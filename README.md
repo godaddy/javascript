@@ -23,17 +23,18 @@ This styleguide is used by dozens of product teams at GoDaddy. Have a question o
 
 There are two ways to install and use this styleguide depending on your own tooling preference: directly using pre-built binaries.
 
-1. Depend on `godaddy-js-style`
+1. Depend on `godaddy-style`
 ```
-npm i godaddy-js-style --save-dev
+npm i godaddy-style --save-dev
 ```
-2. Run the `godaddy-js-style` binaries in your `package.json`:
+
+2. Run the `godaddy-style` binaries in your `package.json`:
 ``` js
 {
   "scripts": {
-    "eslint": "godaddy-js-style-eslint lib/ test/",
-    "jscs": "godaddy-js-style-jscs lib/ test/",
-    "lint": "godaddy-js-style-lint lib/ test/"
+    "eslint": "godaddy-style-eslint lib/ test/",
+    "jscs": "godaddy-style-jscs lib/ test/",
+    "lint": "godaddy-style-lint lib/ test/"
   }
 }
 ```
