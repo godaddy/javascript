@@ -28,13 +28,13 @@ There are two ways to install and use this styleguide depending on your own tool
 npm i godaddy-style --save-dev
 ```
 
-2. Run the `godaddy-style` binaries in your `package.json`:
+2. Run the `godaddy-js-style` binaries in your `package.json`:
 ``` js
 {
   "scripts": {
-    "eslint": "godaddy-style-eslint lib/ test/",
-    "jscs": "godaddy-style-jscs lib/ test/",
-    "lint": "godaddy-style-lint lib/ test/"
+    "eslint": "godaddy-js-style-eslint lib/ test/",
+    "jscs": "godaddy-js-style-jscs lib/ test/",
+    "lint": "godaddy-js-style-lint lib/ test/"
   }
 }
 ```
