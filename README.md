@@ -11,8 +11,6 @@ There are many useful features:
 This styleguide is used by dozens of product teams at GoDaddy. Have a question or comment? [Open an issue!](https://github.com/godaddy/javascript/issues/new)
 
 - [Installation](#installation)
-  - [Using included binaries](#using-included-binaries)
-  - [Using with `gulp`](#using-with-gulp)
 - [Included dotfiles](#included-dotfiles)
 - [Additional Best Practices](#additional-best-practices)
 - [FAQ](#faq)
