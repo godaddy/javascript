@@ -1,6 +1,6 @@
 {
   "name": "godaddy-style",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "The styleguide, lint files, and requireable helpers for consistent style at GoDaddy.",
   "scripts": {
     "pretest": "./bin/lint bin",
