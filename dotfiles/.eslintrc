@@ -115,6 +115,7 @@
     "radix": 2,
     "react/react-in-jsx-scope": 2,
     "react/jsx-uses-react": 1,
+    "react/jsx-uses-vars": 2,
     "strict": [2, "global"],
     "use-isnan": 2,
     "valid-jsdoc": [2, { "prefer": { "return": "returns" } }],
