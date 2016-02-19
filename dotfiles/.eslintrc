@@ -20,7 +20,6 @@
   },
   "rules": {
     "accessor-pairs": 2,
-    "arrow-parens": [2, "as-needed"],
     "arrow-spacing": [2, { "before": true, "after": true }],
     "block-scoped-var": 2,
     "brace-style": [0, "1tbs"],
