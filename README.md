@@ -38,6 +38,19 @@ npm i godaddy-style --save-dev
 ```
 _n.b. All CLI flags are exposed through [fashion-show]. Auto-fix will be enabled by the `-f` setting._
 
+### ES5 Support
+
+Due to issues with the babel-eslint parser plugin, ES5 isn't directly supported (yet).  However, if you're still using ES5, you can add an `--es5` argument when calling the pre-built binaries, and we will switch to using the espree parser, which should allow eslint to work.  The downside being that you can't use any ES6 features if you use the `--es5` argument; it's all or nothing for the moment.
+``` js
+{
+  "scripts": {
+    "eslint": "godaddy-js-style-eslint --es5 lib/ test/",
+    "jscs": "godaddy-js-style-jscs --es5 lib/ test/",
+    "lint": "godaddy-js-style-lint --es5 lib/ test/"
+  }
+}
+```
+
 ## Included dotfiles
 
 This project includes dotfiles with comments under the `dotfiles` directory, but **you should use the distributable versions of these files under `dist`.**
