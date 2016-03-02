@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 // Remove this when es5-fix.js is no longer necessary
-var getConfigDir = require('../es5-config-dir');
+var paths = require('../es5-paths')();
 
 require('fashion-show')({
   commands: ['jscs', 'eslint'],
-  configDir: getConfigDir(),
+  configDir: paths.configDir,
   targets: process.argv.splice(2),
+  binPath: paths.binPath,
   fix: true
 }, function (err, code) {
   if (err) { return process.exit(1); }
