@@ -15,7 +15,7 @@
   ],
   "extends": [
     "eslint:recommended",
-    "plugin:react/recommended"
+    "plugin:eslint-plugin-react/recommended"
   ],
   "parserOptions": {
     "ecmaVersion": 5,

@@ -9,7 +9,7 @@
     "phantomjs": true
   },
   "plugins": ["react","mocha","json"],
-  "extends": ["eslint:recommended","plugin:react/recommended"],
+  "extends": ["eslint:recommended","plugin:eslint-plugin-react/recommended"],
   "parserOptions": {
     "ecmaVersion": 6,
     "sourceType": "script",
