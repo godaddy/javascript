@@ -3,6 +3,7 @@
   // ES6/ES2015 for the win.
   //
   "esnext": true,
+  "plugins": [ "jscs-jsx-rules" ],
 
   //
   // requireCurlyBraces
@@ -39,6 +40,13 @@
   //
   "requireSpaceAfterKeywords":  true,
   "disallowSpaceAfterKeywords": null,
+
+  //
+  // requireSpacesInsideJsxExpressionContainers
+  // Everywhere all the time.
+  //
+  "disallowSpacesInsideJsxExpressionContainers": false,
+  "requireSpacesInsideJsxExpressionContainers": true,
 
   //
   // requireSpaceBeforeBlockStatements

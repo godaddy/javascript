@@ -13,7 +13,10 @@
     "mocha",
     "json"
   ],
-  "extends": "eslint:recommended",
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended"
+  ],
   "parserOptions": {
     "ecmaVersion": 5,
     "sourceType": "script",
@@ -186,9 +189,7 @@
     "no-with": 2,
     "prefer-const": 2,
     "radix": 2,
-    "react/react-in-jsx-scope": 2,
     "react/jsx-uses-react": 1,
-    "react/jsx-uses-vars": 2,
     "strict": [
       2,
       "global"

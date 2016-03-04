@@ -1,5 +1,8 @@
 {
   "esnext": true,
+  "plugins": [
+    "jscs-jsx-rules"
+  ],
   "requireCurlyBraces": [
     "else",
     "for",
@@ -15,6 +18,8 @@
     "catch"
   ],
   "requireSpaceAfterKeywords": true,
+  "disallowSpacesInsideJsxExpressionContainers": false,
+  "requireSpacesInsideJsxExpressionContainers": true,
   "requireSpaceBeforeBlockStatements": true,
   "requireParenthesesAroundIIFE": true,
   "requireSpacesInConditionalExpression": true,

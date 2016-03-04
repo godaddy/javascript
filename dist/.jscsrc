@@ -1,8 +1,11 @@
 {
   "esnext": true,
+  "plugins": ["jscs-jsx-rules"],
   "requireCurlyBraces": ["else","for","while","do","try","catch","switch"],
   "requireSpaceBeforeKeywords": ["else","while","catch"],
   "requireSpaceAfterKeywords": true,
+  "disallowSpacesInsideJsxExpressionContainers": false,
+  "requireSpacesInsideJsxExpressionContainers": true,
   "requireSpaceBeforeBlockStatements": true,
   "requireParenthesesAroundIIFE": true,
   "requireSpacesInConditionalExpression": true,
