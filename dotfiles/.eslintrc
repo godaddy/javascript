@@ -25,7 +25,7 @@
     "brace-style": [0, "1tbs"],
     "callback-return": [2, ["cb", "callback", "next", "done"]],
     "complexity": [1, 11],
-    "consistent-return": 2,
+    "consistent-return": 0,
     "constructor-super": 2,
     "default-case": 2,
     "eqeqeq": 2,
