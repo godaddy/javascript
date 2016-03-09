@@ -25,7 +25,10 @@
   "requireSpacesInConditionalExpression": true,
   "requireSpacesInAnonymousFunctionExpression": {
     "beforeOpeningRoundBrace": true,
-    "beforeOpeningCurlyBrace": true
+    "beforeOpeningCurlyBrace": true,
+    "allExcept": [
+      "shorthand"
+    ]
   },
   "requireSpacesInNamedFunctionExpression": {
     "beforeOpeningCurlyBrace": true
