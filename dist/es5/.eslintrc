@@ -52,7 +52,7 @@
       1,
       11
     ],
-    "consistent-return": 2,
+    "consistent-return": 0,
     "constructor-super": 2,
     "default-case": 2,
     "eqeqeq": 2,
