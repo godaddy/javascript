@@ -108,7 +108,7 @@
     "no-unused-expressions": 0,
     "no-use-before-define": [2, "nofunc"],
     "no-useless-call": 2,
-    "no-useless-concat": 2,
+    "no-useless-concat": 0,
     "no-with": 2,
     "prefer-const": 2,
     "radix": 2,
