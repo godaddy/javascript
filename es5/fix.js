@@ -1,3 +1,5 @@
+/* eslint no-sync: 0, no-console: 0 */
+
 /**
  * This is a temporary workaround for ES5 users. babel-eslint does not support
  * parserOptions the way it should, so setting ecmaVersion to 5 and sourceType
@@ -40,7 +42,7 @@ mkdirp.sync(path.resolve(distDir, 'es5'));
 // we can run all the linting commands in a single call to fashion-show.
 //
 ['.eslintrc', '.jscsrc'].forEach(function fixForEs5(filename) {
-  console.log('Creating es5-compatible' + filename + ' at dist/es5/' + filename);
+  console.log('Creating es5-compatible ' + filename + ' at dist/es5/' + filename);
   var file = JSON.parse(
     fs.readFileSync(path.resolve(distDir, filename), 'utf8')
   );
