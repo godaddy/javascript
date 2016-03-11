@@ -3,8 +3,8 @@
   "version": "3.1.1",
   "description": "The styleguide, lint files, and requireable helpers for consistent style at GoDaddy.",
   "scripts": {
-    "pretest": "./bin/lint bin",
-    "prepublish": "fashion-show-build -p && node es5-fix.js",
+    "pretest": "./bin/lint bin *.js",
+    "prepublish": "fashion-show-build -p && node es5/fix.js",
     "build": "npm run pretest && npm run prepublish",
     "test": "echo ok"
   },
@@ -33,7 +33,7 @@
   "dependencies": {
     "babel-eslint": "^4.1.3",
     "escope": "^3.4.0",
-    "eslint": "^2.1.0",
+    "eslint": "~2.2.0",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^2.0.0",
     "eslint-plugin-react": "^4.1.0",
