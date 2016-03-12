@@ -17,7 +17,7 @@ module.exports = function es5Paths() {
   // the binPath using the configDir, which results in a broken
   // binPath when using --es5, because the --es5 configDir has one
   // more level of directory nesting.
-  var binPath = path.join(__dirname, '..', 'node_modules/.bin');
+  var binPath = path.join(__dirname, '..', 'node_modules', '.bin');
   if (es5) {
     configDir = path.join(configDir, 'es5');
     // We need to remove the --es5 argument because fashion-show
