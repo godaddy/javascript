@@ -107,7 +107,7 @@
     "no-useless-call": 2,
     "no-useless-concat": 2,
     "no-with": 2,
-    "prefer-const": 2,
+    "prefer-const": 1,
     "radix": 2,
     "react/jsx-uses-react": 1,
     "strict": [2,"global"],
