@@ -73,6 +73,28 @@ This section is a place for additional best practices that may be useful but are
 
 ## FAQ
 
+### How do I override a specific rule ?
+
+1. Add a `.eslintrc` file at the root of your project:
+```
+{
+  "extends": "./node_modules/godaddy-style/dist/.eslintrc",
+  "rules": {
+    // Disable the 'max-params' rule
+    "max-params": 0
+  }
+}
+```
+
+2. Add a param to specify the path of your own `.eslintrc` file in your `package.json`:
+``` js
+{
+  "scripts": {
+    "eslint": "godaddy-js-style-eslint -c .eslintrc lib/ test/",
+  }
+}
+```
+
 ### How do I contribute?
 
 Fork this repository and submit a pull request.
