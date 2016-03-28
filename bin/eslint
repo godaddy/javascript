@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Remove this when es5-fix.js is no longer necessary
-var paths = require('../es5-paths')();
+var paths = require('../es5/paths')();
 
 require('fashion-show')({
   commands: 'eslint',
