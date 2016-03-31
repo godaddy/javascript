@@ -76,7 +76,7 @@ This section is a place for additional best practices that may be useful but are
 ### How do I override a specific rule ?
 
 1. Add a `.eslintrc` file at the root of your project:
-```
+``` js
 {
   "extends": "./node_modules/godaddy-style/dist/.eslintrc",
   "rules": {
