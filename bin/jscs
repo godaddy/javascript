@@ -3,7 +3,7 @@
 // Remove this when es5-fix.js is no longer necessary
 var paths = require('../es5/paths')();
 
-var autoFix = process.argv.indexOf('--noFix') === -1;
+var autoFix = require('../jscs/auto-fix')();
 
 require('fashion-show')({
   commands: 'jscs',
