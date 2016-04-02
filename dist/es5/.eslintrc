@@ -189,6 +189,7 @@
     "no-with": 2,
     "prefer-const": 1,
     "radix": 2,
+    "react/display-name": 2,
     "react/jsx-uses-react": 1,
     "strict": [
       2,

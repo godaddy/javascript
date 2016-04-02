@@ -27,6 +27,9 @@ var es5Options = {
     parserOptions: {
       ecmaVersion: 5,
       sourceType: 'script'
+    },
+    rules: {
+      'react/display-name': 2
     }
   }
 };

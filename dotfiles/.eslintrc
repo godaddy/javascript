@@ -112,6 +112,7 @@
     "no-with": 2,
     "prefer-const": 1,
     "radix": 2,
+    "react/display-name": 0,
     "react/jsx-uses-react": 1,
     "strict": [2, "global"],
     "use-isnan": 2,
