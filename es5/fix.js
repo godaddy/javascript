@@ -1,5 +1,4 @@
 /* eslint no-sync: 0, no-console: 0 */
-'use strict';
 
 /**
  * This is a temporary workaround for ES5 users. babel-eslint does not support

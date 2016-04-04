@@ -5,7 +5,7 @@
   "scripts": {
     "pretest": "./bin/lint bin *.js es5/*.js",
     "prepublish": "fashion-show-build -p && node es5/fix.js",
-    "build": "npm run pretest && npm run prepublish",
+    "build": "npm run prepublish && npm run pretest",
     "test": "echo ok"
   },
   "repository": {
