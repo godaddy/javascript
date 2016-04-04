@@ -12,7 +12,7 @@
   "extends": ["eslint:recommended","plugin:eslint-plugin-react/recommended"],
   "parserOptions": {
     "ecmaVersion": 6,
-    "sourceType": "script",
+    "sourceType": "module",
     "ecmaFeatures": {"globalReturn":true,"jsx":true}
   },
   "rules": {
