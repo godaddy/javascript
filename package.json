@@ -5,7 +5,7 @@
   "scripts": {
     "pretest": "./bin/lint bin *.js es5/*.js",
     "prepublish": "fashion-show-build -p && node es5/fix.js",
-    "build": "npm run pretest && npm run prepublish",
+    "build": "npm run prepublish && npm run pretest",
     "test": "echo ok"
   },
   "repository": {
@@ -32,9 +32,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "babel-eslint": "^4.1.3",
+    "babel-eslint": "^6.0.2",
     "escope": "^3.4.0",
-    "eslint": "~2.2.0",
+    "eslint": "~2.5.3",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^2.0.0",
     "eslint-plugin-react": "^4.1.0",
