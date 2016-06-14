@@ -1,5 +1,5 @@
 var path = require('path');
-
+var delimiter = path.delimiter;
 /**
  * Temporary --es5 argument to support es5-compatible .eslintrc
  * Remove when es5-fix.js is no longer necessary.
@@ -17,7 +17,7 @@ module.exports = function es5Paths() {
   // the binPath using the configDir, which results in a broken
   // binPath when using --es5, because the --es5 configDir has one
   // more level of directory nesting.
-  var binPath = path.join(__dirname, '..', 'node_modules', '.bin');
+  var binPath = toBinPaths(__dirname);
   if (es5) {
     configDir = path.join(configDir, 'es5');
     // We need to remove the --es5 argument because fashion-show
@@ -29,4 +29,17 @@ module.exports = function es5Paths() {
     configDir: configDir,
     binPath: binPath
   };
+}
+
+function toBinPaths(dir) {
+  var needleDir = dir;
+  var parentDir = path.dirname(needleDir);
+  var binPath = path.join(needleDir, 'node_modules', '.bin');
+  while (needleDir !== parentDir) {
+    needleDir = parentDir;
+    parentDir = path.dirname(needleDir);
+    binPath = path.join(needleDir, 'node_modules', '.bin') +
+      delimiter + binPath;
+  }
+  return binPath;
 }
