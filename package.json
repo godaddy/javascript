@@ -34,7 +34,7 @@
   "dependencies": {
     "babel-eslint": "^6.0.2",
     "escope": "^3.4.0",
-    "eslint": "~2.5.3",
+    "eslint": "^3.11.0",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^2.0.0",
     "eslint-plugin-react": "^4.1.0",

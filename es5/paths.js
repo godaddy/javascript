@@ -29,7 +29,7 @@ module.exports = function es5Paths() {
     configDir: configDir,
     binPath: binPath
   };
-}
+};
 
 function toBinPaths(dir) {
   var needleDir = dir;
