@@ -115,7 +115,7 @@
     "radix": 2,
     "react/display-name": 0,
     "react/jsx-uses-react": 1,
-    "react/jsx-pascal-case": 1,
+    "react/jsx-pascal-case": 2,
     "semi": 1,
     "strict": [2, "global"],
     "use-isnan": 2,
