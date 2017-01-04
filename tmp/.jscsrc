@@ -14,6 +14,7 @@
   "disallowSpacesInsideArrayBrackets": "all",   // array-bracket-spacing
   "requireBlocksOnNewline": 1,                   // brace-style: [2, "1tbs", { "allowSingleLine": true }]
   "disallowKeywordsOnNewLine": ["catch","else"], // brace-style
+  "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties", // camelcaase
   "validateParameterSeparator": ", ",           // comma-spacing
   "requireCommaBeforeLineBreak": true,          // comma-style
   "disallowTrailingComma": true,                // comma-dangle
@@ -22,8 +23,10 @@
   "disallowSpacesInCallExpression": true,       // func-call-spacing: [2, "never"]
   "validateIndentation": 2,                     // indent
   "disallowSpaceAfterObjectKeys": true,         // key-spacing
+  "requireSpaceBeforeObjectValues": true,       // key-spacing [2, { "afterColon": true }]
   "validateLineBreaks": "LF",                   // linebreak-style
   "disallowTrailingWhitespace": true,           // no-trailing-spaces
+  "requireSpacesInsideObjectBrackets": "allButNested", // object-curly-spacing
   "requireSpaceAfterLineComment": true,         // spaced-comment
   "disallowSpacesInsideParentheses": true,      // space-in-parens
   "disallowYodaConditions": true,               // yoda
@@ -58,13 +61,10 @@
   "disallowSpacesInFunctionDeclaration": {          // space-before-function-paren
     "beforeOpeningRoundBrace": true                 // ^
   },                                                // ^
-  "requireSpacesInsideObjectBrackets": "allButNested", // object-curly-spacing
-  "requireSpaceBeforeObjectValues": true,           // object-curly-spacing
   "disallowSpaceAfterPrefixUnaryOperators": true,   // space-unary-ops, space-infix-ops
   "disallowSpaceBeforePostfixUnaryOperators": true, // space-unary-ops, space-infix-ops
   "requireSpaceBeforeBinaryOperators": true,        // space-unary-ops, space-infix-ops
   "requireSpaceAfterBinaryOperators": true,         // space-unary-ops, space-infix-ops
-  "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties", // camelcaase
   "disallowNewlineBeforeBlockStatements": true, // ???
   "validateQuoteMarks": {                       // quotes, jsx-quotes, quote-props
     "mark": "'",                                // ^
