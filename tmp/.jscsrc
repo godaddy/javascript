@@ -28,7 +28,12 @@
   "disallowTrailingWhitespace": true,           // no-trailing-spaces
   "requireSpacesInsideObjectBrackets": "allButNested", // object-curly-spacing
   "requireSpaceAfterLineComment": true,         // spaced-comment
-  "disallowSpacesInsideParentheses": true,      // space-in-parens
+  "requireSpacesInConditionalExpression": true,     // space-infix-ops
+  "requireSpaceBeforeBinaryOperators": true,        // space-infix-ops
+  "requireSpaceAfterBinaryOperators": true,         // space-infix-ops
+  "disallowSpacesInsideParentheses": true,          // space-in-parens
+  "disallowSpaceAfterPrefixUnaryOperators": true,   // space-unary-ops
+  "disallowSpaceBeforePostfixUnaryOperators": true, // space-unary-ops
   "disallowYodaConditions": true,               // yoda
   "requireParenthesesAroundIIFE": true,         // wrap-iife
 
@@ -43,7 +48,6 @@
   "disallowSpacesInsideJsxExpressionContainers": false,    // react/jsx-curly-spacing
   "requireSpacesInsideJsxExpressionContainers": true,      // react/jsx-curly-spacing
   "requireSpaceBeforeBlockStatements": true,       // space-before-blocks
-  "requireSpacesInConditionalExpression": true,    // space-infix-ops
   "requireSpacesInAnonymousFunctionExpression": {  // --
     "beforeOpeningRoundBrace": true,               // space-before-function-paren
     "beforeOpeningCurlyBrace": true,               // space-before-blocks
@@ -61,10 +65,6 @@
   "disallowSpacesInFunctionDeclaration": {          // space-before-function-paren
     "beforeOpeningRoundBrace": true                 // ^
   },                                                // ^
-  "disallowSpaceAfterPrefixUnaryOperators": true,   // space-unary-ops, space-infix-ops
-  "disallowSpaceBeforePostfixUnaryOperators": true, // space-unary-ops, space-infix-ops
-  "requireSpaceBeforeBinaryOperators": true,        // space-unary-ops, space-infix-ops
-  "requireSpaceAfterBinaryOperators": true,         // space-unary-ops, space-infix-ops
   "disallowNewlineBeforeBlockStatements": true, // ???
   "validateQuoteMarks": {                       // quotes, jsx-quotes, quote-props
     "mark": "'",                                // ^
