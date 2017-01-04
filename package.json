@@ -38,13 +38,11 @@
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^2.0.0",
     "eslint-plugin-react": "^4.1.0",
-    "fashion-show": "^3.3.0",
-    "install": "^0.4.4",
-    "jscs": "^2.10.1",
-    "jscs-jsx-rules": "0.0.1"
+    "install": "^0.4.4"
   },
   "devDependencies": {
     "assign-deep": "^0.4.3",
+    "fashion-show": "^3.3.0",
     "mkdirp": "^0.5.1"
   }
 }

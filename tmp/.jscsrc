@@ -1,0 +1,68 @@
+{
+  //
+  // FINISHED
+  //
+  "disallowMixedSpacesAndTabs": true,           // NOFIX – no-mixed-spaces-and-tabs
+  "requireCapitalizedConstructors": true,       // NOFIX – new-cap
+  "disallowKeywords": ["with"],                 // NOFIX – no-with
+  "disallowMultipleLineStrings": true,          // NOFIX – no-multi-str
+  "validateParameterSeparator": ", ",           // comma-spacing
+  "requireCommaBeforeLineBreak": true,          // comma-style
+  "requireDotNotation": true,                   // dot-notation
+  "disallowTrailingComma": true,                // comma-dangle
+  "disallowYodaConditions": true,               // yoda
+  "requireParenthesesAroundIIFE": true,         // wrap-iife
+
+  //
+  // TO CONVERT TO ESLINT
+  //
+  "esnext": true,
+  "plugins": ["jscs-jsx-rules"],
+  "requireCurlyBraces": ["else","for","while","do","try","catch","switch"],
+  "requireSpaceBeforeKeywords": ["else","while","catch"],  // keyword-spacing
+  "requireSpaceAfterKeywords": true,                       // keyword-spacing
+  "disallowSpacesInsideJsxExpressionContainers": false,    // react/jsx-curly-spacing
+  "requireSpacesInsideJsxExpressionContainers": true,      // react/jsx-curly-spacing
+  "requireSpaceBeforeBlockStatements": true,       // space-before-blocks
+  "requireSpacesInConditionalExpression": true,    // space-infix-ops
+  "requireSpacesInAnonymousFunctionExpression": {  // --
+    "beforeOpeningRoundBrace": true,               // space-before-function-paren
+    "beforeOpeningCurlyBrace": true,               // space-before-blocks
+    "allExcept": ["shorthand"]                     // space-before-function-paren
+  },
+  "requireSpacesInNamedFunctionExpression": {       // space-before-blocks
+    "beforeOpeningCurlyBrace": true                 // ^
+  },                                                // ^
+  "disallowSpacesInNamedFunctionExpression": {      // space-before-function-paren
+    "beforeOpeningRoundBrace": true                 // ^
+  },                                                // ^
+  "requireSpacesInFunctionDeclaration": {           // space-before-blocks
+    "beforeOpeningCurlyBrace": true                 // ^
+  },                                                // ^
+  "disallowSpacesInFunctionDeclaration": {          // space-before-function-paren
+    "beforeOpeningRoundBrace": true                 // ^
+  },                                                // ^
+  "disallowSpacesInCallExpression": true,              // func-call-spacing: [2, "never"]
+  "requireBlocksOnNewline": 1,                         // brace-style: [2, "1tbs", { "allowSingleLine": true }]
+  "disallowKeywordsOnNewLine": ["catch","else"],       // brace-style
+  "requireSpacesInsideObjectBrackets": "allButNested", // object-curly-spacing
+  "disallowSpacesInsideArrayBrackets": "all",          // array-bracket-spacing
+  "disallowSpacesInsideParentheses": true,             // space-in-parens
+  "disallowSpaceAfterObjectKeys": true,             // key-spacing
+  "requireSpaceBeforeObjectValues": true,           // object-curly-spacing
+  "disallowSpaceAfterPrefixUnaryOperators": true,   // space-unary-ops, space-infix-ops
+  "disallowSpaceBeforePostfixUnaryOperators": true, // space-unary-ops, space-infix-ops
+  "requireSpaceBeforeBinaryOperators": true,        // space-unary-ops, space-infix-ops
+  "requireSpaceAfterBinaryOperators": true,         // space-unary-ops, space-infix-ops
+  "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties", // camelcaase
+  "disallowTrailingWhitespace": true,           // no-trailing-spaces
+  "requireLineFeedAtFileEnd": true,             // eol-last
+  "validateLineBreaks": "LF",                   // linebreak-style
+  "validateIndentation": 2,                     // indent
+  "requireSpaceAfterLineComment": true,         // spaced-comment
+  "disallowNewlineBeforeBlockStatements": true, // ???
+  "validateQuoteMarks": {                       // quotes, jsx-quotes, quote-props
+    "mark": "'",                                // ^
+    "escape": true                              // ^
+  }
+}
