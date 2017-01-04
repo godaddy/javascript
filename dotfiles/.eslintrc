@@ -132,6 +132,7 @@
     //
     "array-bracket-spacing": 2,
     "brace-style": [2, "1tbs", { "allowSingleLine": true }],
+    "camelcase": [2, { "properties": "never" }];
     "comma-spacing": 2,
     "comma-style": 2,
     "comma-dangle": 2,
@@ -142,6 +143,10 @@
     "func-call-spacing": [2, "never"],
     "indent": [2, 2],
     "linebreak-style": 2,
+    "object-curly-spacing": [2, "always", {
+      "arraysInObjects": false,
+      "objectsInObjects": false
+    }]
     "spaced-comment": 2,
     "space-in-parens": 2,
     "wrap-iife": 2,
