@@ -2,6 +2,9 @@
   //
   // ESLINT RULES TO INVESTIGATE:
   // - computed-property-spacing
+  // - generator-star-spacing
+  // - semi-spacing
+  // - block-spacing
   //
 
   //
