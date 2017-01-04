@@ -8,8 +8,11 @@
   "disallowMultipleLineStrings": true,          // NOFIX – no-multi-str
   "validateParameterSeparator": ", ",           // comma-spacing
   "requireCommaBeforeLineBreak": true,          // comma-style
-  "requireDotNotation": true,                   // dot-notation
   "disallowTrailingComma": true,                // comma-dangle
+  "requireDotNotation": true,                   // dot-notation
+  "requireLineFeedAtFileEnd": true,             // eol-last
+  "validateLineBreaks": "LF",                   // linebreak-style
+  "disallowTrailingWhitespace": true,           // no-trailing-spaces
   "disallowYodaConditions": true,               // yoda
   "requireParenthesesAroundIIFE": true,         // wrap-iife
 
@@ -55,9 +58,6 @@
   "requireSpaceBeforeBinaryOperators": true,        // space-unary-ops, space-infix-ops
   "requireSpaceAfterBinaryOperators": true,         // space-unary-ops, space-infix-ops
   "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties", // camelcaase
-  "disallowTrailingWhitespace": true,           // no-trailing-spaces
-  "requireLineFeedAtFileEnd": true,             // eol-last
-  "validateLineBreaks": "LF",                   // linebreak-style
   "validateIndentation": 2,                     // indent
   "requireSpaceAfterLineComment": true,         // spaced-comment
   "disallowNewlineBeforeBlockStatements": true, // ???
