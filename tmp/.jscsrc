@@ -6,6 +6,8 @@
   "requireCapitalizedConstructors": true,       // NOFIX – new-cap
   "disallowKeywords": ["with"],                 // NOFIX – no-with
   "disallowMultipleLineStrings": true,          // NOFIX – no-multi-str
+  "requireBlocksOnNewline": 1,                   // brace-style: [2, "1tbs", { "allowSingleLine": true }]
+  "disallowKeywordsOnNewLine": ["catch","else"], // brace-style
   "validateParameterSeparator": ", ",           // comma-spacing
   "requireCommaBeforeLineBreak": true,          // comma-style
   "disallowTrailingComma": true,                // comma-dangle
@@ -46,8 +48,6 @@
     "beforeOpeningRoundBrace": true                 // ^
   },                                                // ^
   "disallowSpacesInCallExpression": true,              // func-call-spacing: [2, "never"]
-  "requireBlocksOnNewline": 1,                         // brace-style: [2, "1tbs", { "allowSingleLine": true }]
-  "disallowKeywordsOnNewLine": ["catch","else"],       // brace-style
   "requireSpacesInsideObjectBrackets": "allButNested", // object-curly-spacing
   "disallowSpacesInsideArrayBrackets": "all",          // array-bracket-spacing
   "disallowSpacesInsideParentheses": true,             // space-in-parens
