@@ -1,11 +1,17 @@
 {
   //
+  // ESLINT RULES TO INVESTIGATE:
+  // - computed-property-spacing
+  //
+
+  //
   // FINISHED
   //
   "disallowMixedSpacesAndTabs": true,           // NOFIX – no-mixed-spaces-and-tabs
   "requireCapitalizedConstructors": true,       // NOFIX – new-cap
   "disallowKeywords": ["with"],                 // NOFIX – no-with
   "disallowMultipleLineStrings": true,          // NOFIX – no-multi-str
+  "disallowSpacesInsideArrayBrackets": "all",   // array-bracket-spacing
   "requireBlocksOnNewline": 1,                   // brace-style: [2, "1tbs", { "allowSingleLine": true }]
   "disallowKeywordsOnNewLine": ["catch","else"], // brace-style
   "validateParameterSeparator": ", ",           // comma-spacing
@@ -13,8 +19,13 @@
   "disallowTrailingComma": true,                // comma-dangle
   "requireDotNotation": true,                   // dot-notation
   "requireLineFeedAtFileEnd": true,             // eol-last
+  "disallowSpacesInCallExpression": true,       // func-call-spacing: [2, "never"]
+  "validateIndentation": 2,                     // indent
+  "disallowSpaceAfterObjectKeys": true,         // key-spacing
   "validateLineBreaks": "LF",                   // linebreak-style
   "disallowTrailingWhitespace": true,           // no-trailing-spaces
+  "requireSpaceAfterLineComment": true,         // spaced-comment
+  "disallowSpacesInsideParentheses": true,      // space-in-parens
   "disallowYodaConditions": true,               // yoda
   "requireParenthesesAroundIIFE": true,         // wrap-iife
 
@@ -47,19 +58,13 @@
   "disallowSpacesInFunctionDeclaration": {          // space-before-function-paren
     "beforeOpeningRoundBrace": true                 // ^
   },                                                // ^
-  "disallowSpacesInCallExpression": true,              // func-call-spacing: [2, "never"]
   "requireSpacesInsideObjectBrackets": "allButNested", // object-curly-spacing
-  "disallowSpacesInsideArrayBrackets": "all",          // array-bracket-spacing
-  "disallowSpacesInsideParentheses": true,             // space-in-parens
-  "disallowSpaceAfterObjectKeys": true,             // key-spacing
   "requireSpaceBeforeObjectValues": true,           // object-curly-spacing
   "disallowSpaceAfterPrefixUnaryOperators": true,   // space-unary-ops, space-infix-ops
   "disallowSpaceBeforePostfixUnaryOperators": true, // space-unary-ops, space-infix-ops
   "requireSpaceBeforeBinaryOperators": true,        // space-unary-ops, space-infix-ops
   "requireSpaceAfterBinaryOperators": true,         // space-unary-ops, space-infix-ops
   "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties", // camelcaase
-  "validateIndentation": 2,                     // indent
-  "requireSpaceAfterLineComment": true,         // spaced-comment
   "disallowNewlineBeforeBlockStatements": true, // ???
   "validateQuoteMarks": {                       // quotes, jsx-quotes, quote-props
     "mark": "'",                                // ^
