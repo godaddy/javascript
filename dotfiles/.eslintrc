@@ -147,6 +147,8 @@
       "arraysInObjects": false,
       "objectsInObjects": false
     }]
+    "space-unary-ops": [2, {"words": true, "nonwords": false }]
+    "space-infix-ops": 2,
     "spaced-comment": 2,
     "space-in-parens": 2,
     "wrap-iife": 2,
