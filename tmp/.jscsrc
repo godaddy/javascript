@@ -30,7 +30,13 @@
   "validateLineBreaks": "LF",                   // linebreak-style
   "disallowTrailingWhitespace": true,           // no-trailing-spaces
   "requireSpacesInsideObjectBrackets": "allButNested", // object-curly-spacing
-  "requireSpaceAfterLineComment": true,         // spaced-comment
+  "validateQuoteMarks": {                              // quotes, jsx-quotes, quote-props
+    "mark": "'",                                       // ^
+    "escape": true                                     // ^
+  },                                                   // ^
+  "disallowSpacesInsideJsxExpressionContainers": false, // react/jsx-curly-spacing
+  "requireSpacesInsideJsxExpressionContainers": true,   // react/jsx-curly-spacing
+  "requireSpaceAfterLineComment": true,                 // spaced-comment
   "requireSpacesInConditionalExpression": true,     // space-infix-ops
   "requireSpaceBeforeBinaryOperators": true,        // space-infix-ops
   "requireSpaceAfterBinaryOperators": true,         // space-infix-ops
@@ -48,8 +54,6 @@
   "requireCurlyBraces": ["else","for","while","do","try","catch","switch"],
   "requireSpaceBeforeKeywords": ["else","while","catch"],  // keyword-spacing
   "requireSpaceAfterKeywords": true,                       // keyword-spacing
-  "disallowSpacesInsideJsxExpressionContainers": false,    // react/jsx-curly-spacing
-  "requireSpacesInsideJsxExpressionContainers": true,      // react/jsx-curly-spacing
   "requireSpaceBeforeBlockStatements": true,       // space-before-blocks
   "requireSpacesInAnonymousFunctionExpression": {  // --
     "beforeOpeningRoundBrace": true,               // space-before-function-paren
@@ -69,8 +73,4 @@
     "beforeOpeningRoundBrace": true                 // ^
   },                                                // ^
   "disallowNewlineBeforeBlockStatements": true, // ???
-  "validateQuoteMarks": {                       // quotes, jsx-quotes, quote-props
-    "mark": "'",                                // ^
-    "escape": true                              // ^
-  }
 }
