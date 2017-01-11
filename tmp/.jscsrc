@@ -10,6 +10,7 @@
   //
   // FINISHED
   //
+  "plugins": ["jscs-jsx-rules"],
   "disallowMixedSpacesAndTabs": true,           // NOFIX – no-mixed-spaces-and-tabs
   "requireCapitalizedConstructors": true,       // NOFIX – new-cap
   "disallowKeywords": ["with"],                 // NOFIX – no-with
@@ -27,6 +28,8 @@
   "validateIndentation": 2,                     // indent
   "disallowSpaceAfterObjectKeys": true,         // key-spacing
   "requireSpaceBeforeObjectValues": true,       // key-spacing [2, { "afterColon": true }]
+  "requireSpaceBeforeKeywords": ["else","while","catch"],  // keyword-spacing
+  "requireSpaceAfterKeywords": true,                       // keyword-spacing
   "validateLineBreaks": "LF",                   // linebreak-style
   "disallowTrailingWhitespace": true,           // no-trailing-spaces
   "requireSpacesInsideObjectBrackets": "allButNested", // object-curly-spacing
@@ -50,10 +53,7 @@
   // TO CONVERT TO ESLINT
   //
   "esnext": true,
-  "plugins": ["jscs-jsx-rules"],
   "requireCurlyBraces": ["else","for","while","do","try","catch","switch"],
-  "requireSpaceBeforeKeywords": ["else","while","catch"],  // keyword-spacing
-  "requireSpaceAfterKeywords": true,                       // keyword-spacing
   "requireSpaceBeforeBlockStatements": true,       // space-before-blocks
   "requireSpacesInAnonymousFunctionExpression": {  // --
     "beforeOpeningRoundBrace": true,               // space-before-function-paren
