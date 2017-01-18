@@ -39,7 +39,25 @@
   },                                                   // ^
   "disallowSpacesInsideJsxExpressionContainers": false, // react/jsx-curly-spacing
   "requireSpacesInsideJsxExpressionContainers": true,   // react/jsx-curly-spacing
-  "requireSpaceAfterLineComment": true,                 // spaced-comment
+  "requireSpaceBeforeBlockStatements": true,        // space-before-blocks
+  "requireSpacesInNamedFunctionExpression": {       // space-before-blocks
+    "beforeOpeningCurlyBrace": true                 // ^
+  },                                                // ^
+  "requireSpacesInFunctionDeclaration": {           // space-before-blocks
+    "beforeOpeningCurlyBrace": true                 // ^
+  },                                                // ^
+  "requireSpacesInAnonymousFunctionExpression": {   // ^
+    "beforeOpeningCurlyBrace": true,                // space-before-blocks
+    "beforeOpeningRoundBrace": true,                // space-before-function-paren
+    "allExcept": ["shorthand"]                      // space-before-function-paren
+  },                                                // ^
+  "disallowSpacesInNamedFunctionExpression": {      // space-before-function-paren
+    "beforeOpeningRoundBrace": true                 // ^
+  },                                                // ^
+  "disallowSpacesInFunctionDeclaration": {          // space-before-function-paren
+    "beforeOpeningRoundBrace": true                 // ^
+  },                                                // ^
+  "requireSpaceAfterLineComment": true,             // spaced-comment
   "requireSpacesInConditionalExpression": true,     // space-infix-ops
   "requireSpaceBeforeBinaryOperators": true,        // space-infix-ops
   "requireSpaceAfterBinaryOperators": true,         // space-infix-ops
@@ -54,23 +72,5 @@
   //
   "esnext": true,
   "requireCurlyBraces": ["else","for","while","do","try","catch","switch"],
-  "requireSpaceBeforeBlockStatements": true,       // space-before-blocks
-  "requireSpacesInAnonymousFunctionExpression": {  // --
-    "beforeOpeningRoundBrace": true,               // space-before-function-paren
-    "beforeOpeningCurlyBrace": true,               // space-before-blocks
-    "allExcept": ["shorthand"]                     // space-before-function-paren
-  },
-  "requireSpacesInNamedFunctionExpression": {       // space-before-blocks
-    "beforeOpeningCurlyBrace": true                 // ^
-  },                                                // ^
-  "disallowSpacesInNamedFunctionExpression": {      // space-before-function-paren
-    "beforeOpeningRoundBrace": true                 // ^
-  },                                                // ^
-  "requireSpacesInFunctionDeclaration": {           // space-before-blocks
-    "beforeOpeningCurlyBrace": true                 // ^
-  },                                                // ^
-  "disallowSpacesInFunctionDeclaration": {          // space-before-function-paren
-    "beforeOpeningRoundBrace": true                 // ^
-  },                                                // ^
   "disallowNewlineBeforeBlockStatements": true, // ???
 }
