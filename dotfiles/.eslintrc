@@ -150,6 +150,12 @@
     }],
     "quotes": [2, "single", { "avoidEscape": true, "allowTemplateLiterals": true }]
     "quote-props": [2, "consistent-as-needed"],
+    "space-before-blocks": 2,
+    "space-before-function-paren": [2, {
+        "anonymous": "always",
+        "named": "never",
+        "asyncArrow": "ignore"
+    }],
     "space-unary-ops": [2, {"words": true, "nonwords": false }]
     "space-infix-ops": 2,
     "spaced-comment": 2,
