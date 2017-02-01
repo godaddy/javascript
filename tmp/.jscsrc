@@ -1,23 +1,18 @@
 {
   //
-  // ESLINT RULES TO INVESTIGATE:
-  // - computed-property-spacing
-  // - generator-star-spacing
-  // - semi-spacing
-  // - block-spacing
-  //
-
-  //
   // FINISHED
   //
   "plugins": ["jscs-jsx-rules"],
-  "disallowMixedSpacesAndTabs": true,           // NOFIX – no-mixed-spaces-and-tabs
-  "requireCapitalizedConstructors": true,       // NOFIX – new-cap
-  "disallowKeywords": ["with"],                 // NOFIX – no-with
-  "disallowMultipleLineStrings": true,          // NOFIX – no-multi-str
-  "disallowSpacesInsideArrayBrackets": "all",   // array-bracket-spacing
+  "disallowMixedSpacesAndTabs": true,            // NOFIX – no-mixed-spaces-and-tabs
+  "requireCapitalizedConstructors": true,        // NOFIX – new-cap
+  "disallowKeywords": ["with"],                  // NOFIX – no-with
+  "disallowMultipleLineStrings": true,           // NOFIX – no-multi-str
+  "disallowSpacesInsideArrayBrackets": "all",    // array-bracket-spacing
   "requireBlocksOnNewline": 1,                   // brace-style: [2, "1tbs", { "allowSingleLine": true }]
   "disallowKeywordsOnNewLine": ["catch","else"], // brace-style
+  "disallowNewlineBeforeBlockStatements": true,  // brace-style
+  "requireCurlyBraces": ["else","for","while","do","try","catch","switch"], // brace-style
+
   "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties", // camelcaase
   "validateParameterSeparator": ", ",           // comma-spacing
   "requireCommaBeforeLineBreak": true,          // comma-style
@@ -66,11 +61,4 @@
   "disallowSpaceBeforePostfixUnaryOperators": true, // space-unary-ops
   "disallowYodaConditions": true,               // yoda
   "requireParenthesesAroundIIFE": true,         // wrap-iife
-
-  //
-  // TO CONVERT TO ESLINT
-  //
-  "esnext": true,
-  "requireCurlyBraces": ["else","for","while","do","try","catch","switch"],
-  "disallowNewlineBeforeBlockStatements": true, // ???
 }
