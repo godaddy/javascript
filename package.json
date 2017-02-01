@@ -18,6 +18,7 @@
     "godaddy-js-style-eslint": "./bin/eslint"
   },
   "keywords": [
+    "godaddy",
     "javascript",
     "styleguide",
     "style-guide",
@@ -27,22 +28,19 @@
   "peerDependencies": {
     "eslint-plugin-mocha": "^2.0.0",
     "eslint-plugin-react": "^4.1.0",
-    "eslint-plugin-json": "^1.2.0",
-    "jscs-jsx-rules": "0.0.1"
+    "eslint-plugin-json": "^1.2.0"
   },
   "license": "MIT",
   "dependencies": {
     "babel-eslint": "^6.0.2",
     "escope": "^3.4.0",
     "eslint": "~2.5.3",
-    "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^2.0.0",
-    "eslint-plugin-react": "^4.1.0",
     "install": "^0.4.4"
   },
   "devDependencies": {
-    "assign-deep": "^0.4.3",
-    "fashion-show": "^3.3.0",
+    "eslint-plugin-json": "^1.2.0",
+    "eslint-plugin-mocha": "^2.0.0",
+    "eslint-plugin-react": "^4.1.0",
     "mkdirp": "^0.5.1"
   }
 }
