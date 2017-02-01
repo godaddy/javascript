@@ -1,0 +1,40 @@
+{
+  "name": "godaddy-style",
+  "version": "3.1.6",
+  "description": "The styleguide, lint files, and requireable helpers for consistent style at GoDaddy.",
+  "scripts": {
+    "pretest": "./bin/lint bin *.js es5/*.js",
+    "prepublish": "fashion-show-build -p && node es5/fix.js",
+    "build": "npm run prepublish && npm run pretest",
+    "test": "echo ok"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:godaddy/javascript.git"
+  },
+  "bin": {
+    "godaddy-js-style-lint": "./bin/lint",
+    "godaddy-js-style-jscs": "./bin/jscs",
+    "godaddy-js-style-eslint": "./bin/eslint"
+  },
+  "keywords": [
+    "godaddy",
+    "javascript",
+    "styleguide",
+    "style-guide",
+    "jscs",
+    "eslint"
+  ],
+  "peerDependencies": {
+    "eslint-plugin-json": "^1.2.0",
+    "eslint-plugin-mocha": "^4.8.0",
+    "eslint-plugin-react": "^6.9.0"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "eslint-plugin-json": "^1.2.0",
+    "eslint-plugin-mocha": "^4.8.0",
+    "eslint-plugin-react": "^6.9.0",
+    "mkdirp": "^0.5.1"
+  }
+}
