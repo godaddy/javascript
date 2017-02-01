@@ -1,6 +1,6 @@
 {
-  "name": "godaddy-style",
-  "version": "3.1.6",
+  "name": "eslint-config-godaddy-react",
+  "version": "0.0.0",
   "description": "The styleguide, lint files, and requireable helpers for consistent style at GoDaddy.",
   "scripts": {
     "pretest": "./bin/lint bin *.js es5/*.js",
@@ -12,11 +12,6 @@
     "type": "git",
     "url": "git@github.com:godaddy/javascript.git"
   },
-  "bin": {
-    "godaddy-js-style-lint": "./bin/lint",
-    "godaddy-js-style-jscs": "./bin/jscs",
-    "godaddy-js-style-eslint": "./bin/eslint"
-  },
   "keywords": [
     "godaddy",
     "javascript",
@@ -25,6 +20,9 @@
     "jscs",
     "eslint"
   ],
+  "dependencies": {
+    "eslint-config-godaddy": "1.0.0"
+  },
   "peerDependencies": {
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^4.8.0",
@@ -34,7 +32,6 @@
   "devDependencies": {
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^4.8.0",
-    "eslint-plugin-react": "^6.9.0",
-    "mkdirp": "^0.5.1"
+    "eslint-plugin-react": "^6.9.0"
   }
 }
