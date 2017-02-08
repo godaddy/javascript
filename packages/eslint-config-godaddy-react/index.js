@@ -1,5 +1,5 @@
 module.exports = {
-  extends: require.resolve('eslint-config-godaddy'),
+  extends: require('./extends')('eslint-config-godaddy'),
   plugins: ['react'],
   parserOptions: {
     ecmaFeatures: {

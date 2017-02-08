@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-  extends: require.resolve('eslint-config-godaddy'),
+  extends: require('./extends')('eslint-config-godaddy'),
   parser: 'espree',
   env: {
     es6: false
