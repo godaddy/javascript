@@ -8,10 +8,7 @@ module.exports = {
     phantomjs: true
   },
   plugins: ['mocha', 'json'],
-  extends: [
-    'eslint:recommended',
-    'plugin:eslint-plugin-react/recommended'
-  ],
+  extends: ['eslint:recommended'],
   parserOptions: {
     ecmaVersion: 6,
     sourceType: 'module',

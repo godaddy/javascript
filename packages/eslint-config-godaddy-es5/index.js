@@ -1,4 +1,7 @@
+'use strict';
+
 module.exports = {
+  extends: require.resolve('eslint-config-godaddy'),
   parser: 'espree',
   env: {
     es6: false
@@ -8,6 +11,6 @@ module.exports = {
     sourceType: 'script'
   },
   rules: {
-    scrict: [2, 'always']
+    strict: [2, 'safe']
   }
 };

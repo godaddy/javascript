@@ -1,10 +1,12 @@
 {
   "name": "eslint-config-godaddy",
   "version": "0.0.0",
-  "description": "The styleguide, lint files, and requireable helpers for consistent style at GoDaddy.",
+  "description": "Base ESLint config for consistent style in ES6 projects at GoDaddy.",
   "scripts": {
-    "prepublish": "fashion-show-build -p && node es5/fix.js",
-    "test": "echo ok"
+    "lint": "eslint .",
+    "pretest": "npm run --silent lint",
+    "test": "echo ok",
+    "unused": "eslint-find-rules --unused ./index.js || echo ''"
   },
   "repository": {
     "type": "git",
@@ -15,17 +17,19 @@
     "javascript",
     "styleguide",
     "style-guide",
-    "jscs",
-    "eslint"
+    "eslint",
+    "es6"
   ],
   "peerDependencies": {
+    "eslint": "^3.15.0",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^4.8.0"
   },
   "license": "MIT",
   "devDependencies": {
+    "eslint": "^3.15.0",
+    "eslint-find-rules": "^1.14.3",
     "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^4.8.0",
-    "mkdirp": "^0.5.1"
+    "eslint-plugin-mocha": "^4.8.0"
   }
 }
