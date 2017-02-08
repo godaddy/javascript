@@ -15,6 +15,7 @@ module.exports = {
   },
   rules: {
     'react/display-name': 2,
+    'react/prefer-es6-class': 0,
     'strict': [2, 'never']
   }
 };
