@@ -3,12 +3,15 @@
 // Remove this when es5/fix.js is no longer necessary
 var paths = require('../es5/paths')();
 
+var argv = require('minimist')(process.argv.slice(2));
+var autoFix = argv.noFix === undefined;
+
 require('fashion-show')({
   commands: ['jscs', 'eslint'],
   configDir: paths.configDir,
-  targets: process.argv.splice(2),
+  targets: argv._,
   binPath: paths.binPath,
-  fix: true
+  fix: autoFix
 }, function (err, code) {
   if (err) { return process.exit(1); }
   process.exit(code);

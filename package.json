@@ -41,7 +41,8 @@
     "fashion-show": "^3.3.0",
     "install": "^0.4.4",
     "jscs": "^2.10.1",
-    "jscs-jsx-rules": "0.0.1"
+    "jscs-jsx-rules": "0.0.1",
+    "minimist": "^1.2.0"
   },
   "devDependencies": {
     "assign-deep": "^0.4.3",
