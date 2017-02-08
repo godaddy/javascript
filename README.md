@@ -72,15 +72,6 @@ The `--fix` option in `eslint` is [**only** available as a CLI option](https://g
 }
 ```
 
-
-## Included dotfiles
-
-This project includes dotfiles with comments under the `dotfiles` directory, but **you should use the distributable versions of these files under `dist`.**
-
-### ESLint
-
-The styleguide uses `eslint` for all correctness focused linting. All strictly style related checking (i.e. whitespace) is handled by `jscs`. Only the rules exclusive to `eslint` have been enabled or disabled accordingly to make sure there is no overlap with `jscs`.
-
 ## Additional Suggestions for Best Practices
 
 This section is a place for additional best practices that may be useful but are not strictly enforced by this styleguide. Have something to add here? Great! [Submit a PR](#how-do-i-contribute).
