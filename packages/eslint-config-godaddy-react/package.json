@@ -21,6 +21,9 @@
     "es6",
     "react"
   ],
+  "bin": {
+    "eslint-godaddy-react": "bin/eslint-godaddy-react"
+  },
   "dependencies": {
     "eslint-config-godaddy": "^1.0.0"
   },

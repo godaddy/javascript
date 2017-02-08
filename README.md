@@ -39,7 +39,7 @@ npm i eslint-config-godaddy-es5 --save-dev
 
 There are two ways to use this styleguide depending on your own tooling preference: directly using pre-included binaries.
 
-#####1. Use the pre-included binaries.
+##### 1. Use the pre-included binaries.
 
 These use _exactly_ the configuration defined in the individual `eslint-config-godaddy*` package **with auto-fix enabled automatically.**
 
