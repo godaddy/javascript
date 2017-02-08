@@ -29,7 +29,8 @@ var es5Options = {
       sourceType: 'script'
     },
     rules: {
-      'react/display-name': 2
+      'react/display-name': 2,
+      "react/prefer-es6-class": 0,
     }
   }
 };

@@ -116,6 +116,7 @@
     "react/display-name": 0,
     "react/jsx-uses-react": 1,
     "react/jsx-pascal-case": 2,
+    "react/prefer-es6-class": 2,
     "semi": 1,
     "strict": [2, "global"],
     "use-isnan": 2,
