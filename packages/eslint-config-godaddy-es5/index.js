@@ -12,6 +12,6 @@ module.exports = {
   },
   rules: {
     'no-invalid-this': 2,
-    strict: [2, 'safe']
+    'strict': [2, 'safe']
   }
 };
