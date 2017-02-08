@@ -3,7 +3,7 @@
   "version": "3.2.1",
   "description": "The styleguide, lint files, and requireable helpers for consistent style at GoDaddy.",
   "scripts": {
-    "lint": "eslint packages/**/*.js",
+    "lint": "eslint -c .eslintrc.js packages/**/*.js",
     "install:config": "cd packages/eslint-config-godaddy && npm install",
     "install:config:es5": "cd packages/eslint-config-godaddy-es5 && npm install",
     "install:config:react": "cd packages/eslint-config-godaddy-react && npm install",
@@ -40,6 +40,7 @@
     "eslint-find-rules": "^1.14.3",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^4.8.0",
+    "eslint-plugin-react": "^6.9.0",
     "npm-run-all": "^4.0.1"
   }
 }
