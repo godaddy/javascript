@@ -23,7 +23,8 @@ This styleguide is used by dozens of product teams at GoDaddy. Have a question o
 
 ## Installation
 
-Depend on one of the provided packages. e.g. for `eslint-config-godaddy`
+Install one of the provided packages depending on the kind of application you are developing:
+
 ``` sh
 # Default with ES6
 npm i eslint-config-godaddy --save-dev
@@ -37,7 +38,7 @@ npm i eslint-config-godaddy-es5 --save-dev
 
 ## Usage
 
-There are two ways to use this styleguide depending on your own tooling preference: directly using pre-included binaries.
+There are two ways to use this styleguide depending on your own tooling preference: directly using pre-included binaries or running `eslint` yourself with a custom `.eslintrc` config.
 
 ##### 1. Use the pre-included binaries.
 
