@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+require('eslint-config-godaddy/cli')(
+  require('path').join(__dirname, '..', 'index')
+);
