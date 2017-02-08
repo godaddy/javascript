@@ -29,10 +29,10 @@ Install one of the provided packages depending on the kind of application you ar
 # Default with ES6
 npm i eslint-config-godaddy --save-dev
 
-# OR (with React rules)
+# OR (ES6 with React rules)
 npm i eslint-config-godaddy-react --save-dev
 
-# OR (legacy ES5)
+# OR (legacy ES5 with React rules)
 npm i eslint-config-godaddy-es5 --save-dev
 ```
 
@@ -46,7 +46,9 @@ These use _exactly_ the configuration defined in the individual `eslint-config-g
 
 ``` js
 {
-  "scripts": "eslint-godaddy files/ you/ want-to/ lint/"
+  "scripts": {
+    "lint": "eslint-godaddy files/ you/ want-to/ lint/"
+  }
 }
 ```
 
@@ -54,7 +56,7 @@ These use _exactly_ the configuration defined in the individual `eslint-config-g
 
 ``` js
 module.exports = {
-  extends: 'godaddy'
+  extends: 'godaddy',
   rules: {
     //
     // Put any rules you wish to override here.
