@@ -1,10 +1,7 @@
 'use strict';
 
 module.exports = {
-  extends: [
-    'eslint-config-godaddy-react',
-    './index'
-  ].map(require.resolve),
+  extends: require('./extends')('eslint-config-godaddy-react'),
   parser: 'espree',
   env: {
     es6: false
