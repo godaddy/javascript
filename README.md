@@ -39,13 +39,18 @@ npm i eslint-config-godaddy-es5 --save-dev
 
 There are two ways to use this styleguide depending on your own tooling preference: directly using pre-included binaries.
 
-1. Use the pre-included binaries. These use _exactly_ the configuration defined in the individual `eslint-config-godaddy*` package **with auto-fix enabled automatically.**
+#####1. Use the pre-included binaries.
+
+These use _exactly_ the configuration defined in the individual `eslint-config-godaddy*` package **with auto-fix enabled automatically.**
+
 ``` js
 {
   "scripts": "eslint-godaddy files/ you/ want-to/ lint/"
 }
 ```
-2. Define your local `.eslintrc` and run `eslint` yourself:
+
+##### 2. Define your local `.eslintrc` and run `eslint` yourself:
+
 ``` js
 module.exports = {
   extends: 'godaddy'
@@ -88,7 +93,7 @@ This section is a place for additional best practices that may be useful but are
 
 ### How do I override a specific rule ?
 
-1. Add a `.eslintrc` file at the root of your project:
+##### 1. Add a `.eslintrc` file at the root of your project:
 ``` js
 {
   "extends": "godaddy",
@@ -98,7 +103,8 @@ This section is a place for additional best practices that may be useful but are
   }
 }
 ```
-2. Add a param to specify the path of your own `.eslintrc` file in your `package.json`:
+
+##### 2. Add a param to specify the path of your own `.eslintrc` file in your `package.json`:
 ``` js
 {
   "scripts": {
