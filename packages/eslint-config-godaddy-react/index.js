@@ -9,6 +9,7 @@ module.exports = {
   rules: {
     'react/display-name': 0,
     'react/jsx-uses-react': 1,
+    'react/prefer-es6-class': 2,
     //
     // Whitespace rules for specific scenarios (e.g. JSX)
     //
