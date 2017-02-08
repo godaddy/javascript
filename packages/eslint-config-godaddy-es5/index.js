@@ -11,6 +11,7 @@ module.exports = {
     sourceType: 'script'
   },
   rules: {
+    'no-invalid-this': 2,
     strict: [2, 'safe']
   }
 };
