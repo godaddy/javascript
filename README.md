@@ -98,7 +98,6 @@ This section is a place for additional best practices that may be useful but are
   }
 }
 ```
-
 2. Add a param to specify the path of your own `.eslintrc` file in your `package.json`:
 ``` js
 {
