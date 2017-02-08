@@ -24,11 +24,11 @@ module.exports = {
     'arrow-spacing': [2, { before: true, after: true }],
     'block-scoped-var': 2,
     'callback-return': [2, ['cb', 'callback', 'next', 'done']],
-    complexity: [1, 11],
+    'complexity': [1, 11],
     'consistent-return': 0,
     'constructor-super': 2,
     'default-case': 2,
-    eqeqeq: 2,
+    'eqeqeq': 2,
     'func-style': [0, 'declaration'],
     'generator-star-spacing': [2, { before: true, after: false }],
     'guard-for-in': 2,
@@ -110,9 +110,9 @@ module.exports = {
     'no-useless-call': 2,
     'no-useless-concat': 2,
     'prefer-const': 1,
-    radix: 2,
-    semi: 1,
-    strict: [2, 'global'],
+    'radix': 2,
+    'semi': 1,
+    'strict': [2, 'global'],
     'use-isnan': 2,
     'valid-jsdoc': [2, { prefer: { return: 'returns' }, requireReturn: false }],
     //
@@ -129,7 +129,7 @@ module.exports = {
     //
     'array-bracket-spacing': 2,
     'brace-style': [2, '1tbs', { allowSingleLine: true }],
-    camelcase: [2, { properties: 'never' }],
+    'camelcase': [2, { properties: 'never' }],
     'comma-spacing': 2,
     'comma-style': 2,
     'comma-dangle': 2,
@@ -138,14 +138,13 @@ module.exports = {
     'eol-last': 2,
     'key-spacing': 2,
     'func-call-spacing': [2, 'never'],
-    indent: [2, 2],
+    'indent': [2, 2],
     'keyword-spacing': 2,
     'linebreak-style': 2,
     'object-curly-spacing': [2, 'always', {
-      arraysInObjects: false,
       objectsInObjects: false
     }],
-    quotes: [2, 'single', { avoidEscape: true, allowTemplateLiterals: true }]
+    'quotes': [2, 'single', { avoidEscape: true, allowTemplateLiterals: true }],
     'quote-props': [2, 'consistent-as-needed'],
     'space-before-blocks': 2,
     'space-before-function-paren': [2, {
@@ -158,6 +157,6 @@ module.exports = {
     'spaced-comment': 2,
     'space-in-parens': 2,
     'wrap-iife': 2,
-    yoda: [2, 'never']
+    'yoda': [2, 'never']
   }
-}
+};

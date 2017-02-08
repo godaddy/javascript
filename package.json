@@ -3,9 +3,7 @@
   "version": "3.2.1",
   "description": "The styleguide, lint files, and requireable helpers for consistent style at GoDaddy.",
   "scripts": {
-    "pretest": "./bin/lint bin *.js es5/*.js",
-    "prepublish": "fashion-show-build -p && node es5/fix.js",
-    "build": "npm run prepublish && npm run pretest",
+    "pretest": "eslint packages/**/*.js",
     "test": "echo ok"
   },
   "repository": {
@@ -26,21 +24,17 @@
     "eslint"
   ],
   "peerDependencies": {
-    "eslint-plugin-mocha": "^2.0.0",
-    "eslint-plugin-react": "^4.1.0",
-    "eslint-plugin-json": "^1.2.0"
+    "eslint-plugin-json": "*",
+    "eslint-plugin-mocha": "*",
+    "eslint-plugin-react": "*"
   },
   "license": "MIT",
   "dependencies": {
-    "babel-eslint": "^6.0.2",
-    "escope": "^3.4.0",
-    "eslint": "~2.5.3",
-    "install": "^0.4.4"
+    "eslint": "^3.15.0"
   },
   "devDependencies": {
     "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^2.0.0",
-    "eslint-plugin-react": "^4.1.0",
-    "mkdirp": "^0.5.1"
+    "eslint-plugin-mocha": "^4.8.0",
+    "eslint-plugin-react": "^6.9.0"
   }
 }
