@@ -1,17 +1,21 @@
 # godaddy-style
 
-Official GoDaddy JavaScript styleguide. It includes [dotfiles for known tools](#included-dotfiles) and can be used as a standard in any new project.
+Official GoDaddy JavaScript styleguide. It includes `eslint` packages for three use-cases and can be used as a standard in any new project.
+
+- [`eslint-config-godaddy`]: Base configuration for _non-React_, ES6 JavaScript applications
+- [`eslint-config-godaddy-react`]: Configuration for ES6 React JavaScript applications
+- [`eslint-config-godaddy-es5`]: Configuration for React _and_ non-React ES5 JavaScript applications.
 
 There are many useful features:
 
 - **Standard. No configuration.** – Stop worrying about style and focus on your work.
-- **Modern** – Uses modern linting tools like `eslint` and `jscs`.
-- **Auto-fix** – Auto-fix is enabled in `jscs`. Many rules will fix themselves!
+- **Modern** – Uses modern linting tools like `eslint`.
+- **Auto-fix** – Auto-fix is enabled by-default through in `eslint`. Many rules will fix themselves!
 
 This styleguide is used by dozens of product teams at GoDaddy. Have a question or comment? [Open an issue!](https://github.com/godaddy/javascript/issues/new)
 
 - [Installation](#installation)
-- [Included dotfiles](#included-dotfiles)
+- [Usage](#usage)
 - [Additional Best Practices](#additional-best-practices)
 - [FAQ](#faq)
 - [Roadmap](#roadmap)
@@ -19,37 +23,50 @@ This styleguide is used by dozens of product teams at GoDaddy. Have a question o
 
 ## Installation
 
-There are two ways to install and use this styleguide depending on your own tooling preference: directly using pre-built binaries.
+Depend on one of the provided packages. e.g. for `eslint-config-godaddy`
+``` sh
+# Default with ES6
+npm i eslint-config-godaddy --save-dev
 
-1. Depend on `godaddy-style`
-```
-npm i godaddy-style --save-dev
+# OR (with React rules)
+npm i eslint-config-godaddy-react --save-dev
+
+# OR (legacy ES5)
+npm i eslint-config-godaddy-es5 --save-dev
 ```
 
-2. Run the `godaddy-js-style` binaries in your `package.json`:
+## Usage
+
+There are two ways to use this styleguide depending on your own tooling preference: directly using pre-included binaries.
+
+1. Use the pre-included binaries. These use _exactly_ the configuration defined in the individual `eslint-config-godaddy*` package **with auto-fix enabled automatically.**
 ``` js
 {
-  "scripts": {
-    "eslint": "godaddy-js-style-eslint lib/ test/",
-    "jscs": "godaddy-js-style-jscs lib/ test/",
-    "lint": "godaddy-js-style-lint lib/ test/"
+  "scripts": "eslint-godaddy files/ you/ want-to/ lint/"
+}
+```
+2. Define your local `.eslintrc` and run `eslint` yourself:
+``` js
+module.exports = {
+  extends: 'godaddy'
+  rules: {
+    //
+    // Put any rules you wish to override here.
+    //
   }
 }
 ```
-_n.b. All CLI flags are exposed through [fashion-show]. Auto-fix will be enabled by the `-f` setting._
 
-### ES5 Support
+The `--fix` option in `eslint` is [**only** available as a CLI option](https://github.com/eslint/eslint/issues/8041). Auto-fix will *NOT be enabled* unless you run `eslint --fix` in your `package.json`.
 
-Due to issues with the babel-eslint parser plugin, ES5 isn't directly supported (yet).  However, if you're still using ES5, you can add an `--es5` argument when calling the pre-built binaries, and we will switch to using the espree parser, which should allow eslint to work.  The downside being that you can't use any ES6 features if you use the `--es5` argument; it's all or nothing for the moment.
 ``` js
 {
   "scripts": {
-    "eslint": "godaddy-js-style-eslint --es5 lib/ test/",
-    "jscs": "godaddy-js-style-jscs --es5 lib/ test/",
-    "lint": "godaddy-js-style-lint --es5 lib/ test/"
+    "lint": "eslint --fix files/ you/ want-to/ lint/"
   }
 }
 ```
+
 
 ## Included dotfiles
 
@@ -58,10 +75,6 @@ This project includes dotfiles with comments under the `dotfiles` directory, but
 ### ESLint
 
 The styleguide uses `eslint` for all correctness focused linting. All strictly style related checking (i.e. whitespace) is handled by `jscs`. Only the rules exclusive to `eslint` have been enabled or disabled accordingly to make sure there is no overlap with `jscs`.
-
-### JSCS
-
-The styleguide uses `jscs` for all strictly style related checking. Many `jscs` rules have auto-fixing enabled.
 
 ## Additional Suggestions for Best Practices
 
@@ -78,7 +91,7 @@ This section is a place for additional best practices that may be useful but are
 1. Add a `.eslintrc` file at the root of your project:
 ``` js
 {
-  "extends": "./node_modules/godaddy-style/dist/.eslintrc",
+  "extends": "godaddy",
   "rules": {
     // Disable the 'max-params' rule
     "max-params": 0
@@ -90,7 +103,7 @@ This section is a place for additional best practices that may be useful but are
 ``` js
 {
   "scripts": {
-    "eslint": "godaddy-js-style-eslint -c .eslintrc lib/ test/",
+    "eslint": "eslint-godaddy -c .eslintrc lib/ test/",
   }
 }
 ```
@@ -113,8 +126,10 @@ No problem. Reach out to us by [opening an issue]
 
 - Add more specific style guidance around React.
 - Translate dotfile rules into more verbose written documentation.
-- Never stop improving.
 - Add support for IDE formats (IntelliJ, Webstorm, Atom, Eclipse, Sublime, etc...)
+- Never stop improving.
 
 [opening an issue]: https://github.com/godaddy/javascript/issues
-[fashion-show]: https://github.com/indexzero/fashion-show#api-documentation
+[`eslint-config-godaddy`]: /packages/eslint-config-godaddy
+[`eslint-config-godaddy-react`]: /packages/eslint-config-godaddy-react
+[`eslint-config-godaddy-es5`]: /packages/eslint-config-godaddy-es5
