@@ -1,0 +1,3 @@
+{
+  "extends": "./packages/eslint-config-godaddy/index.js"
+}

@@ -1,7 +1,7 @@
 module.exports = {
   extends: [
     'eslint-config-godaddy-react',
-    './index',
+    './index'
   ].map(require.resolve),
   rules: {
     'react/display-name': 2,

@@ -5,7 +5,7 @@ module.exports = {
     ecmaFeatures: {
       jsx: true
     }
-  }
+  },
   rules: {
     'react/display-name': 0,
     'react/jsx-uses-react': 1,
@@ -13,7 +13,7 @@ module.exports = {
     // Whitespace rules for specific scenarios (e.g. JSX)
     //
     'react/jsx-curly-spacing': [2, 'always', {
-      'spacing': { objectLiterals: 'never' }
+      spacing: { objectLiterals: 'never' }
     }],
     'jsx-quotes': [2, 'prefer-single']
   }

@@ -8,6 +8,6 @@ module.exports = {
     sourceType: 'script'
   },
   rules: {
-    'scrict': [2, 'always']
+    scrict: [2, 'always']
   }
 };
