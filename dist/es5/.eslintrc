@@ -134,6 +134,7 @@
     "no-extend-native": 2,
     "no-extra-bind": 0,
     "no-extra-parens": 0,
+    "no-extra-semi": 1,
     "no-floating-decimal": 2,
     "no-implied-eval": 2,
     "no-invalid-regexp": 2,
@@ -191,6 +192,9 @@
     "radix": 2,
     "react/display-name": 2,
     "react/jsx-uses-react": 1,
+    "react/jsx-pascal-case": 2,
+    "react/prefer-es6-class": 0,
+    "semi": 1,
     "strict": [
       2,
       "global"
