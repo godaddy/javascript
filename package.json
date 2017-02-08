@@ -3,7 +3,6 @@
   "version": "3.2.1",
   "description": "The styleguide, lint files, and requireable helpers for consistent style at GoDaddy.",
   "scripts": {
-    "preinstall": "run-p install:config install:config:es5 install:config:react",
     "lint": "eslint packages/**/*.js",
     "install:config": "cd packages/eslint-config-godaddy && npm install",
     "install:config:es5": "cd packages/eslint-config-godaddy-es5 && npm install",
