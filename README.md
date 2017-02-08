@@ -122,7 +122,13 @@ No problem. Reach out to us by [opening an issue]
 ## Roadmap
 
 - Add more specific style guidance around React.
-- Translate dotfile rules into more verbose written documentation.
+- Consider other rules in an `eslint` only implementation:
+  - `computed-property-spacing`
+  - `generator-star-spacing`
+  - `semi-spacing`
+  - `block-spacing`
+- Continue to modularize the `eslint` rules.
+- Translate configuration files into more verbose written documentation.
 - Add support for IDE formats (IntelliJ, Webstorm, Atom, Eclipse, Sublime, etc...)
 - Never stop improving.
 
