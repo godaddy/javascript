@@ -11,7 +11,7 @@ module.exports = {
   },
   rules: {
     'react/display-name': 0,
-    'react/jsx-pascal-case': 2,
+    'react/jsx-pascal-case': [2, { allowAllCaps: true }],
     'react/jsx-uses-react': 1,
     'react/prefer-es6-class': 2,
     //
