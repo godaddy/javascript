@@ -4,11 +4,11 @@
   "description": "The styleguide, lint files, and requireable helpers for consistent style at GoDaddy.",
   "scripts": {
     "lint": "eslint -c .eslintrc.js packages/**/*.js",
+    "postinstall": "run-p install:config install:config:es5 install:config:react",
     "install:config": "cd packages/eslint-config-godaddy && npm install",
     "install:config:es5": "cd packages/eslint-config-godaddy-es5 && npm install",
     "install:config:react": "cd packages/eslint-config-godaddy-react && npm install",
-    "test": "npm run lint",
-    "test:all": "run-p test:config test:config:es5 test:config:react",
+    "test": "run-p lint test:config test:config:es5 test:config:react",
     "test:config": "cd packages/eslint-config-godaddy && npm test",
     "test:config:es5": "cd packages/eslint-config-godaddy-es5 && npm test",
     "test:config:react": "cd packages/eslint-config-godaddy-react && npm test"
