@@ -1,15 +1,8 @@
 #!/usr/bin/env node
 
-// Remove this when es5-fix.js is no longer necessary
-var paths = require('../es5/paths')();
-
-require('fashion-show')({
-  commands: 'eslint',
-  configDir: paths.configDir,
-  targets: process.argv.splice(2),
-  binPath: paths.binPath
-}, function (err, code) {
-  if (err) { return process.exit(1); }
-  process.exit(code);
-});
-
+require('./notice')([
+  'You can enable ESLint --fix by default through:',
+  '  eslint-godaddy       in eslint-config-godaddy',
+  '  eslint-godaddy-react in eslint-config-godaddy-react',
+  '  eslint-godaddy-es5   in eslint-config-godaddy-es5'
+]);

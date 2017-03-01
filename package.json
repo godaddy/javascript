@@ -35,6 +35,11 @@
   "bugs": {
     "url": "https://github.com/godaddy/javascript/issues"
   },
+  "bin": {
+    "godaddy-js-style-lint": "./bin/lint",
+    "godaddy-js-style-jscs": "./bin/jscs",
+    "godaddy-js-style-eslint": "./bin/eslint"
+  },
   "devDependencies": {
     "eslint": "^3.15.0",
     "eslint-find-rules": "^1.14.3",
