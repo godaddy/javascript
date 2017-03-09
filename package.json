@@ -45,7 +45,9 @@
     "eslint-find-rules": "^1.14.3",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^4.8.0",
-    "eslint-plugin-react": "^6.9.0",
-    "npm-run-all": "^4.0.1"
+    "eslint-plugin-react": "^6.9.0"
+  },
+  "dependencies": {
+    "npm-run-all": "^4.0.2"
   }
 }
