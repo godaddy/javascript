@@ -6,7 +6,8 @@ module.exports = {
   plugins: ['react'],
   parserOptions: {
     ecmaFeatures: {
-      jsx: true
+      jsx: true,
+      experimentalObjectRestSpread: true
     }
   },
   rules: {

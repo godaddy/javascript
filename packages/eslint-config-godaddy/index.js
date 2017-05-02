@@ -13,7 +13,8 @@ module.exports = {
     ecmaVersion: 6,
     sourceType: 'module',
     ecmaFeatures: {
-      globalReturn: true
+      globalReturn: true,
+      experimentalObjectRestSpread: true
     }
   },
   rules: {
