@@ -136,7 +136,7 @@ module.exports = {
     'eol-last': 2,
     'key-spacing': 2,
     'func-call-spacing': [2, 'never'],
-    'indent': [2, 2],
+    'indent': [2, 2, { SwitchCase: 1 }],
     'keyword-spacing': 2,
     'linebreak-style': 2,
     'object-curly-spacing': [2, 'always', {
