@@ -4,7 +4,8 @@ Official GoDaddy JavaScript styleguide. It includes `eslint` packages for three 
 
 - [`eslint-config-godaddy`]: Base configuration for _non-React_, ES6 JavaScript applications
 - [`eslint-config-godaddy-react`]: Configuration for ES6 React JavaScript applications
-- [`eslint-config-godaddy-es5`]: Configuration for React _and_ non-React ES5 JavaScript applications.
+- [`eslint-config-godaddy-es5`]: Configuration for React _and_ non-React ES5 JavaScript applications
+- [`eslint-config-godaddy-react-flow`]: Configuration for ES6 React JavaScript applications using Flow
 
 There are many useful features:
 
@@ -138,3 +139,4 @@ No problem. Reach out to us by [opening an issue]
 [`eslint-config-godaddy`]: /packages/eslint-config-godaddy
 [`eslint-config-godaddy-react`]: /packages/eslint-config-godaddy-react
 [`eslint-config-godaddy-es5`]: /packages/eslint-config-godaddy-es5
+[`eslint-config-godaddy-react-flow`]: /packages/eslint-config-godaddy-react-flow

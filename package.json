@@ -4,14 +4,16 @@
   "description": "The approach to JavaScript at GoDaddy. We think it's pretty decent.",
   "scripts": {
     "lint": "eslint -c .eslintrc.js packages/**/*.js",
-    "postinstall": "run-p install:config install:config:es5 install:config:react",
+    "postinstall": "run-p install:config install:config:es5 install:config:react install:config:react-flow",
     "install:config": "cd packages/eslint-config-godaddy && npm install",
     "install:config:es5": "cd packages/eslint-config-godaddy-es5 && npm install",
     "install:config:react": "cd packages/eslint-config-godaddy-react && npm install",
-    "test": "run-p lint test:config test:config:es5 test:config:react",
+    "install:config:react-flow": "cd packages/eslint-config-godaddy-react-flow && npm install",
+    "test": "run-p lint test:config test:config:es5 test:config:react test:config:react-flow",
     "test:config": "cd packages/eslint-config-godaddy && npm test",
     "test:config:es5": "cd packages/eslint-config-godaddy-es5 && npm test",
-    "test:config:react": "cd packages/eslint-config-godaddy-react && npm test"
+    "test:config:react": "cd packages/eslint-config-godaddy-react && npm test",
+    "test:config:react-flow": "cd packages/eslint-config-godaddy-react-flow && npm test"
   },
   "repository": {
     "type": "git",
@@ -27,7 +29,8 @@
     "es6",
     "es2015",
     "react",
-    "jsx"
+    "jsx",
+    "flow"
   ],
   "license": "MIT",
   "author": "GoDaddy.com Operating Company, LLC",
@@ -41,7 +44,10 @@
     "godaddy-js-style-eslint": "./bin/eslint"
   },
   "devDependencies": {
+    "babel-eslint": "^7.2.1",
     "eslint": "^3.15.0",
+    "eslint-plugin-babel": "^4.0.1",
+    "eslint-plugin-flowtype": "^2.30.4",
     "eslint-find-rules": "^1.14.3",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^4.8.0",
