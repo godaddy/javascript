@@ -26,7 +26,7 @@ These use _exactly_ the configuration defined in this  package (`eslint-config-g
 ``` js
 {
   "scripts": {
-    "lint": eslint-godaddy-react-flow files/ you/ want-to/ lint/"
+    "lint": "eslint-godaddy-react-flow files/ you/ want-to/ lint/"
   }
 }
 ```
