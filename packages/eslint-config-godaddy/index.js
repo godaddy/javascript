@@ -125,7 +125,7 @@ module.exports = {
     // Whitespace rules follow. All rules are auto-fix unless
     // otherwise specified.
     //
-    'array-bracket-spacing': 2,
+    'array-bracket-spacing': [2, 'always'],
     'brace-style': [2, '1tbs', { allowSingleLine: true }],
     'camelcase': [2, { properties: 'never' }],
     'comma-spacing': 2,
