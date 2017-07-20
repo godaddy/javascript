@@ -139,9 +139,7 @@ module.exports = {
     'indent': [2, 2, { SwitchCase: 1 }],
     'keyword-spacing': 2,
     'linebreak-style': 2,
-    'object-curly-spacing': [2, 'always', {
-      objectsInObjects: false
-    }],
+    'object-curly-spacing': [2, 'always'],
     'quotes': [2, 'single', { avoidEscape: true, allowTemplateLiterals: true }],
     'quote-props': [2, 'consistent-as-needed'],
     'space-before-blocks': 2,
