@@ -1,6 +1,6 @@
-# eslint-config-godaddy-react
+# eslint-config-godaddy-react-flow
 
-Configuration for ES6 React JavaScript applications officially used at GoDaddy. There are many useful features:
+Configuration for ES6 React JavaScript applications using Flow, officially used at GoDaddy. There are many useful features:
 
 - **Standard. No configuration.** – Stop worrying about style and focus on your work.
 - **Modern** – Uses modern linting tools like `eslint`.
@@ -12,7 +12,7 @@ This styleguide is used by dozens of product teams at GoDaddy. Have a question o
 
 ``` sh
 # ES6 (including React rules)
-npm i eslint-config-godaddy-react --save-dev
+npm i eslint-config-godaddy-react-flow --save-dev
 ```
 
 ## Usage
@@ -21,12 +21,12 @@ There are two ways to use this styleguide depending on your own tooling preferen
 
 ##### 1. Use the pre-included binaries.
 
-These use _exactly_ the configuration defined in this  package (`eslint-config-godaddy-react`) **with auto-fix enabled automatically.**
+These use _exactly_ the configuration defined in this  package (`eslint-config-godaddy-react-flow`) **with auto-fix enabled automatically.**
 
 ``` js
 {
   "scripts": {
-    "lint": "eslint-godaddy-react files/ you/ want-to/ lint/"
+    "lint": "eslint-godaddy-react-flow files/ you/ want-to/ lint/"
   }
 }
 ```
@@ -35,7 +35,7 @@ These use _exactly_ the configuration defined in this  package (`eslint-config-g
 
 ``` js
 module.exports = {
-  extends: 'godaddy-react',
+  extends: 'godaddy-react-flow',
   rules: {
     //
     // Put any rules you wish to override here.
