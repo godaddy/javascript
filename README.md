@@ -35,6 +35,9 @@ npm i eslint-config-godaddy-react --save-dev
 
 # OR (legacy ES5 with React rules)
 npm i eslint-config-godaddy-es5 --save-dev
+
+# OR (ES6 with React and Flow rules)
+npm i eslint-config-godaddy-react-flow --save-dev
 ```
 
 ## Usage
