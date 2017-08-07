@@ -26,7 +26,7 @@
     "eslint-godaddy-react-flow": "bin/eslint-godaddy-react-flow"
   },
   "dependencies": {
-    "eslint-config-godaddy-react": "^1.1.1"
+    "eslint-config-godaddy-react": "^2.0.1"
   },
   "peerDependencies": {
     "eslint": "^4.3.0",
