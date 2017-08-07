@@ -26,8 +26,8 @@
     "eslint-godaddy-es5-react": "bin/eslint-godaddy-es5-react"
   },
   "dependencies": {
-    "eslint-config-godaddy": "^1.0.0",
-    "eslint-config-godaddy-react": "^1.0.0"
+    "eslint-config-godaddy": "^2.0.0",
+    "eslint-config-godaddy-react": "^2.0.0"
   },
   "peerDependencies": {
     "eslint": "^4.3.0",
