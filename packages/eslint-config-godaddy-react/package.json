@@ -24,11 +24,9 @@
   "bin": {
     "eslint-godaddy-react": "bin/eslint-godaddy-react"
   },
-  "dependencies": {
-    "eslint-config-godaddy": "^1.0.0"
-  },
   "peerDependencies": {
     "eslint": "^4.3.0",
+    "eslint-config-godaddy": ">=2.0.0",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^4.8.0",
     "eslint-plugin-react": "^7.1.0"
@@ -36,6 +34,7 @@
   "license": "MIT",
   "devDependencies": {
     "eslint": "^4.3.0",
+    "eslint-config-godaddy": ">=2.0.0",
     "eslint-find-rules": "^3.1.1",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^4.8.0",
