@@ -25,12 +25,10 @@
   "bin": {
     "eslint-godaddy-react-flow": "bin/eslint-godaddy-react-flow"
   },
-  "dependencies": {
-    "eslint-config-godaddy-react": "^1.1.1"
-  },
   "peerDependencies": {
-    "eslint": "^4.3.0",
     "babel-eslint": "^7.2.1",
+    "eslint": "^4.3.0",
+    "eslint-config-godaddy-react": ">=2.0.0",
     "eslint-plugin-babel": "^4.0.1",
     "eslint-plugin-flowtype": "^2.30.4",
     "eslint-plugin-json": "^1.2.0",
@@ -39,8 +37,9 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^4.3.0",
     "babel-eslint": "^7.2.1",
+    "eslint": "^4.3.0",
+    "eslint-config-godaddy": ">=2.0.0",
     "eslint-find-rules": "^3.1.1",
     "eslint-plugin-babel": "^4.0.1",
     "eslint-plugin-flowtype": "^2.30.4",
