@@ -20,6 +20,7 @@ module.exports = {
   rules: {
     'accessor-pairs': 2,
     'arrow-spacing': [2, { before: true, after: true }],
+    'arrow-parens': [2, 'always'],
     'block-scoped-var': 2,
     'callback-return': [2, ['cb', 'callback', 'next', 'done']],
     'complexity': [1, 11],
