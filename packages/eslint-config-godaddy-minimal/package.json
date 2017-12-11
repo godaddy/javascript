@@ -1,0 +1,51 @@
+{
+  "name": "eslint-config-godaddy-minimal",
+  "version": "2.1.0",
+  "description": "Minimal ESLint config for consistent style in ES6 projects using React and Flow at GoDaddy.",
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run --silent lint",
+    "test": "echo ok",
+    "unused": "eslint-find-rules --unused ./index.js || echo ''"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:godaddy/javascript.git"
+  },
+  "keywords": [
+    "godaddy",
+    "javascript",
+    "styleguide",
+    "style-guide",
+    "eslint",
+    "es6",
+    "react",
+    "flow"
+  ],
+  "bin": {
+    "eslint-godaddy-minimal": "bin/eslint-godaddy-minimal"
+  },
+  "dependencies": {
+    "eslint-config-godaddy-react-flow": "^2.0.0"
+  },
+  "peerDependencies": {
+    "eslint": "^4.3.0",
+    "babel-eslint": "^7.2.1",
+    "eslint-plugin-babel": "^4.0.1",
+    "eslint-plugin-flowtype": "^2.30.4",
+    "eslint-plugin-json": "^1.2.0",
+    "eslint-plugin-mocha": "^4.11.0",
+    "eslint-plugin-react": "^7.1.0"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^4.3.0",
+    "babel-eslint": "^7.2.1",
+    "eslint-find-rules": "^3.1.1",
+    "eslint-plugin-babel": "^4.0.1",
+    "eslint-plugin-flowtype": "^2.30.4",
+    "eslint-plugin-json": "^1.2.0",
+    "eslint-plugin-mocha": "^4.8.0",
+    "eslint-plugin-react": "^7.1.0"
+  }
+}
