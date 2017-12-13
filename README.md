@@ -127,7 +127,6 @@ No problem. Reach out to us by [opening an issue]
 
 ## Roadmap
 
-- Add more specific style guidance around React.
 - Consider other rules in an `eslint` only implementation:
   - `computed-property-spacing`
   - `generator-star-spacing`
@@ -136,7 +135,6 @@ No problem. Reach out to us by [opening an issue]
 - Continue to modularize the `eslint` rules.
 - Translate configuration files into more verbose written documentation.
 - Add support for IDE formats (IntelliJ, Webstorm, Atom, Eclipse, Sublime, etc...)
-- Never stop improving.
 
 [opening an issue]: https://github.com/godaddy/javascript/issues
 [`eslint-config-godaddy`]: /packages/eslint-config-godaddy
