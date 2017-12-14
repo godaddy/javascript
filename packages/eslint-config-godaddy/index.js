@@ -2,7 +2,6 @@ module.exports = {
   root: true,
   env: {
     node: true,
-    es6: true,
     browser: true,
     mocha: true,
     phantomjs: true
@@ -10,7 +9,7 @@ module.exports = {
   plugins: ['mocha', 'json'],
   extends: ['eslint:recommended'],
   parserOptions: {
-    ecmaVersion: 6,
+    ecmaVersion: 8,
     sourceType: 'module',
     ecmaFeatures: {
       globalReturn: true,
