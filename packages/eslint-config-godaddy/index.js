@@ -10,7 +10,7 @@ module.exports = {
   plugins: ['mocha', 'json'],
   extends: ['eslint:recommended'],
   parserOptions: {
-    ecmaVersion: 6,
+    ecmaVersion: 8,
     sourceType: 'module',
     ecmaFeatures: {
       globalReturn: true,
