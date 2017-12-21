@@ -1,6 +1,6 @@
 {
   "name": "godaddy-style",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "description": "The approach to JavaScript at GoDaddy. We think it's pretty decent.",
   "scripts": {
     "lint": "eslint -c .eslintrc.js packages/**/*.js",
