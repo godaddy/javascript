@@ -1,9 +1,10 @@
 sudo: false
 language: node_js
 node_js:
-  - "6.9"
+  - "8.9.3"
 
 script:
+  - npm run commitmsg:ci
   - npm test
 
 matrix:
