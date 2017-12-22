@@ -13,7 +13,9 @@
     "test:config": "cd packages/eslint-config-godaddy && npm test",
     "test:config:es5": "cd packages/eslint-config-godaddy-es5 && npm test",
     "test:config:react": "cd packages/eslint-config-godaddy-react && npm test",
-    "test:config:react-flow": "cd packages/eslint-config-godaddy-react-flow && npm test"
+    "test:config:react-flow": "cd packages/eslint-config-godaddy-react-flow && npm test",
+    "commitmsg": "commitlint -e $GIT_PARAMS",
+    "commitmsg:ci": "commitlint --from=HEAD~1"
   },
   "repository": {
     "type": "git",
@@ -44,14 +46,17 @@
     "godaddy-js-style-eslint": "./bin/eslint"
   },
   "devDependencies": {
+    "@commitlint/cli": "^5.2.5",
+    "@commitlint/config-angular": "^5.1.1",
     "babel-eslint": "^7.2.1",
     "eslint": "^4.3.0",
+    "eslint-find-rules": "^3.1.1",
     "eslint-plugin-babel": "^4.0.1",
     "eslint-plugin-flowtype": "^2.30.4",
-    "eslint-find-rules": "^3.1.1",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^4.11.0",
-    "eslint-plugin-react": "^6.9.0"
+    "eslint-plugin-react": "^6.9.0",
+    "husky": "^0.14.3"
   },
   "dependencies": {
     "npm-run-all": "^4.0.2"
