@@ -14,6 +14,7 @@ module.exports = {
     'react/display-name': 0,
     'react/jsx-pascal-case': [2, { allowAllCaps: true }],
     'react/jsx-uses-react': 1,
+    'react/jsx-equals-spacing': 2,
     'react/prefer-es6-class': 2,
     //
     // Whitespace rules for specific scenarios (e.g. JSX)
