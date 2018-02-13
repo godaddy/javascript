@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy-react-flow",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "ESLint config for consistent style in ES6 React projects using Flow at GoDaddy.",
   "scripts": {
     "lint": "eslint .",
