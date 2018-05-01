@@ -79,7 +79,7 @@ The `--fix` option in `eslint` is [**only** available as a CLI option](https://g
 }
 ```
 
-## Additional Suggestions for Best Practices
+## Additional Best Practices
 
 This section is a place for additional best practices that may be useful but are not strictly enforced by this styleguide. Have something to add here? Great! [Submit a PR](#how-do-i-contribute).
 
@@ -92,6 +92,7 @@ This section is a place for additional best practices that may be useful but are
 ### How do I override a specific rule ?
 
 ##### 1. Add a `.eslintrc` file at the root of your project:
+
 ``` js
 {
   "extends": "godaddy",
@@ -103,6 +104,7 @@ This section is a place for additional best practices that may be useful but are
 ```
 
 ##### 2. Add a param to specify the path of your own `.eslintrc` file in your `package.json`:
+
 ``` js
 {
   "scripts": {
