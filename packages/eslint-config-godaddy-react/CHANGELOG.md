@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 2.2.1
+
+- [#65] Reduce `react/no-deprecated` lint rule to a warning.
+
 ### 1.1.1
 
 - [#41] `AllowAllCaps` for `react/jsx-pascal-case` 
