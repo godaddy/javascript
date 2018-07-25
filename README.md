@@ -20,7 +20,7 @@ This styleguide is used by dozens of product teams at GoDaddy. Have a question o
 - [Additional Best Practices](#additional-best-practices)
 - [FAQ](#faq)
 - [Roadmap](#roadmap)
-- [Contributors](#contributors)
+- [Contributors](https://github.com/godaddy/javascript/graphs/contributors)
 
 ## Installation
 
