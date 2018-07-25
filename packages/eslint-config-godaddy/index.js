@@ -19,7 +19,7 @@ module.exports = {
   },
   rules: {
     'accessor-pairs': 2,
-    'arrow-spacing': [2, { before: true, after: true }],
+    'arrow-spacing': [2, {before: true, after: true}],
     'block-scoped-var': 2,
     'callback-return': [2, ['cb', 'callback', 'next', 'done']],
     'complexity': [1, 11],
@@ -28,10 +28,10 @@ module.exports = {
     'default-case': 2,
     'eqeqeq': 2,
     'func-style': [0, 'declaration'],
-    'generator-star-spacing': [2, { before: true, after: false }],
+    'generator-star-spacing': [2, {before: true, after: false}],
     'guard-for-in': 2,
     'handle-callback-err': [2, '^.*(e|E)rr(or)?$'],
-    'id-length': [2, { min: 1, max: 30 }],
+    'id-length': [2, {min: 1, max: 30}],
     'max-depth': [2, 5],
     'max-nested-callbacks': [2, 4],
     'max-params': [2, 4],
@@ -41,7 +41,7 @@ module.exports = {
     'new-parens': 2,
     'no-alert': 2,
     'no-array-constructor': 2,
-    'no-bitwise': [2, { allow: ['~'] }],
+    'no-bitwise': [2, {allow: ['~']}],
     'no-caller': 2,
     'no-catch-shadow': 2,
     'no-dupe-class-members': 2,
@@ -112,7 +112,7 @@ module.exports = {
     'semi': 1,
     'strict': [2, 'global'],
     'use-isnan': 2,
-    'valid-jsdoc': [2, { prefer: { return: 'returns' }, requireReturn: false }],
+    'valid-jsdoc': [2, {prefer: {return: 'returns'}, requireReturn: false}],
     //
     // Whitespace or other stylistic rules. No --fix option exists in eslint,
     // but previously existed in jscs
@@ -126,8 +126,8 @@ module.exports = {
     // otherwise specified.
     //
     'array-bracket-spacing': 2,
-    'brace-style': [2, '1tbs', { allowSingleLine: true }],
-    'camelcase': [2, { properties: 'never' }],
+    'brace-style': [2, '1tbs', {allowSingleLine: true}],
+    'camelcase': [2, {properties: 'never'}],
     'comma-spacing': 2,
     'comma-style': 2,
     'comma-dangle': 2,
@@ -136,13 +136,11 @@ module.exports = {
     'eol-last': 2,
     'key-spacing': 2,
     'func-call-spacing': [2, 'never'],
-    'indent': [2, 2, { SwitchCase: 1 }],
+    'indent': [2, 2, {SwitchCase: 1}],
     'keyword-spacing': 2,
     'linebreak-style': 2,
-    'object-curly-spacing': [2, 'always', {
-      objectsInObjects: false
-    }],
-    'quotes': [2, 'single', { avoidEscape: true, allowTemplateLiterals: true }],
+    'object-curly-spacing': [2, 'never'],
+    'quotes': [2, 'single', {avoidEscape: true, allowTemplateLiterals: true}],
     'quote-props': [2, 'consistent-as-needed'],
     'space-before-blocks': 2,
     'space-before-function-paren': [2, {
@@ -150,7 +148,7 @@ module.exports = {
       named: 'never',
       asyncArrow: 'ignore'
     }],
-    'space-unary-ops': [2, { words: true, nonwords: false }],
+    'space-unary-ops': [2, {words: true, nonwords: false}],
     'space-infix-ops': 2,
     'spaced-comment': 2,
     'space-in-parens': 2,

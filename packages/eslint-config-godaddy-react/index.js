@@ -12,7 +12,7 @@ module.exports = {
   },
   rules: {
     'react/display-name': 0,
-    'react/jsx-pascal-case': [2, { allowAllCaps: true }],
+    'react/jsx-pascal-case': [2, {allowAllCaps: true}],
     'react/jsx-uses-react': 1,
     'react/jsx-equals-spacing': 2,
     'react/prefer-es6-class': 2,
@@ -20,9 +20,7 @@ module.exports = {
     //
     // Whitespace rules for specific scenarios (e.g. JSX)
     //
-    'react/jsx-curly-spacing': [2, 'always', {
-      spacing: { objectLiterals: 'never' }
-    }],
+    'react/jsx-curly-spacing': [2, 'never'],
     'jsx-quotes': [2, 'prefer-single']
   }
 };
