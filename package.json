@@ -4,14 +4,16 @@
   "description": "The approach to JavaScript at GoDaddy. We think it's pretty decent.",
   "scripts": {
     "lint": "eslint -c .eslintrc.js packages/**/*.js",
-    "postinstall": "run-p install:config install:config:es5 install:config:react install:config:react-flow",
+    "postinstall": "run-p install:config install:config:es5 install:config:react install:config:react-flow install:config:minimal",
     "install:config": "cd packages/eslint-config-godaddy && npm install",
     "install:config:es5": "cd packages/eslint-config-godaddy-es5 && npm install",
+    "install:config:minimal": "cd packages/eslint-config-godaddy-minimal && npm install",
     "install:config:react": "cd packages/eslint-config-godaddy-react && npm install",
     "install:config:react-flow": "cd packages/eslint-config-godaddy-react-flow && npm install",
-    "test": "run-p lint test:config test:config:es5 test:config:react test:config:react-flow",
+    "test": "run-p lint test:config test:config:es5 test:config:react test:config:react-flow test:config:minimal",
     "test:config": "cd packages/eslint-config-godaddy && npm test",
     "test:config:es5": "cd packages/eslint-config-godaddy-es5 && npm test",
+    "test:config:minimal": "cd packages/eslint-config-godaddy-minimal && npm test",
     "test:config:react": "cd packages/eslint-config-godaddy-react && npm test",
     "test:config:react-flow": "cd packages/eslint-config-godaddy-react-flow && npm test"
   },
