@@ -36,8 +36,8 @@ module.exports = function (filename) {
       process.argv.splice(2, 0, '-c', require.resolve(filename));
     }
 
-    which('eslint', function (err, resolved) {
-      if (err) { throw err; }
+    which('eslint', function (resolveErr, resolved) {
+      if (resolveErr) { throw resolveErr; }
       require(resolved);
     });
   });
