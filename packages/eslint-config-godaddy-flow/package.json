@@ -1,7 +1,7 @@
 {
-  "name": "eslint-config-godaddy-react-flow",
-  "version": "2.1.0",
-  "description": "ESLint config for consistent style in ES6 React projects using Flow at GoDaddy.",
+  "name": "eslint-config-godaddy-flow",
+  "version": "1.0.0",
+  "description": "ESLint config for consistent style in node projects using Flow at GoDaddy.",
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run --silent lint",
@@ -19,14 +19,13 @@
     "style-guide",
     "eslint",
     "es6",
-    "react",
     "flow"
   ],
   "bin": {
-    "eslint-godaddy-react-flow": "bin/eslint-godaddy-react-flow"
+    "eslint-godaddy-flow": "bin/eslint-godaddy-flow"
   },
   "dependencies": {
-    "eslint-config-godaddy-react": "^2.0.0"
+    "eslint-config-godaddy": "^2.1.0"
   },
   "peerDependencies": {
     "eslint": "^4.3.0",
@@ -34,8 +33,7 @@
     "eslint-plugin-babel": "^4.0.1",
     "eslint-plugin-flowtype": "^2.30.4",
     "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^4.11.0",
-    "eslint-plugin-react": "^7.1.0"
+    "eslint-plugin-mocha": "^4.11.0"
   },
   "license": "MIT",
   "devDependencies": {
@@ -45,7 +43,6 @@
     "eslint-plugin-babel": "^4.0.1",
     "eslint-plugin-flowtype": "^2.30.4",
     "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^4.8.0",
-    "eslint-plugin-react": "^7.1.0"
+    "eslint-plugin-mocha": "^4.8.0"
   }
 }
