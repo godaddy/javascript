@@ -44,14 +44,14 @@
     "godaddy-js-style-eslint": "./bin/eslint"
   },
   "devDependencies": {
-    "babel-eslint": "^8.2.1",
-    "eslint": "^4.3.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.8.0",
+    "eslint-find-rules": "^3.3.1",
     "eslint-plugin-babel": "^4.0.1",
-    "eslint-plugin-flowtype": "^2.30.4",
-    "eslint-find-rules": "^3.1.1",
-    "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^4.11.0",
-    "eslint-plugin-react": "^6.9.0"
+    "eslint-plugin-flowtype": "^3.1.1",
+    "eslint-plugin-json": "^1.2.1",
+    "eslint-plugin-mocha": "^5.2.0",
+    "eslint-plugin-react": "^7.11.1"
   },
   "dependencies": {
     "npm-run-all": "^4.0.2"
