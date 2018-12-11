@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy-react",
-  "version": "2.2.2",
+  "version": "3.0.0",
   "description": "ESLint config for consistent style in ES6 React projects at GoDaddy.",
   "scripts": {
     "lint": "eslint .",
@@ -25,7 +25,7 @@
     "eslint-godaddy-react": "bin/eslint-godaddy-react"
   },
   "dependencies": {
-    "eslint-config-godaddy": "^2.0.0"
+    "eslint-config-godaddy": "^3.0.0"
   },
   "peerDependencies": {
     "babel-eslint": ">=7.2.1 <11.0.0",

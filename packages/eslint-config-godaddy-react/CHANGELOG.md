@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 3.0.0
+
+- Bump to `eslint@5`.
+
 ### 2.2.1
 
 - [#65] Reduce `react/no-deprecated` lint rule to a warning.
