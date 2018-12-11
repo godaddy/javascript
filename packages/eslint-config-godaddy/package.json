@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "description": "Base ESLint config for consistent style in ES6 projects at GoDaddy.",
   "scripts": {
     "lint": "eslint .",
@@ -24,16 +24,16 @@
     "eslint-godaddy": "bin/eslint-godaddy"
   },
   "peerDependencies": {
-    "eslint": "^4.3.0",
+    "eslint": "^5.8.0",
     "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^4.12.1"
+    "eslint-plugin-mocha": "^5.2.0"
   },
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^4.19.1",
+    "eslint": "^5.8.0",
     "eslint-find-rules": "^3.3.1",
     "eslint-plugin-json": "^1.2.1",
-    "eslint-plugin-mocha": "^4.12.1"
+    "eslint-plugin-mocha": "^5.2.0"
   },
   "dependencies": {
     "which": "^1.2.12"
