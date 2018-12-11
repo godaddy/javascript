@@ -29,23 +29,23 @@
     "eslint-config-godaddy-react": "^2.2.1"
   },
   "peerDependencies": {
-    "eslint": "^4.19.1",
+    "eslint": "^5.8.0",
     "babel-eslint": ">=7.2.1 <11.0.0",
-    "eslint-plugin-babel": "^4.0.1",
-    "eslint-plugin-flowtype": "^2.30.4",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-flowtype": "^3.2.0",
     "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^4.12.1",
-    "eslint-plugin-react": "^7.1.0"
+    "eslint-plugin-mocha": "^5.2.0",
+    "eslint-plugin-react": "^7.11.0"
   },
   "license": "MIT",
   "devDependencies": {
     "babel-eslint": "^10.0.1",
-    "eslint": "^4.19.1",
+    "eslint": "^5.8.0",
     "eslint-find-rules": "^3.3.1",
-    "eslint-plugin-babel": "^4.0.1",
-    "eslint-plugin-flowtype": "^2.50.3",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-flowtype": "^3.2.0",
     "eslint-plugin-json": "^1.2.1",
-    "eslint-plugin-mocha": "^4.12.1",
-    "eslint-plugin-react": "^7.1.0"
+    "eslint-plugin-mocha": "^5.2.0",
+    "eslint-plugin-react": "^7.11.0"
   }
 }
