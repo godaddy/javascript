@@ -2,6 +2,7 @@ module.exports = {
   extends: [
     require('./extends')('eslint-config-godaddy'),
     'plugin:eslint-plugin-react/recommended'
+    'eslint-plugin-jsx-a11y'
   ],
   parser: 'babel-eslint',
   plugins: ['react'],
