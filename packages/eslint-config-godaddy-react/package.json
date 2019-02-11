@@ -19,7 +19,8 @@
     "style-guide",
     "eslint",
     "es6",
-    "react"
+    "react",
+    "a11y"
   ],
   "bin": {
     "eslint-godaddy-react": "bin/eslint-godaddy-react"
