@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 4.0.0
+
+- Restore `a11y` as peer dependency
+
 ### 3.1.1
 
 - Remove the peer dependency while this is still not a major version

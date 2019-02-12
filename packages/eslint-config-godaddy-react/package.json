@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy-react",
-  "version": "3.1.1",
+  "version": "4.0.0",
   "description": "ESLint config for consistent style in ES6 React projects at GoDaddy.",
   "scripts": {
     "lint": "eslint .",
@@ -41,6 +41,7 @@
     "eslint": "^5.8.0",
     "eslint-find-rules": "^3.3.1",
     "eslint-plugin-json": "^1.2.1",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
     "eslint-plugin-mocha": "^5.2.0",
     "eslint-plugin-react": "^7.11.0"
   }
