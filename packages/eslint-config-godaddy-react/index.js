@@ -1,10 +1,11 @@
 module.exports = {
   extends: [
     require('./extends')('eslint-config-godaddy'),
-    'plugin:eslint-plugin-react/recommended'
+    'plugin:eslint-plugin-react/recommended',
+    'plugin:jsx-a11y/recommended'
   ],
   parser: 'babel-eslint',
-  plugins: ['react'],
+  plugins: ['react', 'jsx-a11y'],
   parserOptions: {
     ecmaFeatures: {
       jsx: true,

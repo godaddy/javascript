@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 3.1.0
+
+- [#76] Add [`eslint-plugin-jsx-a11y`](https://www.npmjs.com/package/eslint-plugin-jsx-a11y) by default
+
 ### 3.0.0
 
 - Bump to `eslint@5`.
@@ -10,7 +14,7 @@
 
 ### 1.1.1
 
-- [#41] `AllowAllCaps` for `react/jsx-pascal-case` 
+- [#41] `AllowAllCaps` for `react/jsx-pascal-case`
 
 ### 1.1.0
 
