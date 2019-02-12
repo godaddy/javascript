@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 3.1.1
+
+- Remove the peer dependency while this is still not a major version
+
 ### 3.1.0
 
 - [#76] Add [`eslint-plugin-jsx-a11y`](https://www.npmjs.com/package/eslint-plugin-jsx-a11y) by default
