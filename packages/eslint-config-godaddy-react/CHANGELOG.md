@@ -1,6 +1,6 @@
 # CHANGELOG
 
-### 4.0.0
+### 4.0.1
 
 - Restore `a11y` as peer dependency
 
