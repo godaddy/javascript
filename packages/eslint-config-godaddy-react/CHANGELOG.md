@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 4.1.0
+
+- Set react version to 'detect'
+
 ### 4.0.1
 
 - Restore `a11y` as peer dependency
