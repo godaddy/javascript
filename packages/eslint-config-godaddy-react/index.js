@@ -26,5 +26,10 @@ module.exports = {
       spacing: { objectLiterals: 'never' }
     }],
     'jsx-quotes': [2, 'prefer-single']
+  },
+  settings: {
+    react: {
+      version: 'detect'
+    }
   }
 };
