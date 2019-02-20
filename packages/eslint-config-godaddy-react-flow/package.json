@@ -26,7 +26,7 @@
     "eslint-godaddy-react-flow": "bin/eslint-godaddy-react-flow"
   },
   "dependencies": {
-    "eslint-config-godaddy-react": "^3.0.0"
+    "eslint-config-godaddy-react": "^4.1.0"
   },
   "peerDependencies": {
     "eslint": "^5.8.0",
@@ -35,7 +35,8 @@
     "eslint-plugin-flowtype": "^3.2.0",
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^5.2.0",
-    "eslint-plugin-react": "^7.11.0"
+    "eslint-plugin-react": "^7.11.0",
+    "eslint-plugin-jsx-a11y": "^6.2.1"
   },
   "license": "MIT",
   "devDependencies": {
