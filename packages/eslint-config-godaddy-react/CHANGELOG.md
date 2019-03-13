@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- [#79] Reintroduced `react/no-deprecated` lint rule.
+
 ### 4.1.0
 
 - Set react version to 'detect'
