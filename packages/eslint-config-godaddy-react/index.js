@@ -18,7 +18,6 @@ module.exports = {
     'react/jsx-uses-react': 1,
     'react/jsx-equals-spacing': 2,
     'react/prefer-es6-class': 2,
-    'react/no-deprecated': 1,
     //
     // Whitespace rules for specific scenarios (e.g. JSX)
     //
