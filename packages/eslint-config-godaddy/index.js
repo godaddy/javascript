@@ -96,7 +96,7 @@ module.exports = {
     'no-shadow': 1,
     'no-sparse-arrays': 2,
     'no-sync': 2,
-    'no-throw-literal': 1,
+    'no-throw-literal': 2,
     'no-undef-init': 2,
     'no-undefined': 2,
     'no-underscore-dangle': 0,
@@ -112,6 +112,7 @@ module.exports = {
     'strict': [2, 'global'],
     'use-isnan': 2,
     'valid-jsdoc': [2, { prefer: { return: 'returns' }, requireReturn: false }],
+    'prefer-promise-reject-errors': 2,
     //
     // Whitespace or other stylistic rules. No --fix option exists in eslint,
     // but previously existed in jscs
