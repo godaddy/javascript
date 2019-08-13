@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy-flow",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "ESLint config for consistent style in node projects using Flow at GoDaddy.",
   "scripts": {
     "lint": "eslint .",
@@ -25,23 +25,23 @@
     "eslint-godaddy-flow": "bin/eslint-godaddy-flow"
   },
   "dependencies": {
-    "eslint-config-godaddy": "^3.0.0"
+    "eslint-config-godaddy": "^4.0.0"
   },
   "peerDependencies": {
     "babel-eslint": ">=7.2.1 <11.0.0",
-    "eslint": "^5.8.0",
-    "eslint-plugin-babel": "^4.0.1",
-    "eslint-plugin-flowtype": "^2.30.4",
-    "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^5.2.0"
+    "eslint": "^6.1.0",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-flowtype": "^4.2.0",
+    "eslint-plugin-json": "^1.4.0",
+    "eslint-plugin-mocha": "^5.3.0"
   },
   "license": "MIT",
   "devDependencies": {
     "babel-eslint": "^10.0.2",
-    "eslint": "^6.0.1",
-    "eslint-find-rules": "^3.3.1",
+    "eslint": "^6.1.0",
+    "eslint-find-rules": "^3.4.0",
     "eslint-plugin-babel": "^5.3.0",
-    "eslint-plugin-flowtype": "^3.11.1",
+    "eslint-plugin-flowtype": "^4.2.0",
     "eslint-plugin-json": "^1.4.0",
     "eslint-plugin-mocha": "^5.3.0"
   }
