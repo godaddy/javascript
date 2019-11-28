@@ -28,12 +28,12 @@
     "eslint": ">=6.0.0"
   },
   "dependencies": {
-    "eslint-plugin-json": "*",
-    "eslint-plugin-mocha": "*",
+    "eslint-plugin-json": "^2.0.1",
+    "eslint-plugin-mocha": "^6.2.2",
     "which": "^1.2.12"
   },
   "devDependencies": {
-    "eslint": "^6.1.0",
+    "eslint": "^6.7.1",
     "eslint-find-rules": "^3.4.0"
   }
 }

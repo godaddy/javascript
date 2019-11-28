@@ -30,15 +30,14 @@
     "eslint": ">=6.0.0"
   },
   "dependencies": {
-    "babel-eslint": "*",
-    "eslint-config-godaddy-react": "*",
-    "eslint-plugin-react": "*",
-    "eslint-config-godaddy": "*",
-    "eslint-plugin-babel": "*",
-    "eslint-plugin-flowtype": "*"
+    "babel-eslint": "^10.0.3",
+    "eslint-config-godaddy-react": "^6.0.0",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-flowtype": "^4.5.2",
+    "eslint-plugin-react": "^7.16.0"
   },
   "devDependencies": {
-    "eslint": "^6.7.0",
-    "eslint-find-rules": "^3.3.1"
+    "eslint": "^6.7.1",
+    "eslint-find-rules": "^3.4.0"
   }
 }
