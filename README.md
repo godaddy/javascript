@@ -1,10 +1,13 @@
 # godaddy-style
 
-Official GoDaddy JavaScript styleguide. It includes `eslint` packages for three use-cases and can be used as a standard in any new project.
+Official GoDaddy JavaScript styleguide. It includes `eslint` packages for various use-cases and can be used as a standard in any new project.
 
 - [`eslint-config-godaddy`]: Base configuration for _non-React_, ES6 JavaScript applications
 - [`eslint-config-godaddy-react`]: Configuration for ES6 React JavaScript applications
 - [`eslint-config-godaddy-es5`]: Configuration for React _and_ non-React ES5 JavaScript applications
+- [`eslint-config-godaddy-typescript`]: Configuration for ES6 TypeScript applications
+- [`eslint-config-godaddy-react-typescript`]: Configuration for ES6 React JavaScript applications
+- [`eslint-config-godaddy-flow`]: Configuration for ES6 React JavaScript applications using Flow
 - [`eslint-config-godaddy-react-flow`]: Configuration for ES6 React JavaScript applications using Flow
 
 There are many useful features:
@@ -35,6 +38,15 @@ npm i eslint-config-godaddy-react --save-dev
 
 # OR (legacy ES5 with React rules)
 npm i eslint-config-godaddy-es5 --save-dev
+
+# OR (ES6 with TypeScript rules)
+npm i eslint-config-godaddy-typescript --save-dev
+
+# OR (ES6 with React and TypeScript rules)
+npm i eslint-config-godaddy-react-typescript --save-dev
+
+# OR (ES6 with Flow rules)
+npm i eslint-config-godaddy-flow --save-dev
 
 # OR (ES6 with React and Flow rules)
 npm i eslint-config-godaddy-react-flow --save-dev
@@ -142,4 +154,7 @@ No problem. Reach out to us by [opening an issue]
 [`eslint-config-godaddy`]: /packages/eslint-config-godaddy
 [`eslint-config-godaddy-react`]: /packages/eslint-config-godaddy-react
 [`eslint-config-godaddy-es5`]: /packages/eslint-config-godaddy-es5
+[`eslint-config-godaddy-typescript`]: /packages/eslint-config-godaddy-typescript
+[`eslint-config-godaddy-react-typescript`]: /packages/eslint-config-godaddy-react-typescript
+[`eslint-config-godaddy-flow`]: /packages/eslint-config-godaddy-react-flow
 [`eslint-config-godaddy-react-flow`]: /packages/eslint-config-godaddy-react-flow
