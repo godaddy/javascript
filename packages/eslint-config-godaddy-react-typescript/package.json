@@ -32,12 +32,12 @@
     "eslint-config-godaddy-react": "^5.0.0"
   },
   "peerDependencies": {
-    "eslint": "^5.8.0",
+    "eslint": "^6.1.0",
     "typescript": ">=3"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.2",
-    "eslint": "^5.8.0",
+    "eslint": "^6.1.0",
     "typescript": ">=3"
   }
 }
