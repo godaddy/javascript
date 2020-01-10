@@ -6,7 +6,7 @@ module.exports = {
   plugins: ['@typescript-eslint'],
   overrides: [
     {
-      files: ['*.js', '*.ts', '*.tsx'],
+      files: ['*.js', '*.json', '*.ts'],
       rules: {
         // note you must disable the base rule as it can report incorrect errors (in typescript)
         // (because of imported types being incorrectly reported as unused)
@@ -21,12 +21,6 @@ module.exports = {
             ignoreRestSiblings: false
           }
         ]
-      }
-    },
-    {
-      files: ['*.ts', '*.tsx'],
-      rules: {
-        'react/prop-types': 'off'
       }
     }
   ]
