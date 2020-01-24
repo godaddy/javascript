@@ -25,8 +25,8 @@ module.exports = function (filename) {
   // Only force our config file if there is one not in the current
   // directory AND not specified by the command line.
   //
-  fs.readdir(cwd, function (err, files) {
-    if (err) { throw err; }
+  fs.readdir(cwd, function (readErr, files) {
+    if (readErr) { throw readErr; }
 
     has.config = has.config || files.some(function (file) {
       return isEslint.test(file);
