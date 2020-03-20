@@ -30,7 +30,7 @@
     "eslint": ">=6.0.0"
   },
   "dependencies": {
-    "babel-eslint": "^10.0.3",
+    "babel-eslint": "^10.1.0",
     "eslint-config-godaddy": "^4.0.0",
     "eslint-plugin-flowtype": "^4.5.2",
     "eslint-plugin-jsx-a11y": "^6.2.3",
