@@ -7,7 +7,9 @@
     "lint": "eslint .",
     "pretest": "npm run --silent lint",
     "test": "echo ok",
-    "unused": "eslint-find-rules --unused ./index.js || echo ''"
+    "unused": "eslint-find-rules --unused ./index.js || echo ''",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -30,10 +32,12 @@
   "dependencies": {
     "eslint-plugin-json": "^2.0.1",
     "eslint-plugin-mocha": "^6.2.2",
-    "which": "^1.2.12"
+    "which": "^1.2.12",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "eslint": "^6.7.1",
     "eslint-find-rules": "^3.4.0"
-  }
+  },
+  "snyk": true
 }
