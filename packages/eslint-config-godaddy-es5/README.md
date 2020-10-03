@@ -35,7 +35,7 @@ These use _exactly_ the configuration defined in this  package (`eslint-config-g
 ##### 2. Define your local `.eslintrc` and run `eslint` yourself:
 
 ``` js
-module.exports = {
+{
   // Or for ES5 + React:
   // extends: 'godaddy-es5-react',
   extends: 'godaddy-es5',
