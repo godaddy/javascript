@@ -31,10 +31,10 @@ These use _exactly_ the configuration defined in this  package (`eslint-config-g
 }
 ```
 
-##### 2. Define your local `.eslintrc` and run `eslint` yourself:
+##### 2. Define your local `.eslintrc.js` and run `eslint` yourself:
 
 ``` js
-{
+module.exports = {
   extends: 'godaddy-typescript',
   rules: {
     //
