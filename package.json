@@ -19,14 +19,11 @@
     "test:config:react": "cd packages/eslint-config-godaddy-react && npm test",
     "test:config:react-flow": "cd packages/eslint-config-godaddy-react-flow && npm test",
     "test:config:typescript": "cd packages/eslint-config-godaddy-typescript && npm test",
-    "test:config:react-typescript": "cd packages/eslint-config-godaddy-react-typescript && npm test",
-    "prepush": "npm test"
+    "test:config:react-typescript": "cd packages/eslint-config-godaddy-react-typescript && npm test"
   },
-  "prepush": {
-    "tasks": [
-      "npm run prepush"
-    ]
-  },
+  "pre-commit": [
+    "test"
+  ],
   "repository": {
     "type": "git",
     "url": "git@github.com:godaddy/javascript.git"
@@ -61,14 +58,14 @@
     "@typescript-eslint/parser": "^2.3.1",
     "babel-eslint": "^10.0.2",
     "eslint": "^6.0.1",
-    "eslint-find-rules": "^3.3.1",
+    "eslint-find-rules": "^3.6.1",
     "eslint-plugin-babel": "^5.3.0",
     "eslint-plugin-flowtype": "^3.11.1",
     "eslint-plugin-json": "^1.4.0",
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-mocha": "^5.3.0",
     "eslint-plugin-react": "^7.14.2",
-    "prepush": "^3.1.11",
+    "pre-commit": "^1.2.2",
     "react": "^16.8.6",
     "typescript": "^3.0"
   },
