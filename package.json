@@ -3,7 +3,6 @@
   "version": "6.0.0",
   "description": "The approach to JavaScript at GoDaddy. We think it's pretty decent.",
   "scripts": {
-    "prepublishOnly": "npm test",
     "lint": "eslint -c .eslintrc.js packages/**/*.js",
     "postinstall": "run-p install:config install:config:es5 install:config:flow install:config:react install:config:react-flow install:config:typescript install:config:react-typescript",
     "install:config": "cd packages/eslint-config-godaddy && npm install",
