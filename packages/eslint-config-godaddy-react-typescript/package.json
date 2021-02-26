@@ -29,7 +29,8 @@
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^2.3.1",
     "@typescript-eslint/parser": "^2.3.1",
-    "eslint-config-godaddy-react": "^5.0.0"
+    "eslint-config-godaddy-react": "^5.0.0",
+    "eslint-plugin-react-hooks": "^4.2.0"
   },
   "peerDependencies": {
     "eslint": "^6.1.0",
