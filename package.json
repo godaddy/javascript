@@ -6,7 +6,8 @@
     "lint": "lerna run lint --stream",
     "bootstrap": "lerna bootstrap --hoist --ignore-scripts",
     "postinstall": "npm run bootstrap",
-    "test": "lerna run test --stream"
+    "test": "lerna run test --stream",
+    "publish": "lerna publish"
   },
   "repository": {
     "type": "git",
