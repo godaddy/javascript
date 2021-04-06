@@ -3,23 +3,11 @@
   "version": "6.0.0",
   "description": "The approach to JavaScript at GoDaddy. We think it's pretty decent.",
   "scripts": {
-    "lint": "eslint -c .eslintrc.js packages/**/*.js",
-    "postinstall": "run-p install:config install:config:es5 install:config:flow install:config:react install:config:react-flow install:config:typescript install:config:react-typescript",
-    "install:config": "cd packages/eslint-config-godaddy && npm install",
-    "install:config:es5": "cd packages/eslint-config-godaddy-es5 && npm install",
-    "install:config:flow": "cd packages/eslint-config-godaddy-flow && npm install",
-    "install:config:react": "cd packages/eslint-config-godaddy-react && npm install",
-    "install:config:react-flow": "cd packages/eslint-config-godaddy-react-flow && npm install",
-    "install:config:typescript": "cd packages/eslint-config-godaddy-typescript && npm install",
-    "install:config:react-typescript": "cd packages/eslint-config-godaddy-react-typescript && npm install",
-    "test": "run-p lint test:config test:config:es5 test:config:flow test:config:react test:config:react-flow test:config:typescript test:config:react-typescript",
-    "test:config": "cd packages/eslint-config-godaddy && npm test",
-    "test:config:es5": "cd packages/eslint-config-godaddy-es5 && npm test",
-    "test:config:flow": "cd packages/eslint-config-godaddy-flow && npm test",
-    "test:config:react": "cd packages/eslint-config-godaddy-react && npm test",
-    "test:config:react-flow": "cd packages/eslint-config-godaddy-react-flow && npm test",
-    "test:config:typescript": "cd packages/eslint-config-godaddy-typescript && npm test",
-    "test:config:react-typescript": "cd packages/eslint-config-godaddy-react-typescript && npm test"
+    "lint": "lerna run lint --stream",
+    "bootstrap": "lerna bootstrap --hoist --ignore-scripts",
+    "postinstall": "npm run bootstrap",
+    "test": "lerna run test --stream",
+    "publish": "lerna publish"
   },
   "repository": {
     "type": "git",
@@ -54,7 +42,7 @@
     "@typescript-eslint/eslint-plugin": "^2.3.1",
     "@typescript-eslint/parser": "^2.3.1",
     "babel-eslint": "^10.0.2",
-    "eslint": "^6.0.1",
+    "eslint": "^6.7.1",
     "eslint-find-rules": "^3.6.1",
     "eslint-plugin-babel": "^5.3.0",
     "eslint-plugin-flowtype": "^3.11.1",
@@ -66,6 +54,6 @@
     "typescript": "^3.0"
   },
   "dependencies": {
-    "npm-run-all": "^4.0.2"
+    "lerna": "^4.0.0"
   }
 }

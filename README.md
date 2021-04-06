@@ -4,7 +4,6 @@ Official GoDaddy JavaScript styleguide. It includes `eslint` packages for variou
 
 - [`eslint-config-godaddy`]: Base configuration for _non-React_, ES6 JavaScript applications
 - [`eslint-config-godaddy-react`]: Configuration for ES6 React JavaScript applications
-- [`eslint-config-godaddy-es5`]: Configuration for React _and_ non-React ES5 JavaScript applications
 - [`eslint-config-godaddy-typescript`]: Configuration for ES6 TypeScript applications
 - [`eslint-config-godaddy-react-typescript`]: Configuration for ES6 React JavaScript applications
 - [`eslint-config-godaddy-flow`]: Configuration for ES6 React JavaScript applications using Flow
@@ -56,7 +55,7 @@ npm i eslint-config-godaddy-react-flow --save-dev
 
 There are two ways to use this styleguide depending on your own tooling preference: directly using pre-included binaries or running `eslint` yourself with a custom `.eslintrc` config.
 
-##### 1. Use the pre-included binaries.
+### 1. Use the pre-included binaries
 
 These use _exactly_ the configuration defined in the individual `eslint-config-godaddy*` package **with auto-fix enabled automatically.**
 
@@ -68,7 +67,7 @@ These use _exactly_ the configuration defined in the individual `eslint-config-g
 }
 ```
 
-##### 2. Define your local `.eslintrc.js` and run `eslint` yourself:
+### 2. Define your local `.eslintrc.js` and run `eslint` yourself
 
 ``` js
 module.exports = {
@@ -101,9 +100,9 @@ This section is a place for additional best practices that may be useful but are
 
 ## FAQ
 
-### How do I override a specific rule ?
+## How do I override a specific rule ?
 
-##### 1. Add a `.eslintrc` file at the root of your project:
+### 1. Add a `.eslintrc` file at the root of your project:
 
 ``` js
 {
@@ -115,7 +114,7 @@ This section is a place for additional best practices that may be useful but are
 }
 ```
 
-##### 2. Add a param to specify the path of your own `.eslintrc` file in your `package.json`:
+### 2. Add a param to specify the path of your own `.eslintrc` file in your `package.json`
 
 ``` js
 {
@@ -125,17 +124,35 @@ This section is a place for additional best practices that may be useful but are
 }
 ```
 
-### How do I contribute?
+## How do I contribute?
 
 Fork this repository and submit a pull request.
 
-Proposed modifications to the style guide should modify the files in `/dotfiles` before running `npm run build` when submitting a pull request. This repository utilizes the [fashion-show](https://github.com/indexzero/fashion-show) module to generate the `/dist` files to be checked in.
+### Local setup
+
+For a first time setup make sure to run from the root of the monorepo
+
+```bash
+npm install
+```
+
+From there the bootstrap script will setup the packages and hoist the node_modules
+
+### Publishing
+
+If you are lucky enough to get to publish a new version of a package you are in luck. This monorepo is setup to independently publish packages based on changes commited. Just make sure to run:
+
+```bash
+npm run publish
+```
+
+This runs `lerna publish` under the hood and will run you through a cli driven experience to help you determine the next version. To learn more about it see [lerna publish]
 
 ### I disagree with a specific rule
 
 Great. We'd love to talk about it. Fork this repository and submit a pull-request.
 
-### Help! It's not working for me!
+### Help! It's not working for me
 
 No problem. Reach out to us by [opening an issue]
 
@@ -153,8 +170,8 @@ No problem. Reach out to us by [opening an issue]
 [opening an issue]: https://github.com/godaddy/javascript/issues
 [`eslint-config-godaddy`]: /packages/eslint-config-godaddy
 [`eslint-config-godaddy-react`]: /packages/eslint-config-godaddy-react
-[`eslint-config-godaddy-es5`]: /packages/eslint-config-godaddy-es5
 [`eslint-config-godaddy-typescript`]: /packages/eslint-config-godaddy-typescript
 [`eslint-config-godaddy-react-typescript`]: /packages/eslint-config-godaddy-react-typescript
 [`eslint-config-godaddy-flow`]: /packages/eslint-config-godaddy-react-flow
 [`eslint-config-godaddy-react-flow`]: /packages/eslint-config-godaddy-react-flow
+[lerna publish]: https://github.com/lerna/lerna/tree/main/commands/publish#readme
