@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy-react-typescript",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "ESLint config for consistent style in ES6 React projects using TypeScript at GoDaddy.",
   "scripts": {
     "lint": "eslint .",
