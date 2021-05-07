@@ -32,14 +32,9 @@
   "dependencies": {
     "babel-eslint": "^10.0.3",
     "eslint-config-godaddy": "^5.0.0",
-    "eslint-plugin-flowtype": "^4.5.2",
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-react": "^7.16.0",
     "eslint-plugin-react-hooks": "^4.2.0"
   },
-  "devDependencies": {
-    "eslint": "^6.7.1",
-    "eslint-find-rules": "^3.4.0",
-    "react": "^16.12.0"
-  }
+  "devDependencies": {}
 }

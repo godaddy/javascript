@@ -37,8 +37,5 @@
     "eslint-plugin-react": "^7.16.0",
     "eslint-plugin-react-hooks": "^4.2.0"
   },
-  "devDependencies": {
-    "eslint": "^6.7.1",
-    "eslint-find-rules": "^3.4.0"
-  }
+  "devDependencies": {}
 }

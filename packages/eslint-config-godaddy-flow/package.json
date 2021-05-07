@@ -34,8 +34,5 @@
     "eslint-plugin-babel": "^5.3.0",
     "eslint-plugin-flowtype": "^4.5.2"
   },
-  "devDependencies": {
-    "eslint": "^6.7.1",
-    "eslint-find-rules": "^3.4.0"
-  }
+  "devDependencies": {}
 }
