@@ -25,7 +25,7 @@ module.exports = {
     'consistent-return': 0,
     'constructor-super': 2,
     'default-case': 2,
-    'eqeqeq': 2,
+    'eqeqeq': ['error', 'always', { null: 'never' }],
     'func-style': [0, 'declaration'],
     'generator-star-spacing': [2, { before: true, after: false }],
     'guard-for-in': 2,
