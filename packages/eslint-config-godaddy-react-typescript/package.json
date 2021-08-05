@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy-react-typescript",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "ESLint config for consistent style in ES6 React projects using TypeScript at GoDaddy.",
   "scripts": {
     "lint": "eslint .",
@@ -29,15 +29,12 @@
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^2.3.1",
     "@typescript-eslint/parser": "^2.3.1",
-    "eslint-config-godaddy-react": "^5.0.0"
+    "eslint-config-godaddy-react": "^7.0.0",
+    "eslint-plugin-react-hooks": "^4.2.0"
   },
   "peerDependencies": {
     "eslint": "^6.1.0",
     "typescript": ">=3"
   },
-  "devDependencies": {
-    "babel-eslint": "^10.0.2",
-    "eslint": "^6.1.0",
-    "typescript": ">=3"
-  }
+  "devDependencies": {}
 }
