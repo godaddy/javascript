@@ -124,6 +124,20 @@ This section is a place for additional best practices that may be useful but are
 }
 ```
 
+## How do I disable auto fix
+
+You may wish to disable autofix, so you can run eslint in ci, and error
+if it catches anything unlinted
+
+``` js
+{
+  "scripts": {
+    "eslint:ci": "eslint-godaddy --fix=false --max-warnings=0 lib/ test/",
+  }
+}
+```
+
+
 ## How do I contribute?
 
 Fork this repository and submit a pull request.
