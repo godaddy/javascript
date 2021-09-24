@@ -126,8 +126,8 @@ This section is a place for additional best practices that may be useful but are
 
 ## How do I disable auto fix
 
-You may wish to disable autofix, so you can run eslint in ci, and error
-if it catches anything unlinted
+You may wish to disable autofix so when you run `eslint` in ci it will error
+if it catches anything unlinted.
 
 ``` js
 {
