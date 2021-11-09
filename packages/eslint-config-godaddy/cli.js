@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const which = require('which');
 
 module.exports = function (filename) {
   filename = filename || path.join(__dirname, 'index');
@@ -36,9 +35,9 @@ module.exports = function (filename) {
       process.argv.splice(2, 0, '-c', require.resolve(filename));
     }
 
-    which('eslint', function (err, resolved) {
-      if (err) { throw err; }
-      require(resolved);
-    });
+    const pkg = require.resolve('eslint/package.json');
+    const bin = path.join(pkg, '..', 'bin', 'eslint.js');
+
+    require(bin);
   });
 };
