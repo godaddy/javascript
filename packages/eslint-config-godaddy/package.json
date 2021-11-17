@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Base ESLint config for consistent style in ES6 projects at GoDaddy.",
   "license": "MIT",
   "scripts": {
@@ -30,6 +30,5 @@
   "dependencies": {
     "eslint-plugin-json": "^2.0.1",
     "eslint-plugin-mocha": "^6.2.2"
-  },
-  "devDependencies": {}
+  }
 }

@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy-react",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "description": "ESLint config for consistent style in ES6 React projects at GoDaddy.",
   "license": "MIT",
   "scripts": {
@@ -31,10 +31,9 @@
   },
   "dependencies": {
     "babel-eslint": "^10.0.3",
-    "eslint-config-godaddy": "^5.0.0",
+    "eslint-config-godaddy": "^5.0.1",
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-react": "^7.16.0",
     "eslint-plugin-react-hooks": "^4.2.0"
-  },
-  "devDependencies": {}
+  }
 }
