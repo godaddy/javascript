@@ -4,7 +4,7 @@ module.exports = {
     'plugin:eslint-plugin-react/recommended'
   ],
   plugins: ['react', 'flowtype', 'babel'],
-  parser: 'babel-eslint',
+  parser: '@babel/eslint-parser',
   parserOptions: {
     ecmaFeatures: {
       jsx: true,
