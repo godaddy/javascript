@@ -26,12 +26,17 @@
     "eslint-godaddy-flow": "bin/eslint-godaddy-flow"
   },
   "peerDependencies": {
-    "eslint": ">=6.0.0"
+    "eslint": ">=6.0.0",
+    "@babel/core": "^7.0.0"
   },
   "dependencies": {
-    "babel-eslint": "^10.0.3",
+    "@babel/eslint-parser": "^7.16.5",
     "eslint-config-godaddy": "^5.0.1",
     "eslint-plugin-babel": "^5.3.0",
-    "eslint-plugin-flowtype": "^4.5.2"
+    "eslint-plugin-flowtype": "^8.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.4.1",
+    "@babel/core": "^7.0.0"
   }
 }

@@ -3,11 +3,12 @@ module.exports = {
     require('./extends')('eslint-config-godaddy')
   ],
   plugins: ['flowtype', 'babel'],
-  parser: 'babel-eslint',
+  parser: '@babel/eslint-parser',
   parserOptions: {
     ecmaFeatures: {
       experimentalObjectRestSpread: true
-    }
+    },
+    requireConfigFile: false
   },
   rules: {
     'flowtype/define-flow-type': 2,

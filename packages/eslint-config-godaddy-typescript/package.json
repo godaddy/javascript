@@ -26,13 +26,15 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.18.0",
-    "@typescript-eslint/parser": "^4.18.0",
+    "@typescript-eslint/eslint-plugin": "^5.7.0",
+    "@typescript-eslint/parser": "^5.7.0",
     "eslint-config-godaddy": "^5.0.1"
   },
   "peerDependencies": {
-    "babel-eslint": ">=7.2.1 <11.0.0",
-    "eslint": "^7.22.0",
-    "typescript": ">=4"
+    "typescript": ">=4",
+    "eslint": ">=7"
+  },
+  "devDependencies": {
+    "eslint": "^8.4.1"
   }
 }

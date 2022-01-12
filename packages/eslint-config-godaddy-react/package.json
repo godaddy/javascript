@@ -27,10 +27,11 @@
     "eslint-godaddy-react": "bin/eslint-godaddy-react"
   },
   "peerDependencies": {
-    "eslint": ">=6.0.0"
+    "eslint": ">=6.0.0",
+    "@babel/core": "^7.0.0"
   },
   "dependencies": {
-    "babel-eslint": "^10.0.3",
+    "@babel/eslint-parser": "^7.16.5",
     "eslint-config-godaddy": "^5.0.1",
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-react": "^7.16.0",

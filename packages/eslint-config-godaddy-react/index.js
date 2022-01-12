@@ -5,13 +5,14 @@ module.exports = {
     'plugin:jsx-a11y/recommended',
     'plugin:react-hooks/recommended'
   ],
-  parser: 'babel-eslint',
+  parser: '@babel/eslint-parser',
   plugins: ['react', 'jsx-a11y', 'react-hooks'],
   parserOptions: {
     ecmaFeatures: {
       jsx: true,
       experimentalObjectRestSpread: true
-    }
+    },
+    requireConfigFile: false
   },
   rules: {
     'react/display-name': 0,
