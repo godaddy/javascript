@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy-react-flow",
-  "version": "4.0.1",
+  "version": "5.0.0",
   "description": "ESLint config for consistent style in ES6 React projects using Flow at GoDaddy.",
   "license": "MIT",
   "scripts": {
@@ -27,12 +27,12 @@
     "eslint-godaddy-react-flow": "bin/eslint-godaddy-react-flow"
   },
   "peerDependencies": {
-    "eslint": ">=6.0.0",
-    "@babel/core": "^7.0.0"
+    "@babel/core": "^7.0.0",
+    "eslint": ">=6.0.0"
   },
   "dependencies": {
     "@babel/eslint-parser": "^7.16.5",
-    "eslint-config-godaddy-react": "^7.0.1",
+    "eslint-config-godaddy-react": "^8.0.0",
     "eslint-plugin-babel": "^5.3.1",
     "eslint-plugin-flowtype": "^8.0.3",
     "eslint-plugin-react": "^7.28.0",
