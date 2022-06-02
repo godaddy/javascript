@@ -3,15 +3,16 @@
   "version": "6.0.0",
   "private": true,
   "description": "The approach to JavaScript at GoDaddy. We think it's pretty decent.",
+  "engines": {
+    "node": ">=16",
+    "npm": ">=8"
+  },
   "scripts": {
-    "lint": "lerna run lint --stream",
-    "bootstrap": "lerna bootstrap --hoist --ignore-scripts",
-    "postinstall": "npm run bootstrap",
-    "test": "lerna run test --stream",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
     "publish": "lerna publish",
-    "clean": "npm run clean:artifacts && npm run clean:packages && npm run clean:root",
-    "clean:artifacts": "lerna run clean --parallel",
-    "clean:packages": "lerna clean --yes",
+    "clean": "npm run clean:packages && npm run clean:root",
+    "clean:packages": "turbo run clean --parallel",
     "clean:root": "rimraf node_modules"
   },
   "repository": {
@@ -44,6 +45,7 @@
     "godaddy-js-style-eslint": "./bin/eslint"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.22.0",
     "eslint": "^8.4.1",
     "eslint-plugin-json": "^3.1.0",
     "eslint-plugin-jsx-a11y": "^6.5.1",
@@ -52,7 +54,10 @@
     "lerna": "^4.0.0",
     "react": "^17.0.2",
     "rimraf": "^3.0.2",
+    "turbo": "^1.2.15",
     "typescript": "^4.5.4"
   },
-  "dependencies": {}
+  "workspaces": [
+    "packages/*"
+  ]
 }
