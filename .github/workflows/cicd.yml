@@ -1,12 +1,14 @@
 name: CICD
 on: 
   push:
+    branches:
+      - 'main'
   pull_request:
     branches:
      - '*'
 
 jobs:
-  build:
+  cicd:
     runs-on: ubuntu-latest
     concurrency: ${{ github.workflow }}-${{ github.ref }}
     steps:
