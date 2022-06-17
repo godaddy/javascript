@@ -10,3 +10,33 @@ updates:
     rebase-strategy: auto
     schedule:
       interval: daily
+  - directory: /packages/eslint-config-godaddy
+    package-ecosystem: npm
+    rebase-strategy: auto
+    schedule:
+      interval: daily
+  - directory: /packages/eslint-config-godaddy-flow
+    package-ecosystem: npm
+    rebase-strategy: auto
+    schedule:
+      interval: daily
+  - directory: /packages/eslint-config-godaddy-react
+    package-ecosystem: npm
+    rebase-strategy: auto
+    schedule:
+      interval: daily
+  - directory: /packages/eslint-config-godaddy-react-flow
+    package-ecosystem: npm
+    rebase-strategy: auto
+    schedule:
+      interval: daily
+  - directory: /packages/eslint-config-godaddy-react-typescript
+    package-ecosystem: npm
+    rebase-strategy: auto
+    schedule:
+      interval: daily
+  - directory: /packages/eslint-config-godaddy-typescript
+    package-ecosystem: npm
+    rebase-strategy: auto
+    schedule:
+      interval: daily
