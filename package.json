@@ -12,6 +12,7 @@
     "test": "turbo run test",
     "version": "changeset version",
     "release": "changeset publish",
+    "changeset": "changeset",
     "clean": "npm run clean:packages && npm run clean:root",
     "clean:packages": "turbo run clean",
     "clean:root": "rimraf node_modules"
