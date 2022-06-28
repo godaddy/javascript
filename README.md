@@ -150,17 +150,34 @@ For a first time setup make sure to run from the root of the monorepo
 npm install
 ```
 
-From there the bootstrap script will setup the packages and hoist the node_modules
+Since this repository uses npm workspaces it will install and hoist all `node_modules` to 
+the root of the monorepo. 
+
+### Submit a changeset
+
+This repository utilizes [changesets] to handle versioning and publishing as you submit a pull-request. To initiate a changeset run:
+
+```bash
+npm run changeset
+```
+
+After which follow the command prompts to select which packages and which version each package should receive.
 
 ### Publishing
 
 If you are lucky enough to get to publish a new version of a package you are in luck. This monorepo is setup to independently publish packages based on changes commited. Just make sure to run:
 
 ```bash
-npm run publish
+npm version
 ```
 
-This runs `lerna publish` under the hood and will run you through a cli driven experience to help you determine the next version. To learn more about it see [lerna publish]
+This will run `changeset version` and will update all packages to the versions based on the changesets committed into the `.changeset` directory. After the versioning is complete to handle publishing and creating a release run: 
+
+```bash
+npm run release
+```
+
+This runs `changeset publish` under the hood and handle as mentioned above.
 
 ### I disagree with a specific rule
 
@@ -188,4 +205,4 @@ No problem. Reach out to us by [opening an issue]
 [`eslint-config-godaddy-react-typescript`]: /packages/eslint-config-godaddy-react-typescript
 [`eslint-config-godaddy-flow`]: /packages/eslint-config-godaddy-react-flow
 [`eslint-config-godaddy-react-flow`]: /packages/eslint-config-godaddy-react-flow
-[lerna publish]: https://github.com/lerna/lerna/tree/main/commands/publish#readme
+[changesets]: https://github.com/changesets/changesets

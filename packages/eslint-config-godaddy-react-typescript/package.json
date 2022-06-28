@@ -6,6 +6,7 @@
     "lint": "eslint .",
     "pretest": "npm run --silent lint",
     "test": "echo ok",
+    "clean": "rimraf node_modules",
     "unused": "eslint-find-rules --unused ./index.js || echo ''"
   },
   "repository": {
@@ -33,7 +34,7 @@
     "eslint-plugin-react-hooks": "^4.3.0"
   },
   "peerDependencies": {
-    "eslint": "^6.1.0",
+    "eslint": ">=7",
     "typescript": ">=3"
   }
 }
