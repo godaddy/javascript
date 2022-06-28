@@ -40,3 +40,4 @@ updates:
     rebase-strategy: auto
     schedule:
       interval: daily
+      
