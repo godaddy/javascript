@@ -37,7 +37,7 @@
     "eslint-plugin-flowtype": "^8.0.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.16.7",
+    "@babel/core": "^7.20.12",
     "eslint": "^8.4.1"
   }
 }
