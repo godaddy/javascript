@@ -1,5 +1,11 @@
 # eslint-config-godaddy
 
+## 7.0.1
+
+### Patch Changes
+
+- Update eslint-mocha-plugin
+
 ## 7.0.0
 
 ### Major Changes
