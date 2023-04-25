@@ -1,5 +1,13 @@
 # eslint-config-godaddy-react-typescript
 
+## 4.0.1
+
+### Patch Changes
+
+- 906d745: Upgrade dependencies
+- Updated dependencies [906d745]
+  - eslint-config-godaddy-react@9.0.1
+
 ## 4.0.0
 
 ### Major Changes

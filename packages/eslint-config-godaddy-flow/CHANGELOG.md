@@ -1,5 +1,13 @@
 # eslint-config-godaddy-flow
 
+## 6.0.1
+
+### Patch Changes
+
+- 906d745: Upgrade dependencies
+- Updated dependencies [906d745]
+  - eslint-config-godaddy@7.0.2
+
 ## 6.0.0
 
 ### Major Changes
