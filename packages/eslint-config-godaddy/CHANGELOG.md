@@ -1,5 +1,11 @@
 # eslint-config-godaddy
 
+## 7.0.2
+
+### Patch Changes
+
+- 906d745: Upgrade dependencies
+
 ## 7.0.1
 
 ### Patch Changes
