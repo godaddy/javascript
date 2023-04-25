@@ -28,7 +28,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.9.1",
+    "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.9.1",
     "eslint-config-godaddy-react": "^9.0.0",
     "eslint-plugin-react-hooks": "^4.3.0"
