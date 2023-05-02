@@ -21,7 +21,11 @@ module.exports = {
             args: 'after-used',
             ignoreRestSiblings: false
           }
-        ]
+        ],
+        // Disable the base rule and enable TypeScript version to avoid incorrect reports
+        // See https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/docs/rules/no-shadow.md
+        'no-shadow': 'off',
+        '@typescript-eslint/no-shadow': 'warn'
       }
     },
     {
