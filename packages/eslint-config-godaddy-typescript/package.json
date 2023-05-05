@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy-typescript",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "ESLint config for consistent style in node projects using Typescript at GoDaddy.",
   "scripts": {
     "lint": "eslint .",
