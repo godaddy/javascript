@@ -1,5 +1,11 @@
 # eslint-config-godaddy-typescript
 
+## 4.0.2
+
+### Patch Changes
+
+- c2e15c2: Fix incorrect no-shadow warnings for TS enums
+
 ## 4.0.1
 
 ### Patch Changes
