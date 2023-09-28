@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "eslint-plugin-json": "^3.1.0",
-    "eslint-plugin-mocha": "^10.1.0"
+    "eslint-plugin-mocha": "^10.2.0"
   },
   "devDependencies": {
     "eslint": "^8.39.0"
