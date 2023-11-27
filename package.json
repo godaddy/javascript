@@ -47,7 +47,7 @@
     "godaddy-js-style-eslint": "./bin/eslint"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.22.0",
+    "@changesets/cli": "^2.26.2",
     "eslint": "^8.34.0",
     "eslint-plugin-json": "^3.1.0",
     "eslint-plugin-jsx-a11y": "^6.5.1",
