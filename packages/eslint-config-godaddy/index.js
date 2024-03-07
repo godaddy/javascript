@@ -7,7 +7,7 @@ module.exports = {
     mocha: true,
     phantomjs: true
   },
-  plugins: ['mocha', 'json'],
+  plugins: ['mocha', 'json', 'jsdoc'],
   extends: ['eslint:recommended'],
   parserOptions: {
     ecmaVersion: 13,
@@ -111,7 +111,7 @@ module.exports = {
     'semi': 1,
     'strict': [2, 'global'],
     'use-isnan': 2,
-    'valid-jsdoc': [2, { prefer: { return: 'returns' }, requireReturn: false }],
+    'valid-jsdoc': 0,
     'prefer-promise-reject-errors': 2,
     //
     // Whitespace or other stylistic rules. No --fix option exists in eslint,
@@ -150,7 +150,7 @@ module.exports = {
     }],
     'space-unary-ops': [2, { words: true, nonwords: false }],
     'space-infix-ops': 2,
-    'spaced-comment': 2,
+    'spaced-comment': [2, 'always', { markers: ['/'] }],
     'space-in-parens': 2,
     'wrap-iife': 2,
     'yoda': [2, 'never']

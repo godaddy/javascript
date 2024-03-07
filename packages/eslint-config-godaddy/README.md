@@ -19,7 +19,7 @@ npm i eslint-config-godaddy --save-dev
 
 There are two ways to use this styleguide depending on your own tooling preference: directly using pre-included binaries or running `eslint` yourself with a custom `.eslintrc` config.
 
-##### 1. Use the pre-included binaries.
+##### 1. Use the pre-included binaries
 
 These use _exactly_ the configuration defined in this  package (`eslint-config-godaddy`) **with auto-fix enabled automatically.**
 
@@ -31,7 +31,7 @@ These use _exactly_ the configuration defined in this  package (`eslint-config-g
 }
 ```
 
-##### 2. Define your local `.eslintrc.js` and run `eslint` yourself:
+##### 2. Define your local `.eslintrc.js` and run `eslint` yourself
 
 ``` js
 module.exports = {
@@ -44,7 +44,7 @@ module.exports = {
 }
 ```
 
-The `--fix` option in `eslint` is [**only** available as a CLI option](https://github.com/eslint/eslint/issues/8041). Auto-fix will *NOT be enabled* unless you run `eslint --fix` in your `package.json`.
+The `--fix` option in `eslint` is [**only** available as a CLI option](https://github.com/eslint/eslint/issues/8041). Auto-fix will _NOT be enabled_ unless you run `eslint --fix` in your `package.json`.
 
 ``` js
 {
