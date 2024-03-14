@@ -1,5 +1,11 @@
 # eslint-config-godaddy
 
+## 7.1.0
+
+### Minor Changes
+
+- ca2dc13: `valid-jsdoc` Rule Deprecated & Triple-Slash Directive Support
+
 ## 7.0.2
 
 ### Patch Changes
