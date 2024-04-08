@@ -34,6 +34,6 @@
     "eslint-plugin-jsdoc": "^48.2.1"
   },
   "devDependencies": {
-    "eslint": "^8.39.0"
+    "eslint": "^9.0.0"
   }
 }
