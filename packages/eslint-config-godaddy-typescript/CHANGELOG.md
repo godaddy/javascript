@@ -1,5 +1,13 @@
 # eslint-config-godaddy-typescript
 
+## 4.0.3
+
+### Patch Changes
+
+- f47da10: Lock down peerDeps to version 8 of eslint due to major breaking changes in version 9.
+- Updated dependencies [f47da10]
+  - eslint-config-godaddy@7.1.1
+
 ## 4.0.2
 
 ### Patch Changes
