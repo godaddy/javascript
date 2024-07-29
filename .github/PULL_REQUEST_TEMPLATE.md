@@ -9,12 +9,13 @@ Please provide enough information so that others can review your pull request. T
 Explain the **motivation** for making this change. What existing problem does the pull request solve?
 -->
 
-## Changelog
+## Changeset
 
 <!--
-Help reviewers and the release process by writing your own changelog entry. See this project's CHANGELOG.md
-for an example.
+Help reviewers and the release process by writing your own changeset entry.
 -->
+
+- [ ] Changeset added ([docs](https://github.com/godaddy/javascript#submit-a-changeset))
 
 ## Test Plan
 

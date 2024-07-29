@@ -155,7 +155,11 @@ the root of the monorepo.
 
 ### Submit a changeset
 
-This repository utilizes [changesets] to handle versioning and publishing as you submit a pull-request. To initiate a changeset run:
+This repository utilizes [changesets] to handle versioning and publishing as you submit a pull-request.
+A changeset should be included with your pull-request to help the maintainers
+understand the changes and to help with the release process.
+
+To initiate a changeset run:
 
 ```bash
 npm run changeset
@@ -163,40 +167,33 @@ npm run changeset
 
 After which follow the command prompts to select which packages and which version each package should receive.
 
-### Publishing
+Commit and push the changeset to your branch to be included with your pull-request.
 
-If you are lucky enough to get to publish a new version of a package you are in luck. This monorepo is setup to independently publish packages based on changes commited. Just make sure to run:
+## Publishing
 
-```bash
-npm version
-```
+When a pull-request is merged into the `main`, the changeset will be used
+to determine the next version of the package.
 
-This will run `changeset version` and will update all packages to the versions based on the changesets committed into the `.changeset` directory. After the versioning is complete to handle publishing and creating a release run: 
+A "Version Packages" pull-request will be automatically created to bump the
+versions.
+If multiple PRs with changesets are merged, this PR will automatically update to
+include all changesets.
 
-```bash
-npm run release
-```
+When all changes are ready to be published, repo admins can force squash merge
+the "Version Packages" PR to main (CI worflows do not run on this automated branch).
+This will trigger the CI to publish the packages to npm.
 
-This runs `changeset publish` under the hood and handle as mentioned above.
-
-### I disagree with a specific rule
+## I disagree with a specific rule
 
 Great. We'd love to talk about it. Fork this repository and submit a pull-request.
 
-### Help! It's not working for me
+## Help! It's not working for me
 
 No problem. Reach out to us by [opening an issue]
 
 ## Roadmap
 
-- Consider other rules in an `eslint` only implementation:
-  - `computed-property-spacing`
-  - `generator-star-spacing`
-  - `semi-spacing`
-  - `block-spacing`
-- Continue to modularize the `eslint` rules.
-- Translate configuration files into more verbose written documentation.
-- Add support for IDE formats (IntelliJ, Webstorm, Atom, Eclipse, Sublime, etc...)
+- ESLint v9 support ([guide](https://eslint.org/docs/latest/use/migrate-to-9.0.0))
 
 [opening an issue]: https://github.com/godaddy/javascript/issues
 [`eslint-config-godaddy`]: /packages/eslint-config-godaddy
