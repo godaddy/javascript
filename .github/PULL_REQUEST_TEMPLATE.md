@@ -12,7 +12,8 @@ Explain the **motivation** for making this change. What existing problem does th
 ## Changeset
 
 <!--
-Help reviewers and the release process by writing your own changeset entry.
+Help reviewers and the release process by included a changeset entry.
+Use `npm run changeset` and follow the prompts to create a changeset.
 -->
 
 - [ ] Changeset added ([docs](https://github.com/godaddy/javascript#submit-a-changeset))
