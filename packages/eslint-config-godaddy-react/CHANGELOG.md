@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 9.1.0
+
+### Minor Changes
+
+- 6125e53: Disabling react/prop-types
+
 ## 9.0.2
 
 ### Patch Changes
