@@ -40,6 +40,6 @@
     "eslint-plugin-react-hooks": "^4.6.0"
   },
   "devDependencies": {
-    "eslint": "^8.39.0"
+    "eslint": "^9.9.1"
   }
 }
