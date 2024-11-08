@@ -4,8 +4,8 @@
   "private": true,
   "description": "The approach to JavaScript at GoDaddy. We think it's pretty decent.",
   "engines": {
-    "node": ">=16",
-    "npm": ">=8"
+    "node": ">=22",
+    "npm": ">=10"
   },
   "scripts": {
     "lint": "turbo run lint",
