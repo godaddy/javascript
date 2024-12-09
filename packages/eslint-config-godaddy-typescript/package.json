@@ -27,7 +27,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
     "@typescript-eslint/parser": "^5.62.0",
     "eslint-config-godaddy": "^7.1.1"
   },
