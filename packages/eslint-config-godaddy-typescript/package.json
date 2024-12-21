@@ -2,6 +2,8 @@
   "name": "eslint-config-godaddy-typescript",
   "version": "4.0.3",
   "description": "ESLint config for consistent style in node projects using Typescript at GoDaddy.",
+  "type": "module",
+  "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run --silent lint",
@@ -19,23 +21,23 @@
     "styleguide",
     "style-guide",
     "eslint",
-    "es6",
+    "eslint-config",
     "typescript"
   ],
-  "bin": {
-    "eslint-godaddy-typescript": "bin/eslint-godaddy-typescript"
-  },
   "license": "MIT",
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
     "eslint-config-godaddy": "^7.1.1"
   },
   "peerDependencies": {
-    "eslint": "^8",
-    "typescript": ">=4"
+    "eslint": ">=9",
+    "typescript": ">=5"
   },
   "devDependencies": {
-    "eslint": "^8.57.1"
+    "eslint": "^9.17.0"
+  },
+  "exports": {
+    ".": "./index.js"
   }
 }

@@ -3,37 +3,39 @@
   "version": "7.1.1",
   "description": "Base ESLint config for consistent style in ES6 projects at GoDaddy.",
   "license": "MIT",
+  "type": "module",
+  "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run --silent lint",
     "test": "echo ok",
-    "clean": "rimraf node_modules",
-    "unused": "eslint-find-rules --unused ./index.js || echo ''"
+    "clean": "rimraf node_modules"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:godaddy/javascript.git"
+    "url": "git@github.com:godaddy/javascript.git",
+    "directory": "packages/eslint-config-godaddy"
   },
   "keywords": [
     "godaddy",
     "javascript",
     "styleguide",
     "style-guide",
-    "eslint",
-    "es6"
+    "eslint"
   ],
-  "bin": {
-    "eslint-godaddy": "bin/eslint-godaddy"
-  },
   "peerDependencies": {
-    "eslint": "^8"
+    "eslint": ">= 9"
   },
   "dependencies": {
-    "eslint-plugin-json": "^3.1.0",
-    "eslint-plugin-mocha": "^10.5.0",
-    "eslint-plugin-jsdoc": "^48.11.0"
+    "eslint-plugin-jsdoc": "^50.6.1",
+    "eslint-plugin-json": "^4.0.1",
+    "eslint-plugin-mocha": "^10.5.0"
   },
   "devDependencies": {
-    "eslint": "^8.57.1"
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0"
+  },
+  "exports": {
+    ".": "./index.js"
   }
 }
