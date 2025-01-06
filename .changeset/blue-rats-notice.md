@@ -7,4 +7,4 @@
 
 chore(eslint)!: migrate all eslint configs to eslint@v9
 
-BREAKING CHANGE: removes v8 support and transistions configs to flat config
+BREAKING CHANGE: removes v8 support and transistions configs to flat config. Also these packages are now `type:module`
