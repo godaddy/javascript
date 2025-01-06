@@ -10,7 +10,7 @@ const config = [
     plugins: {
       '@typescript-eslint': tseslintPlugin
     },
-    files: ['*.ts', '*.tsx'],
+    files: ['*.ts', '*.tsx', '*.mts', '*.mtsx', '*.cts', '*.ctsx'],
     rules: {
       //
       // note you must disable the base rule as it can report incorrect errors (in typescript)
@@ -30,12 +30,6 @@ const config = [
       // See https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/docs/rules/no-shadow.md
       'no-shadow': 'off',
       '@typescript-eslint/no-shadow': 'warn'
-    }
-  },
-  {
-    files: ['*.ts', '*.tsx'],
-    rules: {
-      'react/prop-types': 'off'
     }
   }
 ];

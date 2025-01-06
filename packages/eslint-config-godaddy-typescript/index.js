@@ -11,7 +11,7 @@ const config = [
     plugins: {
       '@typescript-eslint': tseslintPlugin
     },
-    files: ['*.ts'],
+    files: ['*.ts', '*.mts', '*.cts'],
     rules: {
       // note you must disable the base rule as it can report incorrect errors (in typescript)
       // (because of imported types being incorrectly reported as unused)
