@@ -12,7 +12,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:godaddy/javascript.git"
+    "url": "git@github.com:godaddy/javascript.git",
+    "directory": "packages/eslint-config-godaddy-react-typescript"
   },
   "keywords": [
     "godaddy",
@@ -32,7 +33,7 @@
     "eslint-plugin-react-hooks": "^5.1.0"
   },
   "peerDependencies": {
-    "eslint": ">=9",
+    "eslint": "^9",
     "typescript": ">=5"
   },
   "devDependencies": {

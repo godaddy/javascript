@@ -8,12 +8,12 @@
     "lint": "eslint .",
     "pretest": "npm run --silent lint",
     "test": "echo ok",
-    "clean": "rimraf node_modules",
-    "unused": "eslint-find-rules --unused ./index.js || echo ''"
+    "clean": "rimraf node_modules"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:godaddy/javascript.git"
+    "url": "git@github.com:godaddy/javascript.git",
+    "directory": "packages/eslint-config-godaddy-typescript"
   },
   "keywords": [
     "godaddy",
@@ -31,7 +31,7 @@
     "eslint-config-godaddy": "^7.1.1"
   },
   "peerDependencies": {
-    "eslint": ">=9",
+    "eslint": "^9",
     "typescript": ">=5"
   },
   "devDependencies": {

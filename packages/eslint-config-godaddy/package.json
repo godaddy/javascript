@@ -24,7 +24,7 @@
     "eslint"
   ],
   "peerDependencies": {
-    "eslint": ">= 9"
+    "eslint": "^9"
   },
   "dependencies": {
     "eslint-plugin-jsdoc": "^50.6.1",
