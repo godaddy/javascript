@@ -2,16 +2,18 @@
   "name": "eslint-config-godaddy-react-typescript",
   "version": "4.0.3",
   "description": "ESLint config for consistent style in ES6 React projects using TypeScript at GoDaddy.",
+  "type": "module",
+  "main": "index.js",
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run --silent lint",
     "test": "echo ok",
-    "clean": "rimraf node_modules",
-    "unused": "eslint-find-rules --unused ./index.js || echo ''"
+    "clean": "rimraf node_modules"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:godaddy/javascript.git"
+    "url": "git@github.com:godaddy/javascript.git",
+    "directory": "packages/eslint-config-godaddy-react-typescript"
   },
   "keywords": [
     "godaddy",
@@ -19,25 +21,25 @@
     "styleguide",
     "style-guide",
     "eslint",
-    "es6",
+    "eslint-config",
     "react",
     "typescript"
   ],
-  "bin": {
-    "eslint-godaddy-react-typescript": "bin/eslint-godaddy-react-typescript"
-  },
   "license": "MIT",
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
     "eslint-config-godaddy-react": "^9.1.0",
-    "eslint-plugin-react-hooks": "^4.6.2"
+    "eslint-plugin-react-hooks": "^5.1.0"
   },
   "peerDependencies": {
-    "eslint": "^8",
-    "typescript": ">=3"
+    "eslint": "^9",
+    "typescript": ">=5"
   },
   "devDependencies": {
-    "eslint": "^8.57.1"
+    "eslint": "^9.17.0"
+  },
+  "exports": {
+    ".": "./index.js"
   }
 }
