@@ -1,5 +1,18 @@
 # eslint-config-godaddy-react-typescript
 
+## 5.0.0
+
+### Major Changes
+
+- 16301df: chore(eslint)!: migrate all eslint configs to eslint@v9
+
+  BREAKING CHANGE: removes v8 support and transistions configs to flat config. Also these packages are now `type:module`
+
+### Patch Changes
+
+- Updated dependencies [16301df]
+  - eslint-config-godaddy-react@10.0.0
+
 ## 4.0.3
 
 ### Patch Changes
