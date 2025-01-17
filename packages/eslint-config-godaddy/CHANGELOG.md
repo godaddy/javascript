@@ -1,5 +1,13 @@
 # eslint-config-godaddy
 
+## 8.0.0
+
+### Major Changes
+
+- 16301df: chore(eslint)!: migrate all eslint configs to eslint@v9
+
+  BREAKING CHANGE: removes v8 support and transistions configs to flat config. Also these packages are now `type:module`
+
 ## 7.1.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy-typescript",
-  "version": "4.0.3",
+  "version": "5.0.0",
   "description": "ESLint config for consistent style in node projects using Typescript at GoDaddy.",
   "type": "module",
   "main": "index.js",
@@ -28,7 +28,7 @@
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^8.18.1",
     "@typescript-eslint/parser": "^8.18.1",
-    "eslint-config-godaddy": "^7.1.1"
+    "eslint-config-godaddy": "^8.0.0"
   },
   "peerDependencies": {
     "eslint": "^9",
