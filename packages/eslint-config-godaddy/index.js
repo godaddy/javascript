@@ -1,3 +1,4 @@
+import globals from 'globals';
 import js from '@eslint/js';
 import json from 'eslint-plugin-json';
 import jsdoc from 'eslint-plugin-jsdoc';
@@ -8,10 +9,9 @@ const config = [
   {
     languageOptions: {
       globals: {
-        browser: true,
-        node: true,
-        mocha: true
-      },
+        browser: globals.browser,
+        node: globals.node,
+        mocha: globals.mocha,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
