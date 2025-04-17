@@ -1,5 +1,11 @@
 # eslint-config-godaddy
 
+## 8.0.1
+
+### Patch Changes
+
+- 545241e: fix(globals): add globals to the config
+
 ## 8.0.0
 
 ### Major Changes
