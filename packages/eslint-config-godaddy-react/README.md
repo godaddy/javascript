@@ -1,6 +1,6 @@
-# eslint-config-godaddy
+# eslint-config-godaddy-react
 
-Base configuration for _non-React_, JavaScript applications officially used at GoDaddy.
+Base configuration for React, JavaScript applications officially used at GoDaddy.
 
 This styleguide is used by dozens of product teams at GoDaddy. Have a question or comment? [Open an issue!](https://github.com/godaddy/javascript/issues/new)
 
@@ -14,13 +14,16 @@ npm i eslint-config-godaddy-react --save-dev
 ## Usage
 
 ```js
-
 import gdConfig from 'eslint-config-godaddy-react'
+import { defineConfig } from 'eslint-define-config';
 
-const config = [{
-  ...gdConfig
-  {
-    // Other eslint options here
-  }
-}]
+export default defineConfig({
+  extends: [
+    gdConfig,
+  ],
+  rules: {
+    // Add your own rules here
+    'no-console': 'warn',
+  },
+});
 ```

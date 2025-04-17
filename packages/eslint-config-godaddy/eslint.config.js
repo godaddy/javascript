@@ -1,3 +1,8 @@
 import GDConfig from './index.js';
+import { defineConfig } from 'eslint/config';
 
-export default GDConfig;
+export default defineConfig({
+  extends: [
+    GDConfig
+  ]
+});

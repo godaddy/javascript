@@ -16,11 +16,15 @@ npm i eslint-config-godaddy --save-dev
 ```js
 
 import gdConfig from 'eslint-config-godaddy'
+import { defineConfig } from 'eslint-define-config';
 
-const config = [{
-  ...gdConfig
-  {
-    // Other eslint options here
-  }
-}]
+export default defineConfig({
+  extends: [
+    gdConfig,
+  ],
+  rules: {
+    // Add your own rules here
+    'no-console': 'warn',
+  },
+});
 ```
