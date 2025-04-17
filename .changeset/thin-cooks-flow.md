@@ -1,5 +1,5 @@
 ---
-"eslint-config-godaddy": minor
+"eslint-config-godaddy": patch
 ---
 
-feat(globals): add globals to the config
+fix(globals): add globals to the config
