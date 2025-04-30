@@ -1,5 +1,11 @@
 # eslint-config-godaddy
 
+## 8.0.2
+
+### Patch Changes
+
+- 1b52e1c: Support mocha globals
+
 ## 8.0.1
 
 ### Patch Changes

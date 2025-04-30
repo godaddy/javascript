@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-godaddy",
-  "version": "8.0.1",
+  "version": "8.0.2",
   "description": "Base ESLint config for consistent style in ES6 projects at GoDaddy.",
   "license": "MIT",
   "type": "module",
