@@ -9,8 +9,9 @@ const config = [
   {
     languageOptions: {
       globals: {
-        ...globals.node,
-        ...globals.browser
+        ...globals.browser,
+        ...globals.mocha,
+        ...globals.node
       },
       parserOptions: {
         ecmaVersion: 'latest',
