@@ -117,10 +117,12 @@ Fork this repository and submit a pull request.
 
 ### Local setup
 
-For a first time setup make sure to run from the root of the monorepo
+This repo uses [pnpm] to install node_modules and handle script execution. Please install and setup `pnpm` after cloning and before installing packages.
+
+For a first time setup make sure to run from the root of the monorepo.
 
 ```bash
-npm install
+pnpm install
 ```
 
 Since this repository uses npm workspaces it will install and hoist all `node_modules` to the root of the monorepo.
@@ -134,7 +136,7 @@ understand the changes and to help with the release process.
 To initiate a changeset run:
 
 ```bash
-npm run changeset
+pnpm run changeset
 ```
 
 After which follow the command prompts to select which packages and which version each package should receive.
@@ -173,3 +175,4 @@ No problem. Reach out to us by [opening an issue]
 [`eslint-config-godaddy-typescript`]: /packages/eslint-config-godaddy-typescript
 [`eslint-config-godaddy-react-typescript`]: /packages/eslint-config-godaddy-react-typescript
 [changesets]: https://github.com/changesets/changesets
+[pnpm]: https://pnpm.io/

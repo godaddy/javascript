@@ -1,21 +1,24 @@
 {
   "name": "godaddy-style",
-  "version": "6.0.0",
+  "version": "0.0.0",
   "private": true,
   "description": "The approach to JavaScript at GoDaddy. We think it's pretty decent.",
   "type": "module",
   "engines": {
+    "node": ">=22"
+  },
+  "devEngines": {
     "node": ">=22",
-    "npm": ">=10"
+    "pnpm": ">=10"
   },
   "scripts": {
-    "lint": "turbo run lint",
-    "test": "turbo run test",
-    "version": "changeset version",
+    "lint": "pnpm run -r lint",
+    "test": "pnpm run -r --parallel test",
+    "version": "changeset version && pnpm install --prefer-offline",
     "release": "changeset publish",
     "changeset": "changeset",
-    "clean": "npm run clean:packages && npm run clean:root",
-    "clean:packages": "turbo run clean",
+    "clean": "pnpm run clean:packages && pnpm run clean:root",
+    "clean:packages": "pnpm run -r clean",
     "clean:root": "rimraf node_modules"
   },
   "repository": {
@@ -30,22 +33,14 @@
     "styleguide",
     "style-guide",
     "eslint",
-    "es6",
-    "es2015",
     "react",
-    "jsx",
-    "flow"
+    "jsx"
   ],
   "license": "MIT",
   "author": "GoDaddy.com Operating Company, LLC",
   "homepage": "https://github.com/godaddy/javascript",
   "bugs": {
     "url": "https://github.com/godaddy/javascript/issues"
-  },
-  "bin": {
-    "godaddy-js-style-lint": "./bin/lint",
-    "godaddy-js-style-jscs": "./bin/jscs",
-    "godaddy-js-style-eslint": "./bin/eslint"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5",
@@ -60,11 +55,7 @@
     "eslint-plugin-react": "^7.37.5",
     "react": "^19.1.0",
     "rimraf": "^6.0.1",
-    "turbo": "^2.5.6",
     "typescript": "^5.8.3"
   },
-  "workspaces": [
-    "packages/*"
-  ],
-  "packageManager": "npm@10.9.0"
+  "packageManager": "pnpm@10.14.0"
 }

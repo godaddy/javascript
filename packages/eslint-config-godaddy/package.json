@@ -7,7 +7,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
-    "pretest": "npm run --silent lint",
+    "pretest": "pnpm run --silent lint",
     "test": "echo ok",
     "clean": "rimraf node_modules"
   },

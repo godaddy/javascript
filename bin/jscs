@@ -1,9 +1,0 @@
-#!/usr/bin/env node
-
-require('./notice')([
-  'JSCS has been completely removed from all godaddy-style packages.',
-  'Please use eslint binaries instead which now use eslint --fix:',
-  '  eslint-godaddy       in eslint-config-godaddy',
-  '  eslint-godaddy-react in eslint-config-godaddy-react',
-  '  eslint-godaddy-es5   in eslint-config-godaddy-es5'
-]);
