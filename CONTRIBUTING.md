@@ -92,19 +92,10 @@ approved, other developers with commit access may commit it for the author. When
 doing so, it is important to retain correct attribution of the contribution.
 Generally speaking, Git handles attribution automatically.
 
-## Type Safety
-
-Please ensure that all contributed code utilizes our defined type checking method outlined in our [Type Safety with JSDoc document].
-
 ## Markdown Documentation
 
 Each package should have a `README.md`, with guides and other documents under a
 `docs/` directory.
-
-Even though readme's should be functional on their own, consider them as pages
-in a book when used with `gasket docs`. Different styles and layouts can result
-in a disjointed experience for readers. In general, and certainly for the
-top-level README, the following headings should be used.
 
 ```md
 # Name of package
@@ -230,9 +221,8 @@ This will trigger the CI to publish the packages to npm.
 - [GitHub Pull Request documentation](https://help.github.com/send-pull-requests/)
 - [JSDoc]
 
-[issues]: https://github.com/godaddy/gasket/issues
+[issues]: https://github.com/godaddy/javascript/issues
 [JSDoc]: https://jsdoc.app/
 [npm]: http://npmjs.org/
 [style]: https://github.com/godaddy/javascript/#godaddy-style
-[Type Safety with JSDoc document]: https://github.com/godaddy/gasket/blob/main/docs/jsdoc-type-safety.md
 [changesets]: https://github.com/changesets/changesets

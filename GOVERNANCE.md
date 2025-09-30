@@ -4,27 +4,26 @@
 
 ### Contributor
 
-Anyone who contributes to Gasket, through pull requests, responses to issues,
+Anyone who contributes through pull requests, responses to issues,
 documentation or otherwise, is a contributor.
 
 ### Maintainer
 
 Maintainers have commit permissions. They are responsible for creating release
-commits. They also are responsible for maintaining the Gasket
-[roadmap](./ROADMAP.md). Finally, they are responsible for closing out issues
+commits. Finally, they are responsible for closing out issues
 that are duplicates, not reproducible or otherwise should not be addressed. New
 maintainers are added by existing maintainers at their discretion. If you want
-to become a maintainer, start by looking at Gasket's backlog of issues. You can
+to become a maintainer, start by looking at the issues and current open pull requests. You can
 triage existing issues, provide fixes, and/or create issues that will improve
-Gasket for the community at large. You can view the current list of maintainers
-in the [Gasket Github group].
+the packages for the community at large. You can view the current list of maintainers
+in the [Javascript Github group].
 
 ### Code Owner
 
 A code owner is a maintainer with an extra level of commitment. Code owners are
 expected to make themselves available to review pull requests and discuss
-architectural or roadmap changes to Gasket. Code owners also have veto power
-over "core" Gasket changes, which we define here as breaking change or major
+architectural or core code changes. Code owners also have veto power
+over "core" package changes, which we define here as breaking change or major
 refactors to the plugin engine or the cli. Code owners are a small group by
 design, and new code owners will be added only rarely. Code owners are listed
 [here][code owners].
@@ -48,19 +47,6 @@ interpreted as approval). In rare cases, there may prove to be irresolvable
 disagreement between maintainers, in which case it is acceptable to conduct a
 majority vote.
 
-If the design/roadmap change requires a breaking change or major refactor to the
-plugin engine or the cli, please tag at least one [code owner][code owners] in
-your discussion.
-
-## Working Groups
-
-We anticipate the creation of working groups to give direction and define best
-practices for major Gasket feature areas. Here are a few ideas for future
-working groups:
-
-* Front-end frameworks: e.g. Nextjs, Svelte
-* Feature areas: e.g. Intl, lint
-
-[Discussions]: https://github.com/godaddy/gasket/discussions
-[Gasket Github group]: https://github.com/orgs/godaddy/teams/gasket
+[Discussions]: https://github.com/godaddy/javascript/discussions
+[Javascript Github group]: https://github.com/orgs/godaddy/teams/javascript
 [code owners]: ./CODEOWNERS
