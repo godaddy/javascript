@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
-    "pretest": "npm run --silent lint",
+    "pretest": "pnpm run --silent lint",
     "test": "echo ok",
     "clean": "rimraf node_modules"
   },
@@ -28,7 +28,7 @@
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.30.1",
-    "eslint-config-godaddy": "^8.0.0"
+    "eslint-config-godaddy": "workspace:^"
   },
   "peerDependencies": {
     "eslint": "^9",

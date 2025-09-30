@@ -1,8 +1,0 @@
-#!/usr/bin/env node
-
-require('./notice')([
-  'You can enable ESLint --fix by default through:',
-  '  eslint-godaddy       in eslint-config-godaddy',
-  '  eslint-godaddy-react in eslint-config-godaddy-react',
-  '  eslint-godaddy-es5   in eslint-config-godaddy-es5'
-]);
