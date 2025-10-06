@@ -12,8 +12,9 @@
     "pnpm": ">=10"
   },
   "scripts": {
+    "build": "pnpm run -r build",
     "lint": "pnpm run -r lint",
-    "test": "pnpm run -r --parallel test",
+    "test": "pnpm run build && pnpm run -r --parallel test",
     "version": "changeset version && pnpm install --prefer-offline",
     "release": "changeset publish",
     "changeset": "changeset",
