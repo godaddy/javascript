@@ -41,7 +41,7 @@ export function canonicalizeRequest(req: VerifiableRequest): string {
   logger.debug({ method }, 'HTTP method processed');
 
   // 2. URI Path with query parameters
-  let path = req.url || '/';
+  let path = req.path || req.url || '/';
 
   // Add query parameters if they exist
   if (req.query && Object.keys(req.query).length > 0) {
