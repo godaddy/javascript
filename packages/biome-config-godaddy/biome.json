@@ -250,8 +250,6 @@
   },
   "json": {
     "formatter": {
-      "allowComments": true,
-      "allowTrailingCommas": false,
       "enabled": true,
       "indentStyle": "space",
       "indentWidth": 2,
