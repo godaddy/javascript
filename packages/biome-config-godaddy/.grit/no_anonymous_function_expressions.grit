@@ -1,0 +1,20 @@
+// Detect anonymous function expressions (function() {} and function(params) {})
+// Uses 'as $funcSig' to capture function signature for better span highlighting
+or {
+    // Pattern for anonymous function with no parameters  
+    `function() { $body }` as $funcSig where {
+        register_diagnostic(
+            span = $funcSig,
+            message = "Anonymous function expressions should be assigned to a named variable or converted to named functions for better debugging",
+            severity = "warn"
+        )
+    },
+    // Pattern for anonymous function with parameters
+    `function($params) { $body }` as $funcSig where {
+        register_diagnostic(
+            span = $funcSig,
+            message = "Anonymous function expressions should be assigned to a named variable or converted to named functions for better debugging",
+            severity = "warn"
+        )
+    }
+}

@@ -1,0 +1,10 @@
+// Detect anonymous arrow functions with parentheses that use block statements (curly braces)
+// Only flag them if they do NOT reference 'this' in the function body
+`($args) => { $body }` where {
+    not $body <: contains `this`,
+    register_diagnostic(
+        span = $args,
+        message = "Anonymous arrow functions with block statements that don't reference 'this' should be converted to named function expressions for better debugging",
+        severity = "warn"
+    )
+}
