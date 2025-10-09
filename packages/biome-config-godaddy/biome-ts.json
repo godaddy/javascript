@@ -7,11 +7,6 @@
     "lineEnding": "lf",
     "lineWidth": 130
   },
-  "plugins": [
-    "./.grit/no_anonymous_functions.grit",
-    "./.grit/no_anonymous_single_param.grit",
-    "./.grit/no_anonymous_function_expressions.grit"
-  ],
   "linter": {
     "rules": {
       "recommended": false,
