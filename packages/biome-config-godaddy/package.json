@@ -1,0 +1,36 @@
+{
+  "name": "biome-config-godaddy",
+  "version": "1.0.0",
+  "description": "Base Biome config for consistent style in JavaScript projects at GoDaddy.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "echo ok",
+    "clean": "rimraf node_modules"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:godaddy/javascript.git",
+    "directory": "packages/biome-config-godaddy"
+  },
+  "keywords": [
+    "godaddy",
+    "javascript",
+    "styleguide",
+    "style-guide",
+    "biome",
+    "biome-config",
+    "linter",
+    "formatter"
+  ],
+  "peerDependencies": {
+    "@biomejs/biome": ">= 2.2.0 < 3.0.0"
+  },
+  "exports": {
+    "./biome.json": "./biome.json",
+    "./biome-ts.json": "./biome-ts.json"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.5"
+  }
+}
