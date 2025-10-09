@@ -1,0 +1,39 @@
+import { useCheckoutContext } from "@/components/checkout/checkout";
+import { getDraftOrder } from "@/lib/godaddy/godaddy";
+import type { DraftOrder, DraftOrderSession } from "@/types";
+import { type UseQueryResult, useQuery } from "@tanstack/react-query";
+
+/**
+ * Hook to fetch the entire draft order
+ * @param select Optional selector function to extract specific data from the response
+ * @param key Optional custom key to differentiate queries
+ * @returns Query result with draft order data
+ */
+export function useDraftOrder<TData = DraftOrder>(
+	select?: (data: DraftOrderSession) => TData,
+	key = "draft-order",
+): UseQueryResult<TData> {
+	const { session } = useCheckoutContext();
+
+	return useQuery<DraftOrderSession, Error, TData>({
+		queryKey: [key, { id: session?.id }],
+		queryFn: () => getDraftOrder(session),
+		enabled: !!session?.id,
+		select: select ?? ((data) => data.checkoutSession?.draftOrder as TData),
+		retry: 3,
+	});
+}
+
+export function useDraftOrderLineItems() {
+	return useDraftOrder<DraftOrder["lineItems"]>(
+		(data) => data.checkoutSession?.draftOrder?.lineItems ?? null,
+		"draft-order-line-items",
+	);
+}
+
+export function useDraftOrderShippingAddress() {
+	return useDraftOrder<NonNullable<DraftOrder["shipping"]>["address"]>(
+		(data) => data.checkoutSession?.draftOrder?.shipping?.address ?? null,
+		"draft-order-shipping-address",
+	);
+}
