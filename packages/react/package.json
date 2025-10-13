@@ -41,8 +41,8 @@
 	},
 	"peerDependencies": {
 		"@tanstack/react-query": ">=5",
-		"react": ">=18",
-		"react-dom": ">=18",
+		"react": "18.x || 19.x",
+		"react-dom": "18.x || 19.x",
 		"react-hook-form": ">=7"
 	},
 	"dependencies": {
