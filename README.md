@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/npm/l/eslint-config-godaddy.svg)](https://github.com/godaddy/javascript/blob/main/LICENSE)
 [![github stars](https://img.shields.io/github/stars/godaddy/javascript.svg?style=social&label=Star)](https://github.com/godaddy/javascript)
 
-Official collection of JavaScript libraries, tools, and configurations for building GoDaddy on the GoDaddy platform. This monorepo contains all the JavaScript SDKs, ESLint configurations, and React components under the `@godaddy` namespace.
+Official collection of JavaScript libraries, tools, and configurations for building on the GoDaddy platform. This monorepo contains all the JavaScript SDKs, ESLint configurations, and React components under the `@godaddy` namespace.
 
 ## Getting Started
 
