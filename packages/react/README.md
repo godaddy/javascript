@@ -29,7 +29,7 @@ The first parameter accepts all checkout session configuration options from the 
 - **`customerId`** (string): Customer ID for the checkout session
 - **`storeName`** (string): The name of the store this checkout session belongs to
 - **`url`** (string): Custom URL for the checkout session
-- **`environment`** (enum): Environment - `dev` (default), `ote`, `prod`, `test`
+- **`environment`** (enum): Environment - `ote`, `prod`
 - **`expiresAt`** (DateTime): When the session expires
 - **`enableBillingAddressCollection`** (boolean): Enable billing address collection
 - **`enableLocalPickup`** (boolean): Enable local pickup option
@@ -73,8 +73,6 @@ The checkout session supports multiple environments through the input parameter:
 
 - **`prod`**: Production environment (`https://api.godaddy.com`)
 - **`ote`**: OTE environment (`https://api.ote-godaddy.com`)
-- **`dev`**: Development environment (`https://api.dev-godaddy.com`) - default
-- **`test`**: Test environment (`https://api.test-godaddy.com`)
 
 ### API Scopes
 
