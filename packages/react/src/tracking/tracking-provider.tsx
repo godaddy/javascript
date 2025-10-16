@@ -1,0 +1,99 @@
+"use client";
+
+import { Track, useTracking } from "@/tracking/track";
+import type { CheckoutSession } from "@/types";
+import React from "react";
+import { useEffect } from "react";
+
+declare global {
+	interface Window {
+		_expDataLayer: unknown[];
+	}
+}
+
+export function TrackingProvider({
+	children,
+	session,
+	trackingEnabled = false,
+}: {
+	children: React.ReactNode;
+	session?: CheckoutSession;
+	trackingEnabled?: boolean;
+}) {
+	return (
+		<Track>
+			<TrackingInitializer
+				session={session}
+				trackingEnabled={trackingEnabled}
+			/>
+			{children}
+		</Track>
+	);
+}
+
+// Helper component to initialize tracking using the hook
+function TrackingInitializer({
+	session,
+	trackingEnabled,
+}: {
+	session?: CheckoutSession;
+	trackingEnabled: boolean;
+}) {
+	const [isInitialized, setIsInitialized] = React.useState(false);
+	const tracking = useTracking();
+
+	useEffect(() => {
+		if (
+			session?.id &&
+			trackingEnabled &&
+			!tracking.isTrackingEnabled &&
+			!isInitialized
+		) {
+			setIsInitialized(true);
+			// Enable tracking
+			tracking.setIsTrackingEnabled({ isTrackingEnabled: trackingEnabled });
+
+			// Set common properties
+			tracking.setCommonProperties({
+				commonProperties: {
+					draftOrderId: session?.draftOrder?.id || "",
+					storeId: session?.storeId || "",
+					channelId: session?.channelId || "",
+				},
+			});
+
+			// Add event handlers
+			tracking.addEventHandler({
+				handlerId: "traffic",
+				handler: ({ event }) => {
+					window._expDataLayer = window._expDataLayer || [];
+					window._expDataLayer?.push?.({
+						schema: "add_event",
+						version: "v1",
+						data: {
+							type: event?.type,
+							eid: event?.eventId,
+							custom_properties: {
+								eventId: event?.eventId,
+								traceId: event?.traceId,
+								...event?.properties,
+							},
+						},
+						targets: ["fullstory"],
+					});
+				},
+			});
+
+			tracking.addEventHandler({
+				handlerId: "console",
+				handler: ({ event }) => {
+					if (session?.environment === "dev") {
+						console.log("event", event);
+					}
+				},
+			});
+		}
+	}, [tracking, session, trackingEnabled, isInitialized]);
+
+	return null;
+}

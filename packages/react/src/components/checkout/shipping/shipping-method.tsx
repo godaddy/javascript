@@ -1,0 +1,245 @@
+import { useCheckoutContext } from "@/components/checkout/checkout";
+import { useDraftOrderShippingAddress } from "@/components/checkout/order/use-draft-order";
+import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order-totals";
+import { ShippingMethodSkeleton } from "@/components/checkout/shipping/shipping-method-skeleton";
+import { filterAndSortShippingMethods } from "@/components/checkout/shipping/utils/filter-shipping-methods";
+import { useApplyShippingMethod } from "@/components/checkout/shipping/utils/use-apply-shipping-method";
+import { useDraftOrderShippingMethods } from "@/components/checkout/shipping/utils/use-draft-order-shipping-methods";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useGoDaddyContext } from "@/godaddy-provider";
+import { eventIds } from "@/tracking/events";
+import { TrackingEventType, track } from "@/tracking/track";
+import type { ShippingMethod } from "@/types";
+import { useEffect, useRef } from "react";
+import { useFormContext } from "react-hook-form";
+
+// Helper function to build the shipping payload
+function buildShippingPayload(method: ShippingMethod) {
+	return [
+		{
+			taxTotal: {
+				value: 0,
+				currencyCode: method?.cost?.currencyCode || "USD",
+			},
+			subTotal: {
+				value: method?.cost?.value || 0,
+				currencyCode: method?.cost?.currencyCode || "USD",
+			},
+			requestedService: method?.serviceCode,
+			requestedProvider: method?.carrierCode,
+			name: method?.displayName || "",
+		},
+	];
+}
+
+export function ShippingMethodForm() {
+	const form = useFormContext();
+	const { t } = useGoDaddyContext();
+	const { isConfirmingCheckout, session } = useCheckoutContext();
+
+	const { data: shippingMethodsData, isLoading: isShippingMethodsLoading } =
+		useDraftOrderShippingMethods();
+	const { data: shippingAddress, isLoading: isShippingAddressLoading } =
+		useDraftOrderShippingAddress();
+	const { data: totals } = useDraftOrderTotals();
+
+	const hasShippingAddress = Boolean(shippingAddress?.addressLine1);
+
+	const orderSubTotal = totals?.subTotal?.value || 0;
+
+	const shippingMethods = filterAndSortShippingMethods({
+		shippingMethods: shippingMethodsData || [],
+		orderSubTotal,
+		experimentalRules: session?.experimental_rules,
+	});
+
+	const initializedRef = useRef(false);
+	const applyShippingMethod = useApplyShippingMethod();
+
+	useEffect(() => {
+		if (!initializedRef.current && shippingMethods?.length) {
+			const firstMethod = shippingMethods[0];
+			const currentMethod = form.getValues("shippingMethod");
+
+			const method = shippingMethods.find(
+				(m) => m.displayName === currentMethod,
+			);
+
+			if (!currentMethod) {
+				form.setValue("shippingMethod", firstMethod.displayName, {
+					shouldDirty: false,
+				});
+				applyShippingMethod.mutate(buildShippingPayload(firstMethod));
+				initializedRef.current = true;
+				return;
+			}
+
+			if (!method) {
+				form.setValue("shippingMethod", firstMethod.displayName, {
+					shouldDirty: false,
+				});
+				applyShippingMethod.mutate(buildShippingPayload(firstMethod));
+				initializedRef.current = true;
+				return;
+			}
+
+			if (method) {
+				form.setValue("shippingMethod", method.displayName, {
+					shouldDirty: false,
+				});
+
+				applyShippingMethod.mutate(buildShippingPayload(method));
+				initializedRef.current = true;
+				return;
+			}
+
+			initializedRef.current = true;
+		}
+	}, [shippingMethods, applyShippingMethod, form]);
+
+	if (isShippingMethodsLoading || isShippingAddressLoading) {
+		return <ShippingMethodSkeleton />;
+	}
+
+	if (!hasShippingAddress && !isShippingMethodsLoading) {
+		return (
+			<div className="bg-muted rounded-md p-6 flex justify-center items-center">
+				<p className="text-sm text-center w-full">
+					{t?.shipping?.noShippingMethodAddress}
+				</p>
+			</div>
+		);
+	}
+
+	if (
+		hasShippingAddress &&
+		!isShippingMethodsLoading &&
+		shippingMethods?.length === 0
+	) {
+		return (
+			<div className="bg-muted rounded-md p-6 flex justify-center items-center">
+				<p className="text-sm text-center w-full">
+					{t?.shipping?.noShippingMethods}
+				</p>
+			</div>
+		);
+	}
+
+	const currentMethod = form.watch("shippingMethod");
+	const selectedValue = currentMethod || undefined;
+
+	const handleValueChange = (value: string) => {
+		const previousValue = form.getValues("shippingMethod");
+		form.setValue("shippingMethod", value);
+
+		const method = shippingMethods?.find(
+			(method) => method.displayName === value,
+		);
+
+		if (method) {
+			// Track shipping method selection
+			track({
+				eventId: eventIds.selectShippingMethod,
+				type: TrackingEventType.CLICK,
+				properties: {
+					shippingMethod: method.displayName,
+					shippingMethodId: method.serviceCode,
+					shippingCarrier: method.carrierCode,
+					cost: method.cost?.value || 0,
+					currencyCode: method.cost?.currencyCode || "USD",
+				},
+			});
+
+			applyShippingMethod
+				.mutateAsync(buildShippingPayload(method))
+				.catch(() => {
+					form.setValue("shippingMethod", previousValue);
+				});
+		}
+	};
+
+	return (
+		<div className="space-y-2">
+			<div>
+				<Label>{t.shipping.method}</Label>
+			</div>
+			{shippingMethods.length === 1 ? (
+				<Label
+					htmlFor={shippingMethods[0].displayName || "shipping-method-0"}
+					className="font-medium"
+				>
+					<div className="flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 rounded-md">
+						<div className="flex items-center space-x-4">
+							<div className="inline-flex flex-col">
+								{shippingMethods[0].displayName}
+								<p className="text-xs text-muted-foreground">
+									{shippingMethods[0].description}
+								</p>
+							</div>
+						</div>
+						<div className="text-right text-sm">
+							{shippingMethods[0]?.cost?.value === 0 ? (
+								<span className="font-semibold">{t.general.free}</span>
+							) : (
+								<span className="font-semibold">
+									{new Intl.NumberFormat("en-us", {
+										style: "currency",
+										currency: shippingMethods[0]?.cost?.currencyCode || "USD",
+									}).format((shippingMethods[0]?.cost?.value || 0) / 100)}
+								</span>
+							)}
+						</div>
+					</div>
+				</Label>
+			) : (
+				<RadioGroup
+					disabled={isConfirmingCheckout}
+					value={selectedValue}
+					onValueChange={handleValueChange}
+				>
+					{shippingMethods?.map((method, index) => {
+						const methodId = method.displayName || `shipping-method-${index}`;
+						const isSelected = method.displayName === currentMethod;
+
+						return (
+							<Label key={methodId} htmlFor={methodId} className="font-medium">
+								<div
+									className={`flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 hover:bg-muted ${
+										index === 0 ? "rounded-t-md" : ""
+									} ${
+										index === shippingMethods.length - 1 ? "rounded-b-md" : ""
+									} ${index !== 0 ? "border-t-0" : ""} ${
+										isSelected ? "bg-muted" : ""
+									}`}
+								>
+									<div className="flex items-center space-x-4">
+										<RadioGroupItem value={methodId} id={methodId} />
+										<div className="inline-flex flex-col">
+											{method.displayName}
+											<p className="text-xs text-muted-foreground">
+												{method.description}
+											</p>
+										</div>
+									</div>
+									<div className="text-right text-sm">
+										{method?.cost?.value === 0 ? (
+											<span className="font-semibold">{t.general.free}</span>
+										) : (
+											<span className="font-semibold">
+												{new Intl.NumberFormat("en-us", {
+													style: "currency",
+													currency: method?.cost?.currencyCode || "USD",
+												}).format((method?.cost?.value || 0) / 100)}
+											</span>
+										)}
+									</div>
+								</div>
+							</Label>
+						);
+					})}
+				</RadioGroup>
+			)}
+		</div>
+	);
+}

@@ -1,0 +1,38 @@
+{
+	"name": "@godaddy/localizations",
+	"version": "0.1.0",
+	"description": "Internationalization localizations for GoDaddy checkout components",
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"dev": "tsdown --watch",
+		"build": "tsdown",
+		"typecheck": "tsc --noEmit"
+	},
+	"keywords": [
+		"godaddy",
+		"checkout",
+		"localization",
+		"i18n",
+		"internationalization"
+	],
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^22.13.1",
+		"tsdown": "^0.15.6",
+		"typescript": "~5.7.3"
+	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org/"
+	}
+}

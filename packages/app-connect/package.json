@@ -1,0 +1,75 @@
+{
+	"name": "@godaddy/app-connect",
+	"version": "0.1.0",
+	"description": "GoDaddy App Connect - A verification library for GoDaddy Platform App requests",
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./express": {
+			"types": "./dist/express/index.d.ts",
+			"import": "./dist/express/index.js",
+			"default": "./dist/express/index.js"
+		},
+		"./next": {
+			"types": "./dist/next/index.d.ts",
+			"import": "./dist/next/index.js",
+			"default": "./dist/next/index.js"
+		},
+		"./tanstack": {
+			"types": "./dist/tanstack/index.d.ts",
+			"import": "./dist/tanstack/index.js",
+			"default": "./dist/tanstack/index.js"
+		}
+	},
+	"scripts": {
+		"dev": "tsdown --watch",
+		"build": "tsdown",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome lint --write --unsafe ./src",
+		"check": "biome check --write --unsafe ./src",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
+		"release": "pnpm build && changeset publish",
+		"prepublishOnly": "pnpm build"
+	},
+	"keywords": [
+		"godaddy",
+		"platform",
+		"verification",
+		"signature"
+	],
+	"author": "GoDaddy",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/godaddy/javascript.git"
+	},
+	"dependencies": {
+		"@tanstack/react-router": "^1.127.9",
+		"@tanstack/react-start": "^1.127.9",
+		"pino": "^9.7.0",
+		"zod": "^3.22.4"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@changesets/cli": "^2.29.4",
+		"@types/express": "^5.0.2",
+		"@types/node": "^22.13.1",
+		"pino-pretty": "^13.0.0",
+		"tsdown": "^0.15.6",
+		"typescript": "~5.7.3",
+		"vitest": "^1.2.2"
+	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org/"
+	}
+}
