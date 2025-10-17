@@ -1,6 +1,6 @@
 {
   "name": "biome-config-godaddy",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Base Biome config for consistent style in JavaScript projects at GoDaddy.",
   "license": "MIT",
   "type": "module",
