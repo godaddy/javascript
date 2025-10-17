@@ -1,11 +1,12 @@
 # godaddy-style
 
-Official GoDaddy JavaScript styleguide. It includes `eslint` packages for various use-cases and can be used as a standard in any new project.
+Official GoDaddy JavaScript styleguide. It includes `eslint` and `biomejs` packages for various use-cases and can be used as a standard in any new project.
 
 - [`eslint-config-godaddy`]: Base configuration for _non-React_, ES6 JavaScript applications
 - [`eslint-config-godaddy-react`]: Configuration for ES6 React JavaScript applications
 - [`eslint-config-godaddy-typescript`]: Configuration for ES6 TypeScript applications
 - [`eslint-config-godaddy-react-typescript`]: Configuration for ES6 React JavaScript applications
+- [`biome-config-godaddy`]: Fast Rust-based alternative to ESLint and Prettier using Biome
 
 There are many useful features:
 
@@ -41,13 +42,18 @@ npm i eslint-config-godaddy-typescript --save-dev
 
 # OR (ES6 with React and TypeScript rules)
 npm i eslint-config-godaddy-react-typescript --save-dev
+
+# OR (BiomeJS with JS and TS rules available)
+npm i biome-config-godaddy --save-dev
 ```
 
 ## Usage
 
-There are two ways to use this styleguide depending on your own tooling preference: directly using pre-included binaries or running `eslint` yourself with a custom `.eslintrc` config.
+There are different ways to use this styleguide depending on your tooling preference and performance requirements.
 
-### 2. Define your local `eslint.config.js|mjs` and run `eslint` yourself
+### ESLint Configuration
+
+Define your local `eslint.config.js|mjs` and run `eslint` yourself:
 
 ``` js
 import GDConfig from 'eslint-config-godaddy';
@@ -69,6 +75,39 @@ The `--fix` option in `eslint` is [**only** available as a CLI option](https://g
 {
   "scripts": {
     "lint": "eslint --fix files/ you/ want-to/ lint/"
+  }
+}
+```
+
+### Biome Configuration
+
+For improved performance, use the Biome configuration. Create a `biome.json` file:
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "extends": ["biome-config-godaddy/biome.json"]
+}
+```
+
+For TypeScript projects:
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "extends": ["biome-config-godaddy/biome-ts.json"]
+}
+```
+
+Add these scripts to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "check": "biome check --write ."
   }
 }
 ```
@@ -174,5 +213,6 @@ No problem. Reach out to us by [opening an issue]
 [`eslint-config-godaddy-react`]: /packages/eslint-config-godaddy-react
 [`eslint-config-godaddy-typescript`]: /packages/eslint-config-godaddy-typescript
 [`eslint-config-godaddy-react-typescript`]: /packages/eslint-config-godaddy-react-typescript
+[`biome-config-godaddy`]: /packages/biome-config-godaddy
 [changesets]: https://github.com/changesets/changesets
 [pnpm]: https://pnpm.io/
