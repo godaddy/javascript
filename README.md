@@ -24,6 +24,9 @@ npm install eslint-config-godaddy-typescript --save-dev
 
 # For React + TypeScript applications
 npm install eslint-config-godaddy-react-typescript --save-dev
+
+# For fast Rust-based linting (alternative to ESLint)
+npm install biome-config-godaddy --save-dev
 ```
 
 ### Other Packages
@@ -46,6 +49,7 @@ This monorepo contains the following packages:
 | [`eslint-config-godaddy-react`](/packages/eslint-config-godaddy-react) | ESLint configuration for React applications | [![npm](https://img.shields.io/npm/v/eslint-config-godaddy-react.svg)](https://www.npmjs.com/package/eslint-config-godaddy-react) |
 | [`eslint-config-godaddy-typescript`](/packages/eslint-config-godaddy-typescript) | ESLint configuration for TypeScript applications | [![npm](https://img.shields.io/npm/v/eslint-config-godaddy-typescript.svg)](https://www.npmjs.com/package/eslint-config-godaddy-typescript) |
 | [`eslint-config-godaddy-react-typescript`](/packages/eslint-config-godaddy-react-typescript) | ESLint configuration for React + TypeScript applications | [![npm](https://img.shields.io/npm/v/eslint-config-godaddy-react-typescript.svg)](https://www.npmjs.com/package/eslint-config-godaddy-react-typescript) |
+| [`biome-config-godaddy`](/packages/biome-config-godaddy) | Fast Rust-based alternative to ESLint and Prettier using Biome | [![npm](https://img.shields.io/npm/v/biome-config-godaddy.svg)](https://www.npmjs.com/package/biome-config-godaddy) |
 | [`@godaddy/app-connect`](/packages/app-connect) | Platform integration tools for GoDaddy apps | [![npm](https://img.shields.io/npm/v/@godaddy/app-connect.svg)](https://www.npmjs.com/package/@godaddy/app-connect) |
 | [`@godaddy/react`](/packages/react) | React components and commerce API integration | [![npm](https://img.shields.io/npm/v/@godaddy/react.svg)](https://www.npmjs.com/package/@godaddy/react) |
 
@@ -82,6 +86,39 @@ export default defineConfig({
 {
   "scripts": {
     "lint": "eslint --fix src/"
+  }
+}
+```
+
+### Biome Configuration
+
+For improved performance, use the Biome configuration. Create a `biome.json` file:
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "extends": ["biome-config-godaddy/biome.json"]
+}
+```
+
+For TypeScript projects:
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "extends": ["biome-config-godaddy/biome-ts.json"]
+}
+```
+
+Add these scripts to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "check": "biome check --write ."
   }
 }
 ```

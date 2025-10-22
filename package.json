@@ -7,10 +7,6 @@
   "engines": {
     "node": ">=22"
   },
-  "devEngines": {
-    "node": ">=22",
-    "pnpm": ">=10"
-  },
   "scripts": {
     "build": "pnpm run -r build",
     "lint": "pnpm run -r lint",
