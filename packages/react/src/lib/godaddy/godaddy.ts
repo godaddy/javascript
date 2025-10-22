@@ -41,7 +41,9 @@ import {
 } from "./queries";
 
 function getHostByEnvironment(): string {
-	return process.env.HOST || "https://checkout.commerce.api.godaddy.com";
+	return (
+		process.env.GODADDY_HOST || "https://checkout.commerce.api.godaddy.com"
+	);
 }
 
 export async function createCheckoutSession(
