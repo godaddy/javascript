@@ -33,3 +33,16 @@ node_modules
 
 # Turbo artifacts
 .turbo
+
+dist
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+schema.graphql
+
+# macOS
+.DS_Store
