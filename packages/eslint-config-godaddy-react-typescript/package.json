@@ -30,7 +30,7 @@
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.30.1",
     "eslint-config-godaddy-react": "workspace:^",
-    "eslint-plugin-react-hooks": "^5.2.0"
+    "eslint-plugin-react-hooks": "^7.0.0"
   },
   "peerDependencies": {
     "eslint": "^9",
