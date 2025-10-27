@@ -1,4 +1,4 @@
-# @godaddy/react
+# @godaddy/localizations
 
 ## 1.0.0
 
@@ -30,14 +30,3 @@
   - Environment-based configuration support
 
   These packages provide the foundation for building robust, secure, and internationalized applications on the GoDaddy platform.
-
-### Patch Changes
-
-- Updated dependencies [1864bc2]
-  - @godaddy/localizations@1.0.0
-
-## 0.1.0
-
-### Minor Changes
-
-- intitial release
