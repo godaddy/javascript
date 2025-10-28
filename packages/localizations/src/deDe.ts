@@ -133,6 +133,7 @@ export const deDe = {
 		discount: "Gutschein",
 		processingPayment: "Zahlung wird verarbeitet...",
 		completingOrder: "Bestellung wird abgeschlossen...",
+		completeOrder: "Bestellung abschließen",
 		freePayment: "Schließen Sie Ihre kostenlose Bestellung ab",
 	},
 	phone: {
@@ -187,6 +188,12 @@ export const deDe = {
 		accessibility: {
 			payWithApplePay: "Mit Apple Pay bezahlen",
 			applePayLogo: "Apple Pay Logo",
+			close: "Schließen",
+			additionalTipOptions: "Zusätzliche Trinkgeldoptionen",
+			breadcrumb: "Brotkrümelnavigation",
+			more: "Mehr",
+			previousSlide: "Vorherige Folie",
+			nextSlide: "Nächste Folie",
 		},
 	},
 	errors: {
@@ -248,7 +255,7 @@ export const deDe = {
 		CHECKOUT_SESSION_NOT_FOUND: "Checkout-Sitzung nicht gefunden",
 		CHECKOUT_SESSION_FETCH_ERROR:
 			"Allgemeiner Abruffehler der Checkout-Sitzung",
-		DRAFT_ORDER_NOT_FOUND: "Entwurfsbestellung nicht gefunden",
+		DRAFT_ORDER_NOT_FOUND: "Bestellung nicht gefunden",
 		CHECKOUT_SESSION_CREATION_FAILED:
 			"Erstellen der Checkout-Sitzung fehlgeschlagen",
 		CREATED_SESSION_DATA_NOT_FOUND:
@@ -261,8 +268,7 @@ export const deDe = {
 		CHECKOUT_SESSION_UPDATE_ERROR:
 			"Allgemeiner Aktualisierungsfehler der Checkout-Sitzung",
 		ORDER_API_NOT_FOUND: "Bestellungs-API-Datenquelle nicht gefunden",
-		DRAFT_ORDER_RETRIEVAL_FAILED:
-			"Abrufen der Entwurfsbestellung fehlgeschlagen",
+		DRAFT_ORDER_RETRIEVAL_FAILED: "Abrufen der Bestellung fehlgeschlagen",
 		DATA_SOURCES_NOT_FOUND: "Datenquellen nicht gefunden",
 		TRANSACTION_API_NOT_FOUND: "Transaktions-API-Datenquelle nicht gefunden",
 		TRANSACTION_PROCESSING_FAILED:
@@ -272,18 +278,19 @@ export const deDe = {
 		ORDER_OPENING_FAILED: "Öffnen der Bestellung fehlgeschlagen",
 		INVALID_FULFILLMENT_LOCATION: "Ungültiger Erfüllungsort",
 		NO_VALID_PICKUP_LOCATION: "Kein gültiger Abholort verfügbar",
-		DRAFT_ORDER_FETCH_FAILED: "Abrufen der Entwurfsbestellung fehlgeschlagen",
+		DRAFT_ORDER_FETCH_FAILED: "Abrufen der Bestellung fehlgeschlagen",
 		LINE_ITEMS_FETCH_FAILED: "Abrufen der Artikel fehlgeschlagen",
 		CURRENT_ORDER_FETCH_FAILED:
-			"Abrufen der aktuellen Entwurfsbestellung fehlgeschlagen",
-		DRAFT_ORDER_UPDATE_FAILED:
-			"Aktualisierung der Entwurfsbestellung fehlgeschlagen",
+			"Abrufen der aktuellen Bestellung fehlgeschlagen",
+		DRAFT_ORDER_UPDATE_FAILED: "Aktualisierung der Bestellung fehlgeschlagen",
 		DISCOUNT_APPLICATION_FAILED: "Anwenden des Gutscheins fehlgeschlagen",
 		CONTEXT_UNAVAILABLE: "Sitzung oder Datenquellen nicht verfügbar",
 		SHIPPING_LINES_UPDATE_FAILED:
 			"Aktualisierung der Versandzeilen fehlgeschlagen",
 		ORDER_TOTALS_UPDATE_FAILED:
 			"Aktualisierung der Bestellsummen fehlgeschlagen",
+		ORDER_TOTAL_CALCULATION_FAILED:
+			"Berechnung der Bestellsummen fehlgeschlagen",
 		SHIPPING_METHOD_APPLICATION_FAILED:
 			"Anwenden der Versandmethode fehlgeschlagen",
 		SKU_FETCH_FAILED: "Abrufen der SKUs fehlgeschlagen",
@@ -307,13 +314,13 @@ export const deDe = {
 		SHIPPING_ERROR: "Allgemeiner Versandfehler",
 		PRICE_ADJUSTMENT_CALCULATION_ERROR: "Preisanpassungsberechnungsfehler",
 		ORDER_FETCH_ERROR: "Bestellabruffehler",
-		DRAFT_ORDER_UPDATE_ERROR: "Entwurfsbestellungsaktualisierungsfehler",
+		DRAFT_ORDER_UPDATE_ERROR: "Bestellungsaktualisierungsfehler",
 		DISCOUNT_APPLICATION_ERROR: "Gutscheinanwendungsfehler",
-		DRAFT_ORDER_OPEN_ERROR: "Entwurfsbestellungsöffnungsfehler",
+		DRAFT_ORDER_OPEN_ERROR: "Bestellungsöffnungsfehler",
 		ORDER_UPDATE_ERROR: "Bestellaktualisierungsfehler",
 		CATALOG_FETCH_ERROR: "Katalogabruffehler",
 		STORE_ID_NOT_FOUND: "Shop-ID nicht gefunden",
-		ORDER_NOT_DRAFT: "Bestellung ist nicht im Entwurfsstatus",
+		ORDER_NOT_DRAFT: "Bestellung ist nicht im gültigen Status",
 		NO_LINE_ITEMS: "Keine Artikel gefunden",
 		BAD_USER_INPUT: "Ungültige Benutzereingabe",
 		MISSING_SHIPPING_ADDRESS: "Lieferadresse ist erforderlich",
@@ -336,5 +343,9 @@ export const deDe = {
 			"Verifizierung der Lieferadresse fehlgeschlagen",
 		BILLING_ADDRESS_VERIFICATION_FAILED:
 			"Verifizierung der Rechnungsadresse fehlgeschlagen",
+		MISSING_SHIPPING_INFO:
+			"Lieferadresse oder -methode konnte nicht angewendet werden",
+		DEPENDENCY_ERROR:
+			"Wir können Ihre Bestellung derzeit nicht bearbeiten. Bitte warten Sie einen Moment und versuchen Sie es erneut",
 	},
 };

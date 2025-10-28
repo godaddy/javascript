@@ -134,6 +134,7 @@ export const itIt = {
 		discount: "Buono",
 		processingPayment: "Elaborazione pagamento...",
 		completingOrder: "Completamento dell'ordine...",
+		completeOrder: "Completa il tuo ordine",
 		freePayment: "Completa il tuo ordine gratuito",
 	},
 	phone: {
@@ -188,6 +189,12 @@ export const itIt = {
 		accessibility: {
 			payWithApplePay: "Paga con Apple Pay",
 			applePayLogo: "Logo Apple Pay",
+			close: "Chiudi",
+			additionalTipOptions: "Opzioni di mancia aggiuntive",
+			breadcrumb: "percorso di navigazione",
+			more: "Altro",
+			previousSlide: "Diapositiva precedente",
+			nextSlide: "Diapositiva successiva",
 		},
 	},
 	errors: {
@@ -251,7 +258,7 @@ export const itIt = {
 		CHECKOUT_SESSION_NOT_FOUND: "Sessione di checkout non trovata",
 		CHECKOUT_SESSION_FETCH_ERROR:
 			"Errore generale nel recupero della sessione di checkout",
-		DRAFT_ORDER_NOT_FOUND: "Bozza ordine non trovata",
+		DRAFT_ORDER_NOT_FOUND: "Ordine non trovato",
 		CHECKOUT_SESSION_CREATION_FAILED:
 			"Errore nella creazione della sessione di checkout",
 		CREATED_SESSION_DATA_NOT_FOUND: "Dati della sessione creata non trovati",
@@ -263,7 +270,7 @@ export const itIt = {
 		CHECKOUT_SESSION_UPDATE_ERROR:
 			"Errore generale nell'aggiornamento della sessione di checkout",
 		ORDER_API_NOT_FOUND: "Fonte dati API ordini non trovata",
-		DRAFT_ORDER_RETRIEVAL_FAILED: "Errore nel recupero della bozza ordine",
+		DRAFT_ORDER_RETRIEVAL_FAILED: "Errore nel recupero dell'ordine",
 		DATA_SOURCES_NOT_FOUND: "Fonti dati non trovate",
 		TRANSACTION_API_NOT_FOUND: "Fonte dati API transazioni non trovata",
 		TRANSACTION_PROCESSING_FAILED: "Errore nell'elaborazione della transazione",
@@ -272,17 +279,17 @@ export const itIt = {
 		ORDER_OPENING_FAILED: "Errore nell'apertura dell'ordine",
 		INVALID_FULFILLMENT_LOCATION: "Posizione di evasione non valida",
 		NO_VALID_PICKUP_LOCATION: "Nessuna posizione di ritiro valida disponibile",
-		DRAFT_ORDER_FETCH_FAILED: "Errore nel recupero della bozza ordine",
+		DRAFT_ORDER_FETCH_FAILED: "Errore nel recupero dell'ordine",
 		LINE_ITEMS_FETCH_FAILED: "Errore nel recupero degli articoli",
-		CURRENT_ORDER_FETCH_FAILED:
-			"Errore nel recupero della bozza ordine corrente",
-		DRAFT_ORDER_UPDATE_FAILED: "Errore nell'aggiornamento della bozza ordine",
+		CURRENT_ORDER_FETCH_FAILED: "Errore nel recupero dell'ordine corrente",
+		DRAFT_ORDER_UPDATE_FAILED: "Errore nell'aggiornamento dell'ordine",
 		DISCOUNT_APPLICATION_FAILED: "Errore nell'applicazione del buono",
 		CONTEXT_UNAVAILABLE: "Sessione o fonti dati non disponibili",
 		SHIPPING_LINES_UPDATE_FAILED:
 			"Errore nell'aggiornamento delle linee di spedizione",
 		ORDER_TOTALS_UPDATE_FAILED:
 			"Errore nell'aggiornamento dei totali dell'ordine",
+		ORDER_TOTAL_CALCULATION_FAILED: "Errore nel calcolo dei totali dell'ordine",
 		SHIPPING_METHOD_APPLICATION_FAILED:
 			"Errore nell'applicazione del metodo di spedizione",
 		SKU_FETCH_FAILED: "Errore nel recupero degli SKU",
@@ -307,13 +314,13 @@ export const itIt = {
 		PRICE_ADJUSTMENT_CALCULATION_ERROR:
 			"Errore nel calcolo dell'aggiustamento prezzo",
 		ORDER_FETCH_ERROR: "Errore nel recupero dell'ordine",
-		DRAFT_ORDER_UPDATE_ERROR: "Errore nell'aggiornamento della bozza ordine",
+		DRAFT_ORDER_UPDATE_ERROR: "Errore nell'aggiornamento dell'ordine",
 		DISCOUNT_APPLICATION_ERROR: "Errore nell'applicazione del buono",
-		DRAFT_ORDER_OPEN_ERROR: "Errore nell'apertura della bozza ordine",
+		DRAFT_ORDER_OPEN_ERROR: "Errore nell'apertura dell'ordine",
 		ORDER_UPDATE_ERROR: "Errore nell'aggiornamento dell'ordine",
 		CATALOG_FETCH_ERROR: "Errore nel recupero del catalogo",
 		STORE_ID_NOT_FOUND: "ID negozio non trovato",
-		ORDER_NOT_DRAFT: "L'ordine non è in stato di bozza",
+		ORDER_NOT_DRAFT: "L'ordine non è in stato valido",
 		NO_LINE_ITEMS: "Nessun articolo trovato",
 		BAD_USER_INPUT: "Input utente non valido",
 		MISSING_SHIPPING_ADDRESS: "Indirizzo di spedizione richiesto",
@@ -336,5 +343,9 @@ export const itIt = {
 			"Verifica indirizzo di spedizione fallita",
 		BILLING_ADDRESS_VERIFICATION_FAILED:
 			"Verifica indirizzo di fatturazione fallita",
+		MISSING_SHIPPING_INFO:
+			"Impossibile applicare l'indirizzo o il metodo di spedizione",
+		DEPENDENCY_ERROR:
+			"Non riusciamo a elaborare il tuo ordine in questo momento. Aspetta un momento e riprova",
 	},
 };

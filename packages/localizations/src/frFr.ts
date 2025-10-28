@@ -134,6 +134,7 @@ export const frFr = {
 		discount: "Coupon",
 		processingPayment: "Traitement du paiement...",
 		completingOrder: "Finalisation de la commande...",
+		completeOrder: "Terminer votre commande",
 		freePayment: "Terminez votre commande gratuite",
 	},
 	phone: {
@@ -186,6 +187,12 @@ export const frFr = {
 		accessibility: {
 			payWithApplePay: "Payer avec Apple Pay",
 			applePayLogo: "Logo Apple Pay",
+			close: "Fermer",
+			additionalTipOptions: "Options de pourboire supplémentaires",
+			breadcrumb: "fil d'ariane",
+			more: "Plus",
+			previousSlide: "Diapositive précédente",
+			nextSlide: "Diapositive suivante",
 		},
 	},
 	errors: {
@@ -250,7 +257,7 @@ export const frFr = {
 		CHECKOUT_SESSION_NOT_FOUND: "Session de paiement non trouvée",
 		CHECKOUT_SESSION_FETCH_ERROR:
 			"Erreur générale lors de la récupération de la session de paiement",
-		DRAFT_ORDER_NOT_FOUND: "Brouillon de commande non trouvé",
+		DRAFT_ORDER_NOT_FOUND: "Commande non trouvée",
 		CHECKOUT_SESSION_CREATION_FAILED:
 			"Échec de la création de la session de paiement",
 		CREATED_SESSION_DATA_NOT_FOUND: "Données de session créées non trouvées",
@@ -262,8 +269,7 @@ export const frFr = {
 		CHECKOUT_SESSION_UPDATE_ERROR:
 			"Erreur générale lors de la mise à jour de la session de paiement",
 		ORDER_API_NOT_FOUND: "Source de données de l'API de commande non trouvée",
-		DRAFT_ORDER_RETRIEVAL_FAILED:
-			"Échec de la récupération du brouillon de commande",
+		DRAFT_ORDER_RETRIEVAL_FAILED: "Échec de la récupération de la commande",
 		DATA_SOURCES_NOT_FOUND: "Sources de données non trouvées",
 		TRANSACTION_API_NOT_FOUND:
 			"Source de données de l'API de transaction non trouvée",
@@ -273,19 +279,18 @@ export const frFr = {
 		ORDER_OPENING_FAILED: "Échec de l'ouverture de la commande",
 		INVALID_FULFILLMENT_LOCATION: "Lieu d'exécution invalide",
 		NO_VALID_PICKUP_LOCATION: "Aucun lieu de retrait valide disponible",
-		DRAFT_ORDER_FETCH_FAILED:
-			"Échec de la récupération du brouillon de commande",
+		DRAFT_ORDER_FETCH_FAILED: "Échec de la récupération de la commande",
 		LINE_ITEMS_FETCH_FAILED: "Échec de la récupération des articles",
 		CURRENT_ORDER_FETCH_FAILED:
-			"Échec de la récupération du brouillon de commande actuel",
-		DRAFT_ORDER_UPDATE_FAILED:
-			"Échec de la mise à jour du brouillon de commande",
+			"Échec de la récupération de la commande actuelle",
+		DRAFT_ORDER_UPDATE_FAILED: "Échec de la mise à jour de la commande",
 		DISCOUNT_APPLICATION_FAILED: "Échec de l'application du coupon",
 		CONTEXT_UNAVAILABLE: "Session ou sources de données non disponibles",
 		SHIPPING_LINES_UPDATE_FAILED:
 			"Échec de la mise à jour des lignes d'expédition",
 		ORDER_TOTALS_UPDATE_FAILED:
 			"Échec de la mise à jour des totaux de la commande",
+		ORDER_TOTAL_CALCULATION_FAILED: "Échec du calcul des totaux de la commande",
 		SHIPPING_METHOD_APPLICATION_FAILED:
 			"Échec de l'application de la méthode d'expédition",
 		SKU_FETCH_FAILED: "Échec de la récupération des SKU",
@@ -310,15 +315,13 @@ export const frFr = {
 		PRICE_ADJUSTMENT_CALCULATION_ERROR:
 			"Erreur lors du calcul de l'ajustement de prix",
 		ORDER_FETCH_ERROR: "Erreur lors de la récupération de la commande",
-		DRAFT_ORDER_UPDATE_ERROR:
-			"Erreur lors de la mise à jour du brouillon de commande",
+		DRAFT_ORDER_UPDATE_ERROR: "Erreur lors de la mise à jour de la commande",
 		DISCOUNT_APPLICATION_ERROR: "Erreur lors de l'application du coupon",
-		DRAFT_ORDER_OPEN_ERROR:
-			"Erreur lors de l'ouverture du brouillon de commande",
+		DRAFT_ORDER_OPEN_ERROR: "Erreur lors de l'ouverture de la commande",
 		ORDER_UPDATE_ERROR: "Erreur lors de la mise à jour de la commande",
 		CATALOG_FETCH_ERROR: "Erreur lors de la récupération du catalogue",
 		STORE_ID_NOT_FOUND: "ID de magasin introuvable",
-		ORDER_NOT_DRAFT: "La commande n'est pas en statut brouillon",
+		ORDER_NOT_DRAFT: "La commande n'est pas en statut valide",
 		NO_LINE_ITEMS: "Aucun article trouvé",
 		BAD_USER_INPUT: "Saisie utilisateur invalide",
 		MISSING_SHIPPING_ADDRESS: "Adresse de livraison requise",
@@ -341,5 +344,9 @@ export const frFr = {
 			"La vérification de l'adresse d'expédition a échoué",
 		BILLING_ADDRESS_VERIFICATION_FAILED:
 			"La vérification de l'adresse de facturation a échoué",
+		MISSING_SHIPPING_INFO:
+			"L'adresse ou la méthode de livraison n'a pas pu être appliquée",
+		DEPENDENCY_ERROR:
+			"Nous ne pouvons pas traiter votre commande actuellement. Veuillez patienter un moment et réessayer",
 	},
 };

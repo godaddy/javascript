@@ -134,6 +134,7 @@ export const esEs = {
 		discount: "Cupón",
 		processingPayment: "Procesando pago...",
 		completingOrder: "Completando pedido...",
+		completeOrder: "Completar tu pedido",
 		freePayment: "Completa tu pedido gratuito",
 	},
 	phone: {
@@ -186,6 +187,12 @@ export const esEs = {
 		accessibility: {
 			payWithApplePay: "Pagar con Apple Pay",
 			applePayLogo: "Logo de Apple Pay",
+			close: "Cerrar",
+			additionalTipOptions: "Opciones de propina adicionales",
+			breadcrumb: "ruta de navegación",
+			more: "Más",
+			previousSlide: "Diapositiva anterior",
+			nextSlide: "Siguiente diapositiva",
 		},
 	},
 	errors: {
@@ -245,7 +252,7 @@ export const esEs = {
 		CHECKOUT_SESSION_NOT_FOUND: "Sesión de checkout no encontrada",
 		CHECKOUT_SESSION_FETCH_ERROR:
 			"Error general al obtener la sesión de checkout",
-		DRAFT_ORDER_NOT_FOUND: "Borrador de pedido no encontrado",
+		DRAFT_ORDER_NOT_FOUND: "Pedido no encontrado",
 		CHECKOUT_SESSION_CREATION_FAILED: "No se pudo crear la sesión de checkout",
 		CREATED_SESSION_DATA_NOT_FOUND: "Datos de la sesión creada no encontrados",
 		CHECKOUT_SESSION_CREATION_ERROR:
@@ -256,7 +263,7 @@ export const esEs = {
 		CHECKOUT_SESSION_UPDATE_ERROR:
 			"Error general al actualizar la sesión de checkout",
 		ORDER_API_NOT_FOUND: "Fuente de datos de la API de pedidos no encontrada",
-		DRAFT_ORDER_RETRIEVAL_FAILED: "No se pudo recuperar el borrador de pedido",
+		DRAFT_ORDER_RETRIEVAL_FAILED: "No se pudo recuperar el pedido",
 		DATA_SOURCES_NOT_FOUND: "Fuentes de datos no encontradas",
 		TRANSACTION_API_NOT_FOUND:
 			"Fuente de datos de la API de transacciones no encontrada",
@@ -265,15 +272,16 @@ export const esEs = {
 		ORDER_OPENING_FAILED: "No se pudo abrir el pedido",
 		INVALID_FULFILLMENT_LOCATION: "Ubicación de cumplimiento inválida",
 		NO_VALID_PICKUP_LOCATION: "No hay ubicación de recogida válida disponible",
-		DRAFT_ORDER_FETCH_FAILED: "No se pudo obtener el borrador de pedido",
+		DRAFT_ORDER_FETCH_FAILED: "No se pudo obtener el pedido",
 		LINE_ITEMS_FETCH_FAILED: "No se pudieron obtener los artículos",
-		CURRENT_ORDER_FETCH_FAILED:
-			"No se pudo obtener el borrador de pedido actual",
-		DRAFT_ORDER_UPDATE_FAILED: "No se pudo actualizar el borrador de pedido",
+		CURRENT_ORDER_FETCH_FAILED: "No se pudo obtener el pedido actual",
+		DRAFT_ORDER_UPDATE_FAILED: "No se pudo actualizar el pedido",
 		DISCOUNT_APPLICATION_FAILED: "No se pudo aplicar el cupón",
 		CONTEXT_UNAVAILABLE: "Sesión o fuentes de datos no disponibles",
 		SHIPPING_LINES_UPDATE_FAILED: "No se pudo actualizar las líneas de envío",
 		ORDER_TOTALS_UPDATE_FAILED: "No se pudo actualizar los totales del pedido",
+		ORDER_TOTAL_CALCULATION_FAILED:
+			"No se pudo calcular los totales del pedido",
 		SHIPPING_METHOD_APPLICATION_FAILED: "No se pudo aplicar el método de envío",
 		SKU_FETCH_FAILED: "No se pudieron obtener los SKUs",
 		SHIPPING_RATES_CALCULATION_FAILED:
@@ -295,13 +303,13 @@ export const esEs = {
 		SHIPPING_ERROR: "Error general de envío",
 		PRICE_ADJUSTMENT_CALCULATION_ERROR: "Error al calcular el ajuste de precio",
 		ORDER_FETCH_ERROR: "Error al obtener el pedido",
-		DRAFT_ORDER_UPDATE_ERROR: "Error al actualizar el borrador de pedido",
+		DRAFT_ORDER_UPDATE_ERROR: "Error al actualizar el pedido",
 		DISCOUNT_APPLICATION_ERROR: "Error al aplicar el cupón",
-		DRAFT_ORDER_OPEN_ERROR: "Error al abrir el borrador de pedido",
+		DRAFT_ORDER_OPEN_ERROR: "Error al abrir el pedido",
 		ORDER_UPDATE_ERROR: "Error al actualizar el pedido",
 		CATALOG_FETCH_ERROR: "Error al obtener el catálogo",
 		STORE_ID_NOT_FOUND: "ID de tienda no encontrado",
-		ORDER_NOT_DRAFT: "El pedido no está en estado borrador",
+		ORDER_NOT_DRAFT: "El pedido no está en estado válido",
 		NO_LINE_ITEMS: "No se encontraron artículos",
 		BAD_USER_INPUT: "Entrada de usuario inválida",
 		MISSING_SHIPPING_ADDRESS: "Se requiere dirección de envío",
@@ -324,5 +332,8 @@ export const esEs = {
 			"Falló la verificación de dirección de envío",
 		BILLING_ADDRESS_VERIFICATION_FAILED:
 			"Falló la verificación de dirección de facturación",
+		MISSING_SHIPPING_INFO: "No se pudo aplicar la dirección o método de envío",
+		DEPENDENCY_ERROR:
+			"No podemos procesar su pedido en este momento. Espere un momento e inténtelo de nuevo",
 	},
 };
