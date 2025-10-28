@@ -33,22 +33,32 @@ import {
 	AddressMatchesQuery,
 	DraftOrderPriceAdjustmentsQuery,
 	DraftOrderQuery,
-	DraftOrderShippingQuery,
 	DraftOrderShippingRatesQuery,
 	DraftOrderSkusQuery,
 	DraftOrderTaxesQuery,
-	DraftOrderTotalsQuery,
 } from "./queries";
 
-function getHostByEnvironment(): string {
-	return (
-		process.env.GODADDY_HOST || "https://checkout.commerce.api.godaddy.com"
-	);
+function getHostByEnvironment(environment: string | null): string {
+	switch (environment) {
+		case "prod":
+			return "https://checkout.commerce.api.godaddy.com";
+		case "ote":
+			return "https://checkout.commerce.api.ote-godaddy.com";
+		case "dev":
+			return "https://checkout.commerce.api.dev-godaddy.com";
+		case "test":
+			return "https://checkout.commerce.api.test-godaddy.com";
+		default:
+			throw new Error("Invalid environment");
+	}
 }
 
 export async function createCheckoutSession(
 	input: CheckoutSessionInput["input"],
-	{ accessToken }: { accessToken: string; environment: Environments },
+	{
+		accessToken,
+		environment = "dev",
+	}: { accessToken: string; environment: Environments },
 ): Promise<
 	ResultOf<typeof CreateCheckoutSessionMutation>["createCheckoutSession"]
 > {
@@ -56,7 +66,7 @@ export async function createCheckoutSession(
 		throw new Error("No public access token provided");
 	}
 
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(environment);
 
 	try {
 		const response = await graphqlRequestWithErrors<
@@ -83,7 +93,7 @@ export async function getAddressMatches(
 		throw new Error("No session token or ID provided");
 	}
 
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<ResultOf<typeof AddressMatchesQuery>>(
 		GODADDY_HOST,
@@ -102,47 +112,11 @@ export function getDraftOrder(session: CheckoutSession | undefined) {
 		throw new Error("No session token or ID provided");
 	}
 
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<ResultOf<typeof DraftOrderQuery>>(
 		GODADDY_HOST,
 		DraftOrderQuery,
-		undefined,
-		{
-			"x-session-token": `${session.token}`,
-			"x-session-id": session.id,
-			"x-store-id": session.storeId,
-		},
-	);
-}
-
-export function getDraftOrderTotals(session: CheckoutSession | undefined) {
-	if (!session?.token || !session?.id) {
-		throw new Error("No session token or ID provided");
-	}
-	const GODADDY_HOST = getHostByEnvironment();
-
-	return graphqlRequestWithErrors<ResultOf<typeof DraftOrderTotalsQuery>>(
-		GODADDY_HOST,
-		DraftOrderTotalsQuery,
-		undefined,
-		{
-			"x-session-token": `${session.token}`,
-			"x-session-id": session.id,
-			"x-store-id": session.storeId,
-		},
-	);
-}
-
-export function getDraftOrderShipping(session: CheckoutSession | undefined) {
-	if (!session?.token || !session?.id) {
-		throw new Error("No session token or ID provided");
-	}
-	const GODADDY_HOST = getHostByEnvironment();
-
-	return graphqlRequestWithErrors<ResultOf<typeof DraftOrderShippingQuery>>(
-		GODADDY_HOST,
-		DraftOrderShippingQuery,
 		undefined,
 		{
 			"x-session-token": `${session.token}`,
@@ -165,7 +139,7 @@ export function getDraftOrderTaxes(
 	if (!session?.token || !session?.id) {
 		throw new Error("No session token or ID provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<ResultOf<typeof DraftOrderTaxesQuery>>(
 		GODADDY_HOST,
@@ -196,14 +170,14 @@ export async function verifyAddress(
 	if (!session?.token || !session?.id) {
 		throw new Error("No public access token provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof VerifyCheckoutSessionAddressMutation>
 	>(
 		GODADDY_HOST,
 		VerifyCheckoutSessionAddressMutation,
-		{ input: { ...input, adminArea2: input.adminArea3 } },
+		{ input: { ...input, adminArea3: input.adminArea2, adminArea2: "" } },
 		{
 			"x-session-token": `${session.token}`,
 			"x-session-id": session.id,
@@ -219,7 +193,7 @@ export async function updateDraftOrder(
 	if (!session?.token || !session?.id) {
 		throw new Error("No public access token provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof UpdateCheckoutSessionDraftOrderMutation>
@@ -241,7 +215,7 @@ export async function getProductsFromOrderSkus(
 	if (!session?.token || !session?.id) {
 		throw new Error("No session token or ID provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<ResultOf<typeof DraftOrderSkusQuery>>(
 		GODADDY_HOST,
@@ -271,7 +245,7 @@ export function updateDraftOrderTaxes(
 	if (!session?.token || !session?.id) {
 		throw new Error("No session token or ID provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof CalculateCheckoutSessionTaxesMutation>
@@ -294,7 +268,7 @@ export function applyDiscount(
 	if (!session?.token || !session?.id) {
 		throw new Error("No session token or ID provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof ApplyCheckoutSessionDiscountMutation>
@@ -317,7 +291,7 @@ export function applyShippingMethod(
 	if (!session?.token || !session?.id) {
 		throw new Error("No session token or ID provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof ApplyCheckoutSessionShippingMethodMutation>
@@ -334,7 +308,7 @@ export function applyShippingMethod(
 }
 
 export function removeShippingMethod(
-	shippingMethod: RemoveAppliedCheckoutSessionShippingMethodInput["input"]["name"],
+	input: RemoveAppliedCheckoutSessionShippingMethodInput["input"],
 	session: CheckoutSession | undefined,
 ): Promise<
 	ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>
@@ -342,14 +316,14 @@ export function removeShippingMethod(
 	if (!session?.token || !session?.id) {
 		throw new Error("No session token or ID provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>
 	>(
 		GODADDY_HOST,
 		RemoveAppliedCheckoutSessionShippingMethodMutation,
-		{ input: { name: shippingMethod } },
+		{ input },
 		{
 			"x-session-token": `${session.token}`,
 			"x-session-id": session.id,
@@ -365,7 +339,7 @@ export function confirmCheckout(
 	if (!session?.token || !session?.id) {
 		throw new Error("No session token or ID provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof ConfirmCheckoutSessionMutation>
@@ -389,7 +363,7 @@ export function getDraftOrderShippingMethods(
 		throw new Error("No session token or ID provided");
 	}
 
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof DraftOrderShippingRatesQuery>
@@ -412,7 +386,7 @@ export function applyDeliveryMethod(
 	if (!session?.token || !session?.id) {
 		throw new Error("No session token or ID provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof ApplyCheckoutSessionDeliveryMethodMutation>
@@ -437,7 +411,7 @@ export function getDraftOrderPriceAdjustments(
 		throw new Error("No session token or ID provided");
 	}
 
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof DraftOrderPriceAdjustmentsQuery>
@@ -460,7 +434,7 @@ export function applyFulfillmentLocation(
 	if (!session?.token || !session?.id) {
 		throw new Error("No session token or ID provided");
 	}
-	const GODADDY_HOST = getHostByEnvironment();
+	const GODADDY_HOST = getHostByEnvironment(session?.environment || "dev");
 
 	return graphqlRequestWithErrors<
 		ResultOf<typeof ApplyCheckoutSessionFulfillmentLocationMutation>

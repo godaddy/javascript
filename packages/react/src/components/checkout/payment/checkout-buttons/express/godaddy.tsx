@@ -1,7 +1,7 @@
 import { useCheckoutContext } from "@/components/checkout/checkout";
 import { useGetPriceAdjustments } from "@/components/checkout/discount/utils/use-get-price-adjustments";
 import { useDraftOrder } from "@/components/checkout/order/use-draft-order";
-import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order-totals";
+import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order";
 import { useUpdateTaxes } from "@/components/checkout/order/use-update-taxes";
 
 import {
@@ -36,7 +36,13 @@ import type {
 	WalletError,
 	WalletRequestUpdate,
 } from "@/components/checkout/payment/types";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 import { useFormContext } from "react-hook-form";
 
 export function ExpressCheckoutButton() {
@@ -82,7 +88,6 @@ export function ExpressCheckoutButton() {
 	const calculateGodaddyExpressTaxes = useCallback(
 		async (
 			shippingAddress: Address | null,
-			lineItems: LineItem[],
 			currencyCode: string,
 			shippingAmount: string,
 		) => {
@@ -96,15 +101,6 @@ export function ExpressCheckoutButton() {
 					adminArea1: shippingAddress?.administrativeArea || "",
 				},
 				lines: [
-					...lineItems.map((item) => ({
-						type: "SKU" as const,
-						subtotalPrice: {
-							currencyCode: currencyCode,
-							value:
-								Number(item.amount) * 100 -
-								(item.discountAmount ? Number(item.discountAmount) * 100 : 0),
-						},
-					})),
 					{
 						type: "SHIPPING" as const,
 						subtotalPrice: {
@@ -148,7 +144,7 @@ export function ExpressCheckoutButton() {
 				}).format((method.cost?.value || 0) / 100);
 
 				return {
-					id: method?.displayName?.replace(/\s+/g, "-").toLowerCase(),
+					id: method?.displayName?.replace(/\s+/g, "-")?.toLowerCase(),
 					label: method.displayName || "",
 					detail: method.description
 						? `(${method.description}) ${shippingMethodPrice}`
@@ -268,13 +264,39 @@ export function ExpressCheckoutButton() {
 		setCouponFetchStatus("fetching");
 
 		const fetchPriceAdjustments = async () => {
-			if (draftOrder?.discounts?.length && draftOrder.discounts[0]?.code) {
+			const allCodes = new Set<string>();
+
+			// Add order-level discount codes
+			if (draftOrder?.discounts) {
+				for (const discount of draftOrder.discounts) {
+					if (discount.code) {
+						allCodes.add(discount.code);
+					}
+				}
+			}
+
+			// Add line item-level discount codes
+			if (draftOrder?.lineItems) {
+				for (const lineItem of draftOrder.lineItems) {
+					if (lineItem.discounts) {
+						for (const discount of lineItem.discounts) {
+							if (discount.code) {
+								allCodes.add(discount.code);
+							}
+						}
+					}
+				}
+			}
+
+			const discountCodes = Array.from(allCodes);
+
+			if (discountCodes?.length && discountCodes?.[0]) {
 				const result = await getPriceAdjustments.mutateAsync({
-					discountCodes: [draftOrder.discounts[0].code],
+					discountCodes: [discountCodes?.[0]],
 				});
 
 				if (result) {
-					setAppliedCouponCode(draftOrder.discounts[0].code);
+					setAppliedCouponCode(discountCodes?.[0]);
 					setPriceAdjustment(result);
 				}
 			}
@@ -289,7 +311,7 @@ export function ExpressCheckoutButton() {
 
 	// Initialize the TokenizeJs instance when the component mounts
 	// But only after price adjustments have been fetched
-	useEffect(() => {
+	useLayoutEffect(() => {
 		if (
 			!collect.current &&
 			godaddyPaymentsConfig &&
@@ -357,15 +379,32 @@ export function ExpressCheckoutButton() {
 			!godaddyPaymentsConfig ||
 			!isCollectLoading ||
 			!collect.current ||
-			!totals ||
 			hasMounted.current
 		)
 			return;
 
 		collect.current?.supportWalletPayments().then((supports) => {
 			const paymentMethods = [];
-			if (supports.applePay) paymentMethods.push("apple_pay");
-			if (supports.googlePay) paymentMethods.push("google_pay");
+			if (supports.applePay) {
+				track({
+					eventId: eventIds.expressApplePayImpression,
+					type: TrackingEventType.IMPRESSION,
+					properties: {
+						provider: "poynt",
+					},
+				});
+				paymentMethods.push("apple_pay");
+			}
+			if (supports.googlePay) {
+				paymentMethods.push("google_pay");
+				track({
+					eventId: eventIds.expressGooglePayImpression,
+					type: TrackingEventType.IMPRESSION,
+					properties: {
+						provider: "poynt",
+					},
+				});
+			}
 			// if (supports.paze) paymentMethods.push("paze"); // paze is not an "express" payment and needs to be implemented as a standard flow
 
 			if (paymentMethods.length > 0 && !hasMounted.current) {
@@ -391,7 +430,6 @@ export function ExpressCheckoutButton() {
 		isPoyntLoaded,
 		godaddyPaymentsConfig,
 		isCollectLoading,
-		totals,
 		handleExpressPayClick,
 	]);
 
@@ -443,7 +481,12 @@ export function ExpressCheckoutButton() {
 				shipping: { currencyCode: "USD", value: 0 },
 			});
 
-			form.reset(mapOrderToFormValues(draftOrder));
+			form.reset(
+				mapOrderToFormValues({
+					order: draftOrder,
+					defaultCountryCode: session?.shipping?.originAddress?.countryCode,
+				}),
+			);
 
 			if (session?.enableTaxCollection && draftOrder?.shipping?.address) {
 				try {
@@ -783,41 +826,7 @@ export function ExpressCheckoutButton() {
 		});
 
 		collect.current.on("ready", () => {
-			// console.log("[poynt collect] Ready");
 			setIsCollectLoading(false);
-
-			// Track express payment methods impression when available
-			collect.current?.supportWalletPayments().then((supports) => {
-				if (supports.applePay) {
-					track({
-						eventId: eventIds.expressApplePayImpression,
-						type: TrackingEventType.IMPRESSION,
-						properties: {
-							provider: "poynt",
-						},
-					});
-				}
-
-				if (supports.googlePay) {
-					track({
-						eventId: eventIds.expressGooglePayImpression,
-						type: TrackingEventType.IMPRESSION,
-						properties: {
-							provider: "poynt",
-						},
-					});
-				}
-
-				if (supports.paze) {
-					track({
-						eventId: eventIds.pazePayImpression,
-						type: TrackingEventType.IMPRESSION,
-						properties: {
-							provider: "poynt",
-						},
-					});
-				}
-			});
 		});
 
 		collect.current.on("error", (event) => {
@@ -887,11 +896,6 @@ export function ExpressCheckoutButton() {
 					try {
 						const taxesResult = await calculateGodaddyExpressTaxes(
 							shippingAddress,
-							poyntExpressRequest.lineItems?.map((item) => ({
-								label: item.label,
-								amount: item.amount,
-								isPending: item.isPending,
-							})),
 							currencyCode,
 							shippingAmount || "0",
 						);
@@ -1053,11 +1057,6 @@ export function ExpressCheckoutButton() {
 						// console.log("[poynt collect] getting taxes!");
 						const taxesResult = await calculateGodaddyExpressTaxes(
 							e.shippingAddress,
-							poyntExpressRequest.lineItems?.map((item) => ({
-								label: item.label,
-								amount: item.amount,
-								isPending: item.isPending,
-							})),
 							currencyCode,
 							methods?.[0]?.amount,
 						);

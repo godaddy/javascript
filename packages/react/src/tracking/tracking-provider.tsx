@@ -1,5 +1,6 @@
 "use client";
 
+import type { TrackingProperties } from "@/tracking/event-properties";
 import { Track, useTracking } from "@/tracking/track";
 import type { CheckoutSession } from "@/types";
 import React from "react";
@@ -15,16 +16,19 @@ export function TrackingProvider({
 	children,
 	session,
 	trackingEnabled = false,
+	trackingProperties,
 }: {
 	children: React.ReactNode;
 	session?: CheckoutSession;
 	trackingEnabled?: boolean;
+	trackingProperties?: TrackingProperties;
 }) {
 	return (
 		<Track>
 			<TrackingInitializer
 				session={session}
 				trackingEnabled={trackingEnabled}
+				trackingProperties={trackingProperties}
 			/>
 			{children}
 		</Track>
@@ -35,9 +39,11 @@ export function TrackingProvider({
 function TrackingInitializer({
 	session,
 	trackingEnabled,
+	trackingProperties = {},
 }: {
 	session?: CheckoutSession;
 	trackingEnabled: boolean;
+	trackingProperties?: TrackingProperties;
 }) {
 	const [isInitialized, setIsInitialized] = React.useState(false);
 	const tracking = useTracking();
@@ -59,6 +65,8 @@ function TrackingInitializer({
 					draftOrderId: session?.draftOrder?.id || "",
 					storeId: session?.storeId || "",
 					channelId: session?.channelId || "",
+					customerId: session?.customerId || "",
+					...trackingProperties,
 				},
 			});
 
@@ -93,7 +101,7 @@ function TrackingInitializer({
 				},
 			});
 		}
-	}, [tracking, session, trackingEnabled, isInitialized]);
+	}, [tracking, session, trackingEnabled, isInitialized, trackingProperties]);
 
 	return null;
 }

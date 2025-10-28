@@ -19,7 +19,10 @@ import {
 	type Product,
 } from "@/components/checkout/line-items/line-items";
 import { NotesForm } from "@/components/checkout/notes/notes-form";
-import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order-totals";
+import {
+	useDraftOrder,
+	useDraftOrderTotals,
+} from "@/components/checkout/order/use-draft-order";
 import { PaymentForm } from "@/components/checkout/payment/payment-form";
 import {
 	ConditionalExpressProviders,
@@ -87,6 +90,11 @@ export function CheckoutForm({
 			mutationKey: ["apply-shipping-method", { sessionId: session?.id }],
 		}) > 0;
 
+	const isDiscountApplying =
+		useIsMutating({
+			mutationKey: ["apply-discount", { sessionId: session?.id }],
+		}) > 0;
+
 	const isUpdatingTaxes =
 		useIsMutating({
 			mutationKey: ["update-draft-order-taxes", { id: session?.id }],
@@ -97,13 +105,19 @@ export function CheckoutForm({
 	// 	(order?.discounts?.map((d) => d.code).filter(Boolean) as string[]) || [];
 
 	const draftOrderTotalsQuery = useDraftOrderTotals();
+	const draftOrder = useDraftOrder();
 
 	const { data: totals, isLoading: totalsLoading } = draftOrderTotalsQuery;
+	const { data: order } = draftOrder;
 
 	// Order summary calculations
 	const subtotal = (totals?.subTotal?.value || 0) / 100;
 	const orderDiscount = (totals?.discountTotal?.value || 0) / 100;
-	const shipping = (totals?.shippingTotal?.value || 0) / 100;
+	const shipping =
+		(order?.shippingLines?.reduce(
+			(sum, line) => sum + (line?.amount?.value || 0),
+			0,
+		) || 0) / 100;
 	const taxTotal = (totals?.taxTotal?.value || 0) / 100;
 	const orderTotal = (totals?.total?.value || 0) / 100;
 	const tipTotal = (tipAmount || 0) / 100;
@@ -379,6 +393,7 @@ export function CheckoutForm({
 															taxes={taxTotal}
 															isTaxLoading={isUpdatingTaxes}
 															isShippingLoading={isUpdatingShipping}
+															isDiscountLoading={isDiscountApplying}
 															subtotal={subtotal}
 															discount={orderDiscount}
 															shipping={shipping}
@@ -443,6 +458,7 @@ export function CheckoutForm({
 													isShippingLoading={isUpdatingShipping}
 													subtotal={subtotal}
 													discount={orderDiscount}
+													isDiscountLoading={isDiscountApplying}
 													shipping={shipping}
 													totalSavings={totalSavings}
 													itemCount={itemCount}
@@ -471,6 +487,7 @@ export function CheckoutForm({
 									isShippingLoading={isUpdatingShipping}
 									subtotal={subtotal}
 									discount={orderDiscount}
+									isDiscountLoading={isDiscountApplying}
 									shipping={shipping}
 									totalSavings={totalSavings}
 									itemCount={itemCount}

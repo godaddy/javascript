@@ -35,11 +35,12 @@ export function useAddressVerification(
 	const queryKey = [
 		"verifyAddressQuery",
 		{
-			addressLine1: address.addressLine1.toLowerCase(),
-			postalCode: address.postalCode.toLowerCase(),
-			countryCode: address.countryCode.toLowerCase(),
-			city: address.adminArea2?.toLowerCase(),
-			state: address.adminArea1?.toLowerCase(),
+			sessionId: session?.id,
+			addressLine1: address?.addressLine1?.toLowerCase(),
+			postalCode: address?.postalCode?.toLowerCase(),
+			countryCode: address?.countryCode?.toLowerCase(),
+			city: address?.adminArea3?.toLowerCase(),
+			state: address?.adminArea1?.toLowerCase(),
 		},
 	];
 
@@ -49,9 +50,9 @@ export function useAddressVerification(
 		enabled:
 			options.enabled &&
 			!!session?.id &&
-			!!address.addressLine1 &&
-			!!address.postalCode &&
-			!!address.countryCode,
+			!!address?.addressLine1 &&
+			!!address?.postalCode &&
+			!!address?.countryCode,
 		select: (data) => data.verifyAddress,
 	});
 }

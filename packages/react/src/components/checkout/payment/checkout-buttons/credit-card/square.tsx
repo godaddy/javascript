@@ -7,12 +7,14 @@ import {
 } from "@/components/checkout/payment/utils/use-confirm-checkout";
 import { useIsPaymentDisabled } from "@/components/checkout/payment/utils/use-is-payment-disabled";
 import { Button } from "@/components/ui/button";
+import { useGoDaddyContext } from "@/godaddy-provider";
 import { GraphQLErrorWithCodes } from "@/lib/graphql-with-errors";
 import { PaymentMethodType } from "@/types";
 import React, { useCallback, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 export function SquareCreditCardCheckoutButton() {
+	const { t } = useGoDaddyContext();
 	const { card, isLoading } = useSquare();
 	const { squarePaymentRequest } = useBuildPaymentRequest();
 	const confirmCheckout = useConfirmCheckout();
@@ -79,7 +81,7 @@ export function SquareCreditCardCheckoutButton() {
 				isSquareDisabled
 			}
 		>
-			Pay now
+			{t.payment.payNow}
 		</Button>
 	);
 }

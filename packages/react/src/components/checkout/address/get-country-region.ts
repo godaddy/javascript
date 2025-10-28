@@ -32,8 +32,8 @@ export function getRegions(
 		return [];
 	}
 
-	return countryData[2].map((region: string[]) => ({
-		label: region[0],
-		code: region[1],
+	return countryData[2].map((region: (string | undefined)[]) => ({
+		label: region[0] ?? "",
+		code: region[1] ?? region[0] ?? "",
 	}));
 }

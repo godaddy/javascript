@@ -7,6 +7,7 @@ import { getRequiredFieldsFromSchema } from "@/components/checkout/form/utils/ge
 import { type GoDaddyVariables, useGoDaddyContext } from "@/godaddy-provider";
 import { type Theme, useTheme } from "@/hooks/use-theme";
 import { useVariables } from "@/hooks/use-variables";
+import type { TrackingProperties } from "@/tracking/event-properties";
 import { TrackingProvider } from "@/tracking/tracking-provider";
 import type { CheckoutSession } from "@/types";
 import React, { type ReactNode } from "react";
@@ -17,7 +18,9 @@ import type { Target } from "./target/target";
 // Utility function for redirecting to success URL after checkout
 export function redirectToSuccessUrl(successUrl?: string): void {
 	if (successUrl && typeof window !== "undefined") {
-		window.location.href = successUrl;
+		setTimeout(() => {
+			window.location.href = successUrl;
+		}, 1000);
 	}
 }
 
@@ -218,6 +221,7 @@ export interface CheckoutProps {
 	direction?: "ltr" | "rtl";
 	showStoreHours?: boolean;
 	enableTracking?: boolean;
+	trackingProperties?: TrackingProperties;
 	targets?: Partial<Record<Target, () => ReactNode>>;
 	checkoutFormSchema?: CheckoutFormSchema;
 	defaultValues?: Pick<CheckoutFormData, "contactEmail">;
@@ -228,6 +232,7 @@ export function Checkout(props: CheckoutProps) {
 		session,
 		checkoutFormSchema,
 		enableTracking = false,
+		trackingProperties,
 		stripeConfig,
 		godaddyPaymentsConfig,
 		squareConfig,
@@ -504,6 +509,7 @@ export function Checkout(props: CheckoutProps) {
 		<TrackingProvider
 			session={session}
 			trackingEnabled={enableTracking && !!session?.id}
+			trackingProperties={trackingProperties}
 		>
 			<checkoutContext.Provider
 				value={{

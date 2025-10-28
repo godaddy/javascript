@@ -16,7 +16,6 @@ import type {
 	DraftOrderShippingRatesQuery,
 	DraftOrderSkusQuery,
 	DraftOrderTaxesQuery,
-	DraftOrderTotalsQuery,
 } from "@/lib/godaddy/queries";
 import type { ResultOf, VariablesOf } from "gql.tada";
 
@@ -96,9 +95,19 @@ export type DraftOrder = NonNullable<
 export type Totals = NonNullable<
 	NonNullable<
 		NonNullable<
-			ResultOf<typeof DraftOrderTotalsQuery>["checkoutSession"]
+			ResultOf<typeof DraftOrderQuery>["checkoutSession"]
 		>["draftOrder"]
 	>["totals"]
+>;
+
+export type ShippingLines = NonNullable<
+	NonNullable<
+		NonNullable<
+			NonNullable<
+				ResultOf<typeof DraftOrderQuery>["checkoutSession"]
+			>["draftOrder"]
+		>["shippingLines"]
+	>[number]
 >;
 
 export type UpdateDraftOrderInput = VariablesOf<

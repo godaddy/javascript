@@ -5,6 +5,7 @@ import {
 } from "@/components/checkout/payment/utils/use-confirm-checkout";
 import { useIsPaymentDisabled } from "@/components/checkout/payment/utils/use-is-payment-disabled";
 import { Button } from "@/components/ui/button";
+import { useGoDaddyContext } from "@/godaddy-provider";
 import { GraphQLErrorWithCodes } from "@/lib/graphql-with-errors";
 import { cn } from "@/lib/utils";
 import { PaymentMethodType } from "@/types";
@@ -12,6 +13,7 @@ import React, { useCallback } from "react";
 import { useFormContext } from "react-hook-form";
 
 export function OfflinePaymentCheckoutButton() {
+	const { t } = useGoDaddyContext();
 	const { setCheckoutErrors, isConfirmingCheckout } = useCheckoutContext();
 	const isPaymentDisabled = useIsPaymentDisabled();
 	const form = useFormContext();
@@ -53,7 +55,7 @@ export function OfflinePaymentCheckoutButton() {
 			disabled={isPaymentDisabled || isConfirmingCheckout}
 			onClick={handleSubmit}
 		>
-			Complete your order
+			{t.payment.completeOrder}
 		</Button>
 	);
 }

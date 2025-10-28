@@ -1,5 +1,5 @@
 import { useCheckoutContext } from "@/components/checkout/checkout";
-import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order-totals";
+import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order";
 import { useStripePaymentIntent } from "@/components/checkout/payment/utils/use-stripe-payment-intent";
 import { Elements, useElements } from "@stripe/react-stripe-js";
 import { useEffect } from "react";

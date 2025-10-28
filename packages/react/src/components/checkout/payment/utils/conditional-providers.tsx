@@ -50,20 +50,10 @@ export function ConditionalPaymentProviders({
 export function ConditionalExpressProviders({
 	children,
 }: ConditionalPaymentProvidersProps) {
-	const { stripeConfig, godaddyPaymentsConfig } = useCheckoutContext();
+	const { stripeConfig } = useCheckoutContext();
 
 	// Start with the children and conditionally wrap with express-capable providers
 	let wrappedChildren = children;
-
-	// Only wrap with PoyntCollectProvider (GoDaddy Payments) if configured
-	if (
-		godaddyPaymentsConfig?.businessId?.trim() &&
-		godaddyPaymentsConfig?.appId?.trim()
-	) {
-		wrappedChildren = (
-			<PoyntCollectProvider>{wrappedChildren}</PoyntCollectProvider>
-		);
-	}
 
 	// Only wrap with StripeProvider if Stripe is configured
 	if (stripeConfig?.publishableKey?.trim()) {

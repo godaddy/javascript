@@ -26,20 +26,18 @@ export function useUpdateOrder() {
 				input.shipping?.address ||
 				(!input.shipping?.address && input.billing?.address)
 			) {
-				queryClient.invalidateQueries({
-					queryKey: ["draft-order-shipping-methods", { id: session?.id }],
-				});
-				queryClient.invalidateQueries({
-					queryKey: ["draft-order-shipping-address", { id: session?.id }],
-				});
 				if (session?.enableTaxCollection) {
 					updateTaxes.mutate(undefined);
+				} else {
+					queryClient.invalidateQueries({
+						queryKey: ["draft-order", { id: session?.id }],
+					});
 				}
+			} else {
+				queryClient.invalidateQueries({
+					queryKey: ["draft-order", { id: session?.id }],
+				});
 			}
-
-			queryClient.invalidateQueries({
-				queryKey: ["draft-order", { id: session?.id }],
-			});
 		},
 	});
 }

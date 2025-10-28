@@ -1,6 +1,6 @@
 import { useCheckoutContext } from "@/components/checkout/checkout";
 import { updateDraftOrderTaxes } from "@/lib/godaddy/godaddy";
-import type { DraftOrderTotalsQuery } from "@/lib/godaddy/queries";
+import type { DraftOrderQuery } from "@/lib/godaddy/queries";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ResultOf } from "gql.tada";
 
@@ -28,11 +28,11 @@ export function useUpdateTaxes() {
 			// Extract shippingTotal from mutation response
 			const taxesTotal = data?.calculateCheckoutSessionTaxes?.totalTaxAmount;
 
-			// Update the cached draft-order-totals query
+			// Update the cached draft-order query (includes totals)
 			if (taxesTotal) {
 				queryClient.setQueryData(
-					["draft-order-totals", { id: session.id }],
-					(old: ResultOf<typeof DraftOrderTotalsQuery> | undefined) => {
+					["draft-order", { id: session.id }],
+					(old: ResultOf<typeof DraftOrderQuery> | undefined) => {
 						if (!old) return old;
 						return {
 							...old,
@@ -54,9 +54,6 @@ export function useUpdateTaxes() {
 			}
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({
-				queryKey: ["draft-order-totals", { id: session?.id }],
-			});
 			queryClient.invalidateQueries({
 				queryKey: ["draft-order", { id: session?.id }],
 			});

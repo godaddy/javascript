@@ -10,7 +10,7 @@ import { GraphQLErrorWithCodes } from "@/lib/graphql-with-errors";
 import { eventIds } from "@/tracking/events";
 import { TrackingEventType, track } from "@/tracking/track";
 
-import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order-totals";
+import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order";
 import type {
 	TokenizeJs,
 	WalletError,
@@ -64,13 +64,45 @@ export function PazeCheckoutButton() {
 		});
 	}, [poyntStandardRequest, setCheckoutErrors, form]);
 
+	const mountPazeElement = useCallback(() => {
+		if (!hasMounted.current && collect?.current) {
+			hasMounted.current = true;
+			// console.log("[poynt collect] Mounting paze-pay-element");
+			collect?.current.mount("paze-pay-element", document, {
+				paymentMethods: ["paze"],
+				buttonsContainerOptions: {
+					className: "gap-1 !flex-col sm:!flex-row place-items-center",
+				},
+
+				buttonOptions: {
+					type: "plain",
+					margin: "0",
+					height: "48px",
+					width: "100%",
+					justifyContent: "flex-start",
+					onClick: handlePazeClick,
+				},
+			});
+
+			setIsCollectLoading(false);
+
+			track({
+				eventId: eventIds.pazePayImpression,
+				type: TrackingEventType.IMPRESSION,
+				properties: {
+					provider: "poynt",
+				},
+			});
+		}
+	}, [handlePazeClick]);
+
 	// Initialize the TokenizeJs instance when the component mounts
 	useEffect(() => {
 		if (
 			!collect.current &&
 			godaddyPaymentsConfig &&
-			isPoyntLoaded &&
 			isCollectLoading &&
+			isPoyntLoaded &&
 			!hasMounted.current
 		) {
 			// console.log("[poynt collect] Initializing TokenizeJs instance");
@@ -109,26 +141,16 @@ export function PazeCheckoutButton() {
 			return;
 
 		collect.current?.supportWalletPayments().then((supports) => {
-			if (supports.paze && !hasMounted.current) {
-				hasMounted.current = true;
-				// console.log("[poynt collect] Mounting paze-pay-element");
-				collect?.current?.mount("paze-pay-element", document, {
-					paymentMethods: ["paze"],
-					buttonsContainerOptions: {
-						className: "gap-1 !flex-col sm:!flex-row place-items-center",
-					},
-					buttonOptions: {
-						type: "plain",
-						margin: "0",
-						height: "48px",
-						width: "100%",
-						justifyContent: "flex-start",
-						onClick: handlePazeClick,
-					},
-				});
+			if (!hasMounted.current && supports.paze) {
+				mountPazeElement();
 			}
 		});
-	}, [isPoyntLoaded, godaddyPaymentsConfig, isCollectLoading, handlePazeClick]);
+	}, [
+		isPoyntLoaded,
+		godaddyPaymentsConfig,
+		isCollectLoading,
+		mountPazeElement,
+	]);
 
 	// Set up event listeners for TokenizeJs
 	useEffect(() => {
@@ -207,23 +229,6 @@ export function PazeCheckoutButton() {
 				};
 				event.complete({ error: walletError });
 			}
-		});
-
-		collect.current.on("ready", () => {
-			setIsCollectLoading(false);
-
-			// Track Paze impression when available
-			collect.current?.supportWalletPayments().then((supports) => {
-				if (supports.paze) {
-					track({
-						eventId: eventIds.pazePayImpression,
-						type: TrackingEventType.IMPRESSION,
-						properties: {
-							provider: "poynt",
-						},
-					});
-				}
-			});
 		});
 
 		collect.current.on("error", (event) => {

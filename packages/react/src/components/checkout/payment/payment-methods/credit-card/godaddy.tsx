@@ -12,7 +12,7 @@ import { useLoadPoyntCollect } from "@/components/checkout/payment/utils/use-loa
 import { useGoDaddyContext } from "@/godaddy-provider";
 import { GraphQLErrorWithCodes } from "@/lib/graphql-with-errors";
 import { PaymentMethodType } from "@/types";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export function GoDaddyCreditCardForm() {
 	const { t } = useGoDaddyContext();
@@ -24,35 +24,24 @@ export function GoDaddyCreditCardForm() {
 
 	const confirmCheckout = useConfirmCheckout();
 
-	const collect = useRef<TokenizeJs | null>(null);
-
-	useEffect(() => {
-		if (!isPoyntLoaded || !godaddyPaymentsConfig || collect.current) return;
-
-		// biome-ignore lint/suspicious/noExplicitAny: Window can be any
-		collect.current = new (window as any).TokenizeJs(
-			godaddyPaymentsConfig?.businessId,
-			godaddyPaymentsConfig?.appId,
-		);
-
-		const options = {
-			iFrame: {
-				width: "100%",
-				height: "115px",
-			},
-			displayComponents: {
-				labels: true,
-				firstName: false,
-				lastName: false,
-				zipCode: false,
-				line1: false,
-				city: false,
-				territory: false,
-				cvcIcon: true,
-			},
-			customCss: {
-				inputLabel: "display: none",
-				inputDefault: `
+	const options = {
+		iFrame: {
+			width: "100%",
+			height: "115px",
+		},
+		displayComponents: {
+			labels: true,
+			firstName: false,
+			lastName: false,
+			zipCode: false,
+			line1: false,
+			city: false,
+			territory: false,
+			cvcIcon: true,
+		},
+		customCss: {
+			inputLabel: "display: none",
+			inputDefault: `
 					display: flex;
 					height: 48px;
 					width: 100%;
@@ -93,42 +82,42 @@ export function GoDaddyCreditCardForm() {
 					  color: oklch(0.13 0 0);
 					}
 				`,
-				cardIcon: `
+			cardIcon: `
 					left: auto !important;
 					right: 8px;
 					width: 30px;
 					height: 20px;
 				  `,
-				cvcIcon: `
+			cvcIcon: `
 					left: auto !important;
 					right: 8px;
 					width: 30px;
 					height: 20px;
 				  `,
-				container: `
+			container: `
 				  height: 100%;
 				  display: grid;
 				  grid-template-columns: 1fr 1fr;
 				  gap: 4px;
 				`,
-				rowCardNumber: `
+			rowCardNumber: `
 				  grid-column: 1 / span 2;
 				  padding: 0;
 				  margin: 0;
 				`,
-				rowExpiration: `
+			rowExpiration: `
 				  grid-column: 1;
 				  padding: 0;
 				  order: 4;
 				`,
-				rowCVV: `
+			rowCVV: `
 				  grid-column: 2;
 				  padding: 0;
 				  order: 5;
 				`,
-				input: {
-					cardPayment: {
-						cardNumber: `
+			input: {
+				cardPayment: {
+					cardNumber: `
 							padding: 16px;
 							padding-left: 16px !important;
 							padding-right: 38px;
@@ -159,7 +148,7 @@ export function GoDaddyCreditCardForm() {
 							  opacity: 0.5;
 							}
 						  `,
-						cvc: `
+					cvc: `
 							padding: 16px;
 							padding-left: 16px !important;
 							padding-right: 38px;
@@ -190,16 +179,27 @@ export function GoDaddyCreditCardForm() {
 							  opacity: 0.5;
 							}
 						  `,
-					},
 				},
 			},
-		};
+		},
+	};
 
-		collect?.current?.mount("gdpay-card-element", document, options);
+	const collect = useRef<TokenizeJs | null>(null);
+
+	useLayoutEffect(() => {
+		if (!isPoyntLoaded || !godaddyPaymentsConfig || collect.current) return;
+
+		// biome-ignore lint/suspicious/noExplicitAny: Window can be any
+		collect.current = new (window as any).TokenizeJs(
+			godaddyPaymentsConfig?.businessId,
+			godaddyPaymentsConfig?.appId,
+		);
 
 		collect?.current?.on("ready", () => {
 			setCollect(collect.current);
 		});
+
+		collect?.current?.mount("gdpay-card-element", document, options);
 
 		collect?.current?.on("nonce", async (event: TokenizeJsEvent) => {
 			const nonce = event?.data?.nonce;
@@ -236,21 +236,14 @@ export function GoDaddyCreditCardForm() {
 				setError("");
 			}
 		});
-
-		return function unmount() {
-			if (collect.current) {
-				collect.current.unmount("gdpay-apple-pay-element", document);
-				setCollect(null);
-			}
-		};
 	}, [
 		isPoyntLoaded,
 		godaddyPaymentsConfig,
 		confirmCheckout.mutateAsync,
 		setCollect,
-		setIsLoadingNonce,
-		t.errors.errorProcessingPayment,
 		setCheckoutErrors,
+		t,
+		setIsLoadingNonce,
 	]);
 
 	return (

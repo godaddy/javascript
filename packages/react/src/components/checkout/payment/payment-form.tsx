@@ -11,13 +11,13 @@ import ApplePayIcon from "@/components/checkout/payment/icons/ApplePay";
 import GooglePayIcon from "@/components/checkout/payment/icons/GooglePay";
 import PayPalIcon from "@/components/checkout/payment/icons/PayPal";
 import PazeIcon from "@/components/checkout/payment/icons/Paze";
-import { PaymentAddressToggle } from "@/components/checkout/payment/icons/payment-address-toggle";
 import {
 	PaymentMethodRenderer,
 	hasPaymentMethodButton,
 	hasPaymentMethodForm,
 } from "@/components/checkout/payment/payment-method-renderer";
 import type { TokenizeJs } from "@/components/checkout/payment/types";
+import { PaymentAddressToggle } from "@/components/checkout/payment/utils/payment-address-toggle";
 import { useGetSelectedPaymentMethod } from "@/components/checkout/payment/utils/use-get-selected-payment-method";
 import { useLoadPoyntCollect } from "@/components/checkout/payment/utils/use-load-poynt-collect";
 import { Target } from "@/components/checkout/target/target";
@@ -49,7 +49,13 @@ import {
 	PaymentProvider,
 } from "@/types";
 import { Circle, CreditCard, LoaderCircle, Wallet } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 import { useFormContext } from "react-hook-form";
 
 // UI config for payment methods (labels will be resolved from translations)
@@ -137,13 +143,26 @@ export function PaymentForm(
 	);
 
 	// Initialize TokenizeJs for Paze with GoDaddy processor
-	useEffect(() => {
+	useLayoutEffect(() => {
 		if (
 			!collect.current &&
 			godaddyPaymentsConfig &&
 			isPoyntLoaded &&
+			countryCode &&
+			currencyCode &&
 			session?.paymentMethods?.paze?.processor === PaymentProvider.GODADDY
 		) {
+			if (session?.environment !== "prod") {
+				console.log("[poynt collect] - Initialize TokenizeJs in Payment Form", {
+					godaddyPaymentsConfig,
+					countryCode,
+					currencyCode,
+					collect,
+					isPoyntLoaded,
+					pazeProcessor: session?.paymentMethods?.paze?.processor,
+				});
+			}
+
 			// biome-ignore lint/suspicious/noExplicitAny: Window can be any
 			collect.current = new (window as any).TokenizeJs(
 				godaddyPaymentsConfig?.businessId,
@@ -156,6 +175,15 @@ export function PaymentForm(
 			);
 
 			collect.current?.supportWalletPayments().then((supports) => {
+				if (session?.environment !== "prod") {
+					console.log("[poynt collect] -  supportWalletPayments", {
+						supports,
+						godaddyPaymentsConfig,
+						countryCode,
+						currencyCode,
+						collect,
+					});
+				}
 				if (supports.paze) {
 					setPazeSupported(true);
 				} else {
@@ -167,7 +195,9 @@ export function PaymentForm(
 		godaddyPaymentsConfig,
 		countryCode,
 		currencyCode,
-		session,
+		session?.paymentMethods?.paze?.processor,
+		session?.environment,
+		session?.storeName,
 		isPoyntLoaded,
 	]);
 
@@ -358,6 +388,7 @@ export function PaymentForm(
 																"bg-muted hover:bg-muted",
 														)}
 														aria-required={requiredFields?.paymentMethod}
+														tabIndex={0}
 													>
 														<div className="flex w-full items-center">
 															{!isSingleMethod ? (
@@ -373,7 +404,7 @@ export function PaymentForm(
 																	)}
 																</div>
 															) : null}
-															<div className="flex w-full justify-between items-start gap-3">
+															<div className="flex w-full justify-between items-center gap-3">
 																<div className="flex flex-col">
 																	<span
 																		className={cn(
@@ -383,7 +414,7 @@ export function PaymentForm(
 																		{label}
 																	</span>
 																</div>
-																<div className="flex h-5 items-start justify-end ml-auto mt-1">
+																<div className="flex h-5 items-center justify-end ml-auto mt-1">
 																	{icon}
 																</div>
 															</div>
@@ -429,7 +460,10 @@ export function PaymentForm(
 			<div className="md:hidden">
 				<Accordion type="single" collapsible>
 					<AccordionItem value="order-summary" className="border-none">
-						<AccordionTrigger className="py-4 px-0 border-b border-border hover:no-underline">
+						<AccordionTrigger
+							className="py-4 px-0 border-b border-border hover:no-underline"
+							tabIndex={0}
+						>
 							<div className="flex justify-between items-center w-full">
 								<span className="font-medium self-center">
 									{t.totals.orderSummary}

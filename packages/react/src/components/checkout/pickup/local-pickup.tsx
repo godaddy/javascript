@@ -1,5 +1,4 @@
 import { useCheckoutContext } from "@/components/checkout/checkout";
-import { useApplyDeliveryMethod } from "@/components/checkout/delivery/utils/use-apply-delivery-method";
 import { useApplyFulfillmentLocation } from "@/components/checkout/delivery/utils/use-apply-fulfillment-location";
 import { NotesForm } from "@/components/checkout/notes/notes-form";
 import { Button } from "@/components/ui/button";
@@ -90,7 +89,6 @@ export function LocalPickupForm({
 	const form = useFormContext();
 	const { session } = useCheckoutContext();
 	const { t } = useGoDaddyContext();
-	const applyDeliveryMethod = useApplyDeliveryMethod();
 	const applyFulfillmentLocation = useApplyFulfillmentLocation();
 	const [selectedLocationId, setSelectedLocationId] = useState<string>("");
 	const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -180,7 +178,6 @@ export function LocalPickupForm({
 						"",
 				);
 
-				applyDeliveryMethod.mutate("PICKUP");
 				applyFulfillmentLocation.mutate({
 					fulfillmentLocationId: defaultLocation.id,
 					locationAddress: defaultLocation.address,
@@ -193,7 +190,6 @@ export function LocalPickupForm({
 		form,
 		findAndSetNextAvailableDate,
 		session?.defaultOperatingHours,
-		applyDeliveryMethod,
 		applyFulfillmentLocation,
 		selectedLocationId,
 	]);

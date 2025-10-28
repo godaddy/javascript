@@ -5,18 +5,14 @@ import {
 	getRegions,
 	hasRegionData,
 } from "@/components/checkout/address/get-country-region";
-// TEMPORARY: Comment out autocomplete/verification imports - will be restored later
-// import { checkIsValidAddress } from "@/components/checkout/address/utils/check-is-valid-address";
-// import { formatSingleLineAddress } from "@/components/checkout/address/utils/format-address";
-// import { isAddressComplete } from "@/components/checkout/address/utils/is-address-complete";
+import { isAddressComplete } from "@/components/checkout/address/utils/is-address-complete";
 import { mapAddressFieldsToInput } from "@/components/checkout/address/utils/map-address-fields-to-input";
-// import { useAddressMatches } from "@/components/checkout/address/utils/use-address-matches";
-// import { useAddressVerification } from "@/components/checkout/address/utils/use-address-verification";
+import { useAddressMatches } from "@/components/checkout/address/utils/use-address-matches";
 import { useCheckoutContext } from "@/components/checkout/checkout";
 import { PhoneInput } from "@/components/checkout/contact/phone-input";
 import { useDraftOrder } from "@/components/checkout/order/use-draft-order";
 import { useDraftOrderFieldSync } from "@/components/checkout/order/use-draft-order-sync";
-// import { AutoComplete } from "@/components/ui/autocomplete";
+import { AutoComplete } from "@/components/ui/autocomplete";
 import { Button } from "@/components/ui/button";
 import {
 	Command,
@@ -50,7 +46,7 @@ import { useGoDaddyContext } from "@/godaddy-provider";
 import { cn } from "@/lib/utils";
 import { eventIds } from "@/tracking/events";
 import { TrackingEventType, track } from "@/tracking/track";
-// import type { Address } from "@/types";
+import type { Address } from "@/types";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { Check, ChevronsUpDown } from "lucide-react";
 import * as React from "react";
@@ -58,15 +54,16 @@ import { useFormContext } from "react-hook-form";
 
 export function AddressForm({ sectionKey }: { sectionKey: string }) {
 	const form = useFormContext();
+	const { session } = useCheckoutContext();
 	const { t } = useGoDaddyContext();
 	const { isConfirmingCheckout, requiredFields } = useCheckoutContext();
 
 	const { data: draftOrder } = useDraftOrder();
 	const countryTriggerRef = React.useRef<HTMLButtonElement>(null);
 	const [triggerWidth, setTriggerWidth] = React.useState<number | null>(null);
-	// TEMPORARY: Comment out suggested address state - will be restored later
-	// const [showSuggestedAddress, setShowSuggestedAddress] = React.useState(false);
 	const [isCountrySelectOpen, setCountrySelectOpen] =
+		React.useState<boolean>(false);
+	const [isAutocompleteOpen, setIsAutocompleteOpen] =
 		React.useState<boolean>(false);
 
 	React.useEffect(() => {
@@ -80,37 +77,9 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 		return () => window.removeEventListener("resize", updateWidth);
 	}, []);
 
-	// TEMPORARY: Comment out address value watching for autocomplete - will be restored later
-	// const addressValue = form.watch(`${sectionKey}AddressLine1`);
+	const addressValue = form.watch(`${sectionKey}AddressLine1`);
 	const countryValue = form.watch(`${sectionKey}CountryCode`);
-
-	// Reset AdminArea1 if current value is not valid for the selected country
-	React.useEffect(() => {
-		if (countryValue) {
-			const currentAdminArea1 = form.getValues(`${sectionKey}AdminArea1`);
-			if (hasRegionData(countryValue) && currentAdminArea1) {
-				const regions = getRegions(countryValue);
-				const isValidRegion = regions.some(
-					(region) => region.code === currentAdminArea1,
-				);
-				if (!isValidRegion) {
-					form.setValue(`${sectionKey}AdminArea1`, "", {
-						shouldValidate: true,
-						shouldDirty: true,
-						shouldTouch: true,
-					});
-					// Force validation for this specific field
-					form.trigger(`${sectionKey}AdminArea1`);
-				}
-			}
-		}
-	}, [countryValue, form, sectionKey]);
-
 	const useShippingAddress = form.watch("paymentUseShippingAddress");
-
-	// const [debouncedAddressValue] = useDebouncedValue(addressValue, {
-	// 	wait: 200,
-	// });
 
 	const [
 		firstName,
@@ -150,26 +119,9 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 		},
 	);
 
-	// const addressMatchesQuery = useAddressMatches(debouncedAddressValue, {
-	// 	enabled:
-	// 		!!line1AddressIsDirty &&
-	// 		!!debouncedAddressValue &&
-	// 		countryValue === "US" &&
-	// 		debouncedFullAddress === Object.values(address).join(""),
-	// });
-
-	// const shouldVerifyAddress =
-	// 	!!debouncedFullAddress &&
-	// 	debouncedFullAddress !== "US" &&
-	// 	addressLine1 !== "" &&
-	// 	postalCode !== "" &&
-	// 	countryCode !== "" &&
-	// 	addressIsDirty &&
-	// 	debouncedFullAddress === Object.values(address).join("");
-
-	// const verifyAddressQuery = useAddressVerification(address, {
-	// 	enabled: shouldVerifyAddress,
-	// });
+	const [debouncedAddressValue] = useDebouncedValue(addressValue, {
+		wait: 200,
+	});
 
 	// Check if name values differ from order values
 	const nameHasChanged = React.useMemo(() => {
@@ -206,52 +158,6 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 		},
 	});
 
-	// TEMPORARY: Comment out address validation logic - will be restored later
-	// const isAddressValid = React.useMemo(() => {
-	// 	if (
-	// 		verifyAddressQuery.status === "success" &&
-	// 		!verifyAddressQuery.isLoading &&
-	// 		verifyAddressQuery.data?.[0] &&
-	// 		address &&
-	// 		addressIsDirty &&
-	// 		debouncedFullAddress === Object.values(address).join("")
-	// 	) {
-	// 		return checkIsValidAddress(address, verifyAddressQuery.data[0]);
-	// 	}
-	// 	return false;
-	// }, [
-	// 	verifyAddressQuery.status,
-	// 	verifyAddressQuery.isLoading,
-	// 	verifyAddressQuery.data,
-	// 	address,
-	// 	debouncedFullAddress,
-	// 	addressIsDirty,
-	// ]);
-
-	// TEMPORARY: Comment out suggested address effect - will be restored later
-	// React.useEffect(() => {
-	// 	if (
-	// 		verifyAddressQuery.status === "success" &&
-	// 		!verifyAddressQuery.isFetching &&
-	// 		!isAddressValid &&
-	// 		!!addressIsDirty
-	// 	) {
-	// 		setShowSuggestedAddress(true);
-	// 		form.setValue(`${sectionKey}Valid`, false, { shouldValidate: true });
-	// 	} else {
-	// 		setShowSuggestedAddress(false);
-	// 		form.setValue(`${sectionKey}Valid`, true, { shouldValidate: true });
-	// 	}
-	// }, [
-	// 	isAddressValid,
-	// 	verifyAddressQuery.status,
-	// 	verifyAddressQuery.isFetching,
-	// 	form.setValue,
-	// 	sectionKey,
-	// 	addressIsDirty,
-	// ]);
-
-	// TEMPORARY: Simplified draft order sync without validation dependencies
 	const address = React.useMemo(
 		() => ({
 			addressLine1,
@@ -330,14 +236,45 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 		countryCode,
 	]);
 
+	const addressLine1HasChanged = React.useMemo(() => {
+		if (!orderAddress) return true;
+
+		return orderAddress.addressLine1 !== (addressLine1 || "");
+	}, [orderAddress, addressLine1]);
+
+	const addressMatchesQuery = useAddressMatches(debouncedAddressValue, {
+		enabled:
+			!!session?.enableAddressAutocomplete &&
+			!!debouncedAddressValue &&
+			countryValue === "US" &&
+			addressLine1HasChanged,
+	});
+
+	function handleUpdateAddress(address?: Address) {
+		if (!address) return;
+
+		const fieldMap: Record<string, string | null> = {
+			AddressLine1: address.addressLine1,
+			AddressLine2: address.addressLine2,
+			AdminArea2: address.adminArea3,
+			AdminArea1: address.adminArea1,
+			PostalCode: address.postalCode,
+		};
+
+		for (const [key, value] of Object.entries(fieldMap)) {
+			if (value) {
+				form.setValue(`${sectionKey}${key}`, value, { shouldValidate: true });
+			}
+		}
+	}
+
 	const shouldUpdateAddress = Boolean(
 		addressHasChanged && // Only sync if values differ from order
 			!!debouncedFullAddress &&
-			addressLine1?.trim() !== "" &&
-			postalCode?.trim() !== "" &&
-			countryCode?.trim() !== "" &&
+			isAddressComplete(address) &&
 			debouncedFullAddress === Object.values(address).join("") &&
-			debouncedFullAddress.trim() !== "",
+			debouncedFullAddress.trim() !== "" &&
+			!isAutocompleteOpen,
 	);
 
 	useDraftOrderFieldSync({
@@ -364,25 +301,6 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 		},
 	});
 
-	// TEMPORARY: Comment out address update handler - will be restored later
-	// function handleUpdateAddress(address?: Address) {
-	// 	if (!address) return;
-
-	// 	const fieldMap: Record<string, string | null> = {
-	// 		AddressLine1: address.addressLine1,
-	// 		AddressLine2: address.addressLine2,
-	// 		AdminArea3: address.adminArea3,
-	// 		AdminArea1: address.adminArea1,
-	// 		PostalCode: address.postalCode,
-	// 	};
-
-	// 	for (const [key, value] of Object.entries(fieldMap)) {
-	// 		if (value) {
-	// 			form.setValue(`${sectionKey}${key}`, value, { shouldValidate: true });
-	// 		}
-	// 	}
-	// }
-
 	return (
 		<fieldset className="space-y-2" disabled={isConfirmingCheckout}>
 			<FormField
@@ -407,6 +325,7 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 										hasError={!!fieldState.error}
 										disabled={isConfirmingCheckout}
 										aria-required={requiredFields?.[`${sectionKey}CountryCode`]}
+										tabIndex={0}
 									>
 										{field.value
 											? countries.find(
@@ -441,11 +360,6 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 														const previousCountry = form.getValues(
 															`${sectionKey}CountryCode`,
 														);
-														const isChangingCountryType =
-															(hasRegionData(previousCountry) &&
-																!hasRegionData(country.value)) ||
-															(!hasRegionData(previousCountry) &&
-																hasRegionData(country.value));
 
 														// Set the new country value
 														form.setValue(
@@ -456,22 +370,22 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 															},
 														);
 
-														// Reset AdminArea1 field when changing country types or when current value is invalid
-														const currentAdminArea1 = form.getValues(
-															`${sectionKey}AdminArea1`,
-														);
-														const newCountryRegions = getRegions(country.value);
-														const isCurrentValueValid = newCountryRegions.some(
-															(region) => region.code === currentAdminArea1,
-														);
-
-														if (
-															isChangingCountryType ||
-															(hasRegionData(country.value) &&
-																!isCurrentValueValid)
-														) {
+														if (previousCountry !== country.value) {
+															form.setValue(`${sectionKey}AddressLine1`, "", {
+																shouldDirty: true,
+																shouldValidate: false,
+															});
 															form.setValue(`${sectionKey}AdminArea1`, "", {
 																shouldDirty: true,
+																shouldValidate: false,
+															});
+															form.setValue(`${sectionKey}AdminArea2`, "", {
+																shouldDirty: true,
+																shouldValidate: false,
+															});
+															form.setValue(`${sectionKey}PostalCode`, "", {
+																shouldDirty: true,
+																shouldValidate: false,
 															});
 														}
 
@@ -561,39 +475,35 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 					<FormItem>
 						<FormLabel className="sr-only">{t.shipping.address1}</FormLabel>
 						<FormControl>
-							{/* TEMPORARY: Comment out autocomplete for US addresses - will be restored later */}
-							{/* {countryValue === "US" ? (
+							{countryValue === "US" && session?.enableAddressAutocomplete ? (
 								<AutoComplete
 									data={addressMatchesQuery.data || []}
 									value={field.value}
 									onChange={field.onChange}
-									onSelect={(address) =>
-										handleUpdateAddress(address as Address)
-									}
+									onSelect={(address) => {
+										handleUpdateAddress(address as Address);
+									}}
+									onOpenChange={setIsAutocompleteOpen}
 									isLoading={
 										addressMatchesQuery?.isLoading ||
 										addressMatchesQuery?.isFetching
 									}
 									hasError={!!fieldState.error}
+									aria-required={requiredFields?.[`${sectionKey}AddressLine1`]}
+									disabled={isConfirmingCheckout}
 								/>
-							) : ( */}
-							<Input
-								placeholder={t.shipping.address1}
-								hasError={!!fieldState.error}
-								aria-required={requiredFields?.[`${sectionKey}AddressLine1`]}
-								{...field}
-								disabled={isConfirmingCheckout}
-								autoComplete="off"
-							/>
-							{/* )} */}
+							) : (
+								<Input
+									placeholder={t.shipping.address1}
+									hasError={!!fieldState.error}
+									aria-required={requiredFields?.[`${sectionKey}AddressLine1`]}
+									{...field}
+									disabled={isConfirmingCheckout}
+									autoComplete="off"
+								/>
+							)}
 						</FormControl>
 						<FormMessage />
-						{/* TEMPORARY: Comment out validation error display - will be restored later */}
-						{/* {form?.formState?.errors?.[`${sectionKey}Valid`]?.message ? (
-							<p className="text-[0.8rem] font-medium text-destructive">
-								{String(form.formState.errors[`${sectionKey}Valid`]?.message)}
-							</p>
-						) : null} */}
 					</FormItem>
 				)}
 			/>
@@ -656,6 +566,11 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 												shouldValidate: true,
 											});
 
+											form.setValue(`${sectionKey}PostalCode`, "", {
+												shouldDirty: true,
+												shouldValidate: false,
+											});
+
 											// Track region selection event
 											track({
 												eventId: eventIds.changeRegion,
@@ -679,6 +594,7 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 												aria-required={
 													requiredFields?.[`${sectionKey}AdminArea1`]
 												}
+												tabIndex={0}
 											>
 												<SelectValue placeholder={t.shipping.region} />
 											</SelectTrigger>
@@ -732,27 +648,6 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 					)}
 				/>
 			</div>
-			{/* TEMPORARY: Comment out suggested address display - will be restored later */}
-			{/* {showSuggestedAddress ? (
-				<div className="text-sm">
-					{t.shipping.addressSuggestion}{" "}
-					<button
-						type="button"
-						onClick={() => {
-							handleUpdateAddress(verifyAddressQuery?.data?.[0]);
-							setShowSuggestedAddress(false);
-							form.setValue(`${sectionKey}Valid`, true, {
-								shouldValidate: true,
-							});
-						}}
-						className="text-primary font-bold underline hover:underline focus:outline-none cursor-pointer"
-						disabled={isConfirmingCheckout}
-					>
-						{formatSingleLineAddress(verifyAddressQuery?.data?.[0])}
-					</button>
-					{t.shipping.addressSuggestionEnd}
-				</div>
-			) : null} */}
 
 			<PhoneInput sectionKey={sectionKey} disabled={isConfirmingCheckout} />
 		</fieldset>

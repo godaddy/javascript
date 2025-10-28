@@ -5,6 +5,7 @@ import { useGoDaddyContext } from "@/godaddy-provider";
 export interface DraftOrderTotalsProps {
 	subtotal?: number;
 	discount?: number;
+	isDiscountLoading?: boolean;
 	shipping?: number;
 	isShippingLoading?: boolean;
 	totalSavings?: number;
@@ -61,6 +62,7 @@ export function DraftOrderTotals({
 	enableTaxes = false,
 	isTaxLoading = false,
 	isShippingLoading = false,
+	isDiscountLoading = false,
 	enableShipping = true,
 }: DraftOrderTotalsProps) {
 	const { t } = useGoDaddyContext();
@@ -84,11 +86,15 @@ export function DraftOrderTotals({
 					value={subtotal}
 				/>
 				{discount > 0 ? (
-					<TotalLineItem
-						currencyCode={currencyCode}
-						title={t.totals.discount}
-						value={-discount || 0}
-					/>
+					isDiscountLoading ? (
+						<TotalLineItemSkeleton title={t.totals.discount} />
+					) : (
+						<TotalLineItem
+							currencyCode={currencyCode}
+							title={t.totals.discount}
+							value={-discount || 0}
+						/>
+					)
 				) : null}
 				{enableShipping &&
 					(isShippingLoading ? (

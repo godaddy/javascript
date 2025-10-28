@@ -23,7 +23,7 @@ export function DiscountTag({
 				<Button
 					variant="ghost"
 					size="icon"
-					className="cursor-pointer rounded-l-none h-7 w-7 p-0 bg-muted hover:bg-secondary/80 text-muted-foreground"
+					className="cursor-pointer rounded-l-none h-7 w-7 p-0 bg-muted hover:bg-secondary/80 text-muted-foreground hover:text-muted-foreground/80"
 					onClick={onRemove}
 					disabled={isRemoving}
 					aria-label={`Remove ${discount}`}

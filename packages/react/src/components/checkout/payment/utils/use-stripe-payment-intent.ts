@@ -1,5 +1,5 @@
 import { useCheckoutContext } from "@/components/checkout/checkout";
-import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order-totals";
+import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order";
 import { type Stripe, loadStripe } from "@stripe/stripe-js";
 import { useIsMutating, useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";

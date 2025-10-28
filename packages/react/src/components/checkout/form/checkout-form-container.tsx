@@ -9,12 +9,11 @@ import {
 	useDraftOrderLineItems,
 } from "@/components/checkout/order/use-draft-order";
 import { useDraftOrderProductsMap } from "@/components/checkout/order/use-draft-order-products";
-import { useUpdateTaxes } from "@/components/checkout/order/use-update-taxes";
 import {
 	mapOrderToFormValues,
 	mapSkusToItemsDisplay,
 } from "@/components/checkout/utils/checkout-transformers";
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import type { z } from "zod";
 
 interface CheckoutFormContainerProps extends Omit<CheckoutProps, "session"> {
@@ -31,7 +30,6 @@ export function CheckoutFormContainer({
 	const draftOrderQuery = useDraftOrder();
 	const draftOrderLineItemsQuery = useDraftOrderLineItems();
 	const skusMap = useDraftOrderProductsMap();
-	const updateTaxes = useUpdateTaxes();
 
 	const { data: order } = draftOrderQuery;
 	const { data: lineItems } = draftOrderLineItemsQuery;
@@ -43,24 +41,29 @@ export function CheckoutFormContainer({
 
 	const formValues = useMemo(
 		() => ({
-			...mapOrderToFormValues(order, props.defaultValues),
+			...mapOrderToFormValues({
+				order,
+				defaultValues: props.defaultValues,
+				defaultCountryCode: session?.shipping?.originAddress?.countryCode,
+			}),
 		}),
-		[order, props.defaultValues],
+		[order, props.defaultValues, session?.shipping?.originAddress?.countryCode],
 	);
 
-	const hasCalledUpdateTaxes = useRef(false);
-
-	useEffect(() => {
-		if (
-			!hasCalledUpdateTaxes.current &&
-			order &&
-			(order.billing?.address || order.shipping?.address) &&
-			session?.enableTaxCollection
-		) {
-			updateTaxes.mutate(undefined);
-			hasCalledUpdateTaxes.current = true;
-		}
-	}, [order, updateTaxes, session]);
+	// Disable automatic tax updates for now.
+	// const hasCalledUpdateTaxes = useRef(false);
+	//
+	// useEffect(() => {
+	// 	if (
+	// 		!hasCalledUpdateTaxes.current &&
+	// 		order &&
+	// 		(order.billing?.address || order.shipping?.address) &&
+	// 		session?.enableTaxCollection
+	// 	) {
+	// 		updateTaxes.mutate(undefined);
+	// 		hasCalledUpdateTaxes.current = true;
+	// 	}
+	// }, [order, updateTaxes, session]);
 
 	if (!isConfirmingCheckout && !draftOrderQuery.isLoading && !order) {
 		const returnUrl = session?.returnUrl;

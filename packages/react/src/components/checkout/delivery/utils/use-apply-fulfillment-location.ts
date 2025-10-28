@@ -2,11 +2,12 @@ import { useCheckoutContext } from "@/components/checkout/checkout";
 import { useUpdateTaxes } from "@/components/checkout/order/use-update-taxes";
 import { applyFulfillmentLocation } from "@/lib/godaddy/godaddy";
 import type { ApplyCheckoutSessionFulfillmentLocationInput } from "@/types";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useApplyFulfillmentLocation() {
 	const { session } = useCheckoutContext();
 	const updateTaxes = useUpdateTaxes();
+	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationKey: ["apply-fulfillment-location", { sessionId: session?.id }],
@@ -35,6 +36,10 @@ export function useApplyFulfillmentLocation() {
 
 			if (session?.enableTaxCollection && locationAddress) {
 				updateTaxes.mutate(locationAddress);
+			} else {
+				queryClient.invalidateQueries({
+					queryKey: ["draft-order", { id: session?.id }],
+				});
 			}
 		},
 		onError: (error, { locationAddress }) => {

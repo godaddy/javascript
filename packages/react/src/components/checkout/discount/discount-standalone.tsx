@@ -1,11 +1,11 @@
 "use client";
 
-import { useCheckoutContext } from "@/components/checkout/checkout";
 import { DiscountApplyButton } from "@/components/checkout/discount/discount-apply-button";
 import { DiscountErrorList } from "@/components/checkout/discount/discount-error-list";
 import { DiscountInput } from "@/components/checkout/discount/discount-input";
 import { useDiscountApply } from "@/components/checkout/discount/utils/use-discount-apply";
 import { useDraftOrder } from "@/components/checkout/order/use-draft-order";
+import { useIsPaymentDisabled } from "@/components/checkout/payment/utils/use-is-payment-disabled";
 import { useGoDaddyContext } from "@/godaddy-provider";
 import { GraphQLErrorWithCodes } from "@/lib/graphql-with-errors";
 import { eventIds } from "@/tracking/events";
@@ -20,7 +20,7 @@ export function DiscountStandalone({
 	onError,
 }: DiscountFormProps) {
 	const { t } = useGoDaddyContext();
-	const { isConfirmingCheckout } = useCheckoutContext();
+	const isPaymentDisabled = useIsPaymentDisabled();
 	const { data: draftOrder } = useDraftOrder();
 
 	// Get current discount codes from order-level, line item-level, and shipping line-level discounts
@@ -226,13 +226,13 @@ export function DiscountStandalone({
 						placeholder={t.discounts.placeholder}
 						hasError={!!formErrors?.length}
 						className="h-12"
-						disabled={isConfirmingCheckout || !!isRemovingDiscount}
+						disabled={isPaymentDisabled || !!isRemovingDiscount}
 					/>
 				</div>
 				<DiscountApplyButton
 					onClick={handleApply}
 					isSubmitting={isSubmitting}
-					disabled={!discountCode.trim()}
+					disabled={!discountCode.trim() || isPaymentDisabled}
 					className="h-12 px-4"
 				/>
 			</div>

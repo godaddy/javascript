@@ -125,7 +125,7 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
 			<div
 				className="grid grid-cols-2 gap-2"
 				role="radiogroup"
-				aria-label="Additional tip options"
+				aria-label={t.ui.accessibility.additionalTipOptions}
 			>
 				<Button
 					type="button"

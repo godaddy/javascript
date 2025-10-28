@@ -1,4 +1,4 @@
-import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order-totals";
+import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order";
 
 export function useCheckIsOrderFree() {
 	const { data: totals, isLoading } = useDraftOrderTotals();

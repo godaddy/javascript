@@ -55,7 +55,9 @@ type AutoCompleteProps<T extends string> = {
 	data: Address[] | [];
 	onChange: (value: string | null) => void;
 	onSelect: (address: Address) => void;
+	onOpenChange?: (open: boolean) => void;
 	isLoading?: boolean;
+	disabled?: boolean;
 	hasError?: boolean;
 };
 
@@ -64,8 +66,10 @@ export function AutoComplete<T extends string>({
 	data = [],
 	onChange,
 	onSelect,
+	onOpenChange,
 	isLoading = false,
 	hasError = false,
+	disabled = false,
 }: AutoCompleteProps<T>) {
 	const { t } = useGoDaddyContext();
 	const listRef = React.useRef<Array<HTMLElement | null>>([]);
@@ -144,6 +148,11 @@ export function AutoComplete<T extends string>({
 		}
 	}, [value, data.length, hasSelected]);
 
+	// Notify parent of open state changes
+	React.useEffect(() => {
+		onOpenChange?.(open);
+	}, [open, onOpenChange]);
+
 	return (
 		<div>
 			<div className="relative">
@@ -157,6 +166,7 @@ export function AutoComplete<T extends string>({
 						"aria-autocomplete": "list",
 						autoComplete: "off",
 					})}
+					disabled={disabled}
 					hasError={hasError}
 					className="pr-9"
 				/>

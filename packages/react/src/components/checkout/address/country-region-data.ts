@@ -955,7 +955,6 @@ export const CL = [
 		["Los Lagos", "LL"],
 		["Los Ríos", "LR"],
 		["Magallanes y Antartica Chilena", "MA"],
-		["Marga-Marga", ""],
 		["Maule", "ML"],
 		["Ñuble", "NB"],
 		["Región Metropolitana de Santiago", "RM"],
@@ -1102,18 +1101,18 @@ export const CK = [
 	"Cook Islands",
 	"CK",
 	[
-		["Aitutaki", "undefined"],
-		["Atiu", "undefined"],
-		["Avarua", "undefined"],
-		["Mangaia", "undefined"],
-		["Manihiki", "undefined"],
-		["Ma'uke", "undefined"],
-		["Mitiaro", "undefined"],
-		["Nassau", "undefined"],
-		["Palmerston", "undefined"],
-		["Penrhyn", "undefined"],
-		["Pukapuka", "undefined"],
-		["Rakahanga", "undefined"],
+		["Aitutaki", undefined],
+		["Atiu", undefined],
+		["Avarua", undefined],
+		["Mangaia", undefined],
+		["Manihiki", undefined],
+		["Ma'uke", undefined],
+		["Mitiaro", undefined],
+		["Nassau", undefined],
+		["Palmerston", undefined],
+		["Penrhyn", undefined],
+		["Pukapuka", undefined],
+		["Rakahanga", undefined],
 	],
 ];
 export const CR = [
@@ -1440,21 +1439,21 @@ export const ET = [
 export const FK = [
 	"Falkland Islands (Islas Malvinas)",
 	"FK",
-	[["Falkland Islands (Islas Malvinas)", "undefined"]],
+	[["Falkland Islands (Islas Malvinas)", undefined]],
 ];
 export const FO = [
 	"Faroe Islands",
 	"FO",
 	[
-		["Bordoy", "undefined"],
-		["Eysturoy", "undefined"],
-		["Mykines", "undefined"],
-		["Sandoy", "undefined"],
-		["Skuvoy", "undefined"],
-		["Streymoy", "undefined"],
-		["Suduroy", "undefined"],
-		["Tvoroyri", "undefined"],
-		["Vagar", "undefined"],
+		["Bordoy", undefined],
+		["Eysturoy", undefined],
+		["Mykines", undefined],
+		["Sandoy", undefined],
+		["Skuvoy", undefined],
+		["Streymoy", undefined],
+		["Suduroy", undefined],
+		["Tvoroyri", undefined],
+		["Vagar", undefined],
 	],
 ];
 export const FJ = [
@@ -1535,26 +1534,26 @@ export const FR = [
 		["Wallis-et-Futuna", "WF"],
 	],
 ];
-export const GF = ["French Guiana", "GF", [["French Guiana", "undefined"]]];
+export const GF = ["French Guiana", "GF", [["French Guiana", undefined]]];
 export const PF = [
 	"French Polynesia",
 	"PF",
 	[
-		["Archipel des Marquises", "undefined"],
-		["Archipel des Tuamotu", "undefined"],
-		["Archipel des Tubuai", "undefined"],
-		["Iles du Vent", "undefined"],
-		["Iles Sous-le-Vent", "undefined"],
+		["Archipel des Marquises", undefined],
+		["Archipel des Tuamotu", undefined],
+		["Archipel des Tubuai", undefined],
+		["Iles du Vent", undefined],
+		["Iles Sous-le-Vent", undefined],
 	],
 ];
 export const TF = [
 	"French Southern and Antarctic Lands",
 	"TF",
 	[
-		["Adelie Land", "undefined"],
-		["Ile Crozet", "undefined"],
-		["Iles Kerguelen", "undefined"],
-		["Iles Saint-Paul et Amsterdam", "undefined"],
+		["Adelie Land", undefined],
+		["Ile Crozet", undefined],
+		["Iles Kerguelen", undefined],
+		["Iles Saint-Paul et Amsterdam", undefined],
 	],
 ];
 export const GA = [
@@ -1646,7 +1645,7 @@ export const GH = [
 		["Western North", "WN"],
 	],
 ];
-export const GI = ["Gibraltar", "GI", [["Gibraltar", "undefined"]]];
+export const GI = ["Gibraltar", "GI", [["Gibraltar", undefined]]];
 export const GR = [
 	"Greece",
 	"GR",
@@ -1690,8 +1689,8 @@ export const GD = [
 		["Southern Grenadine Islands", "10"],
 	],
 ];
-export const GP = ["Guadeloupe", "GP", [["Guadeloupe", "undefined"]]];
-export const GU = ["Guam", "GU", [["Guam", "undefined"]]];
+export const GP = ["Guadeloupe", "GP", [["Guadeloupe", undefined]]];
+export const GU = ["Guam", "GU", [["Guam", undefined]]];
 export const GT = [
 	"Guatemala",
 	"GT",
@@ -1724,16 +1723,16 @@ export const GG = [
 	"Guernsey",
 	"GG",
 	[
-		["Castel", "undefined"],
-		["Forest", "undefined"],
-		["St. Andrew", "undefined"],
-		["St. Martin", "undefined"],
-		["St. Peter Port", "undefined"],
-		["St. Pierre du Bois", "undefined"],
-		["St. Sampson", "undefined"],
-		["St. Saviour", "undefined"],
-		["Torteval", "undefined"],
-		["Vale", "undefined"],
+		["Castel", undefined],
+		["Forest", undefined],
+		["St. Andrew", undefined],
+		["St. Martin", undefined],
+		["St. Peter Port", undefined],
+		["St. Pierre du Bois", undefined],
+		["St. Sampson", undefined],
+		["St. Saviour", undefined],
+		["Torteval", undefined],
+		["Vale", undefined],
 	],
 ];
 export const GN = [
@@ -1800,7 +1799,7 @@ export const HT = [
 export const HM = [
 	"Heard Island and McDonald Islands",
 	"HM",
-	[["Heard Island and McDonald Islands", "undefined"]],
+	[["Heard Island and McDonald Islands", undefined]],
 ];
 export const VA = [
 	"Holy See (Vatican City)",
@@ -2069,7 +2068,7 @@ export const IE = [
 		["Wicklow", "WW"],
 	],
 ];
-export const IM = ["Isle of Man", "IM", [["Isle of Man", "undefined"]]];
+export const IM = ["Isle of Man", "IM", [["Isle of Man", undefined]]];
 export const IL = [
 	"Israel",
 	"IL",
@@ -2181,7 +2180,7 @@ export const JP = [
 		["Yamanashi", "19"],
 	],
 ];
-export const JE = ["Jersey", "JE", [["Jersey", "undefined"]]];
+export const JE = ["Jersey", "JE", [["Jersey", undefined]]];
 export const JO = [
 	"Jordan",
 	"JO",
@@ -2210,7 +2209,7 @@ export const KZ = [
 		["Astana", "AST"],
 		["Atyrau", "ATY"],
 		["Batys Qazaqstan", "ZAP"],
-		["Bayqongyr", "undefined"],
+		["Bayqongyr", undefined],
 		["Mangghystau", "MAN"],
 		["Ongtustik Qazaqstan", "YUZ"],
 		["Pavlodar", "PAV"],
@@ -2279,33 +2278,33 @@ export const KI = [
 	"Kiribati",
 	"KI",
 	[
-		["Abaiang", "undefined"],
-		["Abemama", "undefined"],
-		["Aranuka", "undefined"],
-		["Arorae", "undefined"],
-		["Banaba", "undefined"],
-		["Beru", "undefined"],
-		["Butaritari", "undefined"],
-		["Central Gilberts", "undefined"],
+		["Abaiang", undefined],
+		["Abemama", undefined],
+		["Aranuka", undefined],
+		["Arorae", undefined],
+		["Banaba", undefined],
+		["Beru", undefined],
+		["Butaritari", undefined],
+		["Central Gilberts", undefined],
 		["Gilbert Islands", "G"],
-		["Kanton", "undefined"],
-		["Kiritimati", "undefined"],
-		["Kuria", "undefined"],
+		["Kanton", undefined],
+		["Kiritimati", undefined],
+		["Kuria", undefined],
 		["Line Islands", "L"],
-		["Maiana", "undefined"],
-		["Makin", "undefined"],
-		["Marakei", "undefined"],
-		["Nikunau", "undefined"],
-		["Nonouti", "undefined"],
-		["Northern Gilberts", "undefined"],
-		["Onotoa", "undefined"],
+		["Maiana", undefined],
+		["Makin", undefined],
+		["Marakei", undefined],
+		["Nikunau", undefined],
+		["Nonouti", undefined],
+		["Northern Gilberts", undefined],
+		["Onotoa", undefined],
 		["Phoenix Islands", "P"],
-		["Southern Gilberts", "undefined"],
-		["Tabiteuea", "undefined"],
-		["Tabuaeran", "undefined"],
-		["Tamana", "undefined"],
-		["Tarawa", "undefined"],
-		["Teraina", "undefined"],
+		["Southern Gilberts", undefined],
+		["Tabiteuea", undefined],
+		["Tabuaeran", undefined],
+		["Tamana", undefined],
+		["Tarawa", undefined],
+		["Teraina", undefined],
 	],
 ];
 export const KP = [
@@ -2665,7 +2664,7 @@ export const LU = [
 		["Wiltz", "WI"],
 	],
 ];
-export const MO = ["Macao", "MO", [["Macao", "undefined"]]];
+export const MO = ["Macao", "MO", [["Macao", undefined]]];
 export const MK = [
 	"Macedonia, Republic of",
 	"MK",
@@ -2718,7 +2717,7 @@ export const MK = [
 		["Plasnica", "61"],
 		["Prilep", "62"],
 		["Probištip", "63"],
-		["Radoviš", ""],
+		["Radoviš", "64"],
 		["Rankovce", "65"],
 		["Resen", "66"],
 		["Rosoman", "67"],
@@ -2956,7 +2955,7 @@ export const MH = [
 		["Wotje", "WTJ"],
 	],
 ];
-export const MQ = ["Martinique", "MQ", [["Martinique", "undefined"]]];
+export const MQ = ["Martinique", "MQ", [["Martinique", undefined]]];
 export const MR = [
 	"Mauritania",
 	"MR",
@@ -3197,9 +3196,9 @@ export const MS = [
 	"Montserrat",
 	"MS",
 	[
-		["Saint Anthony", "undefined"],
-		["Saint Georges", "undefined"],
-		["Saint Peter's", "undefined"],
+		["Saint Anthony", undefined],
+		["Saint Georges", undefined],
+		["Saint Peter's", undefined],
 	],
 ];
 export const MA = [
@@ -3333,9 +3332,9 @@ export const NC = [
 	"New Caledonia",
 	"NC",
 	[
-		["Iles Loyaute", "undefined"],
-		["Nord", "undefined"],
-		["Sud", "undefined"],
+		["Iles Loyaute", undefined],
+		["Nord", undefined],
+		["Sud", undefined],
 	],
 ];
 export const NZ = [
@@ -3441,16 +3440,16 @@ export const NG = [
 		["Zamfara", "ZA"],
 	],
 ];
-export const NU = ["Niue", "NU", [["Niue", "undefined"]]];
-export const NF = ["Norfolk Island", "NF", [["Norfolk Island", "undefined"]]];
+export const NU = ["Niue", "NU", [["Niue", undefined]]];
+export const NF = ["Norfolk Island", "NF", [["Norfolk Island", undefined]]];
 export const MP = [
 	"Northern Mariana Islands",
 	"MP",
 	[
-		["Northern Islands", "undefined"],
-		["Rota", "undefined"],
-		["Saipan", "undefined"],
-		["Tinian", "undefined"],
+		["Northern Islands", undefined],
+		["Rota", undefined],
+		["Saipan", undefined],
+		["Tinian", undefined],
 	],
 ];
 export const NO = [
@@ -3681,7 +3680,7 @@ export const PH = [
 		["Zamboanga Peninsula", "PH-09"],
 	],
 ];
-export const PN = ["Pitcairn", "PN", [["Pitcairn Islands", "undefined"]]];
+export const PN = ["Pitcairn", "PN", [["Pitcairn Islands", undefined]]];
 export const PL = [
 	"Poland",
 	"PL",
@@ -3734,79 +3733,79 @@ export const PR = [
 	"Puerto Rico",
 	"PR",
 	[
-		["Adjuntas", "undefined"],
-		["Aguada", "undefined"],
-		["Aguadilla", "undefined"],
-		["Aguas Buenas", "undefined"],
-		["Aibonito", "undefined"],
-		["Anasco", "undefined"],
-		["Arecibo", "undefined"],
-		["Arroyo", "undefined"],
-		["Barceloneta", "undefined"],
-		["Barranquitas", "undefined"],
-		["Bayamon", "undefined"],
-		["Cabo Rojo", "undefined"],
-		["Caguas", "undefined"],
-		["Camuy", "undefined"],
-		["Canovanas", "undefined"],
-		["Carolina", "undefined"],
-		["Cat", "undefined"],
-		["Ceiba", "undefined"],
-		["Ciales", "undefined"],
-		["Cidra", "undefined"],
-		["Coamo", "undefined"],
-		["Comerio", "undefined"],
-		["Corozal", "undefined"],
-		["Culebra", "undefined"],
-		["Dorado", "undefined"],
-		["Fajardo", "undefined"],
-		["Florida", "undefined"],
-		["Guanica", "undefined"],
-		["Guayama", "undefined"],
-		["Guayanilla", "undefined"],
-		["Guaynabo", "undefined"],
-		["Gurabo", "undefined"],
-		["Hatillo", "undefined"],
-		["Hormigueros", "undefined"],
-		["Humacao", "undefined"],
-		["Isabe", "undefined"],
-		["Juana Diaz", "undefined"],
-		["Juncos", "undefined"],
-		["Lajas", "undefined"],
-		["Lares", "undefined"],
-		["Las Marias", "undefined"],
-		["Las oiza", "undefined"],
-		["Luquillo", "undefined"],
-		["Manati", "undefined"],
-		["Maricao", "undefined"],
-		["Maunabo", "undefined"],
-		["Mayaguez", "undefined"],
-		["Moca", "undefined"],
-		["Morovis", "undefined"],
-		["Naguabo", "undefined"],
-		["Naranjito", "undefined"],
-		["Orocovis", "undefined"],
-		["Patillas", "undefined"],
-		["Penuelas", "undefined"],
-		["Ponce", "undefined"],
-		["Quebradillas", "undefined"],
-		["Rincon", "undefined"],
-		["Rio Grande", "undefined"],
-		["Sabana linas", "undefined"],
-		["San German", "undefined"],
-		["San Juan", "undefined"],
-		["San Lorenzo", "undefined"],
-		["San Sebastian", "undefined"],
-		["Santa Isabel", "undefined"],
-		["Toa Alta", "undefined"],
-		["Toa Baja", "undefined"],
-		["Trujillo Alto", "undefined"],
-		["Utuado", "undefined"],
-		["Vega Alta", "undefined"],
-		["Vega ues", "undefined"],
-		["Villalba", "undefined"],
-		["Yabucoa", "undefined"],
-		["Yauco", "undefined"],
+		["Adjuntas", undefined],
+		["Aguada", undefined],
+		["Aguadilla", undefined],
+		["Aguas Buenas", undefined],
+		["Aibonito", undefined],
+		["Anasco", undefined],
+		["Arecibo", undefined],
+		["Arroyo", undefined],
+		["Barceloneta", undefined],
+		["Barranquitas", undefined],
+		["Bayamon", undefined],
+		["Cabo Rojo", undefined],
+		["Caguas", undefined],
+		["Camuy", undefined],
+		["Canovanas", undefined],
+		["Carolina", undefined],
+		["Cat", undefined],
+		["Ceiba", undefined],
+		["Ciales", undefined],
+		["Cidra", undefined],
+		["Coamo", undefined],
+		["Comerio", undefined],
+		["Corozal", undefined],
+		["Culebra", undefined],
+		["Dorado", undefined],
+		["Fajardo", undefined],
+		["Florida", undefined],
+		["Guanica", undefined],
+		["Guayama", undefined],
+		["Guayanilla", undefined],
+		["Guaynabo", undefined],
+		["Gurabo", undefined],
+		["Hatillo", undefined],
+		["Hormigueros", undefined],
+		["Humacao", undefined],
+		["Isabe", undefined],
+		["Juana Diaz", undefined],
+		["Juncos", undefined],
+		["Lajas", undefined],
+		["Lares", undefined],
+		["Las Marias", undefined],
+		["Las oiza", undefined],
+		["Luquillo", undefined],
+		["Manati", undefined],
+		["Maricao", undefined],
+		["Maunabo", undefined],
+		["Mayaguez", undefined],
+		["Moca", undefined],
+		["Morovis", undefined],
+		["Naguabo", undefined],
+		["Naranjito", undefined],
+		["Orocovis", undefined],
+		["Patillas", undefined],
+		["Penuelas", undefined],
+		["Ponce", undefined],
+		["Quebradillas", undefined],
+		["Rincon", undefined],
+		["Rio Grande", undefined],
+		["Sabana linas", undefined],
+		["San German", undefined],
+		["San Juan", undefined],
+		["San Lorenzo", undefined],
+		["San Sebastian", undefined],
+		["Santa Isabel", undefined],
+		["Toa Alta", undefined],
+		["Toa Baja", undefined],
+		["Trujillo Alto", undefined],
+		["Utuado", undefined],
+		["Vega Alta", undefined],
+		["Vega ues", undefined],
+		["Villalba", undefined],
+		["Yabucoa", undefined],
+		["Yauco", undefined],
 	],
 ];
 export const QA = [
@@ -3822,7 +3821,7 @@ export const QA = [
 		["Umm Şalāl", "US"],
 	],
 ];
-export const RE = ["Réunion", "RE", [["Réunion", "undefined"]]];
+export const RE = ["Réunion", "RE", [["Réunion", undefined]]];
 export const RO = [
 	"Romania",
 	"RO",
@@ -4012,13 +4011,13 @@ export const LC = [
 		["Vieux Fort", "11"],
 	],
 ];
-export const MF = ["Saint Martin", "MF", [["Saint Martin", "undefined"]]];
+export const MF = ["Saint Martin", "MF", [["Saint Martin", undefined]]];
 export const PM = [
 	"Saint Pierre and Miquelon",
 	"PM",
 	[
-		["Miquelon", "undefined"],
-		["Saint Pierre", "undefined"],
+		["Miquelon", undefined],
+		["Saint Pierre", undefined],
 	],
 ];
 export const VC = [
@@ -4203,7 +4202,7 @@ export const SG = [
 export const SX = [
 	"Sint Maarten (Dutch part)",
 	"SX",
-	[["Sint Maarten", "undefined"]],
+	[["Sint Maarten", undefined]],
 ];
 export const SK = [
 	"Slovakia",
@@ -4490,14 +4489,14 @@ export const GS = [
 	"South Georgia and South Sandwich Islands",
 	"GS",
 	[
-		["Bird Island", "undefined"],
-		["Bristol Island", "undefined"],
-		["Clerke Rocks", "undefined"],
-		["Montagu Island", "undefined"],
-		["Saunders Island", "undefined"],
-		["South Georgia", "undefined"],
-		["Southern Thule", "undefined"],
-		["Traversay Islands", "undefined"],
+		["Bird Island", undefined],
+		["Bristol Island", undefined],
+		["Clerke Rocks", undefined],
+		["Montagu Island", undefined],
+		["Saunders Island", undefined],
+		["South Georgia", undefined],
+		["Southern Thule", undefined],
+		["Traversay Islands", undefined],
 	],
 ];
 export const SS = [
@@ -4906,9 +4905,9 @@ export const TK = [
 	"Tokelau",
 	"TK",
 	[
-		["Atafu", "undefined"],
-		["Fakaofo", "undefined"],
-		["Nukunonu", "undefined"],
+		["Atafu", undefined],
+		["Fakaofo", undefined],
+		["Nukunonu", undefined],
 	],
 ];
 export const TO = [
@@ -5074,7 +5073,7 @@ export const TM = [
 export const TC = [
 	"Turks and Caicos Islands",
 	"TC",
-	[["Turks and Caicos Islands", "undefined"]],
+	[["Turks and Caicos Islands", undefined]],
 ];
 export const TV = [
 	"Tuvalu",

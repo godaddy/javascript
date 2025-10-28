@@ -39,10 +39,15 @@ function processPhoneNumber(
 /**
  * Maps order data to form default values
  */
-export function mapOrderToFormValues(
-	order?: DraftOrder | null,
-	defaultValues?: Pick<CheckoutFormData, "contactEmail">,
-): CheckoutFormData {
+export function mapOrderToFormValues({
+	order,
+	defaultValues,
+	defaultCountryCode,
+}: {
+	order?: DraftOrder | null;
+	defaultValues?: Pick<CheckoutFormData, "contactEmail">;
+	defaultCountryCode?: string | null;
+}): CheckoutFormData {
 	const orderShippingAddress = order?.shipping?.address;
 	const orderBillingAddress = order?.billing?.address;
 	const paymentShouldUseShippingAddress = Boolean(
@@ -58,7 +63,7 @@ export function mapOrderToFormValues(
 		shippingLastName: order?.shipping?.lastName ?? "",
 		shippingPhone: processPhoneNumber(
 			order?.shipping?.phone ?? "",
-			orderShippingAddress?.countryCode ?? "US",
+			orderShippingAddress?.countryCode || defaultCountryCode || "US",
 		),
 		shippingAddressLine1: orderShippingAddress?.addressLine1 ?? "",
 		shippingAddressLine2: orderShippingAddress?.addressLine2 ?? "",
@@ -68,7 +73,8 @@ export function mapOrderToFormValues(
 		shippingAdminArea2: orderShippingAddress?.adminArea2 ?? "",
 		shippingAdminArea1: orderShippingAddress?.adminArea1 ?? "",
 		shippingPostalCode: orderShippingAddress?.postalCode ?? "",
-		shippingCountryCode: orderShippingAddress?.countryCode ?? "US",
+		shippingCountryCode:
+			orderShippingAddress?.countryCode || defaultCountryCode || "US",
 		shippingValid: true,
 
 		// Billing address
@@ -76,7 +82,7 @@ export function mapOrderToFormValues(
 		billingLastName: order?.billing?.lastName ?? "",
 		billingPhone: processPhoneNumber(
 			order?.billing?.phone ?? "",
-			orderBillingAddress?.countryCode ?? "US",
+			orderBillingAddress?.countryCode || defaultCountryCode || "US",
 		),
 		billingAddressLine1: orderBillingAddress?.addressLine1 ?? "",
 		billingAddressLine2: orderBillingAddress?.addressLine2 ?? "",
@@ -86,7 +92,8 @@ export function mapOrderToFormValues(
 		billingAdminArea2: orderBillingAddress?.adminArea2 ?? "",
 		billingAdminArea1: orderBillingAddress?.adminArea1 ?? "",
 		billingPostalCode: orderBillingAddress?.postalCode ?? "",
-		billingCountryCode: orderBillingAddress?.countryCode ?? "US",
+		billingCountryCode:
+			orderBillingAddress?.countryCode || defaultCountryCode || "US",
 		billingValid: true,
 
 		// Contact information
@@ -189,12 +196,7 @@ export function mapSkusToItemsDisplay(
 									: [],
 							};
 						}),
-				discounts: orderItem.discounts?.map((discount) => ({
-					amount: discount.amount,
-					code: discount.code,
-					name: discount.name,
-					ratePercentage: discount.ratePercentage ? parseFloat(discount.ratePercentage) : null,
-				})),
+				discounts: orderItem.discounts,
 			} as Product;
 		}) || []
 	);

@@ -5,6 +5,7 @@ export const CreateCheckoutSessionMutation = graphql(`
     createCheckoutSession(input: $input) {
       id
       token
+      sourceApp
       returnUrl
       successUrl
       storeId
@@ -22,6 +23,7 @@ export const CreateCheckoutSessionMutation = graphql(`
       enableTaxCollection
       enableShippingAddressCollection
       enableBillingAddressCollection
+      enableAddressAutocomplete
       experimental_rules {
         freeShipping {
           enabled
@@ -299,6 +301,17 @@ export const ApplyCheckoutSessionDiscountMutation = graphql(`
             unitAmount {
               currencyCode
               value
+            }
+          }
+          shippingLines {
+            discounts {
+              id
+              amount {
+                currencyCode
+                value
+              }
+              appliedBeforeTax
+              code
             }
           }
           discounts {

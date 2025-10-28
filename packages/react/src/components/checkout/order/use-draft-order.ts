@@ -1,6 +1,11 @@
 import { useCheckoutContext } from "@/components/checkout/checkout";
 import { getDraftOrder } from "@/lib/godaddy/godaddy";
-import type { DraftOrder, DraftOrderSession } from "@/types";
+import type {
+	DraftOrder,
+	DraftOrderSession,
+	ShippingLines,
+	Totals,
+} from "@/types";
 import { type UseQueryResult, useQuery } from "@tanstack/react-query";
 
 /**
@@ -27,13 +32,27 @@ export function useDraftOrder<TData = DraftOrder>(
 export function useDraftOrderLineItems() {
 	return useDraftOrder<DraftOrder["lineItems"]>(
 		(data) => data.checkoutSession?.draftOrder?.lineItems ?? null,
-		"draft-order-line-items",
+		"draft-order",
 	);
 }
 
 export function useDraftOrderShippingAddress() {
 	return useDraftOrder<NonNullable<DraftOrder["shipping"]>["address"]>(
 		(data) => data.checkoutSession?.draftOrder?.shipping?.address ?? null,
-		"draft-order-shipping-address",
+		"draft-order",
+	);
+}
+
+export function useDraftOrderTotals() {
+	return useDraftOrder<Totals | null>(
+		(data) => data.checkoutSession?.draftOrder?.totals ?? null,
+		"draft-order",
+	);
+}
+
+export function useDraftOrderShipping() {
+	return useDraftOrder<ShippingLines | null>(
+		(data) => data.checkoutSession?.draftOrder?.shippingLines?.[0] ?? null,
+		"draft-order",
 	);
 }

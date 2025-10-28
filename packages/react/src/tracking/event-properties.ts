@@ -1,6 +1,8 @@
 import { z } from "zod";
-// ts-rest-like contract object
 
+export type TrackingProperties = {
+	[key: string]: string | number | boolean | null;
+};
 export type EventProperties = z.infer<typeof properties>;
 export const properties = z
 	.object({
@@ -8,6 +10,7 @@ export const properties = z
 		draftOrderId: z.string().nullish(),
 		storeId: z.string().nullish(),
 		channelId: z.string().nullish(),
+		customerId: z.string().nullish(),
 		deliveryMethod: z.string().nullish(),
 
 		// Pickup related properties

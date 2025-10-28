@@ -1,7 +1,7 @@
 import { useCheckoutContext } from "@/components/checkout/checkout";
 import { useDraftOrder } from "@/components/checkout/order/use-draft-order";
+import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order";
 import { useDraftOrderProductsMap } from "@/components/checkout/order/use-draft-order-products";
-import { useDraftOrderTotals } from "@/components/checkout/order/use-draft-order-totals";
 import { mapSkusToItemsDisplay } from "@/components/checkout/utils/checkout-transformers";
 import type { CreateTokenCardData } from "@stripe/stripe-js";
 import type { ConfirmationTokenCreateParams } from "@stripe/stripe-js/dist/api/confirmation-tokens";
@@ -197,7 +197,11 @@ export function useBuildPaymentRequest(): {
 	// Convert amounts from cents to dollars for display
 	const subtotal = (totals?.subTotal?.value || 0) / 100;
 	const tax = (totals?.taxTotal?.value || 0) / 100;
-	const shipping = (totals?.shippingTotal?.value || 0) / 100;
+	const shipping =
+		(order?.shippingLines?.reduce(
+			(sum, line) => sum + (line?.amount?.value || 0),
+			0,
+		) || 0) / 100;
 	const discount = (totals?.discountTotal?.value || 0) / 100;
 	const total = (totals?.total?.value || 0) / 100;
 

@@ -2,8 +2,7 @@ import {
 	type CheckoutFormData,
 	useCheckoutContext,
 } from "@/components/checkout/checkout";
-import { useApplyDeliveryMethod } from "@/components/checkout/delivery/utils/use-apply-delivery-method";
-import { useRemoveShippingMethod } from "@/components/checkout/shipping/utils/use-remove-shipping-method";
+import { useIsPaymentDisabled } from "@/components/checkout/payment/utils/use-is-payment-disabled";
 import { FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -57,19 +56,12 @@ export function DeliveryMethodForm() {
 	const { t } = useGoDaddyContext();
 	const form = useFormContext();
 	const { session, isConfirmingCheckout } = useCheckoutContext();
-	const removeShippingMethod = useRemoveShippingMethod();
-	const applyDeliveryMethod = useApplyDeliveryMethod();
-	const shippingMethod = form.watch("shippingMethod");
+	const isPaymentDisabled = useIsPaymentDisabled();
 
 	const handleDeliveryMethodChange = (value: DeliveryMethods) => {
 		form.setValue("deliveryMethod", value);
 		if (value === DeliveryMethods.PICKUP) {
-			if (shippingMethod) {
-				removeShippingMethod.mutate(shippingMethod);
-				form.setValue("shippingMethod", undefined);
-			}
-		} else {
-			applyDeliveryMethod.mutate(value);
+			form.setValue("shippingMethod", undefined);
 		}
 		track({
 			eventId: "change_delivery_method.click",
@@ -119,7 +111,7 @@ export function DeliveryMethodForm() {
 									defaultValue={field.value || DeliveryMethods.SHIP}
 									onValueChange={handleDeliveryMethodChange}
 									required
-									disabled={isConfirmingCheckout}
+									disabled={isConfirmingCheckout || isPaymentDisabled}
 								>
 									{availableMethods.map((method, index) => (
 										<Label

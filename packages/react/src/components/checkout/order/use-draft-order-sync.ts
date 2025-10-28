@@ -5,6 +5,8 @@ import {
 import { useDraftOrder } from "@/components/checkout/order/use-draft-order";
 import { useUpdateOrder } from "@/components/checkout/order/use-update-order";
 import type { DraftOrder, UpdateDraftOrderInput } from "@/types";
+import { useMutationState } from "@tanstack/react-query";
+import isEqual from "fast-deep-equal";
 import * as React from "react";
 import { type UseFormReturn, useFormContext } from "react-hook-form";
 
@@ -244,6 +246,32 @@ export function useDraftOrderFieldSync<T>({
 	const { data: draftOrderData } = useDraftOrder();
 	const form = useFormContext<CheckoutFormData>();
 	const pendingResetRef = React.useRef<string[]>([]);
+	const pendingMutations = useMutationState({
+		filters: {
+			mutationKey: ["update-draft-order"],
+			status: "pending",
+		},
+		select: (mutation) => {
+			return mutation.state.variables as
+				| { input: UpdateDraftOrderInput["input"] }
+				| undefined;
+		},
+	}).filter(Boolean);
+
+	// Memoize the normalization function to avoid recreating on every render
+	const normalizeMutationInput = React.useCallback(
+		(input: UpdateDraftOrderInput["input"]) => {
+			const normalized = { ...input };
+			if (normalized.shipping) {
+				normalized.shipping = filterEmptyStrings(normalized.shipping);
+			}
+			if (normalized.billing) {
+				normalized.billing = filterEmptyStrings(normalized.billing);
+			}
+			return normalized;
+		},
+		[],
+	);
 
 	React.useEffect(() => {
 		if (!enabled) return;
@@ -277,6 +305,27 @@ export function useDraftOrderFieldSync<T>({
 
 		if (!hasActualContent) return;
 
+		const finalInput = {
+			...input,
+			context: { channelId, storeId },
+			...(customerId ? { customerId } : {}),
+		};
+
+		const hasDuplicatePendingMutation = pendingMutations.some(
+			(mutationVars) => {
+				if (!mutationVars?.input) return false;
+
+				// Compare the mutation input with our current input using deep equality
+				const normalizedPending = normalizeMutationInput(mutationVars.input);
+				const normalizedCurrent = normalizeMutationInput(finalInput);
+				return isEqual(normalizedPending, normalizedCurrent);
+			},
+		);
+
+		if (hasDuplicatePendingMutation) {
+			return; // Don't submit duplicate mutation
+		}
+
 		// Track that we're expecting a reset for these fields
 		if (fieldNames) {
 			pendingResetRef.current = [...fieldNames];
@@ -284,11 +333,7 @@ export function useDraftOrderFieldSync<T>({
 
 		updateDraftOrder.mutate(
 			{
-				input: {
-					...input,
-					context: { channelId, storeId },
-					...(customerId ? { customerId } : {}),
-				},
+				input: finalInput,
 			},
 			{
 				onSuccess: () => {
@@ -322,6 +367,8 @@ export function useDraftOrderFieldSync<T>({
 		fieldNames,
 		preserveFormData,
 		draftOrderData,
+		pendingMutations,
+		normalizeMutationInput,
 		...deps,
 	]);
 }

@@ -18,9 +18,8 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
 	const stripe = useStripe();
 	const elements = useElements();
 	const confirmCheckout = useConfirmCheckout();
-	const { session, setCheckoutErrors } = useCheckoutContext();
-	const { stripePaymentCardRequest, stripePaymentExpressRequest } =
-		useBuildPaymentRequest();
+	const { setCheckoutErrors } = useCheckoutContext();
+	const { stripePaymentExpressRequest } = useBuildPaymentRequest();
 	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
 	const handleSubmit = useCallback(async () => {

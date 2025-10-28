@@ -97,6 +97,7 @@ function CountrySelect({
 						hasError && "border-destructive focus-visible:ring-destructive",
 					)}
 					disabled={disabled}
+					tabIndex={0}
 				>
 					<FlagComponent
 						country={selectedCountry}
@@ -187,6 +188,18 @@ const CountrySelectOption = ({
 	);
 };
 
+function getCountryFromPhoneNumber(phoneNumberString: string) {
+	try {
+		const phoneNumber = RPNInput.parsePhoneNumber(phoneNumberString);
+		if (phoneNumber) {
+			return phoneNumber.country;
+		}
+	} catch (err) {
+		// Error is handled by returning undefined.
+	}
+	return undefined;
+}
+
 export function PhoneInput({
 	sectionKey,
 	disabled,
@@ -202,6 +215,14 @@ export function PhoneInput({
 	const [phone] = useDebouncedValue(phoneValue, {
 		wait: 1000,
 	});
+
+	const section =
+		sectionKey === "shipping" ? draftOrder?.shipping : draftOrder?.billing;
+
+	const defaultCountryCode =
+		getCountryFromPhoneNumber(section?.phone || "") ||
+		session?.shipping?.originAddress?.countryCode ||
+		"US";
 
 	const isValidPhone = React.useMemo(() => checkIsValidPhone(phone), [phone]);
 
@@ -241,7 +262,7 @@ export function PhoneInput({
 					<FormLabel className="sr-only">{t.shipping.phone}</FormLabel>
 					<FormControl>
 						<RPNInput.default
-							defaultCountry="US"
+							defaultCountry={defaultCountryCode as RPNInput.Country}
 							placeholder={t.phone.placeholder}
 							value={field.value}
 							onChange={(value) => {
