@@ -91,15 +91,6 @@ function TrackingInitializer({
 					});
 				},
 			});
-
-			tracking.addEventHandler({
-				handlerId: "console",
-				handler: ({ event }) => {
-					if (session?.environment === "dev") {
-						console.log("event", event);
-					}
-				},
-			});
 		}
 	}, [tracking, session, trackingEnabled, isInitialized, trackingProperties]);
 

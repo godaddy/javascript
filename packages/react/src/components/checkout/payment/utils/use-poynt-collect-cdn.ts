@@ -1,9 +1,7 @@
-import { useCheckoutContext } from "@/components/checkout/checkout";
 import { useMemo } from "react";
 
 export const useGetPoyntCollectCdn = () => {
-	const { session } = useCheckoutContext();
-	const environment = session?.environment;
+	const environment = process.env.GODADDY_ENV || "prod";
 
 	return useMemo(() => {
 		switch (environment) {

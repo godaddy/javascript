@@ -29,14 +29,6 @@ export function CustomFormProvider<
 	useEffect(() => {
 		// Access specific properties to create a subscription
 		const { errors, isValidating } = methods.formState;
-
-		// Intentionally logging subscription values to prevent tree-shaking
-		if (session?.environment === "dev") {
-			console.debug("Form state subscription active", {
-				isValidating,
-				hasErrors: !!Object.keys(errors || {}).length,
-			});
-		}
 	}, [methods.formState, session]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: using methodsRef instead of methods directly
@@ -59,9 +51,6 @@ export function CustomFormProvider<
 
 				// If specific fields are provided, use the original trigger
 				if (name) {
-					if (session?.environment === "dev") {
-						console.log("Triggering validation for specific fields:", name);
-					}
 					// Use original methods directly to ensure formState is properly updated
 					result = await methods.trigger(name, triggerOptions);
 				}
@@ -93,18 +82,6 @@ export function CustomFormProvider<
 						);
 					}
 
-					// Log if in dev mode
-					if (session?.environment === "dev") {
-						if (paymentUseShippingAddress || isPickup) {
-							console.log(
-								"Triggering validation for filtered fields:",
-								fieldNames,
-							);
-						} else {
-							console.log("Triggering validation for all fields");
-						}
-					}
-
 					// Trigger validation only on the filtered fields if any condition is true,
 					// otherwise trigger on all fields
 					if (paymentUseShippingAddress || isPickup) {
@@ -121,9 +98,6 @@ export function CustomFormProvider<
 
 				return result;
 			} catch (error) {
-				if (session?.environment === "dev") {
-					console.error("Error in enhanced trigger:", error);
-				}
 				return false;
 			}
 		};

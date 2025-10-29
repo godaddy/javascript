@@ -6,11 +6,12 @@ let isSquareCDNLoaded = false;
 const listeners = new Set<(loaded: boolean) => void>();
 
 export function useLoadSquare() {
-	const { squareConfig, session } = useCheckoutContext();
+	const { squareConfig } = useCheckoutContext();
 	const [loaded, setLoaded] = useState(isSquareLoaded);
+	const environment = process.env.GODADDY_ENV || "prod"
 
 	const squareCDN =
-		session?.environment === "prod"
+		environment === "prod"
 			? "https://web.squarecdn.com/v1/square.js"
 			: "https://sandbox.web.squarecdn.com/v1/square.js";
 

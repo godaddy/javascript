@@ -152,17 +152,6 @@ export function PaymentForm(
 			currencyCode &&
 			session?.paymentMethods?.paze?.processor === PaymentProvider.GODADDY
 		) {
-			if (session?.environment !== "prod") {
-				console.log("[poynt collect] - Initialize TokenizeJs in Payment Form", {
-					godaddyPaymentsConfig,
-					countryCode,
-					currencyCode,
-					collect,
-					isPoyntLoaded,
-					pazeProcessor: session?.paymentMethods?.paze?.processor,
-				});
-			}
-
 			// biome-ignore lint/suspicious/noExplicitAny: Window can be any
 			collect.current = new (window as any).TokenizeJs(
 				godaddyPaymentsConfig?.businessId,
@@ -175,15 +164,6 @@ export function PaymentForm(
 			);
 
 			collect.current?.supportWalletPayments().then((supports) => {
-				if (session?.environment !== "prod") {
-					console.log("[poynt collect] -  supportWalletPayments", {
-						supports,
-						godaddyPaymentsConfig,
-						countryCode,
-						currencyCode,
-						collect,
-					});
-				}
 				if (supports.paze) {
 					setPazeSupported(true);
 				} else {
@@ -196,7 +176,6 @@ export function PaymentForm(
 		countryCode,
 		currencyCode,
 		session?.paymentMethods?.paze?.processor,
-		session?.environment,
 		session?.storeName,
 		isPoyntLoaded,
 	]);

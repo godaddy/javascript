@@ -8,7 +8,7 @@ const listeners = new Set<(loaded: boolean) => void>();
 
 // load collect.js globally so it can be used for card component and Apple/G Pay buttons
 export function useLoadPoyntCollect() {
-	const { godaddyPaymentsConfig, session } = useCheckoutContext();
+	const { godaddyPaymentsConfig } = useCheckoutContext();
 	const collectCDN = useGetPoyntCollectCdn();
 	const [loaded, setLoaded] = useState(isPoyntLoaded);
 
@@ -37,34 +37,19 @@ export function useLoadPoyntCollect() {
 			return;
 		}
 
-		if (session?.environment !== "prod") {
-			console.log("[poynt collect] - load from CDN", {
-				isPoyntLoaded,
-			});
-		}
-
 		isPoyntCDNLoaded = true;
 		const script = document.createElement("script");
 		script.src = collectCDN;
 		script.async = true;
 		script.onload = () => {
 			isPoyntLoaded = true;
-			if (session?.environment !== "prod") {
-				console.log("[poynt collect] - loaded from CDN", {
-					isPoyntLoaded,
-				});
-			}
 			// Notify all components that Poynt has loaded
 			// biome-ignore lint/complexity/noForEach: Set iteration needs forEach for compatibility
 			listeners.forEach((listener) => listener(true));
 		};
 
 		document?.body?.appendChild(script);
-		//
-		// return () => {
-		// 	document?.body?.removeChild(script);
-		// };
-	}, [godaddyPaymentsConfig, collectCDN, session?.environment]);
+	}, [godaddyPaymentsConfig, collectCDN]);
 
 	return { isPoyntLoaded: loaded };
 }
