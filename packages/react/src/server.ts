@@ -49,9 +49,9 @@ function getHostByEnvironment(): string {
 }
 
 async function getAccessToken({
-								  clientId,
-								  clientSecret,
-							  }: {
+  clientId,
+  clientSecret,
+}: {
 	clientId: string;
 	clientSecret: string;
 	environment: Environments;
@@ -92,7 +92,6 @@ async function getAccessToken({
 			scope: string;
 			expires_in: number;
 		};
-
 		return result;
 	} catch (err) {
 		console.error("Failed to get access token:", err);
