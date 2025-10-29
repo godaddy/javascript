@@ -17,7 +17,7 @@ import { useMemo } from "react";
 import type { z } from "zod";
 
 interface CheckoutFormContainerProps extends Omit<CheckoutProps, "session"> {
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: Fix this
+	// biome-ignore lint/suspicious/noExplicitAny: Can be any
 	schema: z.ZodObject<any> | z.ZodEffects<any>;
 }
 
@@ -49,21 +49,6 @@ export function CheckoutFormContainer({
 		}),
 		[order, props.defaultValues, session?.shipping?.originAddress?.countryCode],
 	);
-
-	// Disable automatic tax updates for now.
-	// const hasCalledUpdateTaxes = useRef(false);
-	//
-	// useEffect(() => {
-	// 	if (
-	// 		!hasCalledUpdateTaxes.current &&
-	// 		order &&
-	// 		(order.billing?.address || order.shipping?.address) &&
-	// 		session?.enableTaxCollection
-	// 	) {
-	// 		updateTaxes.mutate(undefined);
-	// 		hasCalledUpdateTaxes.current = true;
-	// 	}
-	// }, [order, updateTaxes, session]);
 
 	if (!isConfirmingCheckout && !draftOrderQuery.isLoading && !order) {
 		const returnUrl = session?.returnUrl;

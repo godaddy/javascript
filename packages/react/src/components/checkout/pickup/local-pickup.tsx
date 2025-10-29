@@ -700,14 +700,6 @@ export function LocalPickupForm({
 												locationId: selectedLocationId,
 											},
 										});
-
-										// If you need to store the actual time for ASAP, you can calculate it here
-										// if (value === "ASAP" && storeHours && locationTimeZone) {
-										//   const leadTimeMinutes = storeHours.leadTime || FALLBACK_LEAD_TIME;
-										//   const now = new Date();
-										//   const pickupTime = toZonedTime(new Date(now.getTime() + leadTimeMinutes * 60000), locationTimeZone);
-										//   form.setValue("actualPickupTime", pickupTime.toISOString());
-										// }
 									}}
 									value={field.value}
 								>
@@ -788,12 +780,6 @@ export function LocalPickupForm({
 								);
 							})}
 						</div>
-						{/*<div className="text-xs text-muted-foreground">*/}
-						{/*	{t.pickup.storeOperatesIn.replace(*/}
-						{/*		"{timezone}",*/}
-						{/*		displayHours.timeZone,*/}
-						{/*	)}*/}
-						{/*</div>*/}
 					</CollapsibleContent>
 				</Collapsible>
 			)}

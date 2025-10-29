@@ -155,7 +155,7 @@ export const baseCheckoutSchema = z.object({
 	shippingPostalCode: z.string().max(60),
 	shippingCountryCode: z.string().max(2),
 	shippingMethod: z.string().optional(),
-	shippingValid: z.literal<boolean>(true, {
+	shippingValid: z.literal(true, {
 		errorMap: () => ({ message: "Invalid shipping address" }),
 	}),
 	billingFirstName: z.string().max(60),
@@ -178,7 +178,7 @@ export const baseCheckoutSchema = z.object({
 	billingAdminArea1: z.string().max(100).describe("State or province"),
 	billingPostalCode: z.string().max(60),
 	billingCountryCode: z.string().max(2),
-	billingValid: z.literal<boolean>(true, {
+	billingValid: z.literal(true, {
 		errorMap: () => ({ message: "Invalid billing address" }),
 	}),
 	paymentCardNumber: z.string().optional(),
@@ -429,7 +429,7 @@ export function Checkout(props: CheckoutProps) {
 
 			// Billing address validation - only required if not using shipping address OR pickup
 			const requireBillingAddress =
-				!data.paymentUseShippingAddress || data.deliveryMethod === "PICKUP";
+				!data.paymentUseShippingAddress || data.deliveryMethod === DeliveryMethods.PICKUP;
 
 			if (requireBillingAddress) {
 				// Basic billing fields required for all countries

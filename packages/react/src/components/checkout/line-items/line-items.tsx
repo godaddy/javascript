@@ -111,9 +111,6 @@ export function DraftOrderLineItems({
 													key={`addon-${value.name}`}
 												>
 													{value.name}
-													{/*{value?.costAdjustment?.value*/}
-													{/*	? `(+$${(value?.costAdjustment?.value / 100).toFixed(2)})`*/}
-													{/*	: null}*/}
 												</span>
 											))}
 										</span>
@@ -130,14 +127,6 @@ export function DraftOrderLineItems({
 								<span className="text-xs text-muted-foreground">
 									{t.general.quantity}: {item.quantity}
 								</span>
-								{/*{item?.discounts?.length ? (*/}
-								{/*	<div className="flex items-center space-x-2">*/}
-								{/*		<Badge variant="outline" className="text-xs uppercase">*/}
-								{/*			{item?.discounts?.[0].code} (-$*/}
-								{/*			{(item?.discounts?.[0].amount?.value || 0) / 100})*/}
-								{/*		</Badge>*/}
-								{/*	</div>*/}
-								{/*) : null}*/}
 							</div>
 							{item.originalPrice && item.quantity ? (
 								<div className="text-right">
@@ -148,20 +137,6 @@ export function DraftOrderLineItems({
 												currency: currencyCode,
 											}).format(item.originalPrice * item.quantity)}
 										</span>
-										{/*{item.originalPrice * item.quantity > item.price && (*/}
-										{/*	<div className="text-xs text-muted-foreground line-through">*/}
-										{/*		{new Intl.NumberFormat("en-us", {*/}
-										{/*			style: "currency",*/}
-										{/*			currency: currencyCode,*/}
-										{/*		}).format(item.originalPrice * item.quantity)}*/}
-										{/*	</div>*/}
-										{/*)}*/}
-										{/*<span className="text-sm">*/}
-										{/*	{new Intl.NumberFormat("en-us", {*/}
-										{/*		style: "currency",*/}
-										{/*		currency: currencyCode,*/}
-										{/*	}).format(item.price)}*/}
-										{/*</span>*/}
 									</div>
 								</div>
 							) : null}

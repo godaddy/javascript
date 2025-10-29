@@ -59,7 +59,7 @@ const deliveryMethodToGridArea: Record<string, string> = {
 };
 
 interface CheckoutFormProps extends Omit<CheckoutProps, "session"> {
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: Fix this
+	// biome-ignore lint/suspicious/noExplicitAny: Can be any
 	schema: z.ZodObject<any> | z.ZodEffects<any>;
 	defaultValues?: Pick<CheckoutFormData, "contactEmail">;
 	items: Product[];
@@ -99,10 +99,6 @@ export function CheckoutForm({
 		useIsMutating({
 			mutationKey: ["update-draft-order-taxes", { id: session?.id }],
 		}) > 0;
-
-	// // Get active discount codes
-	// const discountCodes =
-	// 	(order?.discounts?.map((d) => d.code).filter(Boolean) as string[]) || [];
 
 	const draftOrderTotalsQuery = useDraftOrderTotals();
 	const draftOrder = useDraftOrder();
