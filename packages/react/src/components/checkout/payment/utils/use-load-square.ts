@@ -1,57 +1,54 @@
-import { useCheckoutContext } from "@/components/checkout/checkout";
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
+import { useCheckoutContext } from '@/components/checkout/checkout';
 
 let isSquareLoaded = false;
 let isSquareCDNLoaded = false;
 const listeners = new Set<(loaded: boolean) => void>();
 
 export function useLoadSquare() {
-	const { squareConfig } = useCheckoutContext();
-	const [loaded, setLoaded] = useState(isSquareLoaded);
-	const environment = process.env.GODADDY_ENV || "prod"
+  const { squareConfig } = useCheckoutContext();
+  const [loaded, setLoaded] = useState(isSquareLoaded);
+  const environment = process.env.GODADDY_ENV || process.env.NEXT_PUBLIC_GODADDY_ENV || 'prod';
 
-	const squareCDN =
-		environment === "prod"
-			? "https://web.squarecdn.com/v1/square.js"
-			: "https://sandbox.web.squarecdn.com/v1/square.js";
+  const squareCDN =
+    environment === 'prod' ? 'https://web.squarecdn.com/v1/square.js' : 'https://sandbox.web.squarecdn.com/v1/square.js';
 
-	useEffect(() => {
-		// Register this component to be notified when Square loads
-		const updateLoaded = (newLoaded: boolean) => setLoaded(newLoaded);
-		listeners.add(updateLoaded);
+  useEffect(() => {
+    // Register this component to be notified when Square loads
+    const updateLoaded = (newLoaded: boolean) => setLoaded(newLoaded);
+    listeners.add(updateLoaded);
 
-		// If already loaded, update immediately
-		if (isSquareLoaded) {
-			setLoaded(true);
-		}
+    // If already loaded, update immediately
+    if (isSquareLoaded) {
+      setLoaded(true);
+    }
 
-		return () => {
-			listeners.delete(updateLoaded);
-		};
-	}, []);
+    return () => {
+      listeners.delete(updateLoaded);
+    };
+  }, []);
 
-	useEffect(() => {
-		if (isSquareLoaded || isSquareCDNLoaded || !squareConfig || !squareCDN) {
-			return;
-		}
+  useEffect(() => {
+    if (isSquareLoaded || isSquareCDNLoaded || !squareConfig || !squareCDN) {
+      return;
+    }
 
-		isSquareCDNLoaded = true;
-		const script = document.createElement("script");
-		script.src = squareCDN;
-		script.async = true;
-		script.onload = () => {
-			isSquareLoaded = true;
-			// Notify all components that Square has loaded
-			// biome-ignore lint/complexity/noForEach: Set iteration needs forEach for compatibility
-			listeners.forEach((listener) => listener(true));
-		};
+    isSquareCDNLoaded = true;
+    const script = document.createElement('script');
+    script.src = squareCDN;
+    script.async = true;
+    script.onload = () => {
+      isSquareLoaded = true;
+      // Notify all components that Square has loaded
+      listeners.forEach(listener => listener(true));
+    };
 
-		document.body.appendChild(script);
+    document.body.appendChild(script);
 
-		// return () => {
-		// 	document.body.removeChild(script);
-		// };
-	}, [squareConfig, squareCDN]);
+    // return () => {
+    // 	document.body.removeChild(script);
+    // };
+  }, [squareConfig, squareCDN]);
 
-	return { isSquareLoaded: loaded };
+  return { isSquareLoaded: loaded };
 }

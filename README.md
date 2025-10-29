@@ -46,7 +46,7 @@ This monorepo contains the following packages:
 | Package | Description | NPM |
 |---------|-------------|-----|
 | [`eslint-config-godaddy`](/packages/eslint-config-godaddy) | Base ESLint configuration for ES6 JavaScript | [![npm](https://img.shields.io/npm/v/eslint-config-godaddy.svg)](https://www.npmjs.com/package/eslint-config-godaddy) |
-| [`eslint-config-godaddy-react`](/packages/eslint-config-godaddy-react) | ESLint configuration for React applications | [![npm](https://img.shields.io/npm/v/eslint-config-godaddy-react.svg)](https://www.npmjs.com/package/eslint-config-godaddy-react) |
+| [`eslint-config-godaddy-react`](/packages/eslint-config-godaddy-react) | ESLint configuration for React applications | [![npm](https://img.shields.io/npm/v/eslint-config-godaddy-svg)](https://www.npmjs.com/package/eslint-config-godaddy-react) |
 | [`eslint-config-godaddy-typescript`](/packages/eslint-config-godaddy-typescript) | ESLint configuration for TypeScript applications | [![npm](https://img.shields.io/npm/v/eslint-config-godaddy-typescript.svg)](https://www.npmjs.com/package/eslint-config-godaddy-typescript) |
 | [`eslint-config-godaddy-react-typescript`](/packages/eslint-config-godaddy-react-typescript) | ESLint configuration for React + TypeScript applications | [![npm](https://img.shields.io/npm/v/eslint-config-godaddy-react-typescript.svg)](https://www.npmjs.com/package/eslint-config-godaddy-react-typescript) |
 | [`biome-config-godaddy`](/packages/biome-config-godaddy) | Fast Rust-based alternative to ESLint and Prettier using Biome | [![npm](https://img.shields.io/npm/v/biome-config-godaddy.svg)](https://www.npmjs.com/package/biome-config-godaddy) |

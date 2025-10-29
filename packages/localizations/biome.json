@@ -1,0 +1,4 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
+  "extends": ["biome-config-godaddy/biome.json"]
+}

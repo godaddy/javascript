@@ -1,4 +1,4 @@
-import { graphql } from "gql.tada";
+import { graphql } from '@/gql.tada';
 
 export const AddressMatchesQuery = graphql(`
     query CheckoutSessionWithAddressMatches($query: String!) {

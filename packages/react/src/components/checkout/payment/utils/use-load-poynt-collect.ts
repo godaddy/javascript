@@ -1,6 +1,6 @@
-import { useCheckoutContext } from "@/components/checkout/checkout";
-import { useGetPoyntCollectCdn } from "@/components/checkout/payment/utils/use-poynt-collect-cdn";
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
+import { useCheckoutContext } from '@/components/checkout/checkout';
+import { useGetPoyntCollectCdn } from '@/components/checkout/payment/utils/use-poynt-collect-cdn';
 
 let isPoyntLoaded = false;
 let isPoyntCDNLoaded = false;
@@ -8,48 +8,42 @@ const listeners = new Set<(loaded: boolean) => void>();
 
 // load collect.js globally so it can be used for card component and Apple/G Pay buttons
 export function useLoadPoyntCollect() {
-	const { godaddyPaymentsConfig } = useCheckoutContext();
-	const collectCDN = useGetPoyntCollectCdn();
-	const [loaded, setLoaded] = useState(isPoyntLoaded);
+  const { godaddyPaymentsConfig } = useCheckoutContext();
+  const collectCDN = useGetPoyntCollectCdn();
+  const [loaded, setLoaded] = useState(isPoyntLoaded);
 
-	useEffect(() => {
-		// Register this component to be notified when Poynt loads
-		const updateLoaded = (newLoaded: boolean) => setLoaded(newLoaded);
-		listeners.add(updateLoaded);
+  useEffect(() => {
+    // Register this component to be notified when Poynt loads
+    const updateLoaded = (newLoaded: boolean) => setLoaded(newLoaded);
+    listeners.add(updateLoaded);
 
-		// If already loaded, update immediately
-		if (isPoyntLoaded) {
-			setLoaded(true);
-		}
+    // If already loaded, update immediately
+    if (isPoyntLoaded) {
+      setLoaded(true);
+    }
 
-		return () => {
-			listeners.delete(updateLoaded);
-		};
-	}, []);
+    return () => {
+      listeners.delete(updateLoaded);
+    };
+  }, []);
 
-	useEffect(() => {
-		if (
-			isPoyntCDNLoaded ||
-			isPoyntLoaded ||
-			!godaddyPaymentsConfig ||
-			!collectCDN
-		) {
-			return;
-		}
+  useEffect(() => {
+    if (isPoyntCDNLoaded || isPoyntLoaded || !godaddyPaymentsConfig || !collectCDN) {
+      return;
+    }
 
-		isPoyntCDNLoaded = true;
-		const script = document.createElement("script");
-		script.src = collectCDN;
-		script.async = true;
-		script.onload = () => {
-			isPoyntLoaded = true;
-			// Notify all components that Poynt has loaded
-			// biome-ignore lint/complexity/noForEach: Set iteration needs forEach for compatibility
-			listeners.forEach((listener) => listener(true));
-		};
+    isPoyntCDNLoaded = true;
+    const script = document.createElement('script');
+    script.src = collectCDN;
+    script.async = true;
+    script.onload = () => {
+      isPoyntLoaded = true;
+      // Notify all components that Poynt has loaded
+      listeners.forEach(listener => listener(true));
+    };
 
-		document?.body?.appendChild(script);
-	}, [godaddyPaymentsConfig, collectCDN]);
+    document?.body?.appendChild(script);
+  }, [godaddyPaymentsConfig, collectCDN]);
 
-	return { isPoyntLoaded: loaded };
+  return { isPoyntLoaded: loaded };
 }
