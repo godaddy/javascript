@@ -44,31 +44,23 @@ export async function createCheckoutSession(
 	});
 }
 
-function getHostByEnvironment(environment: string | null): string {
-	switch (environment) {
-		case "prod":
-			return "https://api.godaddy.com";
-		case "ote":
-			return "https://api.ote-godaddy.com";
-		case "dev":
-			return "https://api.dev-godaddy.com";
-		case "test":
-			return "https://api.test-godaddy.com";
-		default:
-			throw new Error("Invalid environment");
-	}
+function getHostByEnvironment(): string {
+	return process.env.GODADDY_HOST || "https://api.godaddy.com";
 }
 
 async function getAccessToken({
-	clientId,
-	clientSecret,
-	environment,
-}: { clientId: string; clientSecret: string; environment: Environments }) {
+								  clientId,
+								  clientSecret,
+							  }: {
+	clientId: string;
+	clientSecret: string;
+	environment: Environments;
+}) {
 	if (!clientId || !clientSecret) {
 		return;
 	}
 
-	const host = getHostByEnvironment(environment);
+	const host = getHostByEnvironment();
 
 	const data = new URLSearchParams();
 	data.append("grant_type", "client_credentials");
