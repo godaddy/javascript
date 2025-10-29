@@ -44,10 +44,6 @@ export function useLoadSquare() {
     };
 
     document.body.appendChild(script);
-
-    // return () => {
-    // 	document.body.removeChild(script);
-    // };
   }, [squareConfig, squareCDN]);
 
   return { isSquareLoaded: loaded };
