@@ -21,8 +21,8 @@
     "plugins": [
       {
         "name": "gql.tada/ts-plugin",
-        "schema": "./schema.graphql",
-        "tadaOutputLocation": "./src/lib/godaddy/graphql-env.d.ts"
+        "schema": "./src/lib/godaddy/schema.graphql",
+        "tadaOutputLocation": "./src/lib/godaddy/graphql-env.ts"
       }
     ]
   },

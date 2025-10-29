@@ -1,8 +1,12 @@
 import { initGraphQLTada } from 'gql.tada';
-import type { introspection } from '@/lib/godaddy/graphql-env.d.ts';
+import type { introspection } from '@/lib/godaddy/graphql-env';
 
 export const graphql = initGraphQLTada<{
-  introspection: introspection;
+  introspection: typeof introspection;
+  scalars: {
+    DateTime: string;
+    ID: string;
+  };
 }>();
 
 export type { FragmentOf, ResultOf, VariablesOf } from 'gql.tada';
