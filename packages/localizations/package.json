@@ -1,10 +1,12 @@
 {
   "name": "@godaddy/localizations",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Internationalization localizations for GoDaddy checkout components",
   "type": "module",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,7 +21,13 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write ."
   },
-  "keywords": ["godaddy", "checkout", "localization", "i18n", "internationalization"],
+  "keywords": [
+    "godaddy",
+    "checkout",
+    "localization",
+    "i18n",
+    "internationalization"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.3.2",
