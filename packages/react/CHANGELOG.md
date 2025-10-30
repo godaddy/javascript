@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.2
+
+### Patch Changes
+
+- 445d787: Small formatting issues and fixes
+- Updated dependencies [445d787]
+  - @godaddy/localizations@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes

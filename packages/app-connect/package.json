@@ -1,6 +1,6 @@
 {
 	"name": "@godaddy/app-connect",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "GoDaddy App Connect - A verification library for GoDaddy Platform App requests",
 	"type": "module",
 	"types": "./dist/index.d.ts",
