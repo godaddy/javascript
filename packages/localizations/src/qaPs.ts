@@ -6,7 +6,8 @@ export const qaPs = {
     free: '[FRËË]',
     closed: '[Çlöšéd]',
     apply: '[Âþþlÿ]',
-    checkoutDisabled: '[Çhéçkøüť îš çürrëñťlÿ dîšâblëd. Wé âþöløgîžé før ťhé îñçöñvéñîéñçé ând áppreciate your patience.]',
+    checkoutDisabled:
+      '[Çhéçkøüť îš çürrëñťlÿ dîšâblëd. Wé âþöløgîžé før ťhé îñçöñvéñîéñçé ând áppreciate your patience.]',
   },
   contact: {
     title: '[Çöñťâçť]',
@@ -25,7 +26,8 @@ export const qaPs = {
     selectTime: '[Šëlëçť â þîçküþ ťîmé šlöť]',
     storeHours: '[Šťörë Hôürš Îñförmâťîöñ]',
     seeDetails: '[Šëë mörë dëťâîlš]',
-    noTimeSlots: '[Ñö âvâîlâblë ťîmé šlöťš fôr ťhé šëlëçťëd dâťé. Þlëâšé šëlëçť âñöťhër dâťé ôr çöñšîdër öťhër öþťîöñš.]',
+    noTimeSlots:
+      '[Ñö âvâîlâblë ťîmé šlöťš fôr ťhé šëlëçťëd dâťé. Þlëâšé šëlëçť âñöťhër dâťé ôr çöñšîdër öťhër öþťîöñš.]',
     hoursDisplayed: '[Hôürš dîšþlâÿëd îñ ÿöür löçâl ťîmëžöñë fôr çöñvëñîëñçë.]',
     storeOperatesIn: '[Šťörë öþërâťëš îñ {timezone} ťîmëžöñë förmâť.]',
     asap: '[ÂŠÂ̈P]',
@@ -63,7 +65,8 @@ export const qaPs = {
     title: '[Šhîþþîñg Îñförmâťîöñ]',
     description: '[Šhîþþîñg âddrëšš dëťâîlš]',
     method: '[Šhîþþîñg mëťhöd šëlëçťîöñ]',
-    noShippingMethodAddress: '[Ëñťër ÿöür âddrëšš ťö šëë âvâîlâblë šhîþþîñg mëťhödš fôr ÿöür löçâťîöñ.]',
+    noShippingMethodAddress:
+      '[Ëñťër ÿöür âddrëšš ťö šëë âvâîlâblë šhîþþîñg mëťhödš fôr ÿöür löçâťîöñ.]',
     noShippingMethods: '[Ñö šhîþþîñg mëťhödš föüñd fôr ţhîš löçâţîöñ.]',
     phone: '[Þhöñë Ñümkër Îñförmâťîöñ]',
     country: '[Çöüñţrÿ Šëlëçťîöñ]',
@@ -80,7 +83,8 @@ export const qaPs = {
     notesPlaceholder: '[Ñöţëš ör šþëçîâl îñšţrüçţîöñš fôr délîvërÿ]',
     addressSuggestion: '[Dîd ÿöü mëâñ ţhîš âddrëšš]',
     addressSuggestionEnd: '[?]',
-    noShippingOriginAddress: '[Ñö šhîþþîñg örîgîñ âddrëšš þrövîdëd bÿ mërçhâñť.]',
+    noShippingOriginAddress:
+      '[Ñö šhîþþîñg örîgîñ âddrëšš þrövîdëd bÿ mërçhâñť.]',
   },
   billing: {
     title: '[Bîllîñg Îñförmâţîöñ]',
@@ -166,7 +170,8 @@ export const qaPs = {
       suggestions: '[Äüţöçömþlëţë šüggëšţîöñš]',
     },
     form: {
-      useFormFieldError: '[üšëFörmFîëld šhöüld bë üšëd wîţhîñ <FörmFîëld> çömþöñëñţ]',
+      useFormFieldError:
+        '[üšëFörmFîëld šhöüld bë üšëd wîţhîñ <FörmFîëld> çömþöñëñţ]',
     },
     pagination: {
       ariaLabel: '[þâgîñâţîöñ ñâvîgâţîöñ]',
@@ -177,7 +182,8 @@ export const qaPs = {
       morePages: '[Mörë þâgëš âvâîlâblë]',
     },
     sidebar: {
-      useSidebarError: '[üšëŠîdëbâr müšţ bë üšëd wîţhîñ â ŠîdëbârÞrövîdër çömþöñëñţ.]',
+      useSidebarError:
+        '[üšëŠîdëbâr müšţ bë üšëd wîţhîñ â ŠîdëbârÞrövîdër çömþöñëñţ.]',
       toggleSidebar: '[Tögglë Šîdëbâr Vîšîbîlîţÿ]',
     },
     accessibility: {
@@ -200,14 +206,19 @@ export const qaPs = {
     orderIdRequired: '[Ördër ÎD îš rëqüîrëd fôr þröçëššîñg]',
     errorTrackingEvent: '[Ërrör ţrâçkîñg ëvëñţ îñ âñâlÿţîçš]',
     errorInTrackingSubscriber: '[Ërrör îñ ţrâçkîñg šübšçrîbër šÿšţëm]',
-    useTrackingProviderError: '[üšëŢrâçkîñg müšţ bë üšëd wîţhîñ â ŢrâçkîñgÞrövîdër çömþöñëñţ]',
-    usePoyntCollectProviderError: '[üšëÞöÿñţÇöllëçţ müšţ bë üšëd wîţhîñ â ÞöÿñţÇöllëçţÞrövîdër çömþöñëñţ]',
-    useSquareProviderError: '[üšëŠqüârë müšţ bë üšëd wîţhîñ â ŠqüârëÞrövîdër çömþöñëñţ]',
+    useTrackingProviderError:
+      '[üšëŢrâçkîñg müšţ bë üšëd wîţhîñ â ŢrâçkîñgÞrövîdër çömþöñëñţ]',
+    usePoyntCollectProviderError:
+      '[üšëÞöÿñţÇöllëçţ müšţ bë üšëd wîţhîñ â ÞöÿñţÇöllëçţÞrövîdër çömþöñëñţ]',
+    useSquareProviderError:
+      '[üšëŠqüârë müšţ bë üšëd wîţhîñ â ŠqüârëÞrövîdër çömþöñëñţ]',
     errorProcessingPayment: '[Ërrör þröçëššîñg þâÿmëñţ îñförmâţîöñ]',
-    stripeConfigMissing: '[Šţrîþë çönfîgürâţîöñ îš mîššîñg. Þlëâšë çhëçk ÿöür šëţüþ.]',
+    stripeConfigMissing:
+      '[Šţrîþë çönfîgürâţîöñ îš mîššîñg. Þlëâšë çhëçk ÿöür šëţüþ.]',
     paymentSuccessful: '[Þâÿmëñţ þröçëššëd šüççëššfüllÿ]',
     paymentFailed: '[Þâÿmëñţ þröçëššîñg fâîlëd]',
-    paypalConfigMissing: '[ÞâÿÞâl çönfîgürâţîöñ îš mîššîñg. Þlëâšë çhëçk ÿöür šëţüþ.]',
+    paypalConfigMissing:
+      '[ÞâÿÞâl çönfîgürâţîöñ îš mîššîñg. Þlëâšë çhëçk ÿöür šëţüþ.]',
     stripeNotReady: '[Šţrîþë šërvîçë ñöţ rëâdÿ fôr þröçëššîñg]',
     cardElementNotFound: '[ÇârdËlëmëñţ çömþöñëñţ ñöţ föüñd îñ DÖM]',
     errorProcessingCardPayment: '[Ërrör þröçëššîñg çârd þâÿmëñţ îñförmâţîöñ.]',
@@ -238,13 +249,16 @@ export const qaPs = {
   apiErrors: {
     INTERNAL_SERVER_ERROR: '[Šërvër ërrör öççürrëd]',
     SESSION_NOT_FOUND: '[Šëššîöñ ñöţ föüñd îñ šÿšţëm]',
-    CHECKOUT_SESSION_RETRIEVAL_FAILED: '[Fâîlëd ţö rëţrîëvë çhëçköüţ šëššîöñ dâţâ]',
+    CHECKOUT_SESSION_RETRIEVAL_FAILED:
+      '[Fâîlëd ţö rëţrîëvë çhëçköüţ šëššîöñ dâţâ]',
     CHECKOUT_SESSION_NOT_FOUND: '[Çhëçköüţ šëššîöñ ñöţ föüñd îñ šÿšţëm]',
-    CHECKOUT_SESSION_FETCH_ERROR: '[Gëñërâl çhëçköüţ šëššîöñ fëţçh ërrör öççürrëd]',
+    CHECKOUT_SESSION_FETCH_ERROR:
+      '[Gëñërâl çhëçköüţ šëššîöñ fëţçh ërrör öççürrëd]',
     DRAFT_ORDER_NOT_FOUND: '[Ördër ñöţ föüñd îñ šÿšţëm]',
     CHECKOUT_SESSION_CREATION_FAILED: '[Fâîlëd ţö çrëâţë çhëçköüţ šëššîöñ]',
     CREATED_SESSION_DATA_NOT_FOUND: '[Çrëâţëd šëššîöñ dâţâ ñöţ föüñd]',
-    CHECKOUT_SESSION_CREATION_ERROR: '[Gëñërâl çhëçköüţ šëššîöñ çrëâţîöñ ërrör]',
+    CHECKOUT_SESSION_CREATION_ERROR:
+      '[Gëñërâl çhëçköüţ šëššîöñ çrëâţîöñ ërrör]',
     CHECKOUT_SESSION_UPDATE_FAILED: '[Fâîlëd ţö üþdâţë çhëçköüţ šëššîöñ]',
     UPDATED_SESSION_NOT_FOUND: '[Üþdâţëd šëššîöñ ñöţ föüñd]',
     CHECKOUT_SESSION_UPDATE_ERROR: '[Gëñërâl çhëçköüţ šëššîöñ üþdâţë ërrör]',
@@ -300,8 +314,10 @@ export const qaPs = {
     CATALOG_API_ERROR: '[Çâţâlög šërvîçë ërrör öççürrëd]',
     TAX_SERVICE_UNAVAILABLE: '[Ţâx šërvîçë îš üñâvâîlâblë]',
     SHIPPING_SERVICE_UNAVAILABLE: '[Šhîþþîñg šërvîçë îš üñâvâîlâblë]',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: '[Þrîçë âdjüšţmëñţš šërvîçë îš üñâvâîlâblë]',
-    PRICE_ADJUSTMENTS_CALCULATION_FAILED: '[Fâîlëd ţö çâlçülâţë þrîçë âdjüšţmëñţš]',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      '[Þrîçë âdjüšţmëñţš šërvîçë îš üñâvâîlâblë]',
+    PRICE_ADJUSTMENTS_CALCULATION_FAILED:
+      '[Fâîlëd ţö çâlçülâţë þrîçë âdjüšţmëñţš]',
     SERVICE_UNAVAILABLE: '[Šërvîçë îš ţëmþörârîlÿ üñâvâîlâblë]',
     RATE_LIMITED: '[Ţöö mâñÿ rëqüëšţš, þlëâšë ţrÿ âgâîñ lâţër]',
     TIMEOUT: '[Rëqüëšţ ţîmëd öüţ]',
@@ -309,9 +325,12 @@ export const qaPs = {
     SHIPPING_POSTAL_CODE_REQUIRED: '[Šhîþþîñg þöšţâl çödë îš rëqüîrëd]',
     SHIPPING_COUNTRY_CODE_REQUIRED: '[Šhîþþîñg çöüñţrÿ çödë îš rëqüîrëd]',
     SHIPPING_METHOD_REQUIRED: '[Šhîþþîñg mëţhöd îš rëqüîrëd]',
-    SHIPPING_ADDRESS_VERIFICATION_FAILED: '[Šhîþþîñg âddrëšš vërîfîçâţîöñ fâîlëd]',
-    BILLING_ADDRESS_VERIFICATION_FAILED: '[Bîllîñg âddrëšš vërîfîçâţîöñ fâîlëd]',
+    SHIPPING_ADDRESS_VERIFICATION_FAILED:
+      '[Šhîþþîñg âddrëšš vërîfîçâţîöñ fâîlëd]',
+    BILLING_ADDRESS_VERIFICATION_FAILED:
+      '[Bîllîñg âddrëšš vërîfîçâţîöñ fâîlëd]',
     MISSING_SHIPPING_INFO: '[Šĥîţţîñg âddrëšš ör mëţĥöd fâîlëd ţö âţţļÿ]',
-    DEPENDENCY_ERROR: 'موږ اوس ستاسو امر پروسس نشو کولی. مهرباني وکړئ یو شېبه انتظار وکړئ او بیا هڅه وکړئ',
+    DEPENDENCY_ERROR:
+      'موږ اوس ستاسو امر پروسس نشو کولی. مهرباني وکړئ یو شېبه انتظار وکړئ او بیا هڅه وکړئ',
   },
 };

@@ -18,91 +18,117 @@ export function useDiscountApply() {
 
   return useMutation({
     mutationKey: ['apply-discount', { sessionId: session?.id }],
-    mutationFn: async ({ discountCodes }: { discountCodes: ApplyCheckoutSessionDiscountInput['input']['discountCodes'] }) => {
+    mutationFn: async ({
+      discountCodes,
+    }: {
+      discountCodes: ApplyCheckoutSessionDiscountInput['input']['discountCodes'];
+    }) => {
       if (!session) return;
       return await applyDiscount(discountCodes, session);
     },
     onSuccess: (data, { discountCodes }) => {
       if (!session) return;
 
-      const discountTotal = data?.applyCheckoutSessionDiscount?.totals?.discountTotal;
+      const discountTotal =
+        data?.applyCheckoutSessionDiscount?.totals?.discountTotal;
       const responseData = data?.applyCheckoutSessionDiscount;
       // Update the cached draft-order query (includes totals)
 
       if (discountTotal) {
-        queryClient.setQueryData(['draft-order', { id: session.id }], (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
-          if (!old) return old;
-          return {
-            ...old,
-            checkoutSession: {
-              ...old.checkoutSession,
-              draftOrder: {
-                ...old?.checkoutSession?.draftOrder,
-                totals: {
-                  ...old?.checkoutSession?.draftOrder?.totals,
-                  discountTotal,
-                  total: responseData?.totals?.total || old?.checkoutSession?.draftOrder?.totals?.total,
+        queryClient.setQueryData(
+          ['draft-order', { id: session.id }],
+          (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
+            if (!old) return old;
+            return {
+              ...old,
+              checkoutSession: {
+                ...old.checkoutSession,
+                draftOrder: {
+                  ...old?.checkoutSession?.draftOrder,
+                  totals: {
+                    ...old?.checkoutSession?.draftOrder?.totals,
+                    discountTotal,
+                    total:
+                      responseData?.totals?.total ||
+                      old?.checkoutSession?.draftOrder?.totals?.total,
+                  },
+                  // Update order-level discounts
+                  discounts:
+                    responseData?.discounts ||
+                    old?.checkoutSession?.draftOrder?.discounts ||
+                    [],
+                  // Update lineItem discounts
+                  lineItems:
+                    responseData?.lineItems
+                      ?.map(responseLineItem => {
+                        const existingLineItem =
+                          old?.checkoutSession?.draftOrder?.lineItems?.find(
+                            li => li.id === responseLineItem.id
+                          );
+                        return existingLineItem
+                          ? {
+                              ...existingLineItem,
+                              discounts: responseLineItem.discounts || [],
+                            }
+                          : existingLineItem;
+                      })
+                      .filter(Boolean) ||
+                    old?.checkoutSession?.draftOrder?.lineItems,
+                  // Update shippingLine discounts
+                  shippingLines:
+                    responseData?.shippingLines
+                      ?.map((responseShippingLine, index) => {
+                        const existingShippingLine =
+                          old?.checkoutSession?.draftOrder?.shippingLines?.[
+                            index
+                          ];
+                        return existingShippingLine
+                          ? {
+                              ...existingShippingLine,
+                              discounts: responseShippingLine.discounts || [],
+                            }
+                          : existingShippingLine;
+                      })
+                      .filter(Boolean) ||
+                    old?.checkoutSession?.draftOrder?.shippingLines,
                 },
-                // Update order-level discounts
-                discounts: responseData?.discounts || old?.checkoutSession?.draftOrder?.discounts || [],
-                // Update lineItem discounts
-                lineItems:
-                  responseData?.lineItems
-                    ?.map(responseLineItem => {
-                      const existingLineItem = old?.checkoutSession?.draftOrder?.lineItems?.find(
-                        li => li.id === responseLineItem.id
-                      );
-                      return existingLineItem
-                        ? {
-                            ...existingLineItem,
-                            discounts: responseLineItem.discounts || [],
-                          }
-                        : existingLineItem;
-                    })
-                    .filter(Boolean) || old?.checkoutSession?.draftOrder?.lineItems,
-                // Update shippingLine discounts
-                shippingLines:
-                  responseData?.shippingLines
-                    ?.map((responseShippingLine, index) => {
-                      const existingShippingLine = old?.checkoutSession?.draftOrder?.shippingLines?.[index];
-                      return existingShippingLine
-                        ? {
-                            ...existingShippingLine,
-                            discounts: responseShippingLine.discounts || [],
-                          }
-                        : existingShippingLine;
-                    })
-                    .filter(Boolean) || old?.checkoutSession?.draftOrder?.shippingLines,
               },
-            },
-          };
-        });
+            };
+          }
+        );
       }
 
       if (!discountCodes?.length) {
         // If no discount codes, we need to remove any existing discounts from the cache
-        queryClient.setQueryData(['draft-order', { id: session.id }], (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
-          if (!old) return old;
-          return {
-            ...old,
-            checkoutSession: {
-              ...old.checkoutSession,
-              draftOrder: {
-                ...old?.checkoutSession?.draftOrder,
-                discounts: [],
-                lineItems: old?.checkoutSession?.draftOrder?.lineItems?.map(li => ({
-                  ...li,
+        queryClient.setQueryData(
+          ['draft-order', { id: session.id }],
+          (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
+            if (!old) return old;
+            return {
+              ...old,
+              checkoutSession: {
+                ...old.checkoutSession,
+                draftOrder: {
+                  ...old?.checkoutSession?.draftOrder,
                   discounts: [],
-                })),
-                shippingLines:
-                  old?.checkoutSession?.draftOrder?.shippingLines?.map(sl => ({
-                    ...sl,
-                    discounts: [],
-                  })) || null,
+                  lineItems: old?.checkoutSession?.draftOrder?.lineItems?.map(
+                    li => ({
+                      ...li,
+                      discounts: [],
+                    })
+                  ),
+                  shippingLines:
+                    old?.checkoutSession?.draftOrder?.shippingLines?.map(
+                      sl => ({
+                        ...sl,
+                        discounts: [],
+                      })
+                    ) || null,
+                },
               },
-            },
-          };
-        });
+            };
+          }
+        );
       }
 
       if (session?.enableTaxCollection) {
@@ -114,14 +140,18 @@ export function useDiscountApply() {
 
         if (isPickup) {
           const pickupLocationId = form.getValues('pickupLocationId');
-          const locationAddress = session?.locations?.find(loc => loc.id === pickupLocationId)?.address;
+          const locationAddress = session?.locations?.find(
+            loc => loc.id === pickupLocationId
+          )?.address;
 
           if (locationAddress) {
             updateTaxes.mutate(locationAddress);
           }
         } else {
           // Only update taxes if we have the required location data
-          const hasRequiredLocationData = draftOrder?.shipping?.address?.postalCode && draftOrder?.shipping?.address?.countryCode;
+          const hasRequiredLocationData =
+            draftOrder?.shipping?.address?.postalCode &&
+            draftOrder?.shipping?.address?.countryCode;
 
           if (hasRequiredLocationData) {
             updateTaxes.mutate(undefined);

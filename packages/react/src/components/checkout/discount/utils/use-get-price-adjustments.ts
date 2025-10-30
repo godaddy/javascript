@@ -8,7 +8,10 @@ export function useGetPriceAdjustments() {
   const { session } = useCheckoutContext();
 
   return useMutation({
-    mutationKey: ['get-price-adjustments-by-discount-code', { sessionId: session?.id }],
+    mutationKey: [
+      'get-price-adjustments-by-discount-code',
+      { sessionId: session?.id },
+    ],
     mutationFn: async ({
       discountCodes,
       shippingLines,
@@ -18,9 +21,14 @@ export function useGetPriceAdjustments() {
     }) => {
       if (!session) return;
 
-      const data = await getDraftOrderPriceAdjustments(session, discountCodes, shippingLines);
+      const data = await getDraftOrderPriceAdjustments(
+        session,
+        discountCodes,
+        shippingLines
+      );
 
-      return data.checkoutSession?.draftOrder?.calculatedAdjustments?.totalDiscountAmount?.value;
+      return data.checkoutSession?.draftOrder?.calculatedAdjustments
+        ?.totalDiscountAmount?.value;
     },
   });
 }

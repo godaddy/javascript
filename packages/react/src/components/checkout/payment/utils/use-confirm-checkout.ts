@@ -1,11 +1,18 @@
 import { useMutation } from '@tanstack/react-query';
 import { useFormContext } from 'react-hook-form';
-import { redirectToSuccessUrl, useCheckoutContext } from '@/components/checkout/checkout';
+import {
+  redirectToSuccessUrl,
+  useCheckoutContext,
+} from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { eventIds } from '@/tracking/events';
-import { type TrackingEventId, TrackingEventType, track } from '@/tracking/track';
+import {
+  type TrackingEventId,
+  TrackingEventType,
+  track,
+} from '@/tracking/track';
 import type { ConfirmCheckoutMutationInput } from '@/types';
 
 export enum PaymentProvider {
@@ -57,7 +64,12 @@ export enum PaymentProvider {
 }
 
 export function useConfirmCheckout() {
-  const { session, setIsConfirmingCheckout, isConfirmingCheckout, setCheckoutErrors } = useCheckoutContext();
+  const {
+    session,
+    setIsConfirmingCheckout,
+    isConfirmingCheckout,
+    setCheckoutErrors,
+  } = useCheckoutContext();
   const form = useFormContext();
 
   return useMutation({
@@ -71,7 +83,9 @@ export function useConfirmCheckout() {
 
       const { isExpress, ...confirmCheckoutInput } = input;
 
-      const isPickup = form.getValues('deliveryMethod') === DeliveryMethods.PICKUP && !isExpress;
+      const isPickup =
+        form.getValues('deliveryMethod') === DeliveryMethods.PICKUP &&
+        !isExpress;
 
       const pickUpData = isPickup
         ? buildPickupPayload({
@@ -149,7 +163,8 @@ export function useConfirmCheckout() {
         properties: {
           draftOrderId: session?.draftOrder?.id || 'unknown',
           total: session?.draftOrder?.totals?.total?.value || 0,
-          currencyCode: session?.draftOrder?.totals?.total?.currencyCode || 'unknown',
+          currencyCode:
+            session?.draftOrder?.totals?.total?.currencyCode || 'unknown',
           paymentType: input?.paymentType,
           provider: input?.paymentProvider || 'unknown',
         },

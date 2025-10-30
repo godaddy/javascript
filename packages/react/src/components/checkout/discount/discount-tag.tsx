@@ -8,7 +8,11 @@ interface DiscountTagProps {
   isRemoving?: boolean;
 }
 
-export function DiscountTag({ discount, onRemove, isRemoving }: DiscountTagProps) {
+export function DiscountTag({
+  discount,
+  onRemove,
+  isRemoving,
+}: DiscountTagProps) {
   return (
     <div className='inline-flex items-center rounded-md border bg-secondary text-secondary-foreground text-xs'>
       <div className='flex items-center justify-center w-7 h-7 text-muted-foreground'>
@@ -24,7 +28,11 @@ export function DiscountTag({ discount, onRemove, isRemoving }: DiscountTagProps
           disabled={isRemoving}
           aria-label={`Remove ${discount}`}
         >
-          {isRemoving ? <Loader2 className='h-3 w-3 animate-spin' /> : <X className='h-3 w-3' />}
+          {isRemoving ? (
+            <Loader2 className='h-3 w-3 animate-spin' />
+          ) : (
+            <X className='h-3 w-3' />
+          )}
         </Button>
       )}
     </div>

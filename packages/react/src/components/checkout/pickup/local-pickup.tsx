@@ -7,10 +7,30 @@ import { useApplyFulfillmentLocation } from '@/components/checkout/delivery/util
 import { NotesForm } from '@/components/checkout/notes/notes-form';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
@@ -59,10 +79,16 @@ export function formatTime(timeStr: string | null) {
   const period = h >= 12 ? 'pm' : 'am';
   const h12 = h % 12 === 0 ? 12 : h % 12;
 
-  return m === 0 ? `${h12}${period}` : `${h12}:${String(m).padStart(2, '0')}${period}`;
+  return m === 0
+    ? `${h12}${period}`
+    : `${h12}:${String(m).padStart(2, '0')}${period}`;
 }
 
-export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: boolean }) {
+export function LocalPickupForm({
+  showStoreHours = true,
+}: {
+  showStoreHours?: boolean;
+}) {
   const form = useFormContext();
   const { session } = useCheckoutContext();
   const { t } = useGoDaddyContext();
@@ -96,7 +122,10 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
       if (!location) return;
       const locationHours = getStoreHours(locationId);
       if (!locationHours) return;
-      form.setValue('pickupLeadTime', locationHours.leadTime || FALLBACK_LEAD_TIME);
+      form.setValue(
+        'pickupLeadTime',
+        locationHours.leadTime || FALLBACK_LEAD_TIME
+      );
 
       if (locationHours.pickupWindowInDays === 0) {
         const today = new Date();
@@ -111,7 +140,8 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
       const maxDays = locationHours.pickupWindowInDays;
       for (let i = 0; i < maxDays; i++) {
         const dayOfWeek = dateToCheck.getDay();
-        const dayProperty = dayToProperty[dayOfWeek as keyof typeof dayToProperty];
+        const dayProperty =
+          dayToProperty[dayOfWeek as keyof typeof dayToProperty];
         if (locationHours.hours[dayProperty]?.enabled) {
           const zonedDate = toZonedTime(dateToCheck, locationHours.timeZone);
           setSelectedDate(zonedDate);
@@ -131,8 +161,13 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
     if (selectedLocationId) return;
 
     const pickupLocationId = form.getValues('pickupLocationId');
-    if (session?.locations && session.locations.length > 0 && !pickupLocationId) {
-      const defaultLocation = session.locations.find(loc => loc.isDefault) || session.locations[0];
+    if (
+      session?.locations &&
+      session.locations.length > 0 &&
+      !pickupLocationId
+    ) {
+      const defaultLocation =
+        session.locations.find(loc => loc.isDefault) || session.locations[0];
       if (defaultLocation?.id) {
         // Set local state first to prevent further executions
         setSelectedLocationId(defaultLocation.id);
@@ -141,7 +176,9 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
         // Set timezone
         form.setValue(
           'pickupTimezone',
-          defaultLocation.operatingHours?.timeZone ?? session.defaultOperatingHours?.timeZone ?? ''
+          defaultLocation.operatingHours?.timeZone ??
+            session.defaultOperatingHours?.timeZone ??
+            ''
         );
 
         applyFulfillmentLocation.mutate({
@@ -163,7 +200,9 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
   useEffect(() => {
     if (availableTimeSlots.length > 0) {
       const currentTimeValue = form.getValues('pickupTime');
-      const timeSlotExists = availableTimeSlots.some(slot => slot.value === currentTimeValue);
+      const timeSlotExists = availableTimeSlots.some(
+        slot => slot.value === currentTimeValue
+      );
       if (!currentTimeValue || !timeSlotExists) {
         const firstTimeSlot = availableTimeSlots[0].value;
         form.setValue('pickupTime', firstTimeSlot);
@@ -174,14 +213,17 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
   const storeHours = getStoreHours(selectedLocationId);
   const locationTimeZone = storeHours?.timeZone;
   const today = new Date();
-  const maxDate = storeHours?.pickupWindowInDays ? addDays(today, storeHours.pickupWindowInDays - 1) : undefined;
+  const maxDate = storeHours?.pickupWindowInDays
+    ? addDays(today, storeHours.pickupWindowInDays - 1)
+    : undefined;
 
   const isDateBookable = useCallback(
     (date: Date) => {
       const hours = getStoreHours(selectedLocationId);
       if (!hours) return false;
       const dayOfWeek = date.getDay();
-      const dayProperty = dayToProperty[dayOfWeek as keyof typeof dayToProperty];
+      const dayProperty =
+        dayToProperty[dayOfWeek as keyof typeof dayToProperty];
       return hours.hours[dayProperty]?.enabled === true;
     },
     [selectedLocationId, getStoreHours]
@@ -212,8 +254,14 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
       setAvailableTimeSlots([]);
       return;
     }
-    const openTimeHours = Number.parseInt(hoursForDay?.openTime?.split(':')?.[0] ?? '00', 10);
-    const openTimeMins = Number.parseInt(hoursForDay?.openTime?.split(':')?.[1] ?? '00', 10);
+    const openTimeHours = Number.parseInt(
+      hoursForDay?.openTime?.split(':')?.[0] ?? '00',
+      10
+    );
+    const openTimeMins = Number.parseInt(
+      hoursForDay?.openTime?.split(':')?.[1] ?? '00',
+      10
+    );
 
     // Create a base date object for the selected date
     const baseDate = new Date(selectedDate);
@@ -236,12 +284,20 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
       setAvailableTimeSlots([]);
       return;
     }
-    const closeTimeHours = Number.parseInt(hoursForDay?.closeTime?.split(':')?.[0] ?? '23', 10);
-    const closeTimeMins = Number.parseInt(hoursForDay?.closeTime?.split(':')?.[1] ?? '59', 10);
+    const closeTimeHours = Number.parseInt(
+      hoursForDay?.closeTime?.split(':')?.[0] ?? '23',
+      10
+    );
+    const closeTimeMins = Number.parseInt(
+      hoursForDay?.closeTime?.split(':')?.[1] ?? '59',
+      10
+    );
 
     // Get the current time in the location's timezone only
     const now = toZonedTime(new Date(), locationTimeZone);
-    const earliestPickup = isToday ? new Date(now.getTime() + leadTimeMinutes * 60000) : openTime;
+    const earliestPickup = isToday
+      ? new Date(now.getTime() + leadTimeMinutes * 60000)
+      : openTime;
     // Initialize currentTime to openTime (exactly matching the hours/minutes)
     let currentTime = set(new Date(selectedDate), {
       hours: openTimeHours,
@@ -271,8 +327,10 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
         hasAvailableTimeSlots = true;
       }
       if (earliestPickup > openTime) {
-        const minutesSinceMidnight = earliestPickup.getHours() * 60 + earliestPickup.getMinutes();
-        const roundedMinutes = Math.ceil(minutesSinceMidnight / leadTimeMinutes) * leadTimeMinutes;
+        const minutesSinceMidnight =
+          earliestPickup.getHours() * 60 + earliestPickup.getMinutes();
+        const roundedMinutes =
+          Math.ceil(minutesSinceMidnight / leadTimeMinutes) * leadTimeMinutes;
         currentTime = set(openTime, {
           hours: Math.floor(roundedMinutes / 60),
           minutes: roundedMinutes % 60,
@@ -291,11 +349,15 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
 
         for (let i = 1; i < maxDays; i++) {
           const nextDayOfWeek = nextAvailableDate.getDay();
-          const nextDayProperty = dayToProperty[nextDayOfWeek as keyof typeof dayToProperty];
+          const nextDayProperty =
+            dayToProperty[nextDayOfWeek as keyof typeof dayToProperty];
 
           if (storeHours?.hours[nextDayProperty]?.enabled) {
             // We found the next available day
-            const nextDayZoned = toZonedTime(nextAvailableDate, locationTimeZone);
+            const nextDayZoned = toZonedTime(
+              nextAvailableDate,
+              locationTimeZone
+            );
             setSelectedDate(nextDayZoned);
             form.setValue('pickupDate', format(nextDayZoned, 'yyyy-MM-dd'));
             foundNextDay = true;
@@ -319,13 +381,15 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
 
       // Make sure current time is at or after opening time
       const isAfterOrAtOpeningTime =
-        currentSlotHours > openTimeHours || (currentSlotHours === openTimeHours && currentSlotMins >= openTimeMins);
+        currentSlotHours > openTimeHours ||
+        (currentSlotHours === openTimeHours && currentSlotMins >= openTimeMins);
 
       // If current time is at or after closing time, break
       if (
         !isAfterOrAtOpeningTime ||
         currentSlotHours > closeTimeHours ||
-        (currentSlotHours === closeTimeHours && currentSlotMins >= closeTimeMins)
+        (currentSlotHours === closeTimeHours &&
+          currentSlotMins >= closeTimeMins)
       ) {
         break;
       }
@@ -338,10 +402,12 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
           continue;
         }
 
-        const currentTimeInMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+        const currentTimeInMinutes =
+          currentTime.getHours() * 60 + currentTime.getMinutes();
         const nowInMinutes = now.getHours() * 60 + now.getMinutes();
 
-        const minimumBufferMinutes = locationHours.leadTime || FALLBACK_LEAD_TIME; // Use locationHours.leadTime with fallback
+        const minimumBufferMinutes =
+          locationHours.leadTime || FALLBACK_LEAD_TIME; // Use locationHours.leadTime with fallback
         if (currentTimeInMinutes < nowInMinutes + minimumBufferMinutes) {
           currentTime = set(currentTime, {
             minutes: currentTime.getMinutes() + leadTimeMinutes,
@@ -405,7 +471,9 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
     return (
       <div className='text-xs text-muted-foreground'>
         <span className='capitalize'>{t.days[dayName]}: </span>
-        {dayData?.enabled ? `${formatTime(dayData.openTime)} – ${formatTime(dayData.closeTime)}` : t.general.closed}
+        {dayData?.enabled
+          ? `${formatTime(dayData.openTime)} – ${formatTime(dayData.closeTime)}`
+          : t.general.closed}
       </div>
     );
   };
@@ -438,7 +506,9 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
                 <div className='flex items-center w-full'>
                   <Store className='mr-2 h-4 w-4' />
                   <div>
-                    <div className='text-left'>{selectedLocation?.address.adminArea3}</div>
+                    <div className='text-left'>
+                      {selectedLocation?.address.adminArea3}
+                    </div>
                     <div className='text-xs text-muted-foreground flex items-center'>
                       <MapPin className='mr-1 h-3 w-3' />
                       {selectedLocation && formatAddress(selectedLocation)}
@@ -457,7 +527,9 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
                   form.setValue('pickupDate', '');
                   form.setValue('pickupTime', '');
 
-                  const location = session?.locations?.find(loc => loc.id === value);
+                  const location = session?.locations?.find(
+                    loc => loc.id === value
+                  );
 
                   // Track pickup location selection
                   track({
@@ -471,7 +543,9 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
 
                   form.setValue(
                     'pickupTimezone',
-                    location?.operatingHours?.timeZone ?? session.defaultOperatingHours?.timeZone ?? ''
+                    location?.operatingHours?.timeZone ??
+                      session.defaultOperatingHours?.timeZone ??
+                      ''
                   );
 
                   applyFulfillmentLocation.mutate({
@@ -493,7 +567,9 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
                       <div className='flex items-center'>
                         <Store className='mr-2 h-4 w-4' />
                         <div>
-                          <div className='text-left'>{location.address.adminArea3}</div>
+                          <div className='text-left'>
+                            {location.address.adminArea3}
+                          </div>
                           <div className='text-xs text-muted-foreground flex items-center'>
                             <MapPin className='mr-1 h-3 w-3' />
                             {formatAddress(location)}
@@ -541,9 +617,13 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
                 <PopoverContent className='w-auto p-0' align='start'>
                   <Calendar
                     mode='single'
-                    selected={field.value ? parseISODate(field.value) : undefined}
+                    selected={
+                      field.value ? parseISODate(field.value) : undefined
+                    }
                     onSelect={date => {
-                      const currentSelectedDate = field.value ? parseISODate(field.value) : undefined;
+                      const currentSelectedDate = field.value
+                        ? parseISODate(field.value)
+                        : undefined;
 
                       if (!date && currentSelectedDate) {
                         return;
@@ -572,8 +652,16 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
                       setIsCalendarOpen(false);
                     }}
                     disabled={date => {
-                      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                      const dateToCheck = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                      const todayStart = new Date(
+                        today.getFullYear(),
+                        today.getMonth(),
+                        today.getDate()
+                      );
+                      const dateToCheck = new Date(
+                        date.getFullYear(),
+                        date.getMonth(),
+                        date.getDate()
+                      );
                       if (dateToCheck < todayStart) return true;
                       if (!isDateBookable(date)) return true;
                       if (maxDate) {
@@ -591,64 +679,74 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
         />
       )}
 
-      {storeHours?.pickupWindowInDays !== 0 && selectedDate && availableTimeSlots.length > 0 && (
-        <FormField
-          control={form.control}
-          name='pickupTime'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t.pickup.time}</FormLabel>
-              <Select
-                onValueChange={value => {
-                  field.onChange(value);
+      {storeHours?.pickupWindowInDays !== 0 &&
+        selectedDate &&
+        availableTimeSlots.length > 0 && (
+          <FormField
+            control={form.control}
+            name='pickupTime'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.pickup.time}</FormLabel>
+                <Select
+                  onValueChange={value => {
+                    field.onChange(value);
 
-                  // Track pickup time selection
-                  track({
-                    eventId: eventIds.changePickupTime,
-                    type: TrackingEventType.CLICK,
-                    properties: {
-                      pickupTime: value,
-                      isAsap: value === 'ASAP',
-                      pickupDate: form.getValues('pickupDate'),
-                      locationId: selectedLocationId,
-                    },
-                  });
-                }}
-                value={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t.pickup.selectTime} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {availableTimeSlots.map(slot => (
-                    <SelectItem key={slot.value} value={slot.value}>
-                      <div className='flex items-center'>
-                        <Clock className='mr-2 h-4 w-4' />
-                        <span>{slot.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
+                    // Track pickup time selection
+                    track({
+                      eventId: eventIds.changePickupTime,
+                      type: TrackingEventType.CLICK,
+                      properties: {
+                        pickupTime: value,
+                        isAsap: value === 'ASAP',
+                        pickupDate: form.getValues('pickupDate'),
+                        locationId: selectedLocationId,
+                      },
+                    });
+                  }}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t.pickup.selectTime} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {availableTimeSlots.map(slot => (
+                      <SelectItem key={slot.value} value={slot.value}>
+                        <div className='flex items-center'>
+                          <Clock className='mr-2 h-4 w-4' />
+                          <span>{slot.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
-      {storeHours?.pickupWindowInDays !== 0 && selectedDate && availableTimeSlots.length === 0 && (
-        <div className='rounded-md bg-yellow-50 p-4'>
-          <p className='text-sm text-yellow-700'>{t.pickup.noTimeSlots}</p>
-        </div>
-      )}
+      {storeHours?.pickupWindowInDays !== 0 &&
+        selectedDate &&
+        availableTimeSlots.length === 0 && (
+          <div className='rounded-md bg-yellow-50 p-4'>
+            <p className='text-sm text-yellow-700'>{t.pickup.noTimeSlots}</p>
+          </div>
+        )}
 
       {session?.enableNotesCollection ? <NotesForm /> : null}
 
       {selectedLocationId && displayHours && showStoreHours && (
-        <Collapsible defaultOpen={false} className='text-sm border border-border rounded-md mt-2'>
-          <CollapsibleTrigger asChild className='p-3 data-[state=closed]:hover:bg-muted'>
+        <Collapsible
+          defaultOpen={false}
+          className='text-sm border border-border rounded-md mt-2'
+        >
+          <CollapsibleTrigger
+            asChild
+            className='p-3 data-[state=closed]:hover:bg-muted'
+          >
             <div className='flex items-center justify-between w-full'>
               <div>
                 <div>{t.pickup.storeHours}</div>
@@ -673,9 +771,13 @@ export function LocalPickupForm({ showStoreHours = true }: { showStoreHours?: bo
                     key={dayNum}
                     className={`flex text-xs flex-row justify-between mb-0 ${dayIndex <= 3 ? 'md:col-start-1 md:row-auto' : 'md:col-start-2 md:row-auto'}`}
                   >
-                    <span className='capitalize font-medium'>{t.days[dayName]}:</span>
+                    <span className='capitalize font-medium'>
+                      {t.days[dayName]}:
+                    </span>
                     <span className='mt-1 md:mt-0'>
-                      {dayData?.enabled ? `${formatTime(dayData.openTime)} – ${formatTime(dayData.closeTime)}` : t.general.closed}
+                      {dayData?.enabled
+                        ? `${formatTime(dayData.openTime)} – ${formatTime(dayData.closeTime)}`
+                        : t.general.closed}
                     </span>
                   </div>
                 );

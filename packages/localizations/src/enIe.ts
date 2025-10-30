@@ -6,7 +6,8 @@ export const enIe = {
     free: 'FREE',
     closed: 'Closed',
     apply: 'Apply',
-    checkoutDisabled: 'Checkout is currently disabled. We apologise for the inconvenience.',
+    checkoutDisabled:
+      'Checkout is currently disabled. We apologise for the inconvenience.',
   },
   contact: {
     title: 'Contact',
@@ -15,7 +16,8 @@ export const enIe = {
   },
   pickup: {
     title: 'Local Pickup',
-    description: 'All efforts will be made to meet your expected pickup time. Actual pickup times may vary.',
+    description:
+      'All efforts will be made to meet your expected pickup time. Actual pickup times may vary.',
     location: 'Pickup Location',
     date: 'Pickup Date',
     time: 'Preferred Pickup Time',
@@ -24,7 +26,8 @@ export const enIe = {
     selectTime: 'Select a pickup time',
     storeHours: 'Store Hours',
     seeDetails: 'See details',
-    noTimeSlots: 'No available time slots for the selected date. Please select another date.',
+    noTimeSlots:
+      'No available time slots for the selected date. Please select another date.',
     hoursDisplayed: 'Hours displayed in your local timezone.',
     storeOperatesIn: 'Store operates in {timezone} timezone.',
     asap: 'ASAP',
@@ -62,7 +65,8 @@ export const enIe = {
     title: 'Shipping',
     description: 'Shipping address',
     method: 'Shipping method',
-    noShippingMethodAddress: 'Enter your address to see available shipping methods.',
+    noShippingMethodAddress:
+      'Enter your address to see available shipping methods.',
     noShippingMethods: 'No shipping methods found.',
     phone: 'Phone Number',
     country: 'Country',
@@ -199,14 +203,18 @@ export const enIe = {
     orderIdRequired: 'Order ID is required',
     errorTrackingEvent: 'Error tracking event',
     errorInTrackingSubscriber: 'Error in tracking subscriber',
-    useTrackingProviderError: 'useTracking must be used within a TrackingProvider',
-    usePoyntCollectProviderError: 'usePoyntCollect must be used within a PoyntCollectProvider',
+    useTrackingProviderError:
+      'useTracking must be used within a TrackingProvider',
+    usePoyntCollectProviderError:
+      'usePoyntCollect must be used within a PoyntCollectProvider',
     useSquareProviderError: 'useSquare must be used within a SquareProvider',
     errorProcessingPayment: 'Error processing payment',
-    stripeConfigMissing: 'Stripe configuration is missing. Please check your setup.',
+    stripeConfigMissing:
+      'Stripe configuration is missing. Please check your setup.',
     paymentSuccessful: 'Payment successful',
     paymentFailed: 'Payment failed',
-    paypalConfigMissing: 'PayPal configuration is missing. Please check your setup.',
+    paypalConfigMissing:
+      'PayPal configuration is missing. Please check your setup.',
     stripeNotReady: 'Stripe not ready',
     cardElementNotFound: 'CardElement not found',
     errorProcessingCardPayment: 'Error processing card payment.',
@@ -299,8 +307,10 @@ export const enIe = {
     CATALOG_API_ERROR: 'Catalogue service error',
     TAX_SERVICE_UNAVAILABLE: 'VAT service is unavailable',
     SHIPPING_SERVICE_UNAVAILABLE: 'Shipping service is unavailable',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: 'Price adjustments service is unavailable',
-    PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'Failed to calculate price adjustments',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      'Price adjustments service is unavailable',
+    PRICE_ADJUSTMENTS_CALCULATION_FAILED:
+      'Failed to calculate price adjustments',
     SERVICE_UNAVAILABLE: 'Service is temporarily unavailable',
     RATE_LIMITED: 'Too many requests, please try again later',
     TIMEOUT: 'Request timed out',
@@ -308,9 +318,11 @@ export const enIe = {
     SHIPPING_POSTAL_CODE_REQUIRED: 'Shipping postal code is required',
     SHIPPING_COUNTRY_CODE_REQUIRED: 'Shipping country code is required',
     SHIPPING_METHOD_REQUIRED: 'Shipping method is required',
-    SHIPPING_ADDRESS_VERIFICATION_FAILED: 'Shipping address verification failed',
+    SHIPPING_ADDRESS_VERIFICATION_FAILED:
+      'Shipping address verification failed',
     BILLING_ADDRESS_VERIFICATION_FAILED: 'Billing address verification failed',
     MISSING_SHIPPING_INFO: 'Shipping address or method failed to apply',
-    DEPENDENCY_ERROR: "We're unable to process your order right now. Please wait a moment and try again",
+    DEPENDENCY_ERROR:
+      "We're unable to process your order right now. Please wait a moment and try again",
   },
 };

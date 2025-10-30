@@ -2,79 +2,110 @@
 
 import { type ComponentType, lazy, Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { type AvailablePaymentProviders, PaymentMethodType, type PaymentMethodValue, PaymentProvider } from '@/types';
+import {
+  type AvailablePaymentProviders,
+  PaymentMethodType,
+  type PaymentMethodValue,
+  PaymentProvider,
+} from '@/types';
 
 // Define lazy-loaded components
 const LazyComponents = {
   // Credit Card Forms
   GoDaddyCreditCardForm: lazy(() =>
-    import('@/components/checkout/payment/payment-methods/credit-card/godaddy').then(module => ({
+    import(
+      '@/components/checkout/payment/payment-methods/credit-card/godaddy'
+    ).then(module => ({
       default: module.GoDaddyCreditCardForm,
     }))
   ),
   StripeCreditCardForm: lazy(() =>
-    import('@/components/checkout/payment/payment-methods/credit-card/stripe').then(module => ({
+    import(
+      '@/components/checkout/payment/payment-methods/credit-card/stripe'
+    ).then(module => ({
       default: module.StripeCreditCardForm,
     }))
   ),
   SquareCreditCardForm: lazy(() =>
-    import('@/components/checkout/payment/payment-methods/credit-card/square').then(module => ({
+    import(
+      '@/components/checkout/payment/payment-methods/credit-card/square'
+    ).then(module => ({
       default: module.SquareCreditCardForm,
     }))
   ),
 
   // Credit Card Buttons
   CreditCardCheckoutButton: lazy(() =>
-    import('@/components/checkout/payment/checkout-buttons/credit-card/godaddy').then(module => ({
+    import(
+      '@/components/checkout/payment/checkout-buttons/credit-card/godaddy'
+    ).then(module => ({
       default: module.CreditCardCheckoutButton,
     }))
   ),
   StripeCreditCardCheckoutButton: lazy(() =>
-    import('@/components/checkout/payment/checkout-buttons/credit-card/stripe').then(module => ({
+    import(
+      '@/components/checkout/payment/checkout-buttons/credit-card/stripe'
+    ).then(module => ({
       default: module.StripeCreditCardCheckoutButton,
     }))
   ),
   SquareCreditCardCheckoutButton: lazy(() =>
-    import('@/components/checkout/payment/checkout-buttons/credit-card/square').then(module => ({
+    import(
+      '@/components/checkout/payment/checkout-buttons/credit-card/square'
+    ).then(module => ({
       default: module.SquareCreditCardCheckoutButton,
     }))
   ),
 
   // Express Buttons
   ExpressCheckoutButton: lazy(() =>
-    import('@/components/checkout/payment/checkout-buttons/express/godaddy').then(module => ({
+    import(
+      '@/components/checkout/payment/checkout-buttons/express/godaddy'
+    ).then(module => ({
       default: module.ExpressCheckoutButton,
     }))
   ),
   StripeExpressCheckoutButton: lazy(() =>
-    import('@/components/checkout/payment/checkout-buttons/express/stripe').then(module => ({
+    import(
+      '@/components/checkout/payment/checkout-buttons/express/stripe'
+    ).then(module => ({
       default: module.StripeExpressCheckoutButton,
     }))
   ),
 
   // Other Payment Methods
   PayPalCheckoutButton: lazy(() =>
-    import('@/components/checkout/payment/checkout-buttons/paypal/paypal').then(module => ({
-      default: module.PayPalCheckoutButton,
-    }))
+    import('@/components/checkout/payment/checkout-buttons/paypal/paypal').then(
+      module => ({
+        default: module.PayPalCheckoutButton,
+      })
+    )
   ),
   GoDaddyGooglePayCheckoutButton: lazy(() =>
-    import('@/components/checkout/payment/checkout-buttons/googlePay/godaddy').then(module => ({
+    import(
+      '@/components/checkout/payment/checkout-buttons/googlePay/godaddy'
+    ).then(module => ({
       default: module.GoDaddyGooglePayCheckoutButton,
     }))
   ),
   OfflinePaymentCheckoutButton: lazy(() =>
-    import('@/components/checkout/payment/checkout-buttons/offline/default').then(module => ({
+    import(
+      '@/components/checkout/payment/checkout-buttons/offline/default'
+    ).then(module => ({
       default: module.OfflinePaymentCheckoutButton,
     }))
   ),
   PazeCheckoutButton: lazy(() =>
-    import('@/components/checkout/payment/checkout-buttons/paze/godaddy').then(module => ({ default: module.PazeCheckoutButton }))
+    import('@/components/checkout/payment/checkout-buttons/paze/godaddy').then(
+      module => ({ default: module.PazeCheckoutButton })
+    )
   ),
 
   // Container Components
   CreditCardContainer: lazy(() =>
-    import('@/components/checkout/payment/payment-methods/credit-card/container').then(module => ({
+    import(
+      '@/components/checkout/payment/payment-methods/credit-card/container'
+    ).then(module => ({
       default: module.CreditCardContainer,
     }))
   ),
@@ -202,16 +233,27 @@ type LazyPaymentMethodRendererProps = {
   isExpress?: boolean;
 };
 
-export function LazyPaymentMethodRenderer({ type, method, provider, isExpress }: LazyPaymentMethodRendererProps) {
-  const methodRegistry = lazyPaymentComponentRegistry[method as keyof typeof lazyPaymentComponentRegistry];
-  const componentEntry = methodRegistry?.[provider as keyof typeof methodRegistry];
+export function LazyPaymentMethodRenderer({
+  type,
+  method,
+  provider,
+  isExpress,
+}: LazyPaymentMethodRendererProps) {
+  const methodRegistry =
+    lazyPaymentComponentRegistry[
+      method as keyof typeof lazyPaymentComponentRegistry
+    ];
+  const componentEntry =
+    methodRegistry?.[provider as keyof typeof methodRegistry];
 
   if (!componentEntry || !componentEntry[type]) {
     return null;
   }
 
   const componentKey = componentEntry[type];
-  const LazyComponent = LazyComponents[componentKey] as ComponentType<PaymentComponentProps>;
+  const LazyComponent = LazyComponents[
+    componentKey
+  ] as ComponentType<PaymentComponentProps>;
 
   if (method === PaymentMethodType.CREDIT_CARD && type === 'form') {
     const LazyCreditCardContainer = LazyComponents.CreditCardContainer;
@@ -231,14 +273,30 @@ export function LazyPaymentMethodRenderer({ type, method, provider, isExpress }:
   );
 }
 
-export function hasLazyPaymentMethodButton(method: PaymentMethodValue, provider: AvailablePaymentProviders): boolean {
-  const methodRegistry = lazyPaymentComponentRegistry[method as keyof typeof lazyPaymentComponentRegistry];
-  const componentEntry = methodRegistry?.[provider as keyof typeof methodRegistry] as { button?: string } | undefined;
+export function hasLazyPaymentMethodButton(
+  method: PaymentMethodValue,
+  provider: AvailablePaymentProviders
+): boolean {
+  const methodRegistry =
+    lazyPaymentComponentRegistry[
+      method as keyof typeof lazyPaymentComponentRegistry
+    ];
+  const componentEntry = methodRegistry?.[
+    provider as keyof typeof methodRegistry
+  ] as { button?: string } | undefined;
   return !!componentEntry?.button;
 }
 
-export function hasLazyPaymentMethodForm(method: PaymentMethodValue, provider: AvailablePaymentProviders): boolean {
-  const methodRegistry = lazyPaymentComponentRegistry[method as keyof typeof lazyPaymentComponentRegistry];
-  const componentEntry = methodRegistry?.[provider as keyof typeof methodRegistry] as { form?: string } | undefined;
+export function hasLazyPaymentMethodForm(
+  method: PaymentMethodValue,
+  provider: AvailablePaymentProviders
+): boolean {
+  const methodRegistry =
+    lazyPaymentComponentRegistry[
+      method as keyof typeof lazyPaymentComponentRegistry
+    ];
+  const componentEntry = methodRegistry?.[
+    provider as keyof typeof methodRegistry
+  ] as { form?: string } | undefined;
   return !!componentEntry?.form;
 }

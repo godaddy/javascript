@@ -28,7 +28,12 @@ export function useLoadPoyntCollect() {
   }, []);
 
   useEffect(() => {
-    if (isPoyntCDNLoaded || isPoyntLoaded || !godaddyPaymentsConfig || !collectCDN) {
+    if (
+      isPoyntCDNLoaded ||
+      isPoyntLoaded ||
+      !godaddyPaymentsConfig ||
+      !collectCDN
+    ) {
       return;
     }
 

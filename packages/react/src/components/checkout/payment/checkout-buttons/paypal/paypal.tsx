@@ -1,10 +1,17 @@
-import { PayPalButtons, PayPalScriptProvider, usePayPalScriptReducer } from '@paypal/react-paypal-js';
+import {
+  PayPalButtons,
+  PayPalScriptProvider,
+  usePayPalScriptReducer,
+} from '@paypal/react-paypal-js';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
-import { PaymentProvider, useConfirmCheckout } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import {
+  PaymentProvider,
+  useConfirmCheckout,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -109,7 +116,9 @@ export function PayPalCheckoutButton() {
   const { payPalRequest } = useBuildPaymentRequest();
 
   if (!paypalConfig) {
-    return <div className='text-destructive'>{t.errors.paypalConfigMissing}</div>;
+    return (
+      <div className='text-destructive'>{t.errors.paypalConfigMissing}</div>
+    );
   }
 
   return (
@@ -117,9 +126,15 @@ export function PayPalCheckoutButton() {
       <PayPalScriptProvider
         options={{
           clientId: paypalConfig?.clientId,
-          currency: payPalRequest?.purchase_units?.[0]?.amount?.currency_code || 'USD',
+          currency:
+            payPalRequest?.purchase_units?.[0]?.amount?.currency_code || 'USD',
           intent: 'capture',
-          disableFunding: paypalConfig?.disableFunding || ['credit', 'card', 'paylater', 'venmo'],
+          disableFunding: paypalConfig?.disableFunding || [
+            'credit',
+            'card',
+            'paylater',
+            'venmo',
+          ],
         }}
       >
         <PayPalButtonsWrapper />

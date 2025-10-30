@@ -35,7 +35,9 @@ function TotalLineItem({
     <div className='flex justify-between text-sm'>
       <div className='flex flex-col gap-0.5'>
         <span>{title}</span>
-        {description ? <span className='text-xs text-muted-foreground'>{description}</span> : null}
+        {description ? (
+          <span className='text-xs text-muted-foreground'>{description}</span>
+        ) : null}
       </div>
       <span>
         {new Intl.NumberFormat('en-us', {
@@ -74,28 +76,50 @@ export function DraftOrderTotals({
         <TotalLineItem
           currencyCode={currencyCode}
           title={t.totals.subtotal}
-          description={itemCount > 0 ? `${itemCount} ${t.totals.itemCount}` : t.totals.noItems}
+          description={
+            itemCount > 0
+              ? `${itemCount} ${t.totals.itemCount}`
+              : t.totals.noItems
+          }
           value={subtotal}
         />
         {discount > 0 ? (
           isDiscountLoading ? (
             <TotalLineItemSkeleton title={t.totals.discount} />
           ) : (
-            <TotalLineItem currencyCode={currencyCode} title={t.totals.discount} value={-discount || 0} />
+            <TotalLineItem
+              currencyCode={currencyCode}
+              title={t.totals.discount}
+              value={-discount || 0}
+            />
           )
         ) : null}
         {enableShipping &&
           (isShippingLoading ? (
             <TotalLineItemSkeleton title={t.totals.shipping} />
           ) : (
-            <TotalLineItem currencyCode={currencyCode} title={t.totals.shipping} value={shipping || 0} />
+            <TotalLineItem
+              currencyCode={currencyCode}
+              title={t.totals.shipping}
+              value={shipping || 0}
+            />
           ))}
-        {tip ? <TotalLineItem currencyCode={currencyCode} title={t.totals.tip} value={tip || 0} /> : null}
+        {tip ? (
+          <TotalLineItem
+            currencyCode={currencyCode}
+            title={t.totals.tip}
+            value={tip || 0}
+          />
+        ) : null}
         {enableTaxes &&
           (isTaxLoading ? (
             <TotalLineItemSkeleton title={t.totals.estimatedTaxes} />
           ) : (
-            <TotalLineItem currencyCode={currencyCode} title={t.totals.estimatedTaxes} value={taxes || 0} />
+            <TotalLineItem
+              currencyCode={currencyCode}
+              title={t.totals.estimatedTaxes}
+              value={taxes || 0}
+            />
           ))}
       </div>
 
@@ -115,7 +139,9 @@ export function DraftOrderTotals({
         <div className='flex justify-between items-end'>
           <span className='text-sm'>{t.totals.totalDue}</span>
           <div className='text-right'>
-            <span className='text-xs text-muted-foreground'>{currencyCode} </span>
+            <span className='text-xs text-muted-foreground'>
+              {currencyCode}{' '}
+            </span>
             <span className='font-medium'>
               {new Intl.NumberFormat('en-us', {
                 style: 'currency',

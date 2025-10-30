@@ -6,7 +6,8 @@ export const itIt = {
     free: 'GRATUITO',
     closed: 'Chiuso',
     apply: 'Applica',
-    checkoutDisabled: "Il checkout è attualmente disabilitato. Ci scusiamo per l'inconveniente.",
+    checkoutDisabled:
+      "Il checkout è attualmente disabilitato. Ci scusiamo per l'inconveniente.",
   },
   contact: {
     title: 'Contatto',
@@ -15,7 +16,8 @@ export const itIt = {
   },
   pickup: {
     title: 'Ritiro in Negozio',
-    description: "Faremo ogni sforzo per rispettare l'orario di ritiro previsto. Gli orari di ritiro effettivi possono variare.",
+    description:
+      "Faremo ogni sforzo per rispettare l'orario di ritiro previsto. Gli orari di ritiro effettivi possono variare.",
     location: 'Punto di Ritiro',
     date: 'Data di Ritiro',
     time: 'Orario di Ritiro Preferito',
@@ -24,7 +26,8 @@ export const itIt = {
     selectTime: 'Seleziona un orario di ritiro',
     storeHours: 'Orari del Negozio',
     seeDetails: 'Vedi dettagli',
-    noTimeSlots: "Nessuna fascia oraria disponibile per la data selezionata. Seleziona un'altra data.",
+    noTimeSlots:
+      "Nessuna fascia oraria disponibile per la data selezionata. Seleziona un'altra data.",
     hoursDisplayed: 'Orari visualizzati nel tuo fuso orario locale.',
     storeOperatesIn: 'Il negozio opera nel fuso orario {timezone}.',
     asap: 'IL PRIMA POSSIBILE',
@@ -62,7 +65,8 @@ export const itIt = {
     title: 'Spedizione',
     description: 'Indirizzo di spedizione',
     method: 'Metodo di spedizione',
-    noShippingMethodAddress: 'Inserisci il tuo indirizzo per vedere i metodi di spedizione disponibili.',
+    noShippingMethodAddress:
+      'Inserisci il tuo indirizzo per vedere i metodi di spedizione disponibili.',
     noShippingMethods: 'Nessun metodo di spedizione trovato.',
     phone: 'Numero di Telefono',
     country: 'Paese',
@@ -91,7 +95,8 @@ export const itIt = {
     billingAddress: {
       title: 'Indirizzo di Fatturazione',
       description: 'Inserisci il tuo indirizzo di fatturazione.',
-      useShippingAddress: "Usa l'indirizzo di spedizione come indirizzo di fatturazione",
+      useShippingAddress:
+        "Usa l'indirizzo di spedizione come indirizzo di fatturazione",
     },
     methods: {
       creditCard: 'Carta di Credito o Debito',
@@ -165,7 +170,8 @@ export const itIt = {
       suggestions: 'Suggerimenti',
     },
     form: {
-      useFormFieldError: "useFormField deve essere usato all'interno di <FormField>",
+      useFormFieldError:
+        "useFormField deve essere usato all'interno di <FormField>",
     },
     pagination: {
       ariaLabel: 'paginazione',
@@ -176,7 +182,8 @@ export const itIt = {
       morePages: 'Altre pagine',
     },
     sidebar: {
-      useSidebarError: "useSidebar deve essere usato all'interno di un SidebarProvider.",
+      useSidebarError:
+        "useSidebar deve essere usato all'interno di un SidebarProvider.",
       toggleSidebar: 'Attiva/Disattiva Barra Laterale',
     },
     accessibility: {
@@ -199,18 +206,25 @@ export const itIt = {
     orderIdRequired: 'ID ordine richiesto',
     errorTrackingEvent: "Errore nel tracciamento dell'evento",
     errorInTrackingSubscriber: 'Errore nel sottoscrittore di tracciamento',
-    useTrackingProviderError: "useTracking deve essere usato all'interno di un TrackingProvider",
-    usePoyntCollectProviderError: "usePoyntCollect deve essere usato all'interno di un PoyntCollectProvider",
-    useSquareProviderError: "useSquare deve essere usato all'interno di un SquareProvider",
+    useTrackingProviderError:
+      "useTracking deve essere usato all'interno di un TrackingProvider",
+    usePoyntCollectProviderError:
+      "usePoyntCollect deve essere usato all'interno di un PoyntCollectProvider",
+    useSquareProviderError:
+      "useSquare deve essere usato all'interno di un SquareProvider",
     errorProcessingPayment: "Errore nell'elaborazione del pagamento",
-    stripeConfigMissing: 'Configurazione Stripe mancante. Controlla la tua configurazione.',
+    stripeConfigMissing:
+      'Configurazione Stripe mancante. Controlla la tua configurazione.',
     paymentSuccessful: 'Pagamento riuscito',
     paymentFailed: 'Pagamento fallito',
-    paypalConfigMissing: 'Configurazione PayPal mancante. Controlla la tua configurazione.',
+    paypalConfigMissing:
+      'Configurazione PayPal mancante. Controlla la tua configurazione.',
     stripeNotReady: 'Stripe non pronto',
     cardElementNotFound: 'CardElement non trovato',
-    errorProcessingCardPayment: "Errore nell'elaborazione del pagamento con carta.",
-    errorProcessingExpressPayment: "Errore nell'elaborazione del pagamento express.",
+    errorProcessingCardPayment:
+      "Errore nell'elaborazione del pagamento con carta.",
+    errorProcessingExpressPayment:
+      "Errore nell'elaborazione del pagamento express.",
     failedToInitializePayment: "Errore nell'inizializzazione del pagamento.",
     invalidPhoneNumber: 'numero di telefono non valido',
   },
@@ -222,8 +236,10 @@ export const itIt = {
     invalidShippingAddress: 'Indirizzo di spedizione non valido',
     invalidBillingAddress: 'Indirizzo di fatturazione non valido',
     selectPaymentMethod: 'Seleziona un metodo di pagamento',
-    enterValidBillingPhone: 'Inserisci un numero di telefono di fatturazione valido',
-    enterValidShippingPhone: 'Inserisci un numero di telefono di spedizione valido',
+    enterValidBillingPhone:
+      'Inserisci un numero di telefono di fatturazione valido',
+    enterValidShippingPhone:
+      'Inserisci un numero di telefono di spedizione valido',
     enterFirstName: 'Inserisci un nome',
     enterLastName: 'Inserisci un cognome',
     enterAddress: 'Inserisci un indirizzo',
@@ -237,22 +253,29 @@ export const itIt = {
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Errore del server',
     SESSION_NOT_FOUND: 'Sessione non trovata',
-    CHECKOUT_SESSION_RETRIEVAL_FAILED: 'Errore nel recupero della sessione di checkout',
+    CHECKOUT_SESSION_RETRIEVAL_FAILED:
+      'Errore nel recupero della sessione di checkout',
     CHECKOUT_SESSION_NOT_FOUND: 'Sessione di checkout non trovata',
-    CHECKOUT_SESSION_FETCH_ERROR: 'Errore generale nel recupero della sessione di checkout',
+    CHECKOUT_SESSION_FETCH_ERROR:
+      'Errore generale nel recupero della sessione di checkout',
     DRAFT_ORDER_NOT_FOUND: 'Ordine non trovato',
-    CHECKOUT_SESSION_CREATION_FAILED: 'Errore nella creazione della sessione di checkout',
+    CHECKOUT_SESSION_CREATION_FAILED:
+      'Errore nella creazione della sessione di checkout',
     CREATED_SESSION_DATA_NOT_FOUND: 'Dati della sessione creata non trovati',
-    CHECKOUT_SESSION_CREATION_ERROR: 'Errore generale nella creazione della sessione di checkout',
-    CHECKOUT_SESSION_UPDATE_FAILED: "Errore nell'aggiornamento della sessione di checkout",
+    CHECKOUT_SESSION_CREATION_ERROR:
+      'Errore generale nella creazione della sessione di checkout',
+    CHECKOUT_SESSION_UPDATE_FAILED:
+      "Errore nell'aggiornamento della sessione di checkout",
     UPDATED_SESSION_NOT_FOUND: 'Sessione aggiornata non trovata',
-    CHECKOUT_SESSION_UPDATE_ERROR: "Errore generale nell'aggiornamento della sessione di checkout",
+    CHECKOUT_SESSION_UPDATE_ERROR:
+      "Errore generale nell'aggiornamento della sessione di checkout",
     ORDER_API_NOT_FOUND: 'Fonte dati API ordini non trovata',
     DRAFT_ORDER_RETRIEVAL_FAILED: "Errore nel recupero dell'ordine",
     DATA_SOURCES_NOT_FOUND: 'Fonti dati non trovate',
     TRANSACTION_API_NOT_FOUND: 'Fonte dati API transazioni non trovata',
     TRANSACTION_PROCESSING_FAILED: "Errore nell'elaborazione della transazione",
-    TRANSACTION_CREATION_FAILED: 'Errore nella ricerca o creazione della transazione',
+    TRANSACTION_CREATION_FAILED:
+      'Errore nella ricerca o creazione della transazione',
     ORDER_OPENING_FAILED: "Errore nell'apertura dell'ordine",
     INVALID_FULFILLMENT_LOCATION: 'Posizione di evasione non valida',
     NO_VALID_PICKUP_LOCATION: 'Nessuna posizione di ritiro valida disponibile',
@@ -262,14 +285,19 @@ export const itIt = {
     DRAFT_ORDER_UPDATE_FAILED: "Errore nell'aggiornamento dell'ordine",
     DISCOUNT_APPLICATION_FAILED: "Errore nell'applicazione del buono",
     CONTEXT_UNAVAILABLE: 'Sessione o fonti dati non disponibili',
-    SHIPPING_LINES_UPDATE_FAILED: "Errore nell'aggiornamento delle linee di spedizione",
-    ORDER_TOTALS_UPDATE_FAILED: "Errore nell'aggiornamento dei totali dell'ordine",
+    SHIPPING_LINES_UPDATE_FAILED:
+      "Errore nell'aggiornamento delle linee di spedizione",
+    ORDER_TOTALS_UPDATE_FAILED:
+      "Errore nell'aggiornamento dei totali dell'ordine",
     ORDER_TOTAL_CALCULATION_FAILED: "Errore nel calcolo dei totali dell'ordine",
-    SHIPPING_METHOD_APPLICATION_FAILED: "Errore nell'applicazione del metodo di spedizione",
+    SHIPPING_METHOD_APPLICATION_FAILED:
+      "Errore nell'applicazione del metodo di spedizione",
     SKU_FETCH_FAILED: 'Errore nel recupero degli SKU',
-    SHIPPING_RATES_CALCULATION_FAILED: 'Errore nel calcolo delle tariffe di spedizione',
+    SHIPPING_RATES_CALCULATION_FAILED:
+      'Errore nel calcolo delle tariffe di spedizione',
     SHIPPING_METHOD_NOT_FOUND: 'Metodo di spedizione non trovato',
-    SHIPPING_METHOD_REMOVAL_FAILED: 'Errore nella rimozione del metodo di spedizione',
+    SHIPPING_METHOD_REMOVAL_FAILED:
+      'Errore nella rimozione del metodo di spedizione',
     SHIPPING_ADDRESS_REQUIRED: 'Indirizzo di spedizione richiesto',
     INVENTORY_VALIDATION_ERROR: 'Errore di validazione inventario',
     INSUFFICIENT_INVENTORY: 'Inventario insufficiente',
@@ -283,7 +311,8 @@ export const itIt = {
     ADDRESS_MATCHES_ERROR: "Errore nelle corrispondenze dell'indirizzo",
     SHIPPING_CONFLICT_ERROR: 'Errore di conflitto nella spedizione',
     SHIPPING_ERROR: 'Errore generale di spedizione',
-    PRICE_ADJUSTMENT_CALCULATION_ERROR: "Errore nel calcolo dell'aggiustamento prezzo",
+    PRICE_ADJUSTMENT_CALCULATION_ERROR:
+      "Errore nel calcolo dell'aggiustamento prezzo",
     ORDER_FETCH_ERROR: "Errore nel recupero dell'ordine",
     DRAFT_ORDER_UPDATE_ERROR: "Errore nell'aggiornamento dell'ordine",
     DISCOUNT_APPLICATION_ERROR: "Errore nell'applicazione del buono",
@@ -299,8 +328,10 @@ export const itIt = {
     CATALOG_API_ERROR: 'Errore del servizio catalogo',
     TAX_SERVICE_UNAVAILABLE: 'Servizio tasse non disponibile',
     SHIPPING_SERVICE_UNAVAILABLE: 'Servizio di spedizione non disponibile',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: 'Servizio di aggiustamento prezzi non disponibile',
-    PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'Errore nel calcolo degli aggiustamenti prezzi',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      'Servizio di aggiustamento prezzi non disponibile',
+    PRICE_ADJUSTMENTS_CALCULATION_FAILED:
+      'Errore nel calcolo degli aggiustamenti prezzi',
     SERVICE_UNAVAILABLE: 'Servizio temporaneamente non disponibile',
     RATE_LIMITED: 'Troppe richieste, riprovare più tardi',
     TIMEOUT: 'Timeout della richiesta',
@@ -308,9 +339,13 @@ export const itIt = {
     SHIPPING_POSTAL_CODE_REQUIRED: 'Codice postale di spedizione obbligatorio',
     SHIPPING_COUNTRY_CODE_REQUIRED: 'Codice paese di spedizione obbligatorio',
     SHIPPING_METHOD_REQUIRED: 'Metodo di spedizione obbligatorio',
-    SHIPPING_ADDRESS_VERIFICATION_FAILED: 'Verifica indirizzo di spedizione fallita',
-    BILLING_ADDRESS_VERIFICATION_FAILED: 'Verifica indirizzo di fatturazione fallita',
-    MISSING_SHIPPING_INFO: "Impossibile applicare l'indirizzo o il metodo di spedizione",
-    DEPENDENCY_ERROR: 'Non riusciamo a elaborare il tuo ordine in questo momento. Aspetta un momento e riprova',
+    SHIPPING_ADDRESS_VERIFICATION_FAILED:
+      'Verifica indirizzo di spedizione fallita',
+    BILLING_ADDRESS_VERIFICATION_FAILED:
+      'Verifica indirizzo di fatturazione fallita',
+    MISSING_SHIPPING_INFO:
+      "Impossibile applicare l'indirizzo o il metodo di spedizione",
+    DEPENDENCY_ERROR:
+      'Non riusciamo a elaborare il tuo ordine in questo momento. Aspetta un momento e riprova',
   },
 };

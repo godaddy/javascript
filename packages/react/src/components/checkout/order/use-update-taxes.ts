@@ -30,24 +30,27 @@ export function useUpdateTaxes() {
 
       // Update the cached draft-order query (includes totals)
       if (taxesTotal) {
-        queryClient.setQueryData(['draft-order', { id: session.id }], (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
-          if (!old) return old;
-          return {
-            ...old,
-            checkoutSession: {
-              ...old.checkoutSession,
-              draftOrder: {
-                ...old?.checkoutSession?.draftOrder,
-                totals: {
-                  ...old?.checkoutSession?.draftOrder?.totals,
-                  taxesTotal: {
-                    ...taxesTotal,
+        queryClient.setQueryData(
+          ['draft-order', { id: session.id }],
+          (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
+            if (!old) return old;
+            return {
+              ...old,
+              checkoutSession: {
+                ...old.checkoutSession,
+                draftOrder: {
+                  ...old?.checkoutSession?.draftOrder,
+                  totals: {
+                    ...old?.checkoutSession?.draftOrder?.totals,
+                    taxesTotal: {
+                      ...taxesTotal,
+                    },
                   },
                 },
               },
-            },
-          };
-        });
+            };
+          }
+        );
       }
     },
     onSettled: () => {

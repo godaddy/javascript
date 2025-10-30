@@ -36,15 +36,27 @@ export function useSyncBillingAddressWithShippingAddress() {
     form.setValue('billingPhone', form.getValues('shippingPhone'), {
       shouldValidate: true,
     });
-    form.setValue('billingAddressLine1', form.getValues('shippingAddressLine1'), {
-      shouldValidate: true,
-    });
-    form.setValue('billingAddressLine2', form.getValues('shippingAddressLine2'), {
-      shouldValidate: true,
-    });
-    form.setValue('billingAddressLine3', form.getValues('shippingAddressLine3'), {
-      shouldValidate: true,
-    });
+    form.setValue(
+      'billingAddressLine1',
+      form.getValues('shippingAddressLine1'),
+      {
+        shouldValidate: true,
+      }
+    );
+    form.setValue(
+      'billingAddressLine2',
+      form.getValues('shippingAddressLine2'),
+      {
+        shouldValidate: true,
+      }
+    );
+    form.setValue(
+      'billingAddressLine3',
+      form.getValues('shippingAddressLine3'),
+      {
+        shouldValidate: true,
+      }
+    );
     form.setValue('billingAdminArea4', form.getValues('shippingAdminArea4'), {
       shouldValidate: true,
     });

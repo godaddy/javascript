@@ -47,14 +47,20 @@ export function ShippingMethodForm() {
   const updateTaxes = useUpdateTaxes();
   const isPaymentDisabled = useIsPaymentDisabled();
 
-  const { data: shippingMethodsData, isLoading: isShippingMethodsLoading } = useDraftOrderShippingMethods();
-  const { data: shippingAddress, isLoading: isShippingAddressLoading } = useDraftOrderShippingAddress();
+  const { data: shippingMethodsData, isLoading: isShippingMethodsLoading } =
+    useDraftOrderShippingMethods();
+  const { data: shippingAddress, isLoading: isShippingAddressLoading } =
+    useDraftOrderShippingAddress();
   const { data: totals } = useDraftOrderTotals();
   const { data: order, isLoading: isDraftOrderLoading } = useDraftOrder();
   const { data: shippingLines } = useDraftOrderShipping();
 
   const hasShippingAddress = Boolean(shippingAddress?.addressLine1);
-  const isPickup = Boolean(order?.lineItems?.some(lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP));
+  const isPickup = Boolean(
+    order?.lineItems?.some(
+      lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP
+    )
+  );
 
   const orderSubTotal = totals?.subTotal?.value || 0;
 
@@ -92,7 +98,8 @@ export function ShippingMethodForm() {
     if (
       !hasShippingMethods &&
       hasShippingAddress &&
-      ((currentServiceCode && lastState.hadShippingMethods) || (isPickup && !lastState.wasPickup))
+      ((currentServiceCode && lastState.hadShippingMethods) ||
+        (isPickup && !lastState.wasPickup))
     ) {
       form.setValue('shippingMethod', '', { shouldDirty: false });
       applyShippingMethod.mutate([]);
@@ -120,13 +127,17 @@ export function ShippingMethodForm() {
       const existingMethod = currentServiceCode || currentFormMethod;
 
       // Try to find the existing method in available methods
-      const matchedMethod = existingMethod ? shippingMethods.find(m => m.serviceCode === existingMethod) : null;
+      const matchedMethod = existingMethod
+        ? shippingMethods.find(m => m.serviceCode === existingMethod)
+        : null;
 
       const methodToApply = matchedMethod || firstMethod;
       const methodCost = methodToApply.cost?.value ?? null;
 
       // Check if we've already processed this exact state
-      const alreadyProcessed = methodToApply.serviceCode === lastState.serviceCode && methodCost === lastState.cost;
+      const alreadyProcessed =
+        methodToApply.serviceCode === lastState.serviceCode &&
+        methodCost === lastState.cost;
 
       if (!alreadyProcessed) {
         form.setValue('shippingMethod', methodToApply.serviceCode, {
@@ -134,7 +145,9 @@ export function ShippingMethodForm() {
         });
 
         // Only mutate if the method or cost actually changed on the order
-        const needsMutation = methodToApply.serviceCode !== currentServiceCode || methodCost !== currentCost;
+        const needsMutation =
+          methodToApply.serviceCode !== currentServiceCode ||
+          methodCost !== currentCost;
 
         if (needsMutation) {
           applyShippingMethod.mutate(buildShippingPayload(methodToApply));
@@ -170,15 +183,23 @@ export function ShippingMethodForm() {
   if (!hasShippingAddress && !isShippingMethodsLoading) {
     return (
       <div className='bg-muted rounded-md p-6 flex justify-center items-center'>
-        <p className='text-sm text-center w-full'>{t?.shipping?.noShippingMethodAddress}</p>
+        <p className='text-sm text-center w-full'>
+          {t?.shipping?.noShippingMethodAddress}
+        </p>
       </div>
     );
   }
 
-  if (hasShippingAddress && !isShippingMethodsLoading && shippingMethods?.length === 0) {
+  if (
+    hasShippingAddress &&
+    !isShippingMethodsLoading &&
+    shippingMethods?.length === 0
+  ) {
     return (
       <div className='bg-muted rounded-md p-6 flex justify-center items-center'>
-        <p className='text-sm text-center w-full'>{t?.shipping?.noShippingMethods}</p>
+        <p className='text-sm text-center w-full'>
+          {t?.shipping?.noShippingMethods}
+        </p>
       </div>
     );
   }
@@ -206,9 +227,11 @@ export function ShippingMethodForm() {
         },
       });
 
-      applyShippingMethod.mutateAsync(buildShippingPayload(method)).catch(() => {
-        form.setValue('shippingMethod', previousValue);
-      });
+      applyShippingMethod
+        .mutateAsync(buildShippingPayload(method))
+        .catch(() => {
+          form.setValue('shippingMethod', previousValue);
+        });
     }
   };
 
@@ -218,12 +241,17 @@ export function ShippingMethodForm() {
         <Label>{t.shipping.method}</Label>
       </div>
       {shippingMethods.length === 1 ? (
-        <Label htmlFor={shippingMethods[0].displayName || 'shipping-method-0'} className='font-medium'>
+        <Label
+          htmlFor={shippingMethods[0].displayName || 'shipping-method-0'}
+          className='font-medium'
+        >
           <div className='flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 rounded-md'>
             <div className='flex items-center space-x-4'>
               <div className='inline-flex flex-col'>
                 {shippingMethods[0].displayName}
-                <p className='text-xs text-muted-foreground'>{shippingMethods[0].description}</p>
+                <p className='text-xs text-muted-foreground'>
+                  {shippingMethods[0].description}
+                </p>
               </div>
             </div>
             <div className='text-right text-sm'>
@@ -241,7 +269,11 @@ export function ShippingMethodForm() {
           </div>
         </Label>
       ) : (
-        <RadioGroup disabled={isPaymentDisabled} value={selectedValue} onValueChange={handleValueChange}>
+        <RadioGroup
+          disabled={isPaymentDisabled}
+          value={selectedValue}
+          onValueChange={handleValueChange}
+        >
           {shippingMethods?.map((method, index) => {
             const methodId = method.serviceCode || `shipping-method-${index}`;
             const isSelected = method.serviceCode === currentMethod;
@@ -259,7 +291,9 @@ export function ShippingMethodForm() {
                     <RadioGroupItem value={methodId} id={methodId} />
                     <div className='inline-flex flex-col'>
                       {method.displayName}
-                      <p className='text-xs text-muted-foreground'>{method.description}</p>
+                      <p className='text-xs text-muted-foreground'>
+                        {method.description}
+                      </p>
                     </div>
                   </div>
                   <div className='text-right text-sm'>

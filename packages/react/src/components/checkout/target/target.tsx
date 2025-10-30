@@ -43,7 +43,13 @@ export function Target({ id }: { id: Target }) {
   }
 
   return (
-    <div id={id} className={cn(debug && 'border border-dashed border-blue-300 p-3 rounded-md', 'm-0')}>
+    <div
+      id={id}
+      className={cn(
+        debug && 'border border-dashed border-blue-300 p-3 rounded-md',
+        'm-0'
+      )}
+    >
       {content}
     </div>
   );

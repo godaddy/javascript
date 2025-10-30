@@ -1,17 +1,29 @@
 import { useMemo } from 'react';
 import type { z } from 'zod';
-import { type CheckoutProps, useCheckoutContext } from '@/components/checkout/checkout';
+import {
+  type CheckoutProps,
+  useCheckoutContext,
+} from '@/components/checkout/checkout';
 import { CheckoutSkeleton } from '@/components/checkout/checkout-skeleton';
 import { CheckoutForm } from '@/components/checkout/form/checkout-form';
-import { useDraftOrder, useDraftOrderLineItems } from '@/components/checkout/order/use-draft-order';
+import {
+  useDraftOrder,
+  useDraftOrderLineItems,
+} from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderProductsMap } from '@/components/checkout/order/use-draft-order-products';
-import { mapOrderToFormValues, mapSkusToItemsDisplay } from '@/components/checkout/utils/checkout-transformers';
+import {
+  mapOrderToFormValues,
+  mapSkusToItemsDisplay,
+} from '@/components/checkout/utils/checkout-transformers';
 
 interface CheckoutFormContainerProps extends Omit<CheckoutProps, 'session'> {
   schema: z.ZodObject<any> | z.ZodEffects<any>;
 }
 
-export function CheckoutFormContainer({ schema, ...props }: CheckoutFormContainerProps) {
+export function CheckoutFormContainer({
+  schema,
+  ...props
+}: CheckoutFormContainerProps) {
   const { session, isConfirmingCheckout } = useCheckoutContext();
 
   const draftOrderQuery = useDraftOrder();
@@ -21,7 +33,10 @@ export function CheckoutFormContainer({ schema, ...props }: CheckoutFormContaine
   const { data: order } = draftOrderQuery;
   const { data: lineItems } = draftOrderLineItemsQuery;
 
-  const items = useMemo(() => mapSkusToItemsDisplay(lineItems, skusMap), [lineItems, skusMap]);
+  const items = useMemo(
+    () => mapSkusToItemsDisplay(lineItems, skusMap),
+    [lineItems, skusMap]
+  );
 
   const formValues = useMemo(
     () => ({
@@ -46,5 +61,13 @@ export function CheckoutFormContainer({ schema, ...props }: CheckoutFormContaine
     return <CheckoutSkeleton direction={props.direction} />;
   }
 
-  return <CheckoutForm {...props} schema={schema} items={items} defaultValues={formValues} direction={props.direction} />;
+  return (
+    <CheckoutForm
+      {...props}
+      schema={schema}
+      items={items}
+      defaultValues={formValues}
+      direction={props.direction}
+    />
+  );
 }

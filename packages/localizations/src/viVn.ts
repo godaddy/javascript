@@ -6,7 +6,8 @@ export const viVn = {
     free: 'MIỄN PHÍ',
     closed: 'Đóng cửa',
     apply: 'Áp dụng',
-    checkoutDisabled: 'Thanh toán hiện tại đang bị vô hiệu hóa. Chúng tôi xin lỗi vì sự bất tiện này.',
+    checkoutDisabled:
+      'Thanh toán hiện tại đang bị vô hiệu hóa. Chúng tôi xin lỗi vì sự bất tiện này.',
   },
   contact: {
     title: 'Liên hệ',
@@ -25,7 +26,8 @@ export const viVn = {
     selectTime: 'Chọn thời gian nhận hàng',
     storeHours: 'Giờ mở cửa',
     seeDetails: 'Xem chi tiết',
-    noTimeSlots: 'Không có khung thời gian nào trong ngày đã chọn. Vui lòng chọn ngày khác.',
+    noTimeSlots:
+      'Không có khung thời gian nào trong ngày đã chọn. Vui lòng chọn ngày khác.',
     hoursDisplayed: 'Giờ hiển thị theo múi giờ địa phương của bạn.',
     storeOperatesIn: 'Cửa hàng hoạt động trong múi giờ {timezone}.',
     asap: 'CÀNG SỚM CÀNG TỐT',
@@ -63,7 +65,8 @@ export const viVn = {
     title: 'Vận chuyển',
     description: 'Địa chỉ giao hàng',
     method: 'Phương thức vận chuyển',
-    noShippingMethodAddress: 'Nhập địa chỉ của bạn để xem các phương thức vận chuyển có sẵn.',
+    noShippingMethodAddress:
+      'Nhập địa chỉ của bạn để xem các phương thức vận chuyển có sẵn.',
     noShippingMethods: 'Không tìm thấy phương thức vận chuyển nào.',
     phone: 'Số điện thoại',
     country: 'Quốc gia',
@@ -200,14 +203,18 @@ export const viVn = {
     orderIdRequired: 'ID đơn hàng là bắt buộc',
     errorTrackingEvent: 'Lỗi theo dõi sự kiện',
     errorInTrackingSubscriber: 'Lỗi trong người đăng ký theo dõi',
-    useTrackingProviderError: 'useTracking phải được sử dụng trong TrackingProvider',
-    usePoyntCollectProviderError: 'usePoyntCollect phải được sử dụng trong PoyntCollectProvider',
+    useTrackingProviderError:
+      'useTracking phải được sử dụng trong TrackingProvider',
+    usePoyntCollectProviderError:
+      'usePoyntCollect phải được sử dụng trong PoyntCollectProvider',
     useSquareProviderError: 'useSquare phải được sử dụng trong SquareProvider',
     errorProcessingPayment: 'Lỗi xử lý thanh toán',
-    stripeConfigMissing: 'Cấu hình Stripe bị thiếu. Vui lòng kiểm tra thiết lập của bạn.',
+    stripeConfigMissing:
+      'Cấu hình Stripe bị thiếu. Vui lòng kiểm tra thiết lập của bạn.',
     paymentSuccessful: 'Thanh toán thành công',
     paymentFailed: 'Thanh toán thất bại',
-    paypalConfigMissing: 'Cấu hình PayPal bị thiếu. Vui lòng kiểm tra thiết lập của bạn.',
+    paypalConfigMissing:
+      'Cấu hình PayPal bị thiếu. Vui lòng kiểm tra thiết lập của bạn.',
     stripeNotReady: 'Stripe chưa sẵn sàng',
     cardElementNotFound: 'Không tìm thấy CardElement',
     errorProcessingCardPayment: 'Lỗi xử lý thanh toán thẻ.',
@@ -266,7 +273,8 @@ export const viVn = {
     SHIPPING_LINES_UPDATE_FAILED: 'Không thể cập nhật dòng vận chuyển',
     ORDER_TOTALS_UPDATE_FAILED: 'Không thể cập nhật tổng đơn hàng',
     ORDER_TOTAL_CALCULATION_FAILED: 'Không thể tính tổng đơn hàng',
-    SHIPPING_METHOD_APPLICATION_FAILED: 'Không thể áp dụng phương thức vận chuyển',
+    SHIPPING_METHOD_APPLICATION_FAILED:
+      'Không thể áp dụng phương thức vận chuyển',
     SKU_FETCH_FAILED: 'Không thể tải SKU',
     SHIPPING_RATES_CALCULATION_FAILED: 'Không thể tính phí vận chuyển',
     SHIPPING_METHOD_NOT_FOUND: 'Không tìm thấy phương thức vận chuyển',
@@ -300,7 +308,8 @@ export const viVn = {
     CATALOG_API_ERROR: 'Lỗi dịch vụ danh mục',
     TAX_SERVICE_UNAVAILABLE: 'Dịch vụ thuế không khả dụng',
     SHIPPING_SERVICE_UNAVAILABLE: 'Dịch vụ vận chuyển không khả dụng',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: 'Dịch vụ điều chỉnh giá không khả dụng',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      'Dịch vụ điều chỉnh giá không khả dụng',
     PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'Không thể tính toán điều chỉnh giá',
     SERVICE_UNAVAILABLE: 'Dịch vụ tạm thời không khả dụng',
     RATE_LIMITED: 'Quá nhiều yêu cầu, vui lòng thử lại sau',
@@ -311,7 +320,9 @@ export const viVn = {
     SHIPPING_METHOD_REQUIRED: 'Phương thức giao hàng là bắt buộc',
     SHIPPING_ADDRESS_VERIFICATION_FAILED: 'Xác minh địa chỉ giao hàng thất bại',
     BILLING_ADDRESS_VERIFICATION_FAILED: 'Xác minh địa chỉ thanh toán thất bại',
-    MISSING_SHIPPING_INFO: 'Địa chỉ hoặc phương thức giao hàng không thể áp dụng',
-    DEPENDENCY_ERROR: 'Chúng tôi không thể xử lý đơn hàng của bạn ngay bây giờ. Vui lòng đợi một chút và thử lại',
+    MISSING_SHIPPING_INFO:
+      'Địa chỉ hoặc phương thức giao hàng không thể áp dụng',
+    DEPENDENCY_ERROR:
+      'Chúng tôi không thể xử lý đơn hàng của bạn ngay bây giờ. Vui lòng đợi một chút và thử lại',
   },
 };

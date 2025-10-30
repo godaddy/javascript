@@ -47,7 +47,12 @@ export function useAddressVerification(
   return useQuery({
     queryKey,
     queryFn: async () => verifyAddress(address, session),
-    enabled: options.enabled && !!session?.id && !!address?.addressLine1 && !!address?.postalCode && !!address?.countryCode,
+    enabled:
+      options.enabled &&
+      !!session?.id &&
+      !!address?.addressLine1 &&
+      !!address?.postalCode &&
+      !!address?.countryCode,
     select: data => data.verifyAddress,
   });
 }

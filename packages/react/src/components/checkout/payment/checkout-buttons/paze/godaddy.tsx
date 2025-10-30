@@ -2,9 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
-import type { TokenizeJs, WalletError } from '@/components/checkout/payment/types';
+import type {
+  TokenizeJs,
+  WalletError,
+} from '@/components/checkout/payment/types';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
-import { PaymentProvider, useConfirmCheckout } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import {
+  PaymentProvider,
+  useConfirmCheckout,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -91,29 +97,58 @@ export function PazeCheckoutButton() {
 
   // Initialize the TokenizeJs instance when the component mounts
   useEffect(() => {
-    if (!collect.current && godaddyPaymentsConfig && isCollectLoading && isPoyntLoaded && !hasMounted.current) {
+    if (
+      !collect.current &&
+      godaddyPaymentsConfig &&
+      isCollectLoading &&
+      isPoyntLoaded &&
+      !hasMounted.current
+    ) {
       // console.log("[poynt collect] Initializing TokenizeJs instance");
-      collect.current = new (window as any).TokenizeJs(godaddyPaymentsConfig?.businessId, godaddyPaymentsConfig?.appId, {
-        country: countryCode,
-        currency: currencyCode,
-        merchantName: session?.storeName || '',
-        requireEmail: false,
-        requireShippingAddress: false,
-        supportCouponCode: false,
-      });
+      collect.current = new (window as any).TokenizeJs(
+        godaddyPaymentsConfig?.businessId,
+        godaddyPaymentsConfig?.appId,
+        {
+          country: countryCode,
+          currency: currencyCode,
+          merchantName: session?.storeName || '',
+          requireEmail: false,
+          requireShippingAddress: false,
+          supportCouponCode: false,
+        }
+      );
     }
-  }, [godaddyPaymentsConfig, countryCode, currencyCode, session, isPoyntLoaded, isCollectLoading]);
+  }, [
+    godaddyPaymentsConfig,
+    countryCode,
+    currencyCode,
+    session,
+    isPoyntLoaded,
+    isCollectLoading,
+  ]);
 
   // Mount the TokenizeJs instance
   useEffect(() => {
-    if (!isPoyntLoaded || !godaddyPaymentsConfig || !isCollectLoading || !collect.current || hasMounted.current) return;
+    if (
+      !isPoyntLoaded ||
+      !godaddyPaymentsConfig ||
+      !isCollectLoading ||
+      !collect.current ||
+      hasMounted.current
+    )
+      return;
 
     collect.current?.supportWalletPayments().then(supports => {
       if (!hasMounted.current && supports.paze) {
         mountPazeElement();
       }
     });
-  }, [isPoyntLoaded, godaddyPaymentsConfig, isCollectLoading, mountPazeElement]);
+  }, [
+    isPoyntLoaded,
+    godaddyPaymentsConfig,
+    isCollectLoading,
+    mountPazeElement,
+  ]);
 
   // Set up event listeners for TokenizeJs
   useEffect(() => {
@@ -140,7 +175,9 @@ export function PazeCheckoutButton() {
           if (err instanceof GraphQLErrorWithCodes) {
             const walletError: WalletError = {
               code: 'invalid_payment_data',
-              message: t.apiErrors?.[err.codes[0] as keyof typeof t.apiErrors] || t.errors.errorProcessingPayment,
+              message:
+                t.apiErrors?.[err.codes[0] as keyof typeof t.apiErrors] ||
+                t.errors.errorProcessingPayment,
             };
 
             setCheckoutErrors(err.codes);

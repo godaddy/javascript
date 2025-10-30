@@ -1,8 +1,17 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
-import { useDraftOrder, useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import {
+  useDraftOrder,
+  useDraftOrderTotals,
+} from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import type {
   Address,
@@ -12,8 +21,14 @@ import type {
   WalletError,
   WalletRequestUpdate,
 } from '@/components/checkout/payment/types';
-import { type PoyntExpressRequest, useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
-import { PaymentProvider, useConfirmCheckout } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import {
+  type PoyntExpressRequest,
+  useBuildPaymentRequest,
+} from '@/components/checkout/payment/utils/use-build-payment-request';
+import {
+  PaymentProvider,
+  useConfirmCheckout,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
@@ -23,7 +38,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { eventIds } from '@/tracking/events';
-import { type TrackingEventId, TrackingEventType, track } from '@/tracking/track';
+import {
+  type TrackingEventId,
+  TrackingEventType,
+  track,
+} from '@/tracking/track';
 
 export function ExpressCheckoutButton() {
   const { session, setCheckoutErrors } = useCheckoutContext();
@@ -31,10 +50,14 @@ export function ExpressCheckoutButton() {
   const { godaddyPaymentsConfig } = useCheckoutContext();
   const { t } = useGoDaddyContext();
   const [isCollectLoading, setIsCollectLoading] = useState(true);
-  const [walletSource, setWalletSource] = useState<string | undefined>(undefined);
+  const [walletSource, setWalletSource] = useState<string | undefined>(
+    undefined
+  );
   const [error, setError] = useState('');
   const [priceAdjustment, setPriceAdjustment] = useState<number | null>(null);
-  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(
+    null
+  );
   const [godaddyTotals, setGoDaddyTotals] = useState<{
     taxes: { currencyCode: string; value: number };
     shipping: { currencyCode: string; value: number };
@@ -43,7 +66,8 @@ export function ExpressCheckoutButton() {
     shipping: { currencyCode: 'USD', value: 0 },
   });
   const [shippingAddress, setShippingAddress] = useState<Address | null>(null);
-  const [shippingMethods, setShippingMethods] = useState<ShippingMethods | null>(null);
+  const [shippingMethods, setShippingMethods] =
+    useState<ShippingMethods | null>(null);
   const [shippingMethod, setShippingMethod] = useState<string | null>(null);
   const { poyntExpressRequest } = useBuildPaymentRequest();
   const { data: totals } = useDraftOrderTotals();
@@ -89,12 +113,14 @@ export function ExpressCheckoutButton() {
 
   const getSortedShippingMethods = useCallback(
     async ({ shippingAddress: address }: { shippingAddress: Address }) => {
-      const shippingMethodsData = await getShippingMethodsByAddress.mutateAsync({
-        countryCode: address.countryCode || 'US',
-        postalCode: address.postalCode || '',
-        adminArea2: address.locality || '',
-        adminArea1: address.administrativeArea || '',
-      });
+      const shippingMethodsData = await getShippingMethodsByAddress.mutateAsync(
+        {
+          countryCode: address.countryCode || 'US',
+          postalCode: address.postalCode || '',
+          adminArea2: address.locality || '',
+          adminArea1: address.administrativeArea || '',
+        }
+      );
 
       setShippingMethods(shippingMethodsData);
 
@@ -115,7 +141,9 @@ export function ExpressCheckoutButton() {
         return {
           id: method?.displayName?.replace(/\s+/g, '-')?.toLowerCase(),
           label: method.displayName || '',
-          detail: method.description ? `(${method.description}) ${shippingMethodPrice}` : `${shippingMethodPrice}`,
+          detail: method.description
+            ? `(${method.description}) ${shippingMethodPrice}`
+            : `${shippingMethodPrice}`,
           amount: ((method.cost?.value || 0) / 100).toString(),
         };
       });
@@ -150,7 +178,10 @@ export function ExpressCheckoutButton() {
         });
 
         // Calculate the correct total amount that includes the discount
-        const totalAmount = updatedLineItems.reduce((acc, item) => acc + Number(item.amount), 0);
+        const totalAmount = updatedLineItems.reduce(
+          (acc, item) => acc + Number(item.amount),
+          0
+        );
 
         expressRequest = {
           ...expressRequest,
@@ -206,11 +237,19 @@ export function ExpressCheckoutButton() {
         },
       });
     },
-    [poyntExpressRequest, appliedCouponCode, priceAdjustment, t, setCheckoutErrors]
+    [
+      poyntExpressRequest,
+      appliedCouponCode,
+      priceAdjustment,
+      t,
+      setCheckoutErrors,
+    ]
   );
 
   // Track the status of coupon code fetching with a state variable
-  const [couponFetchStatus, setCouponFetchStatus] = useState<'idle' | 'fetching' | 'done'>('idle');
+  const [couponFetchStatus, setCouponFetchStatus] = useState<
+    'idle' | 'fetching' | 'done'
+  >('idle');
 
   useEffect(() => {
     // Skip if we've already loaded this once or have an applied code
@@ -282,7 +321,9 @@ export function ExpressCheckoutButton() {
       // 	priceAdjustment,
       // });
       // Create coupon config if there's a price adjustment from existing coupon
-      let couponConfig: { code: string; label: string; amount: string } | undefined;
+      let couponConfig:
+        | { code: string; label: string; amount: string }
+        | undefined;
       if (priceAdjustment && appliedCouponCode) {
         couponConfig = {
           code: appliedCouponCode,
@@ -294,15 +335,19 @@ export function ExpressCheckoutButton() {
       // console.log("[poynt collect] TokenizeJsing initialized", {
       // 	couponConfig,
       // });
-      collect.current = new (window as any).TokenizeJs(godaddyPaymentsConfig?.businessId, godaddyPaymentsConfig?.appId, {
-        country: countryCode,
-        currency: currencyCode,
-        merchantName: session?.storeName || '',
-        requireEmail: true,
-        requireShippingAddress: !!session?.enableShippingAddressCollection,
-        supportCouponCode: !!session?.enablePromotionCodes,
-        ...(couponConfig ? { couponCode: couponConfig } : {}),
-      });
+      collect.current = new (window as any).TokenizeJs(
+        godaddyPaymentsConfig?.businessId,
+        godaddyPaymentsConfig?.appId,
+        {
+          country: countryCode,
+          currency: currencyCode,
+          merchantName: session?.storeName || '',
+          requireEmail: true,
+          requireShippingAddress: !!session?.enableShippingAddressCollection,
+          supportCouponCode: !!session?.enablePromotionCodes,
+          ...(couponConfig ? { couponCode: couponConfig } : {}),
+        }
+      );
     }
   }, [
     godaddyPaymentsConfig,
@@ -323,7 +368,14 @@ export function ExpressCheckoutButton() {
 
   // Mount the TokenizeJs instance
   useEffect(() => {
-    if (!isPoyntLoaded || !godaddyPaymentsConfig || !isCollectLoading || !collect.current || hasMounted.current) return;
+    if (
+      !isPoyntLoaded ||
+      !godaddyPaymentsConfig ||
+      !isCollectLoading ||
+      !collect.current ||
+      hasMounted.current
+    )
+      return;
 
     collect.current?.supportWalletPayments().then(supports => {
       const paymentMethods = [];
@@ -368,11 +420,19 @@ export function ExpressCheckoutButton() {
         });
       }
     });
-  }, [isPoyntLoaded, godaddyPaymentsConfig, isCollectLoading, handleExpressPayClick]);
+  }, [
+    isPoyntLoaded,
+    godaddyPaymentsConfig,
+    isCollectLoading,
+    handleExpressPayClick,
+  ]);
 
   // Function to convert shipping address to shippingLines format for price adjustments
   const convertAddressToShippingLines = useCallback(
-    (address: Address | null, selectedMethod: { amount: string; name: string }) => {
+    (
+      address: Address | null,
+      selectedMethod: { amount: string; name: string }
+    ) => {
       if (!address) return undefined;
 
       return [
@@ -437,7 +497,9 @@ export function ExpressCheckoutButton() {
 
       // Track the event
       track({
-        eventId: couponCode ? eventIds.expressApplyCouponEvent : eventIds.expressRemoveCouponEvent,
+        eventId: couponCode
+          ? eventIds.expressApplyCouponEvent
+          : eventIds.expressRemoveCouponEvent,
         type: TrackingEventType.EVENT,
         properties: {
           couponCode: couponCode || 'removed',
@@ -470,7 +532,9 @@ export function ExpressCheckoutButton() {
         }
 
         // Calculate the total amount
-        const totalAmount = finalLineItems.reduce((acc, item) => acc + Number(item.amount), 0).toFixed(2);
+        const totalAmount = finalLineItems
+          .reduce((acc, item) => acc + Number(item.amount), 0)
+          .toFixed(2);
 
         updatedOrder = {
           lineItems: finalLineItems,
@@ -494,7 +558,10 @@ export function ExpressCheckoutButton() {
               amount: (godaddyTotals.shipping.value / 100).toString(),
               name: shippingMethod,
             };
-            shippingLines = convertAddressToShippingLines(shippingAddress, selectedMethodInfo);
+            shippingLines = convertAddressToShippingLines(
+              shippingAddress,
+              selectedMethodInfo
+            );
           }
 
           // Call the price adjustments mutation with the new coupon code
@@ -531,7 +598,9 @@ export function ExpressCheckoutButton() {
             });
 
             // Calculate the total amount
-            const totalAmount = finalLineItems.reduce((acc, item) => acc + Number(item.amount), 0).toFixed(2);
+            const totalAmount = finalLineItems
+              .reduce((acc, item) => acc + Number(item.amount), 0)
+              .toFixed(2);
 
             updatedOrder = {
               lineItems: finalLineItems,
@@ -596,7 +665,9 @@ export function ExpressCheckoutButton() {
     collect.current.on('payment_authorized', async event => {
       const nonce = event?.nonce;
 
-      const selectedShippingMethod = shippingMethods?.find(method => method.displayName === shippingMethod);
+      const selectedShippingMethod = shippingMethods?.find(
+        method => method.displayName === shippingMethod
+      );
 
       if (nonce) {
         // Include coupon code if one is applied
@@ -624,7 +695,10 @@ export function ExpressCheckoutButton() {
                   email: event.billingAddress.emailAddress || '',
                   phone: event.billingAddress.phoneNumber || '',
                   firstName: event.billingAddress.name?.split(' ')?.[0] || '',
-                  lastName: event.billingAddress.name ? event.billingAddress.name.split(' ').slice(1).join(' ') || '' : '',
+                  lastName: event.billingAddress.name
+                    ? event.billingAddress.name.split(' ').slice(1).join(' ') ||
+                      ''
+                    : '',
                   address: {
                     countryCode: event.billingAddress.countryCode || '',
                     postalCode: event.billingAddress.postalCode || '',
@@ -642,14 +716,21 @@ export function ExpressCheckoutButton() {
                   email: event?.shippingAddress?.emailAddress || '',
                   phone: event?.shippingAddress?.phoneNumber || '',
                   firstName: event.shippingAddress.name?.split(' ')?.[0] || '',
-                  lastName: event.shippingAddress.name ? event.shippingAddress.name.split(' ').slice(1).join(' ') || '' : '',
+                  lastName: event.shippingAddress.name
+                    ? event.shippingAddress.name
+                        .split(' ')
+                        .slice(1)
+                        .join(' ') || ''
+                    : '',
                   address: {
                     countryCode: event?.shippingAddress?.countryCode || '',
                     postalCode: event?.shippingAddress?.postalCode || '',
                     adminArea1: event.shippingAddress?.administrativeArea || '',
                     adminArea2: event?.shippingAddress?.locality || '',
-                    addressLine1: event?.shippingAddress?.addressLines?.[0] || '',
-                    addressLine2: event?.shippingAddress?.addressLines?.[1] || '',
+                    addressLine1:
+                      event?.shippingAddress?.addressLines?.[0] || '',
+                    addressLine2:
+                      event?.shippingAddress?.addressLines?.[1] || '',
                   },
                 },
               }
@@ -660,7 +741,8 @@ export function ExpressCheckoutButton() {
                   {
                     amount: godaddyTotals.shipping,
                     name: selectedShippingMethod?.displayName || '',
-                    requestedProvider: selectedShippingMethod?.carrierCode || '',
+                    requestedProvider:
+                      selectedShippingMethod?.carrierCode || '',
                     requestedService: selectedShippingMethod?.serviceCode || '',
                     totals: {
                       subTotal: godaddyTotals.shipping,
@@ -683,7 +765,9 @@ export function ExpressCheckoutButton() {
           if (err instanceof GraphQLErrorWithCodes) {
             const walletError: WalletError = {
               code: 'invalid_payment_data',
-              message: t.apiErrors?.[err.codes[0] as keyof typeof t.apiErrors] || t.errors.errorProcessingPayment,
+              message:
+                t.apiErrors?.[err.codes[0] as keyof typeof t.apiErrors] ||
+                t.errors.errorProcessingPayment,
             };
 
             // Track payment error
@@ -767,10 +851,13 @@ export function ExpressCheckoutButton() {
         // If there's an applied coupon, recalculate price adjustments with the new shipping method
         if (appliedCouponCode) {
           try {
-            const shippingLines = convertAddressToShippingLines(shippingAddress, {
-              amount: shippingAmount || '0',
-              name: e.shippingMethod?.label || t.totals.shipping,
-            });
+            const shippingLines = convertAddressToShippingLines(
+              shippingAddress,
+              {
+                amount: shippingAmount || '0',
+                name: e.shippingMethod?.label || t.totals.shipping,
+              }
+            );
 
             const newAdjustments = await getPriceAdjustments.mutateAsync({
               discountCodes: [appliedCouponCode],
@@ -801,7 +888,11 @@ export function ExpressCheckoutButton() {
 
         if (session?.enableTaxCollection) {
           try {
-            const taxesResult = await calculateGodaddyExpressTaxes(shippingAddress, currencyCode, shippingAmount || '0');
+            const taxesResult = await calculateGodaddyExpressTaxes(
+              shippingAddress,
+              currencyCode,
+              shippingAmount || '0'
+            );
 
             if (taxesResult?.value) {
               poyntLineItems.push({
@@ -839,7 +930,10 @@ export function ExpressCheckoutButton() {
           });
         }
 
-        const totalAmount = poyntLineItems.reduce((acc, item) => acc + Number(item.amount), 0);
+        const totalAmount = poyntLineItems.reduce(
+          (acc, item) => acc + Number(item.amount),
+          0
+        );
 
         updatedOrder = {
           ...updatedOrder,
@@ -902,10 +996,13 @@ export function ExpressCheckoutButton() {
           // If there's an applied coupon, recalculate price adjustments with the new shipping
           if (appliedCouponCode) {
             try {
-              const shippingLines = convertAddressToShippingLines(e.shippingAddress, {
-                amount: methods[0]?.amount || '0',
-                name: methods[0]?.label || t.totals.shipping,
-              });
+              const shippingLines = convertAddressToShippingLines(
+                e.shippingAddress,
+                {
+                  amount: methods[0]?.amount || '0',
+                  name: methods[0]?.label || t.totals.shipping,
+                }
+              );
 
               const newAdjustments = await getPriceAdjustments.mutateAsync({
                 discountCodes: [appliedCouponCode],
@@ -952,7 +1049,11 @@ export function ExpressCheckoutButton() {
         if (session?.enableTaxCollection) {
           try {
             // console.log("[poynt collect] getting taxes!");
-            const taxesResult = await calculateGodaddyExpressTaxes(e.shippingAddress, currencyCode, methods?.[0]?.amount);
+            const taxesResult = await calculateGodaddyExpressTaxes(
+              e.shippingAddress,
+              currencyCode,
+              methods?.[0]?.amount
+            );
 
             // console.log("[poynt collect] Taxes result", { taxesResult });
 
@@ -998,7 +1099,10 @@ export function ExpressCheckoutButton() {
           });
         }
 
-        const totalAmount = poyntLineItems.reduce((acc, item) => acc + Number(item.amount), 0);
+        const totalAmount = poyntLineItems.reduce(
+          (acc, item) => acc + Number(item.amount),
+          0
+        );
 
         updatedOrder = {
           ...poyntExpressRequest,

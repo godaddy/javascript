@@ -4,7 +4,12 @@ import { useClearBillingAddress } from '@/components/checkout/address/utils/use-
 import { useSyncBillingAddressWithShippingAddress } from '@/components/checkout/address/utils/use-sync-billing-address';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/components/ui/form';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
@@ -13,7 +18,8 @@ export function PaymentAddressToggle({ className }: { className?: string }) {
   const { t } = useGoDaddyContext();
   const { isConfirmingCheckout } = useCheckoutContext();
   const form = useFormContext();
-  const syncBillingAddressWithShippingAddress = useSyncBillingAddressWithShippingAddress();
+  const syncBillingAddressWithShippingAddress =
+    useSyncBillingAddressWithShippingAddress();
   const clearBillingAddress = useClearBillingAddress();
 
   return (
@@ -50,7 +56,9 @@ export function PaymentAddressToggle({ className }: { className?: string }) {
                 }}
               />
             </FormControl>
-            <FormLabel className='text-sm font-normal'>{t.payment.billingAddress.useShippingAddress}</FormLabel>
+            <FormLabel className='text-sm font-normal'>
+              {t.payment.billingAddress.useShippingAddress}
+            </FormLabel>
           </FormItem>
         )}
       />

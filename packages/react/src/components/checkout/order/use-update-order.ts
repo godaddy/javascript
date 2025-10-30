@@ -11,14 +11,21 @@ export function useUpdateOrder() {
 
   return useMutation({
     mutationKey: ['update-draft-order'],
-    mutationFn: async ({ input }: { input: UpdateDraftOrderInput['input'] }) => {
+    mutationFn: async ({
+      input,
+    }: {
+      input: UpdateDraftOrderInput['input'];
+    }) => {
       return await updateDraftOrder(input, session);
     },
     onSuccess: (_data, { input }) => {
       if (!session) return;
 
       /* Refetch taxes and shipping methods on address changes */
-      if (input.shipping?.address || (!input.shipping?.address && input.billing?.address)) {
+      if (
+        input.shipping?.address ||
+        (!input.shipping?.address && input.billing?.address)
+      ) {
         if (session?.enableTaxCollection) {
           updateTaxes.mutate(undefined);
         } else {

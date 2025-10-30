@@ -39,12 +39,17 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
     <>
       {description && <div className='pb-4'>{description}</div>}
       {children}
-      {isShipping && paymentMethod === PaymentMethodType.CREDIT_CARD && session?.enableBillingAddressCollection && (
-        <PaymentAddressToggle className='pt-4' />
-      )}
+      {isShipping &&
+        paymentMethod === PaymentMethodType.CREDIT_CARD &&
+        session?.enableBillingAddressCollection && (
+          <PaymentAddressToggle className='pt-4' />
+        )}
       {isBillingAddressRequired ? (
         <CheckoutSection className='pt-5'>
-          <CheckoutSectionHeader title={t.payment.billingAddress.title} description={t.payment.billingAddress.description} />
+          <CheckoutSectionHeader
+            title={t.payment.billingAddress.title}
+            description={t.payment.billingAddress.description}
+          />
           <AddressForm sectionKey='billing' />
         </CheckoutSection>
       ) : null}

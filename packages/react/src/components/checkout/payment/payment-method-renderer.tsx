@@ -12,14 +12,32 @@ type PaymentMethodRendererProps = {
   isExpress?: boolean;
 };
 
-export function PaymentMethodRenderer({ type, method, provider, isExpress }: PaymentMethodRendererProps) {
-  return <LazyPaymentMethodRenderer type={type} method={method} provider={provider} isExpress={isExpress} />;
+export function PaymentMethodRenderer({
+  type,
+  method,
+  provider,
+  isExpress,
+}: PaymentMethodRendererProps) {
+  return (
+    <LazyPaymentMethodRenderer
+      type={type}
+      method={method}
+      provider={provider}
+      isExpress={isExpress}
+    />
+  );
 }
 
-export function hasPaymentMethodButton(method: PaymentMethodValue, provider: AvailablePaymentProviders): boolean {
+export function hasPaymentMethodButton(
+  method: PaymentMethodValue,
+  provider: AvailablePaymentProviders
+): boolean {
   return hasLazyPaymentMethodButton(method, provider);
 }
 
-export function hasPaymentMethodForm(method: PaymentMethodValue, provider: AvailablePaymentProviders): boolean {
+export function hasPaymentMethodForm(
+  method: PaymentMethodValue,
+  provider: AvailablePaymentProviders
+): boolean {
   return hasLazyPaymentMethodForm(method, provider);
 }

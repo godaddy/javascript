@@ -1,12 +1,19 @@
 'use server';
 
-import type { CheckoutSessionInput, CheckoutSessionOptions, Environments } from '@/types';
+import type {
+  CheckoutSessionInput,
+  CheckoutSessionOptions,
+  Environments,
+} from '@/types';
 import * as GoDaddy from './lib/godaddy/godaddy';
 
 let accessToken: string | undefined;
 let accessTokenExpiresAt: number | undefined;
 
-export async function createCheckoutSession(input: CheckoutSessionInput['input'], options?: CheckoutSessionOptions) {
+export async function createCheckoutSession(
+  input: CheckoutSessionInput['input'],
+  options?: CheckoutSessionOptions
+) {
   const CLIENT_ID = options?.auth?.clientId || '';
   const CLIENT_SECRET = options?.auth?.clientSecret || '';
 
@@ -41,7 +48,14 @@ function getHostByEnvironment(): string {
   return `https://${process.env.GODADDY_HOST || process.env.NEXT_PUBLIC_GODADDY_HOST || 'api.godaddy.com'}`;
 }
 
-async function getAccessToken({ clientId, clientSecret }: { clientId: string; clientSecret: string; environment: Environments }) {
+async function getAccessToken({
+  clientId,
+  clientSecret,
+}: {
+  clientId: string;
+  clientSecret: string;
+  environment: Environments;
+}) {
   if (!clientId || !clientSecret) {
     return;
   }
@@ -52,7 +66,10 @@ async function getAccessToken({ clientId, clientSecret }: { clientId: string; cl
   data.append('grant_type', 'client_credentials');
   data.append('client_id', clientId);
   data.append('client_secret', clientSecret);
-  data.append('scope', 'commerce.product:read commerce.order:read commerce.order:update location.address-verification:execute');
+  data.append(
+    'scope',
+    'commerce.product:read commerce.order:read commerce.order:update location.address-verification:execute'
+  );
   const response = await fetch(`${host}/v2/oauth2/token`, {
     method: 'POST',
     headers: {
@@ -63,7 +80,9 @@ async function getAccessToken({ clientId, clientSecret }: { clientId: string; cl
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to get access token: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to get access token: ${response.status} ${response.statusText}`
+    );
   }
 
   const result = (await response.json()) as {

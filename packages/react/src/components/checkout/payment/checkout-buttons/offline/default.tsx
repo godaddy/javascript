@@ -1,7 +1,10 @@
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { PaymentProvider, useConfirmCheckout } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import {
+  PaymentProvider,
+  useConfirmCheckout,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -41,7 +44,10 @@ export function OfflinePaymentCheckoutButton() {
 
   return (
     <Button
-      className={cn('w-full', isPaymentDisabled || isConfirmingCheckout ? 'opacity-80' : '')}
+      className={cn(
+        'w-full',
+        isPaymentDisabled || isConfirmingCheckout ? 'opacity-80' : ''
+      )}
       size='lg'
       type='submit'
       disabled={isPaymentDisabled || isConfirmingCheckout}

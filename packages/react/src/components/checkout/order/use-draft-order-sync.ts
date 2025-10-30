@@ -2,23 +2,37 @@ import { useMutationState } from '@tanstack/react-query';
 import isEqual from 'fast-deep-equal';
 import * as React from 'react';
 import { type UseFormReturn, useFormContext } from 'react-hook-form';
-import { type CheckoutFormData, useCheckoutContext } from '@/components/checkout/checkout';
+import {
+  type CheckoutFormData,
+  useCheckoutContext,
+} from '@/components/checkout/checkout';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateOrder } from '@/components/checkout/order/use-update-order';
 import type { DraftOrder, UpdateDraftOrderInput } from '@/types';
 
 // Helper function to check if an address object has required fields
 function hasRequiredAddressFields(address: Record<string, unknown>): boolean {
-  const requiredFields = ['addressLine1', 'countryCode', 'postalCode', 'adminArea1'];
+  const requiredFields = [
+    'addressLine1',
+    'countryCode',
+    'postalCode',
+    'adminArea1',
+  ];
   return requiredFields.every(field => address[field] && address[field] !== '');
 }
 
 // Helper function to filter out empty strings from an object
-function filterEmptyStrings(obj: Record<string, unknown>): Record<string, unknown> {
+function filterEmptyStrings(
+  obj: Record<string, unknown>
+): Record<string, unknown> {
   const filtered: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     if (value !== '') {
-      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      if (
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
         // Special handling for address objects
         if (key === 'address') {
           const addressObj = value as Record<string, unknown>;
@@ -29,7 +43,9 @@ function filterEmptyStrings(obj: Record<string, unknown>): Record<string, unknow
             }
           }
         } else {
-          const filteredNested = filterEmptyStrings(value as Record<string, unknown>);
+          const filteredNested = filterEmptyStrings(
+            value as Record<string, unknown>
+          );
           if (Object.keys(filteredNested).length > 0) {
             filtered[key] = filteredNested;
           }
@@ -89,7 +105,10 @@ function getChangedContactFields(
     [key: string]: unknown;
     address?: { [key: string]: unknown } | null;
   },
-  draftData: { [key: string]: unknown; address?: { [key: string]: unknown } | null } | null | undefined
+  draftData:
+    | { [key: string]: unknown; address?: { [key: string]: unknown } | null }
+    | null
+    | undefined
 ) {
   if (!draftData) return formData;
 
@@ -160,7 +179,10 @@ function mergeWithExistingFormData(
 
   // If updating shipping, only include changed shipping data
   if (updates.shipping) {
-    const shippingChanges = getChangedContactFields(currentData.shipping, draftOrder.shipping);
+    const shippingChanges = getChangedContactFields(
+      currentData.shipping,
+      draftOrder.shipping
+    );
     if (shippingChanges) {
       result.shipping = {
         ...shippingChanges,
@@ -181,7 +203,10 @@ function mergeWithExistingFormData(
 
   // If updating billing, only include changed billing data
   if (updates.billing && !useShippingAddress) {
-    const billingChanges = getChangedContactFields(currentData.billing, draftOrder.billing);
+    const billingChanges = getChangedContactFields(
+      currentData.billing,
+      draftOrder.billing
+    );
     if (billingChanges) {
       result.billing = {
         ...billingChanges,
@@ -225,21 +250,26 @@ export function useDraftOrderFieldSync<T>({
       status: 'pending',
     },
     select: mutation => {
-      return mutation.state.variables as { input: UpdateDraftOrderInput['input'] } | undefined;
+      return mutation.state.variables as
+        | { input: UpdateDraftOrderInput['input'] }
+        | undefined;
     },
   }).filter(Boolean);
 
   // Memoize the normalization function to avoid recreating on every render
-  const normalizeMutationInput = React.useCallback((input: UpdateDraftOrderInput['input']) => {
-    const normalized = { ...input };
-    if (normalized.shipping) {
-      normalized.shipping = filterEmptyStrings(normalized.shipping);
-    }
-    if (normalized.billing) {
-      normalized.billing = filterEmptyStrings(normalized.billing);
-    }
-    return normalized;
-  }, []);
+  const normalizeMutationInput = React.useCallback(
+    (input: UpdateDraftOrderInput['input']) => {
+      const normalized = { ...input };
+      if (normalized.shipping) {
+        normalized.shipping = filterEmptyStrings(normalized.shipping);
+      }
+      if (normalized.billing) {
+        normalized.billing = filterEmptyStrings(normalized.billing);
+      }
+      return normalized;
+    },
+    []
+  );
 
   React.useEffect(() => {
     if (!enabled) return;
@@ -258,11 +288,17 @@ export function useDraftOrderFieldSync<T>({
     if (!channelId || !storeId || !draftOrderData?.id) return;
 
     const rawInput = mapToInput(data);
-    const input = mergeWithExistingFormData(rawInput, form, draftOrderData, preserveFormData);
+    const input = mergeWithExistingFormData(
+      rawInput,
+      form,
+      draftOrderData,
+      preserveFormData
+    );
 
     // Don't sync if input is effectively empty (only contains context/customerId)
     const hasActualContent = Object.entries(input).some(
-      ([inputKey, value]) => inputKey !== 'context' && inputKey !== 'customerId' && value != null
+      ([inputKey, value]) =>
+        inputKey !== 'context' && inputKey !== 'customerId' && value != null
     );
 
     if (!hasActualContent) return;
@@ -300,7 +336,9 @@ export function useDraftOrderFieldSync<T>({
           // Only reset if this mutation was from this specific hook instance
           if (pendingResetRef.current.length > 0 && form) {
             for (const fieldName of pendingResetRef.current) {
-              const currentValue = form.getValues(fieldName as keyof CheckoutFormData);
+              const currentValue = form.getValues(
+                fieldName as keyof CheckoutFormData
+              );
               form.resetField(fieldName as keyof CheckoutFormData, {
                 defaultValue: currentValue,
               });

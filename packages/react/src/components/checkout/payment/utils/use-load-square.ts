@@ -8,10 +8,13 @@ const listeners = new Set<(loaded: boolean) => void>();
 export function useLoadSquare() {
   const { squareConfig } = useCheckoutContext();
   const [loaded, setLoaded] = useState(isSquareLoaded);
-  const environment = process.env.GODADDY_ENV || process.env.NEXT_PUBLIC_GODADDY_ENV || 'prod';
+  const environment =
+    process.env.GODADDY_ENV || process.env.NEXT_PUBLIC_GODADDY_ENV || 'prod';
 
   const squareCDN =
-    environment === 'prod' ? 'https://web.squarecdn.com/v1/square.js' : 'https://sandbox.web.squarecdn.com/v1/square.js';
+    environment === 'prod'
+      ? 'https://web.squarecdn.com/v1/square.js'
+      : 'https://sandbox.web.squarecdn.com/v1/square.js';
 
   useEffect(() => {
     // Register this component to be notified when Square loads

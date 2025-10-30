@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
 export const useGetPoyntCollectCdn = () => {
-  const environment = process.env.GODADDY_ENV || process.env.NEXT_PUBLIC_GODADDY_ENV || 'prod';
+  const environment =
+    process.env.GODADDY_ENV || process.env.NEXT_PUBLIC_GODADDY_ENV || 'prod';
 
   return useMemo(() => {
     switch (environment) {

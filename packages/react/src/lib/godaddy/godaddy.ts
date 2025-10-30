@@ -45,13 +45,17 @@ function getHostByEnvironment(): string {
 export async function createCheckoutSession(
   input: CheckoutSessionInput['input'],
   { accessToken }: { accessToken: string; environment: Environments }
-): Promise<ResultOf<typeof CreateCheckoutSessionMutation>['createCheckoutSession']> {
+): Promise<
+  ResultOf<typeof CreateCheckoutSessionMutation>['createCheckoutSession']
+> {
   if (!accessToken) {
     throw new Error('No public access token provided');
   }
 
   const GODADDY_HOST = getHostByEnvironment();
-  const response = await graphqlRequestWithErrors<ResultOf<typeof CreateCheckoutSessionMutation>>(
+  const response = await graphqlRequestWithErrors<
+    ResultOf<typeof CreateCheckoutSessionMutation>
+  >(
     GODADDY_HOST,
     CreateCheckoutSessionMutation,
     { input },
@@ -61,18 +65,26 @@ export async function createCheckoutSession(
   return response.createCheckoutSession;
 }
 
-export async function getAddressMatches(input: { query: string }, session: CheckoutSession | undefined) {
+export async function getAddressMatches(
+  input: { query: string },
+  session: CheckoutSession | undefined
+) {
   if (!session?.token || !session?.id) {
     throw new Error('No session token or ID provided');
   }
 
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof AddressMatchesQuery>>(GODADDY_HOST, AddressMatchesQuery, input, {
-    'x-session-token': `${session.token}`,
-    'x-session-id': session.id,
-    'x-store-id': session.storeId,
-  });
+  return graphqlRequestWithErrors<ResultOf<typeof AddressMatchesQuery>>(
+    GODADDY_HOST,
+    AddressMatchesQuery,
+    input,
+    {
+      'x-session-token': `${session.token}`,
+      'x-session-id': session.id,
+      'x-store-id': session.storeId,
+    }
+  );
 }
 
 export function getDraftOrder(session: CheckoutSession | undefined) {
@@ -82,11 +94,16 @@ export function getDraftOrder(session: CheckoutSession | undefined) {
 
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof DraftOrderQuery>>(GODADDY_HOST, DraftOrderQuery, undefined, {
-    'x-session-token': `${session.token}`,
-    'x-session-id': session.id,
-    'x-store-id': session.storeId,
-  });
+  return graphqlRequestWithErrors<ResultOf<typeof DraftOrderQuery>>(
+    GODADDY_HOST,
+    DraftOrderQuery,
+    undefined,
+    {
+      'x-session-token': `${session.token}`,
+      'x-session-id': session.id,
+      'x-store-id': session.storeId,
+    }
+  );
 }
 
 export function getDraftOrderTaxes(
@@ -135,7 +152,9 @@ export async function verifyAddress(
   }
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof VerifyCheckoutSessionAddressMutation>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof VerifyCheckoutSessionAddressMutation>
+  >(
     GODADDY_HOST,
     VerifyCheckoutSessionAddressMutation,
     { input: { ...input, adminArea3: input.adminArea2, adminArea2: '' } },
@@ -147,13 +166,18 @@ export async function verifyAddress(
   );
 }
 
-export async function updateDraftOrder(input: UpdateDraftOrderInput['input'], session: CheckoutSession | undefined) {
+export async function updateDraftOrder(
+  input: UpdateDraftOrderInput['input'],
+  session: CheckoutSession | undefined
+) {
   if (!session?.token || !session?.id) {
     throw new Error('No public access token provided');
   }
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof UpdateCheckoutSessionDraftOrderMutation>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof UpdateCheckoutSessionDraftOrderMutation>
+  >(
     GODADDY_HOST,
     UpdateCheckoutSessionDraftOrderMutation,
     { input },
@@ -165,17 +189,24 @@ export async function updateDraftOrder(input: UpdateDraftOrderInput['input'], se
   );
 }
 
-export async function getProductsFromOrderSkus(session: CheckoutSession | undefined) {
+export async function getProductsFromOrderSkus(
+  session: CheckoutSession | undefined
+) {
   if (!session?.token || !session?.id) {
     throw new Error('No session token or ID provided');
   }
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof DraftOrderSkusQuery>>(GODADDY_HOST, DraftOrderSkusQuery, undefined, {
-    'x-session-token': `${session.token}`,
-    'x-session-id': session.id,
-    'x-store-id': session.storeId,
-  });
+  return graphqlRequestWithErrors<ResultOf<typeof DraftOrderSkusQuery>>(
+    GODADDY_HOST,
+    DraftOrderSkusQuery,
+    undefined,
+    {
+      'x-session-token': `${session.token}`,
+      'x-session-id': session.id,
+      'x-store-id': session.storeId,
+    }
+  );
 }
 
 export function updateDraftOrderTaxes(
@@ -196,7 +227,9 @@ export function updateDraftOrderTaxes(
   }
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof CalculateCheckoutSessionTaxesMutation>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof CalculateCheckoutSessionTaxesMutation>
+  >(
     GODADDY_HOST,
     CalculateCheckoutSessionTaxesMutation,
     { destination },
@@ -217,7 +250,9 @@ export function applyDiscount(
   }
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof ApplyCheckoutSessionDiscountMutation>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof ApplyCheckoutSessionDiscountMutation>
+  >(
     GODADDY_HOST,
     ApplyCheckoutSessionDiscountMutation,
     { input: { discountCodes }, sessionId: session.id },
@@ -238,7 +273,9 @@ export function applyShippingMethod(
   }
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof ApplyCheckoutSessionShippingMethodMutation>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof ApplyCheckoutSessionShippingMethodMutation>
+  >(
     GODADDY_HOST,
     ApplyCheckoutSessionShippingMethodMutation,
     { input: [...shippingMethods] },
@@ -253,13 +290,17 @@ export function applyShippingMethod(
 export function removeShippingMethod(
   input: RemoveAppliedCheckoutSessionShippingMethodInput['input'],
   session: CheckoutSession | undefined
-): Promise<ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>> {
+): Promise<
+  ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>
+> {
   if (!session?.token || !session?.id) {
     throw new Error('No session token or ID provided');
   }
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>
+  >(
     GODADDY_HOST,
     RemoveAppliedCheckoutSessionShippingMethodMutation,
     { input },
@@ -271,13 +312,18 @@ export function removeShippingMethod(
   );
 }
 
-export function confirmCheckout(input: ConfirmCheckoutMutationInput['input'], session: CheckoutSession | undefined) {
+export function confirmCheckout(
+  input: ConfirmCheckoutMutationInput['input'],
+  session: CheckoutSession | undefined
+) {
   if (!session?.token || !session?.id) {
     throw new Error('No session token or ID provided');
   }
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof ConfirmCheckoutSessionMutation>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof ConfirmCheckoutSessionMutation>
+  >(
     GODADDY_HOST,
     ConfirmCheckoutSessionMutation,
     { input, sessionId: session.id },
@@ -299,7 +345,9 @@ export function getDraftOrderShippingMethods(
 
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof DraftOrderShippingRatesQuery>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof DraftOrderShippingRatesQuery>
+  >(
     GODADDY_HOST,
     DraftOrderShippingRatesQuery,
     { destination },
@@ -320,7 +368,9 @@ export function applyDeliveryMethod(
   }
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof ApplyCheckoutSessionDeliveryMethodMutation>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof ApplyCheckoutSessionDeliveryMethodMutation>
+  >(
     GODADDY_HOST,
     ApplyCheckoutSessionDeliveryMethodMutation,
     { input },
@@ -343,7 +393,9 @@ export function getDraftOrderPriceAdjustments(
 
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof DraftOrderPriceAdjustmentsQuery>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof DraftOrderPriceAdjustmentsQuery>
+  >(
     GODADDY_HOST,
     DraftOrderPriceAdjustmentsQuery,
     { shippingLines, discountCodes },
@@ -364,7 +416,9 @@ export function applyFulfillmentLocation(
   }
   const GODADDY_HOST = getHostByEnvironment();
 
-  return graphqlRequestWithErrors<ResultOf<typeof ApplyCheckoutSessionFulfillmentLocationMutation>>(
+  return graphqlRequestWithErrors<
+    ResultOf<typeof ApplyCheckoutSessionFulfillmentLocationMutation>
+  >(
     GODADDY_HOST,
     ApplyCheckoutSessionFulfillmentLocationMutation,
     { input },

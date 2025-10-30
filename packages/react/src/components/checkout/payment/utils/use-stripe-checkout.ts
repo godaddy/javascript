@@ -2,7 +2,10 @@ import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { useCallback, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
-import { PaymentProvider, useConfirmCheckout } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import {
+  PaymentProvider,
+  useConfirmCheckout,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { PaymentMethodType } from '@/types';
 
@@ -62,15 +65,18 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
       }
 
       if (mode === 'express') {
-        const { error, confirmationToken: expressToken } = await stripe.createConfirmationToken({
-          elements,
-          params: {
-            ...stripePaymentExpressRequest,
-          },
-        });
+        const { error, confirmationToken: expressToken } =
+          await stripe.createConfirmationToken({
+            elements,
+            params: {
+              ...stripePaymentExpressRequest,
+            },
+          });
 
         if (error) {
-          setCheckoutErrors([error.code || 'confirmation_token_creation_failed']);
+          setCheckoutErrors([
+            error.code || 'confirmation_token_creation_failed',
+          ]);
           return;
         }
 
@@ -96,7 +102,14 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
     } finally {
       setIsProcessingPayment(false);
     }
-  }, [mode, stripe, elements, stripePaymentExpressRequest, confirmCheckout.mutateAsync, setCheckoutErrors]);
+  }, [
+    mode,
+    stripe,
+    elements,
+    stripePaymentExpressRequest,
+    confirmCheckout.mutateAsync,
+    setCheckoutErrors,
+  ]);
 
   return {
     handleSubmit,

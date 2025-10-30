@@ -29,7 +29,10 @@ export function CheckoutErrorList() {
   if (!checkoutErrors?.length && !isCheckoutDisabled) return null;
 
   return (
-    <div ref={ref} className='mb-4 rounded-md border border-destructive bg-destructive/10 p-4'>
+    <div
+      ref={ref}
+      className='mb-4 rounded-md border border-destructive bg-destructive/10 p-4'
+    >
       <div className='flex items-start'>
         <CircleAlert className='text-destructive w-5 h-5 mr-3' />
         <ul className='text-destructive-foreground list-disc pl-5'>
@@ -38,7 +41,9 @@ export function CheckoutErrorList() {
               {t.apiErrors?.[code as keyof typeof t.apiErrors] || code}
             </li>
           ))}
-          {isCheckoutDisabled && <li className='text-sm'>{t.general.checkoutDisabled}</li>}
+          {isCheckoutDisabled && (
+            <li className='text-sm'>{t.general.checkoutDisabled}</li>
+          )}
         </ul>
       </div>
     </div>

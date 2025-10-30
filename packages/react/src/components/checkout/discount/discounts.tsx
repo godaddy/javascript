@@ -3,7 +3,11 @@
 import { DiscountTag } from '@/components/checkout/discount/discount-tag';
 import type { DiscountsProps } from './types';
 
-export function Discounts({ discounts, onRemove, isRemovingDiscount }: DiscountsProps) {
+export function Discounts({
+  discounts,
+  onRemove,
+  isRemovingDiscount,
+}: DiscountsProps) {
   // const { data: orderData } = useOrder({ orderId: "test" });
 
   if (!discounts.length) return null;

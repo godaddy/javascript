@@ -12,7 +12,10 @@ export function useDraftOrderShippingMethods() {
   const { session } = useCheckoutContext();
   const { data: shippingAddress } = useDraftOrderShippingAddress();
 
-  const hasShippingAddress = useMemo(() => !!shippingAddress?.addressLine1, [shippingAddress?.addressLine1]);
+  const hasShippingAddress = useMemo(
+    () => !!shippingAddress?.addressLine1,
+    [shippingAddress?.addressLine1]
+  );
 
   return useQuery({
     queryKey: [
@@ -28,6 +31,7 @@ export function useDraftOrderShippingMethods() {
     ],
     queryFn: () => getDraftOrderShippingMethods(session),
     enabled: !!session?.id && hasShippingAddress,
-    select: data => data?.checkoutSession?.draftOrder?.calculatedShippingRates?.rates,
+    select: data =>
+      data?.checkoutSession?.draftOrder?.calculatedShippingRates?.rates,
   });
 }

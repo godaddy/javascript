@@ -4,16 +4,30 @@ import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import { AddressForm } from '@/components/checkout/address';
-import { type CheckoutFormData, type CheckoutProps, LayoutSections, useCheckoutContext } from '@/components/checkout/checkout';
+import {
+  type CheckoutFormData,
+  type CheckoutProps,
+  LayoutSections,
+  useCheckoutContext,
+} from '@/components/checkout/checkout';
 import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { CheckoutSectionHeader } from '@/components/checkout/checkout-section-header';
 import { ContactForm } from '@/components/checkout/contact/contact-form';
-import { DeliveryMethodForm, DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import {
+  DeliveryMethodForm,
+  DeliveryMethods,
+} from '@/components/checkout/delivery/delivery-method';
 import { ExpressCheckoutButtons } from '@/components/checkout/express-checkout/express-checkout-buttons';
 import { CheckoutErrorList } from '@/components/checkout/form/checkout-error-list';
-import { DraftOrderLineItems, type Product } from '@/components/checkout/line-items/line-items';
+import {
+  DraftOrderLineItems,
+  type Product,
+} from '@/components/checkout/line-items/line-items';
 import { NotesForm } from '@/components/checkout/notes/notes-form';
-import { useDraftOrder, useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import {
+  useDraftOrder,
+  useDraftOrderTotals,
+} from '@/components/checkout/order/use-draft-order';
 import { PaymentForm } from '@/components/checkout/payment/payment-form';
 import {
   ConditionalExpressProviders,
@@ -24,7 +38,12 @@ import { ShippingMethodForm } from '@/components/checkout/shipping/shipping-meth
 import { Target } from '@/components/checkout/target/target';
 import { TipsForm } from '@/components/checkout/tips/tips-form';
 import { DraftOrderTotals } from '@/components/checkout/totals/totals';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
@@ -45,7 +64,12 @@ interface CheckoutFormProps extends Omit<CheckoutProps, 'session'> {
   items: Product[];
 }
 
-export function CheckoutForm({ schema, defaultValues, items, ...props }: CheckoutFormProps) {
+export function CheckoutForm({
+  schema,
+  defaultValues,
+  items,
+  ...props
+}: CheckoutFormProps) {
   const { t } = useGoDaddyContext();
   const { session, isCheckoutDisabled } = useCheckoutContext();
 
@@ -84,7 +108,11 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
   // Order summary calculations
   const subtotal = (totals?.subTotal?.value || 0) / 100;
   const orderDiscount = (totals?.discountTotal?.value || 0) / 100;
-  const shipping = (order?.shippingLines?.reduce((sum, line) => sum + (line?.amount?.value || 0), 0) || 0) / 100;
+  const shipping =
+    (order?.shippingLines?.reduce(
+      (sum, line) => sum + (line?.amount?.value || 0),
+      0
+    ) || 0) / 100;
   const taxTotal = (totals?.taxTotal?.value || 0) / 100;
   const orderTotal = (totals?.total?.value || 0) / 100;
   const tipTotal = (tipAmount || 0) / 100;
@@ -120,7 +148,13 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
 
   const lineItemDiscounts = items.reduce((sum, item) => {
     if (item?.discounts && Array.isArray(item.discounts)) {
-      return sum + item.discounts.reduce((dSum, discount) => dSum + (discount.amount?.value || 0), 0);
+      return (
+        sum +
+        item.discounts.reduce(
+          (dSum, discount) => dSum + (discount.amount?.value || 0),
+          0
+        )
+      );
     }
     return sum;
   }, 0);
@@ -131,7 +165,10 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
     const { enableTips, paymentMethods } = session || {};
     if (!props?.layout) {
       const enableExpressCheckout = Object.values(paymentMethods ?? {}).some(
-        method => method && Array.isArray(method.checkoutTypes) && method.checkoutTypes.includes(CheckoutType.EXPRESS)
+        method =>
+          method &&
+          Array.isArray(method.checkoutTypes) &&
+          method.checkoutTypes.includes(CheckoutType.EXPRESS)
       );
       const defaultTemplate = ` ${enableExpressCheckout ? "'express-checkout'" : ''} 'contact' 'delivery' '${deliveryMethodToGridArea[deliveryMethod]}' ${enableTips ? "'tips'" : ''} 'payment'`;
       // Return consistent tuple type: [string, number]
@@ -244,7 +281,10 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
             <div className='p-8 w-full md:max-w-[618px]'>
               <Target id='checkout.form.before' />
               <CheckoutErrorList />
-              <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className='grid gap-4'>
+              <form
+                onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+                className='grid gap-4'
+              >
                 <div
                   className='grid gap-4'
                   style={{
@@ -261,7 +301,10 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
 
                   <CheckoutSection style={{ gridArea: 'contact' }}>
                     <Target id='checkout.form.contact.before' />
-                    <CheckoutSectionHeader title={t.contact.title} description={t.contact.description} />
+                    <CheckoutSectionHeader
+                      title={t.contact.title}
+                      description={t.contact.description}
+                    />
                     <ContactForm />
                     <Target id='checkout.form.contact.after' />
                   </CheckoutSection>
@@ -275,7 +318,10 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
                     <CheckoutSection style={{ gridArea: 'tips' }}>
                       <Target id='checkout.form.tips.before' />
                       <CheckoutSectionHeader title={t.tips?.title} />
-                      <TipsForm currencyCode={currencyCode} total={orderTotal} />
+                      <TipsForm
+                        currencyCode={currencyCode}
+                        total={orderTotal}
+                      />
                       <Target id='checkout.form.tips.after' />
                     </CheckoutSection>
                   )}
@@ -299,15 +345,23 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
                       <Target id='checkout.form.shipping.before' />
                       <CheckoutSectionHeader
                         title={t.shipping.title}
-                        description={session?.enableShippingAddressCollection ? t.shipping.description : undefined}
+                        description={
+                          session?.enableShippingAddressCollection
+                            ? t.shipping.description
+                            : undefined
+                        }
                       />
                       <div className='space-y-4'>
-                        {session?.enableShippingAddressCollection ? <AddressForm sectionKey='shipping' /> : null}
+                        {session?.enableShippingAddressCollection ? (
+                          <AddressForm sectionKey='shipping' />
+                        ) : null}
                         {session?.shipping?.originAddress ? (
                           <ShippingMethodForm />
                         ) : (
                           <div className='bg-muted rounded-md p-6 flex justify-center items-center'>
-                            <p className='text-sm text-center w-full'>{t?.shipping?.noShippingOriginAddress}</p>
+                            <p className='text-sm text-center w-full'>
+                              {t?.shipping?.noShippingOriginAddress}
+                            </p>
                           </div>
                         )}
                         {session?.enableNotesCollection ? <NotesForm /> : null}
@@ -317,7 +371,10 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
                   )}
                   <CheckoutSection style={{ gridArea: 'payment' }}>
                     <Target id='checkout.form.payment.before' />
-                    <CheckoutSectionHeader title={t.payment.title} description={t.payment.description} />
+                    <CheckoutSectionHeader
+                      title={t.payment.title}
+                      description={t.payment.description}
+                    />
                     <div className='space-y-2'>
                       {!isCheckoutDisabled ? (
                         !isFree ? (
@@ -353,15 +410,22 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
           </div>
 
           {/* Right column - Order summary */}
-          <div className='bg-secondary-background' style={{ gridArea: 'right' }}>
-            <div className={`p-0 md:p-8 w-full md:max-w-xl md:sticky md:top-0 ${props.direction === 'rtl' ? 'md:ml-auto' : ''}`}>
+          <div
+            className='bg-secondary-background'
+            style={{ gridArea: 'right' }}
+          >
+            <div
+              className={`p-0 md:p-8 w-full md:max-w-xl md:sticky md:top-0 ${props.direction === 'rtl' ? 'md:ml-auto' : ''}`}
+            >
               <Target id='checkout.summary.before' />
               <div className='md:hidden'>
                 <Accordion type='single' collapsible>
                   <AccordionItem value='order-summary' className='border-none'>
                     <AccordionTrigger className='py-4 px-8 border-b border-border hover:no-underline'>
                       <div className='flex justify-between items-center w-full'>
-                        <span className='font-medium self-center'>{t.totals.orderSummary}</span>
+                        <span className='font-medium self-center'>
+                          {t.totals.orderSummary}
+                        </span>
                         <span className='font-bold text-lg pr-2 self-center'>
                           {new Intl.NumberFormat('en-us', {
                             style: 'currency',
@@ -372,7 +436,10 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
                     </AccordionTrigger>
                     <AccordionContent className='p-8'>
                       <div className='pb-4'>
-                        <DraftOrderLineItems currencyCode={currencyCode} items={items} />
+                        <DraftOrderLineItems
+                          currencyCode={currencyCode}
+                          items={items}
+                        />
 
                         <DraftOrderTotals
                           currencyCode={currencyCode}
@@ -398,7 +465,10 @@ export function CheckoutForm({ schema, defaultValues, items, ...props }: Checkou
               </div>
 
               <div className='hidden md:block'>
-                <DraftOrderLineItems currencyCode={currencyCode} items={items} />
+                <DraftOrderLineItems
+                  currencyCode={currencyCode}
+                  items={items}
+                />
 
                 <DraftOrderTotals
                   currencyCode={currencyCode}

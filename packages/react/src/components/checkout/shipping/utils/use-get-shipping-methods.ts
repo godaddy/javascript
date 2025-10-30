@@ -8,12 +8,16 @@ export function useGetShippingMethodByAddress() {
 
   return useMutation({
     mutationKey: ['get-shipping-method-by-address', { sessionId: session?.id }],
-    mutationFn: async (destination: GetCheckoutSessionShippingRatesInput['destination']) => {
+    mutationFn: async (
+      destination: GetCheckoutSessionShippingRatesInput['destination']
+    ) => {
       if (!session) return;
 
       const data = await getDraftOrderShippingMethods(session, destination);
 
-      return data.checkoutSession?.draftOrder?.calculatedShippingRates?.rates || [];
+      return (
+        data.checkoutSession?.draftOrder?.calculatedShippingRates?.rates || []
+      );
     },
   });
 }

@@ -1,6 +1,10 @@
 export const VisaIcon = ({ className }: { className?: string }) => {
   return (
-    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 750 471' className={className}>
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 750 471'
+      className={className}
+    >
       <title>Visa</title>
       <g fill='none' fillRule='evenodd'>
         <rect width='750' height='471' fill='#0E4595' rx='40' />

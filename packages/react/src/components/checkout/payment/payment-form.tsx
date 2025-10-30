@@ -1,12 +1,21 @@
 import { Circle, CreditCard, LoaderCircle, Wallet } from 'lucide-react';
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useFormContext } from 'react-hook-form';
 import { AddressForm } from '@/components/checkout/address';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { CheckoutSectionHeader } from '@/components/checkout/checkout-section-header';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
-import { DraftOrderLineItems, type Product } from '@/components/checkout/line-items';
+import {
+  DraftOrderLineItems,
+  type Product,
+} from '@/components/checkout/line-items';
 import ApplePayIcon from '@/components/checkout/payment/icons/ApplePay';
 import GooglePayIcon from '@/components/checkout/payment/icons/GooglePay';
 import PayPalIcon from '@/components/checkout/payment/icons/PayPal';
@@ -21,15 +30,33 @@ import { PaymentAddressToggle } from '@/components/checkout/payment/utils/paymen
 import { useGetSelectedPaymentMethod } from '@/components/checkout/payment/utils/use-get-selected-payment-method';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { Target } from '@/components/checkout/target/target';
-import { DraftOrderTotals, type DraftOrderTotalsProps } from '@/components/checkout/totals/totals';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+  DraftOrderTotals,
+  type DraftOrderTotalsProps,
+} from '@/components/checkout/totals/totals';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
-import { CheckoutType, PaymentMethodType, type PaymentMethodValue, PaymentProvider } from '@/types';
+import {
+  CheckoutType,
+  PaymentMethodType,
+  type PaymentMethodValue,
+  PaymentProvider,
+} from '@/types';
 
 // UI config for payment methods (labels will be resolved from translations)
 const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
@@ -41,16 +68,26 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   offline: <Wallet className='h-5 w-5' />,
 };
 
-export function PaymentForm(props: DraftOrderTotalsProps & { items: Product[] }) {
+export function PaymentForm(
+  props: DraftOrderTotalsProps & { items: Product[] }
+) {
   const { t } = useGoDaddyContext();
-  const { session, isConfirmingCheckout, setCheckoutErrors, requiredFields, godaddyPaymentsConfig } = useCheckoutContext();
+  const {
+    session,
+    isConfirmingCheckout,
+    setCheckoutErrors,
+    requiredFields,
+    godaddyPaymentsConfig,
+  } = useCheckoutContext();
   const form = useFormContext();
   const paymentMethod = form.watch('paymentMethod');
   const deliveryMethod = form.watch('deliveryMethod');
   const useShippingAddress = form.watch('paymentUseShippingAddress');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-  const methodConfig = useGetSelectedPaymentMethod(paymentMethod as PaymentMethodValue);
+  const methodConfig = useGetSelectedPaymentMethod(
+    paymentMethod as PaymentMethodValue
+  );
   const { isPoyntLoaded } = useLoadPoyntCollect();
 
   const [pazeSupported, setPazeSupported] = useState<boolean | null>(null);
@@ -115,11 +152,15 @@ export function PaymentForm(props: DraftOrderTotalsProps & { items: Product[] })
       currencyCode &&
       session?.paymentMethods?.paze?.processor === PaymentProvider.GODADDY
     ) {
-      collect.current = new (window as any).TokenizeJs(godaddyPaymentsConfig?.businessId, godaddyPaymentsConfig?.appId, {
-        country: countryCode,
-        currency: currencyCode,
-        merchantName: session?.storeName || '',
-      });
+      collect.current = new (window as any).TokenizeJs(
+        godaddyPaymentsConfig?.businessId,
+        godaddyPaymentsConfig?.appId,
+        {
+          country: countryCode,
+          currency: currencyCode,
+          merchantName: session?.storeName || '',
+        }
+      );
 
       collect.current?.supportWalletPayments().then(supports => {
         if (supports.paze) {
@@ -144,7 +185,10 @@ export function PaymentForm(props: DraftOrderTotalsProps & { items: Product[] })
       const method = session.paymentMethods?.[key as PaymentMethodValue];
 
       // Special handling for Paze with GoDaddy processor
-      if (key === PaymentMethodType.PAZE && method?.processor === PaymentProvider.GODADDY) {
+      if (
+        key === PaymentMethodType.PAZE &&
+        method?.processor === PaymentProvider.GODADDY
+      ) {
         return (
           PAYMENT_METHOD_ICONS[key as PaymentMethodValue] &&
           method &&
@@ -196,7 +240,13 @@ export function PaymentForm(props: DraftOrderTotalsProps & { items: Product[] })
 
     if (!hasForm) return null;
 
-    return <PaymentMethodRenderer type='form' method={paymentMethod} provider={methodConfig.processor} />;
+    return (
+      <PaymentMethodRenderer
+        type='form'
+        method={paymentMethod}
+        provider={methodConfig.processor}
+      />
+    );
   };
 
   // Get description for payment method if it exists
@@ -211,7 +261,11 @@ export function PaymentForm(props: DraftOrderTotalsProps & { items: Product[] })
   const getCheckoutButton = () => {
     if (isConfirmingCheckout) {
       return (
-        <Button type='button' className='w-full flex items-center justify-center gap-2 px-8 h-10' disabled>
+        <Button
+          type='button'
+          className='w-full flex items-center justify-center gap-2 px-8 h-10'
+          disabled
+        >
           <LoaderCircle className='h-5 w-5 animate-spin' />
           {t.payment.processingPayment}
         </Button>
@@ -220,16 +274,29 @@ export function PaymentForm(props: DraftOrderTotalsProps & { items: Product[] })
 
     if (!methodConfig) return null;
 
-    const hasButton = hasPaymentMethodButton(paymentMethod, methodConfig.processor);
+    const hasButton = hasPaymentMethodButton(
+      paymentMethod,
+      methodConfig.processor
+    );
 
     // No button component available for this payment method
     if (!hasButton) return null;
 
-    return <PaymentMethodRenderer type='button' method={paymentMethod} provider={methodConfig.processor} />;
+    return (
+      <PaymentMethodRenderer
+        type='button'
+        method={paymentMethod}
+        provider={methodConfig.processor}
+      />
+    );
   };
 
   useEffect(() => {
-    if (filteredPaymentMethods.length && (!paymentMethod || !filteredPaymentMethods.some(([key]) => key === paymentMethod))) {
+    if (
+      filteredPaymentMethods.length &&
+      (!paymentMethod ||
+        !filteredPaymentMethods.some(([key]) => key === paymentMethod))
+    ) {
       const firstFilteredMethod = filteredPaymentMethods[0][0];
       // Set default payment method to first available method)
       form.setValue('paymentMethod', firstFilteredMethod);
@@ -278,54 +345,73 @@ export function PaymentForm(props: DraftOrderTotalsProps & { items: Product[] })
                   onValueChange={handleAccordionChange}
                   className='w-full border border-border rounded-md overflow-hidden'
                 >
-                  {filteredPaymentMethods.map(([key, { label, icon }], index, array) => {
-                    return (
-                      <AccordionItem
-                        key={key}
-                        value={key}
-                        className={cn(
-                          'border-0',
-                          index !== array.length - 1 && 'border-b border-border',
-                          paymentMethod === key && 'bg-muted'
-                        )}
-                      >
-                        <AccordionTrigger
-                          hideChevron
+                  {filteredPaymentMethods.map(
+                    ([key, { label, icon }], index, array) => {
+                      return (
+                        <AccordionItem
+                          key={key}
+                          value={key}
                           className={cn(
-                            'py-3 px-4 flex items-center hover:no-underline hover:bg-muted transition-colors',
-                            paymentMethod === key && 'bg-muted hover:bg-muted'
+                            'border-0',
+                            index !== array.length - 1 &&
+                              'border-b border-border',
+                            paymentMethod === key && 'bg-muted'
                           )}
-                          aria-required={requiredFields?.paymentMethod}
-                          tabIndex={0}
                         >
-                          <div className='flex w-full items-center'>
-                            {!isSingleMethod ? (
-                              <div
-                                className={cn(
-                                  'aspect-square bg-input h-4 w-4 rounded-full border border-border text-accent shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mr-2 flex items-center justify-center',
-                                  paymentMethod === key && 'bg-accent border-accent'
-                                )}
-                              >
-                                {paymentMethod === key && <Circle className='h-2 w-2 fill-accent-foreground' />}
+                          <AccordionTrigger
+                            hideChevron
+                            className={cn(
+                              'py-3 px-4 flex items-center hover:no-underline hover:bg-muted transition-colors',
+                              paymentMethod === key && 'bg-muted hover:bg-muted'
+                            )}
+                            aria-required={requiredFields?.paymentMethod}
+                            tabIndex={0}
+                          >
+                            <div className='flex w-full items-center'>
+                              {!isSingleMethod ? (
+                                <div
+                                  className={cn(
+                                    'aspect-square bg-input h-4 w-4 rounded-full border border-border text-accent shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mr-2 flex items-center justify-center',
+                                    paymentMethod === key &&
+                                      'bg-accent border-accent'
+                                  )}
+                                >
+                                  {paymentMethod === key && (
+                                    <Circle className='h-2 w-2 fill-accent-foreground' />
+                                  )}
+                                </div>
+                              ) : null}
+                              <div className='flex w-full justify-between items-center gap-3'>
+                                <div className='flex flex-col'>
+                                  <span
+                                    className={cn(
+                                      paymentMethod === key && 'font-medium'
+                                    )}
+                                  >
+                                    {label}
+                                  </span>
+                                </div>
+                                <div className='flex h-5 items-center justify-end ml-auto mt-1'>
+                                  {icon}
+                                </div>
                               </div>
-                            ) : null}
-                            <div className='flex w-full justify-between items-center gap-3'>
-                              <div className='flex flex-col'>
-                                <span className={cn(paymentMethod === key && 'font-medium')}>{label}</span>
-                              </div>
-                              <div className='flex h-5 items-center justify-end ml-auto mt-1'>{icon}</div>
                             </div>
-                          </div>
-                        </AccordionTrigger>
+                          </AccordionTrigger>
 
-                        {hasFormOrDescription ? (
-                          <AccordionContent className={cn('px-4 pt-2 pb-4', isSingleMethod ? 'pl-4' : 'pl-10')}>
-                            {methodForm || methodDescription}
-                          </AccordionContent>
-                        ) : null}
-                      </AccordionItem>
-                    );
-                  })}
+                          {hasFormOrDescription ? (
+                            <AccordionContent
+                              className={cn(
+                                'px-4 pt-2 pb-4',
+                                isSingleMethod ? 'pl-4' : 'pl-10'
+                              )}
+                            >
+                              {methodForm || methodDescription}
+                            </AccordionContent>
+                          ) : null}
+                        </AccordionItem>
+                      );
+                    }
+                  )}
                 </Accordion>
               </FormControl>
             </FormItem>
@@ -333,12 +419,17 @@ export function PaymentForm(props: DraftOrderTotalsProps & { items: Product[] })
         />
       ) : null}
 
-      {isShipping && paymentMethod !== PaymentMethodType.CREDIT_CARD && session?.enableBillingAddressCollection ? (
+      {isShipping &&
+      paymentMethod !== PaymentMethodType.CREDIT_CARD &&
+      session?.enableBillingAddressCollection ? (
         <PaymentAddressToggle />
       ) : null}
       {isBillingAddressRequired ? (
         <CheckoutSection className={isPickup ? 'pt-5' : ''}>
-          <CheckoutSectionHeader title={t.payment.billingAddress.title} description={t.payment.billingAddress.description} />
+          <CheckoutSectionHeader
+            title={t.payment.billingAddress.title}
+            description={t.payment.billingAddress.description}
+          />
           <AddressForm sectionKey='billing' />
         </CheckoutSection>
       ) : null}
@@ -346,9 +437,14 @@ export function PaymentForm(props: DraftOrderTotalsProps & { items: Product[] })
       <div className='md:hidden'>
         <Accordion type='single' collapsible>
           <AccordionItem value='order-summary' className='border-none'>
-            <AccordionTrigger className='py-4 px-0 border-b border-border hover:no-underline' tabIndex={0}>
+            <AccordionTrigger
+              className='py-4 px-0 border-b border-border hover:no-underline'
+              tabIndex={0}
+            >
               <div className='flex justify-between items-center w-full'>
-                <span className='font-medium self-center'>{t.totals.orderSummary}</span>
+                <span className='font-medium self-center'>
+                  {t.totals.orderSummary}
+                </span>
                 <span className='font-bold text-lg pr-2 self-center'>
                   {new Intl.NumberFormat('en-us', {
                     style: 'currency',
@@ -359,7 +455,10 @@ export function PaymentForm(props: DraftOrderTotalsProps & { items: Product[] })
             </AccordionTrigger>
             <AccordionContent className='pt-4'>
               <div>
-                <DraftOrderLineItems currencyCode={props.currencyCode} items={props.items} />
+                <DraftOrderLineItems
+                  currencyCode={props.currencyCode}
+                  items={props.items}
+                />
               </div>
             </AccordionContent>
           </AccordionItem>

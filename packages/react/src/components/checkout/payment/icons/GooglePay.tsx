@@ -1,6 +1,13 @@
 export const GooglePayIcon = ({ className }: { className?: string }) => {
   return (
-    <svg xmlns='http://www.w3.org/2000/svg' width='40' height='26' fill='none' viewBox='0 0 40 26' className={className}>
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='40'
+      height='26'
+      fill='none'
+      viewBox='0 0 40 26'
+      className={className}
+    >
       <title>GooglePay</title>
       <path
         fill='#fff'
@@ -18,8 +25,14 @@ export const GooglePayIcon = ({ className }: { className?: string }) => {
         fill='#4285F4'
         d='M15.14 13.1c0-.32-.03-.64-.09-.95h-4.17v1.75h2.4a2.1 2.1 0 0 1-.89 1.4v1.14h1.43a4.49 4.49 0 0 0 1.32-3.33Z'
       />
-      <path fill='#34A853' d='M12.4 15.3a2.66 2.66 0 0 1-4-1.44H6.9v1.18a4.43 4.43 0 0 0 6.91 1.4l-1.43-1.13Z' />
-      <path fill='#FABB05' d='M8.25 13c0-.3.05-.59.14-.86v-1.17H6.9a4.59 4.59 0 0 0 0 4.07l1.48-1.17a2.79 2.79 0 0 1-.14-.86Z' />
+      <path
+        fill='#34A853'
+        d='M12.4 15.3a2.66 2.66 0 0 1-4-1.44H6.9v1.18a4.43 4.43 0 0 0 6.91 1.4l-1.43-1.13Z'
+      />
+      <path
+        fill='#FABB05'
+        d='M8.25 13c0-.3.05-.59.14-.86v-1.17H6.9a4.59 4.59 0 0 0 0 4.07l1.48-1.17a2.79 2.79 0 0 1-.14-.86Z'
+      />
       <path
         fill='#E94235'
         d='M10.88 10.27c.66 0 1.24.23 1.7.68l1.27-1.3a4.22 4.22 0 0 0-2.97-1.18 4.44 4.44 0 0 0-3.97 2.5l1.48 1.17a2.66 2.66 0 0 1 2.5-1.87Z'

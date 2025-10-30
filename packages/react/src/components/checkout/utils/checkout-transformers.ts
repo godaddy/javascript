@@ -1,4 +1,8 @@
-import { type Country, getCountryCallingCode, parsePhoneNumber } from 'react-phone-number-input';
+import {
+  type Country,
+  getCountryCallingCode,
+  parsePhoneNumber,
+} from 'react-phone-number-input';
 import type { CheckoutFormData } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import type { Product } from '@/components/checkout/line-items';
@@ -7,7 +11,10 @@ import type { DraftOrder, SKUProduct } from '@/types';
 /**
  * Process a phone number with country code
  */
-function processPhoneNumber(phoneValue: string | undefined, countryCode: string): string {
+function processPhoneNumber(
+  phoneValue: string | undefined,
+  countryCode: string
+): string {
   if (!phoneValue) return '';
 
   const cleanPhone = phoneValue.replace('-', '');
@@ -43,8 +50,12 @@ export function mapOrderToFormValues({
 }): CheckoutFormData {
   const orderShippingAddress = order?.shipping?.address;
   const orderBillingAddress = order?.billing?.address;
-  const paymentShouldUseShippingAddress = Boolean(orderShippingAddress?.addressLine1 === orderBillingAddress?.addressLine1);
-  const isPickup = order?.lineItems?.some(lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP);
+  const paymentShouldUseShippingAddress = Boolean(
+    orderShippingAddress?.addressLine1 === orderBillingAddress?.addressLine1
+  );
+  const isPickup = order?.lineItems?.some(
+    lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP
+  );
 
   return {
     // Shipping address
@@ -62,13 +73,17 @@ export function mapOrderToFormValues({
     shippingAdminArea2: orderShippingAddress?.adminArea2 ?? '',
     shippingAdminArea1: orderShippingAddress?.adminArea1 ?? '',
     shippingPostalCode: orderShippingAddress?.postalCode ?? '',
-    shippingCountryCode: orderShippingAddress?.countryCode || defaultCountryCode || 'US',
+    shippingCountryCode:
+      orderShippingAddress?.countryCode || defaultCountryCode || 'US',
     shippingValid: true,
 
     // Billing address
     billingFirstName: order?.billing?.firstName ?? '',
     billingLastName: order?.billing?.lastName ?? '',
-    billingPhone: processPhoneNumber(order?.billing?.phone ?? '', orderBillingAddress?.countryCode || defaultCountryCode || 'US'),
+    billingPhone: processPhoneNumber(
+      order?.billing?.phone ?? '',
+      orderBillingAddress?.countryCode || defaultCountryCode || 'US'
+    ),
     billingAddressLine1: orderBillingAddress?.addressLine1 ?? '',
     billingAddressLine2: orderBillingAddress?.addressLine2 ?? '',
     billingAddressLine3: orderBillingAddress?.addressLine3 ?? '',
@@ -77,7 +92,8 @@ export function mapOrderToFormValues({
     billingAdminArea2: orderBillingAddress?.adminArea2 ?? '',
     billingAdminArea1: orderBillingAddress?.adminArea1 ?? '',
     billingPostalCode: orderBillingAddress?.postalCode ?? '',
-    billingCountryCode: orderBillingAddress?.countryCode || defaultCountryCode || 'US',
+    billingCountryCode:
+      orderBillingAddress?.countryCode || defaultCountryCode || 'US',
     billingValid: true,
 
     // Contact information
@@ -87,7 +103,9 @@ export function mapOrderToFormValues({
     deliveryMethod: isPickup ? DeliveryMethods.PICKUP : DeliveryMethods.SHIP,
 
     // Payment information
-    paymentUseShippingAddress: orderShippingAddress?.addressLine1 ? paymentShouldUseShippingAddress : true,
+    paymentUseShippingAddress: orderShippingAddress?.addressLine1
+      ? paymentShouldUseShippingAddress
+      : true,
     paymentExpiryDate: '',
     paymentNameOnCard: '',
     paymentCardNumber: '',
@@ -114,7 +132,10 @@ export function mapOrderToFormValues({
 /**
  * Maps order line items and SKUs to displayable items
  */
-export function mapSkusToItemsDisplay(orderItems?: DraftOrder['lineItems'], skusMap: Record<string, SKUProduct> = {}): Product[] {
+export function mapSkusToItemsDisplay(
+  orderItems?: DraftOrder['lineItems'],
+  skusMap: Record<string, SKUProduct> = {}
+): Product[] {
   return (
     orderItems?.map(orderItem => {
       const sku = orderItem?.details?.sku;
@@ -125,7 +146,10 @@ export function mapSkusToItemsDisplay(orderItems?: DraftOrder['lineItems'], skus
         name: skuDetails?.label || orderItem.name || '',
         image: orderItem.details?.productAssetUrl || skuDetails?.mediaUrls?.[0],
         quantity: orderItem.quantity || 0,
-        originalPrice: (orderItem.totals?.subTotal?.value ?? 0) / (orderItem.quantity || 0) / 100,
+        originalPrice:
+          (orderItem.totals?.subTotal?.value ?? 0) /
+          (orderItem.quantity || 0) /
+          100,
         price:
           ((orderItem.totals?.subTotal?.value ?? 0) +
             (orderItem.totals?.feeTotal?.value ?? 0) -
@@ -133,7 +157,10 @@ export function mapSkusToItemsDisplay(orderItems?: DraftOrder['lineItems'], skus
             (orderItem.totals?.discountTotal?.value ?? 0)) /
           100,
         notes: orderItem.notes
-          ?.filter(note => note.authorType !== 'CUSTOMER' && note.content?.trim() !== '')
+          ?.filter(
+            note =>
+              note.authorType !== 'CUSTOMER' && note.content?.trim() !== ''
+          )
           .map(note => ({
             id: note.id,
             content: note.content,
@@ -158,11 +185,15 @@ export function mapSkusToItemsDisplay(orderItems?: DraftOrder['lineItems'], skus
             }))
           : skuDetails?.attributes?.map(attr => {
               // Find the corresponding attribute value from SKU
-              const matchingValue = skuDetails.attributeValues?.find(value => attr.values?.some(v => v.id === value.id));
+              const matchingValue = skuDetails.attributeValues?.find(value =>
+                attr.values?.some(v => v.id === value.id)
+              );
 
               return {
                 attribute: attr.label || attr.name || '',
-                values: matchingValue ? [matchingValue.label || matchingValue.name || ''] : [],
+                values: matchingValue
+                  ? [matchingValue.label || matchingValue.name || '']
+                  : [],
               };
             }),
         discounts: orderItem.discounts,

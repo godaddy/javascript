@@ -1,4 +1,9 @@
-import React, { createContext, type ReactNode, useContext, useState } from 'react';
+import React, {
+  createContext,
+  type ReactNode,
+  useContext,
+  useState,
+} from 'react';
 import type { SquarePaymentMethod } from '@/components/checkout/payment/payment-methods/credit-card/square';
 
 type SquareContextType = {
@@ -14,7 +19,11 @@ export const SquareProvider = ({ children }: { children: ReactNode }) => {
   const [card, setCard] = useState<SquarePaymentMethod | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  return <SquareContext.Provider value={{ card, setCard, isLoading, setIsLoading }}>{children}</SquareContext.Provider>;
+  return (
+    <SquareContext.Provider value={{ card, setCard, isLoading, setIsLoading }}>
+      {children}
+    </SquareContext.Provider>
+  );
 };
 
 export const useSquare = () => {

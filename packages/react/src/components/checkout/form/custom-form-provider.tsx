@@ -8,7 +8,9 @@ import { DeliveryMethods } from '../delivery/delivery-method';
  * Custom FormProvider that extends React Hook Form's FormProvider
  * to add smart validation that respects unregistered fields
  */
-export function CustomFormProvider<TFormValues extends Record<string, unknown> = CheckoutFormData>({
+export function CustomFormProvider<
+  TFormValues extends Record<string, unknown> = CheckoutFormData,
+>({
   children,
   ...methods
 }: { children: React.ReactNode } & UseFormReturn<TFormValues>) {
@@ -25,7 +27,10 @@ export function CustomFormProvider<TFormValues extends Record<string, unknown> =
   const enhancedMethods = useMemo(() => {
     // Override the trigger function with a type-safe version that ensures error messages are displayed
     const enhancedTrigger: UseFormTrigger<TFormValues> = async (
-      name?: FieldPath<TFormValues> | ReadonlyArray<FieldPath<TFormValues>> | Array<FieldPath<TFormValues>>,
+      name?:
+        | FieldPath<TFormValues>
+        | ReadonlyArray<FieldPath<TFormValues>>
+        | Array<FieldPath<TFormValues>>,
       options?: { shouldFocus?: boolean }
     ) => {
       try {
@@ -45,7 +50,8 @@ export function CustomFormProvider<TFormValues extends Record<string, unknown> =
         else {
           const values = currentMethods.getValues();
           const deliveryMethod = values.deliveryMethod as unknown as string;
-          const paymentUseShippingAddress = values.paymentUseShippingAddress as unknown as boolean;
+          const paymentUseShippingAddress =
+            values.paymentUseShippingAddress as unknown as boolean;
           const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
           const isShipping = deliveryMethod === DeliveryMethods.SHIP;
           const requireBillingAddress = !paymentUseShippingAddress || isPickup;
@@ -56,12 +62,16 @@ export function CustomFormProvider<TFormValues extends Record<string, unknown> =
 
           /* If using shipping address for billing (and not pickup), filter out billing-related field validations */
           if (!requireBillingAddress) {
-            fieldNames = fieldNames.filter(fieldName => !fieldName.startsWith('billing'));
+            fieldNames = fieldNames.filter(
+              fieldName => !fieldName.startsWith('billing')
+            );
           }
 
           /* If the delivery method is not shipping (i.e. pickup), filter out shipping-related field validations */
           if (!isShipping) {
-            fieldNames = fieldNames.filter(fieldName => !fieldName.startsWith('shipping'));
+            fieldNames = fieldNames.filter(
+              fieldName => !fieldName.startsWith('shipping')
+            );
           }
 
           // Trigger validation only on the filtered fields if any condition is true,

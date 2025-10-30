@@ -17,8 +17,14 @@ export function CheckoutSectionHeader({
   return (
     <div className={cn('space-y-2', className)}>
       <div className='space-y-1'>
-        {title ? <h3 className={cn('font-semibold', classNames?.title)}>{title}</h3> : null}
-        {description ? <p className={cn('text-sm text-gray-500', classNames?.description)}>{description}</p> : null}
+        {title ? (
+          <h3 className={cn('font-semibold', classNames?.title)}>{title}</h3>
+        ) : null}
+        {description ? (
+          <p className={cn('text-sm text-gray-500', classNames?.description)}>
+            {description}
+          </p>
+        ) : null}
       </div>
     </div>
   );

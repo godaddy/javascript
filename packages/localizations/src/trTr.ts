@@ -6,7 +6,8 @@ export const trTr = {
     free: 'ÜCRETSİZ',
     closed: 'Kapalı',
     apply: 'Uygula',
-    checkoutDisabled: 'Ödeme işlemi şu anda devre dışı. Yaşanan rahatsızlık için özür dileriz.',
+    checkoutDisabled:
+      'Ödeme işlemi şu anda devre dışı. Yaşanan rahatsızlık için özür dileriz.',
   },
   contact: {
     title: 'İletişim',
@@ -25,7 +26,8 @@ export const trTr = {
     selectTime: 'Bir teslim alma saati seçin',
     storeHours: 'Mağaza Saatleri',
     seeDetails: 'Detayları görüntüle',
-    noTimeSlots: 'Seçilen tarih için uygun zaman dilimi bulunmamaktadır. Lütfen başka bir tarih seçin.',
+    noTimeSlots:
+      'Seçilen tarih için uygun zaman dilimi bulunmamaktadır. Lütfen başka bir tarih seçin.',
     hoursDisplayed: 'Saatler yerel saat diliminizde gösterilmektedir.',
     storeOperatesIn: 'Mağaza {timezone} saat diliminde çalışmaktadır.',
     asap: 'EN KISA SÜREDE',
@@ -63,7 +65,8 @@ export const trTr = {
     title: 'Kargo',
     description: 'Kargo adresi',
     method: 'Kargo yöntemi',
-    noShippingMethodAddress: 'Mevcut kargo yöntemlerini görmek için adresinizi girin.',
+    noShippingMethodAddress:
+      'Mevcut kargo yöntemlerini görmek için adresinizi girin.',
     noShippingMethods: 'Kargo yöntemi bulunamadı.',
     phone: 'Telefon Numarası',
     country: 'Ülke',
@@ -200,14 +203,19 @@ export const trTr = {
     orderIdRequired: 'Sipariş kimliği gerekli',
     errorTrackingEvent: 'Olay izleme hatası',
     errorInTrackingSubscriber: 'İzleme abonesi hatası',
-    useTrackingProviderError: 'useTracking bir TrackingProvider içinde kullanılmalıdır',
-    usePoyntCollectProviderError: 'usePoyntCollect bir PoyntCollectProvider içinde kullanılmalıdır',
-    useSquareProviderError: 'useSquare bir SquareProvider içinde kullanılmalıdır',
+    useTrackingProviderError:
+      'useTracking bir TrackingProvider içinde kullanılmalıdır',
+    usePoyntCollectProviderError:
+      'usePoyntCollect bir PoyntCollectProvider içinde kullanılmalıdır',
+    useSquareProviderError:
+      'useSquare bir SquareProvider içinde kullanılmalıdır',
     errorProcessingPayment: 'Ödeme işleme hatası',
-    stripeConfigMissing: 'Stripe yapılandırması eksik. Lütfen kurulumunuzu kontrol edin.',
+    stripeConfigMissing:
+      'Stripe yapılandırması eksik. Lütfen kurulumunuzu kontrol edin.',
     paymentSuccessful: 'Ödeme başarılı',
     paymentFailed: 'Ödeme başarısız',
-    paypalConfigMissing: 'PayPal yapılandırması eksik. Lütfen kurulumunuzu kontrol edin.',
+    paypalConfigMissing:
+      'PayPal yapılandırması eksik. Lütfen kurulumunuzu kontrol edin.',
     stripeNotReady: 'Stripe hazır değil',
     cardElementNotFound: 'CardElement bulunamadı',
     errorProcessingCardPayment: 'Kart ödemesi işleme hatası.',
@@ -300,7 +308,8 @@ export const trTr = {
     CATALOG_API_ERROR: 'Katalog servisi hatası',
     TAX_SERVICE_UNAVAILABLE: 'Vergi servisi kullanılamıyor',
     SHIPPING_SERVICE_UNAVAILABLE: 'Kargo servisi kullanılamıyor',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: 'Fiyat ayarlama servisi kullanılamıyor',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      'Fiyat ayarlama servisi kullanılamıyor',
     PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'Fiyat ayarlamaları hesaplanamadı',
     SERVICE_UNAVAILABLE: 'Servis geçici olarak kullanılamıyor',
     RATE_LIMITED: 'Çok fazla istek, lütfen daha sonra tekrar deneyin',
@@ -312,6 +321,7 @@ export const trTr = {
     SHIPPING_ADDRESS_VERIFICATION_FAILED: 'Kargo adresi doğrulaması başarısız',
     BILLING_ADDRESS_VERIFICATION_FAILED: 'Fatura adresi doğrulaması başarısız',
     MISSING_SHIPPING_INFO: 'Kargo adresi veya yöntemi uygulanamadı',
-    DEPENDENCY_ERROR: 'Şu anda siparişinizi işleme alamıyoruz. Lütfen bir dakika bekleyin ve tekrar deneyin',
+    DEPENDENCY_ERROR:
+      'Şu anda siparişinizi işleme alamıyoruz. Lütfen bir dakika bekleyin ve tekrar deneyin',
   },
 };

@@ -28,7 +28,10 @@ type AutoCompleteItemProps = {
   active: boolean;
 } & React.HTMLProps<HTMLDivElement>;
 
-const AutoCompleteItem = React.forwardRef<HTMLDivElement, AutoCompleteItemProps>(({ children, active, key, ...rest }, ref) => {
+const AutoCompleteItem = React.forwardRef<
+  HTMLDivElement,
+  AutoCompleteItemProps
+>(({ children, active, key, ...rest }, ref) => {
   const id = React.useId();
 
   return (
@@ -175,7 +178,11 @@ export function AutoComplete<T extends string>({
       </div>
       {open ? (
         <FloatingPortal>
-          <FloatingFocusManager visuallyHiddenDismiss context={floating.context} initialFocus={-1}>
+          <FloatingFocusManager
+            visuallyHiddenDismiss
+            context={floating.context}
+            initialFocus={-1}
+          >
             <div
               {...interactions.getFloatingProps({
                 ref: floating.refs.setFloating,

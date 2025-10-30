@@ -3,7 +3,10 @@ import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useSquare } from '@/components/checkout/payment/utils/square-provider';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
-import { PaymentProvider, useConfirmCheckout } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import {
+  PaymentProvider,
+  useConfirmCheckout,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -53,7 +56,13 @@ export function SquareCreditCardCheckoutButton() {
     } finally {
       setIsSquareDisabled(false);
     }
-  }, [form, card, confirmCheckout.mutateAsync, squarePaymentRequest, setCheckoutErrors]);
+  }, [
+    form,
+    card,
+    confirmCheckout.mutateAsync,
+    squarePaymentRequest,
+    setCheckoutErrors,
+  ]);
 
   return (
     <Button
@@ -62,7 +71,12 @@ export function SquareCreditCardCheckoutButton() {
       type='button'
       onClick={handleSubmit}
       ref={buttonRef}
-      disabled={isLoading || isConfirmingCheckout || isPaymentDisabled || isSquareDisabled}
+      disabled={
+        isLoading ||
+        isConfirmingCheckout ||
+        isPaymentDisabled ||
+        isSquareDisabled
+      }
     >
       {t.payment.payNow}
     </Button>

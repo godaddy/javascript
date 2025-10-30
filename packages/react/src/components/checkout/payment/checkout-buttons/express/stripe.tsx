@@ -46,7 +46,9 @@ export function StripeExpressCheckoutButton() {
   const { stripeConfig } = useCheckoutContext();
 
   if (!stripeConfig) {
-    return <div className='text-destructive'>{t.errors.stripeConfigMissing}</div>;
+    return (
+      <div className='text-destructive'>{t.errors.stripeConfigMissing}</div>
+    );
   }
 
   const { isLoading } = useStripePaymentIntent();

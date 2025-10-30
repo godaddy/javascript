@@ -3,7 +3,12 @@ import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useTryUpdateDraftOrder } from '@/components/checkout/order/use-try-update-draft-order';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/components/ui/form';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
@@ -45,15 +50,27 @@ export function PaymentAddressToggle({ className }: { className?: string }) {
     form.setValue('billingPhone', form.getValues('shippingPhone'), {
       shouldValidate: true,
     });
-    form.setValue('billingAddressLine1', form.getValues('shippingAddressLine1'), {
-      shouldValidate: true,
-    });
-    form.setValue('billingAddressLine2', form.getValues('shippingAddressLine2'), {
-      shouldValidate: true,
-    });
-    form.setValue('billingAddressLine3', form.getValues('shippingAddressLine3'), {
-      shouldValidate: true,
-    });
+    form.setValue(
+      'billingAddressLine1',
+      form.getValues('shippingAddressLine1'),
+      {
+        shouldValidate: true,
+      }
+    );
+    form.setValue(
+      'billingAddressLine2',
+      form.getValues('shippingAddressLine2'),
+      {
+        shouldValidate: true,
+      }
+    );
+    form.setValue(
+      'billingAddressLine3',
+      form.getValues('shippingAddressLine3'),
+      {
+        shouldValidate: true,
+      }
+    );
     form.setValue('billingAdminArea4', form.getValues('shippingAdminArea4'), {
       shouldValidate: true,
     });
@@ -118,7 +135,9 @@ export function PaymentAddressToggle({ className }: { className?: string }) {
                 }}
               />
             </FormControl>
-            <FormLabel className='text-sm font-normal'>{t.payment.billingAddress.useShippingAddress}</FormLabel>
+            <FormLabel className='text-sm font-normal'>
+              {t.payment.billingAddress.useShippingAddress}
+            </FormLabel>
           </FormItem>
         )}
       />

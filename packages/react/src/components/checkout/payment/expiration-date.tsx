@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { monthYearMask } from './month-year-mask';
 
-interface ExpirationDateProps extends React.ComponentPropsWithoutRef<typeof Input> {
+interface ExpirationDateProps
+  extends React.ComponentPropsWithoutRef<typeof Input> {
   setValue: UseFormSetValue<Record<string, unknown>>;
   clearErrors?: UseFormClearErrors<Record<string, unknown>>;
   monthFieldName?: string;
@@ -12,7 +13,17 @@ interface ExpirationDateProps extends React.ComponentPropsWithoutRef<typeof Inpu
 }
 
 const ExpirationDate = React.forwardRef<HTMLInputElement, ExpirationDateProps>(
-  ({ setValue, clearErrors, monthFieldName = 'month', yearFieldName = 'year', name, ...props }, ref) => {
+  (
+    {
+      setValue,
+      clearErrors,
+      monthFieldName = 'month',
+      yearFieldName = 'year',
+      name,
+      ...props
+    },
+    ref
+  ) => {
     const { t } = useGoDaddyContext();
     const [maskedValue, setMaskedValue] = React.useState('');
 
