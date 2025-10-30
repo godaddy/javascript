@@ -12,7 +12,6 @@
     "lint": "pnpm run -r lint",
     "test": "pnpm run build && pnpm run -r --parallel test",
     "version": "changeset version && pnpm install --prefer-offline",
-    "release": "changeset publish",
     "changeset": "changeset",
     "clean": "pnpm run clean:packages && pnpm run clean:root",
     "clean:packages": "pnpm run -r clean",
