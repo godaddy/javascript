@@ -5,7 +5,7 @@
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
-    "lineWidth": 130
+    "lineWidth": 80
   },
   "linter": {
     "rules": {
@@ -253,7 +253,7 @@
       "indentStyle": "space",
       "indentWidth": 2,
       "lineEnding": "lf",
-      "lineWidth": 130,
+      "lineWidth": 80,
       "trailingCommas": "none",
       "bracketSpacing": true,
       "expand": "auto"
