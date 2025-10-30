@@ -17,7 +17,7 @@
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint:fix": "biome check --write --unsafe ./src"
   },
   "keywords": [
     "godaddy",
