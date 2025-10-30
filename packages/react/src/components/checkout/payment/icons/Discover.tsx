@@ -1,6 +1,12 @@
 export const DiscoverIcon = ({ className }: { className?: string }) => {
   return (
-    <svg width='800px' height='800px' viewBox='0 -140 780 780' xmlns='http://www.w3.org/2000/svg' className={className}>
+    <svg
+      width='800px'
+      height='800px'
+      viewBox='0 -140 780 780'
+      xmlns='http://www.w3.org/2000/svg'
+      className={className}
+    >
       <title>Discover</title>
       <g fill-rule='evenodd'>
         <path

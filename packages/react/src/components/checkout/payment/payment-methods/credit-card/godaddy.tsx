@@ -1,8 +1,14 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import type { TokenizeJs, TokenizeJsEvent } from '@/components/checkout/payment/types';
+import type {
+  TokenizeJs,
+  TokenizeJsEvent,
+} from '@/components/checkout/payment/types';
 import { usePoyntCollect } from '@/components/checkout/payment/utils/poynt-provider';
-import { PaymentProvider, useConfirmCheckout } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import {
+  PaymentProvider,
+  useConfirmCheckout,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -182,7 +188,10 @@ export function GoDaddyCreditCardForm() {
   useLayoutEffect(() => {
     if (!isPoyntLoaded || !godaddyPaymentsConfig || collect.current) return;
 
-    collect.current = new (window as any).TokenizeJs(godaddyPaymentsConfig?.businessId, godaddyPaymentsConfig?.appId);
+    collect.current = new (window as any).TokenizeJs(
+      godaddyPaymentsConfig?.businessId,
+      godaddyPaymentsConfig?.appId
+    );
 
     collect?.current?.on('ready', () => {
       setCollect(collect.current);
@@ -223,12 +232,22 @@ export function GoDaddyCreditCardForm() {
         setError('');
       }
     });
-  }, [isPoyntLoaded, godaddyPaymentsConfig, confirmCheckout.mutateAsync, setCollect, setCheckoutErrors, t, setIsLoadingNonce]);
+  }, [
+    isPoyntLoaded,
+    godaddyPaymentsConfig,
+    confirmCheckout.mutateAsync,
+    setCollect,
+    setCheckoutErrors,
+    t,
+    setIsLoadingNonce,
+  ]);
 
   return (
     <>
       <div id='gdpay-card-element' />
-      {error ? <p className='text-[0.8rem] font-medium text-destructive'>{error}</p> : null}
+      {error ? (
+        <p className='text-[0.8rem] font-medium text-destructive'>{error}</p>
+      ) : null}
     </>
   );
 }

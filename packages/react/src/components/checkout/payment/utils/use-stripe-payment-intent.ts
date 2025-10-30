@@ -19,7 +19,10 @@ type UseStripePaymentIntentOptions = {
   enableClientSecret?: boolean;
 };
 
-export function useStripePaymentIntent({ updateIntent = false, enableClientSecret = false }: UseStripePaymentIntentOptions = {}) {
+export function useStripePaymentIntent({
+  updateIntent = false,
+  enableClientSecret = false,
+}: UseStripePaymentIntentOptions = {}) {
   const { session, stripeConfig } = useCheckoutContext();
   const form = useFormContext();
 
@@ -28,7 +31,8 @@ export function useStripePaymentIntent({ updateIntent = false, enableClientSecre
   const amount = totals?.total?.value || 0;
   const currency = totals?.total?.currencyCode?.toLowerCase() || 'usd';
 
-  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [stripePromise, setStripePromise] =
+    useState<Promise<Stripe | null> | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [intentId, setIntentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,15 +60,20 @@ export function useStripePaymentIntent({ updateIntent = false, enableClientSecre
       updateIntent: boolean;
       intentId: string | null;
     }) => {
-      const res = await fetch(shouldUpdate && paymentIntentId ? '/api/update-payment-intent' : '/api/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: paymentAmount,
-          currency: paymentCurrency,
-          ...(shouldUpdate && paymentIntentId ? { id: paymentIntentId } : {}),
-        }),
-      });
+      const res = await fetch(
+        shouldUpdate && paymentIntentId
+          ? '/api/update-payment-intent'
+          : '/api/create-payment-intent',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: paymentAmount,
+            currency: paymentCurrency,
+            ...(shouldUpdate && paymentIntentId ? { id: paymentIntentId } : {}),
+          }),
+        }
+      );
       if (!res.ok) throw new Error('Failed to get payment intent');
       return res.json();
     },
@@ -87,7 +96,11 @@ export function useStripePaymentIntent({ updateIntent = false, enableClientSecre
     },
   });
 
-  const isLoading = paymentIntentMutation.isPending || isLoadingTotals || !stripePromise || isCreatingPaymentIntent;
+  const isLoading =
+    paymentIntentMutation.isPending ||
+    isLoadingTotals ||
+    !stripePromise ||
+    isCreatingPaymentIntent;
 
   const initializePaymentIntent = useCallback(() => {
     const existingClientSecret = form.getValues('stripePaymentIntent');
@@ -110,7 +123,16 @@ export function useStripePaymentIntent({ updateIntent = false, enableClientSecre
       updateIntent,
       intentId,
     });
-  }, [amount, currency, updateIntent, intentId, isLoading, form.getValues, paymentIntentMutation.mutate, enableClientSecret]);
+  }, [
+    amount,
+    currency,
+    updateIntent,
+    intentId,
+    isLoading,
+    form.getValues,
+    paymentIntentMutation.mutate,
+    enableClientSecret,
+  ]);
 
   const amountRef = useRef<null | number>(null);
 

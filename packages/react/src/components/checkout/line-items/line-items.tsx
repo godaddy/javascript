@@ -57,7 +57,10 @@ export interface DraftOrderLineItemsProps {
   currencyCode?: string;
 }
 
-export function DraftOrderLineItems({ items, currencyCode = 'USD' }: DraftOrderLineItemsProps) {
+export function DraftOrderLineItems({
+  items,
+  currencyCode = 'USD',
+}: DraftOrderLineItemsProps) {
   const { t } = useGoDaddyContext();
 
   return (
@@ -74,7 +77,10 @@ export function DraftOrderLineItems({ items, currencyCode = 'USD' }: DraftOrderL
             </div>
           ) : (
             <div className='relative bg-muted flex items-center justify-center min-h-12 min-w-12 h-12 w-12 border border-border rounded-lg object-cover'>
-              <Image className='h-5 w-5 text-muted-foreground' name='image-placeholder' />
+              <Image
+                className='h-5 w-5 text-muted-foreground'
+                name='image-placeholder'
+              />
             </div>
           )}
           <div className='flex-1 space-y-1'>
@@ -83,7 +89,13 @@ export function DraftOrderLineItems({ items, currencyCode = 'USD' }: DraftOrderL
                 <span className='gap-1'>
                   <span className='text-sm mr-1'>{item.name}</span>
                   {item?.selectedOptions?.length ? (
-                    <span className='text-xs'>({item.selectedOptions.flatMap(option => option.values || []).join(' / ')})</span>
+                    <span className='text-xs'>
+                      (
+                      {item.selectedOptions
+                        .flatMap(option => option.values || [])
+                        .join(' / ')}
+                      )
+                    </span>
                   ) : null}
                 </span>
                 <span className='text-xs grid'>
@@ -91,7 +103,10 @@ export function DraftOrderLineItems({ items, currencyCode = 'USD' }: DraftOrderL
                     <span key={`addon-${index}`} className='text-xs'>
                       <span>{addon.attribute}: </span>
                       {addon.values?.map(value => (
-                        <span className='text-muted-foreground' key={`addon-${value.name}`}>
+                        <span
+                          className='text-muted-foreground'
+                          key={`addon-${value.name}`}
+                        >
                           {value.name}
                         </span>
                       ))}

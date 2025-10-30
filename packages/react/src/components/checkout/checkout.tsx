@@ -39,7 +39,14 @@ interface Appearance {
   variables?: Omit<GoDaddyVariables, 'checkout'>;
 }
 
-export type LayoutSection = 'express-checkout' | 'contact' | 'shipping' | 'payment' | 'pickup' | 'tips' | 'delivery';
+export type LayoutSection =
+  | 'express-checkout'
+  | 'contact'
+  | 'shipping'
+  | 'payment'
+  | 'pickup'
+  | 'tips'
+  | 'delivery';
 
 export const LayoutSections = {
   EXPRESS_CHECKOUT: 'express-checkout',
@@ -101,7 +108,10 @@ export const checkoutContext = React.createContext<CheckoutContextValue>({
 export const useCheckoutContext = () => React.useContext(checkoutContext);
 
 export const baseCheckoutSchema = z.object({
-  contactEmail: z.string().min(1, 'Enter an email').email('Enter a valid email'),
+  contactEmail: z
+    .string()
+    .min(1, 'Enter an email')
+    .email('Enter a valid email'),
   deliveryMethod: z.nativeEnum(DeliveryMethods).describe('fulfillmentModes'),
   paymentUseShippingAddress: z.boolean().default(true),
   shippingFirstName: z.string().max(60),
@@ -110,8 +120,16 @@ export const baseCheckoutSchema = z.object({
   shippingAddressLine1: z.string().max(300),
   shippingAddressLine2: z.string().max(300).optional(),
   shippingAddressLine3: z.string().max(300).optional(),
-  shippingAdminArea4: z.string().max(100).describe('The neighborhood').optional(),
-  shippingAdminArea3: z.string().max(100).describe('City, town, or village').optional(),
+  shippingAdminArea4: z
+    .string()
+    .max(100)
+    .describe('The neighborhood')
+    .optional(),
+  shippingAdminArea3: z
+    .string()
+    .max(100)
+    .describe('City, town, or village')
+    .optional(),
   shippingAdminArea2: z.string().max(100).describe('Sub-locality or suburb'),
   shippingAdminArea1: z.string().max(100).describe('State or province'),
   shippingPostalCode: z.string().max(60),
@@ -126,8 +144,16 @@ export const baseCheckoutSchema = z.object({
   billingAddressLine1: z.string().max(300),
   billingAddressLine2: z.string().max(300).optional(),
   billingAddressLine3: z.string().max(300).optional(),
-  billingAdminArea4: z.string().max(100).describe('The neighborhood').optional(),
-  billingAdminArea3: z.string().max(100).describe('City, town, or village').optional(),
+  billingAdminArea4: z
+    .string()
+    .max(100)
+    .describe('The neighborhood')
+    .optional(),
+  billingAdminArea3: z
+    .string()
+    .max(100)
+    .describe('City, town, or village')
+    .optional(),
   billingAdminArea2: z.string().max(100).describe('Sub-locality or suburb'),
   billingAdminArea1: z.string().max(100).describe('State or province'),
   billingPostalCode: z.string().max(60),
@@ -196,14 +222,18 @@ export function Checkout(props: CheckoutProps) {
   } = props;
 
   const [isConfirmingCheckout, setIsConfirmingCheckout] = React.useState(false);
-  const [checkoutErrors, setCheckoutErrors] = React.useState<string[] | undefined>(undefined);
+  const [checkoutErrors, setCheckoutErrors] = React.useState<
+    string[] | undefined
+  >(undefined);
   const { t } = useGoDaddyContext();
 
   useTheme();
   useVariables(props?.appearance?.variables);
 
   const formSchema = React.useMemo(() => {
-    const extendedSchema = checkoutFormSchema ? baseCheckoutSchema.extend(checkoutFormSchema) : baseCheckoutSchema;
+    const extendedSchema = checkoutFormSchema
+      ? baseCheckoutSchema.extend(checkoutFormSchema)
+      : baseCheckoutSchema;
 
     return extendedSchema.superRefine((data, ctx) => {
       if (data.billingPhone) {
@@ -227,7 +257,9 @@ export function Checkout(props: CheckoutProps) {
       }
 
       // Billing address validation - only required if not using shipping address OR pickup
-      const requireBillingAddress = !data.paymentUseShippingAddress || data.deliveryMethod === DeliveryMethods.PICKUP;
+      const requireBillingAddress =
+        !data.paymentUseShippingAddress ||
+        data.deliveryMethod === DeliveryMethods.PICKUP;
 
       if (requireBillingAddress) {
         // Basic billing fields required for all countries
@@ -262,7 +294,8 @@ export function Checkout(props: CheckoutProps) {
       }
 
       // Shipping address validation - only required if delivery method is SHIP
-      const requireShippingAddress = data.deliveryMethod === DeliveryMethods.SHIP;
+      const requireShippingAddress =
+        data.deliveryMethod === DeliveryMethods.SHIP;
 
       if (requireShippingAddress) {
         // Basic shipping fields required for all countries
@@ -304,7 +337,11 @@ export function Checkout(props: CheckoutProps) {
   }, [formSchema]);
 
   return (
-    <TrackingProvider session={session} trackingEnabled={enableTracking && !!session?.id} trackingProperties={trackingProperties}>
+    <TrackingProvider
+      session={session}
+      trackingEnabled={enableTracking && !!session?.id}
+      trackingProperties={trackingProperties}
+    >
       <checkoutContext.Provider
         value={{
           elements: props?.appearance?.elements,
@@ -322,7 +359,11 @@ export function Checkout(props: CheckoutProps) {
           setCheckoutErrors,
         }}
       >
-        <CheckoutFormContainer {...props} schema={formSchema} direction={props.direction} />
+        <CheckoutFormContainer
+          {...props}
+          schema={formSchema}
+          direction={props.direction}
+        />
       </checkoutContext.Provider>
     </TrackingProvider>
   );

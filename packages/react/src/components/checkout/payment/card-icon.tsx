@@ -31,13 +31,17 @@ export function AnimatedCardIcon({
   return (
     <div className='relative'>
       {/* List of cards */}
-      <div className={`transition-opacity duration-300 flex gap-2 ${cardType ? 'opacity-0 hidden' : 'opacity-100'}`}>
+      <div
+        className={`transition-opacity duration-300 flex gap-2 ${cardType ? 'opacity-0 hidden' : 'opacity-100'}`}
+      >
         {supportedCards.map(card => (
           <CardIcon key={card} cardType={card} />
         ))}
       </div>
       {/* Single card */}
-      <div className={`transition-opacity duration-300 flex ${cardType ? 'opacity-100' : 'opacity-0'}`}>
+      <div
+        className={`transition-opacity duration-300 flex ${cardType ? 'opacity-100' : 'opacity-0'}`}
+      >
         {cardType && <CardIcon cardType={cardType} />}
       </div>
     </div>

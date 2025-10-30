@@ -17,7 +17,9 @@ export function useTheme() {
 
   useEffect(() => {
     // Remove all theme classes
-    document.documentElement.classList.remove(...Object.values(themes).map(t => t.value));
+    document.documentElement.classList.remove(
+      ...Object.values(themes).map(t => t.value)
+    );
 
     if (theme && theme !== 'base') {
       document.documentElement.classList.add(themes?.[theme]?.value);

@@ -5,7 +5,9 @@ import type { EventProperties } from '@/tracking/event-properties';
 import type { eventIds } from '@/tracking/events';
 import type { $Values } from '@/types';
 
-export type TrackingEventId = $Values<typeof eventIds> | `godaddy.checkout.${$Values<typeof eventIds>}`;
+export type TrackingEventId =
+  | $Values<typeof eventIds>
+  | `godaddy.checkout.${$Values<typeof eventIds>}`;
 
 export enum TrackingEventType {
   IMPRESSION = 'impression',
@@ -45,7 +47,10 @@ export function getTraceId() {
     return trackingState.traceId;
   }
 
-  const traceId = document.querySelector("meta[name='gd:traceId']")?.getAttribute?.('content') || ulid();
+  const traceId =
+    document
+      .querySelector("meta[name='gd:traceId']")
+      ?.getAttribute?.('content') || ulid();
 
   trackingState.traceId = traceId;
   return traceId;
@@ -64,7 +69,9 @@ export async function track({
   const traceId = getTraceId();
 
   const event = {
-    eventId: (eventId?.includes('godaddy.checkout') ? eventId : `godaddy.checkout.${eventId}`) as TrackingEventId,
+    eventId: (eventId?.includes('godaddy.checkout')
+      ? eventId
+      : `godaddy.checkout.${eventId}`) as TrackingEventId,
     traceId,
     type,
     properties: {
@@ -76,7 +83,10 @@ export async function track({
 
   if (trackingState.isTrackingEnabled) {
     // Add to event log
-    trackingState.eventLog = [...trackingState.eventLog.slice(0, trackingState.maxEventLogLength - 1), event];
+    trackingState.eventLog = [
+      ...trackingState.eventLog.slice(0, trackingState.maxEventLogLength - 1),
+      event,
+    ];
 
     // Process through handlers
     for (const handler of Object.values(trackingState.eventHandlers)) {
@@ -106,18 +116,27 @@ type TrackingContextType = {
   lastEvent: TrackingEvent | null;
   isTrackingEnabled: boolean;
   eventLog: TrackingEvent[];
-  track: (props: { eventId: TrackingEventId; type?: TrackingEventType; properties?: EventProperties }) => Promise<void>;
+  track: (props: {
+    eventId: TrackingEventId;
+    type?: TrackingEventType;
+    properties?: EventProperties;
+  }) => Promise<void>;
   setCommonProperties: (props: { commonProperties: EventProperties }) => void;
   setTraceId: (props: { traceId: string }) => void;
   setIsTrackingEnabled: (props: { isTrackingEnabled: boolean }) => void;
-  addEventHandler: (props: { handlerId: string; handler: TrackingEventHandler }) => void;
+  addEventHandler: (props: {
+    handlerId: string;
+    handler: TrackingEventHandler;
+  }) => void;
   subscribe: (callback: (event: TrackingEvent | null) => void) => () => void;
 };
 
 const TrackingContext = createContext<TrackingContextType | null>(null);
 
 // Provider component
-export const Track: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const Track: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   // Use reducer to force re-renders when global state changes
   const [, forceUpdate] = useReducer(x => x + 1, 0);
 
@@ -151,19 +170,30 @@ export const Track: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   );
 
   const addEventHandler = useCallback(
-    ({ handlerId, handler }: { handlerId: string; handler: TrackingEventHandler }) => {
+    ({
+      handlerId,
+      handler,
+    }: {
+      handlerId: string;
+      handler: TrackingEventHandler;
+    }) => {
       trackingState.eventHandlers[handlerId] = handler;
       updateState();
     },
     [updateState]
   );
 
-  const subscribe = useCallback((callback: (event: TrackingEvent | null) => void) => {
-    trackingState.subscribers.push(callback);
-    return () => {
-      trackingState.subscribers = trackingState.subscribers.filter(cb => cb !== callback);
-    };
-  }, []);
+  const subscribe = useCallback(
+    (callback: (event: TrackingEvent | null) => void) => {
+      trackingState.subscribers.push(callback);
+      return () => {
+        trackingState.subscribers = trackingState.subscribers.filter(
+          cb => cb !== callback
+        );
+      };
+    },
+    []
+  );
 
   const trackEvent = useCallback(
     async ({
@@ -195,7 +225,11 @@ export const Track: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     subscribe,
   };
 
-  return <TrackingContext.Provider value={contextValue}>{children}</TrackingContext.Provider>;
+  return (
+    <TrackingContext.Provider value={contextValue}>
+      {children}
+    </TrackingContext.Provider>
+  );
 };
 
 // Hook to use tracking functionality

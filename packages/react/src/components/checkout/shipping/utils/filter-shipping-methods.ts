@@ -12,10 +12,18 @@ export function filterAndSortShippingMethods({
   experimentalRules,
 }: FilterShippingMethodsParams): ShippingMethod[] {
   const enableFreeShippingRule = experimentalRules?.freeShipping?.enabled;
-  const freeShippingMinimumOrderTotal = experimentalRules?.freeShipping?.minimumOrderTotal || 0;
+  const freeShippingMinimumOrderTotal =
+    experimentalRules?.freeShipping?.minimumOrderTotal || 0;
 
   return shippingMethods
-    .filter(method => !(enableFreeShippingRule && method?.cost?.value === 0 && orderSubTotal < freeShippingMinimumOrderTotal))
+    .filter(
+      method =>
+        !(
+          enableFreeShippingRule &&
+          method?.cost?.value === 0 &&
+          orderSubTotal < freeShippingMinimumOrderTotal
+        )
+    )
     .sort((a, b) => {
       const costA = a?.cost?.value || 0;
       const costB = b?.cost?.value || 0;

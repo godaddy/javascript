@@ -8,7 +8,9 @@ export function useApplyDeliveryMethod() {
 
   return useMutation({
     mutationKey: ['apply-delivery-method', { sessionId: session?.id }],
-    mutationFn: async (mode: ApplyCheckoutSessionDeliveryMethodInput['input']['mode']) => {
+    mutationFn: async (
+      mode: ApplyCheckoutSessionDeliveryMethodInput['input']['mode']
+    ) => {
       if (!session) return;
       return await applyDeliveryMethod({ mode }, session);
     },

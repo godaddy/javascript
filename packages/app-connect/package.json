@@ -39,7 +39,7 @@
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
 		"release": "pnpm build && changeset publish",
-		"prepublishOnly": "pnpm build"
+		"prepublishOnly": "pnpm run build"
 	},
 	"keywords": [
 		"godaddy",

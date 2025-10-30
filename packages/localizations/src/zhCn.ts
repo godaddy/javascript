@@ -200,7 +200,8 @@ export const zhCn = {
     errorTrackingEvent: '跟踪事件出错',
     errorInTrackingSubscriber: '跟踪订阅者出错',
     useTrackingProviderError: 'useTracking 必须在 TrackingProvider 中使用',
-    usePoyntCollectProviderError: 'usePoyntCollect 必须在 PoyntCollectProvider 中使用',
+    usePoyntCollectProviderError:
+      'usePoyntCollect 必须在 PoyntCollectProvider 中使用',
     useSquareProviderError: 'useSquare 必须在 SquareProvider 中使用',
     errorProcessingPayment: '处理付款时出错',
     stripeConfigMissing: 'Stripe 配置缺失。请检查您的设置。',

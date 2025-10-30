@@ -40,8 +40,14 @@ html,
     "Segoe UI Symbol",
     "Noto Color Emoji"
   ); /* 4 */
-  font-feature-settings: var(--gd-default-font-feature-settings, normal); /* 5 */
-  font-variation-settings: var(--gd-default-font-variation-settings, normal); /* 6 */
+  font-feature-settings: var(
+    --gd-default-font-feature-settings,
+    normal
+  ); /* 5 */
+  font-variation-settings: var(
+    --gd-default-font-variation-settings,
+    normal
+  ); /* 6 */
   -webkit-tap-highlight-color: transparent; /* 7 */
 }
 
@@ -129,8 +135,14 @@ pre {
     "Courier New",
     monospace
   ); /* 1 */
-  font-feature-settings: var(--gd-default-mono-font-feature-settings, normal); /* 2 */
-  font-variation-settings: var(--gd-default-mono-font-variation-settings, normal); /* 3 */
+  font-feature-settings: var(
+    --gd-default-mono-font-feature-settings,
+    normal
+  ); /* 2 */
+  font-variation-settings: var(
+    --gd-default-mono-font-variation-settings,
+    normal
+  ); /* 3 */
   font-size: 1em; /* 4 */
 }
 

@@ -24,7 +24,11 @@ export function TrackingProvider({
 }) {
   return (
     <Track>
-      <TrackingInitializer session={session} trackingEnabled={trackingEnabled} trackingProperties={trackingProperties} />
+      <TrackingInitializer
+        session={session}
+        trackingEnabled={trackingEnabled}
+        trackingProperties={trackingProperties}
+      />
       {children}
     </Track>
   );
@@ -44,7 +48,12 @@ function TrackingInitializer({
   const tracking = useTracking();
 
   useEffect(() => {
-    if (session?.id && trackingEnabled && !tracking.isTrackingEnabled && !isInitialized) {
+    if (
+      session?.id &&
+      trackingEnabled &&
+      !tracking.isTrackingEnabled &&
+      !isInitialized
+    ) {
       setIsInitialized(true);
       // Enable tracking
       tracking.setIsTrackingEnabled({ isTrackingEnabled: trackingEnabled });

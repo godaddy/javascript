@@ -6,7 +6,8 @@ export const idId = {
     free: 'GRATIS',
     closed: 'Tutup',
     apply: 'Terapkan',
-    checkoutDisabled: 'Checkout saat ini dinonaktifkan. Kami mohon maaf atas ketidaknyamanannya.',
+    checkoutDisabled:
+      'Checkout saat ini dinonaktifkan. Kami mohon maaf atas ketidaknyamanannya.',
   },
   contact: {
     title: 'Kontak',
@@ -25,7 +26,8 @@ export const idId = {
     selectTime: 'Pilih waktu pengambilan',
     storeHours: 'Jam Toko',
     seeDetails: 'Lihat detail',
-    noTimeSlots: 'Tidak ada slot waktu tersedia untuk tanggal yang dipilih. Silakan pilih tanggal lain.',
+    noTimeSlots:
+      'Tidak ada slot waktu tersedia untuk tanggal yang dipilih. Silakan pilih tanggal lain.',
     hoursDisplayed: 'Jam ditampilkan dalam zona waktu lokal Anda.',
     storeOperatesIn: 'Toko beroperasi dalam zona waktu {timezone}.',
     asap: 'SESEGERA MUNGKIN',
@@ -63,7 +65,8 @@ export const idId = {
     title: 'Pengiriman',
     description: 'Alamat pengiriman',
     method: 'Metode pengiriman',
-    noShippingMethodAddress: 'Masukkan alamat Anda untuk melihat metode pengiriman yang tersedia.',
+    noShippingMethodAddress:
+      'Masukkan alamat Anda untuk melihat metode pengiriman yang tersedia.',
     noShippingMethods: 'Tidak ada metode pengiriman ditemukan.',
     phone: 'Nomor Telepon',
     country: 'Negara',
@@ -200,14 +203,18 @@ export const idId = {
     orderIdRequired: 'ID pesanan diperlukan',
     errorTrackingEvent: 'Error melacak event',
     errorInTrackingSubscriber: 'Error dalam tracking subscriber',
-    useTrackingProviderError: 'useTracking harus digunakan dalam TrackingProvider',
-    usePoyntCollectProviderError: 'usePoyntCollect harus digunakan dalam PoyntCollectProvider',
+    useTrackingProviderError:
+      'useTracking harus digunakan dalam TrackingProvider',
+    usePoyntCollectProviderError:
+      'usePoyntCollect harus digunakan dalam PoyntCollectProvider',
     useSquareProviderError: 'useSquare harus digunakan dalam SquareProvider',
     errorProcessingPayment: 'Error memproses pembayaran',
-    stripeConfigMissing: 'Konfigurasi Stripe tidak ada. Silakan periksa pengaturan Anda.',
+    stripeConfigMissing:
+      'Konfigurasi Stripe tidak ada. Silakan periksa pengaturan Anda.',
     paymentSuccessful: 'Pembayaran berhasil',
     paymentFailed: 'Pembayaran gagal',
-    paypalConfigMissing: 'Konfigurasi PayPal tidak ada. Silakan periksa pengaturan Anda.',
+    paypalConfigMissing:
+      'Konfigurasi PayPal tidak ada. Silakan periksa pengaturan Anda.',
     stripeNotReady: 'Stripe tidak siap',
     cardElementNotFound: 'CardElement tidak ditemukan',
     errorProcessingCardPayment: 'Error memproses pembayaran kartu.',
@@ -256,7 +263,8 @@ export const idId = {
     TRANSACTION_CREATION_FAILED: 'Gagal menemukan atau membuat transaksi',
     ORDER_OPENING_FAILED: 'Gagal membuka pesanan',
     INVALID_FULFILLMENT_LOCATION: 'Lokasi pemenuhan tidak valid',
-    NO_VALID_PICKUP_LOCATION: 'Tidak ada lokasi pengambilan yang valid tersedia',
+    NO_VALID_PICKUP_LOCATION:
+      'Tidak ada lokasi pengambilan yang valid tersedia',
     DRAFT_ORDER_FETCH_FAILED: 'Gagal mengambil pesanan',
     LINE_ITEMS_FETCH_FAILED: 'Gagal mengambil item pesanan',
     CURRENT_ORDER_FETCH_FAILED: 'Gagal mengambil pesanan saat ini',
@@ -300,7 +308,8 @@ export const idId = {
     CATALOG_API_ERROR: 'Error layanan katalog',
     TAX_SERVICE_UNAVAILABLE: 'Layanan pajak tidak tersedia',
     SHIPPING_SERVICE_UNAVAILABLE: 'Layanan pengiriman tidak tersedia',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: 'Layanan penyesuaian harga tidak tersedia',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      'Layanan penyesuaian harga tidak tersedia',
     PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'Gagal menghitung penyesuaian harga',
     SERVICE_UNAVAILABLE: 'Layanan sementara tidak tersedia',
     RATE_LIMITED: 'Terlalu banyak permintaan, silakan coba lagi nanti',
@@ -312,6 +321,7 @@ export const idId = {
     SHIPPING_ADDRESS_VERIFICATION_FAILED: 'Verifikasi alamat pengiriman gagal',
     BILLING_ADDRESS_VERIFICATION_FAILED: 'Verifikasi alamat penagihan gagal',
     MISSING_SHIPPING_INFO: 'Alamat atau metode pengiriman gagal diterapkan',
-    DEPENDENCY_ERROR: 'Kami tidak dapat memproses pesanan Anda saat ini. Silakan tunggu sebentar dan coba lagi',
+    DEPENDENCY_ERROR:
+      'Kami tidak dapat memproses pesanan Anda saat ini. Silakan tunggu sebentar dan coba lagi',
   },
 };

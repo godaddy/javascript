@@ -26,7 +26,12 @@ export function StripeCreditCardCheckoutButton() {
   };
 
   return (
-    <Button className='w-full' size='lg' disabled={isConfirmingCheckout || isPaymentDisabled} onClick={handleStripeCheckout}>
+    <Button
+      className='w-full'
+      size='lg'
+      disabled={isConfirmingCheckout || isPaymentDisabled}
+      onClick={handleStripeCheckout}
+    >
       {t.payment.payNow}
     </Button>
   );

@@ -6,7 +6,8 @@ export const esEs = {
     free: 'GRATIS',
     closed: 'Cerrado',
     apply: 'Aplicar',
-    checkoutDisabled: 'El checkout está deshabilitado actualmente. Pedimos disculpas por las molestias.',
+    checkoutDisabled:
+      'El checkout está deshabilitado actualmente. Pedimos disculpas por las molestias.',
   },
   contact: {
     title: 'Contacto',
@@ -25,7 +26,8 @@ export const esEs = {
     selectTime: 'Selecciona una hora de recogida',
     storeHours: 'Horario de la tienda',
     seeDetails: 'Ver detalles',
-    noTimeSlots: 'No hay horarios disponibles para la fecha seleccionada. Por favor selecciona otra fecha.',
+    noTimeSlots:
+      'No hay horarios disponibles para la fecha seleccionada. Por favor selecciona otra fecha.',
     hoursDisplayed: 'Horarios mostrados en tu zona horaria local.',
     storeOperatesIn: 'La tienda opera en la zona horaria {timezone}.',
     asap: 'Lo antes posible',
@@ -63,7 +65,8 @@ export const esEs = {
     title: 'Envío',
     description: 'Dirección de envío',
     method: 'Método de envío',
-    noShippingMethodAddress: 'Introduce tu dirección para ver los métodos de envío disponibles.',
+    noShippingMethodAddress:
+      'Introduce tu dirección para ver los métodos de envío disponibles.',
     noShippingMethods: 'No se encontraron métodos de envío.',
     phone: 'Número de teléfono',
     country: 'País',
@@ -92,7 +95,8 @@ export const esEs = {
     billingAddress: {
       title: 'Dirección de facturación',
       description: 'Introduce tu dirección de facturación.',
-      useShippingAddress: 'Usar dirección de envío como dirección de facturación',
+      useShippingAddress:
+        'Usar dirección de envío como dirección de facturación',
     },
     methods: {
       creditCard: 'Tarjeta de crédito o débito',
@@ -200,14 +204,18 @@ export const esEs = {
     orderIdRequired: 'Se requiere ID de pedido',
     errorTrackingEvent: 'Error al rastrear evento',
     errorInTrackingSubscriber: 'Error en el suscriptor de rastreo',
-    useTrackingProviderError: 'useTracking debe usarse dentro de un TrackingProvider',
-    usePoyntCollectProviderError: 'usePoyntCollect debe usarse dentro de un PoyntCollectProvider',
+    useTrackingProviderError:
+      'useTracking debe usarse dentro de un TrackingProvider',
+    usePoyntCollectProviderError:
+      'usePoyntCollect debe usarse dentro de un PoyntCollectProvider',
     useSquareProviderError: 'useSquare debe usarse dentro de un SquareProvider',
     errorProcessingPayment: 'Error al procesar el pago',
-    stripeConfigMissing: 'Falta la configuración de Stripe. Por favor verifica tu configuración.',
+    stripeConfigMissing:
+      'Falta la configuración de Stripe. Por favor verifica tu configuración.',
     paymentSuccessful: 'Pago exitoso',
     paymentFailed: 'Pago fallido',
-    paypalConfigMissing: 'Falta la configuración de PayPal. Por favor verifica tu configuración.',
+    paypalConfigMissing:
+      'Falta la configuración de PayPal. Por favor verifica tu configuración.',
     stripeNotReady: 'Stripe no está listo',
     cardElementNotFound: 'Elemento de tarjeta no encontrado',
     errorProcessingCardPayment: 'Error al procesar el pago con tarjeta.',
@@ -223,7 +231,8 @@ export const esEs = {
     invalidShippingAddress: 'Dirección de envío inválida',
     invalidBillingAddress: 'Dirección de facturación inválida',
     selectPaymentMethod: 'Selecciona un método de pago',
-    enterValidBillingPhone: 'Introduce un número de teléfono de facturación válido',
+    enterValidBillingPhone:
+      'Introduce un número de teléfono de facturación válido',
     enterValidShippingPhone: 'Introduce un número de teléfono de envío válido',
     enterFirstName: 'Introduce un nombre',
     enterLastName: 'Introduce un apellido',
@@ -238,20 +247,26 @@ export const esEs = {
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Error del servidor',
     SESSION_NOT_FOUND: 'Sesión no encontrada',
-    CHECKOUT_SESSION_RETRIEVAL_FAILED: 'No se pudo recuperar la sesión de checkout',
+    CHECKOUT_SESSION_RETRIEVAL_FAILED:
+      'No se pudo recuperar la sesión de checkout',
     CHECKOUT_SESSION_NOT_FOUND: 'Sesión de checkout no encontrada',
-    CHECKOUT_SESSION_FETCH_ERROR: 'Error general al obtener la sesión de checkout',
+    CHECKOUT_SESSION_FETCH_ERROR:
+      'Error general al obtener la sesión de checkout',
     DRAFT_ORDER_NOT_FOUND: 'Pedido no encontrado',
     CHECKOUT_SESSION_CREATION_FAILED: 'No se pudo crear la sesión de checkout',
     CREATED_SESSION_DATA_NOT_FOUND: 'Datos de la sesión creada no encontrados',
-    CHECKOUT_SESSION_CREATION_ERROR: 'Error general al crear la sesión de checkout',
-    CHECKOUT_SESSION_UPDATE_FAILED: 'No se pudo actualizar la sesión de checkout',
+    CHECKOUT_SESSION_CREATION_ERROR:
+      'Error general al crear la sesión de checkout',
+    CHECKOUT_SESSION_UPDATE_FAILED:
+      'No se pudo actualizar la sesión de checkout',
     UPDATED_SESSION_NOT_FOUND: 'Sesión actualizada no encontrada',
-    CHECKOUT_SESSION_UPDATE_ERROR: 'Error general al actualizar la sesión de checkout',
+    CHECKOUT_SESSION_UPDATE_ERROR:
+      'Error general al actualizar la sesión de checkout',
     ORDER_API_NOT_FOUND: 'Fuente de datos de la API de pedidos no encontrada',
     DRAFT_ORDER_RETRIEVAL_FAILED: 'No se pudo recuperar el pedido',
     DATA_SOURCES_NOT_FOUND: 'Fuentes de datos no encontradas',
-    TRANSACTION_API_NOT_FOUND: 'Fuente de datos de la API de transacciones no encontrada',
+    TRANSACTION_API_NOT_FOUND:
+      'Fuente de datos de la API de transacciones no encontrada',
     TRANSACTION_PROCESSING_FAILED: 'No se pudo procesar la transacción',
     TRANSACTION_CREATION_FAILED: 'No se pudo encontrar o crear la transacción',
     ORDER_OPENING_FAILED: 'No se pudo abrir el pedido',
@@ -265,10 +280,12 @@ export const esEs = {
     CONTEXT_UNAVAILABLE: 'Sesión o fuentes de datos no disponibles',
     SHIPPING_LINES_UPDATE_FAILED: 'No se pudo actualizar las líneas de envío',
     ORDER_TOTALS_UPDATE_FAILED: 'No se pudo actualizar los totales del pedido',
-    ORDER_TOTAL_CALCULATION_FAILED: 'No se pudo calcular los totales del pedido',
+    ORDER_TOTAL_CALCULATION_FAILED:
+      'No se pudo calcular los totales del pedido',
     SHIPPING_METHOD_APPLICATION_FAILED: 'No se pudo aplicar el método de envío',
     SKU_FETCH_FAILED: 'No se pudieron obtener los SKUs',
-    SHIPPING_RATES_CALCULATION_FAILED: 'No se pudieron calcular las tarifas de envío',
+    SHIPPING_RATES_CALCULATION_FAILED:
+      'No se pudieron calcular las tarifas de envío',
     SHIPPING_METHOD_NOT_FOUND: 'Método de envío no encontrado',
     SHIPPING_METHOD_REMOVAL_FAILED: 'No se pudo eliminar el método de envío',
     SHIPPING_ADDRESS_REQUIRED: 'Se requiere dirección de envío',
@@ -300,8 +317,10 @@ export const esEs = {
     CATALOG_API_ERROR: 'Error del servicio de catálogo',
     TAX_SERVICE_UNAVAILABLE: 'Servicio de impuestos no disponible',
     SHIPPING_SERVICE_UNAVAILABLE: 'Servicio de envío no disponible',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: 'Servicio de ajustes de precio no disponible',
-    PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'No se pudieron calcular los ajustes de precio',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      'Servicio de ajustes de precio no disponible',
+    PRICE_ADJUSTMENTS_CALCULATION_FAILED:
+      'No se pudieron calcular los ajustes de precio',
     SERVICE_UNAVAILABLE: 'Servicio temporalmente no disponible',
     RATE_LIMITED: 'Demasiadas solicitudes, intente nuevamente más tarde',
     TIMEOUT: 'Tiempo de espera agotado',
@@ -309,9 +328,12 @@ export const esEs = {
     SHIPPING_POSTAL_CODE_REQUIRED: 'Se requiere código postal de envío',
     SHIPPING_COUNTRY_CODE_REQUIRED: 'Se requiere código de país de envío',
     SHIPPING_METHOD_REQUIRED: 'Se requiere método de envío',
-    SHIPPING_ADDRESS_VERIFICATION_FAILED: 'Falló la verificación de dirección de envío',
-    BILLING_ADDRESS_VERIFICATION_FAILED: 'Falló la verificación de dirección de facturación',
+    SHIPPING_ADDRESS_VERIFICATION_FAILED:
+      'Falló la verificación de dirección de envío',
+    BILLING_ADDRESS_VERIFICATION_FAILED:
+      'Falló la verificación de dirección de facturación',
     MISSING_SHIPPING_INFO: 'No se pudo aplicar la dirección o método de envío',
-    DEPENDENCY_ERROR: 'No podemos procesar su pedido en este momento. Espere un momento e inténtelo de nuevo',
+    DEPENDENCY_ERROR:
+      'No podemos procesar su pedido en este momento. Espere un momento e inténtelo de nuevo',
   },
 };

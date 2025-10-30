@@ -26,7 +26,8 @@ export function StripeProvider({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  const { stripePromise, currency, clientSecret, isLoading, amount } = useStripePaymentIntent();
+  const { stripePromise, currency, clientSecret, isLoading, amount } =
+    useStripePaymentIntent();
 
   if (isLoading || !stripePromise || amount <= 0) {
     return null;

@@ -6,7 +6,8 @@ export const ptBr = {
     free: 'GRÁTIS',
     closed: 'Fechado',
     apply: 'Aplicar',
-    checkoutDisabled: 'O checkout está temporariamente indisponível. Pedimos desculpas pelo inconveniente.',
+    checkoutDisabled:
+      'O checkout está temporariamente indisponível. Pedimos desculpas pelo inconveniente.',
   },
   contact: {
     title: 'Contato',
@@ -25,7 +26,8 @@ export const ptBr = {
     selectTime: 'Selecione um horário de retirada',
     storeHours: 'Horário de Funcionamento',
     seeDetails: 'Ver detalhes',
-    noTimeSlots: 'Nenhum horário disponível para a data selecionada. Por favor, selecione outra data.',
+    noTimeSlots:
+      'Nenhum horário disponível para a data selecionada. Por favor, selecione outra data.',
     hoursDisplayed: 'Horários exibidos no seu fuso horário local.',
     storeOperatesIn: 'A loja funciona no fuso horário {timezone}.',
     asap: 'O MAIS RÁPIDO POSSÍVEL',
@@ -63,7 +65,8 @@ export const ptBr = {
     title: 'Envio',
     description: 'Endereço de entrega',
     method: 'Método de envio',
-    noShippingMethodAddress: 'Digite seu endereço para ver os métodos de envio disponíveis.',
+    noShippingMethodAddress:
+      'Digite seu endereço para ver os métodos de envio disponíveis.',
     noShippingMethods: 'Nenhum método de envio encontrado.',
     phone: 'Número de Telefone',
     country: 'País',
@@ -177,7 +180,8 @@ export const ptBr = {
       morePages: 'Mais páginas',
     },
     sidebar: {
-      useSidebarError: 'useSidebar deve ser usado dentro de um SidebarProvider.',
+      useSidebarError:
+        'useSidebar deve ser usado dentro de um SidebarProvider.',
       toggleSidebar: 'Alternar Barra Lateral',
     },
     accessibility: {
@@ -200,14 +204,19 @@ export const ptBr = {
     orderIdRequired: 'ID do pedido é obrigatório',
     errorTrackingEvent: 'Erro ao rastrear evento',
     errorInTrackingSubscriber: 'Erro no assinante de rastreamento',
-    useTrackingProviderError: 'useTracking deve ser usado dentro de um TrackingProvider',
-    usePoyntCollectProviderError: 'usePoyntCollect deve ser usado dentro de um PoyntCollectProvider',
-    useSquareProviderError: 'useSquare deve ser usado dentro de um SquareProvider',
+    useTrackingProviderError:
+      'useTracking deve ser usado dentro de um TrackingProvider',
+    usePoyntCollectProviderError:
+      'usePoyntCollect deve ser usado dentro de um PoyntCollectProvider',
+    useSquareProviderError:
+      'useSquare deve ser usado dentro de um SquareProvider',
     errorProcessingPayment: 'Erro ao processar pagamento',
-    stripeConfigMissing: 'Configuração do Stripe está faltando. Por favor, verifique sua configuração.',
+    stripeConfigMissing:
+      'Configuração do Stripe está faltando. Por favor, verifique sua configuração.',
     paymentSuccessful: 'Pagamento realizado com sucesso',
     paymentFailed: 'Falha no pagamento',
-    paypalConfigMissing: 'Configuração do PayPal está faltando. Por favor, verifique sua configuração.',
+    paypalConfigMissing:
+      'Configuração do PayPal está faltando. Por favor, verifique sua configuração.',
     stripeNotReady: 'Stripe não está pronto',
     cardElementNotFound: 'CardElement não encontrado',
     errorProcessingCardPayment: 'Erro ao processar pagamento com cartão.',
@@ -251,7 +260,8 @@ export const ptBr = {
     ORDER_API_NOT_FOUND: 'Fonte de dados da API de pedidos não encontrada',
     DRAFT_ORDER_RETRIEVAL_FAILED: 'Falha ao recuperar pedido',
     DATA_SOURCES_NOT_FOUND: 'Fontes de dados não encontradas',
-    TRANSACTION_API_NOT_FOUND: 'Fonte de dados da API de transação não encontrada',
+    TRANSACTION_API_NOT_FOUND:
+      'Fonte de dados da API de transação não encontrada',
     TRANSACTION_PROCESSING_FAILED: 'Falha ao processar transação',
     TRANSACTION_CREATION_FAILED: 'Falha ao encontrar ou criar transação',
     ORDER_OPENING_FAILED: 'Falha ao abrir pedido',
@@ -300,8 +310,10 @@ export const ptBr = {
     CATALOG_API_ERROR: 'Erro do serviço de catálogo',
     TAX_SERVICE_UNAVAILABLE: 'Serviço de impostos indisponível',
     SHIPPING_SERVICE_UNAVAILABLE: 'Serviço de envio indisponível',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: 'Serviço de ajustes de preço indisponível',
-    PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'Falha no cálculo de ajustes de preço',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      'Serviço de ajustes de preço indisponível',
+    PRICE_ADJUSTMENTS_CALCULATION_FAILED:
+      'Falha no cálculo de ajustes de preço',
     SERVICE_UNAVAILABLE: 'Serviço temporariamente indisponível',
     RATE_LIMITED: 'Muitas solicitações, tente novamente mais tarde',
     TIMEOUT: 'Tempo limite da solicitação esgotado',
@@ -309,9 +321,12 @@ export const ptBr = {
     SHIPPING_POSTAL_CODE_REQUIRED: 'Código postal de envio é obrigatório',
     SHIPPING_COUNTRY_CODE_REQUIRED: 'Código do país de envio é obrigatório',
     SHIPPING_METHOD_REQUIRED: 'Método de envio é obrigatório',
-    SHIPPING_ADDRESS_VERIFICATION_FAILED: 'Falha na verificação do endereço de envio',
-    BILLING_ADDRESS_VERIFICATION_FAILED: 'Falha na verificação do endereço de cobrança',
+    SHIPPING_ADDRESS_VERIFICATION_FAILED:
+      'Falha na verificação do endereço de envio',
+    BILLING_ADDRESS_VERIFICATION_FAILED:
+      'Falha na verificação do endereço de cobrança',
     MISSING_SHIPPING_INFO: 'Falha ao aplicar endereço ou método de entrega',
-    DEPENDENCY_ERROR: 'Não conseguimos processar seu pedido no momento. Aguarde um momento e tente novamente',
+    DEPENDENCY_ERROR:
+      'Não conseguimos processar seu pedido no momento. Aguarde um momento e tente novamente',
   },
 };

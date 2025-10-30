@@ -6,7 +6,8 @@ export const esMx = {
     free: 'GRATIS',
     closed: 'Cerrado',
     apply: 'Aplicar',
-    checkoutDisabled: 'El checkout está deshabilitado temporalmente. Disculpe las molestias.',
+    checkoutDisabled:
+      'El checkout está deshabilitado temporalmente. Disculpe las molestias.',
   },
   contact: {
     title: 'Contacto',
@@ -15,7 +16,8 @@ export const esMx = {
   },
   pickup: {
     title: 'Recolección en Tienda',
-    description: 'Haremos nuestro mejor esfuerzo para cumplir con su horario de recolección. Los horarios reales pueden variar.',
+    description:
+      'Haremos nuestro mejor esfuerzo para cumplir con su horario de recolección. Los horarios reales pueden variar.',
     location: 'Ubicación de Recolección',
     date: 'Fecha de Recolección',
     time: 'Horario Preferido de Recolección',
@@ -24,7 +26,8 @@ export const esMx = {
     selectTime: 'Seleccione un horario de recolección',
     storeHours: 'Horarios de la Tienda',
     seeDetails: 'Ver detalles',
-    noTimeSlots: 'No hay horarios disponibles para la fecha seleccionada. Por favor seleccione otra fecha.',
+    noTimeSlots:
+      'No hay horarios disponibles para la fecha seleccionada. Por favor seleccione otra fecha.',
     hoursDisplayed: 'Horarios mostrados en su zona horaria local.',
     storeOperatesIn: 'La tienda opera en zona horaria {timezone}.',
     asap: 'LO MÁS PRONTO POSIBLE',
@@ -62,7 +65,8 @@ export const esMx = {
     title: 'Envío',
     description: 'Dirección de envío',
     method: 'Método de envío',
-    noShippingMethodAddress: 'Ingrese su dirección para ver los métodos de envío disponibles.',
+    noShippingMethodAddress:
+      'Ingrese su dirección para ver los métodos de envío disponibles.',
     noShippingMethods: 'No se encontraron métodos de envío.',
     phone: 'Número de Teléfono',
     country: 'País',
@@ -91,7 +95,8 @@ export const esMx = {
     billingAddress: {
       title: 'Dirección de Facturación',
       description: 'Ingrese su dirección de facturación.',
-      useShippingAddress: 'Usar dirección de envío como dirección de facturación',
+      useShippingAddress:
+        'Usar dirección de envío como dirección de facturación',
     },
     methods: {
       creditCard: 'Tarjeta de Crédito o Débito',
@@ -199,14 +204,18 @@ export const esMx = {
     orderIdRequired: 'Se requiere ID del pedido',
     errorTrackingEvent: 'Error al rastrear evento',
     errorInTrackingSubscriber: 'Error en suscriptor de seguimiento',
-    useTrackingProviderError: 'useTracking debe usarse dentro de un TrackingProvider',
-    usePoyntCollectProviderError: 'usePoyntCollect debe usarse dentro de un PoyntCollectProvider',
+    useTrackingProviderError:
+      'useTracking debe usarse dentro de un TrackingProvider',
+    usePoyntCollectProviderError:
+      'usePoyntCollect debe usarse dentro de un PoyntCollectProvider',
     useSquareProviderError: 'useSquare debe usarse dentro de un SquareProvider',
     errorProcessingPayment: 'Error al procesar el pago',
-    stripeConfigMissing: 'Falta configuración de Stripe. Por favor verifique su configuración.',
+    stripeConfigMissing:
+      'Falta configuración de Stripe. Por favor verifique su configuración.',
     paymentSuccessful: 'Pago exitoso',
     paymentFailed: 'Error en el pago',
-    paypalConfigMissing: 'Falta configuración de PayPal. Por favor verifique su configuración.',
+    paypalConfigMissing:
+      'Falta configuración de PayPal. Por favor verifique su configuración.',
     stripeNotReady: 'Stripe no está listo',
     cardElementNotFound: 'CardElement no encontrado',
     errorProcessingCardPayment: 'Error al procesar pago con tarjeta.',
@@ -222,7 +231,8 @@ export const esMx = {
     invalidShippingAddress: 'Dirección de envío inválida',
     invalidBillingAddress: 'Dirección de facturación inválida',
     selectPaymentMethod: 'Seleccione un método de pago',
-    enterValidBillingPhone: 'Ingrese un número de teléfono de facturación válido',
+    enterValidBillingPhone:
+      'Ingrese un número de teléfono de facturación válido',
     enterValidShippingPhone: 'Ingrese un número de teléfono de envío válido',
     enterFirstName: 'Ingrese un nombre',
     enterLastName: 'Ingrese apellidos',
@@ -243,19 +253,23 @@ export const esMx = {
     DRAFT_ORDER_NOT_FOUND: 'Pedido no encontrado',
     CHECKOUT_SESSION_CREATION_FAILED: 'Error al crear sesión de checkout',
     CREATED_SESSION_DATA_NOT_FOUND: 'Datos de sesión creada no encontrados',
-    CHECKOUT_SESSION_CREATION_ERROR: 'Error general al crear sesión de checkout',
+    CHECKOUT_SESSION_CREATION_ERROR:
+      'Error general al crear sesión de checkout',
     CHECKOUT_SESSION_UPDATE_FAILED: 'Error al actualizar sesión de checkout',
     UPDATED_SESSION_NOT_FOUND: 'Sesión actualizada no encontrada',
-    CHECKOUT_SESSION_UPDATE_ERROR: 'Error general al actualizar sesión de checkout',
+    CHECKOUT_SESSION_UPDATE_ERROR:
+      'Error general al actualizar sesión de checkout',
     ORDER_API_NOT_FOUND: 'Fuente de datos de API de pedidos no encontrada',
     DRAFT_ORDER_RETRIEVAL_FAILED: 'Error al recuperar pedido',
     DATA_SOURCES_NOT_FOUND: 'Fuentes de datos no encontradas',
-    TRANSACTION_API_NOT_FOUND: 'Fuente de datos de API de transacciones no encontrada',
+    TRANSACTION_API_NOT_FOUND:
+      'Fuente de datos de API de transacciones no encontrada',
     TRANSACTION_PROCESSING_FAILED: 'Error al procesar transacción',
     TRANSACTION_CREATION_FAILED: 'Error al encontrar o crear transacción',
     ORDER_OPENING_FAILED: 'Error al abrir pedido',
     INVALID_FULFILLMENT_LOCATION: 'Ubicación de cumplimiento inválida',
-    NO_VALID_PICKUP_LOCATION: 'No hay ubicación de recolección válida disponible',
+    NO_VALID_PICKUP_LOCATION:
+      'No hay ubicación de recolección válida disponible',
     DRAFT_ORDER_FETCH_FAILED: 'Error al obtener pedido',
     LINE_ITEMS_FETCH_FAILED: 'Error al obtener elementos del pedido',
     CURRENT_ORDER_FETCH_FAILED: 'Error al obtener pedido actual',
@@ -299,8 +313,10 @@ export const esMx = {
     CATALOG_API_ERROR: 'Error de servicio de catálogo',
     TAX_SERVICE_UNAVAILABLE: 'Servicio de impuestos no disponible',
     SHIPPING_SERVICE_UNAVAILABLE: 'Servicio de envío no disponible',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: 'Servicio de ajustes de precios no disponible',
-    PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'Error al calcular ajustes de precios',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      'Servicio de ajustes de precios no disponible',
+    PRICE_ADJUSTMENTS_CALCULATION_FAILED:
+      'Error al calcular ajustes de precios',
     SERVICE_UNAVAILABLE: 'Servicio temporalmente no disponible',
     RATE_LIMITED: 'Demasiadas solicitudes, por favor inténtelo más tarde',
     TIMEOUT: 'Tiempo de espera agotado',
@@ -308,9 +324,12 @@ export const esMx = {
     SHIPPING_POSTAL_CODE_REQUIRED: 'Se requiere código postal de envío',
     SHIPPING_COUNTRY_CODE_REQUIRED: 'Se requiere código de país de envío',
     SHIPPING_METHOD_REQUIRED: 'Se requiere método de envío',
-    SHIPPING_ADDRESS_VERIFICATION_FAILED: 'Falló la verificación de dirección de envío',
-    BILLING_ADDRESS_VERIFICATION_FAILED: 'Falló la verificación de dirección de facturación',
+    SHIPPING_ADDRESS_VERIFICATION_FAILED:
+      'Falló la verificación de dirección de envío',
+    BILLING_ADDRESS_VERIFICATION_FAILED:
+      'Falló la verificación de dirección de facturación',
     MISSING_SHIPPING_INFO: 'No se pudo aplicar la dirección o método de envío',
-    DEPENDENCY_ERROR: 'No podemos procesar su pedido en este momento. Espere un momento e inténtelo de nuevo',
+    DEPENDENCY_ERROR:
+      'No podemos procesar su pedido en este momento. Espere un momento e inténtelo de nuevo',
   },
 };

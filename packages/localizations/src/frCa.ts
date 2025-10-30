@@ -6,7 +6,8 @@ export const frCa = {
     free: 'GRATUIT',
     closed: 'Fermé',
     apply: 'Appliquer',
-    checkoutDisabled: "Le checkout est présentement désactivé. Nous nous excusons pour l'inconvénient.",
+    checkoutDisabled:
+      "Le checkout est présentement désactivé. Nous nous excusons pour l'inconvénient.",
   },
   contact: {
     title: 'Contact',
@@ -25,7 +26,8 @@ export const frCa = {
     selectTime: 'Sélectionner une heure de cueillette',
     storeHours: "Heures d'ouverture",
     seeDetails: 'Voir les détails',
-    noTimeSlots: 'Aucune plage horaire disponible pour la date sélectionnée. Veuillez choisir une autre date.',
+    noTimeSlots:
+      'Aucune plage horaire disponible pour la date sélectionnée. Veuillez choisir une autre date.',
     hoursDisplayed: 'Heures affichées dans votre fuseau horaire local.',
     storeOperatesIn: 'Le magasin opère dans le fuseau horaire {timezone}.',
     asap: 'DÈS QUE POSSIBLE',
@@ -63,7 +65,8 @@ export const frCa = {
     title: 'Expédition',
     description: "Adresse d'expédition",
     method: "Méthode d'expédition",
-    noShippingMethodAddress: "Entrez votre adresse pour voir les méthodes d'expédition disponibles.",
+    noShippingMethodAddress:
+      "Entrez votre adresse pour voir les méthodes d'expédition disponibles.",
     noShippingMethods: "Aucune méthode d'expédition trouvée.",
     phone: 'Numéro de téléphone',
     country: 'Pays',
@@ -92,7 +95,8 @@ export const frCa = {
     billingAddress: {
       title: 'Adresse de facturation',
       description: 'Entrez votre adresse de facturation.',
-      useShippingAddress: "Utiliser l'adresse d'expédition comme adresse de facturation",
+      useShippingAddress:
+        "Utiliser l'adresse d'expédition comme adresse de facturation",
     },
     methods: {
       creditCard: 'Carte de crédit ou de débit',
@@ -196,22 +200,30 @@ export const frCa = {
     invalidEnvironment: 'Environnement invalide',
     noPublicAccessToken: "Aucun jeton d'accès public fourni",
     noSessionToken: 'Aucun jeton ou ID de session fourni',
-    errorCreatingSession: 'Erreur lors de la création de la session de checkout :',
+    errorCreatingSession:
+      'Erreur lors de la création de la session de checkout :',
     orderIdRequired: "L'ID de commande est requis",
     errorTrackingEvent: "Erreur lors du suivi d'événement",
     errorInTrackingSubscriber: "Erreur dans l'abonné de suivi",
-    useTrackingProviderError: 'useTracking doit être utilisé dans un TrackingProvider',
-    usePoyntCollectProviderError: 'usePoyntCollect doit être utilisé dans un PoyntCollectProvider',
-    useSquareProviderError: 'useSquare doit être utilisé dans un SquareProvider',
+    useTrackingProviderError:
+      'useTracking doit être utilisé dans un TrackingProvider',
+    usePoyntCollectProviderError:
+      'usePoyntCollect doit être utilisé dans un PoyntCollectProvider',
+    useSquareProviderError:
+      'useSquare doit être utilisé dans un SquareProvider',
     errorProcessingPayment: 'Erreur lors du traitement du paiement',
-    stripeConfigMissing: 'La configuration Stripe est manquante. Veuillez vérifier votre installation.',
+    stripeConfigMissing:
+      'La configuration Stripe est manquante. Veuillez vérifier votre installation.',
     paymentSuccessful: 'Paiement réussi',
     paymentFailed: 'Paiement échoué',
-    paypalConfigMissing: 'La configuration PayPal est manquante. Veuillez vérifier votre installation.',
+    paypalConfigMissing:
+      'La configuration PayPal est manquante. Veuillez vérifier votre installation.',
     stripeNotReady: "Stripe n'est pas prêt",
     cardElementNotFound: 'CardElement introuvable',
-    errorProcessingCardPayment: 'Erreur lors du traitement du paiement par carte.',
-    errorProcessingExpressPayment: 'Erreur lors du traitement du paiement express.',
+    errorProcessingCardPayment:
+      'Erreur lors du traitement du paiement par carte.',
+    errorProcessingExpressPayment:
+      'Erreur lors du traitement du paiement express.',
     failedToInitializePayment: "Échec de l'initialisation du paiement.",
     invalidPhoneNumber: 'numéro de téléphone invalide',
   },
@@ -223,8 +235,10 @@ export const frCa = {
     invalidShippingAddress: "Adresse d'expédition invalide",
     invalidBillingAddress: 'Adresse de facturation invalide',
     selectPaymentMethod: 'Sélectionnez une méthode de paiement',
-    enterValidBillingPhone: 'Entrez un numéro de téléphone de facturation valide',
-    enterValidShippingPhone: "Entrez un numéro de téléphone d'expédition valide",
+    enterValidBillingPhone:
+      'Entrez un numéro de téléphone de facturation valide',
+    enterValidShippingPhone:
+      "Entrez un numéro de téléphone d'expédition valide",
     enterFirstName: 'Entrez un prénom',
     enterLastName: 'Entrez un nom de famille',
     enterAddress: 'Entrez une adresse',
@@ -238,39 +252,53 @@ export const frCa = {
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Erreur de serveur',
     SESSION_NOT_FOUND: 'Session introuvable',
-    CHECKOUT_SESSION_RETRIEVAL_FAILED: 'Échec de la récupération de la session de checkout',
+    CHECKOUT_SESSION_RETRIEVAL_FAILED:
+      'Échec de la récupération de la session de checkout',
     CHECKOUT_SESSION_NOT_FOUND: 'Session de checkout introuvable',
-    CHECKOUT_SESSION_FETCH_ERROR: 'Erreur générale de récupération de session de checkout',
+    CHECKOUT_SESSION_FETCH_ERROR:
+      'Erreur générale de récupération de session de checkout',
     DRAFT_ORDER_NOT_FOUND: 'Commande introuvable',
-    CHECKOUT_SESSION_CREATION_FAILED: 'Échec de la création de la session de checkout',
+    CHECKOUT_SESSION_CREATION_FAILED:
+      'Échec de la création de la session de checkout',
     CREATED_SESSION_DATA_NOT_FOUND: 'Données de session créée introuvables',
-    CHECKOUT_SESSION_CREATION_ERROR: 'Erreur générale de création de session de checkout',
-    CHECKOUT_SESSION_UPDATE_FAILED: 'Échec de la mise à jour de la session de checkout',
+    CHECKOUT_SESSION_CREATION_ERROR:
+      'Erreur générale de création de session de checkout',
+    CHECKOUT_SESSION_UPDATE_FAILED:
+      'Échec de la mise à jour de la session de checkout',
     UPDATED_SESSION_NOT_FOUND: 'Session mise à jour introuvable',
-    CHECKOUT_SESSION_UPDATE_ERROR: 'Erreur générale de mise à jour de session de checkout',
+    CHECKOUT_SESSION_UPDATE_ERROR:
+      'Erreur générale de mise à jour de session de checkout',
     ORDER_API_NOT_FOUND: 'Source de données API de commande introuvable',
     DRAFT_ORDER_RETRIEVAL_FAILED: 'Échec de la récupération de la commande',
     DATA_SOURCES_NOT_FOUND: 'Sources de données introuvables',
-    TRANSACTION_API_NOT_FOUND: 'Source de données API de transaction introuvable',
+    TRANSACTION_API_NOT_FOUND:
+      'Source de données API de transaction introuvable',
     TRANSACTION_PROCESSING_FAILED: 'Échec du traitement de la transaction',
-    TRANSACTION_CREATION_FAILED: 'Échec de la recherche ou création de transaction',
+    TRANSACTION_CREATION_FAILED:
+      'Échec de la recherche ou création de transaction',
     ORDER_OPENING_FAILED: "Échec de l'ouverture de la commande",
     INVALID_FULFILLMENT_LOCATION: "Lieu d'exécution invalide",
     NO_VALID_PICKUP_LOCATION: 'Aucun lieu de cueillette valide disponible',
     DRAFT_ORDER_FETCH_FAILED: 'Échec de la récupération de la commande',
     LINE_ITEMS_FETCH_FAILED: 'Échec de la récupération des articles',
-    CURRENT_ORDER_FETCH_FAILED: 'Échec de la récupération de la commande actuelle',
+    CURRENT_ORDER_FETCH_FAILED:
+      'Échec de la récupération de la commande actuelle',
     DRAFT_ORDER_UPDATE_FAILED: 'Échec de la mise à jour de la commande',
     DISCOUNT_APPLICATION_FAILED: "Échec de l'application du coupon",
     CONTEXT_UNAVAILABLE: 'Session ou sources de données non disponibles',
-    SHIPPING_LINES_UPDATE_FAILED: "Échec de la mise à jour des lignes d'expédition",
-    ORDER_TOTALS_UPDATE_FAILED: 'Échec de la mise à jour des totaux de commande',
+    SHIPPING_LINES_UPDATE_FAILED:
+      "Échec de la mise à jour des lignes d'expédition",
+    ORDER_TOTALS_UPDATE_FAILED:
+      'Échec de la mise à jour des totaux de commande',
     ORDER_TOTAL_CALCULATION_FAILED: 'Échec du calcul des totaux de commande',
-    SHIPPING_METHOD_APPLICATION_FAILED: "Échec de l'application de la méthode d'expédition",
+    SHIPPING_METHOD_APPLICATION_FAILED:
+      "Échec de l'application de la méthode d'expédition",
     SKU_FETCH_FAILED: 'Échec de la récupération des SKU',
-    SHIPPING_RATES_CALCULATION_FAILED: "Échec du calcul des tarifs d'expédition",
+    SHIPPING_RATES_CALCULATION_FAILED:
+      "Échec du calcul des tarifs d'expédition",
     SHIPPING_METHOD_NOT_FOUND: "Méthode d'expédition introuvable",
-    SHIPPING_METHOD_REMOVAL_FAILED: "Échec de la suppression de la méthode d'expédition",
+    SHIPPING_METHOD_REMOVAL_FAILED:
+      "Échec de la suppression de la méthode d'expédition",
     SHIPPING_ADDRESS_REQUIRED: "Adresse d'expédition requise",
     INVENTORY_VALIDATION_ERROR: "Erreur de validation d'inventaire",
     INSUFFICIENT_INVENTORY: 'Inventaire insuffisant',
@@ -300,8 +328,10 @@ export const frCa = {
     CATALOG_API_ERROR: 'Erreur du service de catalogue',
     TAX_SERVICE_UNAVAILABLE: 'Service de taxes indisponible',
     SHIPPING_SERVICE_UNAVAILABLE: "Service d'expédition indisponible",
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: "Service d'ajustements de prix indisponible",
-    PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'Échec du calcul des ajustements de prix',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      "Service d'ajustements de prix indisponible",
+    PRICE_ADJUSTMENTS_CALCULATION_FAILED:
+      'Échec du calcul des ajustements de prix',
     SERVICE_UNAVAILABLE: 'Service temporairement indisponible',
     RATE_LIMITED: 'Trop de demandes, veuillez réessayer plus tard',
     TIMEOUT: "Délai d'attente dépassé",
@@ -309,9 +339,13 @@ export const frCa = {
     SHIPPING_POSTAL_CODE_REQUIRED: "Le code postal d'expédition est requis",
     SHIPPING_COUNTRY_CODE_REQUIRED: "Le code de pays d'expédition est requis",
     SHIPPING_METHOD_REQUIRED: "La méthode d'expédition est requise",
-    SHIPPING_ADDRESS_VERIFICATION_FAILED: "La vérification de l'adresse d'expédition a échoué",
-    BILLING_ADDRESS_VERIFICATION_FAILED: "La vérification de l'adresse de facturation a échoué",
-    MISSING_SHIPPING_INFO: "L'adresse ou la méthode de livraison n'a pas pu être appliquée",
-    DEPENDENCY_ERROR: 'Nous ne pouvons pas traiter votre commande actuellement. Veuillez patienter un moment et réessayer',
+    SHIPPING_ADDRESS_VERIFICATION_FAILED:
+      "La vérification de l'adresse d'expédition a échoué",
+    BILLING_ADDRESS_VERIFICATION_FAILED:
+      "La vérification de l'adresse de facturation a échoué",
+    MISSING_SHIPPING_INFO:
+      "L'adresse ou la méthode de livraison n'a pas pu être appliquée",
+    DEPENDENCY_ERROR:
+      'Nous ne pouvons pas traiter votre commande actuellement. Veuillez patienter un moment et réessayer',
   },
 };

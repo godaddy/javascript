@@ -1,6 +1,10 @@
 export const AmexIcon = ({ className }: { className?: string }) => {
   return (
-    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 752 471' className={className}>
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 752 471'
+      className={className}
+    >
       <title>Amex Card</title>
       <g fill='none' fillRule='evenodd'>
         <rect width='750' height='471' x='1' fill='#2557D6' rx='40' />

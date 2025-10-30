@@ -36,7 +36,8 @@ export const CheckoutType = {
 };
 
 // Extract values from the object to create a union type
-export type AvailablePaymentProviders = (typeof PaymentProvider)[keyof typeof PaymentProvider];
+export type AvailablePaymentProviders =
+  (typeof PaymentProvider)[keyof typeof PaymentProvider];
 
 export const PaymentMethodType = {
   CREDIT_CARD: 'card',
@@ -51,7 +52,8 @@ export const PaymentMethodType = {
 // Union of all payment method keys
 export type PaymentMethodKey = keyof typeof PaymentMethodType;
 
-export type PaymentMethodValue = (typeof PaymentMethodType)[keyof typeof PaymentMethodType];
+export type PaymentMethodValue =
+  (typeof PaymentMethodType)[keyof typeof PaymentMethodType];
 
 // Payment method config type
 export type PaymentMethodConfig = {
@@ -76,66 +78,118 @@ export type $Values<T> = T[keyof T];
 
 export type CheckoutSession = CheckoutSessionResult & CheckoutSessionOptions;
 
-export type CheckoutSessionResult = ResultOf<typeof CreateCheckoutSessionMutation>['createCheckoutSession'];
+export type CheckoutSessionResult = ResultOf<
+  typeof CreateCheckoutSessionMutation
+>['createCheckoutSession'];
 
-export type CheckoutSessionInput = VariablesOf<typeof CreateCheckoutSessionMutation>;
+export type CheckoutSessionInput = VariablesOf<
+  typeof CreateCheckoutSessionMutation
+>;
 
 export type DraftOrderSession = ResultOf<typeof DraftOrderQuery>;
 
-export type DraftOrder = NonNullable<NonNullable<ResultOf<typeof DraftOrderQuery>['checkoutSession']>['draftOrder']>;
+export type DraftOrder = NonNullable<
+  NonNullable<ResultOf<typeof DraftOrderQuery>['checkoutSession']>['draftOrder']
+>;
 
 export type Totals = NonNullable<
-  NonNullable<NonNullable<ResultOf<typeof DraftOrderQuery>['checkoutSession']>['draftOrder']>['totals']
+  NonNullable<
+    NonNullable<
+      ResultOf<typeof DraftOrderQuery>['checkoutSession']
+    >['draftOrder']
+  >['totals']
 >;
 
 export type ShippingLines = NonNullable<
   NonNullable<
-    NonNullable<NonNullable<ResultOf<typeof DraftOrderQuery>['checkoutSession']>['draftOrder']>['shippingLines']
+    NonNullable<
+      NonNullable<
+        ResultOf<typeof DraftOrderQuery>['checkoutSession']
+      >['draftOrder']
+    >['shippingLines']
   >[number]
 >;
 
-export type UpdateDraftOrderInput = VariablesOf<typeof UpdateCheckoutSessionDraftOrderMutation>;
+export type UpdateDraftOrderInput = VariablesOf<
+  typeof UpdateCheckoutSessionDraftOrderMutation
+>;
 
-export type ApplyCheckoutSessionDiscountInput = VariablesOf<typeof ApplyCheckoutSessionDiscountMutation>;
+export type ApplyCheckoutSessionDiscountInput = VariablesOf<
+  typeof ApplyCheckoutSessionDiscountMutation
+>;
 
-export type ApplyCheckoutSessionShippingMethodInput = VariablesOf<typeof ApplyCheckoutSessionShippingMethodMutation>;
+export type ApplyCheckoutSessionShippingMethodInput = VariablesOf<
+  typeof ApplyCheckoutSessionShippingMethodMutation
+>;
 
-export type ApplyCheckoutSessionDeliveryMethodInput = VariablesOf<typeof ApplyCheckoutSessionDeliveryMethodMutation>;
+export type ApplyCheckoutSessionDeliveryMethodInput = VariablesOf<
+  typeof ApplyCheckoutSessionDeliveryMethodMutation
+>;
 
-export type ApplyCheckoutSessionFulfillmentLocationInput = VariablesOf<typeof ApplyCheckoutSessionFulfillmentLocationMutation>;
+export type ApplyCheckoutSessionFulfillmentLocationInput = VariablesOf<
+  typeof ApplyCheckoutSessionFulfillmentLocationMutation
+>;
 
 export type RemoveAppliedCheckoutSessionShippingMethodInput = VariablesOf<
   typeof RemoveAppliedCheckoutSessionShippingMethodMutation
 >;
 
-export type CalculateCheckoutSessionTaxesInput = VariablesOf<typeof CalculateCheckoutSessionTaxesMutation>;
+export type CalculateCheckoutSessionTaxesInput = VariablesOf<
+  typeof CalculateCheckoutSessionTaxesMutation
+>;
 
-export type MutationVerifyAddress = ResultOf<typeof VerifyCheckoutSessionAddressMutation>;
+export type MutationVerifyAddress = ResultOf<
+  typeof VerifyCheckoutSessionAddressMutation
+>;
 
-export type ConfirmCheckoutMutationInput = VariablesOf<typeof ConfirmCheckoutSessionMutation>;
+export type ConfirmCheckoutMutationInput = VariablesOf<
+  typeof ConfirmCheckoutSessionMutation
+>;
 
-export type GetCheckoutSessionShippingRatesInput = VariablesOf<typeof DraftOrderShippingRatesQuery>;
+export type GetCheckoutSessionShippingRatesInput = VariablesOf<
+  typeof DraftOrderShippingRatesQuery
+>;
 
-export type DraftOrderPriceAdjustmentsQueryInput = VariablesOf<typeof DraftOrderPriceAdjustmentsQuery>;
+export type DraftOrderPriceAdjustmentsQueryInput = VariablesOf<
+  typeof DraftOrderPriceAdjustmentsQuery
+>;
 
-export type GetCheckoutSessionTaxesInput = VariablesOf<typeof DraftOrderTaxesQuery>;
+export type GetCheckoutSessionTaxesInput = VariablesOf<
+  typeof DraftOrderTaxesQuery
+>;
 
 export type ShippingMethod = NonNullable<
   NonNullable<
     NonNullable<
-      NonNullable<ResultOf<typeof DraftOrderShippingRatesQuery>['checkoutSession']>['draftOrder']
+      NonNullable<
+        ResultOf<typeof DraftOrderShippingRatesQuery>['checkoutSession']
+      >['draftOrder']
     >['calculatedShippingRates']
   >['rates']
 >[number];
 
-export type Address = NonNullable<MutationVerifyAddress['verifyAddress']>[number];
+export type Address = NonNullable<
+  MutationVerifyAddress['verifyAddress']
+>[number];
 
-export type StoreHours = NonNullable<NonNullable<CheckoutSession>['locations']>[number]['operatingHours'];
+export type StoreHours = NonNullable<
+  NonNullable<CheckoutSession>['locations']
+>[number]['operatingHours'];
 
-export type CheckoutSessionLocation = NonNullable<NonNullable<CheckoutSession>['locations']>[number];
+export type CheckoutSessionLocation = NonNullable<
+  NonNullable<CheckoutSession>['locations']
+>[number];
 
-export type Environments = NonNullable<NonNullable<CheckoutSession>['environment']>;
+export type Environments = NonNullable<
+  NonNullable<CheckoutSession>['environment']
+>;
 
 export type SKUProduct = NonNullable<
-  NonNullable<NonNullable<NonNullable<ResultOf<typeof DraftOrderSkusQuery>['checkoutSession']>['skus']>['edges']>[number]
+  NonNullable<
+    NonNullable<
+      NonNullable<
+        ResultOf<typeof DraftOrderSkusQuery>['checkoutSession']
+      >['skus']
+    >['edges']
+  >[number]
 >['node'];

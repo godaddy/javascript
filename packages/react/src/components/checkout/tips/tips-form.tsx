@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { Button } from '@/components/ui/button';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
@@ -89,7 +95,11 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
 
   return (
     <fieldset className='space-y-4'>
-      <div className='grid grid-cols-3 gap-2' role='radiogroup' aria-label={t.tips?.title || 'Tip amount'}>
+      <div
+        className='grid grid-cols-3 gap-2'
+        role='radiogroup'
+        aria-label={t.tips?.title || 'Tip amount'}
+      >
         {tipPercentages.map(percentage => (
           <Button
             key={percentage}
@@ -97,22 +107,33 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
             variant={tipPercentage === percentage ? 'default' : 'outline'}
             className={cn(
               'h-16 flex flex-col items-center justify-center',
-              tipPercentage === percentage ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted active:ring'
+              tipPercentage === percentage
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-card hover:bg-muted active:ring'
             )}
             onClick={() => handlePercentageSelect(percentage)}
             aria-checked={tipPercentage === percentage ? 'true' : 'false'}
           >
             <span className='text-lg'>{percentage}%</span>
-            <span className='text-sm'>{formatCurrency(calculateTipAmount(percentage))}</span>
+            <span className='text-sm'>
+              {formatCurrency(calculateTipAmount(percentage))}
+            </span>
           </Button>
         ))}
       </div>
 
-      <div className='grid grid-cols-2 gap-2' role='radiogroup' aria-label={t.ui.accessibility.additionalTipOptions}>
+      <div
+        className='grid grid-cols-2 gap-2'
+        role='radiogroup'
+        aria-label={t.ui.accessibility.additionalTipOptions}
+      >
         <Button
           type='button'
           variant={tipPercentage === 0 ? 'default' : 'outline'}
-          className={cn('h-12 font-normal', tipPercentage !== 0 && 'hover:bg-muted')}
+          className={cn(
+            'h-12 font-normal',
+            tipPercentage !== 0 && 'hover:bg-muted'
+          )}
           onClick={handleNoTip}
           aria-checked={tipPercentage === 0 ? 'true' : 'false'}
         >
@@ -135,7 +156,9 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
           name='tipAmount'
           render={({ field, fieldState }) => (
             <FormItem className='space-y-1'>
-              <FormLabel className='sr-only'>{t.tips.customTipAmount}</FormLabel>
+              <FormLabel className='sr-only'>
+                {t.tips.customTipAmount}
+              </FormLabel>
               <FormControl>
                 <Input
                   type='number'
@@ -148,13 +171,16 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
                   value={field.value > 0 ? field.value / 100 : ''}
                   onChange={e => {
                     // Convert dollars to cents when storing
-                    const tipAmount = Math.round(Number.parseFloat(e.target.value) * 100);
+                    const tipAmount = Math.round(
+                      Number.parseFloat(e.target.value) * 100
+                    );
                     field.onChange(tipAmount);
 
                     // Only track when user stops typing (on blur)
                   }}
                   onBlur={e => {
-                    const tipAmount = Math.round(Number.parseFloat(e.target.value) * 100) || 0;
+                    const tipAmount =
+                      Math.round(Number.parseFloat(e.target.value) * 100) || 0;
                     // Track custom tip amount entry
                     track({
                       eventId: eventIds.enterCustomTip,
@@ -162,7 +188,9 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
                       properties: {
                         tipAmount: tipAmount,
                         totalBeforeTip: total,
-                        tipPercentage: Number(((tipAmount / total) * 100).toFixed(2)),
+                        tipPercentage: Number(
+                          ((tipAmount / total) * 100).toFixed(2)
+                        ),
                         currencyCode,
                       },
                     });

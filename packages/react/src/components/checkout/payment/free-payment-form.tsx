@@ -2,7 +2,10 @@ import { LoaderCircle } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { PaymentProvider, useConfirmCheckout } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import {
+  PaymentProvider,
+  useConfirmCheckout,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -41,7 +44,11 @@ export function FreePaymentForm() {
   }, [form, confirmCheckout.mutateAsync, setCheckoutErrors]);
 
   return isConfirmingCheckout ? (
-    <Button type='button' className='w-full flex items-center justify-center gap-2 px-8 h-10' disabled>
+    <Button
+      type='button'
+      className='w-full flex items-center justify-center gap-2 px-8 h-10'
+      disabled
+    >
       <LoaderCircle className='h-5 w-5 animate-spin' />
       {t.payment.completingOrder}
     </Button>

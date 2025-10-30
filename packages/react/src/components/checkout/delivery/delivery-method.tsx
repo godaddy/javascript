@@ -1,6 +1,9 @@
 import { Store, Truck } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
-import { type CheckoutFormData, useCheckoutContext } from '@/components/checkout/checkout';
+import {
+  type CheckoutFormData,
+  useCheckoutContext,
+} from '@/components/checkout/checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
@@ -69,7 +72,10 @@ export function DeliveryMethodForm() {
     });
   };
 
-  const availableMethods = [DELIVERY_METHODS[0], ...(session?.enableLocalPickup ? [DELIVERY_METHODS[1]] : [])];
+  const availableMethods = [
+    DELIVERY_METHODS[0],
+    ...(session?.enableLocalPickup ? [DELIVERY_METHODS[1]] : []),
+  ];
 
   return (
     <div className='space-y-2'>
@@ -81,9 +87,13 @@ export function DeliveryMethodForm() {
           <div className='flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 rounded-md'>
             <div className='flex items-center space-x-4'>
               <div className='inline-flex flex-col'>
-                {availableMethods[0].id === DeliveryMethods.SHIP ? t.delivery.shipping : t.delivery.localPickup}
+                {availableMethods[0].id === DeliveryMethods.SHIP
+                  ? t.delivery.shipping
+                  : t.delivery.localPickup}
                 <p className='text-xs text-muted-foreground'>
-                  {availableMethods[0].id === DeliveryMethods.SHIP ? t.delivery.shipToAddress : t.delivery.pickupFromStore}
+                  {availableMethods[0].id === DeliveryMethods.SHIP
+                    ? t.delivery.shipToAddress
+                    : t.delivery.pickupFromStore}
                 </p>
               </div>
             </div>
@@ -104,7 +114,11 @@ export function DeliveryMethodForm() {
                   disabled={isConfirmingCheckout || isPaymentDisabled}
                 >
                   {availableMethods.map((method, index) => (
-                    <Label key={method.id} htmlFor={method.id} className='font-medium'>
+                    <Label
+                      key={method.id}
+                      htmlFor={method.id}
+                      className='font-medium'
+                    >
                       <div
                         className={`flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 hover:bg-muted 
 											${index === 0 ? 'rounded-t-md' : 'border-t-0'} 
@@ -117,9 +131,13 @@ export function DeliveryMethodForm() {
                             <RadioGroupItem value={method.id} id={method.id} />
                           </FormControl>
                           <div className='inline-flex flex-col'>
-                            {method.id === DeliveryMethods.SHIP ? t.delivery.shipping : t.delivery.localPickup}
+                            {method.id === DeliveryMethods.SHIP
+                              ? t.delivery.shipping
+                              : t.delivery.localPickup}
                             <p className='text-xs text-muted-foreground'>
-                              {method.id === DeliveryMethods.SHIP ? t.delivery.shipToAddress : t.delivery.pickupFromStore}
+                              {method.id === DeliveryMethods.SHIP
+                                ? t.delivery.shipToAddress
+                                : t.delivery.pickupFromStore}
                             </p>
                           </div>
                         </div>

@@ -15,7 +15,9 @@ export function useRemoveShippingMethod() {
 
   return useMutation({
     mutationKey: ['remove-shipping-method', { sessionId: session?.id }],
-    mutationFn: async (input: RemoveAppliedCheckoutSessionShippingMethodInput['input']) => {
+    mutationFn: async (
+      input: RemoveAppliedCheckoutSessionShippingMethodInput['input']
+    ) => {
       if (!session) return;
       return await removeShippingMethod(input, session);
     },
@@ -23,36 +25,41 @@ export function useRemoveShippingMethod() {
       if (!session) return;
 
       // Extract shippingTotal from mutation response
-      const shippingTotal = data?.removeAppliedCheckoutSessionShippingMethod?.draftOrder?.totals?.shippingTotal;
+      const shippingTotal =
+        data?.removeAppliedCheckoutSessionShippingMethod?.draftOrder?.totals
+          ?.shippingTotal;
 
       // Update the cached draft-order query (includes totals)
       if (shippingTotal) {
-        queryClient.setQueryData(['draft-order', { id: session.id }], (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
-          if (!old) return old;
-          return {
-            ...old,
-            checkoutSession: {
-              ...old.checkoutSession,
-              draftOrder: {
-                ...old?.checkoutSession?.draftOrder,
-                shippingLines: [
-                  {
-                    ...old?.checkoutSession?.draftOrder?.shippingLines?.[0],
-                    amount: {
+        queryClient.setQueryData(
+          ['draft-order', { id: session.id }],
+          (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
+            if (!old) return old;
+            return {
+              ...old,
+              checkoutSession: {
+                ...old.checkoutSession,
+                draftOrder: {
+                  ...old?.checkoutSession?.draftOrder,
+                  shippingLines: [
+                    {
+                      ...old?.checkoutSession?.draftOrder?.shippingLines?.[0],
+                      amount: {
+                        ...shippingTotal,
+                      },
+                    },
+                  ],
+                  totals: {
+                    ...old?.checkoutSession?.draftOrder?.totals,
+                    shippingTotal: {
                       ...shippingTotal,
                     },
                   },
-                ],
-                totals: {
-                  ...old?.checkoutSession?.draftOrder?.totals,
-                  shippingTotal: {
-                    ...shippingTotal,
-                  },
                 },
               },
-            },
-          };
-        });
+            };
+          }
+        );
       }
 
       const allCodes = new Set<string>();

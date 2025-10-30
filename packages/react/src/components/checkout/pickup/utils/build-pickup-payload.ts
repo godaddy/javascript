@@ -33,7 +33,8 @@ export function buildPickupPayload({
     now.setMinutes(now.getMinutes() + leadTime);
     date = toZonedTime(now, timezone ?? 'UTC');
   } else if (pickupDate && pickupTime) {
-    const baseDate = typeof pickupDate === 'string' ? parseDate(pickupDate) : pickupDate;
+    const baseDate =
+      typeof pickupDate === 'string' ? parseDate(pickupDate) : pickupDate;
     const [hours, minutes] = pickupTime.split(':').map(Number);
     const zonedDate = toZonedTime(baseDate, timezone ?? 'UTC');
     zonedDate.setHours(hours || 0, minutes || 0, 0, 0);

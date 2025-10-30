@@ -6,7 +6,8 @@ export const deDe = {
     free: 'KOSTENLOS',
     closed: 'Geschlossen',
     apply: 'Anwenden',
-    checkoutDisabled: 'Der Checkout ist derzeit deaktiviert. Wir entschuldigen uns für die Unannehmlichkeiten.',
+    checkoutDisabled:
+      'Der Checkout ist derzeit deaktiviert. Wir entschuldigen uns für die Unannehmlichkeiten.',
   },
   contact: {
     title: 'Kontakt',
@@ -15,7 +16,8 @@ export const deDe = {
   },
   pickup: {
     title: 'Abholung vor Ort',
-    description: 'Wir werden uns bemühen, Ihre gewünschte Abholzeit einzuhalten. Die tatsächlichen Abholzeiten können variieren.',
+    description:
+      'Wir werden uns bemühen, Ihre gewünschte Abholzeit einzuhalten. Die tatsächlichen Abholzeiten können variieren.',
     location: 'Abholort',
     date: 'Abholdatum',
     time: 'Bevorzugte Abholzeit',
@@ -24,7 +26,8 @@ export const deDe = {
     selectTime: 'Abholzeit auswählen',
     storeHours: 'Öffnungszeiten',
     seeDetails: 'Details anzeigen',
-    noTimeSlots: 'Keine verfügbaren Zeitfenster für das ausgewählte Datum. Bitte wählen Sie ein anderes Datum.',
+    noTimeSlots:
+      'Keine verfügbaren Zeitfenster für das ausgewählte Datum. Bitte wählen Sie ein anderes Datum.',
     hoursDisplayed: 'Zeiten werden in Ihrer lokalen Zeitzone angezeigt.',
     storeOperatesIn: 'Die Filiale arbeitet in der Zeitzone {timezone}.',
     asap: 'ASAP',
@@ -62,7 +65,8 @@ export const deDe = {
     title: 'Versand',
     description: 'Lieferadresse',
     method: 'Versandart',
-    noShippingMethodAddress: 'Geben Sie Ihre Adresse ein, um verfügbare Versandmethoden zu sehen.',
+    noShippingMethodAddress:
+      'Geben Sie Ihre Adresse ein, um verfügbare Versandmethoden zu sehen.',
     noShippingMethods: 'Keine Versandmethoden gefunden.',
     phone: 'Telefonnummer',
     country: 'Land',
@@ -165,7 +169,8 @@ export const deDe = {
       suggestions: 'Vorschläge',
     },
     form: {
-      useFormFieldError: 'useFormField sollte innerhalb von <FormField> verwendet werden',
+      useFormFieldError:
+        'useFormField sollte innerhalb von <FormField> verwendet werden',
     },
     pagination: {
       ariaLabel: 'Seitennummerierung',
@@ -176,7 +181,8 @@ export const deDe = {
       morePages: 'Weitere Seiten',
     },
     sidebar: {
-      useSidebarError: 'useSidebar muss innerhalb eines SidebarProvider verwendet werden.',
+      useSidebarError:
+        'useSidebar muss innerhalb eines SidebarProvider verwendet werden.',
       toggleSidebar: 'Seitenleiste umschalten',
     },
     accessibility: {
@@ -199,18 +205,25 @@ export const deDe = {
     orderIdRequired: 'Bestellnummer ist erforderlich',
     errorTrackingEvent: 'Fehler beim Verfolgen des Events',
     errorInTrackingSubscriber: 'Fehler im Tracking-Abonnenten',
-    useTrackingProviderError: 'useTracking muss innerhalb eines TrackingProvider verwendet werden',
-    usePoyntCollectProviderError: 'usePoyntCollect muss innerhalb eines PoyntCollectProvider verwendet werden',
-    useSquareProviderError: 'useSquare muss innerhalb eines SquareProvider verwendet werden',
+    useTrackingProviderError:
+      'useTracking muss innerhalb eines TrackingProvider verwendet werden',
+    usePoyntCollectProviderError:
+      'usePoyntCollect muss innerhalb eines PoyntCollectProvider verwendet werden',
+    useSquareProviderError:
+      'useSquare muss innerhalb eines SquareProvider verwendet werden',
     errorProcessingPayment: 'Fehler bei der Zahlungsverarbeitung',
-    stripeConfigMissing: 'Stripe-Konfiguration fehlt. Bitte überprüfen Sie Ihre Einstellungen.',
+    stripeConfigMissing:
+      'Stripe-Konfiguration fehlt. Bitte überprüfen Sie Ihre Einstellungen.',
     paymentSuccessful: 'Zahlung erfolgreich',
     paymentFailed: 'Zahlung fehlgeschlagen',
-    paypalConfigMissing: 'PayPal-Konfiguration fehlt. Bitte überprüfen Sie Ihre Einstellungen.',
+    paypalConfigMissing:
+      'PayPal-Konfiguration fehlt. Bitte überprüfen Sie Ihre Einstellungen.',
     stripeNotReady: 'Stripe nicht bereit',
     cardElementNotFound: 'CardElement nicht gefunden',
-    errorProcessingCardPayment: 'Fehler bei der Verarbeitung der Kartenzahlung.',
-    errorProcessingExpressPayment: 'Fehler bei der Verarbeitung der Express-Zahlung.',
+    errorProcessingCardPayment:
+      'Fehler bei der Verarbeitung der Kartenzahlung.',
+    errorProcessingExpressPayment:
+      'Fehler bei der Verarbeitung der Express-Zahlung.',
     failedToInitializePayment: 'Zahlung konnte nicht initialisiert werden.',
     invalidPhoneNumber: 'Ungültige Telefonnummer',
   },
@@ -237,39 +250,55 @@ export const deDe = {
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Serverfehler',
     SESSION_NOT_FOUND: 'Sitzung nicht gefunden',
-    CHECKOUT_SESSION_RETRIEVAL_FAILED: 'Abrufen der Checkout-Sitzung fehlgeschlagen',
+    CHECKOUT_SESSION_RETRIEVAL_FAILED:
+      'Abrufen der Checkout-Sitzung fehlgeschlagen',
     CHECKOUT_SESSION_NOT_FOUND: 'Checkout-Sitzung nicht gefunden',
-    CHECKOUT_SESSION_FETCH_ERROR: 'Allgemeiner Abruffehler der Checkout-Sitzung',
+    CHECKOUT_SESSION_FETCH_ERROR:
+      'Allgemeiner Abruffehler der Checkout-Sitzung',
     DRAFT_ORDER_NOT_FOUND: 'Bestellung nicht gefunden',
-    CHECKOUT_SESSION_CREATION_FAILED: 'Erstellen der Checkout-Sitzung fehlgeschlagen',
-    CREATED_SESSION_DATA_NOT_FOUND: 'Daten der erstellten Sitzung nicht gefunden',
-    CHECKOUT_SESSION_CREATION_ERROR: 'Allgemeiner Erstellungsfehler der Checkout-Sitzung',
-    CHECKOUT_SESSION_UPDATE_FAILED: 'Aktualisierung der Checkout-Sitzung fehlgeschlagen',
+    CHECKOUT_SESSION_CREATION_FAILED:
+      'Erstellen der Checkout-Sitzung fehlgeschlagen',
+    CREATED_SESSION_DATA_NOT_FOUND:
+      'Daten der erstellten Sitzung nicht gefunden',
+    CHECKOUT_SESSION_CREATION_ERROR:
+      'Allgemeiner Erstellungsfehler der Checkout-Sitzung',
+    CHECKOUT_SESSION_UPDATE_FAILED:
+      'Aktualisierung der Checkout-Sitzung fehlgeschlagen',
     UPDATED_SESSION_NOT_FOUND: 'Aktualisierte Sitzung nicht gefunden',
-    CHECKOUT_SESSION_UPDATE_ERROR: 'Allgemeiner Aktualisierungsfehler der Checkout-Sitzung',
+    CHECKOUT_SESSION_UPDATE_ERROR:
+      'Allgemeiner Aktualisierungsfehler der Checkout-Sitzung',
     ORDER_API_NOT_FOUND: 'Bestellungs-API-Datenquelle nicht gefunden',
     DRAFT_ORDER_RETRIEVAL_FAILED: 'Abrufen der Bestellung fehlgeschlagen',
     DATA_SOURCES_NOT_FOUND: 'Datenquellen nicht gefunden',
     TRANSACTION_API_NOT_FOUND: 'Transaktions-API-Datenquelle nicht gefunden',
-    TRANSACTION_PROCESSING_FAILED: 'Verarbeitung der Transaktion fehlgeschlagen',
-    TRANSACTION_CREATION_FAILED: 'Finden oder Erstellen der Transaktion fehlgeschlagen',
+    TRANSACTION_PROCESSING_FAILED:
+      'Verarbeitung der Transaktion fehlgeschlagen',
+    TRANSACTION_CREATION_FAILED:
+      'Finden oder Erstellen der Transaktion fehlgeschlagen',
     ORDER_OPENING_FAILED: 'Öffnen der Bestellung fehlgeschlagen',
     INVALID_FULFILLMENT_LOCATION: 'Ungültiger Erfüllungsort',
     NO_VALID_PICKUP_LOCATION: 'Kein gültiger Abholort verfügbar',
     DRAFT_ORDER_FETCH_FAILED: 'Abrufen der Bestellung fehlgeschlagen',
     LINE_ITEMS_FETCH_FAILED: 'Abrufen der Artikel fehlgeschlagen',
-    CURRENT_ORDER_FETCH_FAILED: 'Abrufen der aktuellen Bestellung fehlgeschlagen',
+    CURRENT_ORDER_FETCH_FAILED:
+      'Abrufen der aktuellen Bestellung fehlgeschlagen',
     DRAFT_ORDER_UPDATE_FAILED: 'Aktualisierung der Bestellung fehlgeschlagen',
     DISCOUNT_APPLICATION_FAILED: 'Anwenden des Gutscheins fehlgeschlagen',
     CONTEXT_UNAVAILABLE: 'Sitzung oder Datenquellen nicht verfügbar',
-    SHIPPING_LINES_UPDATE_FAILED: 'Aktualisierung der Versandzeilen fehlgeschlagen',
-    ORDER_TOTALS_UPDATE_FAILED: 'Aktualisierung der Bestellsummen fehlgeschlagen',
-    ORDER_TOTAL_CALCULATION_FAILED: 'Berechnung der Bestellsummen fehlgeschlagen',
-    SHIPPING_METHOD_APPLICATION_FAILED: 'Anwenden der Versandmethode fehlgeschlagen',
+    SHIPPING_LINES_UPDATE_FAILED:
+      'Aktualisierung der Versandzeilen fehlgeschlagen',
+    ORDER_TOTALS_UPDATE_FAILED:
+      'Aktualisierung der Bestellsummen fehlgeschlagen',
+    ORDER_TOTAL_CALCULATION_FAILED:
+      'Berechnung der Bestellsummen fehlgeschlagen',
+    SHIPPING_METHOD_APPLICATION_FAILED:
+      'Anwenden der Versandmethode fehlgeschlagen',
     SKU_FETCH_FAILED: 'Abrufen der SKUs fehlgeschlagen',
-    SHIPPING_RATES_CALCULATION_FAILED: 'Berechnung der Versandkosten fehlgeschlagen',
+    SHIPPING_RATES_CALCULATION_FAILED:
+      'Berechnung der Versandkosten fehlgeschlagen',
     SHIPPING_METHOD_NOT_FOUND: 'Versandmethode nicht gefunden',
-    SHIPPING_METHOD_REMOVAL_FAILED: 'Entfernen der Versandmethode fehlgeschlagen',
+    SHIPPING_METHOD_REMOVAL_FAILED:
+      'Entfernen der Versandmethode fehlgeschlagen',
     SHIPPING_ADDRESS_REQUIRED: 'Lieferadresse erforderlich',
     INVENTORY_VALIDATION_ERROR: 'Lagervalidierungsfehler',
     INSUFFICIENT_INVENTORY: 'Unzureichender Lagerbestand',
@@ -299,8 +328,10 @@ export const deDe = {
     CATALOG_API_ERROR: 'Katalogservice-Fehler',
     TAX_SERVICE_UNAVAILABLE: 'Steuerservice ist nicht verfügbar',
     SHIPPING_SERVICE_UNAVAILABLE: 'Versandservice ist nicht verfügbar',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: 'Preisanpassungsservice ist nicht verfügbar',
-    PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'Berechnung der Preisanpassungen fehlgeschlagen',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      'Preisanpassungsservice ist nicht verfügbar',
+    PRICE_ADJUSTMENTS_CALCULATION_FAILED:
+      'Berechnung der Preisanpassungen fehlgeschlagen',
     SERVICE_UNAVAILABLE: 'Service ist vorübergehend nicht verfügbar',
     RATE_LIMITED: 'Zu viele Anfragen, bitte versuchen Sie es später erneut',
     TIMEOUT: 'Zeitüberschreitung der Anfrage',
@@ -308,9 +339,12 @@ export const deDe = {
     SHIPPING_POSTAL_CODE_REQUIRED: 'Postleitzahl für Versand ist erforderlich',
     SHIPPING_COUNTRY_CODE_REQUIRED: 'Ländercode für Versand ist erforderlich',
     SHIPPING_METHOD_REQUIRED: 'Versandmethode ist erforderlich',
-    SHIPPING_ADDRESS_VERIFICATION_FAILED: 'Verifizierung der Lieferadresse fehlgeschlagen',
-    BILLING_ADDRESS_VERIFICATION_FAILED: 'Verifizierung der Rechnungsadresse fehlgeschlagen',
-    MISSING_SHIPPING_INFO: 'Lieferadresse oder -methode konnte nicht angewendet werden',
+    SHIPPING_ADDRESS_VERIFICATION_FAILED:
+      'Verifizierung der Lieferadresse fehlgeschlagen',
+    BILLING_ADDRESS_VERIFICATION_FAILED:
+      'Verifizierung der Rechnungsadresse fehlgeschlagen',
+    MISSING_SHIPPING_INFO:
+      'Lieferadresse oder -methode konnte nicht angewendet werden',
     DEPENDENCY_ERROR:
       'Wir können Ihre Bestellung derzeit nicht bearbeiten. Bitte warten Sie einen Moment und versuchen Sie es erneut',
   },

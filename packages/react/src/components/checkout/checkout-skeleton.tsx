@@ -96,7 +96,9 @@ export function CheckoutSkeleton({ direction }: { direction?: string }) {
 
         {/* Right column - Order summary */}
         <div className='bg-secondary-background' style={{ gridArea: 'right' }}>
-          <div className={`p-0 md:p-8 w-full md:max-w-xl md:sticky md:top-0 ${direction === 'rtl' ? 'md:ml-auto' : ''}`}>
+          <div
+            className={`p-0 md:p-8 w-full md:max-w-xl md:sticky md:top-0 ${direction === 'rtl' ? 'md:ml-auto' : ''}`}
+          >
             {/* Mobile view */}
             <div className='p-4 block md:hidden'>
               {/* Collapsible summary header for mobile */}

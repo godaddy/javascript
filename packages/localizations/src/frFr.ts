@@ -6,7 +6,8 @@ export const frFr = {
     free: 'GRATUIT',
     closed: 'Fermé',
     apply: 'Appliquer',
-    checkoutDisabled: 'Le paiement est actuellement désactivé. Nous nous excusons pour la gêne occasionnée.',
+    checkoutDisabled:
+      'Le paiement est actuellement désactivé. Nous nous excusons pour la gêne occasionnée.',
   },
   contact: {
     title: 'Contact',
@@ -25,7 +26,8 @@ export const frFr = {
     selectTime: 'Sélectionner une heure de retrait',
     storeHours: "Heures d'ouverture",
     seeDetails: 'Voir les détails',
-    noTimeSlots: 'Aucun créneau horaire disponible pour la date sélectionnée. Veuillez sélectionner une autre date.',
+    noTimeSlots:
+      'Aucun créneau horaire disponible pour la date sélectionnée. Veuillez sélectionner une autre date.',
     hoursDisplayed: 'Heures affichées dans votre fuseau horaire local.',
     storeOperatesIn: 'Le magasin fonctionne dans le fuseau horaire {timezone}.',
     asap: 'ASAP',
@@ -63,7 +65,8 @@ export const frFr = {
     title: 'Expédition',
     description: 'Adresse de livraison',
     method: "Méthode d'expédition",
-    noShippingMethodAddress: 'Entrez votre adresse pour voir les méthodes de livraison disponibles.',
+    noShippingMethodAddress:
+      'Entrez votre adresse pour voir les méthodes de livraison disponibles.',
     noShippingMethods: "Aucune méthode d'expédition trouvée.",
     phone: 'Numéro de téléphone',
     country: 'Pays',
@@ -92,7 +95,8 @@ export const frFr = {
     billingAddress: {
       title: 'Adresse de facturation',
       description: 'Entrez votre adresse de facturation.',
-      useShippingAddress: "Utiliser l'adresse de livraison comme adresse de facturation",
+      useShippingAddress:
+        "Utiliser l'adresse de livraison comme adresse de facturation",
     },
     methods: {
       creditCard: 'Carte de crédit ou de débit',
@@ -196,22 +200,30 @@ export const frFr = {
     invalidEnvironment: 'Environnement invalide',
     noPublicAccessToken: "Aucun jeton d'accès public fourni",
     noSessionToken: 'Aucun jeton de session ou ID fourni',
-    errorCreatingSession: 'Erreur lors de la création de la session de commande :',
+    errorCreatingSession:
+      'Erreur lors de la création de la session de commande :',
     orderIdRequired: "L'ID de commande est requis",
     errorTrackingEvent: "Erreur lors du suivi de l'événement",
     errorInTrackingSubscriber: "Erreur dans l'abonné de suivi",
-    useTrackingProviderError: 'useTracking doit être utilisé dans un TrackingProvider',
-    usePoyntCollectProviderError: 'usePoyntCollect doit être utilisé dans un PoyntCollectProvider',
-    useSquareProviderError: 'useSquare doit être utilisé dans un SquareProvider',
+    useTrackingProviderError:
+      'useTracking doit être utilisé dans un TrackingProvider',
+    usePoyntCollectProviderError:
+      'usePoyntCollect doit être utilisé dans un PoyntCollectProvider',
+    useSquareProviderError:
+      'useSquare doit être utilisé dans un SquareProvider',
     errorProcessingPayment: 'Erreur lors du traitement du paiement',
-    stripeConfigMissing: 'La configuration Stripe est manquante. Veuillez vérifier votre configuration.',
+    stripeConfigMissing:
+      'La configuration Stripe est manquante. Veuillez vérifier votre configuration.',
     paymentSuccessful: 'Paiement réussi',
     paymentFailed: 'Échec du paiement',
-    paypalConfigMissing: 'La configuration PayPal est manquante. Veuillez vérifier votre configuration.',
+    paypalConfigMissing:
+      'La configuration PayPal est manquante. Veuillez vérifier votre configuration.',
     stripeNotReady: "Stripe n'est pas prêt",
     cardElementNotFound: 'Élément de carte non trouvé',
-    errorProcessingCardPayment: 'Erreur lors du traitement du paiement par carte.',
-    errorProcessingExpressPayment: 'Erreur lors du traitement du paiement express.',
+    errorProcessingCardPayment:
+      'Erreur lors du traitement du paiement par carte.',
+    errorProcessingExpressPayment:
+      'Erreur lors du traitement du paiement express.',
     failedToInitializePayment: "Échec de l'initialisation du paiement.",
     invalidPhoneNumber: 'numéro de téléphone invalide',
   },
@@ -223,8 +235,10 @@ export const frFr = {
     invalidShippingAddress: 'Adresse de livraison invalide',
     invalidBillingAddress: 'Adresse de facturation invalide',
     selectPaymentMethod: 'Sélectionnez une méthode de paiement',
-    enterValidBillingPhone: 'Entrez un numéro de téléphone de facturation valide',
-    enterValidShippingPhone: 'Entrez un numéro de téléphone de livraison valide',
+    enterValidBillingPhone:
+      'Entrez un numéro de téléphone de facturation valide',
+    enterValidShippingPhone:
+      'Entrez un numéro de téléphone de livraison valide',
     enterFirstName: 'Entrez un prénom',
     enterLastName: 'Entrez un nom de famille',
     enterAddress: 'Entrez une adresse',
@@ -238,39 +252,53 @@ export const frFr = {
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Erreur du serveur',
     SESSION_NOT_FOUND: 'Session non trouvée',
-    CHECKOUT_SESSION_RETRIEVAL_FAILED: 'Échec de la récupération de la session de paiement',
+    CHECKOUT_SESSION_RETRIEVAL_FAILED:
+      'Échec de la récupération de la session de paiement',
     CHECKOUT_SESSION_NOT_FOUND: 'Session de paiement non trouvée',
-    CHECKOUT_SESSION_FETCH_ERROR: 'Erreur générale lors de la récupération de la session de paiement',
+    CHECKOUT_SESSION_FETCH_ERROR:
+      'Erreur générale lors de la récupération de la session de paiement',
     DRAFT_ORDER_NOT_FOUND: 'Commande non trouvée',
-    CHECKOUT_SESSION_CREATION_FAILED: 'Échec de la création de la session de paiement',
+    CHECKOUT_SESSION_CREATION_FAILED:
+      'Échec de la création de la session de paiement',
     CREATED_SESSION_DATA_NOT_FOUND: 'Données de session créées non trouvées',
-    CHECKOUT_SESSION_CREATION_ERROR: 'Erreur générale lors de la création de la session de paiement',
-    CHECKOUT_SESSION_UPDATE_FAILED: 'Échec de la mise à jour de la session de paiement',
+    CHECKOUT_SESSION_CREATION_ERROR:
+      'Erreur générale lors de la création de la session de paiement',
+    CHECKOUT_SESSION_UPDATE_FAILED:
+      'Échec de la mise à jour de la session de paiement',
     UPDATED_SESSION_NOT_FOUND: 'Session mise à jour non trouvée',
-    CHECKOUT_SESSION_UPDATE_ERROR: 'Erreur générale lors de la mise à jour de la session de paiement',
+    CHECKOUT_SESSION_UPDATE_ERROR:
+      'Erreur générale lors de la mise à jour de la session de paiement',
     ORDER_API_NOT_FOUND: "Source de données de l'API de commande non trouvée",
     DRAFT_ORDER_RETRIEVAL_FAILED: 'Échec de la récupération de la commande',
     DATA_SOURCES_NOT_FOUND: 'Sources de données non trouvées',
-    TRANSACTION_API_NOT_FOUND: "Source de données de l'API de transaction non trouvée",
+    TRANSACTION_API_NOT_FOUND:
+      "Source de données de l'API de transaction non trouvée",
     TRANSACTION_PROCESSING_FAILED: 'Échec du traitement de la transaction',
-    TRANSACTION_CREATION_FAILED: 'Échec de la recherche ou de la création de la transaction',
+    TRANSACTION_CREATION_FAILED:
+      'Échec de la recherche ou de la création de la transaction',
     ORDER_OPENING_FAILED: "Échec de l'ouverture de la commande",
     INVALID_FULFILLMENT_LOCATION: "Lieu d'exécution invalide",
     NO_VALID_PICKUP_LOCATION: 'Aucun lieu de retrait valide disponible',
     DRAFT_ORDER_FETCH_FAILED: 'Échec de la récupération de la commande',
     LINE_ITEMS_FETCH_FAILED: 'Échec de la récupération des articles',
-    CURRENT_ORDER_FETCH_FAILED: 'Échec de la récupération de la commande actuelle',
+    CURRENT_ORDER_FETCH_FAILED:
+      'Échec de la récupération de la commande actuelle',
     DRAFT_ORDER_UPDATE_FAILED: 'Échec de la mise à jour de la commande',
     DISCOUNT_APPLICATION_FAILED: "Échec de l'application du coupon",
     CONTEXT_UNAVAILABLE: 'Session ou sources de données non disponibles',
-    SHIPPING_LINES_UPDATE_FAILED: "Échec de la mise à jour des lignes d'expédition",
-    ORDER_TOTALS_UPDATE_FAILED: 'Échec de la mise à jour des totaux de la commande',
+    SHIPPING_LINES_UPDATE_FAILED:
+      "Échec de la mise à jour des lignes d'expédition",
+    ORDER_TOTALS_UPDATE_FAILED:
+      'Échec de la mise à jour des totaux de la commande',
     ORDER_TOTAL_CALCULATION_FAILED: 'Échec du calcul des totaux de la commande',
-    SHIPPING_METHOD_APPLICATION_FAILED: "Échec de l'application de la méthode d'expédition",
+    SHIPPING_METHOD_APPLICATION_FAILED:
+      "Échec de l'application de la méthode d'expédition",
     SKU_FETCH_FAILED: 'Échec de la récupération des SKU',
-    SHIPPING_RATES_CALCULATION_FAILED: "Échec du calcul des tarifs d'expédition",
+    SHIPPING_RATES_CALCULATION_FAILED:
+      "Échec du calcul des tarifs d'expédition",
     SHIPPING_METHOD_NOT_FOUND: "Méthode d'expédition non trouvée",
-    SHIPPING_METHOD_REMOVAL_FAILED: "Échec de la suppression de la méthode d'expédition",
+    SHIPPING_METHOD_REMOVAL_FAILED:
+      "Échec de la suppression de la méthode d'expédition",
     SHIPPING_ADDRESS_REQUIRED: 'Adresse de livraison requise',
     INVENTORY_VALIDATION_ERROR: 'Erreur de validation des stocks',
     INSUFFICIENT_INVENTORY: 'Stock insuffisant',
@@ -284,7 +312,8 @@ export const frFr = {
     ADDRESS_MATCHES_ERROR: "Erreur de correspondance d'adresse",
     SHIPPING_CONFLICT_ERROR: "Conflit d'expédition",
     SHIPPING_ERROR: "Erreur générale d'expédition",
-    PRICE_ADJUSTMENT_CALCULATION_ERROR: "Erreur lors du calcul de l'ajustement de prix",
+    PRICE_ADJUSTMENT_CALCULATION_ERROR:
+      "Erreur lors du calcul de l'ajustement de prix",
     ORDER_FETCH_ERROR: 'Erreur lors de la récupération de la commande',
     DRAFT_ORDER_UPDATE_ERROR: 'Erreur lors de la mise à jour de la commande',
     DISCOUNT_APPLICATION_ERROR: "Erreur lors de l'application du coupon",
@@ -300,8 +329,10 @@ export const frFr = {
     CATALOG_API_ERROR: 'Erreur du service catalogue',
     TAX_SERVICE_UNAVAILABLE: 'Service de taxes indisponible',
     SHIPPING_SERVICE_UNAVAILABLE: 'Service de livraison indisponible',
-    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE: "Service d'ajustements de prix indisponible",
-    PRICE_ADJUSTMENTS_CALCULATION_FAILED: 'Échec du calcul des ajustements de prix',
+    PRICE_ADJUSTMENTS_SERVICE_UNAVAILABLE:
+      "Service d'ajustements de prix indisponible",
+    PRICE_ADJUSTMENTS_CALCULATION_FAILED:
+      'Échec du calcul des ajustements de prix',
     SERVICE_UNAVAILABLE: 'Service temporairement indisponible',
     RATE_LIMITED: 'Trop de requêtes, veuillez réessayer plus tard',
     TIMEOUT: "Délai d'attente dépassé",
@@ -309,9 +340,13 @@ export const frFr = {
     SHIPPING_POSTAL_CODE_REQUIRED: "Le code postal d'expédition est requis",
     SHIPPING_COUNTRY_CODE_REQUIRED: "Le code de pays d'expédition est requis",
     SHIPPING_METHOD_REQUIRED: "La méthode d'expédition est requise",
-    SHIPPING_ADDRESS_VERIFICATION_FAILED: "La vérification de l'adresse d'expédition a échoué",
-    BILLING_ADDRESS_VERIFICATION_FAILED: "La vérification de l'adresse de facturation a échoué",
-    MISSING_SHIPPING_INFO: "L'adresse ou la méthode de livraison n'a pas pu être appliquée",
-    DEPENDENCY_ERROR: 'Nous ne pouvons pas traiter votre commande actuellement. Veuillez patienter un moment et réessayer',
+    SHIPPING_ADDRESS_VERIFICATION_FAILED:
+      "La vérification de l'adresse d'expédition a échoué",
+    BILLING_ADDRESS_VERIFICATION_FAILED:
+      "La vérification de l'adresse de facturation a échoué",
+    MISSING_SHIPPING_INFO:
+      "L'adresse ou la méthode de livraison n'a pas pu être appliquée",
+    DEPENDENCY_ERROR:
+      'Nous ne pouvons pas traiter votre commande actuellement. Veuillez patienter un moment et réessayer',
   },
 };

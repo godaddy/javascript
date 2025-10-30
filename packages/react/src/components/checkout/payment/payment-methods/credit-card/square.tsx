@@ -61,7 +61,10 @@ export function SquareCreditCardForm() {
     try {
       if (!squareConfig) return;
 
-      const payments = window?.Square?.payments(squareConfig.appId, squareConfig.locationId);
+      const payments = window?.Square?.payments(
+        squareConfig.appId,
+        squareConfig.locationId
+      );
 
       const cardOptions = {
         style: {

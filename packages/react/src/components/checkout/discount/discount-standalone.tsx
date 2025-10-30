@@ -14,7 +14,11 @@ import { TrackingEventType, track } from '@/tracking/track';
 import { Discounts } from './discounts';
 import type { DiscountFormProps } from './types';
 
-export function DiscountStandalone({ initialDiscounts = [], onDiscountsChange, onError }: DiscountFormProps) {
+export function DiscountStandalone({
+  initialDiscounts = [],
+  onDiscountsChange,
+  onError,
+}: DiscountFormProps) {
   const { t } = useGoDaddyContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const { data: draftOrder } = useDraftOrder();
@@ -66,7 +70,9 @@ export function DiscountStandalone({ initialDiscounts = [], onDiscountsChange, o
   const [discountCode, setDiscountCode] = useState<string>('');
   const [formErrors, setFormErrors] = useState<string[] | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isRemovingDiscount, setIsRemovingDiscount] = useState<string | undefined>(undefined);
+  const [isRemovingDiscount, setIsRemovingDiscount] = useState<
+    string | undefined
+  >(undefined);
   const applyDiscount = useDiscountApply();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,7 +162,9 @@ export function DiscountStandalone({ initialDiscounts = [], onDiscountsChange, o
   };
 
   const handleRemoveDiscount = async (discountToRemove: string) => {
-    const newDiscountCodes = currentDiscountCodes.filter(d => d !== discountToRemove);
+    const newDiscountCodes = currentDiscountCodes.filter(
+      d => d !== discountToRemove
+    );
 
     try {
       setIsRemovingDiscount(discountToRemove);
@@ -232,7 +240,11 @@ export function DiscountStandalone({ initialDiscounts = [], onDiscountsChange, o
 
       {currentDiscountCodes.length > 0 && (
         <div className='mt-2'>
-          <Discounts discounts={currentDiscountCodes} onRemove={handleRemoveDiscount} isRemovingDiscount={isRemovingDiscount} />
+          <Discounts
+            discounts={currentDiscountCodes}
+            onRemove={handleRemoveDiscount}
+            isRemovingDiscount={isRemovingDiscount}
+          />
         </div>
       )}
     </div>

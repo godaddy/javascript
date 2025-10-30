@@ -663,7 +663,11 @@ export const BR = [
     ['Tocantins', 'TO'],
   ],
 ];
-export const IO = ['British Indian Ocean Territory', 'IO', [['British Indian Ocean Territory', 'IO']]];
+export const IO = [
+  'British Indian Ocean Territory',
+  'IO',
+  [['British Indian Ocean Territory', 'IO']],
+];
 export const BN = [
   'Brunei Darussalam',
   'BN',
@@ -1432,7 +1436,11 @@ export const ET = [
     ['Tigray', 'TI'],
   ],
 ];
-export const FK = ['Falkland Islands (Islas Malvinas)', 'FK', [['Falkland Islands (Islas Malvinas)', undefined]]];
+export const FK = [
+  'Falkland Islands (Islas Malvinas)',
+  'FK',
+  [['Falkland Islands (Islas Malvinas)', undefined]],
+];
 export const FO = [
   'Faroe Islands',
   'FO',
@@ -1788,8 +1796,16 @@ export const HT = [
     ['Sud-Est', 'SE'],
   ],
 ];
-export const HM = ['Heard Island and McDonald Islands', 'HM', [['Heard Island and McDonald Islands', undefined]]];
-export const VA = ['Holy See (Vatican City)', 'VA', [['Holy See (Vatican City)', '01']]];
+export const HM = [
+  'Heard Island and McDonald Islands',
+  'HM',
+  [['Heard Island and McDonald Islands', undefined]],
+];
+export const VA = [
+  'Holy See (Vatican City)',
+  'VA',
+  [['Holy See (Vatican City)', '01']],
+];
 export const HN = [
   'Honduras',
   'HN',
@@ -4183,7 +4199,11 @@ export const SG = [
     ['South West', '05'],
   ],
 ];
-export const SX = ['Sint Maarten (Dutch part)', 'SX', [['Sint Maarten', undefined]]];
+export const SX = [
+  'Sint Maarten (Dutch part)',
+  'SX',
+  [['Sint Maarten', undefined]],
+];
 export const SK = [
   'Slovakia',
   'SK',
@@ -5050,7 +5070,11 @@ export const TM = [
     ['Mary', 'M'],
   ],
 ];
-export const TC = ['Turks and Caicos Islands', 'TC', [['Turks and Caicos Islands', undefined]]];
+export const TC = [
+  'Turks and Caicos Islands',
+  'TC',
+  [['Turks and Caicos Islands', undefined]],
+];
 export const TV = [
   'Tuvalu',
   'TV',

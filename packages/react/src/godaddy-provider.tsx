@@ -1,5 +1,9 @@
 import { enUs } from '@godaddy/localizations';
-import { QueryClient, QueryClientProvider, type QueryClientProviderProps } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  type QueryClientProviderProps,
+} from '@tanstack/react-query';
 import React from 'react';
 
 function createQueryClient() {
@@ -86,13 +90,17 @@ export function GoDaddyProvider({
   children,
 }: GoDaddyProviderProps) {
   // Create a new QueryClient per component instance for SSR safety
-  const [clientInstance] = React.useState(() => providedQueryClient ?? createQueryClient());
+  const [clientInstance] = React.useState(
+    () => providedQueryClient ?? createQueryClient()
+  );
   // Apply the 'gd-' prefix to CSS variables
   const processedAppearance = React.useMemo(() => {
     if (!appearance?.variables) return appearance;
 
     const processedVariables =
-      'checkout' in appearance.variables ? { checkout: appearance.variables.checkout } : appearance.variables;
+      'checkout' in appearance.variables
+        ? { checkout: appearance.variables.checkout }
+        : appearance.variables;
 
     return {
       ...appearance,
@@ -101,8 +109,12 @@ export function GoDaddyProvider({
   }, [appearance]);
 
   return (
-    <godaddyContext.Provider value={{ t: localization, appearance: processedAppearance, debug }}>
-      <QueryClientProvider client={clientInstance}>{children}</QueryClientProvider>
+    <godaddyContext.Provider
+      value={{ t: localization, appearance: processedAppearance, debug }}
+    >
+      <QueryClientProvider client={clientInstance}>
+        {children}
+      </QueryClientProvider>
     </godaddyContext.Provider>
   );
 }

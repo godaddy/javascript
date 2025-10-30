@@ -6,7 +6,13 @@ import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderFieldSync } from '@/components/checkout/order/use-draft-order-sync';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { eventIds } from '@/tracking/events';
@@ -30,7 +36,13 @@ export function ContactForm() {
     const shippingIsDifferent = draftOrder?.shipping?.email !== contactEmail;
     const billingIsDifferent = draftOrder?.billing?.email !== contactEmail;
 
-    return !!contactEmail?.trim() && (shippingEmailMissing || billingEmailMissing || shippingIsDifferent || billingIsDifferent);
+    return (
+      !!contactEmail?.trim() &&
+      (shippingEmailMissing ||
+        billingEmailMissing ||
+        shippingIsDifferent ||
+        billingIsDifferent)
+    );
   }, [draftOrder, contactEmail]);
 
   const [email] = useDebouncedValue(contactEmail, {
@@ -41,7 +53,11 @@ export function ContactForm() {
     key: 'email',
     data: email,
     deps: [email, emailHasChanged, draftOrder],
-    enabled: emailHasChanged && email?.trim() && email === contactEmail && !!draftOrder,
+    enabled:
+      emailHasChanged &&
+      email?.trim() &&
+      email === contactEmail &&
+      !!draftOrder,
     fieldNames: ['contactEmail'],
     mapToInput: emailValue => {
       if (!draftOrder) return {};
@@ -50,8 +66,12 @@ export function ContactForm() {
       const billingIsDifferent = draftOrder?.billing?.email !== emailValue;
 
       return {
-        ...(shippingIsDifferent ? { shipping: { email: emailValue?.trim() } } : {}),
-        ...(billingIsDifferent ? { billing: { email: emailValue?.trim() } } : {}),
+        ...(shippingIsDifferent
+          ? { shipping: { email: emailValue?.trim() } }
+          : {}),
+        ...(billingIsDifferent
+          ? { billing: { email: emailValue?.trim() } }
+          : {}),
       };
     },
   });

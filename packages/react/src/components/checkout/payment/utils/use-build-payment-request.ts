@@ -2,7 +2,10 @@ import type { CreateTokenCardData } from '@stripe/stripe-js';
 import type { ConfirmationTokenCreateParams } from '@stripe/stripe-js/dist/api/confirmation-tokens';
 import { useMemo } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useDraftOrder, useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import {
+  useDraftOrder,
+  useDraftOrderTotals,
+} from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderProductsMap } from '@/components/checkout/order/use-draft-order-products';
 import { mapSkusToItemsDisplay } from '@/components/checkout/utils/checkout-transformers';
 
@@ -151,7 +154,11 @@ export interface PoyntExpressRequest {
       | 'unserviceable_address'
       | 'unknown';
     message?: string;
-    contactField?: 'administrativeArea' | 'countryCode' | 'postalCode' | 'locality';
+    contactField?:
+      | 'administrativeArea'
+      | 'countryCode'
+      | 'postalCode'
+      | 'locality';
   };
 }
 
@@ -181,12 +188,19 @@ export function useBuildPaymentRequest(): {
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const lineItems = order?.lineItems || [];
 
-  const items = useMemo(() => mapSkusToItemsDisplay(lineItems, skusMap), [lineItems, skusMap]);
+  const items = useMemo(
+    () => mapSkusToItemsDisplay(lineItems, skusMap),
+    [lineItems, skusMap]
+  );
 
   // Convert amounts from cents to dollars for display
   const subtotal = (totals?.subTotal?.value || 0) / 100;
   const tax = (totals?.taxTotal?.value || 0) / 100;
-  const shipping = (order?.shippingLines?.reduce((sum, line) => sum + (line?.amount?.value || 0), 0) || 0) / 100;
+  const shipping =
+    (order?.shippingLines?.reduce(
+      (sum, line) => sum + (line?.amount?.value || 0),
+      0
+    ) || 0) / 100;
   const discount = (totals?.discountTotal?.value || 0) / 100;
   const total = (totals?.total?.value || 0) / 100;
 
@@ -199,7 +213,8 @@ export function useBuildPaymentRequest(): {
   const shippingAddress = useMemo(
     () => ({
       name: {
-        full_name: `${order?.shipping?.firstName || ''} ${order?.shipping?.lastName || ''}`.trim(),
+        full_name:
+          `${order?.shipping?.firstName || ''} ${order?.shipping?.lastName || ''}`.trim(),
       },
       address: {
         address_line_1: order?.shipping?.address?.addressLine1 || undefined,
@@ -216,7 +231,8 @@ export function useBuildPaymentRequest(): {
   const billingAddress = useMemo(
     () => ({
       name: {
-        full_name: `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim(),
+        full_name:
+          `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim(),
       },
       address: {
         address_line_1: order?.billing?.address?.addressLine1 || undefined,
@@ -298,7 +314,13 @@ export function useBuildPaymentRequest(): {
         type: 'CARD',
         parameters: {
           allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-          allowedCardNetworks: ['AMEX', 'DISCOVER', 'JCB', 'MASTERCARD', 'VISA'],
+          allowedCardNetworks: [
+            'AMEX',
+            'DISCOVER',
+            'JCB',
+            'MASTERCARD',
+            'VISA',
+          ],
         },
         tokenizationSpecification: {
           type: 'PAYMENT_GATEWAY',
@@ -400,7 +422,9 @@ export function useBuildPaymentRequest(): {
   };
 
   const stripePaymentCardRequest: CreateTokenCardData = {
-    name: `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() || undefined,
+    name:
+      `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() ||
+      undefined,
     address_line1: order?.billing?.address?.addressLine1 || undefined,
     address_line2: order?.billing?.address?.addressLine2 || undefined,
     address_city: order?.billing?.address?.adminArea2 || undefined,
@@ -412,7 +436,9 @@ export function useBuildPaymentRequest(): {
   const stripePaymentExpressRequest: ConfirmationTokenCreateParams = {
     payment_method_data: {
       billing_details: {
-        name: `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() || undefined,
+        name:
+          `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() ||
+          undefined,
         email: order?.billing?.email || undefined,
         address: {
           line1: order?.billing?.address?.addressLine1 || undefined,
@@ -456,7 +482,10 @@ export function useBuildPaymentRequest(): {
       familyName: order?.billing?.lastName || '',
       email: order?.billing?.email || '',
       phone: order?.billing?.phone || undefined,
-      addressLines: [order?.billing?.address?.addressLine1 || '', order?.billing?.address?.addressLine2 || ''].filter(Boolean),
+      addressLines: [
+        order?.billing?.address?.addressLine1 || '',
+        order?.billing?.address?.addressLine2 || '',
+      ].filter(Boolean),
       city: order?.billing?.address?.adminArea2 || '',
       state: order?.billing?.address?.adminArea1 || '',
       countryCode: order?.billing?.address?.countryCode || countryCode,
@@ -477,7 +506,9 @@ export function useBuildPaymentRequest(): {
       ...(items || []).map(lineItem => {
         return {
           label: lineItem?.name || '',
-          amount: ((lineItem?.originalPrice || 0) * (lineItem?.quantity || 1)).toString(),
+          amount: (
+            (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1)
+          ).toString(),
         };
       }),
     ],
@@ -492,7 +523,9 @@ export function useBuildPaymentRequest(): {
       ...(items || []).map(lineItem => {
         return {
           label: lineItem?.name || '',
-          amount: ((lineItem?.originalPrice || 0) * (lineItem?.quantity || 1)).toString(),
+          amount: (
+            (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1)
+          ).toString(),
         };
       }),
       {

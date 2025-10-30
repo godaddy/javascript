@@ -1,7 +1,11 @@
 import { CircleAlert } from 'lucide-react';
 import { useGoDaddyContext } from '@/godaddy-provider';
 
-export function DiscountErrorList({ checkoutErrors }: { checkoutErrors?: string[] }) {
+export function DiscountErrorList({
+  checkoutErrors,
+}: {
+  checkoutErrors?: string[];
+}) {
   const { t } = useGoDaddyContext();
 
   if (!checkoutErrors?.length) return null;

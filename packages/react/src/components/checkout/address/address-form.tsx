@@ -4,7 +4,11 @@ import { useDebouncedValue } from '@tanstack/react-pacer';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { countries, getRegions, hasRegionData } from '@/components/checkout/address/get-country-region';
+import {
+  countries,
+  getRegions,
+  hasRegionData,
+} from '@/components/checkout/address/get-country-region';
 import { isAddressComplete } from '@/components/checkout/address/utils/is-address-complete';
 import { mapAddressFieldsToInput } from '@/components/checkout/address/utils/map-address-fields-to-input';
 import { useAddressMatches } from '@/components/checkout/address/utils/use-address-matches';
@@ -14,11 +18,34 @@ import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderFieldSync } from '@/components/checkout/order/use-draft-order-sync';
 import { AutoComplete } from '@/components/ui/autocomplete';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
@@ -34,8 +61,10 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
   const { data: draftOrder } = useDraftOrder();
   const countryTriggerRef = React.useRef<HTMLButtonElement>(null);
   const [triggerWidth, setTriggerWidth] = React.useState<number | null>(null);
-  const [isCountrySelectOpen, setCountrySelectOpen] = React.useState<boolean>(false);
-  const [isAutocompleteOpen, setIsAutocompleteOpen] = React.useState<boolean>(false);
+  const [isCountrySelectOpen, setCountrySelectOpen] =
+    React.useState<boolean>(false);
+  const [isAutocompleteOpen, setIsAutocompleteOpen] =
+    React.useState<boolean>(false);
 
   React.useEffect(() => {
     function updateWidth() {
@@ -78,11 +107,17 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
     `${sectionKey}CountryCode`,
   ]);
 
-  const contact = React.useMemo(() => ({ firstName, lastName }), [firstName, lastName]);
+  const contact = React.useMemo(
+    () => ({ firstName, lastName }),
+    [firstName, lastName]
+  );
 
-  const [debouncedFullName] = useDebouncedValue(Object.values(contact).join(''), {
-    wait: 1000,
-  });
+  const [debouncedFullName] = useDebouncedValue(
+    Object.values(contact).join(''),
+    {
+      wait: 1000,
+    }
+  );
 
   const [debouncedAddressValue] = useDebouncedValue(addressValue, {
     wait: 200,
@@ -91,9 +126,13 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
   // Check if name values differ from order values
   const nameHasChanged = React.useMemo(() => {
     if (!draftOrder) return true; // If no order, allow sync
-    const section = sectionKey === 'shipping' ? draftOrder.shipping : draftOrder.billing;
+    const section =
+      sectionKey === 'shipping' ? draftOrder.shipping : draftOrder.billing;
 
-    return (section?.firstName || '') !== (firstName || '') || (section?.lastName || '') !== (lastName || '');
+    return (
+      (section?.firstName || '') !== (firstName || '') ||
+      (section?.lastName || '') !== (lastName || '')
+    );
   }, [draftOrder, sectionKey, firstName, lastName]);
 
   const shouldVerifyName =
@@ -131,15 +170,29 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
       postalCode,
       countryCode,
     }),
-    [addressLine1, addressLine2, addressLine3, adminArea1, adminArea2, adminArea3, adminArea4, postalCode, countryCode]
+    [
+      addressLine1,
+      addressLine2,
+      addressLine3,
+      adminArea1,
+      adminArea2,
+      adminArea3,
+      adminArea4,
+      postalCode,
+      countryCode,
+    ]
   );
 
-  const [debouncedFullAddress] = useDebouncedValue(Object.values(address).join(''), { wait: 1000 });
+  const [debouncedFullAddress] = useDebouncedValue(
+    Object.values(address).join(''),
+    { wait: 1000 }
+  );
 
   // Get existing order address data for comparison
   const orderAddress = React.useMemo(() => {
     if (!draftOrder) return null;
-    const section = sectionKey === 'shipping' ? draftOrder.shipping : draftOrder.billing;
+    const section =
+      sectionKey === 'shipping' ? draftOrder.shipping : draftOrder.billing;
     return section
       ? {
           addressLine1: section?.address?.addressLine1 || '',
@@ -190,7 +243,11 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
   }, [orderAddress, addressLine1]);
 
   const addressMatchesQuery = useAddressMatches(debouncedAddressValue, {
-    enabled: !!session?.enableAddressAutocomplete && !!debouncedAddressValue && countryValue === 'US' && addressLine1HasChanged,
+    enabled:
+      !!session?.enableAddressAutocomplete &&
+      !!debouncedAddressValue &&
+      countryValue === 'US' &&
+      addressLine1HasChanged,
   });
 
   function handleUpdateAddress(selectedAddress?: Address) {
@@ -252,7 +309,10 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
         render={({ field, fieldState }) => (
           <FormItem className='flex flex-col'>
             <FormLabel className='sr-only'>{t.shipping.country}</FormLabel>
-            <Popover open={isCountrySelectOpen} onOpenChange={setCountrySelectOpen}>
+            <Popover
+              open={isCountrySelectOpen}
+              onOpenChange={setCountrySelectOpen}
+            >
               <PopoverTrigger asChild>
                 <FormControl>
                   <Button
@@ -267,7 +327,10 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
                     aria-required={requiredFields?.[`${sectionKey}CountryCode`]}
                     tabIndex={0}
                   >
-                    {field.value ? countries.find(country => country.value === field.value)?.label : t.shipping.selectCountry}
+                    {field.value
+                      ? countries.find(country => country.value === field.value)
+                          ?.label
+                      : t.shipping.selectCountry}
                     <ChevronsUpDown className='opacity-50' />
                   </Button>
                 </FormControl>
@@ -279,7 +342,11 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
                 }}
               >
                 <Command>
-                  <CommandInput placeholder={t.shipping.searchCountry} className='h-12' disabled={isConfirmingCheckout} />
+                  <CommandInput
+                    placeholder={t.shipping.searchCountry}
+                    className='h-12'
+                    disabled={isConfirmingCheckout}
+                  />
                   <CommandList>
                     <CommandEmpty>{t.shipping.noCountryFound}</CommandEmpty>
                     <CommandGroup>
@@ -289,12 +356,18 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
                           key={country.value}
                           onSelect={() => {
                             // Get current country before setting the new one
-                            const previousCountry = form.getValues(`${sectionKey}CountryCode`);
+                            const previousCountry = form.getValues(
+                              `${sectionKey}CountryCode`
+                            );
 
                             // Set the new country value
-                            form.setValue(`${sectionKey}CountryCode`, country.value, {
-                              shouldValidate: true,
-                            });
+                            form.setValue(
+                              `${sectionKey}CountryCode`,
+                              country.value,
+                              {
+                                shouldValidate: true,
+                              }
+                            );
 
                             if (previousCountry !== country.value) {
                               form.setValue(`${sectionKey}AddressLine1`, '', {
@@ -331,7 +404,14 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
                           disabled={isConfirmingCheckout}
                         >
                           {country.label}
-                          <Check className={cn('ml-auto', country.value === field.value ? 'opacity-100' : 'opacity-0')} />
+                          <Check
+                            className={cn(
+                              'ml-auto',
+                              country.value === field.value
+                                ? 'opacity-100'
+                                : 'opacity-0'
+                            )}
+                          />
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -403,7 +483,10 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
                     handleUpdateAddress(selectedAddress as Address);
                   }}
                   onOpenChange={setIsAutocompleteOpen}
-                  isLoading={addressMatchesQuery?.isLoading || addressMatchesQuery?.isFetching}
+                  isLoading={
+                    addressMatchesQuery?.isLoading ||
+                    addressMatchesQuery?.isFetching
+                  }
                   hasError={!!fieldState.error}
                   aria-required={requiredFields?.[`${sectionKey}AddressLine1`]}
                   disabled={isConfirmingCheckout}
@@ -495,7 +578,9 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
                           sectionKey,
                           countryCode: countryValue,
                           regionCode: value,
-                          regionName: getRegions(countryValue)?.find(r => r.code === value)?.label,
+                          regionName: getRegions(countryValue)?.find(
+                            r => r.code === value
+                          )?.label,
                         },
                       });
                     }}
@@ -505,7 +590,9 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
                       <SelectTrigger
                         hasError={!!fieldState.error}
                         disabled={isConfirmingCheckout}
-                        aria-required={requiredFields?.[`${sectionKey}AdminArea1`]}
+                        aria-required={
+                          requiredFields?.[`${sectionKey}AdminArea1`]
+                        }
                         tabIndex={0}
                       >
                         <SelectValue placeholder={t.shipping.region} />
@@ -513,7 +600,11 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
                     </FormControl>
                     <SelectContent>
                       {getRegions(countryValue)?.map(region => (
-                        <SelectItem key={region.code} value={region.code} disabled={isConfirmingCheckout}>
+                        <SelectItem
+                          key={region.code}
+                          value={region.code}
+                          disabled={isConfirmingCheckout}
+                        >
                           {region.label}
                         </SelectItem>
                       ))}

@@ -116,17 +116,36 @@ export type ShippingMethods =
 
 export declare class TokenizeJs {
   constructor(businessId: string, appId: string, options?: TokenizeJsOptions);
-  mount(elementId: string, document: Document, mountOptions?: TokenizeJsOptions): void;
+  mount(
+    elementId: string,
+    document: Document,
+    mountOptions?: TokenizeJsOptions
+  ): void;
   unmount(elementId: string, document: Document): void;
   on(eventName: 'ready', callback: (event: TokenizeJsEvent) => void): void;
   on(eventName: 'nonce', callback: (event: TokenizeJsEvent) => void): void;
   on(eventName: 'error', callback: (event: TokenizeJsEvent) => void): void;
   on(eventName: 'validated', callback: (event: TokenizeJsEvent) => void): void;
-  on(eventName: 'close_wallet', callback: (event: TokenizeJsEvent) => void): void;
-  on(eventName: 'payment_authorized', callback: (event: PaymentAuthorizedResponse) => void): void;
-  on(eventName: 'shipping_method_change', callback: (event: ShippingMethodResponse) => void): void;
-  on(eventName: 'shipping_address_change', callback: (event: ShippingAddressResponse) => void): void;
-  on(eventName: 'coupon_code_change', callback: (event: CouponCodeResponse) => void): void;
+  on(
+    eventName: 'close_wallet',
+    callback: (event: TokenizeJsEvent) => void
+  ): void;
+  on(
+    eventName: 'payment_authorized',
+    callback: (event: PaymentAuthorizedResponse) => void
+  ): void;
+  on(
+    eventName: 'shipping_method_change',
+    callback: (event: ShippingMethodResponse) => void
+  ): void;
+  on(
+    eventName: 'shipping_address_change',
+    callback: (event: ShippingAddressResponse) => void
+  ): void;
+  on(
+    eventName: 'coupon_code_change',
+    callback: (event: CouponCodeResponse) => void
+  ): void;
   startGooglePaySession: (obj: object) => void;
   startApplePaySession: (obj: object) => void;
   abortApplePaySession: () => void;

@@ -11,16 +11,21 @@ export function StripeCreditCardForm() {
   const { stripeConfig } = useCheckoutContext();
   const [cardError, setCardError] = useState<string | null>(null);
 
-  const handleCardChange = useCallback((event: StripeCardElementChangeEvent) => {
-    if (event.error) {
-      setCardError(event.error.message);
-    } else {
-      setCardError(null);
-    }
-  }, []);
+  const handleCardChange = useCallback(
+    (event: StripeCardElementChangeEvent) => {
+      if (event.error) {
+        setCardError(event.error.message);
+      } else {
+        setCardError(null);
+      }
+    },
+    []
+  );
 
   if (!stripeConfig) {
-    return <div className='text-destructive'>{t.errors.stripeConfigMissing}</div>;
+    return (
+      <div className='text-destructive'>{t.errors.stripeConfigMissing}</div>
+    );
   }
 
   const { isLoading } = useStripePaymentIntent();
@@ -29,7 +34,10 @@ export function StripeCreditCardForm() {
 
   return (
     <div className='space-y-4'>
-      <label htmlFor='stripe-card-element' className='block text-sm font-medium mb-1 sr-only'>
+      <label
+        htmlFor='stripe-card-element'
+        className='block text-sm font-medium mb-1 sr-only'
+      >
         {t.payment.cardDetails}
       </label>
       <div className='border border-input rounded px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-primary transition'>
@@ -43,7 +51,11 @@ export function StripeCreditCardForm() {
           aria-labelledby='stripe-card-element'
         />
       </div>
-      {cardError && <p className='text-[0.8rem] font-medium text-destructive'>{cardError}</p>}
+      {cardError && (
+        <p className='text-[0.8rem] font-medium text-destructive'>
+          {cardError}
+        </p>
+      )}
     </div>
   );
 }

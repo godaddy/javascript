@@ -12,10 +12,27 @@ import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderFieldSync } from '@/components/checkout/order/use-draft-order-sync';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
@@ -33,11 +50,17 @@ function FlagComponent({ country, countryName }: RPNInput.FlagProps) {
 }
 
 const PhoneTextInput = React.memo(
-  React.forwardRef<HTMLInputElement, React.ComponentProps<'input'> & { hasError?: boolean }>(
-    ({ className, hasError, ...props }, ref) => (
-      <Input className={cn('rounded-e-md rounded-s-none border-l-0 pl-2', className)} hasError={hasError} {...props} ref={ref} />
-    )
-  )
+  React.forwardRef<
+    HTMLInputElement,
+    React.ComponentProps<'input'> & { hasError?: boolean }
+  >(({ className, hasError, ...props }, ref) => (
+    <Input
+      className={cn('rounded-e-md rounded-s-none border-l-0 pl-2', className)}
+      hasError={hasError}
+      {...props}
+      ref={ref}
+    />
+  ))
 );
 
 interface CountryEntry {
@@ -53,7 +76,13 @@ interface CountrySelectProps {
   hasError?: boolean;
 }
 
-function CountrySelect({ disabled, value: selectedCountry, options: countryList, onChange, hasError }: CountrySelectProps) {
+function CountrySelect({
+  disabled,
+  value: selectedCountry,
+  options: countryList,
+  onChange,
+  hasError,
+}: CountrySelectProps) {
   const { t } = useGoDaddyContext();
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
   const [searchValue, setSearchValue] = React.useState('');
@@ -70,7 +99,10 @@ function CountrySelect({ disabled, value: selectedCountry, options: countryList,
           disabled={disabled}
           tabIndex={0}
         >
-          <FlagComponent country={selectedCountry} countryName={selectedCountry} />
+          <FlagComponent
+            country={selectedCountry}
+            countryName={selectedCountry}
+          />
           <ChevronsUpDown className='size-1 text-muted-foreground' />
         </Button>
       </PopoverTrigger>
@@ -82,7 +114,9 @@ function CountrySelect({ disabled, value: selectedCountry, options: countryList,
               setSearchValue(value);
               setTimeout(() => {
                 if (scrollAreaRef.current) {
-                  const viewportElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+                  const viewportElement = scrollAreaRef.current.querySelector(
+                    '[data-radix-scroll-area-viewport]'
+                  );
                   if (viewportElement) {
                     viewportElement.scrollTop = 0;
                   }
@@ -120,7 +154,12 @@ interface CountrySelectOptionProps extends RPNInput.FlagProps {
   onChange: (country: RPNInput.Country) => void;
 }
 
-const CountrySelectOption = ({ country, countryName, selectedCountry, onChange }: CountrySelectOptionProps) => {
+const CountrySelectOption = ({
+  country,
+  countryName,
+  selectedCountry,
+  onChange,
+}: CountrySelectOptionProps) => {
   return (
     <CommandItem
       className='gap-2 hover:bg-muted'
@@ -142,7 +181,9 @@ const CountrySelectOption = ({ country, countryName, selectedCountry, onChange }
       <FlagComponent country={country} countryName={countryName} />
       <span className='flex-1 text-sm'>{countryName}</span>
       <span className='text-sm text-foreground/50'>{`+${RPNInput.getCountryCallingCode(country)}`}</span>
-      <CheckIcon className={`ml-auto size-2 ${country === selectedCountry ? 'opacity-100' : 'opacity-0'}`} />
+      <CheckIcon
+        className={`ml-auto size-2 ${country === selectedCountry ? 'opacity-100' : 'opacity-0'}`}
+      />
     </CommandItem>
   );
 };
@@ -159,7 +200,13 @@ function getCountryFromPhoneNumber(phoneNumberString: string) {
   return undefined;
 }
 
-export function PhoneInput({ sectionKey, disabled }: { sectionKey: string; disabled?: boolean }) {
+export function PhoneInput({
+  sectionKey,
+  disabled,
+}: {
+  sectionKey: string;
+  disabled?: boolean;
+}) {
   const form = useFormContext();
   const { t } = useGoDaddyContext();
   const { session, requiredFields } = useCheckoutContext();
@@ -172,17 +219,21 @@ export function PhoneInput({ sectionKey, disabled }: { sectionKey: string; disab
     wait: 1000,
   });
 
-  const section = sectionKey === 'shipping' ? draftOrder?.shipping : draftOrder?.billing;
+  const section =
+    sectionKey === 'shipping' ? draftOrder?.shipping : draftOrder?.billing;
 
   const defaultCountryCode =
-    getCountryFromPhoneNumber(section?.phone || '') || session?.shipping?.originAddress?.countryCode || 'US';
+    getCountryFromPhoneNumber(section?.phone || '') ||
+    session?.shipping?.originAddress?.countryCode ||
+    'US';
 
   const isValidPhone = React.useMemo(() => checkIsValidPhone(phone), [phone]);
 
   // Check if phone value differs from order value
   const phoneHasChanged = React.useMemo(() => {
     if (!draftOrder) return true; // If no order, allow sync
-    const orderSection = sectionKey === 'shipping' ? draftOrder.shipping : draftOrder.billing;
+    const orderSection =
+      sectionKey === 'shipping' ? draftOrder.shipping : draftOrder.billing;
     return (orderSection?.phone || '') !== (phone || '');
   }, [draftOrder, sectionKey, phone]);
 
@@ -193,9 +244,16 @@ export function PhoneInput({ sectionKey, disabled }: { sectionKey: string; disab
     enabled:
       phoneHasChanged && // Only sync if values differ from order
       phone === phoneValue &&
-      (phone ? isValidPhone && phone?.trim() !== '' : !phone && phoneValue === ''),
+      (phone
+        ? isValidPhone && phone?.trim() !== ''
+        : !phone && phoneValue === ''),
     fieldNames: [`${sectionKey}Phone`],
-    mapToInput: data => mapAddressFieldsToInput({ phone: data }, sectionKey as 'shipping' | 'billing', useShippingAddress),
+    mapToInput: data =>
+      mapAddressFieldsToInput(
+        { phone: data },
+        sectionKey as 'shipping' | 'billing',
+        useShippingAddress
+      ),
   });
 
   return session?.enablePhoneCollection ? (
@@ -245,7 +303,9 @@ export function PhoneInput({ sectionKey, disabled }: { sectionKey: string; disab
                 [fieldState.error, sectionKey]
               )}
               countrySelectComponent={React.useCallback(
-                (props: CountrySelectProps) => <CountrySelect hasError={!!fieldState.error} {...props} />,
+                (props: CountrySelectProps) => (
+                  <CountrySelect hasError={!!fieldState.error} {...props} />
+                ),
                 [fieldState.error]
               )}
               className='flex rounded-md'

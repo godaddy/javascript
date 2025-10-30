@@ -6,7 +6,12 @@ import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderFieldSync } from '@/components/checkout/order/use-draft-order-sync';
-import { FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { eventIds } from '@/tracking/events';
@@ -41,7 +46,9 @@ export function NotesForm() {
   // Check if notes value differs from order value
   const notesHasChanged = React.useMemo(() => {
     if (!draftOrder) return true; // If no order, allow sync
-    const orderNotes = draftOrder.notes?.find(note => note.authorType === 'CUSTOMER')?.content || '';
+    const orderNotes =
+      draftOrder.notes?.find(note => note.authorType === 'CUSTOMER')?.content ||
+      '';
     return orderNotes !== (notes || '');
   }, [draftOrder, notes]);
 

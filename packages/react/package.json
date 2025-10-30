@@ -39,7 +39,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint:fix": "biome check --write --unsafe ./src",
+    "prepublishOnly": "pnpm run build"
   },
   "peerDependencies": {
     "@tanstack/react-query": ">=5",

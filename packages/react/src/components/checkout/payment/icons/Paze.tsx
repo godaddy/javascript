@@ -1,11 +1,26 @@
 export const PazeIcon = ({ className }: { className?: string }) => {
   return (
-    <svg width='36' height='12' viewBox='0 0 36 12' fill='none' xmlns='http://www.w3.org/2000/svg' className={className}>
+    <svg
+      width='36'
+      height='12'
+      viewBox='0 0 36 12'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
+      className={className}
+    >
       <rect y='0.845215' width='36' height='10.3097' fill='url(#pattern0)' />
       <defs>
         <title>Paze</title>
-        <pattern id='pattern0' patternContentUnits='objectBoundingBox' width='1' height='1'>
-          <use xlinkHref='#image0_12_981' transform='scale(0.000389105 0.0013587)' />
+        <pattern
+          id='pattern0'
+          patternContentUnits='objectBoundingBox'
+          width='1'
+          height='1'
+        >
+          <use
+            xlinkHref='#image0_12_981'
+            transform='scale(0.000389105 0.0013587)'
+          />
         </pattern>
         <image
           id='image0_12_981'

@@ -1,7 +1,11 @@
 'use client';
 import { useEffect } from 'react';
 // hooks/use-variables.ts
-import { type CSSVariables, type GoDaddyVariables, useGoDaddyContext } from '@/godaddy-provider';
+import {
+  type CSSVariables,
+  type GoDaddyVariables,
+  useGoDaddyContext,
+} from '@/godaddy-provider';
 
 /**
  * Hook that applies CSS variables from the GoDaddy context to the document
