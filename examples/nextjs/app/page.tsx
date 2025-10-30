@@ -9,9 +9,7 @@ export default async function Home() {
   unstable_noStore();
   const session = await createCheckoutSession(
     {
-      environment:
-        (process.env.GODADDY_ENVIRONMENT as 'dev' | 'test' | 'ote' | 'prod') ||
-        'dev',
+      environment: process.env.NEXT_PUBLIC_GODADDY_ENV as any | 'prod',
       returnUrl: 'https://godaddy.com',
       successUrl: 'https://godaddy.com/success',
       draftOrderId: process.env.NEXT_PUBLIC_GODADDY_DRAFT_ORDER_ID || '',

@@ -44,7 +44,7 @@ function getHostByEnvironment(): string {
 
 export async function createCheckoutSession(
   input: CheckoutSessionInput['input'],
-  { accessToken }: { accessToken: string; environment: Environments }
+  { accessToken }: { accessToken: string }
 ): Promise<
   ResultOf<typeof CreateCheckoutSessionMutation>['createCheckoutSession']
 > {

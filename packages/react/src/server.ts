@@ -1,10 +1,6 @@
 'use server';
 
-import type {
-  CheckoutSessionInput,
-  CheckoutSessionOptions,
-  Environments,
-} from '@/types';
+import type { CheckoutSessionInput, CheckoutSessionOptions } from '@/types';
 import * as GoDaddy from './lib/godaddy/godaddy';
 
 let accessToken: string | undefined;
@@ -27,7 +23,6 @@ export async function createCheckoutSession(
     const getAccessTokenResponse = await getAccessToken({
       clientId: CLIENT_ID,
       clientSecret: CLIENT_SECRET,
-      environment: input?.environment || 'dev',
     });
 
     accessToken = getAccessTokenResponse?.access_token;
@@ -40,7 +35,6 @@ export async function createCheckoutSession(
 
   return await GoDaddy.createCheckoutSession(input, {
     accessToken,
-    environment: input?.environment || 'dev',
   });
 }
 
@@ -54,7 +48,6 @@ async function getAccessToken({
 }: {
   clientId: string;
   clientSecret: string;
-  environment: Environments;
 }) {
   if (!clientId || !clientSecret) {
     return;
