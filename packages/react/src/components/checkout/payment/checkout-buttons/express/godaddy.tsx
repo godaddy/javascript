@@ -378,7 +378,7 @@ export function ExpressCheckoutButton() {
       return;
 
     collect.current?.supportWalletPayments().then(supports => {
-      const paymentMethods = [];
+      const paymentMethods: string[] = [];
       if (supports.applePay) {
         track({
           eventId: eventIds.expressApplePayImpression,
