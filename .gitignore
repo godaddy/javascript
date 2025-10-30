@@ -46,3 +46,5 @@ schema.graphql
 
 # macOS
 .DS_Store
+.env
+.env.local

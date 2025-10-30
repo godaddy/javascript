@@ -8,8 +8,10 @@
     "node": ">=22"
   },
   "scripts": {
+    "dev": "pnpm run -r dev",
     "build": "pnpm run -r build",
     "lint": "pnpm run -r lint",
+    "lint:fix": "pnpm run -r lint:fix",
     "test": "pnpm run build && pnpm run -r --parallel test",
     "version": "changeset version && pnpm install --prefer-offline",
     "release": "changeset publish",
