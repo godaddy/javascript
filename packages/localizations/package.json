@@ -1,10 +1,12 @@
 {
   "name": "@godaddy/localizations",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Internationalization localizations for GoDaddy checkout components",
   "type": "module",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
