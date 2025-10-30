@@ -1,5 +1,17 @@
 # @godaddy/react
 
+## 1.0.1
+
+### Patch Changes
+
+- 0e07815: - Add latest translations.
+  - Add address autocomplete feature flag and US support for address autocomplete.
+  - Update tracking events.
+  - Improved address reset logic in the checkout form.
+  - Fix issues with country data missing regions codes.
+- Updated dependencies [0e07815]
+  - @godaddy/localizations@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
