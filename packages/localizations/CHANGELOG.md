@@ -1,5 +1,11 @@
 # @godaddy/localizations
 
+## 1.0.2
+
+### Patch Changes
+
+- 445d787: Small formatting issues and fixes
+
 ## 1.0.1
 
 ### Patch Changes
