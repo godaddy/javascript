@@ -1,6 +1,6 @@
-import { exec } from "node:child_process";
-import { promisify } from "node:util";
-import { defineConfig } from 'tsdown'
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import { defineConfig } from 'tsdown';
 
 const execAsync = promisify(exec);
 
@@ -10,13 +10,13 @@ export default defineConfig({
   tsconfig: './tsconfig.json',
   dts: true,
   onSuccess: async () => {
-    console.log("Transpiling CSS...");
+    // biome-ignore lint/suspicious/noConsole: check build status
+    console.log('Transpiling CSS...');
 
-		const start = Date.now();
-		await execAsync(
-			"pnpm dlx @tailwindcss/cli -i ./src/globals.css -o ./dist/index.css --minify",
-		);
+    const start = Date.now();
+    await execAsync('pnpm dlx @tailwindcss/cli -i ./src/globals.css -o ./dist/index.css --minify');
 
-		console.log(`Transpiled CSS in ${Date.now() - start}ms`);
-  }
-})
+    // biome-ignore lint/suspicious/noConsole:  check build status timing
+    console.log(`Transpiled CSS in ${Date.now() - start}ms`);
+  },
+});

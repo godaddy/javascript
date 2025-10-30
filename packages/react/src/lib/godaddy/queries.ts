@@ -1,4 +1,4 @@
-import { graphql } from "gql.tada";
+import { graphql } from '@/gql.tada';
 
 export const AddressMatchesQuery = graphql(`
     query CheckoutSessionWithAddressMatches($query: String!) {
@@ -184,17 +184,6 @@ export const DraftOrderQuery = graphql(`
                   name
                   ratePercentage
               }
-          }
-      }
-  }
-  `);
-
-export const DraftOrderTotalsQuery = graphql(`
-  query DraftOrderTotals {
-      checkoutSession {
-          id
-          draftOrder {
-              id
               totals {
                   discountTotal {
                       currencyCode
@@ -225,27 +214,6 @@ export const DraftOrderTotalsQuery = graphql(`
       }
   }
   `);
-
-export const DraftOrderShippingQuery = graphql(`
-    query DraftOrderShipping {
-        checkoutSession {
-            id
-            draftOrder {
-                id
-                shippingLines {
-                    id
-                    name
-                    requestedProvider
-                    requestedService
-                    amount {
-                        currencyCode
-                        value
-                    }
-                }
-            }
-        }
-    }
-`);
 
 export const DraftOrderSkusQuery = graphql(`
     query Skus {

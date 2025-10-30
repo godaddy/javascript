@@ -1,29 +1,30 @@
 {
-	"$schema": "https://json.schemastore.org/tsconfig",
-	"compilerOptions": {
-		"isolatedModules": true,
-		"resolveJsonModule": true,
-		"moduleResolution": "bundler",
-		"module": "ESNext",
-		"target": "ES2022",
-		"lib": ["ES2022", "DOM", "DOM.Iterable"],
-		"baseUrl": ".",
-		"jsx": "react-jsx",
-		"jsxImportSource": "react",
-		"allowImportingTsExtensions": true,
-		"noEmit": true,
-		"skipLibCheck": true,
-		"types": ["react/jsx-runtime"],
-		"paths": {
-			"@/*": ["./src/*"]
-		},
-		"plugins": [
-			{
-				"name": "gql.tada/ts-plugin",
-				"schema": "./schema.graphql",
-				"tadaOutputLocation": "./src/lib/godaddy/graphql-env.d.ts"
-			}
-		]
-	},
-	"exclude": ["node_modules"]
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "types": ["react/jsx-runtime"],
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "plugins": [
+      {
+        "name": "gql.tada/ts-plugin",
+        "schema": "./src/lib/godaddy/schema.graphql",
+        "tadaOutputLocation": "./src/lib/godaddy/graphql-env.ts"
+      }
+    ]
+  },
+  "exclude": ["node_modules"]
 }
