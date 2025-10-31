@@ -35,7 +35,7 @@ export function Target({ id }: { id: Target }) {
 
   const target = targets?.[id];
 
-  let content = null;
+  let content: React.ReactNode = null;
   if (target) {
     content = target?.();
   } else if (debug) {
