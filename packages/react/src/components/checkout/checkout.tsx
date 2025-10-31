@@ -182,11 +182,10 @@ export const baseCheckoutSchema = z.object({
   stripePaymentIntentId: z.string().optional(),
 }); // We cannot use refine here, as it would not allow extending the schema with session overrides.
 
-export type CheckoutFormSchema = {
-  [K in keyof z.infer<typeof baseCheckoutSchema>]?: z.ZodTypeAny;
-} & {
-  [key: string]: z.ZodTypeAny;
-};
+export type CheckoutFormSchema = Partial<{
+  [K in keyof z.infer<typeof baseCheckoutSchema>]: z.ZodTypeAny;
+}> &
+  z.ZodRawShape;
 
 export type CheckoutFormData = z.infer<typeof baseCheckoutSchema>;
 
