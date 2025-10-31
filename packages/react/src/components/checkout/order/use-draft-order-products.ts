@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { getProductsFromOrderSkus } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import type { SKUProduct } from '@/types';
 
 /**
@@ -10,10 +10,11 @@ import type { SKUProduct } from '@/types';
  */
 export function useDraftOrderProducts() {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
 
   return useQuery({
     queryKey: ['draft-order-products', { id: session?.id }],
-    queryFn: () => getProductsFromOrderSkus(session),
+    queryFn: () => api.getDraftOrderProducts(),
     enabled: !!session?.id,
     select: data => data.checkoutSession?.skus?.edges,
   });

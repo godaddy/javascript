@@ -1,7 +1,7 @@
 'use server';
 
 import type { CheckoutSessionInput, CheckoutSessionOptions } from '@/types';
-import * as GoDaddy from './lib/godaddy/godaddy';
+import * as GoDaddy from './lib/godaddy/godaddy.server';
 
 let accessToken: string | undefined;
 let accessTokenExpiresAt: number | undefined;

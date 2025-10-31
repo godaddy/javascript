@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { getAddressMatches } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 
 /**
  * Hook to fetch address matches for address autocomplete
@@ -16,10 +16,11 @@ export function useAddressMatches(
   } = { enabled: true }
 ) {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
 
   return useQuery({
     queryKey: ['addressMatchesQuery', debouncedAddressValue],
-    queryFn: () => getAddressMatches({ query: debouncedAddressValue }, session),
+    queryFn: () => api.getAddressMatches({ query: debouncedAddressValue }),
     enabled: !!debouncedAddressValue && !!session?.id && options.enabled,
     placeholderData: prev => prev,
     select: data => data.checkoutSession?.addresses,

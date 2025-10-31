@@ -193,3 +193,19 @@ export type SKUProduct = NonNullable<
     >['edges']
   >[number]
 >['node'];
+
+export type AuthMode = 'auto' | 'legacy' | 'jwt';
+
+export interface JwtAuthState {
+  jwt?: string;
+  expiresAt?: number;
+  sessionId?: string;
+  mode: 'legacy' | 'jwt';
+}
+
+export interface CheckoutTokenExchangeResponse {
+  jwt: string;
+  expiresIn: number;
+  expiresAt: string;
+  sessionId: string;
+}

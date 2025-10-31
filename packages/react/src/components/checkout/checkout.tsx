@@ -11,7 +11,8 @@ import { type Theme, useTheme } from '@/hooks/use-theme';
 import { useVariables } from '@/hooks/use-variables';
 import type { TrackingProperties } from '@/tracking/event-properties';
 import { TrackingProvider } from '@/tracking/tracking-provider';
-import type { CheckoutSession } from '@/types';
+import type { AuthMode, CheckoutSession } from '@/types';
+import { CheckoutAuthProvider } from '@/auth/checkout-auth-provider';
 import { CheckoutFormContainer } from './form/checkout-form-container';
 import type { Target } from './target/target';
 
@@ -190,7 +191,7 @@ export type CheckoutFormSchema = Partial<{
 export type CheckoutFormData = z.infer<typeof baseCheckoutSchema>;
 
 export interface CheckoutProps {
-  session: CheckoutSession | undefined;
+  session?: CheckoutSession;
   appearance?: Appearance;
   isCheckoutDisabled?: boolean;
   stripeConfig?: StripeConfig;
@@ -205,6 +206,7 @@ export interface CheckoutProps {
   targets?: Partial<Record<Target, () => ReactNode>>;
   checkoutFormSchema?: CheckoutFormSchema;
   defaultValues?: Pick<CheckoutFormData, 'contactEmail'>;
+  authMode?: AuthMode;
 }
 
 export function Checkout(props: CheckoutProps) {
@@ -336,34 +338,36 @@ export function Checkout(props: CheckoutProps) {
   }, [formSchema]);
 
   return (
-    <TrackingProvider
-      session={session}
-      trackingEnabled={enableTracking && !!session?.id}
-      trackingProperties={trackingProperties}
-    >
-      <checkoutContext.Provider
-        value={{
-          elements: props?.appearance?.elements,
-          targets: props?.targets,
-          isCheckoutDisabled,
-          session,
-          stripeConfig,
-          godaddyPaymentsConfig,
-          squareConfig,
-          paypalConfig,
-          requiredFields,
-          isConfirmingCheckout,
-          setIsConfirmingCheckout,
-          checkoutErrors,
-          setCheckoutErrors,
-        }}
+    <CheckoutAuthProvider session={session} authMode={props.authMode}>
+      <TrackingProvider
+        session={session}
+        trackingEnabled={enableTracking && !!session?.id}
+        trackingProperties={trackingProperties}
       >
-        <CheckoutFormContainer
-          {...props}
-          schema={formSchema}
-          direction={props.direction}
-        />
-      </checkoutContext.Provider>
-    </TrackingProvider>
+        <checkoutContext.Provider
+          value={{
+            elements: props?.appearance?.elements,
+            targets: props?.targets,
+            isCheckoutDisabled,
+            session,
+            stripeConfig,
+            godaddyPaymentsConfig,
+            squareConfig,
+            paypalConfig,
+            requiredFields,
+            isConfirmingCheckout,
+            setIsConfirmingCheckout,
+            checkoutErrors,
+            setCheckoutErrors,
+          }}
+        >
+          <CheckoutFormContainer
+            {...props}
+            schema={formSchema}
+            direction={props.direction}
+          />
+        </checkoutContext.Provider>
+      </TrackingProvider>
+    </CheckoutAuthProvider>
   );
 }

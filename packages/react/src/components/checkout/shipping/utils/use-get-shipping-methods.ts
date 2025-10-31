@@ -1,10 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { getDraftOrderShippingMethods } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import type { GetCheckoutSessionShippingRatesInput } from '@/types';
 
 export function useGetShippingMethodByAddress() {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
 
   return useMutation({
     mutationKey: ['get-shipping-method-by-address', { sessionId: session?.id }],
@@ -13,7 +14,7 @@ export function useGetShippingMethodByAddress() {
     ) => {
       if (!session) return;
 
-      const data = await getDraftOrderShippingMethods(session, destination);
+      const data = await api.getDraftOrderShippingRates(destination);
 
       return (
         data.checkoutSession?.draftOrder?.calculatedShippingRates?.rates || []

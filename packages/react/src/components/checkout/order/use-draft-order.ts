@@ -1,6 +1,6 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { getDraftOrder } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import type {
   DraftOrder,
   DraftOrderSession,
@@ -19,10 +19,11 @@ export function useDraftOrder<TData = DraftOrder>(
   key = 'draft-order'
 ): UseQueryResult<TData> {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
 
   return useQuery<DraftOrderSession, Error, TData>({
     queryKey: [key, { id: session?.id }],
-    queryFn: () => getDraftOrder(session),
+    queryFn: () => api.getDraftOrder(),
     enabled: !!session?.id,
     select: select ?? (data => data.checkoutSession?.draftOrder as TData),
     retry: 3,

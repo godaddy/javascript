@@ -1,5 +1,27 @@
 import { graphql } from '@/gql.tada';
 
+export const ExchangeCheckoutTokenMutation = graphql(`
+  mutation ExchangeCheckoutToken($input: MutationExchangeCheckoutTokenInput!) {
+    exchangeCheckoutToken(input: $input) {
+      jwt
+      expiresIn
+      expiresAt
+      sessionId
+    }
+  }
+`);
+
+export const RefreshCheckoutTokenMutation = graphql(`
+  mutation RefreshCheckoutToken {
+    refreshCheckoutToken {
+      jwt
+      expiresIn
+      expiresAt
+      sessionId
+    }
+  }
+`);
+
 export const CreateCheckoutSessionMutation = graphql(`
   mutation CreateCheckoutSession($input: MutationCreateCheckoutSessionInput!) {
     createCheckoutSession(input: $input) {
