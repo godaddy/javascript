@@ -59,13 +59,18 @@ export function CheckoutAuthProvider({
     const hash = window.location.hash.slice(1);
     if (!hash) return null;
     
-    for (const part of hash.split('&')) {
-      if (part.startsWith('token=')) {
-        const t = part.split('=')[1];
-        return t?.startsWith('tok_') ? t : null;
-      }
-      if (part.startsWith('tok_')) return part;
+    // Use URLSearchParams for robust parsing
+    const params = new URLSearchParams(hash);
+    const tokenParam = params.get('token');
+    if (tokenParam?.startsWith('tok_')) {
+      return decodeURIComponent(tokenParam);
     }
+    
+    // Fallback: Check if hash directly starts with tok_
+    if (hash.startsWith('tok_')) {
+      return decodeURIComponent(hash.split('&')[0]);
+    }
+    
     return null;
   };
 
@@ -168,6 +173,15 @@ export function CheckoutAuthProvider({
       }
 
       if (fragmentToken && sessionIdForJwt) {
+        // Clear fragment immediately to prevent leakage
+        if (typeof window !== 'undefined') {
+          window.history.replaceState(
+            null,
+            '',
+            window.location.pathname + window.location.search
+          );
+        }
+
         try {
           const result = (await ClientAPI.exchangeCheckoutToken(
             sessionIdForJwt,
@@ -202,19 +216,12 @@ export function CheckoutAuthProvider({
                 JSON.stringify({
                   jwt: result.jwt,
                   expiresAt,
+                  sessionId: result.sessionId,
                 })
               );
             }
           } catch {
             // Ignore storage errors
-          }
-
-          if (typeof window !== 'undefined') {
-            window.history.replaceState(
-              null,
-              '',
-              window.location.pathname + window.location.search
-            );
           }
 
           if (!session) {
@@ -244,8 +251,15 @@ export function CheckoutAuthProvider({
         const stored = sessionStorage.getItem(`checkout_jwt_${sessionIdForJwt}`);
         if (stored) {
           try {
-            const storedAuth: { jwt: string; expiresAt: number } =
+            const storedAuth: { jwt: string; expiresAt: number; sessionId?: string } =
               JSON.parse(stored);
+            
+            // Validate sessionId matches to prevent mismatch
+            if (storedAuth.sessionId && storedAuth.sessionId !== sessionIdForJwt) {
+              sessionStorage.removeItem(`checkout_jwt_${sessionIdForJwt}`);
+              throw new Error('Session ID mismatch');
+            }
+            
             const now = Date.now() / 1000;
             if (storedAuth.expiresAt > now) {
               if (mountedRef.current) {

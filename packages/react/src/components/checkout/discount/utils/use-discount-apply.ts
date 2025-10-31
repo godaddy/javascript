@@ -5,12 +5,13 @@ import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method'
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import type { ResultOf } from '@/gql.tada';
-import { applyDiscount } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 import type { ApplyCheckoutSessionDiscountInput } from '@/types';
 
 export function useDiscountApply() {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
   const form = useFormContext();
   const queryClient = useQueryClient();
   const updateTaxes = useUpdateTaxes();
@@ -23,8 +24,7 @@ export function useDiscountApply() {
     }: {
       discountCodes: ApplyCheckoutSessionDiscountInput['input']['discountCodes'];
     }) => {
-      if (!session) return;
-      return await applyDiscount(discountCodes, session);
+      return await api.applyDiscount(discountCodes ?? []);
     },
     onSuccess: (data, { discountCodes }) => {
       if (!session) return;

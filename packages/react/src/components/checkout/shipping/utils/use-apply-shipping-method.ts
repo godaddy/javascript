@@ -4,12 +4,13 @@ import { useDiscountApply } from '@/components/checkout/discount';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import type { ResultOf } from '@/gql.tada';
-import { applyShippingMethod } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 import type { ApplyCheckoutSessionShippingMethodInput } from '@/types';
 
 export function useApplyShippingMethod() {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
   const { data: order } = useDraftOrder();
   const updateTaxes = useUpdateTaxes();
   const applyDiscount = useDiscountApply();
@@ -20,8 +21,7 @@ export function useApplyShippingMethod() {
     mutationFn: async (
       shippingMethods: ApplyCheckoutSessionShippingMethodInput['input']
     ) => {
-      if (!session) return;
-      return await applyShippingMethod(shippingMethods, session);
+      return await api.applyShippingMethod(shippingMethods);
     },
     onSuccess: async data => {
       if (!session) return;

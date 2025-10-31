@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { verifyAddress } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 
 /**
  * Address input for verification
@@ -31,6 +31,7 @@ export function useAddressVerification(
   } = { enabled: true }
 ) {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
 
   const queryKey = [
     'verifyAddressQuery',
@@ -46,7 +47,7 @@ export function useAddressVerification(
 
   return useQuery({
     queryKey,
-    queryFn: async () => verifyAddress(address, session),
+    queryFn: async () => api.verifyAddress(address),
     enabled:
       options.enabled &&
       !!session?.id &&

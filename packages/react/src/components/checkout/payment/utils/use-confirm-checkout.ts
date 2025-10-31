@@ -6,7 +6,7 @@ import {
 } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
-import { confirmCheckout } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import { eventIds } from '@/tracking/events';
 import {
   type TrackingEventId,
@@ -70,6 +70,7 @@ export function useConfirmCheckout() {
     isConfirmingCheckout,
     setCheckoutErrors,
   } = useCheckoutContext();
+  const api = useCheckoutApi(session);
   const form = useFormContext();
 
   return useMutation({
@@ -79,7 +80,7 @@ export function useConfirmCheckout() {
         isExpress?: boolean;
       }
     ) => {
-      if (!session || !input?.paymentType || isConfirmingCheckout) return;
+      if (!input?.paymentType || isConfirmingCheckout) return;
 
       const { isExpress, ...confirmCheckoutInput } = input;
 
@@ -120,13 +121,10 @@ export function useConfirmCheckout() {
         },
       });
 
-      return await confirmCheckout(
-        {
-          ...confirmCheckoutInput,
-          ...(isPickup ? pickUpData : {}),
-        },
-        session
-      );
+      return await api.confirmCheckout({
+        ...confirmCheckoutInput,
+        ...(isPickup ? pickUpData : {}),
+      });
     },
     onSuccess: (_data, input) => {
       let completedEventId: TrackingEventId | null = null;

@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
-import { updateDraftOrder } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import type { UpdateDraftOrderInput } from '@/types';
 
 export function useUpdateOrder() {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
   const updateTaxes = useUpdateTaxes();
   const queryClient = useQueryClient();
 
@@ -16,7 +17,7 @@ export function useUpdateOrder() {
     }: {
       input: UpdateDraftOrderInput['input'];
     }) => {
-      return await updateDraftOrder(input, session);
+      return await api.updateDraftOrder(input);
     },
     onSuccess: (_data, { input }) => {
       if (!session) return;

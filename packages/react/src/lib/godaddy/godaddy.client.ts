@@ -50,11 +50,17 @@ function getAuthHeaders(
     throw new Error('No session token or ID provided');
   }
   
-  return {
+  const headers: HeadersInit = {
     'x-session-token': `${session.token}`,
     'x-session-id': session.id,
-    'x-store-id': session.storeId,
   };
+  
+  // Only include x-store-id if present
+  if (session.storeId) {
+    headers['x-store-id'] = session.storeId;
+  }
+  
+  return headers;
 }
 
 export async function exchangeCheckoutToken(

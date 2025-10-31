@@ -3,12 +3,13 @@ import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDiscountApply } from '@/components/checkout/discount';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import type { ResultOf } from '@/gql.tada';
-import { removeShippingMethod } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 import type { RemoveAppliedCheckoutSessionShippingMethodInput } from '@/types';
 
 export function useRemoveShippingMethod() {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
   const queryClient = useQueryClient();
   const { data: order } = useDraftOrder();
   const applyDiscount = useDiscountApply();
@@ -18,8 +19,7 @@ export function useRemoveShippingMethod() {
     mutationFn: async (
       input: RemoveAppliedCheckoutSessionShippingMethodInput['input']
     ) => {
-      if (!session) return;
-      return await removeShippingMethod(input, session);
+      return await api.removeShippingMethod(input);
     },
     onSuccess: async data => {
       if (!session) return;

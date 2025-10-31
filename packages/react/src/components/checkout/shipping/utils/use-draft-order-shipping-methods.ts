@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderShippingAddress } from '@/components/checkout/order/use-draft-order';
-import { getDraftOrderShippingMethods } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 
 /**
  * Hook to fetch available shipping methods for the draft order
@@ -10,6 +10,7 @@ import { getDraftOrderShippingMethods } from '@/lib/godaddy/godaddy';
  */
 export function useDraftOrderShippingMethods() {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
   const { data: shippingAddress } = useDraftOrderShippingAddress();
 
   const hasShippingAddress = useMemo(
@@ -29,7 +30,7 @@ export function useDraftOrderShippingMethods() {
         countryCode: shippingAddress?.countryCode,
       },
     ],
-    queryFn: () => getDraftOrderShippingMethods(session),
+    queryFn: () => api.getDraftOrderShippingRates(shippingAddress),
     enabled: !!session?.id && hasShippingAddress,
     select: data =>
       data?.checkoutSession?.draftOrder?.calculatedShippingRates?.rates,

@@ -1,11 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { getDraftOrderPriceAdjustments } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import type { DraftOrderPriceAdjustmentsQueryInput } from '@/types';
 
 export function useGetPriceAdjustments() {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
 
   return useMutation({
     mutationKey: [
@@ -19,11 +20,8 @@ export function useGetPriceAdjustments() {
       discountCodes: DraftOrderPriceAdjustmentsQueryInput['discountCodes'];
       shippingLines?: DraftOrderPriceAdjustmentsQueryInput['shippingLines'];
     }) => {
-      if (!session) return;
-
-      const data = await getDraftOrderPriceAdjustments(
-        session,
-        discountCodes,
+      const data = await api.getDraftOrderPriceAdjustments(
+        discountCodes ?? undefined,
         shippingLines
       );
 

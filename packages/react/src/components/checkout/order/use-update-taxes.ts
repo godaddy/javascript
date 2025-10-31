@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import type { ResultOf } from '@/gql.tada';
-import { updateDraftOrderTaxes } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 
 export function useUpdateTaxes() {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -20,13 +21,14 @@ export function useUpdateTaxes() {
       countryCode?: string | null;
       postalCode?: string | null;
     }) => {
-      return await updateDraftOrderTaxes(session, destination);
+      return await api.getDraftOrderTaxes(destination);
     },
     onSuccess: data => {
       if (!session) return;
 
-      // Extract shippingTotal from mutation response
-      const taxesTotal = data?.calculateCheckoutSessionTaxes?.totalTaxAmount;
+      // Extract taxesTotal from mutation response
+      const taxesTotal =
+        data?.checkoutSession?.draftOrder?.calculatedTaxes?.totalTaxAmount;
 
       // Update the cached draft-order query (includes totals)
       if (taxesTotal) {

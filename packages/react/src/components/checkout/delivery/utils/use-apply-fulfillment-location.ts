@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
-import { applyFulfillmentLocation } from '@/lib/godaddy/godaddy';
+import { useCheckoutApi } from '@/hooks/use-checkout-api';
 import type { ApplyCheckoutSessionFulfillmentLocationInput } from '@/types';
 
 export function useApplyFulfillmentLocation() {
   const { session } = useCheckoutContext();
+  const api = useCheckoutApi(session);
   const updateTaxes = useUpdateTaxes();
   const queryClient = useQueryClient();
 
@@ -26,10 +27,9 @@ export function useApplyFulfillmentLocation() {
         postalCode?: string | null;
       };
     }) => {
-      // Don't process empty string or undefined location IDs
-      if (!session || !fulfillmentLocationId) return;
+      if (!fulfillmentLocationId) return;
 
-      return await applyFulfillmentLocation({ fulfillmentLocationId }, session);
+      return await api.applyFulfillmentLocation({ fulfillmentLocationId });
     },
     onSuccess: (_data, { locationAddress }) => {
       if (!session) return;
