@@ -1,5 +1,6 @@
 'use client';
 import { useEffect } from 'react';
+import { useCheckoutContext } from '@/components/checkout/checkout';
 // hooks/useTheme.ts
 import { useGoDaddyContext } from '@/godaddy-provider';
 
@@ -13,7 +14,11 @@ export type Theme = keyof typeof themes;
 
 export function useTheme() {
   const { appearance } = useGoDaddyContext();
-  const theme = appearance?.theme;
+  const { session } = useCheckoutContext();
+
+  // Prioritize session appearance over context appearance
+  const effectiveAppearance = session?.appearance ?? appearance;
+  const theme = effectiveAppearance?.theme;
 
   useEffect(() => {
     // Remove all theme classes
