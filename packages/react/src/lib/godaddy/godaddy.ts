@@ -55,7 +55,6 @@ export async function createCheckoutSession(
 	}
 
 	const GODADDY_HOST = getHostByEnvironment(getEnvVar("GODADDY_API_HOST"));
-	console.log(GODADDY_HOST);
 	const response = await graphqlRequestWithErrors<
 		ResultOf<typeof CreateCheckoutSessionMutation>
 	>(
@@ -197,7 +196,6 @@ export function getDraftOrder(
 	apiHost?: string,
 ) {
 	const GODADDY_HOST = getHostByEnvironment(apiHost);
-	console.log(sessionOrAuth);
 
 	if (sessionOrAuth && "accessToken" in sessionOrAuth) {
 		if (!sessionOrAuth.accessToken) {

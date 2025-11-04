@@ -33,7 +33,6 @@ export async function createCheckoutSession(
 	if (!accessToken) {
 		throw new Error("Failed to get access token");
 	}
-	console.log(accessToken);
 
 	return await GoDaddy.createCheckoutSession(input, {
 		accessToken,

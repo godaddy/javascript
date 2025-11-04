@@ -32,6 +32,8 @@ export function useCheckoutSession(props?: CheckoutProps) {
     'godaddy-checkout-jwt',
     ''
   );
+  const [storedSessionId, setStoredSessionId, removeStoredSessionId] =
+    useSessionStorage('godaddy-checkout-session-id', '');
   const refreshTimerRef = useRef<number | null>(null);
 
   let sessionId: string;
@@ -71,16 +73,26 @@ export function useCheckoutSession(props?: CheckoutProps) {
           }
         } catch (_error) {
           removeJwt();
+          removeStoredSessionId();
         }
       }, refreshIn);
     },
-    [setJwt, removeJwt, apiHost]
+    [setJwt, removeJwt, removeStoredSessionId, apiHost]
   );
 
   useEffect(() => {
-    if (!sessionId || !sessionToken || jwt) return;
+    if (!sessionId || !sessionToken) return;
 
     let cancelled = false;
+
+    // If we have a JWT for a different session, clear it
+    if (jwt && storedSessionId && storedSessionId !== sessionId) {
+      removeJwt();
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    }
+
+    // If we already have a JWT for this session, nothing to do
+    if (jwt && storedSessionId === sessionId) return;
 
     (async () => {
       try {
@@ -92,6 +104,7 @@ export function useCheckoutSession(props?: CheckoutProps) {
         if (!result?.jwt) return;
 
         setJwt(result.jwt);
+        setStoredSessionId(sessionId);
         if (typeof window !== 'undefined') {
           window.history.replaceState(
             null,
@@ -102,6 +115,7 @@ export function useCheckoutSession(props?: CheckoutProps) {
         scheduleRefresh(result.jwt);
       } catch (_error) {
         removeJwt();
+        removeStoredSessionId();
       }
     })();
 
@@ -111,22 +125,33 @@ export function useCheckoutSession(props?: CheckoutProps) {
         clearTimeout(refreshTimerRef.current);
       }
     };
-  }, [sessionId, sessionToken, jwt, setJwt, removeJwt, scheduleRefresh]);
+  }, [
+    sessionId,
+    sessionToken,
+    jwt,
+    storedSessionId,
+    setJwt,
+    removeJwt,
+    setStoredSessionId,
+    removeStoredSessionId,
+    scheduleRefresh,
+    apiHost,
+  ]);
 
   useEffect(() => {
-    if (!jwt) return;
+    if (!jwt || storedSessionId !== sessionId) return;
     scheduleRefresh(jwt);
     return () => {
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current);
       }
     };
-  }, [jwt, scheduleRefresh]);
+  }, [jwt, sessionId, storedSessionId, scheduleRefresh]);
 
   const checkoutSessionQuery = useQuery({
     queryKey: ['checkout-session', sessionId],
     queryFn: () => getCheckoutSession({ accessToken: jwt }, apiHost),
-    enabled: !!jwt,
+    enabled: !!jwt && storedSessionId === sessionId,
   });
 
   return { session: checkoutSessionQuery.data, jwt };

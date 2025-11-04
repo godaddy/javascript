@@ -33,8 +33,6 @@ export function CheckoutFormContainer({
 	const { data: order } = draftOrderQuery;
 	const { data: lineItems } = draftOrderLineItemsQuery;
 
-	console.log(order);
-
 	const items = useMemo(
 		() => mapSkusToItemsDisplay(lineItems, skusMap),
 		[lineItems, skusMap],
