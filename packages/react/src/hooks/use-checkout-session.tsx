@@ -162,8 +162,8 @@ export function useCheckoutSession(props?: CheckoutProps) {
 
   // If exchange failed and we have a session prop, use legacy flow
   if (exchangeFailed && props?.session) {
-    return { session: props.session, jwt: null };
+    return { session: props.session, jwt: undefined };
   }
 
-  return { session: checkoutSessionQuery.data, jwt };
+  return { session: checkoutSessionQuery.data, jwt: jwt || undefined };
 }
