@@ -5,29 +5,31 @@ import { useGoDaddyContext } from "@/godaddy-provider";
 import { getDraftOrderPriceAdjustments } from "@/lib/godaddy/godaddy";
 import type { DraftOrderPriceAdjustmentsQueryInput } from "@/types";
 
+type Vars = {
+	discountCodes: DraftOrderPriceAdjustmentsQueryInput["discountCodes"];
+	shippingLines?: DraftOrderPriceAdjustmentsQueryInput["shippingLines"];
+};
+
 export function useGetPriceAdjustments() {
 	const { session, jwt } = useCheckoutContext();
 	const { apiHost } = useGoDaddyContext();
 
-	return useMutation({
-		mutationKey: session?.id
-			? ["get-price-adjustments-by-discount-code", session.id]
-			: ["get-price-adjustments-by-discount-code"],
-		mutationFn: async ({
-			discountCodes,
-			shippingLines,
-		}: {
-			discountCodes: DraftOrderPriceAdjustmentsQueryInput["discountCodes"];
-			shippingLines?: DraftOrderPriceAdjustmentsQueryInput["shippingLines"];
-		}) => {
-			if (!session) return;
-
-			const data = await getDraftOrderPriceAdjustments(
-				{ accessToken: jwt },
-				discountCodes,
-				shippingLines,
-				apiHost,
-			);
+	return useMutation<number | null | undefined, Error, Vars>({
+		mutationKey: ["get-price-adjustments-by-discount-code", session?.id ?? "no-session"],
+		mutationFn: async ({ discountCodes, shippingLines }) => {
+			const data = jwt
+				? await getDraftOrderPriceAdjustments(
+						{ accessToken: jwt },
+						discountCodes,
+						shippingLines,
+						apiHost,
+					)
+				: await getDraftOrderPriceAdjustments(
+						session,
+						discountCodes,
+						shippingLines,
+						apiHost,
+					);
 
 			return data.checkoutSession?.draftOrder?.calculatedAdjustments
 				?.totalDiscountAmount?.value;

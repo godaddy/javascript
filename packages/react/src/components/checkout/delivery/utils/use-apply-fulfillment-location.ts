@@ -33,11 +33,18 @@ export function useApplyFulfillmentLocation() {
 			// Don't process empty string or undefined location IDs
 			if (!session || !fulfillmentLocationId) return;
 
-			return await applyFulfillmentLocation(
-				{ fulfillmentLocationId },
-				{ accessToken: jwt },
-				apiHost,
-			);
+			const data = jwt
+				? await applyFulfillmentLocation(
+						{ fulfillmentLocationId },
+						{ accessToken: jwt },
+						apiHost,
+					)
+				: await applyFulfillmentLocation(
+						{ fulfillmentLocationId },
+						session,
+						apiHost,
+					);
+			return data;
 		},
 		onSuccess: (_data, { locationAddress }) => {
 			if (!session) return;

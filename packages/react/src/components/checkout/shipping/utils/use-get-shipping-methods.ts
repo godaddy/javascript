@@ -17,11 +17,13 @@ export function useGetShippingMethodByAddress() {
 		) => {
 			if (!session) return;
 
-			const data = await getDraftOrderShippingMethods(
-				{ accessToken: jwt },
-				destination,
-				apiHost,
-			);
+			const data = jwt
+				? await getDraftOrderShippingMethods(
+						{ accessToken: jwt },
+						destination,
+						apiHost,
+					)
+				: await getDraftOrderShippingMethods(session, destination, apiHost);
 
 			return (
 				data.checkoutSession?.draftOrder?.calculatedShippingRates?.rates || []

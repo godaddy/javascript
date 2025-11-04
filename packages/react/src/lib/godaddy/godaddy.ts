@@ -6,6 +6,7 @@ import type {
 	ApplyCheckoutSessionFulfillmentLocationInput,
 	ApplyCheckoutSessionShippingMethodInput,
 	CheckoutSession,
+	CheckoutSessionInput,
 	ConfirmCheckoutMutationInput,
 	DraftOrderPriceAdjustmentsQueryInput,
 	GetCheckoutSessionShippingRatesInput,
@@ -13,6 +14,7 @@ import type {
 	RemoveAppliedCheckoutSessionShippingMethodInput,
 	UpdateDraftOrderInput,
 } from "@/types";
+import { getEnvVar } from "../utils";
 import {
 	ApplyCheckoutSessionDeliveryMethodMutation,
 	ApplyCheckoutSessionDiscountMutation,
@@ -20,6 +22,7 @@ import {
 	ApplyCheckoutSessionShippingMethodMutation,
 	CalculateCheckoutSessionTaxesMutation,
 	ConfirmCheckoutSessionMutation,
+	CreateCheckoutSessionMutation,
 	ExchangeCheckoutTokenMutation,
 	RefreshCheckoutTokenMutation,
 	RemoveAppliedCheckoutSessionShippingMethodMutation,
@@ -39,6 +42,30 @@ import {
 function getHostByEnvironment(apiHost?: string): string {
 	// Use provided apiHost, otherwise default to production
 	return apiHost || "https://checkout.commerce.api.godaddy.com";
+}
+
+export async function createCheckoutSession(
+	input: CheckoutSessionInput["input"],
+	{ accessToken }: { accessToken: string },
+): Promise<
+	ResultOf<typeof CreateCheckoutSessionMutation>["createCheckoutSession"]
+> {
+	if (!accessToken) {
+		throw new Error("No public access token provided");
+	}
+
+	const GODADDY_HOST = getHostByEnvironment(getEnvVar("GODADDY_API_HOST"));
+	console.log(GODADDY_HOST);
+	const response = await graphqlRequestWithErrors<
+		ResultOf<typeof CreateCheckoutSessionMutation>
+	>(
+		GODADDY_HOST,
+		CreateCheckoutSessionMutation,
+		{ input },
+		{ Authorization: `Bearer ${accessToken}` },
+	);
+
+	return response.createCheckoutSession;
 }
 
 export async function exchangeCheckoutToken(
@@ -103,7 +130,7 @@ export async function getCheckoutSession(
 
 export async function getAddressMatches(
 	input: { query: string },
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	apiHost?: string,
 ): Promise<ResultOf<typeof AddressMatchesQuery>>;
 export async function getAddressMatches(
@@ -116,6 +143,7 @@ export async function getAddressMatches(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	apiHost?: string,
 ) {
@@ -153,7 +181,7 @@ export async function getAddressMatches(
 }
 
 export function getDraftOrder(
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	apiHost?: string,
 ): Promise<ResultOf<typeof DraftOrderQuery>>;
 export function getDraftOrder(
@@ -164,6 +192,7 @@ export function getDraftOrder(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	apiHost?: string,
 ) {
@@ -276,7 +305,7 @@ export async function verifyAddress(
 		adminArea3?: string;
 		adminArea4?: string;
 	},
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	apiHost?: string,
 ): Promise<ResultOf<typeof VerifyCheckoutSessionAddressMutation>>;
 export async function verifyAddress(
@@ -309,6 +338,7 @@ export async function verifyAddress(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	apiHost?: string,
 ) {
@@ -351,7 +381,7 @@ export async function verifyAddress(
 
 export async function updateDraftOrder(
 	input: UpdateDraftOrderInput["input"],
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	apiHost?: string,
 ): Promise<ResultOf<typeof UpdateCheckoutSessionDraftOrderMutation>>;
 export async function updateDraftOrder(
@@ -364,6 +394,7 @@ export async function updateDraftOrder(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	apiHost?: string,
 ) {
@@ -405,7 +436,7 @@ export async function updateDraftOrder(
 }
 
 export async function getProductsFromOrderSkus(
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	apiHost?: string,
 ): Promise<ResultOf<typeof DraftOrderSkusQuery>>;
 export async function getProductsFromOrderSkus(
@@ -418,6 +449,7 @@ export async function getProductsFromOrderSkus(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	apiHost?: string,
 ) {
@@ -455,7 +487,7 @@ export async function getProductsFromOrderSkus(
 }
 
 export function updateDraftOrderTaxes(
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	destination?: {
 		addressLine1?: string | null;
 		addressLine2?: string | null;
@@ -486,6 +518,7 @@ export function updateDraftOrderTaxes(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	destination?: {
 		addressLine1?: string | null;
@@ -538,7 +571,7 @@ export function updateDraftOrderTaxes(
 
 export function applyDiscount(
 	discountCodes: ApplyCheckoutSessionDiscountInput["input"]["discountCodes"],
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	apiHost?: string,
 ): Promise<ResultOf<typeof ApplyCheckoutSessionDiscountMutation>>;
 export function applyDiscount(
@@ -551,6 +584,7 @@ export function applyDiscount(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	apiHost?: string,
 ) {
@@ -593,7 +627,7 @@ export function applyDiscount(
 
 export function applyShippingMethod(
 	shippingMethods: ApplyCheckoutSessionShippingMethodInput["input"],
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	apiHost?: string,
 ): Promise<ResultOf<typeof ApplyCheckoutSessionShippingMethodMutation>>;
 export function applyShippingMethod(
@@ -606,6 +640,7 @@ export function applyShippingMethod(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	apiHost?: string,
 ) {
@@ -648,7 +683,7 @@ export function applyShippingMethod(
 
 export function removeShippingMethod(
 	input: RemoveAppliedCheckoutSessionShippingMethodInput["input"],
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	apiHost?: string,
 ): Promise<ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>>;
 export function removeShippingMethod(
@@ -661,6 +696,7 @@ export function removeShippingMethod(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	apiHost?: string,
 ): Promise<
@@ -705,7 +741,7 @@ export function removeShippingMethod(
 
 export function confirmCheckout(
 	input: ConfirmCheckoutMutationInput["input"],
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	apiHost?: string,
 ): Promise<ResultOf<typeof ConfirmCheckoutSessionMutation>>;
 export function confirmCheckout(
@@ -718,6 +754,7 @@ export function confirmCheckout(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	apiHost?: string,
 ) {
@@ -759,7 +796,7 @@ export function confirmCheckout(
 }
 
 export function getDraftOrderShippingMethods(
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	destination?: GetCheckoutSessionShippingRatesInput["destination"],
 	apiHost?: string,
 ): Promise<ResultOf<typeof DraftOrderShippingRatesQuery>>;
@@ -772,6 +809,7 @@ export function getDraftOrderShippingMethods(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	destination?: GetCheckoutSessionShippingRatesInput["destination"],
 	apiHost?: string,
@@ -815,7 +853,7 @@ export function getDraftOrderShippingMethods(
 
 export function applyDeliveryMethod(
 	input: ApplyCheckoutSessionDeliveryMethodInput["input"],
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	apiHost?: string,
 ): Promise<ResultOf<typeof ApplyCheckoutSessionDeliveryMethodMutation>>;
 export function applyDeliveryMethod(
@@ -828,6 +866,7 @@ export function applyDeliveryMethod(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	apiHost?: string,
 ) {
@@ -869,7 +908,7 @@ export function applyDeliveryMethod(
 }
 
 export function getDraftOrderPriceAdjustments(
-	session: CheckoutSession | undefined,
+	session: CheckoutSession | undefined | null,
 	discountCodes?: DraftOrderPriceAdjustmentsQueryInput["discountCodes"],
 	shippingLines?: DraftOrderPriceAdjustmentsQueryInput["shippingLines"],
 	apiHost?: string,
@@ -884,6 +923,7 @@ export function getDraftOrderPriceAdjustments(
 	sessionOrAuth:
 		| CheckoutSession
 		| undefined
+		| null
 		| { accessToken: string | undefined },
 	discountCodes?: DraftOrderPriceAdjustmentsQueryInput["discountCodes"],
 	shippingLines?: DraftOrderPriceAdjustmentsQueryInput["shippingLines"],

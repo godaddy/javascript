@@ -17,7 +17,10 @@ export function useDraftOrderProducts() {
 		queryKey: session?.id
 			? ["draft-order-products", session.id]
 			: ["draft-order-products"],
-		queryFn: () => getProductsFromOrderSkus({ accessToken: jwt }, apiHost),
+		queryFn: () =>
+			jwt
+				? getProductsFromOrderSkus({ accessToken: jwt }, apiHost)
+				: getProductsFromOrderSkus(session, apiHost),
 		enabled: !!session?.id,
 		select: (data) => data.checkoutSession?.skus?.edges,
 	});

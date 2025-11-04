@@ -25,11 +25,14 @@ export function useApplyShippingMethod() {
 			shippingMethods: ApplyCheckoutSessionShippingMethodInput["input"],
 		) => {
 			if (!session) return;
-			return await applyShippingMethod(
-				shippingMethods,
-				{ accessToken: jwt },
-				apiHost,
-			);
+			const data = jwt
+				? await applyShippingMethod(
+						shippingMethods,
+						{ accessToken: jwt },
+						apiHost,
+					)
+				: await applyShippingMethod(shippingMethods, session, apiHost);
+			return data;
 		},
 		onSuccess: async (data) => {
 			if (!session) return;

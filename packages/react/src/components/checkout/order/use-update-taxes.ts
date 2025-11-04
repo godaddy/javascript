@@ -24,11 +24,14 @@ export function useUpdateTaxes() {
 			countryCode?: string | null;
 			postalCode?: string | null;
 		}) => {
-			return await updateDraftOrderTaxes(
-				{ accessToken: jwt },
-				destination,
-				apiHost,
-			);
+			const data = jwt
+				? await updateDraftOrderTaxes(
+						{ accessToken: jwt },
+						destination,
+						apiHost,
+					)
+				: await updateDraftOrderTaxes(session, destination, apiHost);
+			return data;
 		},
 		onSuccess: (data) => {
 			if (!session) return;

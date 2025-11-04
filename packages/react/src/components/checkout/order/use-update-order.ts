@@ -18,7 +18,10 @@ export function useUpdateOrder() {
 		}: {
 			input: UpdateDraftOrderInput["input"];
 		}) => {
-			return await updateDraftOrder(input, { accessToken: jwt }, apiHost);
+			const data = jwt
+				? await updateDraftOrder(input, { accessToken: jwt }, apiHost)
+				: await updateDraftOrder(input, session, apiHost);
+			return data;
 		},
 		onSuccess: (_data, { input }) => {
 			if (!session) return;

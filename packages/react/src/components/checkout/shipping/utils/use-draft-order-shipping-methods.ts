@@ -59,11 +59,13 @@ export function useDraftOrderShippingMethods() {
 				]
 			: ["draft-order-shipping-methods"],
 		queryFn: () =>
-			getDraftOrderShippingMethods(
-				{ accessToken: jwt },
-				destination,
-				apiHost,
-			),
+			jwt
+				? getDraftOrderShippingMethods(
+						{ accessToken: jwt },
+						destination,
+						apiHost,
+					)
+				: getDraftOrderShippingMethods(session, destination, apiHost),
 		enabled: !!session?.id && hasShippingAddress,
 		select: (data) =>
 			data?.checkoutSession?.draftOrder?.calculatedShippingRates?.rates,

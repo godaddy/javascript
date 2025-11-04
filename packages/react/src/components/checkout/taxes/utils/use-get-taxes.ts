@@ -21,11 +21,13 @@ export function useGetTaxes() {
 		}) => {
 			if (!session) return;
 
-			const data = await getDraftOrderTaxes(
-				{ accessToken: jwt },
-				{ destination, lines },
-				apiHost,
-			);
+			const data = jwt
+				? await getDraftOrderTaxes(
+						{ accessToken: jwt },
+						{ destination, lines },
+						apiHost,
+					)
+				: await getDraftOrderTaxes(session, { destination, lines }, apiHost);
 
 			return data.checkoutSession?.draftOrder?.calculatedTaxes?.totalTaxAmount;
 		},

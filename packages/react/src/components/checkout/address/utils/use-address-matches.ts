@@ -22,11 +22,13 @@ export function useAddressMatches(
 	return useQuery({
 		queryKey: ["addressMatchesQuery", debouncedAddressValue],
 		queryFn: () =>
-			getAddressMatches(
-				{ query: debouncedAddressValue },
-				{ accessToken: jwt },
-				apiHost,
-			),
+			jwt
+				? getAddressMatches(
+						{ query: debouncedAddressValue },
+						{ accessToken: jwt },
+						apiHost,
+					)
+				: getAddressMatches({ query: debouncedAddressValue }, session, apiHost),
 		enabled: !!debouncedAddressValue && !!session?.id && options.enabled,
 		placeholderData: (prev) => prev,
 		select: (data) => data.checkoutSession?.addresses,

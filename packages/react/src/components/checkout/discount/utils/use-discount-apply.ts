@@ -27,8 +27,10 @@ export function useDiscountApply() {
 		}: {
 			discountCodes: ApplyCheckoutSessionDiscountInput["input"]["discountCodes"];
 		}) => {
-			if (!session) return;
-			return await applyDiscount(discountCodes, { accessToken: jwt }, apiHost);
+			const data = jwt
+				? await applyDiscount(discountCodes, { accessToken: jwt }, apiHost)
+				: await applyDiscount(discountCodes, session, apiHost);
+			return data;
 		},
 		onSuccess: (data, { discountCodes }) => {
 			if (!session) return;

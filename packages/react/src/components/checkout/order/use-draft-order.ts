@@ -24,7 +24,10 @@ export function useDraftOrder<TData = DraftOrder>(
 
 	return useQuery<DraftOrderSession, Error, TData>({
 		queryKey: session?.id ? [key, session.id] : [key],
-		queryFn: () => getDraftOrder({ accessToken: jwt }, apiHost),
+		queryFn: () =>
+			jwt
+				? getDraftOrder({ accessToken: jwt }, apiHost)
+				: getDraftOrder(session, apiHost),
 		enabled: !!jwt,
 		select: select ?? ((data) => data.checkoutSession?.draftOrder as TData),
 		retry: 3,

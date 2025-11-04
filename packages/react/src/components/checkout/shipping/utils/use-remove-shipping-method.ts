@@ -22,8 +22,10 @@ export function useRemoveShippingMethod() {
 		mutationFn: async (
 			input: RemoveAppliedCheckoutSessionShippingMethodInput["input"],
 		) => {
-			if (!session) return;
-			return await removeShippingMethod(input, { accessToken: jwt }, apiHost);
+			const data = jwt
+				? await removeShippingMethod(input, { accessToken: jwt }, apiHost)
+				: await removeShippingMethod(input, session, apiHost);
+			return data;
 		},
 		onSuccess: async (data) => {
 			if (!session) return;

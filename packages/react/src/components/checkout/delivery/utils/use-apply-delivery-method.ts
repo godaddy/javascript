@@ -16,7 +16,10 @@ export function useApplyDeliveryMethod() {
 			mode: ApplyCheckoutSessionDeliveryMethodInput["input"]["mode"],
 		) => {
 			if (!session) return;
-			return await applyDeliveryMethod({ mode }, { accessToken: jwt }, apiHost);
+			const data = jwt
+				? await applyDeliveryMethod({ mode }, { accessToken: jwt }, apiHost)
+				: await applyDeliveryMethod({ mode }, session, apiHost);
+			return data;
 		},
 	});
 }

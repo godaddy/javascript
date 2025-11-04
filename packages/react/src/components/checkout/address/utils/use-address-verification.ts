@@ -48,7 +48,10 @@ export function useAddressVerification(
 
 	return useQuery({
 		queryKey,
-		queryFn: async () => verifyAddress(address, { accessToken: jwt }, apiHost),
+		queryFn: async () =>
+			jwt
+				? verifyAddress(address, { accessToken: jwt }, apiHost)
+				: verifyAddress(address, session, apiHost),
 		enabled:
 			options.enabled &&
 			!!session?.id &&

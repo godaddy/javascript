@@ -123,14 +123,24 @@ export function useConfirmCheckout() {
 				},
 			});
 
-			return await confirmCheckout(
-				{
-					...confirmCheckoutInput,
-					...(isPickup ? pickUpData : {}),
-				},
-				{ accessToken: jwt },
-				apiHost,
-			);
+			const data = jwt
+				? await confirmCheckout(
+						{
+							...confirmCheckoutInput,
+							...(isPickup ? pickUpData : {}),
+						},
+						{ accessToken: jwt },
+						apiHost,
+					)
+				: await confirmCheckout(
+						{
+							...confirmCheckoutInput,
+							...(isPickup ? pickUpData : {}),
+						},
+						session,
+						apiHost,
+					);
+			return data;
 		},
 		onSuccess: (_data, input) => {
 			let completedEventId: TrackingEventId | null = null;
