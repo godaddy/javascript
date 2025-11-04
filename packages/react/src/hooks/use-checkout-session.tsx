@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CheckoutProps } from '@/components/checkout/checkout';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import {
@@ -34,6 +34,7 @@ export function useCheckoutSession(props?: CheckoutProps) {
   );
   const [storedSessionId, setStoredSessionId, removeStoredSessionId] =
     useSessionStorage('godaddy-checkout-session-id', '');
+  const [exchangeFailed, setExchangeFailed] = useState(false);
   const refreshTimerRef = useRef<number | null>(null);
 
   let sessionId: string;
@@ -101,10 +102,14 @@ export function useCheckoutSession(props?: CheckoutProps) {
           token: sessionToken,
         }, apiHost);
         if (cancelled) return;
-        if (!result?.jwt) return;
+        if (!result?.jwt) {
+          setExchangeFailed(true);
+          return;
+        }
 
         setJwt(result.jwt);
         setStoredSessionId(sessionId);
+        setExchangeFailed(false);
         if (typeof window !== 'undefined') {
           window.history.replaceState(
             null,
@@ -116,6 +121,7 @@ export function useCheckoutSession(props?: CheckoutProps) {
       } catch (_error) {
         removeJwt();
         removeStoredSessionId();
+        setExchangeFailed(true);
       }
     })();
 
@@ -153,6 +159,11 @@ export function useCheckoutSession(props?: CheckoutProps) {
     queryFn: () => getCheckoutSession({ accessToken: jwt }, apiHost),
     enabled: !!jwt && storedSessionId === sessionId,
   });
+
+  // If exchange failed and we have a session prop, use legacy flow
+  if (exchangeFailed && props?.session) {
+    return { session: props.session, jwt: null };
+  }
 
   return { session: checkoutSessionQuery.data, jwt };
 }

@@ -232,9 +232,6 @@ export function Checkout(props: CheckoutProps) {
 
 	const { session, jwt } = useCheckoutSession(props);
 
-	console.log("SESSION", session);
-	console.log("JWT", jwt);
-
 	const formSchema = React.useMemo(() => {
 		const extendedSchema = checkoutFormSchema
 			? baseCheckoutSchema.extend(checkoutFormSchema)
