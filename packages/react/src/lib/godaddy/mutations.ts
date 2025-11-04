@@ -394,3 +394,23 @@ export const ApplyCheckoutSessionFulfillmentLocationMutation = graphql(`
         }
     }
 `);
+
+export const ExchangeCheckoutTokenMutation = graphql(`
+    mutation ExchangeCheckoutToken($input: MutationExchangeCheckoutTokenInput!) {
+        exchangeCheckoutToken(input: $input) {
+            jwt
+            expiresAt
+            expiresIn
+        }
+    }
+`);
+
+export const RefreshCheckoutTokenMutation = graphql(`
+    mutation RefreshCheckoutToken {
+        refreshCheckoutToken {
+            jwt
+            expiresAt
+            expiresIn
+        }
+    }
+`);
