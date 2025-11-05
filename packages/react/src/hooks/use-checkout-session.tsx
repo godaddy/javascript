@@ -90,6 +90,7 @@ export function useCheckoutSession(props?: CheckoutProps) {
     if (jwt && storedSessionId && storedSessionId !== sessionId) {
       removeJwt();
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      return;
     }
 
     // If we already have a JWT for this session, nothing to do
@@ -104,11 +105,11 @@ export function useCheckoutSession(props?: CheckoutProps) {
           },
           apiHost
         );
-        if (cancelled) return;
         if (!result?.jwt) {
-          setExchangeFailed(true);
+          if (!cancelled) setExchangeFailed(true);
           return;
         }
+        if (cancelled) return;
 
         setJwt(result.jwt);
         setStoredSessionId(sessionId);
@@ -124,7 +125,7 @@ export function useCheckoutSession(props?: CheckoutProps) {
       } catch (_error) {
         removeJwt();
         removeStoredSessionId();
-        setExchangeFailed(true);
+        if (!cancelled) setExchangeFailed(true);
       }
     })();
 
