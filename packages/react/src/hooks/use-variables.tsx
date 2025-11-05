@@ -1,6 +1,5 @@
 'use client';
 import { useEffect } from 'react';
-import { useCheckoutContext } from '@/components/checkout/checkout';
 import { convertCamelCaseToKebabCase } from '@/components/checkout/utils/case-conversion';
 // hooks/use-variables.ts
 import {
@@ -11,27 +10,17 @@ import {
 
 /**
  * Hook that applies CSS variables from the GoDaddy context to the document
- * Priority: overrideVariables > session.appearance > context.appearance
- * @param {GoDaddyVariables} [overrideVariables] - Optional variables that override all other variables
+ * Priority: overrideVariables > context.appearance
+ * @param {GoDaddyVariables} [overrideVariables] - Optional variables that override context variables
  */
 export function useVariables(overrideVariables?: GoDaddyVariables) {
   const { appearance } = useGoDaddyContext();
-  const { session } = useCheckoutContext();
-
-  // Get variables from both sources
-  let sessionVariables: CSSVariables | undefined;
-  if (session?.appearance?.variables) {
-    // Session variables come from GraphQL in camelCase, convert to kebab-case
-    sessionVariables = convertCamelCaseToKebabCase(
-      session.appearance.variables as Record<string, string>
-    );
-  }
 
   // Context variables are already in kebab-case
   const contextVariables = appearance?.variables;
 
   useEffect(() => {
-    if (!sessionVariables && !contextVariables && !overrideVariables) return;
+    if (!contextVariables && !overrideVariables) return;
 
     // Extract CSS variables from context (lowest priority)
     let contextCssVars: CSSVariables | undefined;
@@ -46,17 +35,22 @@ export function useVariables(overrideVariables?: GoDaddyVariables) {
     // Extract CSS variables from overrides (highest priority)
     let overrideCssVars: CSSVariables | undefined;
     if (overrideVariables) {
+      // Override variables come from session.appearance.variables which are in camelCase
+      // Convert them to kebab-case
       if ('checkout' in overrideVariables) {
-        overrideCssVars = overrideVariables.checkout;
+        overrideCssVars = convertCamelCaseToKebabCase(
+          overrideVariables.checkout as Record<string, string>
+        );
       } else {
-        overrideCssVars = overrideVariables as CSSVariables;
+        overrideCssVars = convertCamelCaseToKebabCase(
+          overrideVariables as Record<string, string>
+        );
       }
     }
 
-    // Merge the variables, with priority: override > session > context
+    // Merge the variables, with priority: override > context
     const mergedVars: CSSVariables = {
       ...contextCssVars,
-      ...sessionVariables,
       ...overrideCssVars,
     };
 
@@ -77,5 +71,5 @@ export function useVariables(overrideVariables?: GoDaddyVariables) {
         rootStyle.removeProperty(`--gd-${key}`);
       }
     };
-  }, [sessionVariables, contextVariables, overrideVariables]);
+  }, [contextVariables, overrideVariables]);
 }

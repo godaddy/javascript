@@ -94,8 +94,8 @@ export function DraftOrderExpressCheckout(props: ExpressCheckoutProps) {
     paypalConfig,
   } = props;
 
-  useTheme();
-  useVariables(props?.appearance?.variables);
+  useTheme(session?.appearance?.theme);
+  useVariables(session?.appearance?.variables || props?.appearance?.variables);
 
   const [isConfirmingCheckout, setIsConfirmingCheckout] = React.useState(false);
   const [checkoutErrors, setCheckoutErrors] = React.useState<
