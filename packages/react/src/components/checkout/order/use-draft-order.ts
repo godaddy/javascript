@@ -1,13 +1,13 @@
-import { type UseQueryResult, useQuery } from '@tanstack/react-query';
-import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useGoDaddyContext } from '@/godaddy-provider';
-import { getDraftOrder } from '@/lib/godaddy/godaddy';
+import { type UseQueryResult, useQuery } from "@tanstack/react-query";
+import { useCheckoutContext } from "@/components/checkout/checkout";
+import { useGoDaddyContext } from "@/godaddy-provider";
+import { getDraftOrder } from "@/lib/godaddy/godaddy";
 import type {
-  DraftOrder,
-  DraftOrderSession,
-  ShippingLines,
-  Totals,
-} from '@/types';
+	DraftOrder,
+	DraftOrderSession,
+	ShippingLines,
+	Totals,
+} from "@/types";
 
 /**
  * Hook to fetch the entire draft order
@@ -16,48 +16,48 @@ import type {
  * @returns Query result with draft order data
  */
 export function useDraftOrder<TData = DraftOrder>(
-  select?: (data: DraftOrderSession) => TData,
-  key = 'draft-order'
+	select?: (data: DraftOrderSession) => TData,
+	key = "draft-order",
 ): UseQueryResult<TData> {
-  const { session, jwt } = useCheckoutContext();
-  const { apiHost } = useGoDaddyContext();
+	const { session, jwt } = useCheckoutContext();
+	const { apiHost } = useGoDaddyContext();
 
-  return useQuery<DraftOrderSession, Error, TData>({
-    queryKey: session?.id ? [key, session.id] : [key],
-    queryFn: () =>
-      jwt
-        ? getDraftOrder({ accessToken: jwt }, apiHost)
-        : getDraftOrder(session, apiHost),
-    enabled: !!jwt,
-    select: select ?? (data => data.checkoutSession?.draftOrder as TData),
-    retry: 3,
-  });
+	return useQuery<DraftOrderSession, Error, TData>({
+		queryKey: session?.id ? [key, session.id] : [key],
+		queryFn: () =>
+			jwt
+				? getDraftOrder({ accessToken: jwt }, apiHost)
+				: getDraftOrder(session, apiHost),
+		enabled: !!session?.id,
+		select: select ?? ((data) => data.checkoutSession?.draftOrder as TData),
+		retry: 3,
+	});
 }
 
 export function useDraftOrderLineItems() {
-  return useDraftOrder<DraftOrder['lineItems']>(
-    data => data.checkoutSession?.draftOrder?.lineItems ?? null,
-    'draft-order'
-  );
+	return useDraftOrder<DraftOrder["lineItems"]>(
+		(data) => data.checkoutSession?.draftOrder?.lineItems ?? null,
+		"draft-order",
+	);
 }
 
 export function useDraftOrderShippingAddress() {
-  return useDraftOrder<NonNullable<DraftOrder['shipping']>['address']>(
-    data => data.checkoutSession?.draftOrder?.shipping?.address ?? null,
-    'draft-order'
-  );
+	return useDraftOrder<NonNullable<DraftOrder["shipping"]>["address"]>(
+		(data) => data.checkoutSession?.draftOrder?.shipping?.address ?? null,
+		"draft-order",
+	);
 }
 
 export function useDraftOrderTotals() {
-  return useDraftOrder<Totals | null>(
-    data => data.checkoutSession?.draftOrder?.totals ?? null,
-    'draft-order'
-  );
+	return useDraftOrder<Totals | null>(
+		(data) => data.checkoutSession?.draftOrder?.totals ?? null,
+		"draft-order",
+	);
 }
 
 export function useDraftOrderShipping() {
-  return useDraftOrder<ShippingLines | null>(
-    data => data.checkoutSession?.draftOrder?.shippingLines?.[0] ?? null,
-    'draft-order'
-  );
+	return useDraftOrder<ShippingLines | null>(
+		(data) => data.checkoutSession?.draftOrder?.shippingLines?.[0] ?? null,
+		"draft-order",
+	);
 }
