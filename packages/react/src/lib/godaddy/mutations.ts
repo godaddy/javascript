@@ -17,6 +17,7 @@ export const CreateCheckoutSessionMutation = graphql(`
       enabledLocales
       enableSurcharge
       enableLocalPickup
+      enableShipping
       enablePhoneCollection
       enableNotesCollection
       enablePromotionCodes

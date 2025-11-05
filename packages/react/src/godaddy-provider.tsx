@@ -82,7 +82,7 @@ export interface GoDaddyProviderProps {
   /**
    * API host for checkout GraphQL requests.
    * Defaults to production (https://checkout.commerce.api.godaddy.com).
-   * 
+   *
    * Internal devs can set to:
    * - "http://localhost:3000" for local development
    * - "https://checkout.commerce.api.dev-godaddy.com" for DEV environment
@@ -122,7 +122,12 @@ export function GoDaddyProvider({
 
   return (
     <godaddyContext.Provider
-      value={{ t: localization, appearance: processedAppearance, debug, apiHost }}
+      value={{
+        t: localization,
+        appearance: processedAppearance,
+        debug,
+        apiHost,
+      }}
     >
       <QueryClientProvider client={clientInstance}>
         {children}

@@ -1,7 +1,7 @@
-import HostedCheckout from "./HostedCheckout";
+import HostedCheckout from './HostedCheckout';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export default async function HostedCheckoutPage() {
-	return <HostedCheckout />;
+  return <HostedCheckout />;
 }

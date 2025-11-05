@@ -97,10 +97,13 @@ export function useCheckoutSession(props?: CheckoutProps) {
 
     (async () => {
       try {
-        const result = await exchangeCheckoutToken({
-          sessionId,
-          token: sessionToken,
-        }, apiHost);
+        const result = await exchangeCheckoutToken(
+          {
+            sessionId,
+            token: sessionToken,
+          },
+          apiHost
+        );
         if (cancelled) return;
         if (!result?.jwt) {
           setExchangeFailed(true);

@@ -420,8 +420,8 @@ export function PaymentForm(
       ) : null}
 
       {isShipping &&
-      paymentMethod !== PaymentMethodType.CREDIT_CARD &&
-      session?.enableBillingAddressCollection ? (
+      session?.enableShipping &&
+      paymentMethod !== PaymentMethodType.CREDIT_CARD ? (
         <PaymentAddressToggle />
       ) : null}
       {isBillingAddressRequired ? (

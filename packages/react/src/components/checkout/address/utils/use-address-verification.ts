@@ -1,21 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
-import { useCheckoutContext } from "@/components/checkout/checkout";
-import { useGoDaddyContext } from "@/godaddy-provider";
-import { verifyAddress } from "@/lib/godaddy/godaddy";
+import { useQuery } from '@tanstack/react-query';
+import { useCheckoutContext } from '@/components/checkout/checkout';
+import { useGoDaddyContext } from '@/godaddy-provider';
+import { verifyAddress } from '@/lib/godaddy/godaddy';
 
 /**
  * Address input for verification
  */
 export interface AddressVerificationInput {
-	addressLine1: string;
-	addressLine2: string;
-	addressLine3: string;
-	postalCode: string;
-	countryCode: string;
-	adminArea1?: string;
-	adminArea2?: string;
-	adminArea3?: string;
-	adminArea4?: string;
+  addressLine1: string;
+  addressLine2: string;
+  addressLine3: string;
+  postalCode: string;
+  countryCode: string;
+  adminArea1?: string;
+  adminArea2?: string;
+  adminArea3?: string;
+  adminArea4?: string;
 }
 
 /**
@@ -26,38 +26,38 @@ export interface AddressVerificationInput {
  * @returns Query result with verified address data
  */
 export function useAddressVerification(
-	address: AddressVerificationInput,
-	options: {
-		enabled: boolean;
-	} = { enabled: true },
+  address: AddressVerificationInput,
+  options: {
+    enabled: boolean;
+  } = { enabled: true }
 ) {
-	const { session, jwt } = useCheckoutContext();
-	const { apiHost } = useGoDaddyContext();
+  const { session, jwt } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
 
-	const queryKey = [
-		"verifyAddressQuery",
-		{
-			sessionId: session?.id,
-			addressLine1: address?.addressLine1?.toLowerCase(),
-			postalCode: address?.postalCode?.toLowerCase(),
-			countryCode: address?.countryCode?.toLowerCase(),
-			city: address?.adminArea3?.toLowerCase(),
-			state: address?.adminArea1?.toLowerCase(),
-		},
-	];
+  const queryKey = [
+    'verifyAddressQuery',
+    {
+      sessionId: session?.id,
+      addressLine1: address?.addressLine1?.toLowerCase(),
+      postalCode: address?.postalCode?.toLowerCase(),
+      countryCode: address?.countryCode?.toLowerCase(),
+      city: address?.adminArea3?.toLowerCase(),
+      state: address?.adminArea1?.toLowerCase(),
+    },
+  ];
 
-	return useQuery({
-		queryKey,
-		queryFn: async () =>
-			jwt
-				? verifyAddress(address, { accessToken: jwt }, apiHost)
-				: verifyAddress(address, session, apiHost),
-		enabled:
-			options.enabled &&
-			!!session?.id &&
-			!!address?.addressLine1 &&
-			!!address?.postalCode &&
-			!!address?.countryCode,
-		select: (data) => data.verifyAddress,
-	});
+  return useQuery({
+    queryKey,
+    queryFn: async () =>
+      jwt
+        ? verifyAddress(address, { accessToken: jwt }, apiHost)
+        : verifyAddress(address, session, apiHost),
+    enabled:
+      options.enabled &&
+      !!session?.id &&
+      !!address?.addressLine1 &&
+      !!address?.postalCode &&
+      !!address?.countryCode,
+    select: data => data.verifyAddress,
+  });
 }

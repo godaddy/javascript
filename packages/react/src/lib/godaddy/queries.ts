@@ -1,4 +1,4 @@
-import { graphql } from "@/gql.tada";
+import { graphql } from '@/gql.tada';
 
 export const GetCheckoutSessionQuery = graphql(`
     query GetCheckoutSession {
@@ -17,6 +17,7 @@ export const GetCheckoutSessionQuery = graphql(`
             enabledLocales
             enableSurcharge
             enableLocalPickup
+            enableShipping
             enablePhoneCollection
             enableNotesCollection
             enablePromotionCodes
