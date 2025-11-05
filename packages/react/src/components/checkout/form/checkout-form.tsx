@@ -460,7 +460,7 @@ export function CheckoutForm({
                           total={orderTotal}
                           enableDiscounts={session?.enablePromotionCodes}
                           enableTaxes={session?.enableTaxCollection}
-                          enableShipping={isShipping}
+                          enableShipping={isShipping && session?.enableShipping}
                         />
                       </div>
                     </AccordionContent>
@@ -489,7 +489,7 @@ export function CheckoutForm({
                   total={orderTotal}
                   enableDiscounts={session?.enablePromotionCodes}
                   enableTaxes={session?.enableTaxCollection}
-                  enableShipping={isShipping}
+                  enableShipping={isShipping && session?.enableShipping}
                 />
               </div>
               <Target id='checkout.summary.after' />
