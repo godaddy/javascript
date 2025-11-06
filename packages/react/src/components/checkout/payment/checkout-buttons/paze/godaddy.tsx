@@ -76,7 +76,7 @@ export function PazeCheckoutButton() {
         buttonOptions: {
           type: 'plain',
           margin: '0',
-          height: '48px',
+          height: '50px',
           width: '100%',
           justifyContent: 'flex-start',
           onClick: handlePazeClick,

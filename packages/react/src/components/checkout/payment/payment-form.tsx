@@ -263,7 +263,8 @@ export function PaymentForm(
       return (
         <Button
           type='button'
-          className='w-full flex items-center justify-center gap-2 px-8 h-10'
+          size='lg'
+          className='w-full flex items-center justify-center gap-2 px-8 h-13'
           disabled
         >
           <LoaderCircle className='h-5 w-5 animate-spin' />

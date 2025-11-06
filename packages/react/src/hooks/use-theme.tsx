@@ -11,9 +11,15 @@ export const themes = {
 
 export type Theme = keyof typeof themes;
 
-export function useTheme() {
+/**
+ * Hook that applies theme from override or context
+ * @param {Theme} [overrideTheme] - Optional theme that overrides context theme
+ */
+export function useTheme(overrideTheme?: Theme | null) {
   const { appearance } = useGoDaddyContext();
-  const theme = appearance?.theme;
+
+  // Priority: overrideTheme > context.appearance.theme
+  const theme = overrideTheme ?? appearance?.theme;
 
   useEffect(() => {
     // Remove all theme classes

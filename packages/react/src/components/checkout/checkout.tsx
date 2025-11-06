@@ -229,8 +229,8 @@ export function Checkout(props: CheckoutProps) {
   >(undefined);
   const { t } = useGoDaddyContext();
 
-  useTheme();
-  useVariables(props?.appearance?.variables);
+  useTheme(session?.appearance?.theme);
+  useVariables(session?.appearance?.variables || props?.appearance?.variables);
 
   const { session, jwt, isLoading: isLoadingJWT } = useCheckoutSession(props);
 
