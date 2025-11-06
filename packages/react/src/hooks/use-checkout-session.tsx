@@ -181,8 +181,6 @@ export function useCheckoutSession(props?: CheckoutProps) {
   if (exchangeFailed && props?.session) {
     return { session: props.session, jwt: undefined, isLoading };
   }
-  console.log('checkoutSessionLoading', checkoutSessionQuery.isLoading)
-  console.log('isLoading', isLoading)
 
   return {
     session: checkoutSessionQuery.data,
