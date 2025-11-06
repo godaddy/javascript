@@ -19,6 +19,7 @@ import {
 } from '@/components/checkout/delivery/delivery-method';
 import { ExpressCheckoutButtons } from '@/components/checkout/express-checkout/express-checkout-buttons';
 import { CheckoutErrorList } from '@/components/checkout/form/checkout-error-list';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import {
   DraftOrderLineItems,
   type Product,
@@ -106,16 +107,16 @@ export function CheckoutForm({
   const { data: order } = draftOrder;
 
   // Order summary calculations
-  const subtotal = (totals?.subTotal?.value || 0) / 100;
-  const orderDiscount = (totals?.discountTotal?.value || 0) / 100;
+  const subtotal = totals?.subTotal?.value || 0;
+  const orderDiscount = totals?.discountTotal?.value || 0;
   const shipping =
-    (order?.shippingLines?.reduce(
+    order?.shippingLines?.reduce(
       (sum, line) => sum + (line?.amount?.value || 0),
       0
-    ) || 0) / 100;
-  const taxTotal = (totals?.taxTotal?.value || 0) / 100;
-  const orderTotal = (totals?.total?.value || 0) / 100;
-  const tipTotal = (tipAmount || 0) / 100;
+    ) || 0;
+  const taxTotal = totals?.taxTotal?.value || 0;
+  const orderTotal = totals?.total?.value || 0;
+  const tipTotal = tipAmount || 0;
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
@@ -427,10 +428,7 @@ export function CheckoutForm({
                           {t.totals.orderSummary}
                         </span>
                         <span className='font-bold text-lg pr-2 self-center'>
-                          {new Intl.NumberFormat('en-us', {
-                            style: 'currency',
-                            currency: currencyCode,
-                          }).format(orderTotal)}
+                          {formatCurrency({ amount: orderTotal, currencyCode })}
                         </span>
                       </div>
                     </AccordionTrigger>

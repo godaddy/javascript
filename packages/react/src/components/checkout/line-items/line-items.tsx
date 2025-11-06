@@ -3,6 +3,7 @@
 import { Image } from 'lucide-react';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import type { SKUProduct } from '@/types';
+import { formatCurrency } from '../utils/format-currency';
 
 export interface Note {
   content: string | null;
@@ -129,10 +130,10 @@ export function DraftOrderLineItems({
                 <div className='text-right'>
                   <div>
                     <span className='text-sm'>
-                      {new Intl.NumberFormat('en-us', {
-                        style: 'currency',
-                        currency: currencyCode,
-                      }).format(item.originalPrice * item.quantity)}
+                      {formatCurrency({
+                        amount: item.originalPrice * item.quantity,
+                        currencyCode,
+                      })}
                     </span>
                   </div>
                 </div>

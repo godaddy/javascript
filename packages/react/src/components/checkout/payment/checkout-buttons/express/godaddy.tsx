@@ -34,6 +34,7 @@ import { filterAndSortShippingMethods } from '@/components/checkout/shipping/uti
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
 import { mapOrderToFormValues } from '@/components/checkout/utils/checkout-transformers';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -100,7 +101,13 @@ export function ExpressCheckoutButton() {
             type: 'SHIPPING' as const,
             subtotalPrice: {
               currencyCode: currency,
-              value: Number(amount) * 100 || 0,
+              value: Number(
+                formatCurrency({
+                  amount: Number(amount) || 0,
+                  currencyCode: currency,
+                  isInCents: false,
+                })
+              ),
             },
           },
         ],
@@ -133,10 +140,10 @@ export function ExpressCheckoutButton() {
       });
 
       const methods = sortedMethods?.map(method => {
-        const shippingMethodPrice = new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: method.cost?.currencyCode || 'USD',
-        }).format((method.cost?.value || 0) / 100);
+        const shippingMethodPrice = formatCurrency({
+          amount: method.cost?.value || 0,
+          currencyCode: method.cost?.currencyCode || 'USD',
+        });
 
         return {
           id: method?.displayName?.replace(/\s+/g, '-')?.toLowerCase(),
@@ -144,7 +151,11 @@ export function ExpressCheckoutButton() {
           detail: method.description
             ? `(${method.description}) ${shippingMethodPrice}`
             : `${shippingMethodPrice}`,
-          amount: ((method.cost?.value || 0) / 100).toString(),
+          amount: formatCurrency({
+            amount: method.cost?.value || 0,
+            currencyCode,
+            returnRaw: true,
+          }),
         };
       });
 
@@ -173,7 +184,11 @@ export function ExpressCheckoutButton() {
         // Always add the discount line item, using state variables directly
         updatedLineItems.push({
           label: t.totals.discount,
-          amount: (-priceAdjustment / 100).toString(),
+          amount: formatCurrency({
+            amount: -priceAdjustment,
+            currencyCode,
+            returnRaw: true,
+          }),
           isPending: false,
         });
 
@@ -194,7 +209,11 @@ export function ExpressCheckoutButton() {
           couponCode: {
             code: appliedCouponCode,
             label: t.totals.discount,
-            amount: (-priceAdjustment / 100).toString(),
+            amount: formatCurrency({
+              amount: -priceAdjustment,
+              currencyCode,
+              returnRaw: true,
+            }),
           },
         };
       } else {
@@ -328,7 +347,11 @@ export function ExpressCheckoutButton() {
         couponConfig = {
           code: appliedCouponCode,
           label: t.totals.discount,
-          amount: (priceAdjustment / 100).toString(),
+          amount: formatCurrency({
+            amount: -priceAdjustment,
+            currencyCode,
+            returnRaw: true,
+          }),
         };
       }
 
@@ -439,7 +462,13 @@ export function ExpressCheckoutButton() {
         {
           subTotal: {
             currencyCode: currencyCode,
-            value: Number(selectedMethod.amount) * 100,
+            value: Number(
+              formatCurrency({
+                amount: Number(selectedMethod.amount),
+                currencyCode,
+                isInCents: false,
+              })
+            ),
           },
           name: selectedMethod.name,
         },
@@ -520,14 +549,22 @@ export function ExpressCheckoutButton() {
         if (godaddyTotals.shipping.value > 0) {
           finalLineItems.push({
             label: 'Shipping',
-            amount: (godaddyTotals.shipping.value / 100).toString(),
+            amount: formatCurrency({
+              amount: godaddyTotals.shipping.value,
+              currencyCode,
+              returnRaw: true,
+            }),
           });
         }
 
         if (godaddyTotals.taxes.value > 0) {
           finalLineItems.push({
             label: t.totals.estimatedTaxes,
-            amount: (godaddyTotals.taxes.value / 100).toString(),
+            amount: formatCurrency({
+              amount: godaddyTotals.taxes.value,
+              currencyCode,
+              returnRaw: true,
+            }),
           });
         }
 
@@ -555,7 +592,11 @@ export function ExpressCheckoutButton() {
           let shippingLines: ReturnType<typeof convertAddressToShippingLines>;
           if (shippingAddress && shippingMethod) {
             const selectedMethodInfo = {
-              amount: (godaddyTotals.shipping.value / 100).toString(),
+              amount: formatCurrency({
+                amount: godaddyTotals.shipping.value,
+                currencyCode,
+                returnRaw: true,
+              }),
               name: shippingMethod,
             };
             shippingLines = convertAddressToShippingLines(
@@ -580,21 +621,33 @@ export function ExpressCheckoutButton() {
             if (godaddyTotals.shipping.value > 0) {
               finalLineItems.push({
                 label: t.totals.shipping,
-                amount: (godaddyTotals.shipping.value / 100).toString(),
+                amount: formatCurrency({
+                  amount: godaddyTotals.shipping.value,
+                  currencyCode,
+                  returnRaw: true,
+                }),
               });
             }
 
             if (godaddyTotals.taxes.value > 0) {
               finalLineItems.push({
                 label: t.totals.estimatedTaxes,
-                amount: (godaddyTotals.taxes.value / 100).toString(),
+                amount: formatCurrency({
+                  amount: godaddyTotals.taxes.value,
+                  currencyCode,
+                  returnRaw: true,
+                }),
               });
             }
 
             // Add the discount line item
             finalLineItems.push({
               label: t.totals.discount,
-              amount: (-adjustment / 100).toString(),
+              amount: formatCurrency({
+                amount: -adjustment,
+                currencyCode,
+                returnRaw: true,
+              }),
             });
 
             // Calculate the total amount
@@ -611,7 +664,11 @@ export function ExpressCheckoutButton() {
               couponCode: {
                 code: couponCode,
                 label: t.totals.discount,
-                amount: (-adjustment / 100).toString(),
+                amount: formatCurrency({
+                  amount: -adjustment,
+                  currencyCode,
+                  returnRaw: true,
+                }),
               },
             };
           } else {
@@ -844,7 +901,13 @@ export function ExpressCheckoutButton() {
           ...value,
           shipping: {
             currencyCode: 'USD',
-            value: Number(shippingAmount) * 100 || 0,
+            value: Number(
+              formatCurrency({
+                amount: Number(shippingAmount) || 0,
+                currencyCode,
+                isInCents: false,
+              })
+            ),
           },
         }));
 
@@ -897,7 +960,11 @@ export function ExpressCheckoutButton() {
             if (taxesResult?.value) {
               poyntLineItems.push({
                 label: t.totals.estimatedTaxes,
-                amount: (taxesResult.value / 100).toString(),
+                amount: formatCurrency({
+                  amount: taxesResult.value,
+                  currencyCode,
+                  returnRaw: true,
+                }),
                 isPending: false,
               });
               setGoDaddyTotals(value => ({
@@ -925,7 +992,11 @@ export function ExpressCheckoutButton() {
         if (priceAdjustment && appliedCouponCode) {
           poyntLineItems.push({
             label: t.totals.discount,
-            amount: (-priceAdjustment / 100).toString(),
+            amount: formatCurrency({
+              amount: -priceAdjustment,
+              currencyCode,
+              returnRaw: true,
+            }),
             isPending: false,
           });
         }
@@ -949,7 +1020,11 @@ export function ExpressCheckoutButton() {
           updatedOrder.couponCode = {
             code: appliedCouponCode,
             label: t.totals.discount,
-            amount: (-priceAdjustment / 100).toString(),
+            amount: formatCurrency({
+              amount: -priceAdjustment,
+              currencyCode,
+              returnRaw: true,
+            }),
           };
         }
 
@@ -979,7 +1054,13 @@ export function ExpressCheckoutButton() {
             ...value,
             shipping: {
               currencyCode: 'USD',
-              value: Number(methods?.[0]?.amount) * 100 || 0,
+              value: Number(
+                formatCurrency({
+                  amount: Number(methods?.[0]?.amount) || 0,
+                  currencyCode,
+                  isInCents: false,
+                })
+              ),
             },
           }));
 
@@ -1060,7 +1141,11 @@ export function ExpressCheckoutButton() {
             if (taxesResult?.value) {
               poyntLineItems.push({
                 label: t.totals.estimatedTaxes,
-                amount: (taxesResult.value / 100).toString(),
+                amount: formatCurrency({
+                  amount: taxesResult.value,
+                  currencyCode,
+                  returnRaw: true,
+                }),
                 isPending: false,
               });
               setGoDaddyTotals(value => ({
@@ -1094,7 +1179,11 @@ export function ExpressCheckoutButton() {
         if (priceAdjustment && appliedCouponCode) {
           poyntLineItems.push({
             label: t.totals.discount,
-            amount: (-priceAdjustment / 100).toString(),
+            amount: formatCurrency({
+              amount: -priceAdjustment,
+              currencyCode,
+              returnRaw: true,
+            }),
             isPending: false,
           });
         }
@@ -1119,7 +1208,11 @@ export function ExpressCheckoutButton() {
           updatedOrder.couponCode = {
             code: appliedCouponCode,
             label: appliedCouponCode || 'Discount',
-            amount: (-priceAdjustment / 100).toString(),
+            amount: formatCurrency({
+              amount: -priceAdjustment,
+              currencyCode,
+              returnRaw: true,
+            }),
           };
         } else {
           updatedOrder.couponCode = {

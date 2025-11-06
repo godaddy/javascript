@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -28,14 +29,6 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
 
   const calculateTipAmount = (percentage: number): number => {
     return Math.round(((total * percentage) / 100) * 100);
-  };
-
-  const formatCurrency = (amount: number): string => {
-    // Convert from cents to dollars before formatting
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode || 'USD',
-    }).format(amount / 100);
   };
 
   const handlePercentageSelect = (percentage: number) => {
@@ -116,7 +109,7 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
           >
             <span className='text-lg'>{percentage}%</span>
             <span className='text-sm'>
-              {formatCurrency(calculateTipAmount(percentage))}
+              {formatCurrency({ amount: calculateTipAmount(percentage), currencyCode: currencyCode || 'USD' })}
             </span>
           </Button>
         ))}

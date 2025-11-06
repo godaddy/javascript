@@ -8,6 +8,7 @@ import {
 } from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderProductsMap } from '@/components/checkout/order/use-draft-order-products';
 import { mapSkusToItemsDisplay } from '@/components/checkout/utils/checkout-transformers';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 
 // Apple Pay request interface
 export interface ApplePayRequest {
@@ -194,15 +195,45 @@ export function useBuildPaymentRequest(): {
   );
 
   // Convert amounts from cents to dollars for display
-  const subtotal = (totals?.subTotal?.value || 0) / 100;
-  const tax = (totals?.taxTotal?.value || 0) / 100;
-  const shipping =
-    (order?.shippingLines?.reduce(
-      (sum, line) => sum + (line?.amount?.value || 0),
-      0
-    ) || 0) / 100;
-  const discount = (totals?.discountTotal?.value || 0) / 100;
-  const total = (totals?.total?.value || 0) / 100;
+  const subtotal = Number(
+    formatCurrency({
+      amount: totals?.subTotal?.value || 0,
+      currencyCode,
+      returnRaw: true,
+    })
+  );
+  const tax = Number(
+    formatCurrency({
+      amount: totals?.taxTotal?.value || 0,
+      currencyCode,
+      returnRaw: true,
+    })
+  );
+  const shipping = Number(
+    formatCurrency({
+      amount:
+        order?.shippingLines?.reduce(
+          (sum, line) => sum + (line?.amount?.value || 0),
+          0
+        ) || 0,
+      currencyCode,
+      returnRaw: true,
+    })
+  );
+  const discount = Number(
+    formatCurrency({
+      amount: totals?.discountTotal?.value || 0,
+      currencyCode,
+      returnRaw: true,
+    })
+  );
+  const total = Number(
+    formatCurrency({
+      amount: totals?.total?.value || 0,
+      currencyCode,
+      returnRaw: true,
+    })
+  );
 
   const countryCode = useMemo(
     () => session?.shipping?.originAddress?.countryCode || 'US',
@@ -254,52 +285,38 @@ export function useBuildPaymentRequest(): {
     merchantCapabilities: ['supports3DS'],
     total: {
       label: 'Order Total',
-      amount: new Intl.NumberFormat('en-us', {
-        style: 'currency',
-        currency: currencyCode,
-      }).format(total),
+      amount: total.toFixed(2),
       type: 'final',
     },
     lineItems: [
       ...(items || []).map(lineItem => ({
         label: lineItem?.name || '',
-        amount: new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format((lineItem?.originalPrice || 0) * (lineItem?.quantity || 0)),
+        amount: formatCurrency({
+          amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 0),
+          currencyCode,
+          returnRaw: true,
+        }),
         type: 'LINE_ITEM',
         status: 'FINAL',
       })),
       {
         label: 'Subtotal',
-        amount: new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format(subtotal),
+        amount: subtotal.toFixed(2),
         type: 'final',
       },
       {
         label: 'Tax',
-        amount: new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format(tax),
+        amount: tax.toFixed(2),
         type: 'final',
       },
       {
         label: 'Shipping',
-        amount: new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format(shipping),
+        amount: shipping.toFixed(2),
         type: 'final',
       },
       {
         label: 'Discount',
-        amount: new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format(-1 * discount),
+        amount: (-1 * discount).toFixed(2),
         type: 'final',
       },
     ].filter(item => Number.parseFloat(item.amount) !== 0),
@@ -338,16 +355,20 @@ export function useBuildPaymentRequest(): {
     },
     transactionInfo: {
       totalPriceStatus: 'FINAL',
-      totalPrice: new Intl.NumberFormat('en-us', {
-        style: 'currency',
-        currency: currencyCode,
-      }).format(total),
+      totalPrice: total.toFixed(2),
       totalPriceLabel: 'Total',
       currencyCode,
       displayItems: [
         ...(items || []).map(lineItem => ({
           label: lineItem?.name || '',
-          price: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 0),
+          price: Number(
+            formatCurrency({
+              amount:
+                (lineItem?.originalPrice || 0) * (lineItem?.quantity || 0),
+              currencyCode,
+              returnRaw: true,
+            })
+          ),
           type: 'LINE_ITEM',
           status: 'FINAL',
         })),
@@ -411,7 +432,11 @@ export function useBuildPaymentRequest(): {
           name: lineItem?.name || '',
           unit_amount: {
             currency_code: currencyCode,
-            value: (lineItem?.originalPrice || 0).toFixed(2),
+            value: formatCurrency({
+              amount: lineItem?.originalPrice || 0,
+              currencyCode,
+              returnRaw: true,
+            }),
           },
           quantity: (lineItem?.quantity || 1).toString(),
         })),
@@ -500,15 +525,17 @@ export function useBuildPaymentRequest(): {
   const poyntExpressRequest: PoyntExpressRequest = {
     total: {
       label: 'Order Total',
-      amount: subtotal.toString(),
+      amount: subtotal.toFixed(2),
     },
     lineItems: [
       ...(items || []).map(lineItem => {
         return {
           label: lineItem?.name || '',
-          amount: (
-            (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1)
-          ).toString(),
+          amount: formatCurrency({
+            amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
+            currencyCode,
+            returnRaw: true,
+          }),
         };
       }),
     ],
@@ -517,15 +544,17 @@ export function useBuildPaymentRequest(): {
   const poyntStandardRequest: PoyntStandardRequest = {
     total: {
       label: 'Order Total',
-      amount: total.toString(),
+      amount: total.toFixed(2),
     },
     lineItems: [
       ...(items || []).map(lineItem => {
         return {
           label: lineItem?.name || '',
-          amount: (
-            (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1)
-          ).toString(),
+          amount: formatCurrency({
+            amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
+            currencyCode,
+            returnRaw: true,
+          }),
         };
       }),
       {

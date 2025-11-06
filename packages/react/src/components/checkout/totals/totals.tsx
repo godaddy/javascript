@@ -1,5 +1,6 @@
 import { DiscountStandalone } from '@/components/checkout/discount/discount-standalone';
 import { TotalLineItemSkeleton } from '@/components/checkout/totals/totals-skeleton';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { useGoDaddyContext } from '@/godaddy-provider';
 
 export interface DraftOrderTotalsProps {
@@ -39,12 +40,7 @@ function TotalLineItem({
           <span className='text-xs text-muted-foreground'>{description}</span>
         ) : null}
       </div>
-      <span>
-        {new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format(value)}
-      </span>
+      <span>{formatCurrency({ amount: value, currencyCode })}</span>
     </div>
   );
 }
@@ -143,10 +139,7 @@ export function DraftOrderTotals({
               {currencyCode}{' '}
             </span>
             <span className='font-bold text-lg'>
-              {new Intl.NumberFormat('en-us', {
-                style: 'currency',
-                currency: currencyCode,
-              }).format(total)}
+              {formatCurrency({ amount: total, currencyCode })}
             </span>
           </div>
         </div>
