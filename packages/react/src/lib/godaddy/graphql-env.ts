@@ -23,9835 +23,9835 @@
  * ```
  */
 const introspection = {
-  __schema: {
-    queryType: {
-      name: 'Query',
+  "__schema": {
+    "queryType": {
+      "name": "Query"
     },
-    mutationType: {
-      name: 'Mutation',
+    "mutationType": {
+      "name": "Mutation"
     },
-    subscriptionType: null,
-    types: [
+    "subscriptionType": null,
+    "types": [
       {
-        kind: 'OBJECT',
-        name: 'Address',
-        fields: [
+        "kind": "OBJECT",
+        "name": "Address",
+        "fields": [
           {
-            name: 'addressDetails',
-            type: {
-              kind: 'OBJECT',
-              name: 'AddressDetails',
+            "name": "addressDetails",
+            "type": {
+              "kind": "OBJECT",
+              "name": "AddressDetails"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addressLine1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'countryCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "countryCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'postalCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "postalCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'AddressDetails',
-        fields: [
+        "kind": "OBJECT",
+        "name": "AddressDetails",
+        "fields": [
           {
-            name: 'addressType',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addressType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'buildingName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "buildingName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'deliveryService',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "deliveryService",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'geoCoordinates',
-            type: {
-              kind: 'OBJECT',
-              name: 'GeoCoordinates',
+            "name": "geoCoordinates",
+            "type": {
+              "kind": "OBJECT",
+              "name": "GeoCoordinates"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'streetName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "streetName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'streetNumber',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "streetNumber",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'streetType',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "streetType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'subBuilding',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "subBuilding",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'AddressInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "AddressInput",
+        "inputFields": [
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "addressLine1",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "adminArea1",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "adminArea2",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'countryCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "countryCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'postalCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "postalCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'AdjustmentAmount',
-        fields: [
+        "kind": "OBJECT",
+        "name": "AdjustmentAmount",
+        "fields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'OBJECT',
-              name: 'SimpleMoney',
+            "name": "amount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "SimpleMoney"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'AdjustmentPercentage',
-        fields: [
+        "kind": "OBJECT",
+        "name": "AdjustmentPercentage",
+        "fields": [
           {
-            name: 'maximumAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'SimpleMoney',
+            "name": "maximumAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "SimpleMoney"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'percentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "percentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'UNION',
-        name: 'AdjustmentValue',
-        possibleTypes: [
+        "kind": "UNION",
+        "name": "AdjustmentValue",
+        "possibleTypes": [
           {
-            kind: 'OBJECT',
-            name: 'AdjustmentAmount',
+            "kind": "OBJECT",
+            "name": "AdjustmentAmount"
           },
           {
-            kind: 'OBJECT',
-            name: 'AdjustmentPercentage',
+            "kind": "OBJECT",
+            "name": "AdjustmentPercentage"
+          }
+        ]
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "ApplyShippingMethodInput",
+        "inputFields": [
+          {
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
+          {
+            "name": "requestedProvider",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "requestedService",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "subTotal",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "MoneyInput"
+            }
+          },
+          {
+            "name": "taxTotal",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "MoneyInput"
+            }
+          }
         ],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'ApplyShippingMethodInput',
-        inputFields: [
+        "kind": "SCALAR",
+        "name": "Boolean"
+      },
+      {
+        "kind": "UNION",
+        "name": "CalculatedAdjustment",
+        "possibleTypes": [
           {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "kind": "OBJECT",
+            "name": "CalculatedDiscount"
           },
           {
-            name: 'requestedProvider',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "kind": "OBJECT",
+            "name": "CalculatedFee"
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CalculatedAdjustmentOutput",
+        "fields": [
+          {
+            "name": "adjustment",
+            "type": {
+              "kind": "UNION",
+              "name": "CalculatedAdjustment"
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'requestedService',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "totalAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "SimpleMoney"
             },
-          },
-          {
-            name: 'subTotal',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
-            },
-          },
-          {
-            name: 'taxTotal',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
-            },
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'SCALAR',
-        name: 'Boolean',
-      },
-      {
-        kind: 'UNION',
-        name: 'CalculatedAdjustment',
-        possibleTypes: [
+        "kind": "OBJECT",
+        "name": "CalculatedDiscount",
+        "fields": [
           {
-            kind: 'OBJECT',
-            name: 'CalculatedDiscount',
+            "name": "description",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            kind: 'OBJECT',
-            name: 'CalculatedFee',
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID"
+            },
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "label",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "value",
+            "type": {
+              "kind": "UNION",
+              "name": "AdjustmentValue"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CalculatedAdjustmentOutput',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CalculatedFee",
+        "fields": [
           {
-            name: 'adjustment',
-            type: {
-              kind: 'UNION',
-              name: 'CalculatedAdjustment',
+            "name": "description",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'totalAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'SimpleMoney',
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "label",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "value",
+            "type": {
+              "kind": "UNION",
+              "name": "AdjustmentValue"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CalculatedDiscount',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CalculatedLineOutput",
+        "fields": [
           {
-            name: 'description',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adjustments",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CalculatedAdjustmentOutput"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'ID',
+            "name": "calculationLine",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CalculationLineOutput"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'label',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "totalDiscountAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "SimpleMoney"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "totalFeeAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "SimpleMoney"
             },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'value',
-            type: {
-              kind: 'UNION',
-              name: 'AdjustmentValue',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CalculatedFee',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CalculationLineOutput",
+        "fields": [
           {
-            name: 'description',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'ID',
+            "name": "type",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'label',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'value',
-            type: {
-              kind: 'UNION',
-              name: 'AdjustmentValue',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CalculatedLineOutput',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutAuthToken",
+        "fields": [
           {
-            name: 'adjustments',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'CalculatedAdjustmentOutput',
-                },
-              },
+            "name": "expiresAt",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "DateTime"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'calculationLine',
-            type: {
-              kind: 'OBJECT',
-              name: 'CalculationLineOutput',
+            "name": "expiresIn",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'totalDiscountAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'SimpleMoney',
+            "name": "jwt",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'totalFeeAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'SimpleMoney',
+            "name": "sessionId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CalculationLineOutput',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSession",
+        "fields": [
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addresses",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "Address"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'type',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-        ],
-        interfaces: [],
-      },
-      {
-        kind: 'OBJECT',
-        name: 'CheckoutAuthToken',
-        fields: [
-          {
-            name: 'expiresAt',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'DateTime',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'expiresIn',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Int',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'jwt',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'sessionId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-        ],
-        interfaces: [],
-      },
-      {
-        kind: 'OBJECT',
-        name: 'CheckoutSession',
-        fields: [
-          {
-            name: 'addresses',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'Address',
-                },
-              },
-            },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'CheckoutSessionAddressesInput',
-                  },
-                },
-              },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "CheckoutSessionAddressesInput"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'channelId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "channelId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'createdAt',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'DateTime',
-              },
+            "name": "createdAt",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "DateTime"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'customerId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "customerId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'defaultOperatingHours',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionStoreHours',
+            "name": "defaultOperatingHours",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionStoreHours"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'draftOrder',
-            type: {
-              kind: 'OBJECT',
-              name: 'DraftOrder',
+            "name": "draftOrder",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrder"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enableAddressAutocomplete',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enableAddressAutocomplete",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enableBillingAddressCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enableBillingAddressCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enableLocalPickup',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enableLocalPickup",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enableNotesCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enableNotesCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enablePaymentMethodCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enablePaymentMethodCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enablePhoneCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enablePhoneCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enablePromotionCodes',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enablePromotionCodes",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enableShipping',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enableShipping",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enableShippingAddressCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enableShippingAddressCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enableSurcharge',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enableSurcharge",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enableTaxCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enableTaxCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enableTips',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "enableTips",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enabledLocales',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
+            "name": "enabledLocales",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enabledPaymentProviders',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
+            "name": "enabledPaymentProviders",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'environment',
-            type: {
-              kind: 'ENUM',
-              name: 'CheckoutSessionEnvironment',
+            "name": "environment",
+            "type": {
+              "kind": "ENUM",
+              "name": "CheckoutSessionEnvironment"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'experimental_rules',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionExperimentalRules',
+            "name": "experimental_rules",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionExperimentalRules"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'expiresAt',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'DateTime',
-              },
+            "name": "expiresAt",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "DateTime"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'lineItems',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'DraftOrderLineItem',
-                },
-              },
+            "name": "lineItems",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "DraftOrderLineItem"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'locations',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'CheckoutSessionLocation',
-                },
-              },
+            "name": "locations",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CheckoutSessionLocation"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'paymentMethods',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionPaymentMethods',
+            "name": "paymentMethods",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethods"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'returnUrl',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "returnUrl",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'shipping',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionShippingOptions',
+            "name": "shipping",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionShippingOptions"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'skus',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'OBJECT',
-                name: 'CheckoutSessionSkusConnection',
-              },
+            "name": "skus",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "CheckoutSessionSkusConnection"
+              }
             },
-            args: [
+            "args": [
               {
-                name: 'after',
-                type: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-              {
-                name: 'before',
-                type: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
+                "name": "after",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
               },
               {
-                name: 'first',
-                type: {
-                  kind: 'SCALAR',
-                  name: 'Int',
-                },
+                "name": "before",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
               },
               {
-                name: 'last',
-                type: {
-                  kind: 'SCALAR',
-                  name: 'Int',
-                },
+                "name": "first",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
               },
+              {
+                "name": "last",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'sourceApp',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "sourceApp",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'status',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'ENUM',
-                name: 'CheckoutSessionStatus',
-              },
+            "name": "status",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "ENUM",
+                "name": "CheckoutSessionStatus"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'storeId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "storeId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'storeName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "storeName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'successUrl',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "successUrl",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionTaxesOptions',
+            "name": "taxes",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionTaxesOptions"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'token',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "token",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'updatedAt',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'DateTime',
-              },
+            "name": "updatedAt",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "DateTime"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'url',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "url",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionAddress',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionAddress",
+        "fields": [
           {
-            name: 'addressDetails',
-            type: {
-              kind: 'OBJECT',
-              name: 'AddressDetails',
+            "name": "addressDetails",
+            "type": {
+              "kind": "OBJECT",
+              "name": "AddressDetails"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addressLine1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'countryCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "countryCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'postalCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "postalCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionAddressDetailsInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionAddressDetailsInput",
+        "inputFields": [
           {
-            name: 'addressType',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'buildingName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "buildingName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'deliveryService',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "deliveryService",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'geoCoordinates',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionGeoCoordinatesInput',
-            },
+            "name": "geoCoordinates",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionGeoCoordinatesInput"
+            }
           },
           {
-            name: 'streetName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "streetName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'streetNumber',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "streetNumber",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'streetType',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "streetType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'subBuilding',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "subBuilding",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionAddressInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionAddressInput",
+        "inputFields": [
           {
-            name: 'addressDetails',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionAddressDetailsInput',
-            },
+            "name": "addressDetails",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionAddressDetailsInput"
+            }
           },
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'countryCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "countryCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'postalCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "postalCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionAddressesInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionAddressesInput",
+        "inputFields": [
           {
-            name: 'query',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "query",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionCalculateTaxesInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionCalculateTaxesInput",
+        "inputFields": [
           {
-            name: 'destination',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionCalculationLocationInput',
-            },
+            "name": "destination",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionCalculationLocationInput"
+            }
           },
           {
-            name: 'lines',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'CheckoutSessionCalculationLineInput',
-                  },
-                },
-              },
-            },
+            "name": "lines",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "CheckoutSessionCalculationLineInput"
+                  }
+                }
+              }
+            }
           },
           {
-            name: 'origin',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionCalculationLocationInput',
-            },
-          },
+            "name": "origin",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionCalculationLocationInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionCalculatedLine',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionCalculatedLine",
+        "fields": [
           {
-            name: 'calculationLine',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionCalculationLine',
+            "name": "calculationLine",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionCalculationLine"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'taxAmounts',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'CheckoutSessionTaxAmount',
-                },
-              },
+            "name": "taxAmounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CheckoutSessionTaxAmount"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'totalTaxAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionTotalTaxAmount',
+            "name": "totalTaxAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionTotalTaxAmount"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionCalculatedRate',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionCalculatedRate",
+        "fields": [
           {
-            name: 'calculationMethod',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "calculationMethod",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'label',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "label",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'value',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionCalculatedRateValue',
+            "name": "value",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionCalculatedRateValue"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionCalculatedRateValue',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionCalculatedRateValue",
+        "fields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "amount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'appliedAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "appliedAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'appliedPercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
+            "name": "appliedPercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'percentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "percentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionCalculationAddressInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionCalculationAddressInput",
+        "inputFields": [
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'countryCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "countryCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'postalCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "postalCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionCalculationLine',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionCalculationLine",
+        "fields": [
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionCalculationLineInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionCalculationLineInput",
+        "inputFields": [
           {
-            name: 'classification',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "classification",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'destination',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionCalculationLocationInput',
-            },
+            "name": "destination",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionCalculationLocationInput"
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'origin',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionCalculationLocationInput',
-            },
+            "name": "origin",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionCalculationLocationInput"
+            }
           },
           {
-            name: 'quantity',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Float',
-              },
-            },
+            "name": "quantity",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Float"
+              }
+            }
           },
           {
-            name: 'subtotalPrice',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
+            "name": "subtotalPrice",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'type',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "type",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'unitPrice',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
-            },
-          },
+            "name": "unitPrice",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "MoneyInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionCalculationLocationInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionCalculationLocationInput",
+        "inputFields": [
           {
-            name: 'address',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'CheckoutSessionCalculationAddressInput',
-              },
-            },
-          },
+            "name": "address",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "CheckoutSessionCalculationAddressInput"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionCalculationResult',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionCalculationResult",
+        "fields": [
           {
-            name: 'lines',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'CheckoutSessionCalculatedLine',
-                },
-              },
+            "name": "lines",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CheckoutSessionCalculatedLine"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'taxAmounts',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'CheckoutSessionTaxAmount',
-                },
-              },
+            "name": "taxAmounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CheckoutSessionTaxAmount"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'totalTaxAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionTotalTaxAmount',
+            "name": "totalTaxAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionTotalTaxAmount"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionDayHours',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionDayHours",
+        "fields": [
           {
-            name: 'closeTime',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "closeTime",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'enabled',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Boolean',
-              },
+            "name": "enabled",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'openTime',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "openTime",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionDayHoursInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionDayHoursInput",
+        "inputFields": [
           {
-            name: 'closeTime',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "closeTime",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'enabled',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Boolean',
-              },
-            },
+            "name": "enabled",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
+            }
           },
           {
-            name: 'openTime',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "openTime",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'ENUM',
-        name: 'CheckoutSessionEnvironment',
-        enumValues: [
+        "kind": "ENUM",
+        "name": "CheckoutSessionEnvironment",
+        "enumValues": [
           {
-            name: 'dev',
-            isDeprecated: false,
+            "name": "dev",
+            "isDeprecated": false
           },
           {
-            name: 'ote',
-            isDeprecated: false,
+            "name": "ote",
+            "isDeprecated": false
           },
           {
-            name: 'prod',
-            isDeprecated: false,
+            "name": "prod",
+            "isDeprecated": false
           },
           {
-            name: 'test',
-            isDeprecated: false,
+            "name": "test",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionExperimentalRules",
+        "fields": [
+          {
+            "name": "freeShipping",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionFreeShippingRule"
+            },
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "localDelivery",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionLocalDeliveryRule"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionExperimentalRules',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionExperimentalRulesInput",
+        "inputFields": [
           {
-            name: 'freeShipping',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionFreeShippingRule',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'localDelivery',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionLocalDeliveryRule',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "freeShipping",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionFreeShippingRuleInput"
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionExperimentalRulesInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionFreeShippingRule",
+        "fields": [
           {
-            name: 'freeShipping',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionFreeShippingRuleInput',
+            "name": "enabled",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
             },
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "minimumOrderTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionFreeShippingRule',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionFreeShippingRuleInput",
+        "inputFields": [
           {
-            name: 'enabled',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Boolean',
-              },
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "enabled",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
+            }
           },
           {
-            name: 'minimumOrderTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Int',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "minimumOrderTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionFreeShippingRuleInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionGeoCoordinatesInput",
+        "inputFields": [
           {
-            name: 'enabled',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Boolean',
-              },
-            },
+            "name": "latitude",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Float"
+              }
+            }
           },
           {
-            name: 'minimumOrderTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Int',
-              },
-            },
-          },
+            "name": "longitude",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Float"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionGeoCoordinatesInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionLineItemInput",
+        "inputFields": [
           {
-            name: 'latitude',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Float',
-              },
-            },
+            "name": "quantity",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            }
           },
           {
-            name: 'longitude',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Float',
-              },
-            },
-          },
+            "name": "skuId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionLineItemInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionLocalDeliveryRule",
+        "fields": [
           {
-            name: 'quantity',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Int',
-              },
+            "name": "enabled",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'skuId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "minimumOrderTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
             },
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionLocalDeliveryRule',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionLocation",
+        "fields": [
           {
-            name: 'enabled',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Boolean',
-              },
+            "name": "address",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "CheckoutSessionAddress"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'minimumOrderTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Int',
-              },
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "isDefault",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "operatingHours",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionStoreHours"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionLocation',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionLocationInput",
+        "inputFields": [
           {
-            name: 'address',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'OBJECT',
-                name: 'CheckoutSessionAddress',
-              },
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "address",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "CheckoutSessionAddressInput"
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'isDefault',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Boolean',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'operatingHours',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionStoreHours',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "isDefault",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionLocationInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionOperatingHoursMap",
+        "fields": [
           {
-            name: 'address',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'CheckoutSessionAddressInput',
-              },
+            "name": "default",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionStoreHours"
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "locations",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CheckoutSessionStoreHours"
+                }
+              }
             },
-          },
-          {
-            name: 'isDefault',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Boolean',
-              },
-            },
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionOperatingHoursMap',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionOperatingHoursMapInput",
+        "inputFields": [
           {
-            name: 'default',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionStoreHours',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'locations',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'CheckoutSessionStoreHours',
-                },
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "default",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "CheckoutSessionStoreHoursInput"
+              }
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionOperatingHoursMapInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionPaymentMethodConfig",
+        "fields": [
           {
-            name: 'default',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'CheckoutSessionStoreHoursInput',
-              },
+            "name": "checkoutTypes",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              }
             },
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "processor",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionPaymentMethodConfig',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionPaymentMethodConfigInput",
+        "inputFields": [
           {
-            name: 'checkoutTypes',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
-                },
-              },
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "checkoutTypes",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              }
+            }
           },
           {
-            name: 'processor',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "processor",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionPaymentMethodConfigInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionPaymentMethods",
+        "fields": [
           {
-            name: 'checkoutTypes',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
-                },
-              },
+            "name": "applePay",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfig"
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'processor',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "card",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfig"
             },
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "express",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfig"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "googlePay",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfig"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "offline",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfig"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "paypal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfig"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "paze",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfig"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionPaymentMethods',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionPaymentMethodsInput",
+        "inputFields": [
           {
-            name: 'applePay',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfig',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "applePay",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfigInput"
+            }
           },
           {
-            name: 'card',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfig',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "card",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfigInput"
+            }
           },
           {
-            name: 'express',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfig',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "express",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfigInput"
+            }
           },
           {
-            name: 'googlePay',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfig',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "googlePay",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfigInput"
+            }
           },
           {
-            name: 'offline',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfig',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "offline",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfigInput"
+            }
           },
           {
-            name: 'paypal',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfig',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "paypal",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfigInput"
+            }
           },
           {
-            name: 'paze',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfig',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "paze",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfigInput"
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionPaymentMethodsInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionShippingOptions",
+        "fields": [
           {
-            name: 'applePay',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfigInput',
+            "name": "fulfillmentLocationId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'card',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfigInput',
+            "name": "originAddress",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionAddress"
             },
-          },
-          {
-            name: 'express',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfigInput',
-            },
-          },
-          {
-            name: 'googlePay',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfigInput',
-            },
-          },
-          {
-            name: 'offline',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfigInput',
-            },
-          },
-          {
-            name: 'paypal',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfigInput',
-            },
-          },
-          {
-            name: 'paze',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfigInput',
-            },
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionShippingOptions',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionShippingOptionsInput",
+        "inputFields": [
           {
-            name: 'fulfillmentLocationId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "fulfillmentLocationId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'originAddress',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionAddress',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "originAddress",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionAddressInput"
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionShippingOptionsInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionSkusConnection",
+        "fields": [
           {
-            name: 'fulfillmentLocationId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "edges",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "CheckoutSessionSkusConnectionEdge"
+              }
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'originAddress',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionAddressInput',
+            "name": "pageInfo",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "PageInfo"
+              }
             },
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionSkusConnection',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionSkusConnectionEdge",
+        "fields": [
           {
-            name: 'edges',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'OBJECT',
-                name: 'CheckoutSessionSkusConnectionEdge',
-              },
+            "name": "cursor",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'pageInfo',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'OBJECT',
-                name: 'PageInfo',
-              },
+            "name": "node",
+            "type": {
+              "kind": "OBJECT",
+              "name": "SKU"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionSkusConnectionEdge',
-        fields: [
+        "kind": "ENUM",
+        "name": "CheckoutSessionStatus",
+        "enumValues": [
           {
-            name: 'cursor',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "ACTIVE",
+            "isDeprecated": false
           },
           {
-            name: 'node',
-            type: {
-              kind: 'OBJECT',
-              name: 'SKU',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "CANCELLED",
+            "isDeprecated": false
           },
+          {
+            "name": "COMPLETED",
+            "isDeprecated": false
+          },
+          {
+            "name": "CREATED",
+            "isDeprecated": false
+          },
+          {
+            "name": "EXPIRED",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionStoreHours",
+        "fields": [
+          {
+            "name": "hours",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "CheckoutSessionWeekHours"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "leadTime",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "pickupWindowInDays",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "timeZone",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'ENUM',
-        name: 'CheckoutSessionStatus',
-        enumValues: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionStoreHoursInput",
+        "inputFields": [
           {
-            name: 'ACTIVE',
-            isDeprecated: false,
+            "name": "hours",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "CheckoutSessionWeekHoursInput"
+              }
+            }
           },
           {
-            name: 'CANCELLED',
-            isDeprecated: false,
+            "name": "leadTime",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            }
           },
           {
-            name: 'COMPLETED',
-            isDeprecated: false,
+            "name": "pickupWindowInDays",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
+            }
           },
           {
-            name: 'CREATED',
-            isDeprecated: false,
-          },
-          {
-            name: 'EXPIRED',
-            isDeprecated: false,
-          },
+            "name": "timeZone",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionStoreHours',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionTaxAmount",
+        "fields": [
           {
-            name: 'hours',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'OBJECT',
-                name: 'CheckoutSessionWeekHours',
-              },
+            "name": "rate",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionCalculatedRate"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'leadTime',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Int',
-              },
+            "name": "totalTaxAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionTotalTaxAmount"
             },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'pickupWindowInDays',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Int',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'timeZone',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionStoreHoursInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionTaxesOptions",
+        "fields": [
           {
-            name: 'hours',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'CheckoutSessionWeekHoursInput',
-              },
+            "name": "originAddress",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionAddress"
             },
-          },
-          {
-            name: 'leadTime',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Int',
-              },
-            },
-          },
-          {
-            name: 'pickupWindowInDays',
-            type: {
-              kind: 'SCALAR',
-              name: 'Int',
-            },
-          },
-          {
-            name: 'timeZone',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionTaxAmount',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionTaxesOptionsInput",
+        "inputFields": [
           {
-            name: 'rate',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionCalculatedRate',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'totalTaxAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionTotalTaxAmount',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "originAddress",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionAddressInput"
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionTaxesOptions',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionTotalTaxAmount",
+        "fields": [
           {
-            name: 'originAddress',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionAddress',
+            "name": "currencyCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "value",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionTaxesOptionsInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "CheckoutSessionWeekHours",
+        "fields": [
           {
-            name: 'originAddress',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionAddressInput',
+            "name": "friday",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionDayHours"
             },
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "monday",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionDayHours"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "saturday",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionDayHours"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "sunday",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionDayHours"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "thursday",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionDayHours"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "tuesday",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionDayHours"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "wednesday",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionDayHours"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionTotalTaxAmount',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionWeekHoursInput",
+        "inputFields": [
           {
-            name: 'currencyCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "friday",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionDayHoursInput"
+            }
           },
           {
-            name: 'value',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "monday",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionDayHoursInput"
+            }
           },
+          {
+            "name": "saturday",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionDayHoursInput"
+            }
+          },
+          {
+            "name": "sunday",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionDayHoursInput"
+            }
+          },
+          {
+            "name": "thursday",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionDayHoursInput"
+            }
+          },
+          {
+            "name": "tuesday",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionDayHoursInput"
+            }
+          },
+          {
+            "name": "wednesday",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionDayHoursInput"
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutSessionWeekHours',
-        fields: [
+        "kind": "OBJECT",
+        "name": "CheckoutTokenValidation",
+        "fields": [
           {
-            name: 'friday',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionDayHours',
+            "name": "expiresAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'monday',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionDayHours',
+            "name": "sessionId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'saturday',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionDayHours',
+            "name": "valid",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'sunday',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionDayHours',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'thursday',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionDayHours',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'tuesday',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionDayHours',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'wednesday',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionDayHours',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CheckoutSessionWeekHoursInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "ConfirmCheckoutBillingInfoInput",
+        "inputFields": [
           {
-            name: 'friday',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionDayHoursInput',
-            },
+            "name": "address",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ConfirmCheckoutDestinationAddressInput"
+            }
           },
           {
-            name: 'monday',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionDayHoursInput',
-            },
+            "name": "companyName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'saturday',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionDayHoursInput',
-            },
+            "name": "email",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'sunday',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionDayHoursInput',
-            },
+            "name": "firstName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'thursday',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionDayHoursInput',
-            },
+            "name": "lastName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'tuesday',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionDayHoursInput',
-            },
-          },
-          {
-            name: 'wednesday',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionDayHoursInput',
-            },
-          },
+            "name": "phone",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'CheckoutTokenValidation',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "ConfirmCheckoutDestinationAddressInput",
+        "inputFields": [
           {
-            name: 'expiresAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "addressLine1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'sessionId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'valid',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Boolean',
-              },
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
+          {
+            "name": "adminArea1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "countryCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          },
+          {
+            "name": "postalCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'ConfirmCheckoutBillingInfoInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "ConfirmCheckoutShippingInfoInput",
+        "inputFields": [
           {
-            name: 'address',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'ConfirmCheckoutDestinationAddressInput',
-            },
+            "name": "address",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ConfirmCheckoutDestinationAddressInput"
+            }
           },
           {
-            name: 'companyName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "companyName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'email',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "email",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'firstName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "firstName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'lastName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "lastName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'phone',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "phone",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'ConfirmCheckoutDestinationAddressInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "ConfirmCheckoutShippingLineInput",
+        "inputFields": [
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "amount",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "requestedProvider",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "requestedService",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "taxes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ConfirmCheckoutTaxInput"
+                }
+              }
+            }
           },
           {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'countryCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
-          {
-            name: 'postalCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "totals",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "ConfirmCheckoutShippingLineTotalsInput"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'ConfirmCheckoutShippingInfoInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "ConfirmCheckoutShippingLineTotalsInput",
+        "inputFields": [
           {
-            name: 'address',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'ConfirmCheckoutDestinationAddressInput',
-            },
+            "name": "subTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'companyName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'email',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'firstName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'lastName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'phone',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "taxTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'ConfirmCheckoutShippingLineInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "ConfirmCheckoutTaxInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
+            "name": "amount",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "exempted",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'requestedProvider',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "included",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'requestedService',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ConfirmCheckoutTaxInput',
-                },
-              },
-            },
-          },
-          {
-            name: 'totals',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'ConfirmCheckoutShippingLineTotalsInput',
-              },
-            },
-          },
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'ConfirmCheckoutShippingLineTotalsInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "ContactInput",
+        "inputFields": [
           {
-            name: 'subTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
+            "name": "address",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "DraftOrderAddressInput"
+              }
+            }
           },
           {
-            name: 'taxTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
+            "name": "companyName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
+          {
+            "name": "email",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "firstName",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          },
+          {
+            "name": "lastName",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          },
+          {
+            "name": "phone",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'ConfirmCheckoutTaxInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "CreateDraftLineItemInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
+            "name": "details",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "LineItemInputDetailsInfo"
+            }
           },
           {
-            name: 'exempted',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "discounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "DiscountInput"
+                }
+              }
+            }
           },
           {
-            name: 'included',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "externalId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "FeeInput"
+                }
+              }
+            }
           },
           {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "fulfillmentChannelId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
+          {
+            "name": "fulfillmentMode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "ENUM",
+                "name": "LineItemModeInput"
+              }
+            }
+          },
+          {
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
+          },
+          {
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          },
+          {
+            "name": "notes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "NoteInput"
+                }
+              }
+            },
+            "defaultValue": "[]"
+          },
+          {
+            "name": "productId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "quantity",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Float"
+              }
+            }
+          },
+          {
+            "name": "serviceEndsAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
+          },
+          {
+            "name": "serviceStartAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
+          },
+          {
+            "name": "shipping",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "LineItemInputShippingInfo"
+            }
+          },
+          {
+            "name": "skuId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "tags",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
+          },
+          {
+            "name": "taxes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TaxInput"
+                }
+              }
+            }
+          },
+          {
+            "name": "totals",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "LineItemTotalsInput"
+              }
+            }
+          },
+          {
+            "name": "type",
+            "type": {
+              "kind": "ENUM",
+              "name": "LineItemTypesInput"
+            },
+            "defaultValue": "PHYSICAL"
+          },
+          {
+            "name": "unitAmount",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'ContactInput',
-        inputFields: [
+        "kind": "SCALAR",
+        "name": "DateTime"
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "DestinationAddressInput",
+        "inputFields": [
           {
-            name: 'address',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'DraftOrderAddressInput',
-              },
-            },
+            "name": "addressLine1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'companyName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'email',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'firstName',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "adminArea1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'lastName',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'phone',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
+          {
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "countryCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          },
+          {
+            "name": "postalCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'CreateDraftLineItemInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "DiscountInput",
+        "inputFields": [
           {
-            name: 'details',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'LineItemInputDetailsInfo',
-            },
+            "name": "amount",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'discounts',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'DiscountInput',
-                },
-              },
+            "name": "appliedBeforeTax",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
+            "defaultValue": "false"
           },
           {
-            name: 'externalId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "code",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'fees',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'FeeInput',
-                },
-              },
-            },
+            "name": "externalIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ExternalIdsInput"
+                }
+              }
+            }
           },
           {
-            name: 'fulfillmentChannelId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'fulfillmentMode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'ENUM',
-                name: 'LineItemModeInput',
-              },
-            },
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
-          },
-          {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
-          {
-            name: 'notes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'NoteInput',
-                },
-              },
-            },
-            defaultValue: '[]',
-          },
-          {
-            name: 'productId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'quantity',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Float',
-              },
-            },
-          },
-          {
-            name: 'serviceEndsAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
-          },
-          {
-            name: 'serviceStartAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
-          },
-          {
-            name: 'shipping',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'LineItemInputShippingInfo',
-            },
-          },
-          {
-            name: 'skuId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'tags',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
-          },
-          {
-            name: 'taxes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'TaxInput',
-                },
-              },
-            },
-          },
-          {
-            name: 'totals',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'LineItemTotalsInput',
-              },
-            },
-          },
-          {
-            name: 'type',
-            type: {
-              kind: 'ENUM',
-              name: 'LineItemTypesInput',
-            },
-            defaultValue: 'PHYSICAL',
-          },
-          {
-            name: 'unitAmount',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
-          },
+            "name": "referenceId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'SCALAR',
-        name: 'DateTime',
-      },
-      {
-        kind: 'INPUT_OBJECT',
-        name: 'DestinationAddressInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "DraftOrder",
+        "fields": [
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "billing",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrderContact"
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "calculatedAdjustments",
+            "type": {
+              "kind": "OBJECT",
+              "name": "PriceAdjustmentsCalculationResult"
             },
-          },
-          {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'adminArea1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'countryCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
-          {
-            name: 'postalCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
-        ],
-        isOneOf: false,
-      },
-      {
-        kind: 'INPUT_OBJECT',
-        name: 'DiscountInput',
-        inputFields: [
-          {
-            name: 'amount',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
-          },
-          {
-            name: 'appliedBeforeTax',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
-            defaultValue: 'false',
-          },
-          {
-            name: 'code',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'externalIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ExternalIdsInput',
-                },
-              },
-            },
-          },
-          {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
-          },
-          {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
-          {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'referenceId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-        ],
-        isOneOf: false,
-      },
-      {
-        kind: 'OBJECT',
-        name: 'DraftOrder',
-        fields: [
-          {
-            name: 'billing',
-            type: {
-              kind: 'OBJECT',
-              name: 'DraftOrderContact',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'calculatedAdjustments',
-            type: {
-              kind: 'OBJECT',
-              name: 'PriceAdjustmentsCalculationResult',
-            },
-            args: [
+            "args": [
               {
-                name: 'discountCodes',
-                type: {
-                  kind: 'LIST',
-                  ofType: {
-                    kind: 'NON_NULL',
-                    ofType: {
-                      kind: 'SCALAR',
-                      name: 'String',
-                    },
-                  },
-                },
+                "name": "discountCodes",
+                "type": {
+                  "kind": "LIST",
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "ofType": {
+                      "kind": "SCALAR",
+                      "name": "String"
+                    }
+                  }
+                }
               },
               {
-                name: 'shippingLines',
-                type: {
-                  kind: 'LIST',
-                  ofType: {
-                    kind: 'NON_NULL',
-                    ofType: {
-                      kind: 'INPUT_OBJECT',
-                      name: 'PriceAdjustmentShippingLineInput',
-                    },
-                  },
-                },
-              },
+                "name": "shippingLines",
+                "type": {
+                  "kind": "LIST",
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "ofType": {
+                      "kind": "INPUT_OBJECT",
+                      "name": "PriceAdjustmentShippingLineInput"
+                    }
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'calculatedShippingRates',
-            type: {
-              kind: 'OBJECT',
-              name: 'ShippingRateCalculationResult',
+            "name": "calculatedShippingRates",
+            "type": {
+              "kind": "OBJECT",
+              "name": "ShippingRateCalculationResult"
             },
-            args: [
+            "args": [
               {
-                name: 'destination',
-                type: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'DestinationAddressInput',
-                },
-              },
+                "name": "destination",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "DestinationAddressInput"
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'calculatedTaxes',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionCalculationResult',
+            "name": "calculatedTaxes",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionCalculationResult"
             },
-            args: [
+            "args": [
               {
-                name: 'destination',
-                type: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'TaxDestinationAddressInput',
-                },
+                "name": "destination",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TaxDestinationAddressInput"
+                }
               },
               {
-                name: 'lines',
-                type: {
-                  kind: 'LIST',
-                  ofType: {
-                    kind: 'NON_NULL',
-                    ofType: {
-                      kind: 'INPUT_OBJECT',
-                      name: 'TaxLineInput',
-                    },
-                  },
-                },
-              },
+                "name": "lines",
+                "type": {
+                  "kind": "LIST",
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "ofType": {
+                      "kind": "INPUT_OBJECT",
+                      "name": "TaxLineInput"
+                    }
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'cartId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "cartId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'context',
-            type: {
-              kind: 'OBJECT',
-              name: 'DraftOrderContext',
+            "name": "context",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrderContext"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'createdAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
+            "name": "createdAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'customerId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "customerId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'discounts',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'LineItemDiscount',
-                },
-              },
+            "name": "discounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "LineItemDiscount"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'externalId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "externalId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'fees',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'LineItemFee',
-                },
-              },
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "LineItemFee"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'fulfillmentModes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
+            "name": "fulfillmentModes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'ID',
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'lineItems',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'DraftOrderLineItem',
-                },
-              },
+            "name": "lineItems",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "DraftOrderLineItem"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'OrderMetafield',
-                },
-              },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "OrderMetafield"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'notes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'LineItemNote',
-                },
-              },
+            "name": "notes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "LineItemNote"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'number',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "number",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'numberDisplay',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "numberDisplay",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'shipping',
-            type: {
-              kind: 'OBJECT',
-              name: 'DraftOrderContact',
+            "name": "shipping",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrderContact"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'shippingLines',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'ShippingLine',
-                },
-              },
+            "name": "shippingLines",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "ShippingLine"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'statuses',
-            type: {
-              kind: 'OBJECT',
-              name: 'DraftOrderStatuses',
+            "name": "statuses",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrderStatuses"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'tags',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
+            "name": "tags",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'taxExempted',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "taxExempted",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'LineItemTax',
-                },
-              },
+            "name": "taxes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "LineItemTax"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'totals',
-            type: {
-              kind: 'OBJECT',
-              name: 'DraftOrderTotals',
+            "name": "totals",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrderTotals"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'updatedAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
+            "name": "updatedAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'DraftOrderAddress',
-        fields: [
+        "kind": "OBJECT",
+        "name": "DraftOrderAddress",
+        "fields": [
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addressLine1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'countryCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "countryCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'postalCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "postalCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'DraftOrderAddressInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "DraftOrderAddressInput",
+        "inputFields": [
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "addressLine1",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "adminArea1",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'countryCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "countryCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'postalCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "postalCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'DraftOrderContact',
-        fields: [
+        "kind": "OBJECT",
+        "name": "DraftOrderContact",
+        "fields": [
           {
-            name: 'address',
-            type: {
-              kind: 'OBJECT',
-              name: 'DraftOrderAddress',
+            "name": "address",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrderAddress"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'companyName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "companyName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'email',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "email",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'firstName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "firstName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'lastName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "lastName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'phone',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "phone",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'DraftOrderContext',
-        fields: [
+        "kind": "OBJECT",
+        "name": "DraftOrderContext",
+        "fields": [
           {
-            name: 'channelId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "channelId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'owner',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "owner",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'storeId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "storeId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'DraftOrderLineItem',
-        fields: [
+        "kind": "OBJECT",
+        "name": "DraftOrderLineItem",
+        "fields": [
           {
-            name: 'createdAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "createdAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'details',
-            type: {
-              kind: 'OBJECT',
-              name: 'LineItemDetails',
+            "name": "details",
+            "type": {
+              "kind": "OBJECT",
+              "name": "LineItemDetails"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'discounts',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'LineItemDiscount',
-                },
-              },
+            "name": "discounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "LineItemDiscount"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'externalId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "externalId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'fees',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'LineItemFee',
-                },
-              },
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "LineItemFee"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'fulfilledAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "fulfilledAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'fulfillmentChannelId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "fulfillmentChannelId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: true,
+            "args": [],
+            "isDeprecated": true
           },
           {
-            name: 'fulfillmentMode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "fulfillmentMode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'OrderMetafield',
-                },
-              },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "OrderMetafield"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'notes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'LineItemNote',
-                },
-              },
+            "name": "notes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "LineItemNote"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'orderVersion',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "orderVersion",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'productId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "productId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'quantity',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
+            "name": "quantity",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'returnQuantity',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
+            "name": "returnQuantity",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'returnTotals',
-            type: {
-              kind: 'OBJECT',
-              name: 'LineItemReturnTotals',
+            "name": "returnTotals",
+            "type": {
+              "kind": "OBJECT",
+              "name": "LineItemReturnTotals"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'returnedAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "returnedAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'serviceEndsAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "serviceEndsAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'serviceStartAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "serviceStartAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'shipping',
-            type: {
-              kind: 'OBJECT',
-              name: 'DraftOrderContact',
+            "name": "shipping",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrderContact"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'skuId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "skuId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'status',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "status",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'tags',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
+            "name": "tags",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'LineItemTax',
-                },
-              },
+            "name": "taxes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "LineItemTax"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'totals',
-            type: {
-              kind: 'OBJECT',
-              name: 'LineItemTotals',
+            "name": "totals",
+            "type": {
+              "kind": "OBJECT",
+              "name": "LineItemTotals"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'type',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "type",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'unitAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "unitAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'updatedAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "updatedAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'DraftOrderLineItemInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "DraftOrderLineItemInput",
+        "inputFields": [
           {
-            name: 'details',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'LineItemInputDetailsInfo',
-            },
+            "name": "details",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "LineItemInputDetailsInfo"
+            }
           },
           {
-            name: 'discounts',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'DiscountInput',
-                },
-              },
-            },
+            "name": "discounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "DiscountInput"
+                }
+              }
+            }
           },
           {
-            name: 'externalId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "externalId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'fees',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'FeeInput',
-                },
-              },
-            },
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "FeeInput"
+                }
+              }
+            }
           },
           {
-            name: 'fulfillmentMode',
-            type: {
-              kind: 'ENUM',
-              name: 'LineItemModeInput',
-            },
+            "name": "fulfillmentMode",
+            "type": {
+              "kind": "ENUM",
+              "name": "LineItemModeInput"
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'notes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'NoteInput',
-                },
-              },
+            "name": "notes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "NoteInput"
+                }
+              }
             },
-            defaultValue: '[]',
+            "defaultValue": "[]"
           },
           {
-            name: 'productId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "productId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'quantity',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
-            },
+            "name": "quantity",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
+            }
           },
           {
-            name: 'serviceEndsAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
+            "name": "serviceEndsAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
           },
           {
-            name: 'serviceStartAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
+            "name": "serviceStartAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
           },
           {
-            name: 'shipping',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'LineItemInputShippingInfo',
-            },
+            "name": "shipping",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "LineItemInputShippingInfo"
+            }
           },
           {
-            name: 'skuId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "skuId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'tags',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
+            "name": "tags",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'TaxInput',
-                },
-              },
-            },
+            "name": "taxes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TaxInput"
+                }
+              }
+            }
           },
           {
-            name: 'totals',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'LineItemTotalsInput',
-            },
+            "name": "totals",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "LineItemTotalsInput"
+            }
           },
           {
-            name: 'type',
-            type: {
-              kind: 'ENUM',
-              name: 'LineItemTypesInput',
+            "name": "type",
+            "type": {
+              "kind": "ENUM",
+              "name": "LineItemTypesInput"
             },
-            defaultValue: 'PHYSICAL',
+            "defaultValue": "PHYSICAL"
           },
           {
-            name: 'unitAmount',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
-            },
-          },
+            "name": "unitAmount",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "MoneyInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'DraftOrderStatuses',
-        fields: [
+        "kind": "OBJECT",
+        "name": "DraftOrderStatuses",
+        "fields": [
           {
-            name: 'fulfillmentStatus',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "fulfillmentStatus",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'paymentStatus',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "paymentStatus",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'status',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "status",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'DraftOrderTotals',
-        fields: [
+        "kind": "OBJECT",
+        "name": "DraftOrderTotals",
+        "fields": [
           {
-            name: 'discountTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "discountTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'feeTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "feeTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'shippingTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "shippingTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'subTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "subTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'taxTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "taxTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'total',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "total",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'ExchangeCheckoutTokenInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "ExchangeCheckoutTokenInput",
+        "inputFields": [
           {
-            name: 'sessionId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "sessionId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'token',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "token",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'ExternalIdsInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "ExternalIdsInput",
+        "inputFields": [
           {
-            name: 'type',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "type",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'value',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "value",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'FeeInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "FeeInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
+            "name": "amount",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'appliedBeforeTax',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "appliedBeforeTax",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            defaultValue: 'false',
+            "defaultValue": "false"
           },
           {
-            name: 'externalIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ExternalIdsInput',
-                },
-              },
-            },
+            "name": "externalIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ExternalIdsInput"
+                }
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'referenceId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "referenceId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'SCALAR',
-        name: 'Float',
+        "kind": "SCALAR",
+        "name": "Float"
       },
       {
-        kind: 'ENUM',
-        name: 'FulfillmentModeInput',
-        enumValues: [
+        "kind": "ENUM",
+        "name": "FulfillmentModeInput",
+        "enumValues": [
           {
-            name: 'CURBSIDE',
-            isDeprecated: false,
+            "name": "CURBSIDE",
+            "isDeprecated": false
           },
           {
-            name: 'DELIVERY',
-            isDeprecated: false,
+            "name": "DELIVERY",
+            "isDeprecated": false
           },
           {
-            name: 'DIGITAL',
-            isDeprecated: false,
+            "name": "DIGITAL",
+            "isDeprecated": false
           },
           {
-            name: 'DRIVE_THRU',
-            isDeprecated: false,
+            "name": "DRIVE_THRU",
+            "isDeprecated": false
           },
           {
-            name: 'FOR_HERE',
-            isDeprecated: false,
+            "name": "FOR_HERE",
+            "isDeprecated": false
           },
           {
-            name: 'GENERAL_CONTAINER',
-            isDeprecated: false,
+            "name": "GENERAL_CONTAINER",
+            "isDeprecated": false
           },
           {
-            name: 'GIFT_CARD',
-            isDeprecated: false,
+            "name": "GIFT_CARD",
+            "isDeprecated": false
           },
           {
-            name: 'NONE',
-            isDeprecated: false,
+            "name": "NONE",
+            "isDeprecated": false
           },
           {
-            name: 'NON_LODGING_NRR',
-            isDeprecated: false,
+            "name": "NON_LODGING_NRR",
+            "isDeprecated": false
           },
           {
-            name: 'NON_LODGING_SALE',
-            isDeprecated: false,
+            "name": "NON_LODGING_SALE",
+            "isDeprecated": false
           },
           {
-            name: 'PICKUP',
-            isDeprecated: false,
+            "name": "PICKUP",
+            "isDeprecated": false
           },
           {
-            name: 'PURCHASE',
-            isDeprecated: false,
+            "name": "PURCHASE",
+            "isDeprecated": false
           },
           {
-            name: 'QUICK_STAY',
-            isDeprecated: false,
+            "name": "QUICK_STAY",
+            "isDeprecated": false
           },
           {
-            name: 'REGULAR_STAY',
-            isDeprecated: false,
+            "name": "REGULAR_STAY",
+            "isDeprecated": false
           },
           {
-            name: 'SHIP',
-            isDeprecated: false,
+            "name": "SHIP",
+            "isDeprecated": false
           },
           {
-            name: 'TO_GO',
-            isDeprecated: false,
+            "name": "TO_GO",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "GeoCoordinates",
+        "fields": [
+          {
+            "name": "latitude",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
+            },
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "longitude",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'GeoCoordinates',
-        fields: [
+        "kind": "SCALAR",
+        "name": "ID"
+      },
+      {
+        "kind": "SCALAR",
+        "name": "Int"
+      },
+      {
+        "kind": "OBJECT",
+        "name": "LineItemDetails",
+        "fields": [
           {
-            name: 'latitude',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
+            "name": "productAssetUrl",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'longitude',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
+            "name": "selectedAddons",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "SelectedAddon"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "selectedOptions",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "SelectedOption"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "sku",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "unitOfMeasure",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'SCALAR',
-        name: 'ID',
-      },
-      {
-        kind: 'SCALAR',
-        name: 'Int',
-      },
-      {
-        kind: 'OBJECT',
-        name: 'LineItemDetails',
-        fields: [
+        "kind": "OBJECT",
+        "name": "LineItemDiscount",
+        "fields": [
           {
-            name: 'productAssetUrl',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "amount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'selectedAddons',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'SelectedAddon',
-                },
-              },
+            "name": "appliedBeforeTax",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'selectedOptions',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'SelectedOption',
-                },
-              },
+            "name": "code",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'sku',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'unitOfMeasure',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "OrderMetafield"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'LineItemDiscount',
-        fields: [
+        "kind": "OBJECT",
+        "name": "LineItemFee",
+        "fields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "amount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'appliedBeforeTax',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "appliedBeforeTax",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'code',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "OrderMetafield"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'OrderMetafield',
-                },
-              },
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'LineItemFee',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "LineItemInputDetailsInfo",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "productAssetUrl",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'appliedBeforeTax',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "selectedAddons",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "SelectedAddonInput"
+                }
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "selectedOptions",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "SelectedOptionInput"
+                }
+              }
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'OrderMetafield',
-                },
-              },
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "sku",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "unitOfMeasure",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'LineItemInputDetailsInfo',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "LineItemInputShippingInfo",
+        "inputFields": [
           {
-            name: 'productAssetUrl',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "address",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "OrderAddressInput"
+            }
           },
           {
-            name: 'selectedAddons',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'SelectedAddonInput',
-                },
-              },
-            },
+            "name": "companyName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'selectedOptions',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'SelectedOptionInput',
-                },
-              },
-            },
+            "name": "email",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'sku',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "firstName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'unitOfMeasure',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "lastName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
+          {
+            "name": "phone",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'LineItemInputShippingInfo',
-        inputFields: [
+        "kind": "ENUM",
+        "name": "LineItemModeInput",
+        "enumValues": [
           {
-            name: 'address',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'OrderAddressInput',
-            },
+            "name": "CURBSIDE",
+            "isDeprecated": false
           },
           {
-            name: 'companyName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "DELIVERY",
+            "isDeprecated": false
           },
           {
-            name: 'email',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "DIGITAL",
+            "isDeprecated": false
           },
           {
-            name: 'firstName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "DRIVE_THRU",
+            "isDeprecated": false
           },
           {
-            name: 'lastName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "FOR_HERE",
+            "isDeprecated": false
           },
           {
-            name: 'phone',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "GENERAL_CONTAINER",
+            "isDeprecated": false
           },
+          {
+            "name": "GIFT_CARD",
+            "isDeprecated": false
+          },
+          {
+            "name": "NONE",
+            "isDeprecated": false
+          },
+          {
+            "name": "NON_LODGING_NRR",
+            "isDeprecated": false
+          },
+          {
+            "name": "NON_LODGING_SALE",
+            "isDeprecated": false
+          },
+          {
+            "name": "PICKUP",
+            "isDeprecated": false
+          },
+          {
+            "name": "PURCHASE",
+            "isDeprecated": false
+          },
+          {
+            "name": "QUICK_STAY",
+            "isDeprecated": false
+          },
+          {
+            "name": "REGULAR_STAY",
+            "isDeprecated": false
+          },
+          {
+            "name": "SHIP",
+            "isDeprecated": false
+          },
+          {
+            "name": "TO_GO",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "LineItemNote",
+        "fields": [
+          {
+            "name": "author",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "authorType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "content",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "createdAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "deletedAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "OrderMetafield"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "shouldNotifyCustomer",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'ENUM',
-        name: 'LineItemModeInput',
-        enumValues: [
+        "kind": "OBJECT",
+        "name": "LineItemReturnTotals",
+        "fields": [
           {
-            name: 'CURBSIDE',
-            isDeprecated: false,
+            "name": "discountTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
+            },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'DELIVERY',
-            isDeprecated: false,
+            "name": "feeTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
+            },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'DIGITAL',
-            isDeprecated: false,
+            "name": "subTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
+            },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'DRIVE_THRU',
-            isDeprecated: false,
+            "name": "taxTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
+            },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'FOR_HERE',
-            isDeprecated: false,
-          },
-          {
-            name: 'GENERAL_CONTAINER',
-            isDeprecated: false,
-          },
-          {
-            name: 'GIFT_CARD',
-            isDeprecated: false,
-          },
-          {
-            name: 'NONE',
-            isDeprecated: false,
-          },
-          {
-            name: 'NON_LODGING_NRR',
-            isDeprecated: false,
-          },
-          {
-            name: 'NON_LODGING_SALE',
-            isDeprecated: false,
-          },
-          {
-            name: 'PICKUP',
-            isDeprecated: false,
-          },
-          {
-            name: 'PURCHASE',
-            isDeprecated: false,
-          },
-          {
-            name: 'QUICK_STAY',
-            isDeprecated: false,
-          },
-          {
-            name: 'REGULAR_STAY',
-            isDeprecated: false,
-          },
-          {
-            name: 'SHIP',
-            isDeprecated: false,
-          },
-          {
-            name: 'TO_GO',
-            isDeprecated: false,
-          },
+            "name": "total",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'LineItemNote',
-        fields: [
+        "kind": "OBJECT",
+        "name": "LineItemTax",
+        "fields": [
           {
-            name: 'author',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "amount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'authorType',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "exempted",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'content',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'createdAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "included",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'deletedAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "OrderMetafield"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'OrderMetafield',
-                },
-              },
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'shouldNotifyCustomer',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'LineItemReturnTotals',
-        fields: [
+        "kind": "OBJECT",
+        "name": "LineItemTotals",
+        "fields": [
           {
-            name: 'discountTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "discountTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'feeTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "feeTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'subTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "subTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'taxTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "taxTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'total',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'LineItemTax',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "LineItemTotalsInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "discountTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'exempted',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "feeTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "subTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'included',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'OrderMetafield',
-                },
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "taxTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'LineItemTotals',
-        fields: [
+        "kind": "ENUM",
+        "name": "LineItemTypesInput",
+        "enumValues": [
           {
-            name: 'discountTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "ALL",
+            "isDeprecated": false
           },
           {
-            name: 'feeTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "DIGITAL",
+            "isDeprecated": false
           },
           {
-            name: 'subTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "PAY_LINK",
+            "isDeprecated": false
           },
           {
-            name: 'taxTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "PHYSICAL",
+            "isDeprecated": false
           },
+          {
+            "name": "SERVICE",
+            "isDeprecated": false
+          },
+          {
+            "name": "STAY",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "ENUM",
+        "name": "MetafieldTypeInput",
+        "enumValues": [
+          {
+            "name": "JSON",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "MoneyInput",
+        "inputFields": [
+          {
+            "name": "currencyCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'LineItemTotalsInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "MoneyValue",
+        "fields": [
           {
-            name: 'discountTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+            "name": "currencyCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'feeTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+            "name": "value",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
             },
-          },
-          {
-            name: 'subTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
-          },
-          {
-            name: 'taxTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'ENUM',
-        name: 'LineItemTypesInput',
-        enumValues: [
+        "kind": "OBJECT",
+        "name": "Mutation",
+        "fields": [
           {
-            name: 'ALL',
-            isDeprecated: false,
-          },
-          {
-            name: 'DIGITAL',
-            isDeprecated: false,
-          },
-          {
-            name: 'PAY_LINK',
-            isDeprecated: false,
-          },
-          {
-            name: 'PHYSICAL',
-            isDeprecated: false,
-          },
-          {
-            name: 'SERVICE',
-            isDeprecated: false,
-          },
-          {
-            name: 'STAY',
-            isDeprecated: false,
-          },
-        ],
-      },
-      {
-        kind: 'ENUM',
-        name: 'MetafieldTypeInput',
-        enumValues: [
-          {
-            name: 'JSON',
-            isDeprecated: false,
-          },
-        ],
-      },
-      {
-        kind: 'INPUT_OBJECT',
-        name: 'MoneyInput',
-        inputFields: [
-          {
-            name: 'currencyCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "applyCheckoutSessionDeliveryMethod",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSession"
             },
-          },
-          {
-            name: 'value',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Int',
-              },
-            },
-          },
-        ],
-        isOneOf: false,
-      },
-      {
-        kind: 'OBJECT',
-        name: 'MoneyValue',
-        fields: [
-          {
-            name: 'currencyCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'value',
-            type: {
-              kind: 'SCALAR',
-              name: 'Int',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-        ],
-        interfaces: [],
-      },
-      {
-        kind: 'OBJECT',
-        name: 'Mutation',
-        fields: [
-          {
-            name: 'applyCheckoutSessionDeliveryMethod',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSession',
-            },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'MutationApplyCheckoutSessionDeliveryMethodInput',
-                  },
-                },
-              },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "MutationApplyCheckoutSessionDeliveryMethodInput"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'applyCheckoutSessionDiscount',
-            type: {
-              kind: 'OBJECT',
-              name: 'DraftOrder',
+            "name": "applyCheckoutSessionDiscount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrder"
             },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'MutationApplyCheckoutSessionDiscountInput',
-                  },
-                },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "MutationApplyCheckoutSessionDiscountInput"
+                  }
+                }
               },
               {
-                name: 'sessionId',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
-                },
-              },
+                "name": "sessionId",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'applyCheckoutSessionFulfillmentLocation',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSession',
+            "name": "applyCheckoutSessionFulfillmentLocation",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSession"
             },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'MutationApplyCheckoutSessionFulfillmentLocationInput',
-                  },
-                },
-              },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "MutationApplyCheckoutSessionFulfillmentLocationInput"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'applyCheckoutSessionShippingMethod',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSession',
+            "name": "applyCheckoutSessionShippingMethod",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSession"
             },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'LIST',
-                    ofType: {
-                      kind: 'NON_NULL',
-                      ofType: {
-                        kind: 'INPUT_OBJECT',
-                        name: 'ApplyShippingMethodInput',
-                      },
-                    },
-                  },
-                },
-              },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "LIST",
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "ApplyShippingMethodInput"
+                      }
+                    }
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'calculateCheckoutSessionTaxes',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSessionCalculationResult',
+            "name": "calculateCheckoutSessionTaxes",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionCalculationResult"
             },
-            args: [
+            "args": [
               {
-                name: 'destination',
-                type: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'TaxDestinationAddressInput',
-                },
+                "name": "destination",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TaxDestinationAddressInput"
+                }
               },
               {
-                name: 'lines',
-                type: {
-                  kind: 'LIST',
-                  ofType: {
-                    kind: 'NON_NULL',
-                    ofType: {
-                      kind: 'INPUT_OBJECT',
-                      name: 'TaxLineInput',
-                    },
-                  },
-                },
-              },
+                "name": "lines",
+                "type": {
+                  "kind": "LIST",
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "ofType": {
+                      "kind": "INPUT_OBJECT",
+                      "name": "TaxLineInput"
+                    }
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'confirmCheckoutSession',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSession',
+            "name": "confirmCheckoutSession",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSession"
             },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'MutationConfirmCheckoutSessionInput',
-                  },
-                },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "MutationConfirmCheckoutSessionInput"
+                  }
+                }
               },
               {
-                name: 'sessionId',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
-                },
-              },
+                "name": "sessionId",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'createCheckoutSession',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSession',
+            "name": "createCheckoutSession",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSession"
             },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'MutationCreateCheckoutSessionInput',
-                  },
-                },
-              },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "MutationCreateCheckoutSessionInput"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'exchangeCheckoutToken',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutAuthToken',
+            "name": "exchangeCheckoutToken",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutAuthToken"
             },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'MutationExchangeCheckoutTokenInput',
-                  },
-                },
-              },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "MutationExchangeCheckoutTokenInput"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'expireCheckoutSession',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSession',
+            "name": "expireCheckoutSession",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSession"
             },
-            args: [
+            "args": [
               {
-                name: 'id',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
-                },
-              },
+                "name": "id",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'refreshCheckoutToken',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutAuthToken',
+            "name": "refreshCheckoutToken",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutAuthToken"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'removeAppliedCheckoutSessionShippingMethod',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSession',
+            "name": "removeAppliedCheckoutSessionShippingMethod",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSession"
             },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'RemoveShippingMethodInput',
-                  },
-                },
-              },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "RemoveShippingMethodInput"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'updateCheckoutSession',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSession',
+            "name": "updateCheckoutSession",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSession"
             },
-            args: [
+            "args": [
               {
-                name: 'id',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
-                },
+                "name": "id",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
               },
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'MutationUpdateCheckoutSessionInput',
-                  },
-                },
-              },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "MutationUpdateCheckoutSessionInput"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'updateCheckoutSessionDraftOrder',
-            type: {
-              kind: 'OBJECT',
-              name: 'DraftOrder',
+            "name": "updateCheckoutSessionDraftOrder",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrder"
             },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'MutationUpdateCheckoutSessionDraftOrderInput',
-                  },
-                },
-              },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "MutationUpdateCheckoutSessionDraftOrderInput"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'verifyAddress',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'Address',
-                },
-              },
+            "name": "verifyAddress",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "Address"
+                }
+              }
             },
-            args: [
+            "args": [
               {
-                name: 'input',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'MutationVerifyAddressInput',
-                  },
-                },
-              },
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "MutationVerifyAddressInput"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
-          },
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'MutationApplyCheckoutSessionDeliveryMethodInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "MutationApplyCheckoutSessionDeliveryMethodInput",
+        "inputFields": [
           {
-            name: 'mode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'ENUM',
-                name: 'FulfillmentModeInput',
-              },
-            },
-          },
+            "name": "mode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "ENUM",
+                "name": "FulfillmentModeInput"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'MutationApplyCheckoutSessionDiscountInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "MutationApplyCheckoutSessionDiscountInput",
+        "inputFields": [
           {
-            name: 'discountCodes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
-          },
+            "name": "discountCodes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'MutationApplyCheckoutSessionFulfillmentLocationInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "MutationApplyCheckoutSessionFulfillmentLocationInput",
+        "inputFields": [
           {
-            name: 'fulfillmentLocationId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "fulfillmentLocationId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'MutationConfirmCheckoutSessionInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "MutationConfirmCheckoutSessionInput",
+        "inputFields": [
           {
-            name: 'billing',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'ConfirmCheckoutBillingInfoInput',
-            },
+            "name": "billing",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ConfirmCheckoutBillingInfoInput"
+            }
           },
           {
-            name: 'fulfillmentEndAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
+            "name": "fulfillmentEndAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
           },
           {
-            name: 'fulfillmentLocationId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "fulfillmentLocationId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'fulfillmentStartAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
+            "name": "fulfillmentStartAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
           },
           {
-            name: 'paymentProcessor',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "paymentProcessor",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'paymentProvider',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "paymentProvider",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'paymentToken',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "paymentToken",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'paymentType',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "paymentType",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'shipping',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'ConfirmCheckoutShippingInfoInput',
-            },
+            "name": "shipping",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ConfirmCheckoutShippingInfoInput"
+            }
           },
           {
-            name: 'shippingLines',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ConfirmCheckoutShippingLineInput',
-                },
-              },
-            },
+            "name": "shippingLines",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ConfirmCheckoutShippingLineInput"
+                }
+              }
+            }
           },
           {
-            name: 'shippingTotal',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
-            },
+            "name": "shippingTotal",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "MoneyInput"
+            }
           },
           {
-            name: 'taxTotal',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
-            },
-          },
+            "name": "taxTotal",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "MoneyInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'MutationCreateCheckoutSessionInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "MutationCreateCheckoutSessionInput",
+        "inputFields": [
           {
-            name: 'channelId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "channelId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'customerId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "customerId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'draftOrderId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "draftOrderId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'enableAddressAutocomplete',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableAddressAutocomplete",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableBillingAddressCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableBillingAddressCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableLocalPickup',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableLocalPickup",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableNotesCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableNotesCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enablePaymentMethodCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enablePaymentMethodCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enablePhoneCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enablePhoneCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enablePromotionCodes',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enablePromotionCodes",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableShipping',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableShipping",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableShippingAddressCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableShippingAddressCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableSurcharge',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableSurcharge",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableTaxCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableTaxCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableTips',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableTips",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enabledLocales',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
+            "name": "enabledLocales",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
           },
           {
-            name: 'enabledPaymentProviders',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
+            "name": "enabledPaymentProviders",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
           },
           {
-            name: 'environment',
-            type: {
-              kind: 'ENUM',
-              name: 'CheckoutSessionEnvironment',
-            },
+            "name": "environment",
+            "type": {
+              "kind": "ENUM",
+              "name": "CheckoutSessionEnvironment"
+            }
           },
           {
-            name: 'experimental_rules',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionExperimentalRulesInput',
-            },
+            "name": "experimental_rules",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionExperimentalRulesInput"
+            }
           },
           {
-            name: 'expiresAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
+            "name": "expiresAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
           },
           {
-            name: 'lineItems',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'CheckoutSessionLineItemInput',
-                },
-              },
-            },
+            "name": "lineItems",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "CheckoutSessionLineItemInput"
+                }
+              }
+            }
           },
           {
-            name: 'locations',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'CheckoutSessionLocationInput',
-                },
-              },
-            },
+            "name": "locations",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "CheckoutSessionLocationInput"
+                }
+              }
+            }
           },
           {
-            name: 'operatingHours',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionOperatingHoursMapInput',
-            },
+            "name": "operatingHours",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionOperatingHoursMapInput"
+            }
           },
           {
-            name: 'paymentMethods',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodsInput',
-            },
+            "name": "paymentMethods",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodsInput"
+            }
           },
           {
-            name: 'returnUrl',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "returnUrl",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'shipping',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionShippingOptionsInput',
-            },
+            "name": "shipping",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionShippingOptionsInput"
+            }
           },
           {
-            name: 'sourceApp',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "sourceApp",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'storeId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "storeId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'storeName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "storeName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'successUrl',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "successUrl",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionTaxesOptionsInput',
-            },
+            "name": "taxes",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionTaxesOptionsInput"
+            }
           },
           {
-            name: 'url',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "url",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'MutationExchangeCheckoutTokenInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "MutationExchangeCheckoutTokenInput",
+        "inputFields": [
           {
-            name: 'sessionId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "sessionId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'token',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "token",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'MutationUpdateCheckoutSessionDraftOrderInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "MutationUpdateCheckoutSessionDraftOrderInput",
+        "inputFields": [
           {
-            name: 'billing',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'OrderBillingInfoInput',
-            },
+            "name": "billing",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "OrderBillingInfoInput"
+            }
           },
           {
-            name: 'cartId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "cartId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'context',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'OrderContextInputUpdate',
-              },
-            },
+            "name": "context",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "OrderContextInputUpdate"
+              }
+            }
           },
           {
-            name: 'customerId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "customerId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'discounts',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'UpdateDiscountInput',
-                },
-              },
-            },
+            "name": "discounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "UpdateDiscountInput"
+                }
+              }
+            }
           },
           {
-            name: 'externalId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "externalId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'fees',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'UpdateFeeInput',
-                },
-              },
-            },
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "UpdateFeeInput"
+                }
+              }
+            }
           },
           {
-            name: 'lineItems',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateDraftOrderLineItemsInput',
-            },
+            "name": "lineItems",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateDraftOrderLineItemsInput"
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'notes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'NoteInput',
-                },
-              },
-            },
+            "name": "notes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "NoteInput"
+                }
+              }
+            }
           },
           {
-            name: 'shipping',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'OrderShippingInfoInput',
-            },
+            "name": "shipping",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "OrderShippingInfoInput"
+            }
           },
           {
-            name: 'shippingLines',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'UpdateDraftShippingLineInput',
-                },
-              },
-            },
+            "name": "shippingLines",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "UpdateDraftShippingLineInput"
+                }
+              }
+            }
           },
           {
-            name: 'staffUserIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
+            "name": "staffUserIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
           },
           {
-            name: 'tags',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
+            "name": "tags",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
           },
           {
-            name: 'taxExempted',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "taxExempted",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'UpdateOrderTaxInput',
-                },
-              },
-            },
+            "name": "taxes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "UpdateOrderTaxInput"
+                }
+              }
+            }
           },
           {
-            name: 'totals',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'OrderTotalsInput',
-            },
-          },
+            "name": "totals",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "OrderTotalsInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'MutationUpdateCheckoutSessionInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "MutationUpdateCheckoutSessionInput",
+        "inputFields": [
           {
-            name: 'channelId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "channelId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'customerId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "customerId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'enableAddressAutocomplete',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableAddressAutocomplete",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableBillingAddressCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableBillingAddressCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableLocalPickup',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableLocalPickup",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableNotesCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableNotesCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enablePaymentMethodCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enablePaymentMethodCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enablePhoneCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enablePhoneCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enablePromotionCodes',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enablePromotionCodes",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableShipping',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableShipping",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableShippingAddressCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableShippingAddressCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableSurcharge',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableSurcharge",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableTaxCollection',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableTaxCollection",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enableTips',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "enableTips",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'enabledLocales',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
+            "name": "enabledLocales",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
           },
           {
-            name: 'enabledPaymentProviders',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
+            "name": "enabledPaymentProviders",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
           },
           {
-            name: 'environment',
-            type: {
-              kind: 'ENUM',
-              name: 'CheckoutSessionEnvironment',
-            },
+            "name": "environment",
+            "type": {
+              "kind": "ENUM",
+              "name": "CheckoutSessionEnvironment"
+            }
           },
           {
-            name: 'experimental_rules',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionExperimentalRulesInput',
-            },
+            "name": "experimental_rules",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionExperimentalRulesInput"
+            }
           },
           {
-            name: 'expiresAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
+            "name": "expiresAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
           },
           {
-            name: 'locations',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'CheckoutSessionLocationInput',
-                },
-              },
-            },
+            "name": "locations",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "CheckoutSessionLocationInput"
+                }
+              }
+            }
           },
           {
-            name: 'operatingHours',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionOperatingHoursMapInput',
-            },
+            "name": "operatingHours",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionOperatingHoursMapInput"
+            }
           },
           {
-            name: 'paymentMethods',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodsInput',
-            },
+            "name": "paymentMethods",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodsInput"
+            }
           },
           {
-            name: 'returnUrl',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "returnUrl",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'sourceApp',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "sourceApp",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'storeId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "storeId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'storeName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "storeName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'successUrl',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "successUrl",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'url',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "url",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'MutationVerifyAddressInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "MutationVerifyAddressInput",
+        "inputFields": [
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "addressLine1",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'countryCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "countryCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'postalCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "postalCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'ENUM',
-        name: 'NoteAuthorTypeInput',
-        enumValues: [
+        "kind": "ENUM",
+        "name": "NoteAuthorTypeInput",
+        "enumValues": [
           {
-            name: 'CUSTOMER',
-            isDeprecated: false,
+            "name": "CUSTOMER",
+            "isDeprecated": false
           },
           {
-            name: 'MERCHANT',
-            isDeprecated: false,
+            "name": "MERCHANT",
+            "isDeprecated": false
           },
           {
-            name: 'NONE',
-            isDeprecated: false,
+            "name": "NONE",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "NoteInput",
+        "inputFields": [
+          {
+            "name": "author",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
+          {
+            "name": "authorType",
+            "type": {
+              "kind": "ENUM",
+              "name": "NoteAuthorTypeInput"
+            }
+          },
+          {
+            "name": "content",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          },
+          {
+            "name": "createdAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
+          },
+          {
+            "name": "deletedAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
+          },
+          {
+            "name": "externalIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ExternalIdsInput"
+                }
+              }
+            }
+          },
+          {
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
+          },
+          {
+            "name": "referenceId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "shouldNotifyCustomer",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
+          }
         ],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'NoteInput',
-        inputFields: [
+        "kind": "SCALAR",
+        "name": "Null"
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "OrderAddressInput",
+        "inputFields": [
           {
-            name: 'author',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'authorType',
-            type: {
-              kind: 'ENUM',
-              name: 'NoteAuthorTypeInput',
-            },
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'content',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'createdAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
+            "name": "adminArea1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'deletedAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'externalIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ExternalIdsInput',
-                },
-              },
-            },
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'referenceId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "countryCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'shouldNotifyCustomer',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
-          },
+            "name": "postalCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'SCALAR',
-        name: 'Null',
-      },
-      {
-        kind: 'INPUT_OBJECT',
-        name: 'OrderAddressInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "OrderBillingInfoInput",
+        "inputFields": [
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "address",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "OrderAddressInput"
+            }
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "companyName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "email",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "firstName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "lastName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'countryCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'postalCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "phone",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'OrderBillingInfoInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "OrderContextInputUpdate",
+        "inputFields": [
           {
-            name: 'address',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'OrderAddressInput',
-            },
+            "name": "channelId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'companyName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'email',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'firstName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'lastName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
-          {
-            name: 'phone',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "storeId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'OrderContextInputUpdate',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "OrderMetafield",
+        "fields": [
           {
-            name: 'channelId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'storeId',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "type",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "value",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'OrderMetafield',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "OrderMetafieldInput",
+        "inputFields": [
           {
-            name: 'key',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "key",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'type',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "type",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "ENUM",
+                "name": "MetafieldTypeInput"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "defaultValue": "JSON"
           },
           {
-            name: 'value',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "value",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'OrderMetafieldInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "OrderShippingInfoInput",
+        "inputFields": [
           {
-            name: 'key',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "address",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "OrderAddressInput"
+            }
           },
           {
-            name: 'type',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'ENUM',
-                name: 'MetafieldTypeInput',
-              },
-            },
-            defaultValue: 'JSON',
+            "name": "companyName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'value',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "email",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
+          {
+            "name": "firstName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "lastName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "phone",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'OrderShippingInfoInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "OrderTotalsInput",
+        "inputFields": [
           {
-            name: 'address',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'OrderAddressInput',
-            },
+            "name": "discountTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'companyName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "feeTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'email',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "shippingTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'firstName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "subTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'lastName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "taxTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'phone',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "total",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'OrderTotalsInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "PageInfo",
+        "fields": [
           {
-            name: 'discountTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+            "name": "endCursor",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'feeTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+            "name": "hasNextPage",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'shippingTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+            "name": "hasPreviousPage",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'subTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+            "name": "startCursor",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-          },
-          {
-            name: 'taxTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
-          },
-          {
-            name: 'total',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'PageInfo',
-        fields: [
+        "kind": "INPUT_OBJECT",
+        "name": "PriceAdjustmentShippingLineInput",
+        "inputFields": [
           {
-            name: 'endCursor',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'hasNextPage',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Boolean',
-              },
-            },
-            args: [],
-            isDeprecated: false,
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'hasPreviousPage',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Boolean',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'startCursor',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
+            "name": "subTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
+          }
         ],
-        interfaces: [],
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'PriceAdjustmentShippingLineInput',
-        inputFields: [
+        "kind": "OBJECT",
+        "name": "PriceAdjustmentsCalculationResult",
+        "fields": [
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "adjustments",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CalculatedAdjustmentOutput"
+                }
+              }
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "lines",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CalculatedLineOutput"
+                }
+              }
             },
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'subTotal',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+            "name": "totalDiscountAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "SimpleMoney"
             },
+            "args": [],
+            "isDeprecated": false
           },
+          {
+            "name": "totalFeeAmount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "SimpleMoney"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        isOneOf: false,
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'PriceAdjustmentsCalculationResult',
-        fields: [
+        "kind": "OBJECT",
+        "name": "Query",
+        "fields": [
           {
-            name: 'adjustments',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'CalculatedAdjustmentOutput',
-                },
-              },
+            "name": "checkoutSession",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSession"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'lines',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'CalculatedLineOutput',
-                },
-              },
+            "name": "validateCheckoutToken",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutTokenValidation"
             },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'totalDiscountAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'SimpleMoney',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'totalFeeAmount',
-            type: {
-              kind: 'OBJECT',
-              name: 'SimpleMoney',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-        ],
-        interfaces: [],
-      },
-      {
-        kind: 'OBJECT',
-        name: 'Query',
-        fields: [
-          {
-            name: 'checkoutSession',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSession',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'validateCheckoutToken',
-            type: {
-              kind: 'OBJECT',
-              name: 'CheckoutTokenValidation',
-            },
-            args: [
+            "args": [
               {
-                name: 'token',
-                type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
-                },
-              },
+                "name": "token",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              }
             ],
-            isDeprecated: false,
-          },
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'RemoveShippingMethodInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "RemoveShippingMethodInput",
+        "inputFields": [
           {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'serviceCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "serviceCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'SKU',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SKU",
+        "fields": [
           {
-            name: 'attributeValues',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'OBJECT',
-                    name: 'SKUAttributeValue',
-                  },
-                },
-              },
+            "name": "attributeValues",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "SKUAttributeValue"
+                  }
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'attributes',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'OBJECT',
-                    name: 'SKUAttribute',
-                  },
-                },
-              },
+            "name": "attributes",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "SKUAttribute"
+                  }
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'code',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "code",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'createdAt',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'DateTime',
-              },
+            "name": "createdAt",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "DateTime"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'description',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "description",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'disableShipping',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "disableShipping",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'htmlDescription',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "htmlDescription",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'ID',
-              },
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'label',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "label",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'mediaUrls',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
-                },
-              },
+            "name": "mediaUrls",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'OBJECT',
-                name: 'SKUMetafieldsConnection',
-              },
+            "name": "metafields",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "SKUMetafieldsConnection"
+              }
             },
-            args: [
+            "args": [
               {
-                name: 'after',
-                type: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-              {
-                name: 'before',
-                type: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
+                "name": "after",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
               },
               {
-                name: 'first',
-                type: {
-                  kind: 'SCALAR',
-                  name: 'Int',
-                },
+                "name": "before",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
               },
               {
-                name: 'last',
-                type: {
-                  kind: 'SCALAR',
-                  name: 'Int',
-                },
+                "name": "first",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
               },
+              {
+                "name": "last",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
+              }
             ],
-            isDeprecated: false,
+            "isDeprecated": false
           },
           {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'prices',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'OBJECT',
-                    name: 'SKUPrice',
-                  },
-                },
-              },
+            "name": "prices",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "SKUPrice"
+                  }
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'status',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "status",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'unitOfWeight',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "unitOfWeight",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'updatedAt',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'DateTime',
-              },
+            "name": "updatedAt",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "DateTime"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'weight',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
+            "name": "weight",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'SKUAttribute',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SKUAttribute",
+        "fields": [
           {
-            name: 'description',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "description",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'htmlDescription',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "htmlDescription",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'ID',
-              },
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'label',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "label",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'values',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'OBJECT',
-                    name: 'SKUAttributeValue',
-                  },
-                },
-              },
+            "name": "values",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "SKUAttributeValue"
+                  }
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'SKUAttributeValue',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SKUAttributeValue",
+        "fields": [
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'ID',
-              },
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'label',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "label",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'SKUMetafield',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SKUMetafield",
+        "fields": [
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'ID',
-              },
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'key',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "key",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'namespace',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "namespace",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'value',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "value",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'SKUMetafieldsConnection',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SKUMetafieldsConnection",
+        "fields": [
           {
-            name: 'edges',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'OBJECT',
-                name: 'SKUMetafieldsConnectionEdge',
-              },
+            "name": "edges",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "SKUMetafieldsConnectionEdge"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'pageInfo',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'OBJECT',
-                name: 'PageInfo',
-              },
+            "name": "pageInfo",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "PageInfo"
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'SKUMetafieldsConnectionEdge',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SKUMetafieldsConnectionEdge",
+        "fields": [
           {
-            name: 'cursor',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "cursor",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'node',
-            type: {
-              kind: 'OBJECT',
-              name: 'SKUMetafield',
+            "name": "node",
+            "type": {
+              "kind": "OBJECT",
+              "name": "SKUMetafield"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'SKUPrice',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SKUPrice",
+        "fields": [
           {
-            name: 'currencyCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+            "name": "currencyCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'value',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'Float',
-              },
+            "name": "value",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Float"
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'SelectedAddon',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SelectedAddon",
+        "fields": [
           {
-            name: 'attribute',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "attribute",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'sku',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "sku",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'values',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'SelectedAddonValue',
-                },
-              },
+            "name": "values",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "SelectedAddonValue"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'SelectedAddonInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "SelectedAddonInput",
+        "inputFields": [
           {
-            name: 'attribute',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "attribute",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'sku',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "sku",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'values',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'SelectedAddonValueInput',
-                  },
-                },
-              },
-            },
-          },
+            "name": "values",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "SelectedAddonValueInput"
+                  }
+                }
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'SelectedAddonValue',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SelectedAddonValue",
+        "fields": [
           {
-            name: 'costAdjustment',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "costAdjustment",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'SelectedAddonValueInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "SelectedAddonValueInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
-            },
+            "name": "amount",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "MoneyInput"
+            }
           },
           {
-            name: 'amountIncreased',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "amountIncreased",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'costAdjustment',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
+            "name": "costAdjustment",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'SelectedOption',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SelectedOption",
+        "fields": [
           {
-            name: 'attribute',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "attribute",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'values',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
+            "name": "values",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'SelectedOptionInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "SelectedOptionInput",
+        "inputFields": [
           {
-            name: 'attribute',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "attribute",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'values',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
-                },
-              },
-            },
-          },
+            "name": "values",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'OBJECT',
-        name: 'ShippingLine',
-        fields: [
+        "kind": "OBJECT",
+        "name": "ShippingLine",
+        "fields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "amount",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'discounts',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'LineItemDiscount',
-                },
-              },
+            "name": "discounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "LineItemDiscount"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'OrderMetafield',
-                },
-              },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "OrderMetafield"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'requestedProvider',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "requestedProvider",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'requestedService',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "requestedService",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'LineItemTax',
-                },
-              },
+            "name": "taxes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "LineItemTax"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'totals',
-            type: {
-              kind: 'OBJECT',
-              name: 'ShippingLineTotals',
+            "name": "totals",
+            "type": {
+              "kind": "OBJECT",
+              "name": "ShippingLineTotals"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'ShippingLineTotals',
-        fields: [
+        "kind": "OBJECT",
+        "name": "ShippingLineTotals",
+        "fields": [
           {
-            name: 'subTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "subTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'taxTotal',
-            type: {
-              kind: 'OBJECT',
-              name: 'MoneyValue',
+            "name": "taxTotal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "MoneyValue"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'ENUM',
-        name: 'ShippingLineType',
-        enumValues: [
+        "kind": "ENUM",
+        "name": "ShippingLineType",
+        "enumValues": [
           {
-            name: 'FEE',
-            isDeprecated: false,
+            "name": "FEE",
+            "isDeprecated": false
           },
           {
-            name: 'SHIPPING',
-            isDeprecated: false,
+            "name": "SHIPPING",
+            "isDeprecated": false
           },
           {
-            name: 'SKU',
-            isDeprecated: false,
-          },
-        ],
+            "name": "SKU",
+            "isDeprecated": false
+          }
+        ]
       },
       {
-        kind: 'OBJECT',
-        name: 'ShippingRate',
-        fields: [
+        "kind": "OBJECT",
+        "name": "ShippingRate",
+        "fields": [
           {
-            name: 'carrierCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "carrierCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'cost',
-            type: {
-              kind: 'OBJECT',
-              name: 'ShippingRateMoneyValue',
+            "name": "cost",
+            "type": {
+              "kind": "OBJECT",
+              "name": "ShippingRateMoneyValue"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'description',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "description",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'displayName',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "displayName",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'features',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
+            "name": "features",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'maxDeliveryDate',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "maxDeliveryDate",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'minDeliveryDate',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "minDeliveryDate",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'serviceCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "serviceCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'ShippingRateCalculationResult',
-        fields: [
+        "kind": "OBJECT",
+        "name": "ShippingRateCalculationResult",
+        "fields": [
           {
-            name: 'rates',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'OBJECT',
-                  name: 'ShippingRate',
-                },
-              },
+            "name": "rates",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "ShippingRate"
+                }
+              }
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'ShippingRateMoneyValue',
-        fields: [
+        "kind": "OBJECT",
+        "name": "ShippingRateMoneyValue",
+        "fields": [
           {
-            name: 'currencyCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "currencyCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'value',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
+            "name": "value",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'OBJECT',
-        name: 'SimpleMoney',
-        fields: [
+        "kind": "OBJECT",
+        "name": "SimpleMoney",
+        "fields": [
           {
-            name: 'currencyCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
+            "name": "currencyCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             },
-            args: [],
-            isDeprecated: false,
+            "args": [],
+            "isDeprecated": false
           },
           {
-            name: 'value',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
+            "name": "value",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
             },
-            args: [],
-            isDeprecated: false,
-          },
+            "args": [],
+            "isDeprecated": false
+          }
         ],
-        interfaces: [],
+        "interfaces": []
       },
       {
-        kind: 'SCALAR',
-        name: 'String',
+        "kind": "SCALAR",
+        "name": "String"
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'TaxDestinationAddressInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "TaxDestinationAddressInput",
+        "inputFields": [
           {
-            name: 'addressLine1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'addressLine2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'addressLine3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "addressLine3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea1',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea1",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea2',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea2",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea3',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea3",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'adminArea4',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "adminArea4",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'countryCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "countryCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'postalCode',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-          },
+            "name": "postalCode",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'TaxInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "TaxInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
+            "name": "amount",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'exempted',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "exempted",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            defaultValue: 'false',
+            "defaultValue": "false"
           },
           {
-            name: 'externalIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ExternalIdsInput',
-                },
-              },
-            },
+            "name": "externalIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ExternalIdsInput"
+                }
+              }
+            }
           },
           {
-            name: 'included',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "included",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "name",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'referenceId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "referenceId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'TaxLineInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "TaxLineInput",
+        "inputFields": [
           {
-            name: 'classification',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "classification",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'destination',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'TaxDestinationAddressInput',
-            },
+            "name": "destination",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "TaxDestinationAddressInput"
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'origin',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'TaxDestinationAddressInput',
-            },
+            "name": "origin",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "TaxDestinationAddressInput"
+            }
           },
           {
-            name: 'quantity',
-            type: {
-              kind: 'SCALAR',
-              name: 'Int',
-            },
+            "name": "quantity",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
+            }
           },
           {
-            name: 'subtotalPrice',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
-            },
+            "name": "subtotalPrice",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "MoneyInput"
+              }
+            }
           },
           {
-            name: 'type',
-            type: {
-              kind: 'ENUM',
-              name: 'ShippingLineType',
-            },
+            "name": "type",
+            "type": {
+              "kind": "ENUM",
+              "name": "ShippingLineType"
+            }
           },
           {
-            name: 'unitPrice',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
-            },
-          },
+            "name": "unitPrice",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "MoneyInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateDiscountInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateDiscountInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
+            "name": "amount",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateMoneyInput"
+            }
           },
           {
-            name: 'appliedBeforeTax',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "appliedBeforeTax",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            defaultValue: 'false',
+            "defaultValue": "false"
           },
           {
-            name: 'code',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "code",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'externalIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ExternalIdsInput',
-                },
-              },
-            },
+            "name": "externalIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ExternalIdsInput"
+                }
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'referenceId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "referenceId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateDraftLineItemInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateDraftLineItemInput",
+        "inputFields": [
           {
-            name: 'details',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'LineItemInputDetailsInfo',
-            },
+            "name": "details",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "LineItemInputDetailsInfo"
+            }
           },
           {
-            name: 'discounts',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'DiscountInput',
-                },
-              },
-            },
+            "name": "discounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "DiscountInput"
+                }
+              }
+            }
           },
           {
-            name: 'externalId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "externalId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'fees',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'FeeInput',
-                },
-              },
-            },
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "FeeInput"
+                }
+              }
+            }
           },
           {
-            name: 'fulfillmentChannelId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "fulfillmentChannelId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'fulfillmentMode',
-            type: {
-              kind: 'ENUM',
-              name: 'LineItemModeInput',
-            },
+            "name": "fulfillmentMode",
+            "type": {
+              "kind": "ENUM",
+              "name": "LineItemModeInput"
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "id",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'notes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'NoteInput',
-                },
-              },
+            "name": "notes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "NoteInput"
+                }
+              }
             },
-            defaultValue: '[]',
+            "defaultValue": "[]"
           },
           {
-            name: 'productId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "productId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'quantity',
-            type: {
-              kind: 'SCALAR',
-              name: 'Float',
-            },
+            "name": "quantity",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float"
+            }
           },
           {
-            name: 'serviceEndsAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
+            "name": "serviceEndsAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
           },
           {
-            name: 'serviceStartAt',
-            type: {
-              kind: 'SCALAR',
-              name: 'DateTime',
-            },
+            "name": "serviceStartAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            }
           },
           {
-            name: 'shipping',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'LineItemInputShippingInfo',
-            },
+            "name": "shipping",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "LineItemInputShippingInfo"
+            }
           },
           {
-            name: 'skuId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "skuId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'tags',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
+            "name": "tags",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'TaxInput',
-                },
-              },
-            },
+            "name": "taxes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TaxInput"
+                }
+              }
+            }
           },
           {
-            name: 'totals',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'LineItemTotalsInput',
-            },
+            "name": "totals",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "LineItemTotalsInput"
+            }
           },
           {
-            name: 'type',
-            type: {
-              kind: 'ENUM',
-              name: 'LineItemTypesInput',
-            },
+            "name": "type",
+            "type": {
+              "kind": "ENUM",
+              "name": "LineItemTypesInput"
+            }
           },
           {
-            name: 'unitAmount',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
-            },
-          },
+            "name": "unitAmount",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "MoneyInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateDraftOrderInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateDraftOrderInput",
+        "inputFields": [
           {
-            name: 'lineItems',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateDraftOrderLineItemsInput',
-            },
+            "name": "lineItems",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateDraftOrderLineItemsInput"
+            }
           },
           {
-            name: 'notes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'NoteInput',
-                },
-              },
-            },
+            "name": "notes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "NoteInput"
+                }
+              }
+            }
           },
           {
-            name: 'taxExempted',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
-          },
+            "name": "taxExempted",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateDraftOrderLineItemsInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateDraftOrderLineItemsInput",
+        "inputFields": [
           {
-            name: 'add',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'CreateDraftLineItemInput',
-                },
-              },
-            },
+            "name": "add",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "CreateDraftLineItemInput"
+                }
+              }
+            }
           },
           {
-            name: 'remove',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'SCALAR',
-                  name: 'String',
-                },
-              },
-            },
+            "name": "remove",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            }
           },
           {
-            name: 'update',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'UpdateDraftLineItemInput',
-                },
-              },
-            },
-          },
+            "name": "update",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "UpdateDraftLineItemInput"
+                }
+              }
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateDraftShippingLineInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateDraftShippingLineInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
+            "name": "amount",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateMoneyInput"
+            }
           },
           {
-            name: 'discounts',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'UpdateDiscountInput',
-                },
-              },
-            },
+            "name": "discounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "UpdateDiscountInput"
+                }
+              }
+            }
           },
           {
-            name: 'externalIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ExternalIdsInput',
-                },
-              },
-            },
+            "name": "externalIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ExternalIdsInput"
+                }
+              }
+            }
           },
           {
-            name: 'fees',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'UpdateFeeInput',
-                },
-              },
-            },
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "UpdateFeeInput"
+                }
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'requestedProvider',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "requestedProvider",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'requestedService',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "requestedService",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'UpdateTaxInput',
-                },
-              },
-            },
+            "name": "taxes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "UpdateTaxInput"
+                }
+              }
+            }
           },
           {
-            name: 'totals',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateDraftShippingLineTotalsInput',
-            },
-          },
+            "name": "totals",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateDraftShippingLineTotalsInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateDraftShippingLineTotalsInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateDraftShippingLineTotalsInput",
+        "inputFields": [
           {
-            name: 'subTotal',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
+            "name": "subTotal",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateMoneyInput"
+            }
           },
           {
-            name: 'taxTotal',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
-          },
+            "name": "taxTotal",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateMoneyInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateFeeInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateFeeInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
+            "name": "amount",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateMoneyInput"
+            }
           },
           {
-            name: 'appliedBeforeTax',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "appliedBeforeTax",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            defaultValue: 'false',
+            "defaultValue": "false"
           },
           {
-            name: 'externalIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ExternalIdsInput',
-                },
-              },
-            },
+            "name": "externalIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ExternalIdsInput"
+                }
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'referenceId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "referenceId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateMoneyInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateMoneyInput",
+        "inputFields": [
           {
-            name: 'currencyCode',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "currencyCode",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'value',
-            type: {
-              kind: 'SCALAR',
-              name: 'Int',
-            },
-          },
+            "name": "value",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateNoteInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateNoteInput",
+        "inputFields": [
           {
-            name: 'author',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "author",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'authorType',
-            type: {
-              kind: 'ENUM',
-              name: 'NoteAuthorTypeInput',
-            },
+            "name": "authorType",
+            "type": {
+              "kind": "ENUM",
+              "name": "NoteAuthorTypeInput"
+            }
           },
           {
-            name: 'content',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
+            "name": "content",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'shouldNotifyCustomer',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "shouldNotifyCustomer",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            defaultValue: 'false',
-          },
+            "defaultValue": "false"
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateOrderTaxInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateOrderTaxInput",
+        "inputFields": [
           {
-            name: 'additional',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "additional",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            defaultValue: 'false',
+            "defaultValue": "false"
           },
           {
-            name: 'amount',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
+            "name": "amount",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateMoneyInput"
+            }
           },
           {
-            name: 'exempted',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "exempted",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            defaultValue: 'false',
+            "defaultValue": "false"
           },
           {
-            name: 'externalIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ExternalIdsInput',
-                },
-              },
-            },
+            "name": "externalIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ExternalIdsInput"
+                }
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'included',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "included",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'referenceId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "referenceId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateShippingLineInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateShippingLineInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
+            "name": "amount",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateMoneyInput"
+            }
           },
           {
-            name: 'externalIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ExternalIdsInput',
-                },
-              },
-            },
+            "name": "externalIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ExternalIdsInput"
+                }
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'requestedProvider',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "requestedProvider",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'requestedService',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "requestedService",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'taxes',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'UpdateTaxInput',
-                },
-              },
-            },
+            "name": "taxes",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "UpdateTaxInput"
+                }
+              }
+            }
           },
           {
-            name: 'totals',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateShippingLineTotalsInput',
-            },
-          },
+            "name": "totals",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateShippingLineTotalsInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateShippingLineTotalsInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateShippingLineTotalsInput",
+        "inputFields": [
           {
-            name: 'subTotal',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
+            "name": "subTotal",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateMoneyInput"
+            }
           },
           {
-            name: 'taxTotal',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
-          },
+            "name": "taxTotal",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateMoneyInput"
+            }
+          }
         ],
-        isOneOf: false,
+        "isOneOf": false
       },
       {
-        kind: 'INPUT_OBJECT',
-        name: 'UpdateTaxInput',
-        inputFields: [
+        "kind": "INPUT_OBJECT",
+        "name": "UpdateTaxInput",
+        "inputFields": [
           {
-            name: 'amount',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
+            "name": "amount",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "UpdateMoneyInput"
+            }
           },
           {
-            name: 'exempted',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
+            "name": "exempted",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
             },
-            defaultValue: 'false',
+            "defaultValue": "false"
           },
           {
-            name: 'externalIds',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'ExternalIdsInput',
-                },
-              },
-            },
+            "name": "externalIds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ExternalIdsInput"
+                }
+              }
+            }
           },
           {
-            name: 'id',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "id",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'included',
-            type: {
-              kind: 'SCALAR',
-              name: 'Boolean',
-            },
+            "name": "included",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
           },
           {
-            name: 'metafields',
-            type: {
-              kind: 'LIST',
-              ofType: {
-                kind: 'NON_NULL',
-                ofType: {
-                  kind: 'INPUT_OBJECT',
-                  name: 'OrderMetafieldInput',
-                },
-              },
-            },
+            "name": "metafields",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OrderMetafieldInput"
+                }
+              }
+            }
           },
           {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "name",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'ratePercentage',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
+            "name": "ratePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
           },
           {
-            name: 'referenceId',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-          },
+            "name": "referenceId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
         ],
-        isOneOf: false,
-      },
+        "isOneOf": false
+      }
     ],
-    directives: [],
-  },
+    "directives": []
+  }
 } as const;
 
 export { introspection };

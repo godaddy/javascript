@@ -227,12 +227,12 @@ export function Checkout(props: CheckoutProps) {
   const [checkoutErrors, setCheckoutErrors] = React.useState<
     string[] | undefined
   >(undefined);
-  const { t } = useGoDaddyContext();
+  const { t } = useGoDaddyContext()
+
+  const { session, jwt, isLoading: isLoadingJWT } = useCheckoutSession(props);
 
   useTheme(session?.appearance?.theme);
   useVariables(session?.appearance?.variables || props?.appearance?.variables);
-
-  const { session, jwt, isLoading: isLoadingJWT } = useCheckoutSession(props);
 
   const formSchema = React.useMemo(() => {
     const extendedSchema = checkoutFormSchema
