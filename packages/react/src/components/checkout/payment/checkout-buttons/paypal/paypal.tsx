@@ -87,7 +87,7 @@ function PayPalButtonsWrapper() {
   };
 
   if (isPending || !isResolved) {
-    return <Skeleton className='h-10 w-full' />;
+    return <Skeleton className='h-13 w-full' />;
   }
 
   return (
@@ -97,7 +97,7 @@ function PayPalButtonsWrapper() {
         label: 'pay',
         shape: 'rect',
         borderRadius: 8,
-        height: 40,
+        height: 50,
       }}
       disabled={isPaypalDisabled || isPaymentDisabled}
       onClick={handleClick}
