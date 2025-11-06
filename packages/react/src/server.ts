@@ -36,11 +36,12 @@ export async function createCheckoutSession(
 
   return await GoDaddy.createCheckoutSession(input, {
     accessToken,
+    apiHost: getEnvVar('GODADDY_API_HOST'),
   });
 }
 
 function getHostByEnvironment(): string {
-  return `https://${getEnvVar('GODADDY_HOST') || 'api.godaddy.com'}`;
+  return `https://${getEnvVar('GODADDY_API_HOST') || 'api.godaddy.com'}`;
 }
 
 async function getAccessToken({

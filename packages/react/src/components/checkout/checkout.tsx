@@ -232,7 +232,7 @@ export function Checkout(props: CheckoutProps) {
   useTheme();
   useVariables(props?.appearance?.variables);
 
-  const { session, jwt } = useCheckoutSession(props);
+  const { session, jwt, isLoading: isLoadingJWT } = useCheckoutSession(props);
 
   const formSchema = React.useMemo(() => {
     const extendedSchema = checkoutFormSchema
@@ -366,6 +366,7 @@ export function Checkout(props: CheckoutProps) {
       >
         <CheckoutFormContainer
           {...props}
+          isLoadingJWT={isLoadingJWT}
           schema={formSchema}
           direction={props.direction}
         />

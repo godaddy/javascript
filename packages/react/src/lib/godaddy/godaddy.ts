@@ -41,12 +41,12 @@ import {
 
 function getHostByEnvironment(apiHost?: string): string {
   // Use provided apiHost, otherwise default to production
-  return apiHost || 'https://checkout.commerce.api.godaddy.com';
+  return `https://checkout.commerce.${apiHost || 'api.godaddy.com'}`;
 }
 
 export async function createCheckoutSession(
   input: CheckoutSessionInput['input'],
-  { accessToken }: { accessToken: string }
+  { accessToken, apiHost }: { accessToken: string; apiHost?: string }
 ): Promise<
   ResultOf<typeof CreateCheckoutSessionMutation>['createCheckoutSession']
 > {
@@ -54,7 +54,7 @@ export async function createCheckoutSession(
     throw new Error('No public access token provided');
   }
 
-  const GODADDY_HOST = getHostByEnvironment(getEnvVar('GODADDY_API_HOST'));
+  const GODADDY_HOST = getHostByEnvironment(apiHost);
   const response = await graphqlRequestWithErrors<
     ResultOf<typeof CreateCheckoutSessionMutation>
   >(

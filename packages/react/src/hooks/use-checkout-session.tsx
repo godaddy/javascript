@@ -35,6 +35,7 @@ export function useCheckoutSession(props?: CheckoutProps) {
   const [storedSessionId, setStoredSessionId, removeStoredSessionId] =
     useSessionStorage('godaddy-checkout-session-id', '');
   const [exchangeFailed, setExchangeFailed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const refreshTimerRef = useRef<number | null>(null);
 
   let sessionId: string;
@@ -96,6 +97,8 @@ export function useCheckoutSession(props?: CheckoutProps) {
     // If we already have a JWT for this session, nothing to do
     if (jwt && storedSessionId === sessionId) return;
 
+    setIsLoading(true);
+
     (async () => {
       try {
         const result = await exchangeCheckoutToken(
@@ -106,7 +109,10 @@ export function useCheckoutSession(props?: CheckoutProps) {
           apiHost
         );
         if (!result?.jwt) {
-          if (!cancelled) setExchangeFailed(true);
+          if (!cancelled) {
+            setExchangeFailed(true);
+            setIsLoading(false);
+          }
           return;
         }
         if (cancelled) return;
@@ -114,6 +120,7 @@ export function useCheckoutSession(props?: CheckoutProps) {
         setJwt(result.jwt);
         setStoredSessionId(sessionId);
         setExchangeFailed(false);
+        setIsLoading(false);
         if (typeof window !== 'undefined') {
           window.history.replaceState(
             null,
@@ -125,7 +132,10 @@ export function useCheckoutSession(props?: CheckoutProps) {
       } catch (_error) {
         removeJwt();
         removeStoredSessionId();
-        if (!cancelled) setExchangeFailed(true);
+        if (!cancelled) {
+          setExchangeFailed(true);
+          setIsLoading(false);
+        }
       }
     })();
 
@@ -166,8 +176,12 @@ export function useCheckoutSession(props?: CheckoutProps) {
 
   // If exchange failed and we have a session prop, use legacy flow
   if (exchangeFailed && props?.session) {
-    return { session: props.session, jwt: undefined };
+    return { session: props.session, jwt: undefined, isLoading };
   }
 
-  return { session: checkoutSessionQuery.data, jwt: jwt || undefined };
+  return {
+    session: checkoutSessionQuery.data,
+    jwt: jwt || undefined,
+    isLoading,
+  };
 }

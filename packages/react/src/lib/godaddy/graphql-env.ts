@@ -384,6 +384,420 @@ const introspection = {
         "name": "Boolean"
       },
       {
+        "kind": "OBJECT",
+        "name": "CSSVariables",
+        "fields": [
+          {
+            "name": "accent",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "accentForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "background",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "border",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "card",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "cardForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "defaultFontFamily",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "destructive",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "destructiveForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "fontMono",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "fontSans",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "fontSerif",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "foreground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "input",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "muted",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "mutedForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "popover",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "popoverForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "primary",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "primaryForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "radius",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "ring",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "secondary",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "secondaryBackground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "secondaryForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "CSSVariablesInput",
+        "inputFields": [
+          {
+            "name": "accent",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "accentForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "background",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "border",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "card",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "cardForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "defaultFontFamily",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "destructive",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "destructiveForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "fontMono",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "fontSans",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "fontSerif",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "foreground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "input",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "muted",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "mutedForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "popover",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "popoverForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "primary",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "primaryForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "radius",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "ring",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "secondary",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "secondaryBackground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "secondaryForeground",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
+        ],
+        "isOneOf": false
+      },
+      {
         "kind": "UNION",
         "name": "CalculatedAdjustment",
         "possibleTypes": [
@@ -602,61 +1016,6 @@ const introspection = {
       },
       {
         "kind": "OBJECT",
-        "name": "CheckoutAuthToken",
-        "fields": [
-          {
-            "name": "expiresAt",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "DateTime"
-              }
-            },
-            "args": [],
-            "isDeprecated": false
-          },
-          {
-            "name": "expiresIn",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Int"
-              }
-            },
-            "args": [],
-            "isDeprecated": false
-          },
-          {
-            "name": "jwt",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String"
-              }
-            },
-            "args": [],
-            "isDeprecated": false
-          },
-          {
-            "name": "sessionId",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String"
-              }
-            },
-            "args": [],
-            "isDeprecated": false
-          }
-        ],
-        "interfaces": []
-      },
-      {
-        "kind": "OBJECT",
         "name": "CheckoutSession",
         "fields": [
           {
@@ -683,6 +1042,15 @@ const introspection = {
                 }
               }
             ],
+            "isDeprecated": false
+          },
+          {
+            "name": "appearance",
+            "type": {
+              "kind": "OBJECT",
+              "name": "GoDaddyAppearance"
+            },
+            "args": [],
             "isDeprecated": false
           },
           {
@@ -792,15 +1160,6 @@ const introspection = {
           },
           {
             "name": "enablePromotionCodes",
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean"
-            },
-            "args": [],
-            "isDeprecated": false
-          },
-          {
-            "name": "enableShipping",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean"
@@ -1981,33 +2340,6 @@ const introspection = {
         "isOneOf": false
       },
       {
-        "kind": "INPUT_OBJECT",
-        "name": "CheckoutSessionLineItemInput",
-        "inputFields": [
-          {
-            "name": "quantity",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Int"
-              }
-            }
-          },
-          {
-            "name": "skuId",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String"
-              }
-            }
-          }
-        ],
-        "isOneOf": false
-      },
-      {
         "kind": "OBJECT",
         "name": "CheckoutSessionLocalDeliveryRule",
         "fields": [
@@ -2806,43 +3138,6 @@ const introspection = {
           }
         ],
         "isOneOf": false
-      },
-      {
-        "kind": "OBJECT",
-        "name": "CheckoutTokenValidation",
-        "fields": [
-          {
-            "name": "expiresAt",
-            "type": {
-              "kind": "SCALAR",
-              "name": "DateTime"
-            },
-            "args": [],
-            "isDeprecated": false
-          },
-          {
-            "name": "sessionId",
-            "type": {
-              "kind": "SCALAR",
-              "name": "String"
-            },
-            "args": [],
-            "isDeprecated": false
-          },
-          {
-            "name": "valid",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Boolean"
-              }
-            },
-            "args": [],
-            "isDeprecated": false
-          }
-        ],
-        "interfaces": []
       },
       {
         "kind": "INPUT_OBJECT",
@@ -4792,33 +5087,6 @@ const introspection = {
       },
       {
         "kind": "INPUT_OBJECT",
-        "name": "ExchangeCheckoutTokenInput",
-        "inputFields": [
-          {
-            "name": "sessionId",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String"
-              }
-            }
-          },
-          {
-            "name": "token",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String"
-              }
-            }
-          }
-        ],
-        "isOneOf": false
-      },
-      {
-        "kind": "INPUT_OBJECT",
         "name": "ExternalIdsInput",
         "inputFields": [
           {
@@ -5004,6 +5272,70 @@ const introspection = {
           }
         ],
         "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "GoDaddyAppearance",
+        "fields": [
+          {
+            "name": "theme",
+            "type": {
+              "kind": "ENUM",
+              "name": "GoDaddyTheme"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "variables",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CSSVariables"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "GoDaddyAppearanceInput",
+        "inputFields": [
+          {
+            "name": "theme",
+            "type": {
+              "kind": "ENUM",
+              "name": "GoDaddyTheme"
+            }
+          },
+          {
+            "name": "variables",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CSSVariablesInput"
+            }
+          }
+        ],
+        "isOneOf": false
+      },
+      {
+        "kind": "ENUM",
+        "name": "GoDaddyTheme",
+        "enumValues": [
+          {
+            "name": "base",
+            "isDeprecated": false
+          },
+          {
+            "name": "orange",
+            "isDeprecated": false
+          },
+          {
+            "name": "purple",
+            "isDeprecated": false
+          }
+        ]
       },
       {
         "kind": "SCALAR",
@@ -5969,26 +6301,6 @@ const introspection = {
             "isDeprecated": false
           },
           {
-            "name": "exchangeCheckoutToken",
-            "type": {
-              "kind": "OBJECT",
-              "name": "CheckoutAuthToken"
-            },
-            "args": [
-              {
-                "name": "input",
-                "type": {
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "kind": "INPUT_OBJECT",
-                    "name": "MutationExchangeCheckoutTokenInput"
-                  }
-                }
-              }
-            ],
-            "isDeprecated": false
-          },
-          {
             "name": "expireCheckoutSession",
             "type": {
               "kind": "OBJECT",
@@ -6006,15 +6318,6 @@ const introspection = {
                 }
               }
             ],
-            "isDeprecated": false
-          },
-          {
-            "name": "refreshCheckoutToken",
-            "type": {
-              "kind": "OBJECT",
-              "name": "CheckoutAuthToken"
-            },
-            "args": [],
             "isDeprecated": false
           },
           {
@@ -6281,6 +6584,13 @@ const introspection = {
         "name": "MutationCreateCheckoutSessionInput",
         "inputFields": [
           {
+            "name": "appearance",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "GoDaddyAppearanceInput"
+            }
+          },
+          {
             "name": "channelId",
             "type": {
               "kind": "NON_NULL",
@@ -6300,8 +6610,11 @@ const introspection = {
           {
             "name": "draftOrderId",
             "type": {
-              "kind": "SCALAR",
-              "name": "String"
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             }
           },
           {
@@ -6348,13 +6661,6 @@ const introspection = {
           },
           {
             "name": "enablePromotionCodes",
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean"
-            }
-          },
-          {
-            "name": "enableShipping",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean"
@@ -6433,19 +6739,6 @@ const introspection = {
             "type": {
               "kind": "SCALAR",
               "name": "DateTime"
-            }
-          },
-          {
-            "name": "lineItems",
-            "type": {
-              "kind": "LIST",
-              "ofType": {
-                "kind": "NON_NULL",
-                "ofType": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "CheckoutSessionLineItemInput"
-                }
-              }
             }
           },
           {
@@ -6538,33 +6831,6 @@ const introspection = {
             "type": {
               "kind": "SCALAR",
               "name": "String"
-            }
-          }
-        ],
-        "isOneOf": false
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "MutationExchangeCheckoutTokenInput",
-        "inputFields": [
-          {
-            "name": "sessionId",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String"
-              }
-            }
-          },
-          {
-            "name": "token",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String"
-              }
             }
           }
         ],
@@ -6752,6 +7018,13 @@ const introspection = {
         "name": "MutationUpdateCheckoutSessionInput",
         "inputFields": [
           {
+            "name": "appearance",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "GoDaddyAppearanceInput"
+            }
+          },
+          {
             "name": "channelId",
             "type": {
               "kind": "SCALAR",
@@ -6809,13 +7082,6 @@ const introspection = {
           },
           {
             "name": "enablePromotionCodes",
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean"
-            }
-          },
-          {
-            "name": "enableShipping",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean"
@@ -7634,26 +7900,6 @@ const introspection = {
               "name": "CheckoutSession"
             },
             "args": [],
-            "isDeprecated": false
-          },
-          {
-            "name": "validateCheckoutToken",
-            "type": {
-              "kind": "OBJECT",
-              "name": "CheckoutTokenValidation"
-            },
-            "args": [
-              {
-                "name": "token",
-                "type": {
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "kind": "SCALAR",
-                    "name": "String"
-                  }
-                }
-              }
-            ],
             "isDeprecated": false
           }
         ],

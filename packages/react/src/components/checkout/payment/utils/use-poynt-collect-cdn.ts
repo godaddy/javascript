@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { getEnvVar } from '@/lib/utils';
+import { useGetEnvFromContext } from '@/components/checkout/utils/use-get-env-from-context.ts';
 
 export const useGetPoyntCollectCdn = () => {
-  const environment = getEnvVar('GODADDY_ENV') || 'prod';
+  const environment = useGetEnvFromContext();
 
   return useMemo(() => {
     switch (environment) {
@@ -13,7 +13,7 @@ export const useGetPoyntCollectCdn = () => {
       case 'dev':
         return 'https://cdn.poynt.net/ci/collect-ci.js';
       default:
-        return 'https://cdn.poynt.net/ci/collect-ci.js';
+        return 'https://cdn.poynt.net/collect.js';
     }
   }, [environment]);
 };
