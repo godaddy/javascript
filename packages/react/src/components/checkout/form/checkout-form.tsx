@@ -308,7 +308,7 @@ export function CheckoutForm({
                     <ContactForm />
                     <Target id='checkout.form.contact.after' />
                   </CheckoutSection>
-                  {session?.enableShipping ? (
+                  {session?.enableShipping || session?.enableLocalPickup ? (
                     <CheckoutSection style={{ gridArea: 'delivery' }}>
                       <Target id='checkout.form.delivery.before' />
                       <CheckoutSectionHeader title={t.delivery?.title} />

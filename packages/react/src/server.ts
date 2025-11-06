@@ -1,6 +1,7 @@
 'use server';
 
 import * as GoDaddy from '@/lib/godaddy/godaddy';
+import { CreateCheckoutSessionInputWithKebabCase } from '@/lib/godaddy/godaddy';
 import { getEnvVar } from '@/lib/utils';
 import type { CheckoutSessionInput, CheckoutSessionOptions } from '@/types';
 
@@ -8,7 +9,7 @@ let accessToken: string | undefined;
 let accessTokenExpiresAt: number | undefined;
 
 export async function createCheckoutSession(
-  input: CheckoutSessionInput['input'],
+  input: CreateCheckoutSessionInputWithKebabCase,
   options?: CheckoutSessionOptions
 ) {
   const CLIENT_ID = options?.auth?.clientId || '';

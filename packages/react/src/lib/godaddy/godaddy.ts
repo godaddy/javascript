@@ -1,5 +1,5 @@
 import { convertCSSVariablesToCamelCase } from '@/components/checkout/utils/case-conversion';
-import type { CSSVariables, GoDaddyAppearance } from '@/godaddy-provider';
+import type { GoDaddyAppearance } from '@/godaddy-provider';
 import type { ResultOf } from '@/gql.tada';
 import { graphqlRequestWithErrors } from '@/lib/graphql-with-errors';
 import type {
@@ -40,7 +40,7 @@ import {
   GetCheckoutSessionQuery,
 } from './queries';
 
-function _getHostByEnvironment(apiHost?: string): string {
+function getHostByEnvironment(apiHost?: string): string {
   // Use provided apiHost, otherwise default to production
   return `https://checkout.commerce.${apiHost || 'api.godaddy.com'}`;
 }
@@ -53,13 +53,9 @@ export type CreateCheckoutSessionInputWithKebabCase = Omit<
   appearance?: GoDaddyAppearance;
 };
 
-function getHostByEnvironment(): string {
-  return `https://checkout.commerce.${process.env.GODADDY_HOST || process.env.NEXT_PUBLIC_GODADDY_HOST || 'api.godaddy.com'}`;
-}
-
 export async function createCheckoutSession(
   input: CreateCheckoutSessionInputWithKebabCase,
-  { accessToken }: { accessToken: string }
+  { accessToken, apiHost }: { accessToken: string; apiHost?: string }
 ): Promise<
   ResultOf<typeof CreateCheckoutSessionMutation>['createCheckoutSession']
 > {
@@ -91,7 +87,7 @@ export async function createCheckoutSession(
     }),
   };
 
-  const GODADDY_HOST = getHostByEnvironment();
+  const GODADDY_HOST = getHostByEnvironment(apiHost);
   const response = await graphqlRequestWithErrors<
     ResultOf<typeof CreateCheckoutSessionMutation>
   >(
