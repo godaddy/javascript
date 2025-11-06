@@ -1,5 +1,7 @@
 'use server';
 
+import { convertCSSVariablesToCamelCase } from '@/components/checkout/utils/case-conversion';
+import type { CSSVariables, GoDaddyAppearance } from '@/godaddy-provider';
 import type { ResultOf } from '@/gql.tada';
 import { graphqlRequestWithErrors } from '@/lib/graphql-with-errors';
 import type {
@@ -38,12 +40,20 @@ import {
   DraftOrderTaxesQuery,
 } from './queries';
 
+// Type for createCheckoutSession input with kebab-case appearance
+export type CreateCheckoutSessionInputWithKebabCase = Omit<
+  CheckoutSessionInput['input'],
+  'appearance'
+> & {
+  appearance?: GoDaddyAppearance;
+};
+
 function getHostByEnvironment(): string {
   return `https://checkout.commerce.${process.env.GODADDY_HOST || process.env.NEXT_PUBLIC_GODADDY_HOST || 'api.godaddy.com'}`;
 }
 
 export async function createCheckoutSession(
-  input: CheckoutSessionInput['input'],
+  input: CreateCheckoutSessionInputWithKebabCase,
   { accessToken }: { accessToken: string }
 ): Promise<
   ResultOf<typeof CreateCheckoutSessionMutation>['createCheckoutSession']
@@ -52,13 +62,37 @@ export async function createCheckoutSession(
     throw new Error('No public access token provided');
   }
 
+  // Convert appearance variables from kebab-case to camelCase for GraphQL
+  let convertedVariables: Record<string, string> | undefined;
+  if (input.appearance?.variables) {
+    const variables = input.appearance.variables;
+    // Check if variables is nested under 'checkout' or is direct CSSVariables
+    if ('checkout' in variables) {
+      convertedVariables = convertCSSVariablesToCamelCase(variables.checkout);
+    } else {
+      convertedVariables = convertCSSVariablesToCamelCase(variables);
+    }
+  }
+
+  // Exclude appearance from input and add it back with converted variables
+  const { appearance, ...restInput } = input;
+  const graphqlInput: CheckoutSessionInput['input'] = {
+    ...restInput,
+    ...(appearance && {
+      appearance: {
+        theme: appearance.theme,
+        ...(convertedVariables && { variables: convertedVariables }),
+      },
+    }),
+  };
+
   const GODADDY_HOST = getHostByEnvironment();
   const response = await graphqlRequestWithErrors<
     ResultOf<typeof CreateCheckoutSessionMutation>
   >(
     GODADDY_HOST,
     CreateCheckoutSessionMutation,
-    { input },
+    { input: graphqlInput },
     { Authorization: `Bearer ${accessToken}` }
   );
 

@@ -142,7 +142,7 @@ export function DraftOrderTotals({
             <span className='text-xs text-muted-foreground'>
               {currencyCode}{' '}
             </span>
-            <span className='font-medium'>
+            <span className='font-bold text-lg'>
               {new Intl.NumberFormat('en-us', {
                 style: 'currency',
                 currency: currencyCode,
