@@ -743,7 +743,7 @@ export function confirmCheckout(
 ): Promise<ResultOf<typeof ConfirmCheckoutSessionMutation>>;
 export function confirmCheckout(
   input: ConfirmCheckoutMutationInput['input'],
-  auth: { accessToken: string | undefined },
+  auth: { accessToken: string | undefined; sessionId: string },
   apiHost?: string
 ): Promise<ResultOf<typeof ConfirmCheckoutSessionMutation>>;
 export function confirmCheckout(
@@ -752,7 +752,7 @@ export function confirmCheckout(
     | CheckoutSession
     | undefined
     | null
-    | { accessToken: string | undefined },
+    | { accessToken: string | undefined; sessionId: string },
   apiHost?: string
 ) {
   const GODADDY_HOST = getHostByEnvironment(apiHost);
@@ -766,7 +766,7 @@ export function confirmCheckout(
     >(
       GODADDY_HOST,
       ConfirmCheckoutSessionMutation,
-      { input },
+      { input, sessionId: sessionOrAuth.sessionId },
       {
         Authorization: `Bearer ${sessionOrAuth.accessToken}`,
       }

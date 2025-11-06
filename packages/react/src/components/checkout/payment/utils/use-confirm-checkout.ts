@@ -129,7 +129,7 @@ export function useConfirmCheckout() {
               ...confirmCheckoutInput,
               ...(isPickup ? pickUpData : {}),
             },
-            { accessToken: jwt },
+            { accessToken: jwt, sessionId: session?.id || '' },
             apiHost
           )
         : await confirmCheckout(
