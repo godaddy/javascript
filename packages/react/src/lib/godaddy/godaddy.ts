@@ -14,7 +14,6 @@ import type {
   RemoveAppliedCheckoutSessionShippingMethodInput,
   UpdateDraftOrderInput,
 } from '@/types';
-import { getEnvVar } from '../utils';
 import {
   ApplyCheckoutSessionDeliveryMethodMutation,
   ApplyCheckoutSessionDiscountMutation,
