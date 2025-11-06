@@ -25,6 +25,36 @@ export const GetCheckoutSessionQuery = graphql(`
             enableShippingAddressCollection
             enableBillingAddressCollection
             enableAddressAutocomplete
+            appearance {
+                theme
+                variables {
+                    fontSans
+                    fontSerif
+                    fontMono
+                    defaultFontFamily
+                    background
+                    secondaryBackground
+                    foreground
+                    card
+                    cardForeground
+                    popover
+                    popoverForeground
+                    primary
+                    primaryForeground
+                    secondary
+                    secondaryForeground
+                    muted
+                    mutedForeground
+                    accent
+                    accentForeground
+                    destructive
+                    destructiveForeground
+                    border
+                    input
+                    ring
+                    radius
+                }
+            }
             experimental_rules {
               freeShipping {
                 enabled
