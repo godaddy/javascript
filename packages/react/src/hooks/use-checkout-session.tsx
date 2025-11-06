@@ -83,8 +83,6 @@ export function useCheckoutSession(props?: CheckoutProps) {
   );
 
   useEffect(() => {
-    if (!sessionId || !sessionToken) return;
-
     let cancelled = false;
 
     // If we have a JWT for a different session, clear it
@@ -95,7 +93,12 @@ export function useCheckoutSession(props?: CheckoutProps) {
     }
 
     // If we already have a JWT for this session, nothing to do
-    if (jwt && storedSessionId === sessionId) return;
+    if (jwt && storedSessionId === sessionId) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (!sessionId || !sessionToken) return;
 
     setIsLoading(true);
 
@@ -178,10 +181,12 @@ export function useCheckoutSession(props?: CheckoutProps) {
   if (exchangeFailed && props?.session) {
     return { session: props.session, jwt: undefined, isLoading };
   }
+  console.log('checkoutSessionLoading', checkoutSessionQuery.isLoading)
+  console.log('isLoading', isLoading)
 
   return {
     session: checkoutSessionQuery.data,
     jwt: jwt || undefined,
-    isLoading,
+    isLoading: isLoading || checkoutSessionQuery.isLoading,
   };
 }
