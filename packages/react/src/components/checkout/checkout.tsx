@@ -244,7 +244,7 @@ export function Checkout(props: CheckoutProps) {
         if (!checkIsValidPhone(String(data?.billingPhone))) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'Enter a valid billing phone number',
+            message: t.validation.enterValidBillingPhone,
             path: ['billingPhone'],
           });
         }
@@ -254,7 +254,7 @@ export function Checkout(props: CheckoutProps) {
         if (!checkIsValidPhone(String(data?.shippingPhone))) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'Enter a valid shipping phone number',
+            message: t.validation.enterValidShippingPhone,
             path: ['shippingPhone'],
           });
         }

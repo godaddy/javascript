@@ -1,5 +1,5 @@
 /* eslint-disable */
-/* prettier-ignore */
+/* prettier-ignore */ 
 
 /** An IntrospectionQuery representation of your schema.
  *
@@ -1016,6 +1016,61 @@ const introspection = {
       },
       {
         "kind": "OBJECT",
+        "name": "CheckoutAuthToken",
+        "fields": [
+          {
+            "name": "expiresAt",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "DateTime"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "expiresIn",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "jwt",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "sessionId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
         "name": "CheckoutSession",
         "fields": [
           {
@@ -1160,6 +1215,15 @@ const introspection = {
           },
           {
             "name": "enablePromotionCodes",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "enableShipping",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean"
@@ -2340,6 +2404,33 @@ const introspection = {
         "isOneOf": false
       },
       {
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionLineItemInput",
+        "inputFields": [
+          {
+            "name": "quantity",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            }
+          },
+          {
+            "name": "skuId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
+        ],
+        "isOneOf": false
+      },
+      {
         "kind": "OBJECT",
         "name": "CheckoutSessionLocalDeliveryRule",
         "fields": [
@@ -3138,6 +3229,43 @@ const introspection = {
           }
         ],
         "isOneOf": false
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutTokenValidation",
+        "fields": [
+          {
+            "name": "expiresAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "sessionId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "valid",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
       },
       {
         "kind": "INPUT_OBJECT",
@@ -5087,6 +5215,33 @@ const introspection = {
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "ExchangeCheckoutTokenInput",
+        "inputFields": [
+          {
+            "name": "sessionId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          },
+          {
+            "name": "token",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          }
+        ],
+        "isOneOf": false
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "ExternalIdsInput",
         "inputFields": [
           {
@@ -6301,6 +6456,26 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "exchangeCheckoutToken",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutAuthToken"
+            },
+            "args": [
+              {
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "MutationExchangeCheckoutTokenInput"
+                  }
+                }
+              }
+            ],
+            "isDeprecated": false
+          },
+          {
             "name": "expireCheckoutSession",
             "type": {
               "kind": "OBJECT",
@@ -6318,6 +6493,15 @@ const introspection = {
                 }
               }
             ],
+            "isDeprecated": false
+          },
+          {
+            "name": "refreshCheckoutToken",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutAuthToken"
+            },
+            "args": [],
             "isDeprecated": false
           },
           {
@@ -6610,11 +6794,8 @@ const introspection = {
           {
             "name": "draftOrderId",
             "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String"
-              }
+              "kind": "SCALAR",
+              "name": "String"
             }
           },
           {
@@ -6661,6 +6842,13 @@ const introspection = {
           },
           {
             "name": "enablePromotionCodes",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
+          },
+          {
+            "name": "enableShipping",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean"
@@ -6739,6 +6927,19 @@ const introspection = {
             "type": {
               "kind": "SCALAR",
               "name": "DateTime"
+            }
+          },
+          {
+            "name": "lineItems",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "CheckoutSessionLineItemInput"
+                }
+              }
             }
           },
           {
@@ -6831,6 +7032,33 @@ const introspection = {
             "type": {
               "kind": "SCALAR",
               "name": "String"
+            }
+          }
+        ],
+        "isOneOf": false
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "MutationExchangeCheckoutTokenInput",
+        "inputFields": [
+          {
+            "name": "sessionId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            }
+          },
+          {
+            "name": "token",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
             }
           }
         ],
@@ -7082,6 +7310,13 @@ const introspection = {
           },
           {
             "name": "enablePromotionCodes",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
+          },
+          {
+            "name": "enableShipping",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean"
@@ -7900,6 +8135,26 @@ const introspection = {
               "name": "CheckoutSession"
             },
             "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "validateCheckoutToken",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutTokenValidation"
+            },
+            "args": [
+              {
+                "name": "token",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              }
+            ],
             "isDeprecated": false
           }
         ],
