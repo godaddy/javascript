@@ -162,7 +162,8 @@ export function CheckoutForm({
   const totalSavings = Math.abs(orderDiscount + lineItemDiscounts);
 
   const [gridTemplateAreas, sectionLength] = React.useMemo(() => {
-    const { enableTips, paymentMethods } = session || {};
+    const { enableTips, paymentMethods, enableShipping, enableLocalPickup } =
+      session || {};
     if (!props?.layout) {
       const enableExpressCheckout = Object.values(paymentMethods ?? {}).some(
         method =>
@@ -170,10 +171,13 @@ export function CheckoutForm({
           Array.isArray(method.checkoutTypes) &&
           method.checkoutTypes.includes(CheckoutType.EXPRESS)
       );
-      const defaultTemplate = ` ${enableExpressCheckout ? "'express-checkout'" : ''} 'contact' 'delivery' '${deliveryMethodToGridArea[deliveryMethod]}' ${enableTips ? "'tips'" : ''} 'payment'`;
+
+      const enableDelivery = enableShipping || enableLocalPickup;
+      const defaultTemplate = ` ${enableExpressCheckout ? "'express-checkout'" : ''} 'contact' ${enableDelivery ? "'delivery'" : ''} '${deliveryMethodToGridArea[deliveryMethod]}' ${enableTips ? "'tips'" : ''} 'payment'`;
       // Return consistent tuple type: [string, number]
-      let totalSections = 3;
+      let totalSections = 2;
       enableTips && totalSections++;
+      enableDelivery && totalSections++;
       enableExpressCheckout && totalSections++;
       return [defaultTemplate, totalSections];
     }
