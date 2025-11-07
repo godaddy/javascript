@@ -218,12 +218,12 @@ export function ProductDetails({
   // Get all media objects (images)
   const mediaObjects = product?.mediaObjects?.edges || [];
 
-  const imagesSrc = mediaObjects
+  const images = mediaObjects
     .filter((edge: any) => edge?.node?.type === 'IMAGE')
     .map((edge: any) => edge?.node?.url)
     .filter(Boolean);
 
-  const images = [...imagesSrc, ...imagesSrc, ...imagesSrc];
+  // const images = [...imagesSrc, ...imagesSrc, ...imagesSrc];
 
   // Placeholder for product attributes (size, color, etc.)
   // In a real implementation, these would come from SKU-level data
