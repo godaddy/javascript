@@ -2,12 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSkuGroups } from '@/lib/godaddy/godaddy';
 import { ProductCard } from './product-card';
 
 interface ProductGridProps {
-  storeId: string;
-  clientId: string;
+  storeId?: string;
+  clientId?: string;
   first?: number;
 }
 
@@ -28,13 +29,19 @@ function ProductGridSkeleton({ count = 6 }: { count?: number }) {
 }
 
 export function ProductGrid({
-  storeId,
-  clientId,
+  storeId: storeIdProp,
+  clientId: clientIdProp,
   first = 100,
 }: ProductGridProps) {
+  const context = useGoDaddyContext();
+
+  // Props take priority over context values
+  const storeId = storeIdProp || context.storeId;
+  const clientId = clientIdProp || context.clientId;
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['sku-groups', { storeId, clientId, first }],
-    queryFn: () => getSkuGroups(storeId, clientId, { first }),
+    queryFn: () => getSkuGroups(storeId!, clientId!, { first }),
     enabled: !!storeId && !!clientId,
   });
 

@@ -68,6 +68,8 @@ interface GoDaddyContextValue {
   t: typeof enUs;
   appearance?: GoDaddyAppearance;
   debug?: boolean;
+  clientId?: string;
+  storeId?: string;
 }
 
 const godaddyContext = React.createContext<GoDaddyContextValue>({
@@ -81,6 +83,8 @@ export interface GoDaddyProviderProps {
   localization?: typeof enUs;
   appearance?: GoDaddyAppearance;
   debug?: boolean;
+  clientId?: string;
+  storeId?: string;
   queryClient?: QueryClient;
   children: QueryClientProviderProps['children'];
 }
@@ -89,6 +93,8 @@ export function GoDaddyProvider({
   localization = enUs,
   appearance,
   debug,
+  clientId,
+  storeId,
   queryClient: providedQueryClient,
   children,
 }: GoDaddyProviderProps) {
@@ -172,7 +178,13 @@ export function GoDaddyProvider({
 
   return (
     <godaddyContext.Provider
-      value={{ t: localization, appearance: processedAppearance, debug }}
+      value={{
+        t: localization,
+        appearance: processedAppearance,
+        debug,
+        clientId,
+        storeId,
+      }}
     >
       {inlineStyles && (
         <style

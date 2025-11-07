@@ -16,13 +16,14 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSkuGroups } from '@/lib/godaddy/godaddy';
 import { formatCurrency } from '@/lib/utils';
 
 interface ProductDetailsProps {
   sku: string;
-  storeId: string;
-  clientId: string;
+  storeId?: string;
+  clientId?: string;
 }
 
 /**
@@ -108,9 +109,15 @@ function ProductDetailsSkeleton() {
 
 export function ProductDetails({
   sku,
-  storeId,
-  clientId,
+  storeId: storeIdProp,
+  clientId: clientIdProp,
 }: ProductDetailsProps) {
+  const context = useGoDaddyContext();
+
+  // Props take priority over context values
+  const storeId = storeIdProp || context.storeId;
+  const clientId = clientIdProp || context.clientId;
+
   const [quantity, setQuantity] = useState(1);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [thumbnailApi, setThumbnailApi] = useState<CarouselApi>();
@@ -140,7 +147,7 @@ export function ProductDetails({
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['sku-group', { storeId, clientId, sku }],
-    queryFn: () => getSkuGroups(storeId, clientId, { ids: [sku] }),
+    queryFn: () => getSkuGroups(storeId!, clientId!, { ids: [sku] }),
     enabled: !!storeId && !!clientId && !!sku,
   });
 
