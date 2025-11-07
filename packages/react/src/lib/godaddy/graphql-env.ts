@@ -1016,6 +1016,747 @@ const introspection = {
       },
       {
         kind: 'OBJECT',
+        name: 'Catalog',
+        fields: [
+          {
+            name: 'sku',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogSku',
+            },
+            args: [
+              {
+                name: 'id',
+                type: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'SCALAR',
+                    name: 'ID',
+                  },
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
+            name: 'skuGroup',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogSkuGroup',
+            },
+            args: [
+              {
+                name: 'id',
+                type: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'SCALAR',
+                    name: 'ID',
+                  },
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
+            name: 'skuGroups',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogSkuGroupConnection',
+            },
+            args: [
+              {
+                name: 'after',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'String',
+                },
+              },
+              {
+                name: 'first',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'Int',
+                },
+              },
+              {
+                name: 'ids',
+                type: {
+                  kind: 'LIST',
+                  ofType: {
+                    kind: 'NON_NULL',
+                    ofType: {
+                      kind: 'SCALAR',
+                      name: 'ID',
+                    },
+                  },
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
+            name: 'skus',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogSkuConnection',
+            },
+            args: [
+              {
+                name: 'after',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'String',
+                },
+              },
+              {
+                name: 'first',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'Int',
+                },
+              },
+              {
+                name: 'ids',
+                type: {
+                  kind: 'LIST',
+                  ofType: {
+                    kind: 'NON_NULL',
+                    ofType: {
+                      kind: 'SCALAR',
+                      name: 'ID',
+                    },
+                  },
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogAttribute',
+        fields: [
+          {
+            name: 'id',
+            type: {
+              kind: 'SCALAR',
+              name: 'ID',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'label',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'values',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'OBJECT',
+                  name: 'CatalogAttributeValue',
+                },
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogAttributeValue',
+        fields: [
+          {
+            name: 'id',
+            type: {
+              kind: 'SCALAR',
+              name: 'ID',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'label',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogMedia',
+        fields: [
+          {
+            name: 'id',
+            type: {
+              kind: 'SCALAR',
+              name: 'ID',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'label',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'type',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'url',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogPrice',
+        fields: [
+          {
+            name: 'currencyCode',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'value',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogPriceRange',
+        fields: [
+          {
+            name: 'max',
+            type: {
+              kind: 'SCALAR',
+              name: 'Float',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'min',
+            type: {
+              kind: 'SCALAR',
+              name: 'Float',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogSKUMediaObjectsConnection',
+        fields: [
+          {
+            name: 'edges',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'OBJECT',
+                  name: 'CatalogSKUMediaObjectsConnectionEdge',
+                },
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'pageInfo',
+            type: {
+              kind: 'OBJECT',
+              name: 'SKUMediaObjectsPageInfo',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'totalCount',
+            type: {
+              kind: 'SCALAR',
+              name: 'Int',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogSKUMediaObjectsConnectionEdge',
+        fields: [
+          {
+            name: 'cursor',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'node',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogMedia',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogSku',
+        fields: [
+          {
+            name: 'attributes',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'OBJECT',
+                  name: 'CatalogAttribute',
+                },
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'code',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'description',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'htmlDescription',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'id',
+            type: {
+              kind: 'SCALAR',
+              name: 'ID',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'label',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'mediaObjects',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogSKUMediaObjectsConnection',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'prices',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'OBJECT',
+                  name: 'CatalogPrice',
+                },
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'status',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogSkuConnection',
+        fields: [
+          {
+            name: 'edges',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'OBJECT',
+                name: 'CatalogSkuEdge',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'pageInfo',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'OBJECT',
+                name: 'PageInfo',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogSkuEdge',
+        fields: [
+          {
+            name: 'cursor',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'node',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogSku',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogSkuGroup',
+        fields: [
+          {
+            name: 'compareAtPriceRange',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogPriceRange',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'description',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'htmlDescription',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'id',
+            type: {
+              kind: 'SCALAR',
+              name: 'ID',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'label',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'priceRange',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogPriceRange',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'status',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'type',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogSkuGroupConnection',
+        fields: [
+          {
+            name: 'edges',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'OBJECT',
+                name: 'CatalogSkuGroupEdge',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'pageInfo',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'OBJECT',
+                name: 'PageInfo',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CatalogSkuGroupEdge',
+        fields: [
+          {
+            name: 'cursor',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'node',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogSkuGroup',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CheckoutAuthToken',
+        fields: [
+          {
+            name: 'expiresAt',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'DateTime',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'expiresIn',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'Int',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'jwt',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'sessionId',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
         name: 'CheckoutSession',
         fields: [
           {
@@ -1160,6 +1901,15 @@ const introspection = {
           },
           {
             name: 'enablePromotionCodes',
+            type: {
+              kind: 'SCALAR',
+              name: 'Boolean',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'enableShipping',
             type: {
               kind: 'SCALAR',
               name: 'Boolean',
@@ -2340,6 +3090,33 @@ const introspection = {
         isOneOf: false,
       },
       {
+        kind: 'INPUT_OBJECT',
+        name: 'CheckoutSessionLineItemInput',
+        inputFields: [
+          {
+            name: 'quantity',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'Int',
+              },
+            },
+          },
+          {
+            name: 'skuId',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
         kind: 'OBJECT',
         name: 'CheckoutSessionLocalDeliveryRule',
         fields: [
@@ -3138,6 +3915,43 @@ const introspection = {
           },
         ],
         isOneOf: false,
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CheckoutTokenValidation',
+        fields: [
+          {
+            name: 'expiresAt',
+            type: {
+              kind: 'SCALAR',
+              name: 'DateTime',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'sessionId',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'valid',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'Boolean',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
       },
       {
         kind: 'INPUT_OBJECT',
@@ -5087,6 +5901,33 @@ const introspection = {
       },
       {
         kind: 'INPUT_OBJECT',
+        name: 'ExchangeCheckoutTokenInput',
+        inputFields: [
+          {
+            name: 'sessionId',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+          },
+          {
+            name: 'token',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
         name: 'ExternalIdsInput',
         inputFields: [
           {
@@ -6301,6 +7142,26 @@ const introspection = {
             isDeprecated: false,
           },
           {
+            name: 'exchangeCheckoutToken',
+            type: {
+              kind: 'OBJECT',
+              name: 'CheckoutAuthToken',
+            },
+            args: [
+              {
+                name: 'input',
+                type: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'INPUT_OBJECT',
+                    name: 'MutationExchangeCheckoutTokenInput',
+                  },
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
             name: 'expireCheckoutSession',
             type: {
               kind: 'OBJECT',
@@ -6318,6 +7179,15 @@ const introspection = {
                 },
               },
             ],
+            isDeprecated: false,
+          },
+          {
+            name: 'refreshCheckoutToken',
+            type: {
+              kind: 'OBJECT',
+              name: 'CheckoutAuthToken',
+            },
+            args: [],
             isDeprecated: false,
           },
           {
@@ -6610,11 +7480,8 @@ const introspection = {
           {
             name: 'draftOrderId',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+              kind: 'SCALAR',
+              name: 'String',
             },
           },
           {
@@ -6661,6 +7528,13 @@ const introspection = {
           },
           {
             name: 'enablePromotionCodes',
+            type: {
+              kind: 'SCALAR',
+              name: 'Boolean',
+            },
+          },
+          {
+            name: 'enableShipping',
             type: {
               kind: 'SCALAR',
               name: 'Boolean',
@@ -6739,6 +7613,19 @@ const introspection = {
             type: {
               kind: 'SCALAR',
               name: 'DateTime',
+            },
+          },
+          {
+            name: 'lineItems',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'CheckoutSessionLineItemInput',
+                },
+              },
             },
           },
           {
@@ -6831,6 +7718,33 @@ const introspection = {
             type: {
               kind: 'SCALAR',
               name: 'String',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'MutationExchangeCheckoutTokenInput',
+        inputFields: [
+          {
+            name: 'sessionId',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+          },
+          {
+            name: 'token',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
             },
           },
         ],
@@ -7082,6 +7996,13 @@ const introspection = {
           },
           {
             name: 'enablePromotionCodes',
+            type: {
+              kind: 'SCALAR',
+              name: 'Boolean',
+            },
+          },
+          {
+            name: 'enableShipping',
             type: {
               kind: 'SCALAR',
               name: 'Boolean',
@@ -7894,12 +8815,41 @@ const introspection = {
         name: 'Query',
         fields: [
           {
+            name: 'catalog',
+            type: {
+              kind: 'OBJECT',
+              name: 'Catalog',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
             name: 'checkoutSession',
             type: {
               kind: 'OBJECT',
               name: 'CheckoutSession',
             },
             args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'validateCheckoutToken',
+            type: {
+              kind: 'OBJECT',
+              name: 'CheckoutTokenValidation',
+            },
+            args: [
+              {
+                name: 'token',
+                type: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'SCALAR',
+                    name: 'String',
+                  },
+                },
+              },
+            ],
             isDeprecated: false,
           },
         ],
@@ -8037,24 +8987,6 @@ const introspection = {
             type: {
               kind: 'SCALAR',
               name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'mediaUrls',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
-                },
-              },
             },
             args: [],
             isDeprecated: false,
@@ -8281,6 +9213,49 @@ const introspection = {
                 kind: 'SCALAR',
                 name: 'String',
               },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'SKUMediaObjectsPageInfo',
+        fields: [
+          {
+            name: 'endCursor',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'hasNextPage',
+            type: {
+              kind: 'SCALAR',
+              name: 'Boolean',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'hasPreviousPage',
+            type: {
+              kind: 'SCALAR',
+              name: 'Boolean',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'startCursor',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
             },
             args: [],
             isDeprecated: false,

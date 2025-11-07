@@ -265,6 +265,49 @@ export const DraftOrderSkusQuery = graphql(`
     }
 `);
 
+export const SkuGroupsQuery = graphql(`
+    query SkuGroups($first: Int, $after: String, $ids: [ID!]) {
+        catalog {
+            skuGroups(first: $first, after: $after, ids: $ids) {
+                edges {
+                    cursor
+                    node {
+                        id
+                        name
+                        label
+                        description
+                        htmlDescription
+                        status
+                        type
+                        priceRange {
+                            min
+                            max
+                        }
+                        compareAtPriceRange {
+                            min
+                            max
+                        }
+                        mediaObjects(first: 1) {
+                            edges {
+                                node {
+                                    url
+                                    type
+                                }
+                            }
+                        }
+                    }
+                }
+                pageInfo {
+                    hasNextPage
+                    hasPreviousPage
+                    startCursor
+                    endCursor
+                }
+            }
+        }
+    }
+`);
+
 export const DraftOrderTaxesQuery = graphql(`
     query Taxes($destination: TaxDestinationAddressInput, $lines: [TaxLineInput!]) {
         checkoutSession {

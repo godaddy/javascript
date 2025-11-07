@@ -38,6 +38,7 @@ import {
   DraftOrderShippingRatesQuery,
   DraftOrderSkusQuery,
   DraftOrderTaxesQuery,
+  SkuGroupsQuery,
 } from './queries';
 
 // Type for createCheckoutSession input with kebab-case appearance
@@ -460,6 +461,32 @@ export function applyFulfillmentLocation(
       'x-session-token': `${session.token}`,
       'x-session-id': session.id,
       'x-store-id': session.storeId,
+    }
+  );
+}
+
+export function getSkuGroups(
+  storeId: string,
+  clientId: string,
+  {
+    first,
+    after,
+    ids,
+  }: {
+    first?: number;
+    after?: string;
+    ids?: string[];
+  } = {}
+) {
+  const _GODADDY_HOST = getHostByEnvironment();
+
+  return graphqlRequestWithErrors<ResultOf<typeof SkuGroupsQuery>>(
+    'http://localhost:3000',
+    SkuGroupsQuery,
+    { first, after, ids },
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
     }
   );
 }
