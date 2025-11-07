@@ -4,14 +4,16 @@ import { ChevronRight, ShoppingBag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { RouterLink } from '@/components/ui/link';
 import { formatCurrency } from '@/lib/utils';
 import { SKUGroup } from '@/types.ts';
 
 interface ProductCardProps {
   product: SKUGroup;
+  href?: string;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, href }: ProductCardProps) {
   const title = product?.label || product?.name || 'Product';
   const description = product?.description || '';
   const priceMin = product?.priceRange?.min || 0;
@@ -29,8 +31,8 @@ export function ProductCard({ product }: ProductCardProps) {
     e.preventDefault();
   };
 
-  return (
-    <Card className='group overflow-hidden border-border hover:shadow-lg transition-shadow duration-300 flex flex-col'>
+  const cardContent = (
+    <>
       <div className='aspect-square overflow-hidden bg-muted relative'>
         {isOnSale && (
           <Badge className='absolute top-3 right-3 z-10 bg-destructive text-destructive-foreground font-semibold'>
@@ -75,6 +77,22 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
       </div>
+    </>
+  );
+
+  if (href) {
+    return (
+      <RouterLink href={href} className='block'>
+        <Card className='group overflow-hidden border-border hover:shadow-lg transition-shadow duration-300 flex flex-col h-full'>
+          {cardContent}
+        </Card>
+      </RouterLink>
+    );
+  }
+
+  return (
+    <Card className='group overflow-hidden border-border hover:shadow-lg transition-shadow duration-300 flex flex-col'>
+      {cardContent}
     </Card>
   );
 }

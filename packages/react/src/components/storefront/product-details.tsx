@@ -57,7 +57,7 @@ interface ProductDetailsProps {
 
 function ProductDetailsSkeleton() {
   return (
-    <div className='grid md:grid-cols-2 gap-8 max-w-6xl mx-auto p-4'>
+    <div className='grid md:grid-cols-2 gap-8 p-4'>
       <div className='space-y-4'>
         {/* Main Image Skeleton */}
         <div className='relative'>
@@ -183,7 +183,7 @@ export function ProductDetails({
 
   if (error) {
     return (
-      <div className='max-w-6xl mx-auto p-4'>
+      <div className='p-4'>
         <div className='text-center text-destructive'>
           Error loading product: {error.message}
         </div>
@@ -195,7 +195,7 @@ export function ProductDetails({
 
   if (!product) {
     return (
-      <div className='max-w-6xl mx-auto p-4'>
+      <div className='p-4'>
         <div className='text-center text-muted-foreground'>
           Product not found
         </div>
@@ -281,7 +281,7 @@ export function ProductDetails({
   };
 
   return (
-    <div className='grid md:grid-cols-2 gap-8 max-w-6xl mx-auto p-4'>
+    <div className='grid md:grid-cols-2 gap-8 p-4'>
       {/* Product Images */}
       <div className='space-y-4'>
         {/* Main Image Carousel */}

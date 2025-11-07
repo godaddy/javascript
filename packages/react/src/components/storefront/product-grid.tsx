@@ -10,6 +10,7 @@ interface ProductGridProps {
   storeId?: string;
   clientId?: string;
   first?: number;
+  getProductHref?: (productId: string) => string;
 }
 
 function ProductGridSkeleton({ count = 6 }: { count?: number }) {
@@ -32,10 +33,9 @@ export function ProductGrid({
   storeId: storeIdProp,
   clientId: clientIdProp,
   first = 100,
+  getProductHref,
 }: ProductGridProps) {
   const context = useGoDaddyContext();
-
-  // Props take priority over context values
   const storeId = storeIdProp || context.storeId;
   const clientId = clientIdProp || context.clientId;
 
@@ -59,9 +59,10 @@ export function ProductGrid({
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
       {skuGroups?.map(edge => {
         const group = edge?.node;
-        if (!group) return null;
+        if (!group?.id) return null;
 
-        return <ProductCard key={group.id} product={group} />;
+        const href = getProductHref?.(group.id);
+        return <ProductCard key={group.id} product={group} href={href} />;
       })}
     </div>
   );

@@ -70,6 +70,14 @@ interface GoDaddyContextValue {
   debug?: boolean;
   clientId?: string;
   storeId?: string;
+  Link?: React.ComponentType<LinkComponentProps>;
+}
+
+export interface LinkComponentProps {
+  href: string;
+  children: React.ReactNode;
+  className?: string;
+  [key: string]: any;
 }
 
 const godaddyContext = React.createContext<GoDaddyContextValue>({
@@ -86,6 +94,7 @@ export interface GoDaddyProviderProps {
   clientId?: string;
   storeId?: string;
   queryClient?: QueryClient;
+  Link?: React.ComponentType<LinkComponentProps>;
   children: QueryClientProviderProps['children'];
 }
 
@@ -96,6 +105,7 @@ export function GoDaddyProvider({
   clientId,
   storeId,
   queryClient: providedQueryClient,
+  Link,
   children,
 }: GoDaddyProviderProps) {
   // Create a new QueryClient per component instance for SSR safety
@@ -184,6 +194,7 @@ export function GoDaddyProvider({
         debug,
         clientId,
         storeId,
+        Link,
       }}
     >
       {inlineStyles && (
