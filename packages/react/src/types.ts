@@ -11,12 +11,13 @@ import type {
   UpdateCheckoutSessionDraftOrderMutation,
   VerifyCheckoutSessionAddressMutation,
 } from '@/lib/godaddy/mutations';
-import type {
+import {
   DraftOrderPriceAdjustmentsQuery,
   DraftOrderQuery,
   DraftOrderShippingRatesQuery,
   DraftOrderSkusQuery,
   DraftOrderTaxesQuery,
+  SkuGroupsQuery,
 } from '@/lib/godaddy/queries';
 
 export const PaymentProvider = {
@@ -190,6 +191,14 @@ export type SKUProduct = NonNullable<
       NonNullable<
         ResultOf<typeof DraftOrderSkusQuery>['checkoutSession']
       >['skus']
+    >['edges']
+  >[number]
+>['node'];
+
+export type SKUGroup = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuGroupsQuery>['catalog']>['skuGroups']
     >['edges']
   >[number]
 >['node'];

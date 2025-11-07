@@ -5,48 +5,23 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-
-interface SkuGroup {
-  id: string;
-  name?: string;
-  label?: string;
-  description?: string;
-  htmlDescription?: string;
-  status?: string;
-  type?: string;
-  priceRange?: {
-    min?: number;
-    max?: number;
-  };
-  compareAtPriceRange?: {
-    min?: number;
-    max?: number;
-  };
-  mediaObjects?: {
-    edges?: Array<{
-      node?: {
-        url?: string;
-        type?: string;
-      };
-    }>;
-  };
-}
+import { SKUGroup } from '@/types.ts';
 
 interface ProductCardProps {
-  product: SkuGroup;
+  product: SKUGroup;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const title = product.label || product.name || 'Product';
-  const description = product.description || '';
-  const priceMin = product.priceRange?.min || 0;
-  const priceMax = product.priceRange?.max || priceMin;
-  const compareAtMin = product.compareAtPriceRange?.min;
+  const title = product?.label || product?.name || 'Product';
+  const description = product?.description || '';
+  const priceMin = product?.priceRange?.min || 0;
+  const priceMax = product?.priceRange?.max || priceMin;
+  const compareAtMin = product?.compareAtPriceRange?.min;
   const isOnSale = compareAtMin && compareAtMin > priceMin;
   const hasOptions = false;
   const isPriceRange = priceMin !== priceMax;
 
-  const imageUrl = product.mediaObjects?.edges?.find(
+  const imageUrl = product?.mediaObjects?.edges?.find(
     edge => edge?.node?.type === 'IMAGE'
   )?.node?.url;
 
@@ -82,7 +57,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {description}
         </p>
         <div className='flex items-center justify-between pt-2 mt-auto'>
-          <span className='text-lg font-semibold text-foreground'>
+          <span className='text-md font-semibold text-foreground'>
             {isPriceRange
               ? `${formatCurrency(priceMin)} - ${formatCurrency(priceMax)}`
               : formatCurrency(priceMin)}

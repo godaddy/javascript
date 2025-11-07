@@ -5,6 +5,9 @@ import {
   type QueryClientProviderProps,
 } from '@tanstack/react-query';
 import React from 'react';
+import { convertCamelCaseToKebabCase } from '@/components/checkout/utils/case-conversion';
+import { themes, useTheme } from '@/hooks/use-theme.tsx';
+import { useVariables } from '@/hooks/use-variables.tsx';
 
 function createQueryClient() {
   return new QueryClient({
@@ -108,10 +111,81 @@ export function GoDaddyProvider({
     };
   }, [appearance]);
 
+  const inlineStyles = React.useMemo(() => {
+    if (!processedAppearance?.variables) return '';
+
+    const rawVars =
+      'checkout' in processedAppearance.variables
+        ? processedAppearance.variables.checkout
+        : processedAppearance.variables;
+
+    // Check if variables need kebab-case conversion
+    const needsConversion = !Object.keys(rawVars).some(key =>
+      key.includes('-')
+    );
+    const vars = needsConversion
+      ? convertCamelCaseToKebabCase(rawVars as Record<string, string>)
+      : rawVars;
+
+    const sanitizeCSSValue = (value: string): string => {
+      return value
+        .replace(/[<>{}]/g, '') // Remove characters that could close tags
+        .replace(/javascript:/gi, '') // Remove javascript: protocol
+        .replace(/expression\(/gi, ''); // Remove IE expression()
+    };
+
+    const cssVars = Object.entries(vars)
+      .filter(([_, value]) => value != null)
+      .map(([key, value]) => {
+        const sanitizedValue = sanitizeCSSValue(String(value));
+        return `--gd-${key}: ${sanitizedValue};`;
+      })
+      .join(' ');
+
+    return cssVars ? `:root { ${cssVars} }` : '';
+  }, [processedAppearance]);
+
+  // Generate inline script to apply theme class before hydration
+  const themeScript = React.useMemo(() => {
+    const theme = processedAppearance?.theme;
+    if (!theme || theme === 'base') return null;
+
+    const themeValues = Object.values(themes).map(t => t.value);
+    const themeClass = themes[theme]?.value;
+
+    if (!themeClass) return null;
+
+    // Script that runs synchronously before React hydration
+    // Using JSON.stringify to prevent any injection attacks
+    return `
+      (function() {
+        var themeClasses = ${JSON.stringify(themeValues)};
+        var root = document.documentElement;
+        themeClasses.forEach(function(t) { root.classList.remove(t); });
+        root.classList.add(${JSON.stringify(themeClass)});
+      })();
+    `;
+  }, [processedAppearance?.theme]);
+
+  useVariables(processedAppearance?.variables);
+  useTheme(processedAppearance?.theme);
+
   return (
     <godaddyContext.Provider
       value={{ t: localization, appearance: processedAppearance, debug }}
     >
+      {inlineStyles && (
+        <style
+          dangerouslySetInnerHTML={{ __html: inlineStyles }}
+          data-godaddy-vars
+        />
+      )}
+      {themeScript && (
+        <script
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+          data-godaddy-theme
+        />
+      )}
       <QueryClientProvider client={clientInstance}>
         {children}
       </QueryClientProvider>

@@ -1603,6 +1603,44 @@ const introspection = {
             isDeprecated: false,
           },
           {
+            name: 'mediaObjects',
+            type: {
+              kind: 'OBJECT',
+              name: 'CatalogSKUMediaObjectsConnection',
+            },
+            args: [
+              {
+                name: 'after',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'String',
+                },
+              },
+              {
+                name: 'before',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'String',
+                },
+              },
+              {
+                name: 'first',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'Int',
+                },
+              },
+              {
+                name: 'last',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'Int',
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
             name: 'name',
             type: {
               kind: 'SCALAR',

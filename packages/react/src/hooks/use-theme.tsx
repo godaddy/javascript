@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useInsertionEffect } from 'react';
 // hooks/useTheme.ts
 import { useGoDaddyContext } from '@/godaddy-provider';
 
@@ -21,7 +21,7 @@ export function useTheme(overrideTheme?: Theme | null) {
   // Priority: overrideTheme > context.appearance.theme
   const theme = overrideTheme ?? appearance?.theme;
 
-  useEffect(() => {
+  useInsertionEffect(() => {
     // Remove all theme classes
     document.documentElement.classList.remove(
       ...Object.values(themes).map(t => t.value)
