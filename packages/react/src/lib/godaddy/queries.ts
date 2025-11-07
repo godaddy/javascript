@@ -286,7 +286,7 @@ export const SkuGroupsQuery = graphql(`
                             min
                             max
                         }
-                        mediaObjects(first: 1) {
+                        mediaObjects(first: 25) {
                             edges {
                                 node {
                                     url

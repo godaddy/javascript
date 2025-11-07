@@ -3,6 +3,7 @@
 import { GoDaddyProvider } from '@godaddy/react';
 import { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { useState } from 'react';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -19,14 +20,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <GoDaddyProvider
-      queryClient={queryClient}
-      appearance={{
-        variables: { primary: '#ff0000', 'primary-foreground': '#FFFFFF' },
-      }}
-    >
-      {children}
-      <ReactQueryDevtools initialIsOpen={false} />
-    </GoDaddyProvider>
+    <NuqsAdapter>
+      <GoDaddyProvider
+        queryClient={queryClient}
+        appearance={{
+          variables: { primary: '#ff0000', 'primary-foreground': '#FFFFFF' },
+        }}
+      >
+        {children}
+        <ReactQueryDevtools client={queryClient} initialIsOpen={false} />
+      </GoDaddyProvider>
+    </NuqsAdapter>
   );
 }
