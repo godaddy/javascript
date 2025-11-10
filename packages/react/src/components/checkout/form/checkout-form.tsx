@@ -50,6 +50,7 @@ import { TrackingEventType, track } from '@/tracking/track';
 import { CheckoutType, PaymentMethodType } from '@/types';
 import { FreePaymentForm } from '../payment/free-payment-form';
 import { CustomFormProvider } from './custom-form-provider';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 
 const deliveryMethodToGridArea: Record<string, string> = {
   SHIP: 'shipping',
@@ -105,22 +106,21 @@ export function CheckoutForm({
   const { data: totals, isLoading: totalsLoading } = draftOrderTotalsQuery;
   const { data: order } = draftOrder;
 
-  // Order summary calculations
-  const subtotal = (totals?.subTotal?.value || 0) / 100;
-  const orderDiscount = (totals?.discountTotal?.value || 0) / 100;
-  const shipping =
-    (order?.shippingLines?.reduce(
-      (sum, line) => sum + (line?.amount?.value || 0),
-      0
-    ) || 0) / 100;
-  const taxTotal = (totals?.taxTotal?.value || 0) / 100;
-  const orderTotal = (totals?.total?.value || 0) / 100;
-  const tipTotal = (tipAmount || 0) / 100;
+  // Order summary calculations - keep all values in minor units
+  const subtotal = totals?.subTotal?.value || 0;
+  const orderDiscount = totals?.discountTotal?.value || 0;
+  const shipping = order?.shippingLines?.reduce(
+    (sum, line) => sum + (line?.amount?.value || 0),
+    0
+  ) || 0;
+  const taxTotal = totals?.taxTotal?.value || 0;
+  const orderTotal = totals?.total?.value || 0;
+  const tipTotal = tipAmount || 0;
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
   const isFree = orderTotal <= 0;
-  const showExpressButtons = (totals?.subTotal?.value || 0) > 0;
+  const showExpressButtons = subtotal > 0;
 
   useEffect(() => {
     if (!totalsLoading && isFree) {
@@ -136,8 +136,8 @@ export function CheckoutForm({
         eventId: eventIds.checkoutStart,
         type: TrackingEventType.IMPRESSION,
         properties: {
-          subtotal: Math.round(subtotal * 100),
-          total: Math.round(orderTotal * 100),
+          subtotal: subtotal,
+          total: orderTotal,
           itemCount,
           currencyCode,
         },
@@ -240,7 +240,7 @@ export function CheckoutForm({
         deliveryMethod: data.deliveryMethod,
         hasShippingAddress: !!data.shippingAddressLine1,
         hasBillingAddress: !!data.billingAddressLine1,
-        total: Math.round(orderTotal * 100),
+        total: orderTotal,
       },
     });
   };
@@ -427,10 +427,11 @@ export function CheckoutForm({
                           {t.totals.orderSummary}
                         </span>
                         <span className='font-bold text-lg pr-2 self-center'>
-                          {new Intl.NumberFormat('en-us', {
-                            style: 'currency',
-                            currency: currencyCode,
-                          }).format(orderTotal)}
+                          {formatCurrency({
+                            amount: totals?.total?.value || 0,
+                            currencyCode,
+                            isInCents: true,
+                          })}
                         </span>
                       </div>
                     </AccordionTrigger>

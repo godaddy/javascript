@@ -20,6 +20,7 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import type { ShippingMethod } from '@/types';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 
 // Helper function to build the shipping payload
 function buildShippingPayload(method: ShippingMethod) {
@@ -259,10 +260,11 @@ export function ShippingMethodForm() {
                 <span className='font-semibold'>{t.general.free}</span>
               ) : (
                 <span className='font-semibold'>
-                  {new Intl.NumberFormat('en-us', {
-                    style: 'currency',
-                    currency: shippingMethods[0]?.cost?.currencyCode || 'USD',
-                  }).format((shippingMethods[0]?.cost?.value || 0) / 100)}
+                  {formatCurrency({
+                    amount: shippingMethods[0]?.cost?.value || 0,
+                    currencyCode: shippingMethods[0]?.cost?.currencyCode || 'USD',
+                    isInCents: true,
+                  })}
                 </span>
               )}
             </div>
@@ -301,10 +303,11 @@ export function ShippingMethodForm() {
                       <span className='font-semibold'>{t.general.free}</span>
                     ) : (
                       <span className='font-semibold'>
-                        {new Intl.NumberFormat('en-us', {
-                          style: 'currency',
-                          currency: method?.cost?.currencyCode || 'USD',
-                        }).format((method?.cost?.value || 0) / 100)}
+                        {formatCurrency({
+                          amount: method?.cost?.value || 0,
+                          currencyCode: method?.cost?.currencyCode || 'USD',
+                          isInCents: true,
+                        })}
                       </span>
                     )}
                   </div>

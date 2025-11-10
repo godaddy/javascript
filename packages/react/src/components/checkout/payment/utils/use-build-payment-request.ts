@@ -8,6 +8,7 @@ import {
 } from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderProductsMap } from '@/components/checkout/order/use-draft-order-products';
 import { mapSkusToItemsDisplay } from '@/components/checkout/utils/checkout-transformers';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 
 // Apple Pay request interface
 export interface ApplePayRequest {
@@ -193,16 +194,16 @@ export function useBuildPaymentRequest(): {
     [lineItems, skusMap]
   );
 
-  // Convert amounts from cents to dollars for display
-  const subtotal = (totals?.subTotal?.value || 0) / 100;
-  const tax = (totals?.taxTotal?.value || 0) / 100;
-  const shipping =
-    (order?.shippingLines?.reduce(
+  // Extract amounts in minor units for use across payment requests
+  const subtotalMinorUnits = totals?.subTotal?.value || 0;
+  const taxMinorUnits = totals?.taxTotal?.value || 0;
+  const shippingMinorUnits =
+    order?.shippingLines?.reduce(
       (sum, line) => sum + (line?.amount?.value || 0),
       0
-    ) || 0) / 100;
-  const discount = (totals?.discountTotal?.value || 0) / 100;
-  const total = (totals?.total?.value || 0) / 100;
+    ) || 0;
+  const discountMinorUnits = totals?.discountTotal?.value || 0;
+  const totalMinorUnits = totals?.total?.value || 0;
 
   const countryCode = useMemo(
     () => session?.shipping?.originAddress?.countryCode || 'US',
@@ -254,52 +255,62 @@ export function useBuildPaymentRequest(): {
     merchantCapabilities: ['supports3DS'],
     total: {
       label: 'Order Total',
-      amount: new Intl.NumberFormat('en-us', {
-        style: 'currency',
-        currency: currencyCode,
-      }).format(total),
+      amount: formatCurrency({
+        amount: totals?.total?.value || 0,
+        currencyCode,
+        isInCents: true,
+      }),
       type: 'final',
     },
     lineItems: [
       ...(items || []).map(lineItem => ({
         label: lineItem?.name || '',
-        amount: new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format((lineItem?.originalPrice || 0) * (lineItem?.quantity || 0)),
+        amount: formatCurrency({
+          amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 0),
+          currencyCode,
+          isInCents: true,
+        }),
         type: 'LINE_ITEM',
         status: 'FINAL',
       })),
       {
         label: 'Subtotal',
-        amount: new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format(subtotal),
+        amount: formatCurrency({
+          amount: totals?.subTotal?.value || 0,
+          currencyCode,
+          isInCents: true,
+        }),
         type: 'final',
       },
       {
         label: 'Tax',
-        amount: new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format(tax),
+        amount: formatCurrency({
+          amount: totals?.taxTotal?.value || 0,
+          currencyCode,
+          isInCents: true,
+        }),
         type: 'final',
       },
       {
         label: 'Shipping',
-        amount: new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format(shipping),
+        amount: formatCurrency({
+          amount:
+            order?.shippingLines?.reduce(
+              (sum, line) => sum + (line?.amount?.value || 0),
+              0
+            ) || 0,
+          currencyCode,
+          isInCents: true,
+        }),
         type: 'final',
       },
       {
         label: 'Discount',
-        amount: new Intl.NumberFormat('en-us', {
-          style: 'currency',
-          currency: currencyCode,
-        }).format(-1 * discount),
+        amount: formatCurrency({
+          amount: -1 * (totals?.discountTotal?.value || 0),
+          currencyCode,
+          isInCents: true,
+        }),
         type: 'final',
       },
     ].filter(item => Number.parseFloat(item.amount) !== 0),
@@ -338,10 +349,11 @@ export function useBuildPaymentRequest(): {
     },
     transactionInfo: {
       totalPriceStatus: 'FINAL',
-      totalPrice: new Intl.NumberFormat('en-us', {
-        style: 'currency',
-        currency: currencyCode,
-      }).format(total),
+      totalPrice: formatCurrency({
+        amount: totals?.total?.value || 0,
+        currencyCode,
+        isInCents: true,
+      }),
       totalPriceLabel: 'Total',
       currencyCode,
       displayItems: [
@@ -353,25 +365,45 @@ export function useBuildPaymentRequest(): {
         })),
         {
           label: 'Subtotal',
-          price: subtotal,
+          price: Number.parseFloat(formatCurrency({
+            amount: subtotalMinorUnits,
+            currencyCode,
+            isInCents: true,
+            returnRaw: true,
+          })),
           type: 'LINE_ITEM',
           status: 'FINAL',
         },
         {
           label: 'Tax',
-          price: tax,
+          price: Number.parseFloat(formatCurrency({
+            amount: taxMinorUnits,
+            currencyCode,
+            isInCents: true,
+            returnRaw: true,
+          })),
           type: 'LINE_ITEM',
           status: 'FINAL',
         },
         {
           label: 'Shipping',
-          price: shipping,
+          price: Number.parseFloat(formatCurrency({
+            amount: shippingMinorUnits,
+            currencyCode,
+            isInCents: true,
+            returnRaw: true,
+          })),
           type: 'LINE_ITEM',
           status: 'FINAL',
         },
         {
           label: 'Discount',
-          price: -1 * discount,
+          price: Number.parseFloat(formatCurrency({
+            amount: -1 * discountMinorUnits,
+            currencyCode,
+            isInCents: true,
+            returnRaw: true,
+          })),
           type: 'LINE_ITEM',
           status: 'FINAL',
         },
@@ -380,30 +412,59 @@ export function useBuildPaymentRequest(): {
   };
 
   // Create PayPal request with proper breakdown validation
-  const calculatedTotal = subtotal + tax + shipping - discount;
+  const calculatedTotalMinorUnits =
+    subtotalMinorUnits +
+    taxMinorUnits +
+    shippingMinorUnits -
+    discountMinorUnits;
 
   const payPalRequest: PayPalRequest = {
     purchase_units: [
       {
         amount: {
           currency_code: currencyCode,
-          value: calculatedTotal.toFixed(2),
+          value: formatCurrency({
+            amount: calculatedTotalMinorUnits,
+            currencyCode,
+            isInCents: true,
+            returnRaw: true,
+          }),
           breakdown: {
             item_total: {
               currency_code: currencyCode,
-              value: subtotal.toFixed(2),
+              value: formatCurrency({
+                amount: subtotalMinorUnits,
+                currencyCode,
+                isInCents: true,
+                returnRaw: true,
+              }),
             },
             tax_total: {
               currency_code: currencyCode,
-              value: tax.toFixed(2),
+              value: formatCurrency({
+                amount: taxMinorUnits,
+                currencyCode,
+                isInCents: true,
+                returnRaw: true,
+              }),
             },
             shipping: {
               currency_code: currencyCode,
-              value: shipping.toFixed(2),
+              value: formatCurrency({
+                amount: shippingMinorUnits,
+                currencyCode,
+                isInCents: true,
+                returnRaw: true,
+              }),
             },
             discount: {
               currency_code: currencyCode,
-              value: discount.toFixed(2),
+              value: formatCurrency({
+                amount: discountMinorUnits,
+                currencyCode,
+                isInCents: true,
+                returnRaw: true,
+              }),
             },
           },
         },
@@ -411,7 +472,12 @@ export function useBuildPaymentRequest(): {
           name: lineItem?.name || '',
           unit_amount: {
             currency_code: currencyCode,
-            value: (lineItem?.originalPrice || 0).toFixed(2),
+            value: formatCurrency({
+              amount: lineItem?.originalPrice || 0,
+              currencyCode,
+              isInCents: true,
+              returnRaw: true,
+            }),
           },
           quantity: (lineItem?.quantity || 1).toString(),
         })),
@@ -500,7 +566,12 @@ export function useBuildPaymentRequest(): {
   const poyntExpressRequest: PoyntExpressRequest = {
     total: {
       label: 'Order Total',
-      amount: subtotal.toString(),
+      amount: formatCurrency({
+        amount: subtotalMinorUnits,
+        currencyCode,
+        isInCents: true,
+        returnRaw: true,
+      }),
     },
     lineItems: [
       ...(items || []).map(lineItem => {
@@ -517,7 +588,12 @@ export function useBuildPaymentRequest(): {
   const poyntStandardRequest: PoyntStandardRequest = {
     total: {
       label: 'Order Total',
-      amount: total.toString(),
+      amount: formatCurrency({
+        amount: totalMinorUnits,
+        currencyCode,
+        isInCents: true,
+        returnRaw: true,
+      }),
     },
     lineItems: [
       ...(items || []).map(lineItem => {
@@ -530,15 +606,30 @@ export function useBuildPaymentRequest(): {
       }),
       {
         label: 'Tax',
-        amount: tax.toFixed(2),
+        amount: formatCurrency({
+          amount: taxMinorUnits,
+          currencyCode,
+          isInCents: true,
+          returnRaw: true,
+        }),
       },
       {
         label: 'Shipping',
-        amount: shipping.toFixed(2),
+        amount: formatCurrency({
+          amount: shippingMinorUnits,
+          currencyCode,
+          isInCents: true,
+          returnRaw: true,
+        }),
       },
       {
         label: 'Discount',
-        amount: (-1 * discount).toFixed(2),
+        amount: formatCurrency({
+          amount: -1 * discountMinorUnits,
+          currencyCode,
+          isInCents: true,
+          returnRaw: true,
+        }),
       },
     ],
   };
