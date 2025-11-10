@@ -365,45 +365,53 @@ export function useBuildPaymentRequest(): {
         })),
         {
           label: 'Subtotal',
-          price: Number.parseFloat(formatCurrency({
-            amount: subtotalMinorUnits,
-            currencyCode,
-            isInCents: true,
-            returnRaw: true,
-          })),
+          price: Number.parseFloat(
+            formatCurrency({
+              amount: subtotalMinorUnits,
+              currencyCode,
+              isInCents: true,
+              returnRaw: true,
+            })
+          ),
           type: 'LINE_ITEM',
           status: 'FINAL',
         },
         {
           label: 'Tax',
-          price: Number.parseFloat(formatCurrency({
-            amount: taxMinorUnits,
-            currencyCode,
-            isInCents: true,
-            returnRaw: true,
-          })),
+          price: Number.parseFloat(
+            formatCurrency({
+              amount: taxMinorUnits,
+              currencyCode,
+              isInCents: true,
+              returnRaw: true,
+            })
+          ),
           type: 'LINE_ITEM',
           status: 'FINAL',
         },
         {
           label: 'Shipping',
-          price: Number.parseFloat(formatCurrency({
-            amount: shippingMinorUnits,
-            currencyCode,
-            isInCents: true,
-            returnRaw: true,
-          })),
+          price: Number.parseFloat(
+            formatCurrency({
+              amount: shippingMinorUnits,
+              currencyCode,
+              isInCents: true,
+              returnRaw: true,
+            })
+          ),
           type: 'LINE_ITEM',
           status: 'FINAL',
         },
         {
           label: 'Discount',
-          price: Number.parseFloat(formatCurrency({
-            amount: -1 * discountMinorUnits,
-            currencyCode,
-            isInCents: true,
-            returnRaw: true,
-          })),
+          price: Number.parseFloat(
+            formatCurrency({
+              amount: -1 * discountMinorUnits,
+              currencyCode,
+              isInCents: true,
+              returnRaw: true,
+            })
+          ),
           type: 'LINE_ITEM',
           status: 'FINAL',
         },

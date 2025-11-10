@@ -14,13 +14,13 @@ import { ShippingMethodSkeleton } from '@/components/checkout/shipping/shipping-
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
 import { useApplyShippingMethod } from '@/components/checkout/shipping/utils/use-apply-shipping-method';
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import type { ShippingMethod } from '@/types';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
 
 // Helper function to build the shipping payload
 function buildShippingPayload(method: ShippingMethod) {
@@ -262,7 +262,8 @@ export function ShippingMethodForm() {
                 <span className='font-semibold'>
                   {formatCurrency({
                     amount: shippingMethods[0]?.cost?.value || 0,
-                    currencyCode: shippingMethods[0]?.cost?.currencyCode || 'USD',
+                    currencyCode:
+                      shippingMethods[0]?.cost?.currencyCode || 'USD',
                     isInCents: true,
                   })}
                 </span>

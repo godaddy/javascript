@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -14,7 +15,6 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
 
 interface TipsFormProps {
   total: number;
@@ -166,12 +166,16 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
                   {...field}
                   placeholder={t.tips.placeholder}
                   className='h-12'
-                  value={field.value > 0 ? formatCurrency({
-                    amount: field.value,
-                    currencyCode: currencyCode || 'USD',
-                    isInCents: true,
-                    returnRaw: true,
-                  }) : ''}
+                  value={
+                    field.value > 0
+                      ? formatCurrency({
+                          amount: field.value,
+                          currencyCode: currencyCode || 'USD',
+                          isInCents: true,
+                          returnRaw: true,
+                        })
+                      : ''
+                  }
                   onChange={e => {
                     // User inputs in major units (e.g., $10.50), convert to minor units for storage
                     const inputValue = Number.parseFloat(e.target.value);
@@ -185,7 +189,9 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
                   onBlur={e => {
                     // User inputs in major units (e.g., $10.50), convert to minor units for storage
                     const inputValue = Number.parseFloat(e.target.value);
-                    const tipAmount = !Number.isNaN(inputValue) ? Math.round(inputValue * 100) : 0;
+                    const tipAmount = !Number.isNaN(inputValue)
+                      ? Math.round(inputValue * 100)
+                      : 0;
                     // Track custom tip amount entry
                     track({
                       eventId: eventIds.enterCustomTip,

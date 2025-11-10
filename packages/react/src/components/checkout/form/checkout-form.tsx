@@ -38,6 +38,7 @@ import { ShippingMethodForm } from '@/components/checkout/shipping/shipping-meth
 import { Target } from '@/components/checkout/target/target';
 import { TipsForm } from '@/components/checkout/tips/tips-form';
 import { DraftOrderTotals } from '@/components/checkout/totals/totals';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import {
   Accordion,
   AccordionContent,
@@ -50,7 +51,6 @@ import { TrackingEventType, track } from '@/tracking/track';
 import { CheckoutType, PaymentMethodType } from '@/types';
 import { FreePaymentForm } from '../payment/free-payment-form';
 import { CustomFormProvider } from './custom-form-provider';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
 
 const deliveryMethodToGridArea: Record<string, string> = {
   SHIP: 'shipping',
@@ -109,10 +109,11 @@ export function CheckoutForm({
   // Order summary calculations - keep all values in minor units
   const subtotal = totals?.subTotal?.value || 0;
   const orderDiscount = totals?.discountTotal?.value || 0;
-  const shipping = order?.shippingLines?.reduce(
-    (sum, line) => sum + (line?.amount?.value || 0),
-    0
-  ) || 0;
+  const shipping =
+    order?.shippingLines?.reduce(
+      (sum, line) => sum + (line?.amount?.value || 0),
+      0
+    ) || 0;
   const taxTotal = totals?.taxTotal?.value || 0;
   const orderTotal = totals?.total?.value || 0;
   const tipTotal = tipAmount || 0;

@@ -1,7 +1,7 @@
 import { DiscountStandalone } from '@/components/checkout/discount/discount-standalone';
 import { TotalLineItemSkeleton } from '@/components/checkout/totals/totals-skeleton';
-import { useGoDaddyContext } from '@/godaddy-provider';
 import { formatCurrency } from '@/components/checkout/utils/format-currency';
+import { useGoDaddyContext } from '@/godaddy-provider';
 
 export interface DraftOrderTotalsProps {
   subtotal?: number;

@@ -1,9 +1,9 @@
 // import { Badge } from "@/components/ui/badge";
 
 import { Image } from 'lucide-react';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import type { SKUProduct } from '@/types';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
 
 export interface Note {
   content: string | null;

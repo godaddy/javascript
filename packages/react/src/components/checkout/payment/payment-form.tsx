@@ -34,6 +34,7 @@ import {
   DraftOrderTotals,
   type DraftOrderTotalsProps,
 } from '@/components/checkout/totals/totals';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import {
   Accordion,
   AccordionContent,
@@ -57,7 +58,6 @@ import {
   type PaymentMethodValue,
   PaymentProvider,
 } from '@/types';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
 
 // UI config for payment methods (labels will be resolved from translations)
 const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
