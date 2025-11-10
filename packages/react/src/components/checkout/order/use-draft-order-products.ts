@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { getProductsFromOrderSkus } from '@/lib/godaddy/godaddy';
 import type { SKUProduct } from '@/types';
 
@@ -9,11 +10,17 @@ import type { SKUProduct } from '@/types';
  * @returns Query result with SKU product data
  */
 export function useDraftOrderProducts() {
-  const { session } = useCheckoutContext();
+  const { session, jwt } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
 
   return useQuery({
-    queryKey: ['draft-order-products', { id: session?.id }],
-    queryFn: () => getProductsFromOrderSkus(session),
+    queryKey: session?.id
+      ? ['draft-order-products', session.id]
+      : ['draft-order-products'],
+    queryFn: () =>
+      jwt
+        ? getProductsFromOrderSkus({ accessToken: jwt }, apiHost)
+        : getProductsFromOrderSkus(session, apiHost),
     enabled: !!session?.id,
     select: data => data.checkoutSession?.skus?.edges,
   });

@@ -18,13 +18,15 @@ import {
 
 interface CheckoutFormContainerProps extends Omit<CheckoutProps, 'session'> {
   schema: z.ZodObject<any> | z.ZodEffects<any>;
+  isLoadingJWT?: boolean;
 }
 
 export function CheckoutFormContainer({
   schema,
+  isLoadingJWT,
   ...props
 }: CheckoutFormContainerProps) {
-  const { session, isConfirmingCheckout } = useCheckoutContext();
+  const { session } = useCheckoutContext();
 
   const draftOrderQuery = useDraftOrder();
   const draftOrderLineItemsQuery = useDraftOrderLineItems();
@@ -49,15 +51,15 @@ export function CheckoutFormContainer({
     [order, props.defaultValues, session?.shipping?.originAddress?.countryCode]
   );
 
-  if (!isConfirmingCheckout && !draftOrderQuery.isLoading && !order) {
-    const returnUrl = session?.returnUrl;
-    if (returnUrl) {
-      window.location.href = returnUrl;
-      return null;
-    }
-  }
+  // if (!isConfirmingCheckout && !draftOrderQuery.isLoading && !order) {
+  //   const returnUrl = session?.returnUrl;
+  //   if (returnUrl) {
+  //     window.location.href = returnUrl;
+  //     return null;
+  //   }
+  // }
 
-  if (draftOrderQuery.isLoading) {
+  if (draftOrderQuery.isLoading || isLoadingJWT) {
     return <CheckoutSkeleton direction={props.direction} />;
   }
 

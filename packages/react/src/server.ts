@@ -1,13 +1,15 @@
 'use server';
 
+import * as GoDaddy from '@/lib/godaddy/godaddy';
+import { CreateCheckoutSessionInputWithKebabCase } from '@/lib/godaddy/godaddy';
+import { getEnvVar } from '@/lib/utils';
 import type { CheckoutSessionInput, CheckoutSessionOptions } from '@/types';
-import * as GoDaddy from './lib/godaddy/godaddy';
 
 let accessToken: string | undefined;
 let accessTokenExpiresAt: number | undefined;
 
 export async function createCheckoutSession(
-  input: CheckoutSessionInput['input'],
+  input: CreateCheckoutSessionInputWithKebabCase,
   options?: CheckoutSessionOptions
 ) {
   const CLIENT_ID = options?.auth?.clientId || '';
@@ -35,11 +37,12 @@ export async function createCheckoutSession(
 
   return await GoDaddy.createCheckoutSession(input, {
     accessToken,
+    apiHost: getEnvVar('GODADDY_API_HOST'),
   });
 }
 
 function getHostByEnvironment(): string {
-  return `https://${process.env.GODADDY_HOST || process.env.NEXT_PUBLIC_GODADDY_HOST || 'api.godaddy.com'}`;
+  return `https://${getEnvVar('GODADDY_API_HOST') || 'api.godaddy.com'}`;
 }
 
 async function getAccessToken({

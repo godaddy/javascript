@@ -1,11 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { updateDraftOrder } from '@/lib/godaddy/godaddy';
 import type { UpdateDraftOrderInput } from '@/types';
 
 export function useUpdateOrder() {
-  const { session } = useCheckoutContext();
+  const { session, jwt } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
   const updateTaxes = useUpdateTaxes();
   const queryClient = useQueryClient();
 
@@ -16,7 +18,10 @@ export function useUpdateOrder() {
     }: {
       input: UpdateDraftOrderInput['input'];
     }) => {
-      return await updateDraftOrder(input, session);
+      const data = jwt
+        ? await updateDraftOrder(input, { accessToken: jwt }, apiHost)
+        : await updateDraftOrder(input, session, apiHost);
+      return data;
     },
     onSuccess: (_data, { input }) => {
       if (!session) return;
@@ -30,12 +35,12 @@ export function useUpdateOrder() {
           updateTaxes.mutate(undefined);
         } else {
           queryClient.invalidateQueries({
-            queryKey: ['draft-order', { id: session?.id }],
+            queryKey: ['draft-order', session.id],
           });
         }
       } else {
         queryClient.invalidateQueries({
-          queryKey: ['draft-order', { id: session?.id }],
+          queryKey: ['draft-order', session.id],
         });
       }
     },

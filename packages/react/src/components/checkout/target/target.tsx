@@ -31,13 +31,13 @@ export type Target =
 
 export function Target({ id }: { id: Target }) {
   const { debug } = useGoDaddyContext();
-  const { targets } = useCheckoutContext();
+  const { targets, session } = useCheckoutContext();
 
   const target = targets?.[id];
 
   let content: React.ReactNode = null;
   if (target) {
-    content = target?.();
+    content = target?.(session);
   } else if (debug) {
     content = <span className='text-xs text-blue-500'>{id}</span>;
   }

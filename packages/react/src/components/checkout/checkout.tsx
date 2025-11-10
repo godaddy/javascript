@@ -7,6 +7,7 @@ import { checkIsValidPhone } from '@/components/checkout/address/utils/check-is-
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { getRequiredFieldsFromSchema } from '@/components/checkout/form/utils/get-required-fields-from-schema';
 import { type GoDaddyVariables, useGoDaddyContext } from '@/godaddy-provider';
+import { useCheckoutSession } from '@/hooks/use-checkout-session';
 import { type Theme, useTheme } from '@/hooks/use-theme';
 import { useVariables } from '@/hooks/use-variables';
 import type { TrackingProperties } from '@/tracking/event-properties';
@@ -80,8 +81,11 @@ export type PayPalConfig = {
 
 interface CheckoutContextValue {
   elements?: CheckoutElements;
-  targets?: Partial<Record<Target, () => ReactNode>>;
-  session?: CheckoutSession;
+  targets?: Partial<
+    Record<Target, (session?: CheckoutSession | null) => ReactNode>
+  >;
+  session?: CheckoutSession | null;
+  jwt?: string;
   isCheckoutDisabled?: boolean;
   stripeConfig?: StripeConfig;
   godaddyPaymentsConfig?: GodaddyPaymentsConfig;
@@ -190,7 +194,7 @@ export type CheckoutFormSchema = Partial<{
 export type CheckoutFormData = z.infer<typeof baseCheckoutSchema>;
 
 export interface CheckoutProps {
-  session: CheckoutSession | undefined;
+  session?: CheckoutSession | undefined;
   appearance?: Appearance;
   isCheckoutDisabled?: boolean;
   stripeConfig?: StripeConfig;
@@ -209,7 +213,6 @@ export interface CheckoutProps {
 
 export function Checkout(props: CheckoutProps) {
   const {
-    session,
     checkoutFormSchema,
     enableTracking = false,
     trackingProperties,
@@ -226,6 +229,8 @@ export function Checkout(props: CheckoutProps) {
   >(undefined);
   const { t } = useGoDaddyContext();
 
+  const { session, jwt, isLoading: isLoadingJWT } = useCheckoutSession(props);
+
   useTheme(session?.appearance?.theme);
   useVariables(session?.appearance?.variables || props?.appearance?.variables);
 
@@ -239,7 +244,7 @@ export function Checkout(props: CheckoutProps) {
         if (!checkIsValidPhone(String(data?.billingPhone))) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'Enter a valid billing phone number',
+            message: t.validation.enterValidBillingPhone,
             path: ['billingPhone'],
           });
         }
@@ -249,7 +254,7 @@ export function Checkout(props: CheckoutProps) {
         if (!checkIsValidPhone(String(data?.shippingPhone))) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'Enter a valid shipping phone number',
+            message: t.validation.enterValidShippingPhone,
             path: ['shippingPhone'],
           });
         }
@@ -346,6 +351,7 @@ export function Checkout(props: CheckoutProps) {
           targets: props?.targets,
           isCheckoutDisabled,
           session,
+          jwt,
           stripeConfig,
           godaddyPaymentsConfig,
           squareConfig,
@@ -359,6 +365,7 @@ export function Checkout(props: CheckoutProps) {
       >
         <CheckoutFormContainer
           {...props}
+          isLoadingJWT={isLoadingJWT}
           schema={formSchema}
           direction={props.direction}
         />

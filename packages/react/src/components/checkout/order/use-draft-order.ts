@@ -1,5 +1,6 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { getDraftOrder } from '@/lib/godaddy/godaddy';
 import type {
   DraftOrder,
@@ -18,11 +19,15 @@ export function useDraftOrder<TData = DraftOrder>(
   select?: (data: DraftOrderSession) => TData,
   key = 'draft-order'
 ): UseQueryResult<TData> {
-  const { session } = useCheckoutContext();
+  const { session, jwt } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
 
   return useQuery<DraftOrderSession, Error, TData>({
-    queryKey: [key, { id: session?.id }],
-    queryFn: () => getDraftOrder(session),
+    queryKey: session?.id ? [key, session.id] : [key],
+    queryFn: () =>
+      jwt
+        ? getDraftOrder({ accessToken: jwt }, apiHost)
+        : getDraftOrder(session, apiHost),
     enabled: !!session?.id,
     select: select ?? (data => data.checkoutSession?.draftOrder as TData),
     retry: 3,

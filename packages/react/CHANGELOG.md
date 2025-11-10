@@ -4,6 +4,12 @@
 
 ### Patch Changes
 
+- 811bb55: Add auth-token exchange
+
+## 1.0.3
+
+### Patch Changes
+
 - c0eed81: Add optional appearance to checkout session
 
 ## 1.0.2

@@ -1,20 +1,19 @@
 import React from 'react';
-import { useGoDaddyContext, LinkComponentProps } from '@/godaddy-provider';
+import { LinkComponentProps, useGoDaddyContext } from '@/godaddy-provider';
 
 /**
  * Default Link implementation that falls back to a regular anchor tag
  * if no custom Link component is provided via GoDaddyProvider
  */
-const DefaultLink = React.forwardRef<
-  HTMLAnchorElement,
-  LinkComponentProps
->(({ href, children, ...props }, ref) => {
-  return (
-    <a ref={ref} href={href} {...props}>
-      {children}
-    </a>
-  );
-});
+const DefaultLink = React.forwardRef<HTMLAnchorElement, LinkComponentProps>(
+  ({ href, children, ...props }, ref) => {
+    return (
+      <a ref={ref} href={href} {...props}>
+        {children}
+      </a>
+    );
+  }
+);
 DefaultLink.displayName = 'DefaultLink';
 
 /**

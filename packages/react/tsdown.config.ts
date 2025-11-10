@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [],
   tsconfig: './tsconfig.json',
   dts: true,
+  external: [/^react($|\/)/, /^react-dom($|\/)/],
   onSuccess: async () => {
     // biome-ignore lint/suspicious/noConsole: check build status
     console.log('Transpiling CSS...');

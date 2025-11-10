@@ -1,4 +1,5 @@
 import { Store, Truck } from 'lucide-react';
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   type CheckoutFormData,
@@ -73,9 +74,29 @@ export function DeliveryMethodForm() {
   };
 
   const availableMethods = [
-    DELIVERY_METHODS[0],
+    ...(session?.enableShipping ? [DELIVERY_METHODS[0]] : []),
     ...(session?.enableLocalPickup ? [DELIVERY_METHODS[1]] : []),
   ];
+
+  // Set default delivery method when component loads
+  useEffect(() => {
+    const currentValue = form.getValues('deliveryMethod');
+    const isCurrentValueValid = availableMethods.some(
+      method => method.id === currentValue
+    );
+
+    if (!currentValue || !isCurrentValueValid) {
+      const defaultMethod =
+        availableMethods.length === 1
+          ? availableMethods[0].id
+          : DeliveryMethods.SHIP;
+      form.setValue('deliveryMethod', defaultMethod);
+    }
+  }, [availableMethods, form]);
+
+  if (availableMethods.length === 0) {
+    return null;
+  }
 
   return (
     <div className='space-y-2'>
@@ -108,7 +129,7 @@ export function DeliveryMethodForm() {
             <FormItem>
               <FormControl>
                 <RadioGroup
-                  defaultValue={field.value || DeliveryMethods.SHIP}
+                  value={field.value}
                   onValueChange={handleDeliveryMethodChange}
                   required
                   disabled={isConfirmingCheckout || isPaymentDisabled}

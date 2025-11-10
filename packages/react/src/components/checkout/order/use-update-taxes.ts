@@ -1,15 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import type { ResultOf } from '@/gql.tada';
 import { updateDraftOrderTaxes } from '@/lib/godaddy/godaddy';
 import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 
 export function useUpdateTaxes() {
-  const { session } = useCheckoutContext();
+  const { session, jwt } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ['update-draft-order-taxes', { id: session?.id }],
+    mutationKey: session?.id
+      ? ['update-draft-order-taxes', session.id]
+      : ['update-draft-order-taxes'],
     mutationFn: async (destination?: {
       addressLine1?: string | null;
       addressLine2?: string | null;
@@ -20,7 +24,14 @@ export function useUpdateTaxes() {
       countryCode?: string | null;
       postalCode?: string | null;
     }) => {
-      return await updateDraftOrderTaxes(session, destination);
+      const data = jwt
+        ? await updateDraftOrderTaxes(
+            { accessToken: jwt },
+            destination,
+            apiHost
+          )
+        : await updateDraftOrderTaxes(session, destination, apiHost);
+      return data;
     },
     onSuccess: data => {
       if (!session) return;
@@ -31,7 +42,7 @@ export function useUpdateTaxes() {
       // Update the cached draft-order query (includes totals)
       if (taxesTotal) {
         queryClient.setQueryData(
-          ['draft-order', { id: session.id }],
+          ['draft-order', session.id],
           (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
             if (!old) return old;
             return {
@@ -54,8 +65,9 @@ export function useUpdateTaxes() {
       }
     },
     onSettled: () => {
+      if (!session) return;
       queryClient.invalidateQueries({
-        queryKey: ['draft-order', { id: session?.id }],
+        queryKey: ['draft-order', session.id],
       });
     },
   });

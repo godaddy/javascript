@@ -273,11 +273,6 @@ export function ProductDetails({
 
   const handleAddToCart = () => {
     // Placeholder for add to cart functionality
-    console.log('Adding to cart:', {
-      product: product?.id,
-      quantity,
-      selectedAttributes,
-    });
   };
 
   return (

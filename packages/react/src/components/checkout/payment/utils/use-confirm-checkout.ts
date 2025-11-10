@@ -6,6 +6,7 @@ import {
 } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { eventIds } from '@/tracking/events';
 import {
@@ -66,10 +67,12 @@ export enum PaymentProvider {
 export function useConfirmCheckout() {
   const {
     session,
+    jwt,
     setIsConfirmingCheckout,
     isConfirmingCheckout,
     setCheckoutErrors,
   } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
   const form = useFormContext();
 
   return useMutation({
@@ -120,13 +123,24 @@ export function useConfirmCheckout() {
         },
       });
 
-      return await confirmCheckout(
-        {
-          ...confirmCheckoutInput,
-          ...(isPickup ? pickUpData : {}),
-        },
-        session
-      );
+      const data = jwt
+        ? await confirmCheckout(
+            {
+              ...confirmCheckoutInput,
+              ...(isPickup ? pickUpData : {}),
+            },
+            { accessToken: jwt, sessionId: session?.id || '' },
+            apiHost
+          )
+        : await confirmCheckout(
+            {
+              ...confirmCheckoutInput,
+              ...(isPickup ? pickUpData : {}),
+            },
+            session,
+            apiHost
+          );
+      return data;
     },
     onSuccess: (_data, input) => {
       let completedEventId: TrackingEventId | null = null;

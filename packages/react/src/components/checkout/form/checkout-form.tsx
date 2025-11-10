@@ -162,7 +162,8 @@ export function CheckoutForm({
   const totalSavings = Math.abs(orderDiscount + lineItemDiscounts);
 
   const [gridTemplateAreas, sectionLength] = React.useMemo(() => {
-    const { enableTips, paymentMethods } = session || {};
+    const { enableTips, paymentMethods, enableShipping, enableLocalPickup } =
+      session || {};
     if (!props?.layout) {
       const enableExpressCheckout = Object.values(paymentMethods ?? {}).some(
         method =>
@@ -170,10 +171,13 @@ export function CheckoutForm({
           Array.isArray(method.checkoutTypes) &&
           method.checkoutTypes.includes(CheckoutType.EXPRESS)
       );
-      const defaultTemplate = ` ${enableExpressCheckout ? "'express-checkout'" : ''} 'contact' 'delivery' '${deliveryMethodToGridArea[deliveryMethod]}' ${enableTips ? "'tips'" : ''} 'payment'`;
+
+      const enableDelivery = enableShipping || enableLocalPickup;
+      const defaultTemplate = ` ${enableExpressCheckout ? "'express-checkout'" : ''} 'contact' ${enableDelivery ? "'delivery'" : ''} '${deliveryMethodToGridArea[deliveryMethod]}' ${enableTips ? "'tips'" : ''} 'payment'`;
       // Return consistent tuple type: [string, number]
-      let totalSections = 3;
+      let totalSections = 2;
       enableTips && totalSections++;
+      enableDelivery && totalSections++;
       enableExpressCheckout && totalSections++;
       return [defaultTemplate, totalSections];
     }
@@ -308,13 +312,15 @@ export function CheckoutForm({
                     <ContactForm />
                     <Target id='checkout.form.contact.after' />
                   </CheckoutSection>
-                  <CheckoutSection style={{ gridArea: 'delivery' }}>
-                    <Target id='checkout.form.delivery.before' />
-                    <CheckoutSectionHeader title={t.delivery?.title} />
-                    <DeliveryMethodForm />
-                    <Target id='checkout.form.delivery.after' />
-                  </CheckoutSection>
-                  {session?.enableTips && (
+                  {session?.enableShipping || session?.enableLocalPickup ? (
+                    <CheckoutSection style={{ gridArea: 'delivery' }}>
+                      <Target id='checkout.form.delivery.before' />
+                      <CheckoutSectionHeader title={t.delivery?.title} />
+                      <DeliveryMethodForm />
+                      <Target id='checkout.form.delivery.after' />
+                    </CheckoutSection>
+                  ) : null}
+                  {session?.enableTips ? (
                     <CheckoutSection style={{ gridArea: 'tips' }}>
                       <Target id='checkout.form.tips.before' />
                       <CheckoutSectionHeader title={t.tips?.title} />
@@ -324,8 +330,8 @@ export function CheckoutForm({
                       />
                       <Target id='checkout.form.tips.after' />
                     </CheckoutSection>
-                  )}
-                  {isPickup && session?.enableLocalPickup && (
+                  ) : null}
+                  {isPickup && session?.enableLocalPickup ? (
                     <CheckoutSection style={{ gridArea: 'pickup' }}>
                       <Target id='checkout.form.pickup.before' />
                       <CheckoutSectionHeader
@@ -339,8 +345,8 @@ export function CheckoutForm({
                       <LocalPickupForm showStoreHours={props?.showStoreHours} />
                       <Target id='checkout.form.pickup.after' />
                     </CheckoutSection>
-                  )}
-                  {isShipping && (
+                  ) : null}
+                  {isShipping && session?.enableShipping ? (
                     <CheckoutSection style={{ gridArea: 'shipping' }}>
                       <Target id='checkout.form.shipping.before' />
                       <CheckoutSectionHeader
@@ -368,7 +374,7 @@ export function CheckoutForm({
                       </div>
                       <Target id='checkout.form.shipping.after' />
                     </CheckoutSection>
-                  )}
+                  ) : null}
                   <CheckoutSection style={{ gridArea: 'payment' }}>
                     <Target id='checkout.form.payment.before' />
                     <CheckoutSectionHeader
@@ -393,7 +399,9 @@ export function CheckoutForm({
                               totalSavings={totalSavings}
                               itemCount={itemCount}
                               total={orderTotal}
-                              enableShipping={isShipping}
+                              enableShipping={
+                                isShipping && session?.enableShipping
+                              }
                             />
                           </ConditionalPaymentProviders>
                         ) : (
@@ -456,7 +464,7 @@ export function CheckoutForm({
                           total={orderTotal}
                           enableDiscounts={session?.enablePromotionCodes}
                           enableTaxes={session?.enableTaxCollection}
-                          enableShipping={isShipping}
+                          enableShipping={isShipping && session?.enableShipping}
                         />
                       </div>
                     </AccordionContent>
@@ -485,7 +493,7 @@ export function CheckoutForm({
                   total={orderTotal}
                   enableDiscounts={session?.enablePromotionCodes}
                   enableTaxes={session?.enableTaxCollection}
-                  enableShipping={isShipping}
+                  enableShipping={isShipping && session?.enableShipping}
                 />
               </div>
               <Target id='checkout.summary.after' />
