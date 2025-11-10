@@ -43,6 +43,7 @@ dist
 /playwright/.cache/
 
 schema.graphql
+storefront.graphql
 
 # macOS
 .DS_Store

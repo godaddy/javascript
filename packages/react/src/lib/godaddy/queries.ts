@@ -486,43 +486,41 @@ export const DraftOrderSkusQuery = graphql(`
 `);
 
 export const SkuGroupsQuery = graphql(`
-    query SkuGroups($first: Int, $after: String, $ids: [ID!]) {
-        catalog {
-            skuGroups(first: $first, after: $after, ids: $ids) {
-                edges {
-                    cursor
-                    node {
-                        id
-                        name
-                        label
-                        description
-                        htmlDescription
-                        status
-                        type
-                        priceRange {
-                            min
-                            max
-                        }
-                        compareAtPriceRange {
-                            min
-                            max
-                        }
-                        mediaObjects(first: 25) {
-                            edges {
-                                node {
-                                    url
-                                    type
-                                }
+    query SkuGroups($first: Int, $after: String, $id: SKUGroupIdsFilter) {
+        skuGroups(first: $first, after: $after, id: $id) {
+            edges {
+                cursor
+                node {
+                    id
+                    name
+                    label
+                    description
+                    htmlDescription
+                    status
+                    type
+                    priceRange {
+                        min
+                        max
+                    }
+                    compareAtPriceRange {
+                        min
+                        max
+                    }
+                    mediaObjects(first: 25) {
+                        edges {
+                            node {
+                                url
+                                type
                             }
                         }
                     }
                 }
-                pageInfo {
-                    hasNextPage
-                    hasPreviousPage
-                    startCursor
-                    endCursor
-                }
+            }
+            pageInfo {
+                hasNextPage
+                hasPreviousPage
+                startCursor
+                endCursor
             }
         }
     }

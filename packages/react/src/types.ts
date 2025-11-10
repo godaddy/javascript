@@ -181,10 +181,6 @@ export type CheckoutSessionLocation = NonNullable<
   NonNullable<CheckoutSession>['locations']
 >[number];
 
-export type Environments = NonNullable<
-  NonNullable<CheckoutSession>['environment']
->;
-
 export type SKUProduct = NonNullable<
   NonNullable<
     NonNullable<
@@ -195,10 +191,10 @@ export type SKUProduct = NonNullable<
   >[number]
 >['node'];
 
+export type SkuGroupsInput = VariablesOf<typeof SkuGroupsQuery>;
+
 export type SKUGroup = NonNullable<
   NonNullable<
-    NonNullable<
-      NonNullable<ResultOf<typeof SkuGroupsQuery>['catalog']>['skuGroups']
-    >['edges']
+    NonNullable<ResultOf<typeof SkuGroupsQuery>['skuGroups']>['edges']
   >[number]
 >['node'];

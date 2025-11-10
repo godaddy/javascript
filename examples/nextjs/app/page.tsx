@@ -90,7 +90,7 @@ export default async function Home() {
     },
     {
       auth: {
-        clientId: process.env.GODADDY_CLIENT_ID || '',
+        clientId: process.env.NEXT_PUBLIC_GODADDY_CLIENT_ID || '',
         clientSecret: process.env.GODADDY_CLIENT_SECRET || '',
       },
     }

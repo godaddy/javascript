@@ -24,8 +24,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <NuqsAdapter>
       <GoDaddyProvider
         queryClient={queryClient}
-        storeId='0eb49b3e-21ee-484b-93f2-a61d8717d890'
-        clientId='e0640f63-e88b-4c55-a909-562567600f47'
+        apiHost={process.env.NEXT_PUBLIC_GODADDY_API_HOST}
+        storeId={process.env.NEXT_PUBLIC_GODADDY_STORE_ID}
+        clientId={process.env.NEXT_PUBLIC_GODADDY_CLIENT_ID}
         Link={Link}
         appearance={{
           variables: { primary: '#ff0000', 'primary-foreground': '#FFFFFF' },

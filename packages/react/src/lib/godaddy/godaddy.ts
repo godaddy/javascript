@@ -14,6 +14,7 @@ import type {
   GetCheckoutSessionShippingRatesInput,
   GetCheckoutSessionTaxesInput,
   RemoveAppliedCheckoutSessionShippingMethodInput,
+  SkuGroupsInput,
   UpdateDraftOrderInput,
 } from '@/types';
 import {
@@ -41,9 +42,9 @@ import {
   SkuGroupsQuery,
 } from './queries';
 
-function getHostByEnvironment(apiHost?: string): string {
+function getHostByEnvironment(apiHost?: string, service = 'checkout'): string {
   // Use provided apiHost, otherwise default to production
-  return `https://checkout.commerce.${apiHost || 'api.godaddy.com'}`;
+  return `https://${service}.commerce.${apiHost || 'api.godaddy.com'}`;
 }
 
 // Type for createCheckoutSession input with kebab-case appearance
@@ -1054,24 +1055,17 @@ export function applyFulfillmentLocation(
 }
 
 export function getSkuGroups(
+  input: SkuGroupsInput,
   storeId: string,
   clientId: string,
-  {
-    first,
-    after,
-    ids,
-  }: {
-    first?: number;
-    after?: string;
-    ids?: string[];
-  } = {}
+  apiHost?: string
 ) {
-  const _GODADDY_HOST = getHostByEnvironment();
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'catalog');
 
   return graphqlRequestWithErrors<ResultOf<typeof SkuGroupsQuery>>(
-    'http://localhost:3000',
+    `${GODADDY_HOST}/storefront`,
     SkuGroupsQuery,
-    { first, after, ids },
+    { input },
     {
       'X-Store-ID': storeId,
       'X-Client-ID': clientId,

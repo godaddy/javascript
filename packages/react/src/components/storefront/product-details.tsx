@@ -147,7 +147,8 @@ export function ProductDetails({
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['sku-group', { storeId, clientId, sku }],
-    queryFn: () => getSkuGroups(storeId!, clientId!, { ids: [sku] }),
+    queryFn: () =>
+      getSkuGroups({ id: { eq: sku } }, storeId!, clientId!, context?.apiHost),
     enabled: !!storeId && !!clientId && !!sku,
   });
 
@@ -191,7 +192,7 @@ export function ProductDetails({
     );
   }
 
-  const product = data?.catalog?.skuGroups?.edges?.[0]?.node;
+  const product = data?.skuGroups?.edges?.[0]?.node;
 
   if (!product) {
     return (

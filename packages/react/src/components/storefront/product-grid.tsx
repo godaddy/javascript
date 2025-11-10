@@ -41,11 +41,12 @@ export function ProductGrid({
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['sku-groups', { storeId, clientId, first }],
-    queryFn: () => getSkuGroups(storeId!, clientId!, { first }),
+    queryFn: () =>
+      getSkuGroups({ first }, storeId!, clientId!, context?.apiHost),
     enabled: !!storeId && !!clientId,
   });
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return <ProductGridSkeleton />;
   }
 
@@ -53,7 +54,7 @@ export function ProductGrid({
     return <div>Error loading products: {error.message}</div>;
   }
 
-  const skuGroups = data?.catalog?.skuGroups?.edges;
+  const skuGroups = data?.skuGroups?.edges;
 
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>

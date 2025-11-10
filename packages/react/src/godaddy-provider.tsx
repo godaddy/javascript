@@ -1,3 +1,5 @@
+'use client';
+
 import { enUs } from '@godaddy/localizations';
 import {
   QueryClient,
