@@ -20,9 +20,10 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const isBillingAddressRequired =
-    session?.enableBillingAddressCollection &&
-    (!useShippingAddress || isPickup) &&
-    paymentMethod === PaymentMethodType.CREDIT_CARD;
+    !session?.enableShipping ||
+    (session?.enableBillingAddressCollection &&
+      (!useShippingAddress || isPickup) &&
+      paymentMethod === PaymentMethodType.CREDIT_CARD);
 
   const getPaymentMethodDescription = useCallback((): string | undefined => {
     if (paymentMethod === 'card') {
@@ -39,7 +40,8 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
     <>
       {description && <div className='pb-4'>{description}</div>}
       {children}
-      {isShipping &&
+      {session?.enableShipping &&
+        isShipping &&
         paymentMethod === PaymentMethodType.CREDIT_CARD &&
         session?.enableBillingAddressCollection && (
           <PaymentAddressToggle className='pt-4' />

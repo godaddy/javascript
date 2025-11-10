@@ -2,24 +2,30 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDiscountApply } from '@/components/checkout/discount';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import type { ResultOf } from '@/gql.tada';
 import { removeShippingMethod } from '@/lib/godaddy/godaddy';
 import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 import type { RemoveAppliedCheckoutSessionShippingMethodInput } from '@/types';
 
 export function useRemoveShippingMethod() {
-  const { session } = useCheckoutContext();
+  const { session, jwt } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
   const queryClient = useQueryClient();
   const { data: order } = useDraftOrder();
   const applyDiscount = useDiscountApply();
 
   return useMutation({
-    mutationKey: ['remove-shipping-method', { sessionId: session?.id }],
+    mutationKey: session?.id
+      ? ['remove-shipping-method', session.id]
+      : ['remove-shipping-method'],
     mutationFn: async (
       input: RemoveAppliedCheckoutSessionShippingMethodInput['input']
     ) => {
-      if (!session) return;
-      return await removeShippingMethod(input, session);
+      const data = jwt
+        ? await removeShippingMethod(input, { accessToken: jwt }, apiHost)
+        : await removeShippingMethod(input, session, apiHost);
+      return data;
     },
     onSuccess: async data => {
       if (!session) return;
@@ -32,7 +38,7 @@ export function useRemoveShippingMethod() {
       // Update the cached draft-order query (includes totals)
       if (shippingTotal) {
         queryClient.setQueryData(
-          ['draft-order', { id: session.id }],
+          ['draft-order', session.id],
           (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
             if (!old) return old;
             return {

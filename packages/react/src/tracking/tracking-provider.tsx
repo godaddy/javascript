@@ -18,7 +18,7 @@ export function TrackingProvider({
   trackingProperties,
 }: {
   children: React.ReactNode;
-  session?: CheckoutSession;
+  session?: CheckoutSession | null;
   trackingEnabled?: boolean;
   trackingProperties?: TrackingProperties;
 }) {
@@ -40,7 +40,7 @@ function TrackingInitializer({
   trackingEnabled,
   trackingProperties = {},
 }: {
-  session?: CheckoutSession;
+  session?: CheckoutSession | null;
   trackingEnabled: boolean;
   trackingProperties?: TrackingProperties;
 }) {

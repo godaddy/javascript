@@ -1,5 +1,226 @@
 import { graphql } from '@/gql.tada';
 
+export const GetCheckoutSessionQuery = graphql(`
+    query GetCheckoutSession {
+        checkoutSession {
+            id
+            token
+            sourceApp
+            returnUrl
+            successUrl
+            storeId
+            channelId
+            customerId
+            storeName
+            environment
+            enableTips
+            enabledLocales
+            enableSurcharge
+            enableLocalPickup
+            enableShipping
+            enablePhoneCollection
+            enableNotesCollection
+            enablePromotionCodes
+            enableTaxCollection
+            enableShippingAddressCollection
+            enableBillingAddressCollection
+            enableAddressAutocomplete
+            appearance {
+                theme
+                variables {
+                    fontSans
+                    fontSerif
+                    fontMono
+                    defaultFontFamily
+                    background
+                    secondaryBackground
+                    foreground
+                    card
+                    cardForeground
+                    popover
+                    popoverForeground
+                    primary
+                    primaryForeground
+                    secondary
+                    secondaryForeground
+                    muted
+                    mutedForeground
+                    accent
+                    accentForeground
+                    destructive
+                    destructiveForeground
+                    border
+                    input
+                    ring
+                    radius
+                }
+            }
+            experimental_rules {
+              freeShipping {
+                enabled
+                  minimumOrderTotal
+              }
+            }
+            shipping {
+              originAddress {
+                addressLine1
+                addressLine2
+                addressLine3
+                postalCode
+                countryCode
+                adminArea1
+                adminArea2
+                adminArea3
+                adminArea4
+              }
+            }
+            paymentMethods {
+              card {
+                processor
+                checkoutTypes
+              }
+              express {
+                processor
+                checkoutTypes
+              }
+              applePay {
+                processor
+                checkoutTypes
+              }
+              googlePay {
+                processor
+                checkoutTypes
+              }
+              paypal {
+                processor
+                checkoutTypes
+              }
+              paze {
+                processor
+                checkoutTypes
+              }
+              offline {
+                processor
+                checkoutTypes
+              }
+            }
+            locations {
+              id
+              isDefault
+              address {
+                addressLine1
+                addressLine2
+                addressLine3
+                postalCode
+                countryCode
+                adminArea1
+                adminArea2
+                adminArea3
+                adminArea4
+              }
+              operatingHours {
+                pickupWindowInDays
+                leadTime
+                timeZone
+                hours {
+                  monday {
+                    enabled
+                    openTime
+                    closeTime
+                  }
+                  tuesday {
+                    enabled
+                    openTime
+                    closeTime
+                  }
+                  wednesday {
+                    enabled
+                    openTime
+                    closeTime
+                  }
+                  thursday {
+                    enabled
+                    openTime
+                    closeTime
+                  }
+                  friday {
+                    enabled
+                    openTime
+                    closeTime
+                  }
+                  saturday {
+                    enabled
+                    openTime
+                    closeTime
+                  }
+                  sunday {
+                    enabled
+                    openTime
+                    closeTime
+                  }
+                }
+              }
+            }
+            defaultOperatingHours {
+              pickupWindowInDays
+              leadTime
+              timeZone
+              hours {
+                monday {
+                  enabled
+                  openTime
+                  closeTime
+                }
+                tuesday {
+                  enabled
+                  openTime
+                  closeTime
+                }
+                wednesday {
+                  enabled
+                  openTime
+                  closeTime
+                }
+                thursday {
+                  enabled
+                  openTime
+                  closeTime
+                }
+                friday {
+                  enabled
+                  openTime
+                  closeTime
+                }
+                saturday {
+                  enabled
+                  openTime
+                  closeTime
+                }
+                sunday {
+                  enabled
+                  openTime
+                  closeTime
+                }
+              }
+            }
+            draftOrder {
+                id
+                statuses {
+                    fulfillmentStatus
+                    paymentStatus
+                    status
+                }
+                totals {
+                    subTotal {
+                        currencyCode
+                        value
+                    }
+                }
+            }
+        }
+    }
+`);
+
 export const AddressMatchesQuery = graphql(`
     query CheckoutSessionWithAddressMatches($query: String!) {
       checkoutSession {

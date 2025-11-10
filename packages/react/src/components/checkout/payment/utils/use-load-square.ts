@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { useGetEnvFromContext } from '@/components/checkout/utils/use-get-env-from-context.ts';
 
 let isSquareLoaded = false;
 let isSquareCDNLoaded = false;
@@ -8,8 +9,7 @@ const listeners = new Set<(loaded: boolean) => void>();
 export function useLoadSquare() {
   const { squareConfig } = useCheckoutContext();
   const [loaded, setLoaded] = useState(isSquareLoaded);
-  const environment =
-    process.env.GODADDY_ENV || process.env.NEXT_PUBLIC_GODADDY_ENV || 'prod';
+  const environment = useGetEnvFromContext();
 
   const squareCDN =
     environment === 'prod'

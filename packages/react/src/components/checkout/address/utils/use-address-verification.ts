@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { verifyAddress } from '@/lib/godaddy/godaddy';
 
 /**
@@ -30,7 +31,8 @@ export function useAddressVerification(
     enabled: boolean;
   } = { enabled: true }
 ) {
-  const { session } = useCheckoutContext();
+  const { session, jwt } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
 
   const queryKey = [
     'verifyAddressQuery',
@@ -46,7 +48,10 @@ export function useAddressVerification(
 
   return useQuery({
     queryKey,
-    queryFn: async () => verifyAddress(address, session),
+    queryFn: async () =>
+      jwt
+        ? verifyAddress(address, { accessToken: jwt }, apiHost)
+        : verifyAddress(address, session, apiHost),
     enabled:
       options.enabled &&
       !!session?.id &&
