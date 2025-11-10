@@ -19,6 +19,7 @@ export interface DraftOrderTotalsProps {
   enableTaxes?: boolean | null;
   enableDiscounts?: boolean | null;
   enableShipping?: boolean | null;
+  isInCents?: boolean;
 }
 
 function TotalLineItem({
@@ -26,11 +27,13 @@ function TotalLineItem({
   description,
   value,
   currencyCode = 'USD',
+  isInCents = false,
 }: {
   title: string;
   description?: string;
   value: number;
   currencyCode?: string;
+  isInCents?: boolean;
 }) {
   return (
     <div className='flex justify-between text-sm'>
@@ -44,7 +47,7 @@ function TotalLineItem({
         {formatCurrency({
           amount: value,
           currencyCode,
-          isInCents: true,
+          isInCents,
         })}
       </span>
     </div>
@@ -66,6 +69,7 @@ export function DraftOrderTotals({
   isShippingLoading = false,
   isDiscountLoading = false,
   enableShipping = true,
+  isInCents = false,
 }: DraftOrderTotalsProps) {
   const { t } = useGoDaddyContext();
   const handleDiscountsChange = (discounts: string[]) => {
@@ -84,6 +88,7 @@ export function DraftOrderTotals({
               : t.totals.noItems
           }
           value={subtotal}
+          isInCents={isInCents}
         />
         {discount > 0 ? (
           isDiscountLoading ? (
@@ -93,6 +98,7 @@ export function DraftOrderTotals({
               currencyCode={currencyCode}
               title={t.totals.discount}
               value={-discount || 0}
+              isInCents={isInCents}
             />
           )
         ) : null}
@@ -104,6 +110,7 @@ export function DraftOrderTotals({
               currencyCode={currencyCode}
               title={t.totals.shipping}
               value={shipping || 0}
+              isInCents={isInCents}
             />
           ))}
         {tip ? (
@@ -111,6 +118,7 @@ export function DraftOrderTotals({
             currencyCode={currencyCode}
             title={t.totals.tip}
             value={tip || 0}
+            isInCents={isInCents}
           />
         ) : null}
         {enableTaxes &&
@@ -121,6 +129,7 @@ export function DraftOrderTotals({
               currencyCode={currencyCode}
               title={t.totals.estimatedTaxes}
               value={taxes || 0}
+              isInCents={isInCents}
             />
           ))}
       </div>
@@ -148,7 +157,7 @@ export function DraftOrderTotals({
               {formatCurrency({
                 amount: total,
                 currencyCode,
-                isInCents: true,
+                isInCents,
               })}
             </span>
           </div>

@@ -441,9 +441,11 @@ export function CheckoutForm({
                         <DraftOrderLineItems
                           currencyCode={currencyCode}
                           items={items}
+                          isInCents
                         />
 
                         <DraftOrderTotals
+                          isInCents
                           currencyCode={currencyCode}
                           tip={tipTotal}
                           taxes={taxTotal}
@@ -470,9 +472,11 @@ export function CheckoutForm({
                 <DraftOrderLineItems
                   currencyCode={currencyCode}
                   items={items}
+                  isInCents
                 />
 
                 <DraftOrderTotals
+                  isInCents
                   currencyCode={currencyCode}
                   tip={tipTotal}
                   taxes={taxTotal}

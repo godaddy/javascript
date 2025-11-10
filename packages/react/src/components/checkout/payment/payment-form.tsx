@@ -461,6 +461,7 @@ export function PaymentForm(
                 <DraftOrderLineItems
                   currencyCode={props.currencyCode}
                   items={props.items}
+                  isInCents
                 />
               </div>
             </AccordionContent>
@@ -468,6 +469,7 @@ export function PaymentForm(
         </Accordion>
         <div className='pt-4'>
           <DraftOrderTotals
+            isInCents
             currencyCode={props.currencyCode}
             tip={props.tip}
             taxes={props.taxes}
