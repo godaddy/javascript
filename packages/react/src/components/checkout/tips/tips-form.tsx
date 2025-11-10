@@ -109,7 +109,10 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
           >
             <span className='text-lg'>{percentage}%</span>
             <span className='text-sm'>
-              {formatCurrency({ amount: calculateTipAmount(percentage), currencyCode: currencyCode || 'USD' })}
+              {formatCurrency({
+                amount: calculateTipAmount(percentage),
+                currencyCode: currencyCode || 'USD',
+              })}
             </span>
           </Button>
         ))}

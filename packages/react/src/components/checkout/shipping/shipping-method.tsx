@@ -260,7 +260,11 @@ export function ShippingMethodForm() {
                 <span className='font-semibold'>{t.general.free}</span>
               ) : (
                 <span className='font-semibold'>
-                  {formatCurrency({ amount: shippingMethods[0]?.cost?.value || 0, currencyCode: shippingMethods[0]?.cost?.currencyCode || 'USD' })}
+                  {formatCurrency({
+                    amount: shippingMethods[0]?.cost?.value || 0,
+                    currencyCode:
+                      shippingMethods[0]?.cost?.currencyCode || 'USD',
+                  })}
                 </span>
               )}
             </div>
@@ -299,7 +303,10 @@ export function ShippingMethodForm() {
                       <span className='font-semibold'>{t.general.free}</span>
                     ) : (
                       <span className='font-semibold'>
-                        {formatCurrency({ amount: method?.cost?.value || 0, currencyCode: method?.cost?.currencyCode || 'USD' })}
+                        {formatCurrency({
+                          amount: method?.cost?.value || 0,
+                          currencyCode: method?.cost?.currencyCode || 'USD',
+                        })}
                       </span>
                     )}
                   </div>

@@ -19,7 +19,6 @@ import {
 } from '@/components/checkout/delivery/delivery-method';
 import { ExpressCheckoutButtons } from '@/components/checkout/express-checkout/express-checkout-buttons';
 import { CheckoutErrorList } from '@/components/checkout/form/checkout-error-list';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import {
   DraftOrderLineItems,
   type Product,
@@ -39,6 +38,7 @@ import { ShippingMethodForm } from '@/components/checkout/shipping/shipping-meth
 import { Target } from '@/components/checkout/target/target';
 import { TipsForm } from '@/components/checkout/tips/tips-form';
 import { DraftOrderTotals } from '@/components/checkout/totals/totals';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import {
   Accordion,
   AccordionContent,

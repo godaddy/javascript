@@ -448,7 +448,10 @@ export function PaymentForm(
                   {t.totals.orderSummary}
                 </span>
                 <span className='font-bold text-lg pr-2 self-center'>
-                  {formatCurrency({ amount: props.total || 0, currencyCode: props.currencyCode || 'USD' })}
+                  {formatCurrency({
+                    amount: props.total || 0,
+                    currencyCode: props.currencyCode || 'USD',
+                  })}
                 </span>
               </div>
             </AccordionTrigger>
