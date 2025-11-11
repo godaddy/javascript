@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Minus, Plus, ShoppingCart } from 'lucide-react';
-import { parseAsString, useQueryStates } from 'nuqs';
+import { useQueryStates } from 'nuqs';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,14 +17,20 @@ import {
 } from '@/components/ui/carousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
-import { getSkuGroups } from '@/lib/godaddy/godaddy';
+import { getSku, getSkuGroups } from '@/lib/godaddy/godaddy';
 import { formatCurrency } from '@/lib/utils';
+import type { SKUGroupAttribute, SKUGroupAttributeValue } from '@/types';
 
 interface ProductDetailsProps {
   sku: string;
   storeId?: string;
   clientId?: string;
 }
+
+// Flattened attribute structure for UI (transforms edges/node to flat array)
+type Attribute = Pick<SKUGroupAttribute, 'id' | 'name' | 'label'> & {
+  values: SKUGroupAttributeValue[];
+};
 
 /**
  * TODO: Product Details Enhancements
@@ -123,20 +129,55 @@ export function ProductDetails({
   const [thumbnailApi, setThumbnailApi] = useState<CarouselApi>();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Track variant attributes in URL query params
-  // Using nuqs to sync selected attributes (size, color, etc.) with the URL
-  const [variantParams, setVariantParams] = useQueryStates(
-    {
-      size: parseAsString.withDefault(''),
-      color: parseAsString.withDefault(''),
-    },
-    {
-      history: 'push',
-      shallow: true,
-    }
-  );
+  // Initial query to get product data and attributes
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['sku-group', storeId, clientId, sku],
+    queryFn: () =>
+      getSkuGroups({ id: { eq: sku } }, storeId!, clientId!, context?.apiHost),
+    enabled: !!storeId && !!clientId && !!sku,
+  });
 
-  // Convert nuqs attributes to the format expected by the component
+  // Get product attributes from the query response
+  const attributesEdges =
+    data?.skuGroups?.edges?.[0]?.node?.attributes?.edges || [];
+  const attributes: Attribute[] = attributesEdges.map((edge: any) => {
+    const attributeNode = edge?.node;
+    const valuesEdges = attributeNode?.values?.edges || [];
+
+    return {
+      id: attributeNode?.id || '',
+      name: attributeNode?.name || '',
+      label: attributeNode?.label || attributeNode?.name || '',
+      values: valuesEdges.map((valueEdge: any) => {
+        const valueNode = valueEdge?.node;
+        return {
+          id: valueNode?.id || '',
+          name: valueNode?.name || '',
+          label: valueNode?.label || valueNode?.name || '',
+        };
+      }),
+    };
+  });
+
+  // Create dynamic query state parsers based on product attributes
+  const queryStateParsers = useMemo(() => {
+    const parsers: Record<string, any> = {};
+    attributes.forEach(attr => {
+      parsers[attr.name] = {
+        parse: (value: string) => value || '',
+        defaultValue: '',
+      };
+    });
+    return parsers;
+  }, [attributes.map(a => a.name).join(',')]);
+
+  // Track variant attributes in URL query params
+  const [variantParams, setVariantParams] = useQueryStates(queryStateParsers, {
+    history: 'push',
+    shallow: true,
+  });
+
+  // Convert query params to selected attributes
   const selectedAttributes = useMemo(() => {
     const attrs: Record<string, string> = {};
     Object.entries(variantParams).forEach(([key, value]) => {
@@ -145,12 +186,49 @@ export function ProductDetails({
     return attrs;
   }, [variantParams]);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['sku-group', { storeId, clientId, sku }],
+  // Convert selected attributes to array for query
+  const selectedAttributeValues = useMemo(() => {
+    return Object.values(selectedAttributes).filter(Boolean);
+  }, [selectedAttributes]);
+
+  // Query for filtered SKUs when attributes are selected
+  const { data: skuData } = useQuery({
+    queryKey: [
+      'sku-group-filtered',
+      storeId,
+      clientId,
+      sku,
+      selectedAttributeValues,
+    ],
     queryFn: () =>
-      getSkuGroups({ id: { eq: sku } }, storeId!, clientId!, context?.apiHost),
-    enabled: !!storeId && !!clientId && !!sku,
+      getSkuGroups(
+        {
+          id: { eq: sku },
+          attributeValues: selectedAttributeValues,
+        },
+        storeId!,
+        clientId!,
+        context?.apiHost
+      ),
+    enabled:
+      !!storeId && !!clientId && !!sku && selectedAttributeValues.length > 0,
   });
+
+  // Get the matched SKUs based on selected attributes
+  const matchedSkus = skuData?.skuGroups?.edges?.[0]?.node?.skus?.edges || [];
+  const matchedSkuId =
+    matchedSkus.length === 1 ? matchedSkus[0]?.node?.id : null;
+
+  // Query individual SKU details when exactly one SKU matches
+  const { data: individualSkuData, isLoading: isSkuLoading } = useQuery({
+    queryKey: ['individual-sku', storeId, clientId, matchedSkuId],
+    queryFn: () =>
+      getSku({ id: matchedSkuId! }, storeId!, clientId!, context?.apiHost),
+    enabled: !!storeId && !!clientId && !!matchedSkuId,
+  });
+
+  // Use individual SKU data if available, otherwise use SKU Group data
+  const selectedSku = individualSkuData?.sku;
 
   // Track main carousel selection and sync thumbnail carousel
   useEffect(() => {
@@ -207,17 +285,28 @@ export function ProductDetails({
   const title = product?.label || product?.name || 'Product';
   const description = product?.description || '';
   const htmlDescription = product?.htmlDescription || '';
-  const priceMin = product?.priceRange?.min || 0;
-  const priceMax = product?.priceRange?.max || priceMin;
-  const compareAtMin = product?.compareAtPriceRange?.min;
-  const compareAtMax = product?.compareAtPriceRange?.max;
+
+  // Use SKU-specific pricing if available, otherwise fall back to SKU Group pricing
+  const skuPrice = selectedSku?.prices?.edges?.[0]?.node;
+  const priceMin = skuPrice?.value?.value ?? product?.priceRange?.min ?? 0;
+  const priceMax = selectedSku
+    ? priceMin
+    : (product?.priceRange?.max ?? priceMin);
+  const compareAtMin =
+    skuPrice?.compareAtValue?.value ?? product?.compareAtPriceRange?.min;
+  const compareAtMax = selectedSku
+    ? compareAtMin
+    : product?.compareAtPriceRange?.max;
   const isOnSale = compareAtMin && compareAtMin > priceMin;
   const isPriceRange = priceMin !== priceMax;
   const isCompareAtPriceRange =
     compareAtMin && compareAtMax && compareAtMin !== compareAtMax;
 
-  // Get all media objects (images)
-  const mediaObjects = product?.mediaObjects?.edges || [];
+  // Get all media objects (images) - prefer SKU-specific images if available
+  const skuMediaObjects = selectedSku?.mediaObjects?.edges || [];
+  const productMediaObjects = product?.mediaObjects?.edges || [];
+  const mediaObjects =
+    skuMediaObjects.length > 0 ? skuMediaObjects : productMediaObjects;
 
   const images = mediaObjects
     .filter((edge: any) => edge?.node?.type === 'IMAGE')
@@ -226,39 +315,10 @@ export function ProductDetails({
 
   // const images = [...imagesSrc, ...imagesSrc, ...imagesSrc];
 
-  // Placeholder for product attributes (size, color, etc.)
-  // In a real implementation, these would come from SKU-level data
-  // SKUGroups don't have attributes, individual SKUs within the group do
-  const attributes = [
-    {
-      id: 'size',
-      name: 'size',
-      label: 'Size',
-      values: [
-        { id: 'xs', name: 'XS', label: 'Extra Small' },
-        { id: 's', name: 'S', label: 'Small' },
-        { id: 'm', name: 'M', label: 'Medium' },
-        { id: 'l', name: 'L', label: 'Large' },
-        { id: 'xl', name: 'XL', label: 'Extra Large' },
-      ],
-    },
-    {
-      id: 'color',
-      name: 'color',
-      label: 'Color',
-      values: [
-        { id: 'black', name: 'Black', label: 'Black' },
-        { id: 'white', name: 'White', label: 'White' },
-        { id: 'blue', name: 'Blue', label: 'Blue' },
-        { id: 'red', name: 'Red', label: 'Red' },
-      ],
-    },
-  ];
-
-  const handleAttributeChange = (attributeName: string, valueId: string) => {
-    // Update the URL query params with the new attribute value
-    setVariantParams({
-      [attributeName]: valueId,
+  const handleAttributeChange = (attributeName: string, valueName: string) => {
+    // Update the URL query params with the new attribute value (using name instead of ID)
+    void setVariantParams({
+      [attributeName]: valueName,
     });
   };
 
@@ -271,6 +331,19 @@ export function ProductDetails({
     carouselApi?.scrollTo(index);
     thumbnailApi?.scrollTo(index);
   };
+
+  // Check if product is available for purchase
+  const isOutOfStock = selectedSku
+    ? (() => {
+        const availableCount =
+          selectedSku.inventoryCounts?.edges?.find(
+            edge => edge?.node?.type === 'AVAILABLE'
+          )?.node?.quantity ?? 0;
+        return availableCount === 0;
+      })()
+    : false;
+
+  const canAddToCart = !isOutOfStock && (!attributes.length || selectedSku);
 
   const handleAddToCart = () => {
     // Placeholder for add to cart functionality
@@ -417,46 +490,79 @@ export function ProductDetails({
         </div>
 
         {/* Description */}
-        <div className='border-t border-border pt-4'>
-          {htmlDescription ? (
-            <div
-              className='text-muted-foreground prose prose-sm max-w-none'
-              dangerouslySetInnerHTML={{ __html: htmlDescription }}
-            />
-          ) : (
-            <p className='text-muted-foreground'>{description}</p>
-          )}
-        </div>
+        {htmlDescription || description ? (
+          <div className='border-t border-border pt-4'>
+            {htmlDescription ? (
+              <div
+                className='text-muted-foreground prose prose-sm max-w-none'
+                dangerouslySetInnerHTML={{ __html: htmlDescription }}
+              />
+            ) : (
+              <p className='text-muted-foreground'>{description}</p>
+            )}
+          </div>
+        ) : null}
 
         {/* Product Attributes (Size, Color, etc.) */}
-        <div className='space-y-4 border-t border-border pt-4'>
-          {attributes.map(attribute => (
-            <div key={attribute.id}>
-              <label className='text-sm font-medium text-foreground mb-2 block'>
-                {attribute.label}
-              </label>
-              <div className='flex flex-wrap gap-2'>
-                {attribute.values.map(value => (
-                  <Button
-                    key={value.id}
-                    variant={
-                      selectedAttributes[attribute.name] === value.id
-                        ? 'default'
-                        : 'outline'
-                    }
-                    size='sm'
-                    onClick={() =>
-                      handleAttributeChange(attribute.name, value.id)
-                    }
-                    className='min-w-[60px]'
-                  >
-                    {value.name}
-                  </Button>
-                ))}
+        {attributes.length > 0 && (
+          <div className='space-y-4 border-t border-border pt-4'>
+            {attributes.map(attribute => (
+              <div key={attribute.id}>
+                <label className='text-sm font-medium text-foreground mb-2 block'>
+                  {attribute.label}
+                </label>
+                <div className='flex flex-wrap gap-2'>
+                  {attribute.values.map(value => (
+                    <Button
+                      key={value.id}
+                      variant={
+                        selectedAttributes[attribute.name] === value.name
+                          ? 'default'
+                          : 'outline'
+                      }
+                      size='sm'
+                      onClick={() =>
+                        handleAttributeChange(attribute.name, value.name)
+                      }
+                      className='min-w-[60px]'
+                    >
+                      {value.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+
+            {/* SKU Match Status */}
+            {selectedAttributeValues.length > 0 && (
+              <div className='text-sm'>
+                {isSkuLoading && (
+                  <div className='flex items-center gap-2 text-muted-foreground'>
+                    <div className='h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent' />
+                    Loading variant details...
+                  </div>
+                )}
+                {!isSkuLoading && matchedSkus.length === 0 && (
+                  <div className='text-destructive'>
+                    This combination is not available. Please select different
+                    options.
+                  </div>
+                )}
+                {!isSkuLoading && matchedSkus.length > 1 && (
+                  <div className='text-muted-foreground'>
+                    {matchedSkus.length} variants match your selection. Select
+                    more attributes to narrow down.
+                  </div>
+                )}
+                {!isSkuLoading && matchedSkus.length === 1 && selectedSku && (
+                  <div className='text-green-600 dark:text-green-400 font-medium'>
+                    ✓ Variant selected
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Quantity Selector */}
         <div className='border-t border-border pt-4'>
@@ -486,9 +592,14 @@ export function ProductDetails({
         </div>
 
         {/* Add to Cart Button */}
-        <Button size='lg' className='w-full gap-2' onClick={handleAddToCart}>
+        <Button
+          size='lg'
+          className='w-full gap-2'
+          onClick={handleAddToCart}
+          disabled={!canAddToCart}
+        >
           <ShoppingCart className='h-5 w-5' />
-          Add to Cart
+          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
         </Button>
 
         {/* Additional Product Information */}
@@ -508,6 +619,34 @@ export function ProductDetails({
                 {product.id}
               </span>
             </div>
+          )}
+          {selectedSku && (
+            <>
+              <div className='flex justify-between text-sm'>
+                <span className='text-muted-foreground'>Selected SKU:</span>
+                <span className='font-mono text-xs text-foreground'>
+                  {selectedSku.code}
+                </span>
+              </div>
+              {selectedSku.inventoryCounts?.edges &&
+                selectedSku.inventoryCounts.edges.length > 0 && (
+                  <div className='flex justify-between text-sm'>
+                    <span className='text-muted-foreground'>Stock Status:</span>
+                    <span className='font-medium text-foreground'>
+                      {(() => {
+                        const availableCount =
+                          selectedSku.inventoryCounts.edges.find(
+                            edge => edge?.node?.type === 'AVAILABLE'
+                          )?.node?.quantity ?? 0;
+                        if (availableCount === 0) return 'Out of Stock';
+                        if (availableCount < 10)
+                          return `Low Stock (${availableCount})`;
+                        return 'In Stock';
+                      })()}
+                    </span>
+                  </div>
+                )}
+            </>
           )}
         </div>
       </div>

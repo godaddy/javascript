@@ -18,7 +18,7 @@ import {
   DraftOrderSkusQuery,
   DraftOrderTaxesQuery,
 } from '@/lib/godaddy/checkout-queries.ts';
-import { SkuGroupsQuery } from '@/lib/godaddy/storefront-queries.ts';
+import { SkuGroupsQuery, SkuQuery } from '@/lib/godaddy/storefront-queries.ts';
 
 export const PaymentProvider = {
   STRIPE: 'stripe',
@@ -198,3 +198,67 @@ export type SKUGroup = NonNullable<
     NonNullable<ResultOf<typeof SkuGroupsQuery>['skuGroups']>['edges']
   >[number]
 >['node'];
+
+export type SKUGroupAttribute = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<
+        NonNullable<ResultOf<typeof SkuGroupsQuery>['skuGroups']>['edges']
+      >[number]
+    >['node']['attributes']
+  >['edges']
+>[number]['node'];
+
+export type SKUGroupAttributeValue = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<
+        NonNullable<
+          NonNullable<
+            NonNullable<
+              NonNullable<ResultOf<typeof SkuGroupsQuery>['skuGroups']>['edges']
+            >[number]
+          >['node']['attributes']
+        >['edges']
+      >[number]['node']['values']
+    >['edges']
+  >[number]
+>['node'];
+
+export type SKUGroupSKU = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<
+        NonNullable<ResultOf<typeof SkuGroupsQuery>['skuGroups']>['edges']
+      >[number]
+    >['node']['skus']
+  >['edges']
+>[number]['node'];
+
+export type SkuInput = VariablesOf<typeof SkuQuery>;
+
+export type SKU = NonNullable<ResultOf<typeof SkuQuery>['sku']>;
+
+export type SKUPrice = NonNullable<
+  NonNullable<
+    NonNullable<ResultOf<typeof SkuQuery>['sku']>['prices']
+  >['edges']
+>[number]['node'];
+
+export type SKUInventoryCount = NonNullable<
+  NonNullable<
+    NonNullable<ResultOf<typeof SkuQuery>['sku']>['inventoryCounts']
+  >['edges']
+>[number]['node'];
+
+export type SKUMedia = NonNullable<
+  NonNullable<
+    NonNullable<ResultOf<typeof SkuQuery>['sku']>['mediaObjects']
+  >['edges']
+>[number]['node'];
+
+export type SKUAttributeValue = NonNullable<
+  NonNullable<
+    NonNullable<ResultOf<typeof SkuQuery>['sku']>['attributeValues']
+  >['edges']
+>[number]['node'];
