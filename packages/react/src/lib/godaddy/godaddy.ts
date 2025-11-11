@@ -1065,7 +1065,7 @@ export function getSkuGroups(
   return graphqlRequestWithErrors<ResultOf<typeof SkuGroupsQuery>>(
     `${GODADDY_HOST}/storefront`,
     SkuGroupsQuery,
-    { input },
+    input,
     {
       'X-Store-ID': storeId,
       'X-Client-ID': clientId,
