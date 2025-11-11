@@ -14,6 +14,7 @@
 		"@godaddy/react": "workspace:*",
 		"@tanstack/react-query": "^5.66.0",
 		"@tanstack/react-query-devtools": "^5.76.1",
+		"lucide-react": "^0.475.0",
 		"next": "16.0.1",
         "nuqs": "^2.7.3",
 		"react": "19.2.0",
