@@ -2,8 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Minus, Plus, ShoppingCart } from 'lucide-react';
-import { parseAsString, useQueryStates } from 'nuqs';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -132,15 +131,65 @@ export function ProductDetails({
   const [thumbnailApi, setThumbnailApi] = useState<CarouselApi>();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Use nuqs to track URL params - start with permissive parsers
-  const [variantParams, setVariantParams] = useQueryStates({
-    roast: parseAsString.withDefault(''),
-    size: parseAsString.withDefault(''),
-    color: parseAsString.withDefault(''),
-    // Add more common attribute names as needed - unused ones are harmless
+  // Read query params from URL - framework agnostic
+  const [variantParams, setVariantParamsState] = useState<
+    Record<string, string>
+  >(() => {
+    if (typeof window === 'undefined') return {};
+    const params = new URLSearchParams(window.location.search);
+    const result: Record<string, string> = {};
+    params.forEach((value, key) => {
+      result[key] = value;
+    });
+    return result;
   });
 
-  // Convert variant params to selected attributes
+  // Update URL when variant params change
+  const setVariantParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(window.location.search);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value) {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      });
+
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({}, '', newUrl);
+
+      setVariantParamsState(prev => {
+        const next = { ...prev };
+        Object.entries(updates).forEach(([key, value]) => {
+          if (value) {
+            next[key] = value;
+          } else {
+            delete next[key];
+          }
+        });
+        return next;
+      });
+    },
+    []
+  );
+
+  // Sync state with URL changes (e.g., browser back/forward)
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const result: Record<string, string> = {};
+      params.forEach((value, key) => {
+        result[key] = value;
+      });
+      setVariantParamsState(result);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const selectedAttributes = useMemo(() => {
     const attrs: Record<string, string> = {};
     Object.entries(variantParams).forEach(([key, value]) => {
@@ -300,7 +349,7 @@ export function ProductDetails({
 
   const handleAttributeChange = (attributeName: string, valueName: string) => {
     // Update the URL query params with the new attribute value (using name instead of ID)
-    void setVariantParams({
+    setVariantParams({
       [attributeName]: valueName,
     });
   };
