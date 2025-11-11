@@ -21,11 +21,18 @@
     "plugins": [
       {
         "name": "gql.tada/ts-plugin",
-        "schema": [
-          "./src/lib/godaddy/schema.graphql",
-          "./src/lib/godaddy/storefront.graphql"
-        ],
-        "tadaOutputLocation": "./src/lib/godaddy/graphql-env.ts"
+        "schemas": [
+          {
+            "name": "checkout-api",
+            "schema": "./src/lib/godaddy/schema.graphql",
+            "tadaOutputLocation": "./src/lib/godaddy/graphql-env.ts"
+          },
+          {
+            "name": "storefront-api",
+            "schema": "./src/lib/godaddy/storefront.graphql",
+            "tadaOutputLocation": "./src/lib/godaddy/storefront-env.ts"
+          }
+        ]
       }
     ]
   },

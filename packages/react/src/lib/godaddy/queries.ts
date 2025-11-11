@@ -1,4 +1,5 @@
 import { graphql } from '@/gql.tada';
+import { graphqlStorefront } from '@/gql-storefront.tada';
 
 export const GetCheckoutSessionQuery = graphql(`
     query GetCheckoutSession {
@@ -485,7 +486,7 @@ export const DraftOrderSkusQuery = graphql(`
     }
 `);
 
-export const SkuGroupsQuery = graphql(`
+export const SkuGroupsQuery = graphqlStorefront(`
     query SkuGroups($first: Int, $after: String, $id: SKUGroupIdsFilter) {
         skuGroups(first: $first, after: $after, id: $id) {
             edges {
@@ -496,7 +497,6 @@ export const SkuGroupsQuery = graphql(`
                     label
                     description
                     htmlDescription
-                    status
                     type
                     priceRange {
                         min

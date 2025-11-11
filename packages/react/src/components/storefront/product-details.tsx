@@ -414,13 +414,6 @@ export function ProductDetails({
               </span>
             )}
           </div>
-
-          {/* Status Badge */}
-          {product?.status && (
-            <Badge variant='outline' className='mb-4'>
-              {product.status}
-            </Badge>
-          )}
         </div>
 
         {/* Description */}
