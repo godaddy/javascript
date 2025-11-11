@@ -161,6 +161,8 @@ export function GoDaddyProvider({
       return value
         .replace(/[<>{}]/g, '') // Remove characters that could close tags
         .replace(/javascript:/gi, '') // Remove javascript: protocol
+        .replace(/data:/gi, '') // Remove data: protocol
+        .replace(/vbscript:/gi, '') // Remove vbscript: protocol
         .replace(/expression\(/gi, ''); // Remove IE expression()
     };
 
