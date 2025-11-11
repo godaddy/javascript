@@ -4,7 +4,7 @@ import { ProductDetails } from '@godaddy/react';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function Product({ skuId }: { skuId: string }) {
+export default function Product({ productId }: { productId: string }) {
   return (
     <div className='container mx-auto'>
       <Link
@@ -14,7 +14,7 @@ export default function Product({ skuId }: { skuId: string }) {
         <ArrowLeft className='h-4 w-4' />
         Back to Store
       </Link>
-      <ProductDetails sku={skuId} />
+      <ProductDetails productId={productId} />
     </div>
   );
 }

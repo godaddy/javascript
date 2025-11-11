@@ -22,7 +22,7 @@ import { formatCurrency } from '@/lib/utils';
 import type { SKUGroupAttribute, SKUGroupAttributeValue } from '@/types';
 
 interface ProductDetailsProps {
-  sku: string;
+  productId: string;
   storeId?: string;
   clientId?: string;
 }
@@ -114,7 +114,7 @@ function ProductDetailsSkeleton() {
 }
 
 export function ProductDetails({
-  sku,
+  productId,
   storeId: storeIdProp,
   clientId: clientIdProp,
 }: ProductDetailsProps) {
@@ -131,10 +131,15 @@ export function ProductDetails({
 
   // Initial query to get product data and attributes
   const { data, isLoading, error } = useQuery({
-    queryKey: ['sku-group', storeId, clientId, sku],
+    queryKey: ['sku-group', storeId, clientId, productId],
     queryFn: () =>
-      getSkuGroups({ id: { eq: sku } }, storeId!, clientId!, context?.apiHost),
-    enabled: !!storeId && !!clientId && !!sku,
+      getSkuGroups(
+        { id: { eq: productId } },
+        storeId!,
+        clientId!,
+        context?.apiHost
+      ),
+    enabled: !!storeId && !!clientId && !!productId,
   });
 
   // Get product attributes from the query response
@@ -197,13 +202,13 @@ export function ProductDetails({
       'sku-group-filtered',
       storeId,
       clientId,
-      sku,
+      productId,
       selectedAttributeValues,
     ],
     queryFn: () =>
       getSkuGroups(
         {
-          id: { eq: sku },
+          id: { eq: productId },
           attributeValues: selectedAttributeValues,
         },
         storeId!,
@@ -211,7 +216,10 @@ export function ProductDetails({
         context?.apiHost
       ),
     enabled:
-      !!storeId && !!clientId && !!sku && selectedAttributeValues.length > 0,
+      !!storeId &&
+      !!clientId &&
+      !!productId &&
+      selectedAttributeValues.length > 0,
   });
 
   // Get the matched SKUs based on selected attributes
