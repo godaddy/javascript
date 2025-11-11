@@ -2,6 +2,7 @@ import type { ResultOf } from 'gql.tada';
 import { convertCSSVariablesToCamelCase } from '@/components/checkout/utils/case-conversion';
 import type { GoDaddyAppearance } from '@/godaddy-provider';
 import {
+  SkuGroupQuery,
   SkuGroupsQuery,
   SkuQuery,
 } from '@/lib/godaddy/catalog-storefront-queries.ts';
@@ -18,6 +19,7 @@ import type {
   GetCheckoutSessionShippingRatesInput,
   GetCheckoutSessionTaxesInput,
   RemoveAppliedCheckoutSessionShippingMethodInput,
+  SkuGroupInput,
   SkuGroupsInput,
   SkuInput,
   UpdateDraftOrderInput,
@@ -1069,6 +1071,25 @@ export function getSkuGroups(
   return graphqlRequestWithErrors<ResultOf<typeof SkuGroupsQuery>>(
     `${GODADDY_HOST}/storefront`,
     SkuGroupsQuery,
+    input,
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
+    }
+  );
+}
+
+export function getSkuGroup(
+  input: SkuGroupInput,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'catalog');
+
+  return graphqlRequestWithErrors<ResultOf<typeof SkuGroupQuery>>(
+    `${GODADDY_HOST}/storefront`,
+    SkuGroupQuery,
     input,
     {
       'X-Store-ID': storeId,

@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Minus, Plus, ShoppingCart } from 'lucide-react';
-import { useQueryStates } from 'nuqs';
+import { parseAsString, useQueryStates } from 'nuqs';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/carousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
-import { getSku, getSkuGroups } from '@/lib/godaddy/godaddy';
+import { getSku, getSkuGroup } from '@/lib/godaddy/godaddy';
 import { formatCurrency } from '@/lib/utils';
 import type { SKUGroupAttribute, SKUGroupAttributeValue } from '@/types';
 
@@ -28,8 +28,11 @@ interface ProductDetailsProps {
 }
 
 // Flattened attribute structure for UI (transforms edges/node to flat array)
-type Attribute = Pick<SKUGroupAttribute, 'id' | 'name' | 'label'> & {
-  values: SKUGroupAttributeValue[];
+type Attribute = {
+  id: NonNullable<SKUGroupAttribute>['id'];
+  name: NonNullable<SKUGroupAttribute>['name'];
+  label: NonNullable<SKUGroupAttribute>['label'];
+  values: NonNullable<SKUGroupAttributeValue>[];
 };
 
 /**
@@ -129,60 +132,15 @@ export function ProductDetails({
   const [thumbnailApi, setThumbnailApi] = useState<CarouselApi>();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Initial query to get product data and attributes
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['sku-group', storeId, clientId, productId],
-    queryFn: () =>
-      getSkuGroups(
-        { id: { eq: productId } },
-        storeId!,
-        clientId!,
-        context?.apiHost
-      ),
-    enabled: !!storeId && !!clientId && !!productId,
+  // Use nuqs to track URL params - start with permissive parsers
+  const [variantParams, setVariantParams] = useQueryStates({
+    roast: parseAsString.withDefault(''),
+    size: parseAsString.withDefault(''),
+    color: parseAsString.withDefault(''),
+    // Add more common attribute names as needed - unused ones are harmless
   });
 
-  // Get product attributes from the query response
-  const attributesEdges =
-    data?.skuGroups?.edges?.[0]?.node?.attributes?.edges || [];
-  const attributes: Attribute[] = attributesEdges.map((edge: any) => {
-    const attributeNode = edge?.node;
-    const valuesEdges = attributeNode?.values?.edges || [];
-
-    return {
-      id: attributeNode?.id || '',
-      name: attributeNode?.name || '',
-      label: attributeNode?.label || attributeNode?.name || '',
-      values: valuesEdges.map((valueEdge: any) => {
-        const valueNode = valueEdge?.node;
-        return {
-          id: valueNode?.id || '',
-          name: valueNode?.name || '',
-          label: valueNode?.label || valueNode?.name || '',
-        };
-      }),
-    };
-  });
-
-  // Create dynamic query state parsers based on product attributes
-  const queryStateParsers = useMemo(() => {
-    const parsers: Record<string, any> = {};
-    attributes.forEach(attr => {
-      parsers[attr.name] = {
-        parse: (value: string) => value || '',
-        defaultValue: '',
-      };
-    });
-    return parsers;
-  }, [attributes.map(a => a.name).join(',')]);
-
-  // Track variant attributes in URL query params
-  const [variantParams, setVariantParams] = useQueryStates(queryStateParsers, {
-    history: 'push',
-    shallow: true,
-  });
-
-  // Convert query params to selected attributes
+  // Convert variant params to selected attributes
   const selectedAttributes = useMemo(() => {
     const attrs: Record<string, string> = {};
     Object.entries(variantParams).forEach(([key, value]) => {
@@ -191,39 +149,56 @@ export function ProductDetails({
     return attrs;
   }, [variantParams]);
 
-  // Convert selected attributes to array for query
+  // Convert to array for GraphQL query
   const selectedAttributeValues = useMemo(() => {
     return Object.values(selectedAttributes).filter(Boolean);
   }, [selectedAttributes]);
 
-  // Query for filtered SKUs when attributes are selected
-  const { data: skuData, isLoading: isFilteredSkuLoading } = useQuery({
+  // Single query - refetches when selectedAttributeValues changes
+  const { data, isLoading, error } = useQuery({
     queryKey: [
-      'sku-group-filtered',
+      'sku-group',
       storeId,
       clientId,
       productId,
-      selectedAttributeValues,
+      ...selectedAttributeValues.sort(), // Sort for stable key
     ],
     queryFn: () =>
-      getSkuGroups(
-        {
-          id: { eq: productId },
-          attributeValues: selectedAttributeValues,
-        },
+      getSkuGroup(
+        { id: productId!, attributeValues: selectedAttributeValues },
         storeId!,
         clientId!,
         context?.apiHost
       ),
-    enabled:
-      !!storeId &&
-      !!clientId &&
-      !!productId &&
-      selectedAttributeValues.length > 0,
+    enabled: !!storeId && !!clientId && !!productId,
+    placeholderData: previousData => previousData, // Keep previous data while refetching
   });
 
+  // Get product attributes from the query response
+  const attributesEdges = data?.skuGroup?.attributes?.edges || [];
+  const attributes: Attribute[] = useMemo(() => {
+    return attributesEdges.map((edge: any) => {
+      const attributeNode = edge?.node;
+      const valuesEdges = attributeNode?.values?.edges || [];
+
+      return {
+        id: attributeNode?.id || '',
+        name: attributeNode?.name || '',
+        label: attributeNode?.label || attributeNode?.name || '',
+        values: valuesEdges.map((valueEdge: any) => {
+          const valueNode = valueEdge?.node;
+          return {
+            id: valueNode?.id || '',
+            name: valueNode?.name || '',
+            label: valueNode?.label || valueNode?.name || '',
+          };
+        }),
+      };
+    });
+  }, [attributesEdges]);
+
   // Get the matched SKUs based on selected attributes
-  const matchedSkus = skuData?.skuGroups?.edges?.[0]?.node?.skus?.edges || [];
+  const matchedSkus = data?.skuGroup?.skus?.edges || [];
   const matchedSkuId =
     matchedSkus.length === 1 ? matchedSkus[0]?.node?.id : null;
 
@@ -278,7 +253,7 @@ export function ProductDetails({
     );
   }
 
-  const product = data?.skuGroups?.edges?.[0]?.node;
+  const product = data?.skuGroup;
 
   if (!product) {
     return (
@@ -476,7 +451,7 @@ export function ProductDetails({
       </div>
 
       {/* Product Information */}
-      <div className='space-y-6'>
+      <div className='space-y-6 transition-opacity duration-200'>
         <div>
           <h1 className='text-3xl font-bold text-foreground mb-2'>{title}</h1>
 
@@ -550,14 +525,12 @@ export function ProductDetails({
                     Loading variant details...
                   </div>
                 )}
-                {!isSkuLoading &&
-                  !isFilteredSkuLoading &&
-                  matchedSkus.length === 0 && (
-                    <div className='text-destructive'>
-                      This combination is not available. Please select different
-                      options.
-                    </div>
-                  )}
+                {!isSkuLoading && matchedSkus.length === 0 && (
+                  <div className='text-destructive'>
+                    This combination is not available. Please select different
+                    options.
+                  </div>
+                )}
                 {!isSkuLoading && matchedSkus.length > 1 && (
                   <div className='text-muted-foreground'>
                     {matchedSkus.length} variants match your selection. Select

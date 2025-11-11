@@ -1,5 +1,6 @@
 import type { ResultOf, VariablesOf } from 'gql.tada';
 import {
+  SkuGroupQuery,
   SkuGroupsQuery,
   SkuQuery,
 } from '@/lib/godaddy/catalog-storefront-queries.ts';
@@ -196,21 +197,17 @@ export type SKUProduct = NonNullable<
 
 export type SkuGroupsInput = VariablesOf<typeof SkuGroupsQuery>;
 
-export type SKUGroup = NonNullable<
-  NonNullable<
-    NonNullable<ResultOf<typeof SkuGroupsQuery>['skuGroups']>['edges']
-  >[number]
->['node'];
+export type SkuGroupInput = VariablesOf<typeof SkuGroupQuery>;
+
+export type SKUGroup = NonNullable<ResultOf<typeof SkuGroupQuery>['skuGroup']>;
 
 export type SKUGroupAttribute = NonNullable<
   NonNullable<
     NonNullable<
-      NonNullable<
-        NonNullable<ResultOf<typeof SkuGroupsQuery>['skuGroups']>['edges']
-      >[number]
-    >['node']['attributes']
-  >['edges']
->[number]['node'];
+      NonNullable<ResultOf<typeof SkuGroupQuery>['skuGroup']>['attributes']
+    >['edges']
+  >[number]
+>['node'];
 
 export type SKUGroupAttributeValue = NonNullable<
   NonNullable<
@@ -219,11 +216,13 @@ export type SKUGroupAttributeValue = NonNullable<
         NonNullable<
           NonNullable<
             NonNullable<
-              NonNullable<ResultOf<typeof SkuGroupsQuery>['skuGroups']>['edges']
-            >[number]
-          >['node']['attributes']
-        >['edges']
-      >[number]['node']['values']
+              NonNullable<
+                ResultOf<typeof SkuGroupQuery>['skuGroup']
+              >['attributes']
+            >['edges']
+          >[number]
+        >['node']
+      >['values']
     >['edges']
   >[number]
 >['node'];
@@ -231,35 +230,43 @@ export type SKUGroupAttributeValue = NonNullable<
 export type SKUGroupSKU = NonNullable<
   NonNullable<
     NonNullable<
-      NonNullable<
-        NonNullable<ResultOf<typeof SkuGroupsQuery>['skuGroups']>['edges']
-      >[number]
-    >['node']['skus']
-  >['edges']
->[number]['node'];
+      NonNullable<ResultOf<typeof SkuGroupQuery>['skuGroup']>['skus']
+    >['edges']
+  >[number]
+>['node'];
 
 export type SkuInput = VariablesOf<typeof SkuQuery>;
 
 export type SKU = NonNullable<ResultOf<typeof SkuQuery>['sku']>;
 
 export type SKUPrice = NonNullable<
-  NonNullable<NonNullable<ResultOf<typeof SkuQuery>['sku']>['prices']>['edges']
->[number]['node'];
+  NonNullable<
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuQuery>['sku']>['prices']
+    >['edges']
+  >[number]
+>['node'];
 
 export type SKUInventoryCount = NonNullable<
   NonNullable<
-    NonNullable<ResultOf<typeof SkuQuery>['sku']>['inventoryCounts']
-  >['edges']
->[number]['node'];
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuQuery>['sku']>['inventoryCounts']
+    >['edges']
+  >[number]
+>['node'];
 
 export type SKUMedia = NonNullable<
   NonNullable<
-    NonNullable<ResultOf<typeof SkuQuery>['sku']>['mediaObjects']
-  >['edges']
->[number]['node'];
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuQuery>['sku']>['mediaObjects']
+    >['edges']
+  >[number]
+>['node'];
 
 export type SKUAttributeValue = NonNullable<
   NonNullable<
-    NonNullable<ResultOf<typeof SkuQuery>['sku']>['attributeValues']
-  >['edges']
->[number]['node'];
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuQuery>['sku']>['attributeValues']
+    >['edges']
+  >[number]
+>['node'];
