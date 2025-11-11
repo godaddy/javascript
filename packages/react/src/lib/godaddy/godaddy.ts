@@ -1,7 +1,10 @@
 import type { ResultOf } from 'gql.tada';
 import { convertCSSVariablesToCamelCase } from '@/components/checkout/utils/case-conversion';
 import type { GoDaddyAppearance } from '@/godaddy-provider';
-import { SkuGroupsQuery, SkuQuery } from '@/lib/godaddy/storefront-queries.ts';
+import {
+  SkuGroupsQuery,
+  SkuQuery,
+} from '@/lib/godaddy/catalog-storefront-queries.ts';
 import { graphqlRequestWithErrors } from '@/lib/graphql-with-errors';
 import type {
   ApplyCheckoutSessionDeliveryMethodInput,

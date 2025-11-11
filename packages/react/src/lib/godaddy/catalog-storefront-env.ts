@@ -23,7 +23,7 @@
  * ```
  */
 const introspection = {
-  name: 'storefront-api',
+  name: 'catalog-api',
   __schema: {
     queryType: {
       name: 'Query',

@@ -192,7 +192,7 @@ export function ProductDetails({
   }, [selectedAttributes]);
 
   // Query for filtered SKUs when attributes are selected
-  const { data: skuData } = useQuery({
+  const { data: skuData, isLoading: isFilteredSkuLoading } = useQuery({
     queryKey: [
       'sku-group-filtered',
       storeId,
@@ -542,12 +542,14 @@ export function ProductDetails({
                     Loading variant details...
                   </div>
                 )}
-                {!isSkuLoading && matchedSkus.length === 0 && (
-                  <div className='text-destructive'>
-                    This combination is not available. Please select different
-                    options.
-                  </div>
-                )}
+                {!isSkuLoading &&
+                  !isFilteredSkuLoading &&
+                  matchedSkus.length === 0 && (
+                    <div className='text-destructive'>
+                      This combination is not available. Please select different
+                      options.
+                    </div>
+                  )}
                 {!isSkuLoading && matchedSkus.length > 1 && (
                   <div className='text-muted-foreground'>
                     {matchedSkus.length} variants match your selection. Select

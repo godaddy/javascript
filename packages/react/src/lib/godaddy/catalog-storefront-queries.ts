@@ -1,4 +1,4 @@
-import { graphql } from '@/lib/gql/gql-storefront.tada';
+import { graphql } from '@/lib/gql/gql-catalog-storefront.tada.ts';
 
 export const SkuGroupsQuery = graphql(`
     query SkuGroups($first: Int, $after: String, $id: SKUGroupIdsFilter, $attributeValues: [String!] = []) {

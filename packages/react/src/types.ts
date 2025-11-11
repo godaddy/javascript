@@ -1,4 +1,8 @@
 import type { ResultOf, VariablesOf } from 'gql.tada';
+import {
+  SkuGroupsQuery,
+  SkuQuery,
+} from '@/lib/godaddy/catalog-storefront-queries.ts';
 import type {
   ApplyCheckoutSessionDeliveryMethodMutation,
   ApplyCheckoutSessionDiscountMutation,
@@ -18,7 +22,6 @@ import {
   DraftOrderSkusQuery,
   DraftOrderTaxesQuery,
 } from '@/lib/godaddy/checkout-queries.ts';
-import { SkuGroupsQuery, SkuQuery } from '@/lib/godaddy/storefront-queries.ts';
 
 export const PaymentProvider = {
   STRIPE: 'stripe',
@@ -240,9 +243,7 @@ export type SkuInput = VariablesOf<typeof SkuQuery>;
 export type SKU = NonNullable<ResultOf<typeof SkuQuery>['sku']>;
 
 export type SKUPrice = NonNullable<
-  NonNullable<
-    NonNullable<ResultOf<typeof SkuQuery>['sku']>['prices']
-  >['edges']
+  NonNullable<NonNullable<ResultOf<typeof SkuQuery>['sku']>['prices']>['edges']
 >[number]['node'];
 
 export type SKUInventoryCount = NonNullable<

@@ -42,8 +42,7 @@ dist
 /blob-report/
 /playwright/.cache/
 
-schema.graphql
-storefront.graphql
+*.graphql
 
 # macOS
 .DS_Store
