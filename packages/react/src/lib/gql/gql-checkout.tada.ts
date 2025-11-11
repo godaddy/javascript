@@ -1,7 +1,7 @@
 import { initGraphQLTada } from 'gql.tada';
-import type { introspection } from '@/lib/godaddy/storefront-env';
+import type { introspection } from '@/lib/godaddy/checkout-env';
 
-export const graphqlStorefront = initGraphQLTada<{
+export const graphql = initGraphQLTada<{
   introspection: typeof introspection;
   scalars: {
     DateTime: string;

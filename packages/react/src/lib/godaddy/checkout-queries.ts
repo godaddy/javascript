@@ -1,5 +1,4 @@
-import { graphql } from '@/gql.tada';
-import { graphqlStorefront } from '@/gql-storefront.tada';
+import { graphql } from '@/lib/gql/gql-checkout.tada.ts';
 
 export const GetCheckoutSessionQuery = graphql(`
     query GetCheckoutSession {
@@ -481,46 +480,6 @@ export const DraftOrderSkusQuery = graphql(`
                     startCursor
                     endCursor
                 }
-            }
-        }
-    }
-`);
-
-export const SkuGroupsQuery = graphqlStorefront(`
-    query SkuGroups($first: Int, $after: String, $id: SKUGroupIdsFilter) {
-        skuGroups(first: $first, after: $after, id: $id) {
-            edges {
-                cursor
-                node {
-                    id
-                    name
-                    label
-                    description
-                    htmlDescription
-                    type
-                    priceRange {
-                        min
-                        max
-                    }
-                    compareAtPriceRange {
-                        min
-                        max
-                    }
-                    mediaObjects(first: 25) {
-                        edges {
-                            node {
-                                url
-                                type
-                            }
-                        }
-                    }
-                }
-            }
-            pageInfo {
-                hasNextPage
-                hasPreviousPage
-                startCursor
-                endCursor
             }
         }
     }

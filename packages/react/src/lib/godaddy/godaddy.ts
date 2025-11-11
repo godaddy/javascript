@@ -1,6 +1,7 @@
+import type { ResultOf } from 'gql.tada';
 import { convertCSSVariablesToCamelCase } from '@/components/checkout/utils/case-conversion';
 import type { GoDaddyAppearance } from '@/godaddy-provider';
-import type { ResultOf } from '@/gql.tada';
+import { SkuGroupsQuery } from '@/lib/godaddy/storefront-queries.ts';
 import { graphqlRequestWithErrors } from '@/lib/graphql-with-errors';
 import type {
   ApplyCheckoutSessionDeliveryMethodInput,
@@ -30,7 +31,7 @@ import {
   RemoveAppliedCheckoutSessionShippingMethodMutation,
   UpdateCheckoutSessionDraftOrderMutation,
   VerifyCheckoutSessionAddressMutation,
-} from './mutations';
+} from './checkout-mutations.ts';
 import {
   AddressMatchesQuery,
   DraftOrderPriceAdjustmentsQuery,
@@ -39,8 +40,7 @@ import {
   DraftOrderSkusQuery,
   DraftOrderTaxesQuery,
   GetCheckoutSessionQuery,
-  SkuGroupsQuery,
-} from './queries';
+} from './checkout-queries.ts';
 
 function getHostByEnvironment(apiHost?: string, service = 'checkout'): string {
   // Use provided apiHost, otherwise default to production

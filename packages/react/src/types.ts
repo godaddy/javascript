@@ -1,4 +1,4 @@
-import type { ResultOf, VariablesOf } from '@/gql.tada';
+import type { ResultOf, VariablesOf } from 'gql.tada';
 import type {
   ApplyCheckoutSessionDeliveryMethodMutation,
   ApplyCheckoutSessionDiscountMutation,
@@ -10,15 +10,15 @@ import type {
   RemoveAppliedCheckoutSessionShippingMethodMutation,
   UpdateCheckoutSessionDraftOrderMutation,
   VerifyCheckoutSessionAddressMutation,
-} from '@/lib/godaddy/mutations';
+} from '@/lib/godaddy/checkout-mutations.ts';
 import {
   DraftOrderPriceAdjustmentsQuery,
   DraftOrderQuery,
   DraftOrderShippingRatesQuery,
   DraftOrderSkusQuery,
   DraftOrderTaxesQuery,
-  SkuGroupsQuery,
-} from '@/lib/godaddy/queries';
+} from '@/lib/godaddy/checkout-queries.ts';
+import { SkuGroupsQuery } from '@/lib/godaddy/storefront-queries.ts';
 
 export const PaymentProvider = {
   STRIPE: 'stripe',

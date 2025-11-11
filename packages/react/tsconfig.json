@@ -25,7 +25,7 @@
           {
             "name": "checkout-api",
             "schema": "./src/lib/godaddy/schema.graphql",
-            "tadaOutputLocation": "./src/lib/godaddy/graphql-env.ts"
+            "tadaOutputLocation": "./src/lib/godaddy/checkout-env.ts"
           },
           {
             "name": "storefront-api",
