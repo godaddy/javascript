@@ -1,5 +1,3 @@
-'use server';
-
 import type { DocumentNode } from 'graphql';
 import { ClientError, request, type Variables } from 'graphql-request';
 

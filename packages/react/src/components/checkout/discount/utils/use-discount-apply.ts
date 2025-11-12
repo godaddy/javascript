@@ -4,27 +4,33 @@ import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import type { ResultOf } from '@/gql.tada';
 import { applyDiscount } from '@/lib/godaddy/godaddy';
 import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 import type { ApplyCheckoutSessionDiscountInput } from '@/types';
 
 export function useDiscountApply() {
-  const { session } = useCheckoutContext();
+  const { session, jwt } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
   const form = useFormContext();
   const queryClient = useQueryClient();
   const updateTaxes = useUpdateTaxes();
   const { data: draftOrder } = useDraftOrder();
 
   return useMutation({
-    mutationKey: ['apply-discount', { sessionId: session?.id }],
+    mutationKey: session?.id
+      ? ['apply-discount', session.id]
+      : ['apply-discount'],
     mutationFn: async ({
       discountCodes,
     }: {
       discountCodes: ApplyCheckoutSessionDiscountInput['input']['discountCodes'];
     }) => {
-      if (!session) return;
-      return await applyDiscount(discountCodes, session);
+      const data = jwt
+        ? await applyDiscount(discountCodes, { accessToken: jwt }, apiHost)
+        : await applyDiscount(discountCodes, session, apiHost);
+      return data;
     },
     onSuccess: (data, { discountCodes }) => {
       if (!session) return;
@@ -36,7 +42,7 @@ export function useDiscountApply() {
 
       if (discountTotal) {
         queryClient.setQueryData(
-          ['draft-order', { id: session.id }],
+          ['draft-order', session.id],
           (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
             if (!old) return old;
             return {
@@ -101,7 +107,7 @@ export function useDiscountApply() {
       if (!discountCodes?.length) {
         // If no discount codes, we need to remove any existing discounts from the cache
         queryClient.setQueryData(
-          ['draft-order', { id: session.id }],
+          ['draft-order', session.id],
           (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
             if (!old) return old;
             return {
@@ -159,7 +165,7 @@ export function useDiscountApply() {
         }
       } else {
         queryClient.invalidateQueries({
-          queryKey: ['draft-order', { id: session?.id }],
+          queryKey: ['draft-order', session.id],
         });
       }
     },

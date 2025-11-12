@@ -1,121 +1,121 @@
 {
-  "name": "@godaddy/react",
-  "private": false,
-  "version": "1.0.3",
-  "type": "module",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "exports": {
-    "./package.json": "./package.json",
-    "./styles.css": "./dist/index.css",
-    "./server": {
-      "types": "./dist/server.d.ts",
-      "import": "./dist/server.js",
-      "default": "./dist/server.js"
-    },
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    }
-  },
-  "typesVersions": {
-    "*": {
-      "server": [
-        "./dist/server.d.ts"
-      ],
-      "*": [
-        "./dist/index.d.ts"
-      ]
-    }
-  },
-  "scripts": {
-    "dev": "tsdown --watch",
-    "dev:https": "tsdown --watch",
-    "build": "tsdown && pnpm dlx @tailwindcss/cli -i ./src/globals.css -o ./dist/index.css --minify",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write --unsafe ./src",
-    "prepublishOnly": "pnpm run build"
-  },
-  "peerDependencies": {
-    "@tanstack/react-query": ">=5",
-    "react": "18.x || 19.x",
-    "react-dom": "18.x || 19.x",
-    "react-hook-form": ">=7"
-  },
-  "dependencies": {
-    "@floating-ui/react": "^0.27.8",
-    "@godaddy/localizations": "workspace:*",
-    "@hookform/resolvers": "^4.0.0",
-    "@paypal/react-paypal-js": "^8.8.3",
-    "@radix-ui/react-accordion": "^1.2.3",
-    "@radix-ui/react-alert-dialog": "^1.1.6",
-    "@radix-ui/react-aspect-ratio": "^1.1.2",
-    "@radix-ui/react-avatar": "^1.1.3",
-    "@radix-ui/react-checkbox": "^1.1.4",
-    "@radix-ui/react-collapsible": "^1.1.3",
-    "@radix-ui/react-dialog": "^1.1.6",
-    "@radix-ui/react-label": "^2.1.2",
-    "@radix-ui/react-popover": "^1.1.6",
-    "@radix-ui/react-radio-group": "^1.2.3",
-    "@radix-ui/react-scroll-area": "^1.2.3",
-    "@radix-ui/react-select": "^2.1.6",
-    "@radix-ui/react-separator": "^1.1.2",
-    "@radix-ui/react-slot": "^1.1.2",
-    "@radix-ui/react-switch": "^1.1.3",
-    "@radix-ui/react-toast": "^1.2.6",
-    "@radix-ui/react-toggle": "^1.1.2",
-    "@radix-ui/react-toggle-group": "^1.1.2",
-    "@radix-ui/react-tooltip": "^1.1.8",
-    "@stripe/react-stripe-js": "^3.7.0",
-    "@stripe/stripe-js": "^7.3.1",
-    "@tailwindcss/cli": "^4.1.10",
-    "@tailwindcss/vite": "^4.1.4",
-    "@tanstack/react-pacer": "^0.2.0",
-    "@tanstack/react-query": "^5.66.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "cmdk": "1.0.0",
-    "date-fns": "^4.1.0",
-    "date-fns-tz": "^3.2.0",
-    "embla-carousel-react": "^8.5.2",
-    "fast-deep-equal": "^3.1.3",
-    "gql.tada": "^1.8.10",
-    "graphql": "^16.10.0",
-    "graphql-request": "^5.2.0",
-    "lucide-react": "^0.475.0",
-    "react-day-picker": "8.10.1",
-    "react-phone-number-input": "^3.4.12",
-    "react-resizable-panels": "^2.1.7",
-    "tailwind-merge": "^3.0.1",
-    "tailwindcss": "^4.1.4",
-    "ulid": "^3.0.0",
-    "vaul": "^1.1.2",
-    "zod": "^3.24.1"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.3.2",
-    "@types/node": "^22.13.1",
-    "@types/react": "^19.0.8",
-    "@types/react-dom": "^19.0.3",
-    "@vitejs/plugin-react": "^4.2.1",
-    "biome-config-godaddy": "workspace:*",
-    "globals": "^15.14.0",
-    "jsdom": "^26.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-hook-form": "^7.54.2",
-    "tsdown": "^0.15.6",
-    "typescript": "~5.7.3",
-    "vite": "^5.1.6",
-    "vitest": "^3.0.6"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
-  }
+	"name": "@godaddy/react",
+	"private": false,
+	"version": "1.0.3",
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"exports": {
+		"./package.json": "./package.json",
+		"./styles.css": "./dist/index.css",
+		"./server": {
+			"types": "./dist/server.d.ts",
+			"import": "./dist/server.js",
+			"default": "./dist/server.js"
+		},
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		}
+	},
+	"typesVersions": {
+		"*": {
+			"server": [
+				"./dist/server.d.ts"
+			],
+			"*": [
+				"./dist/index.d.ts"
+			]
+		}
+	},
+	"scripts": {
+		"dev": "tsdown --watch",
+		"dev:https": "tsdown --watch",
+		"build": "tsdown && pnpm dlx @tailwindcss/cli -i ./src/globals.css -o ./dist/index.css --minify",
+		"preview": "vite preview",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write --unsafe ./src",
+		"prepublishOnly": "pnpm run build"
+	},
+	"peerDependencies": {
+		"@tanstack/react-query": ">=5",
+		"react": "18.x || 19.x",
+		"react-dom": "18.x || 19.x",
+		"react-hook-form": ">=7"
+	},
+	"dependencies": {
+		"@floating-ui/react": "^0.27.8",
+		"@godaddy/localizations": "workspace:*",
+		"@hookform/resolvers": "^4.0.0",
+		"@paypal/react-paypal-js": "^8.8.3",
+		"@radix-ui/react-accordion": "^1.2.3",
+		"@radix-ui/react-alert-dialog": "^1.1.6",
+		"@radix-ui/react-aspect-ratio": "^1.1.2",
+		"@radix-ui/react-avatar": "^1.1.3",
+		"@radix-ui/react-checkbox": "^1.1.4",
+		"@radix-ui/react-collapsible": "^1.1.3",
+		"@radix-ui/react-dialog": "^1.1.6",
+		"@radix-ui/react-label": "^2.1.2",
+		"@radix-ui/react-popover": "^1.1.6",
+		"@radix-ui/react-radio-group": "^1.2.3",
+		"@radix-ui/react-scroll-area": "^1.2.3",
+		"@radix-ui/react-select": "^2.1.6",
+		"@radix-ui/react-separator": "^1.1.2",
+		"@radix-ui/react-slot": "^1.1.2",
+		"@radix-ui/react-switch": "^1.1.3",
+		"@radix-ui/react-toast": "^1.2.6",
+		"@radix-ui/react-toggle": "^1.1.2",
+		"@radix-ui/react-toggle-group": "^1.1.2",
+		"@radix-ui/react-tooltip": "^1.1.8",
+		"@stripe/react-stripe-js": "^3.7.0",
+		"@stripe/stripe-js": "^7.3.1",
+		"@tailwindcss/cli": "^4.1.10",
+		"@tailwindcss/vite": "^4.1.4",
+		"@tanstack/react-pacer": "^0.2.0",
+		"@tanstack/react-query": "^5.66.0",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"cmdk": "1.0.0",
+		"date-fns": "^4.1.0",
+		"date-fns-tz": "^3.2.0",
+		"embla-carousel-react": "^8.5.2",
+		"fast-deep-equal": "^3.1.3",
+		"gql.tada": "^1.8.10",
+		"graphql": "^16.10.0",
+		"graphql-request": "^5.2.0",
+		"lucide-react": "^0.475.0",
+		"react-day-picker": "8.10.1",
+		"react-phone-number-input": "^3.4.12",
+		"react-resizable-panels": "^2.1.7",
+		"tailwind-merge": "^3.0.1",
+		"tailwindcss": "^4.1.4",
+		"ulid": "^3.0.0",
+		"vaul": "^1.1.2",
+		"zod": "^3.24.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.2",
+		"@types/node": "^22.13.1",
+		"@types/react": "^19.0.8",
+		"@types/react-dom": "^19.0.3",
+		"@vitejs/plugin-react": "^4.2.1",
+		"biome-config-godaddy": "workspace:*",
+		"globals": "^15.14.0",
+		"jsdom": "^26.0.0",
+		"react": "^19",
+		"react-dom": "^19",
+		"react-hook-form": "^7.54.2",
+		"tsdown": "^0.15.6",
+		"typescript": "~5.7.3",
+		"vite": "^5.1.6",
+		"vitest": "^3.0.6"
+	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org/"
+	}
 }

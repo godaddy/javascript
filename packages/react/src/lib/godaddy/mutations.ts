@@ -17,6 +17,7 @@ export const CreateCheckoutSessionMutation = graphql(`
       enabledLocales
       enableSurcharge
       enableLocalPickup
+      enableShipping
       enablePhoneCollection
       enableNotesCollection
       enablePromotionCodes
@@ -421,6 +422,26 @@ export const ApplyCheckoutSessionFulfillmentLocationMutation = graphql(`
     mutation ApplyCheckoutSessionFulfillmentLocation($input: MutationApplyCheckoutSessionFulfillmentLocationInput!) {
         applyCheckoutSessionFulfillmentLocation(input: $input) {
             status
+        }
+    }
+`);
+
+export const ExchangeCheckoutTokenMutation = graphql(`
+    mutation ExchangeCheckoutToken($input: MutationExchangeCheckoutTokenInput!) {
+        exchangeCheckoutToken(input: $input) {
+            jwt
+            expiresAt
+            expiresIn
+        }
+    }
+`);
+
+export const RefreshCheckoutTokenMutation = graphql(`
+    mutation RefreshCheckoutToken {
+        refreshCheckoutToken {
+            jwt
+            expiresAt
+            expiresIn
         }
     }
 `);

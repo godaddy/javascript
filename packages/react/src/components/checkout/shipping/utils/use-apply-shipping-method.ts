@@ -3,25 +3,36 @@ import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDiscountApply } from '@/components/checkout/discount';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import type { ResultOf } from '@/gql.tada';
 import { applyShippingMethod } from '@/lib/godaddy/godaddy';
 import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 import type { ApplyCheckoutSessionShippingMethodInput } from '@/types';
 
 export function useApplyShippingMethod() {
-  const { session } = useCheckoutContext();
+  const { session, jwt } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
   const { data: order } = useDraftOrder();
   const updateTaxes = useUpdateTaxes();
   const applyDiscount = useDiscountApply();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ['apply-shipping-method', { sessionId: session?.id }],
+    mutationKey: session?.id
+      ? ['apply-shipping-method', session.id]
+      : ['apply-shipping-method'],
     mutationFn: async (
       shippingMethods: ApplyCheckoutSessionShippingMethodInput['input']
     ) => {
       if (!session) return;
-      return await applyShippingMethod(shippingMethods, session);
+      const data = jwt
+        ? await applyShippingMethod(
+            shippingMethods,
+            { accessToken: jwt },
+            apiHost
+          )
+        : await applyShippingMethod(shippingMethods, session, apiHost);
+      return data;
     },
     onSuccess: async data => {
       if (!session) return;
@@ -34,7 +45,7 @@ export function useApplyShippingMethod() {
       // Update the cached draft-order query (includes totals)
       if (shippingTotal) {
         queryClient.setQueryData(
-          ['draft-order', { id: session.id }],
+          ['draft-order', session.id],
           (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
             if (!old) return old;
 
@@ -102,7 +113,7 @@ export function useApplyShippingMethod() {
         updateTaxes.mutate(undefined);
       } else {
         queryClient.invalidateQueries({
-          queryKey: ['draft-order', { id: session?.id }],
+          queryKey: ['draft-order', session.id],
         });
       }
     },

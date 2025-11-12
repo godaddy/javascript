@@ -57,6 +57,19 @@ export function mapOrderToFormValues({
     lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP
   );
 
+  const isShipping = order?.lineItems?.some(
+    lineItem => lineItem.fulfillmentMode === DeliveryMethods.SHIP
+  );
+
+  const isMixedFulfillment = isPickup && isShipping;
+
+  let deliveryMethod = DeliveryMethods.PURCHASE;
+  if (!isMixedFulfillment && isPickup) {
+    deliveryMethod = DeliveryMethods.PICKUP;
+  } else if (!isMixedFulfillment && isShipping) {
+    deliveryMethod = DeliveryMethods.SHIP;
+  }
+
   return {
     // Shipping address
     shippingFirstName: order?.shipping?.firstName ?? '',
@@ -100,7 +113,7 @@ export function mapOrderToFormValues({
     contactEmail: order?.shipping?.email || defaultValues?.contactEmail || '',
 
     // Delivery Methods
-    deliveryMethod: isPickup ? DeliveryMethods.PICKUP : DeliveryMethods.SHIP,
+    deliveryMethod: deliveryMethod,
 
     // Payment information
     paymentUseShippingAddress: orderShippingAddress?.addressLine1
