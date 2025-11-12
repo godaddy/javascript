@@ -3,7 +3,7 @@
 import * as GoDaddy from '@/lib/godaddy/godaddy';
 import { CreateCheckoutSessionInputWithKebabCase } from '@/lib/godaddy/godaddy';
 import { getEnvVar } from '@/lib/utils';
-import type { CheckoutSessionInput, CheckoutSessionOptions } from '@/types';
+import type { CheckoutSessionOptions } from '@/types';
 
 let accessToken: string | undefined;
 let accessTokenExpiresAt: number | undefined;
@@ -81,10 +81,9 @@ async function getAccessToken({
     );
   }
 
-  const result = (await response.json()) as {
+  return (await response.json()) as {
     access_token: string;
     scope: string;
     expires_in: number;
   };
-  return result;
 }

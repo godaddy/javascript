@@ -472,7 +472,6 @@ export const DraftOrderSkusQuery = graphql(`
                             name
                             label
                         }
-                        mediaUrls
                     }
                 }
                 pageInfo {
