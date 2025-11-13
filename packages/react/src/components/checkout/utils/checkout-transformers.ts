@@ -160,15 +160,12 @@ export function mapSkusToItemsDisplay(
         image: orderItem.details?.productAssetUrl || skuDetails?.mediaUrls?.[0],
         quantity: orderItem.quantity || 0,
         originalPrice:
-          (orderItem.totals?.subTotal?.value ?? 0) /
-          (orderItem.quantity || 0) /
-          100,
+          (orderItem.totals?.subTotal?.value ?? 0) / (orderItem.quantity || 0),
         price:
-          ((orderItem.totals?.subTotal?.value ?? 0) +
-            (orderItem.totals?.feeTotal?.value ?? 0) -
-            // (orderItem.totals?.taxTotal?.value ?? 0) - // do we need taxTotal here?
-            (orderItem.totals?.discountTotal?.value ?? 0)) /
-          100,
+          (orderItem.totals?.subTotal?.value ?? 0) +
+          (orderItem.totals?.feeTotal?.value ?? 0) -
+          // (orderItem.totals?.taxTotal?.value ?? 0) - // do we need taxTotal here?
+          (orderItem.totals?.discountTotal?.value ?? 0),
         notes: orderItem.notes
           ?.filter(
             note =>

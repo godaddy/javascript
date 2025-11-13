@@ -38,6 +38,7 @@ import { ShippingMethodForm } from '@/components/checkout/shipping/shipping-meth
 import { Target } from '@/components/checkout/target/target';
 import { TipsForm } from '@/components/checkout/tips/tips-form';
 import { DraftOrderTotals } from '@/components/checkout/totals/totals';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import {
   Accordion,
   AccordionContent,
@@ -105,22 +106,22 @@ export function CheckoutForm({
   const { data: totals, isLoading: totalsLoading } = draftOrderTotalsQuery;
   const { data: order } = draftOrder;
 
-  // Order summary calculations
-  const subtotal = (totals?.subTotal?.value || 0) / 100;
-  const orderDiscount = (totals?.discountTotal?.value || 0) / 100;
+  // Order summary calculations - keep all values in minor units
+  const subtotal = totals?.subTotal?.value || 0;
+  const orderDiscount = totals?.discountTotal?.value || 0;
   const shipping =
-    (order?.shippingLines?.reduce(
+    order?.shippingLines?.reduce(
       (sum, line) => sum + (line?.amount?.value || 0),
       0
-    ) || 0) / 100;
-  const taxTotal = (totals?.taxTotal?.value || 0) / 100;
-  const orderTotal = (totals?.total?.value || 0) / 100;
-  const tipTotal = (tipAmount || 0) / 100;
+    ) || 0;
+  const taxTotal = totals?.taxTotal?.value || 0;
+  const orderTotal = totals?.total?.value || 0;
+  const tipTotal = tipAmount || 0;
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
   const isFree = orderTotal <= 0;
-  const showExpressButtons = (totals?.subTotal?.value || 0) > 0;
+  const showExpressButtons = subtotal > 0;
 
   useEffect(() => {
     if (!totalsLoading && isFree) {
@@ -136,8 +137,8 @@ export function CheckoutForm({
         eventId: eventIds.checkoutStart,
         type: TrackingEventType.IMPRESSION,
         properties: {
-          subtotal: Math.round(subtotal * 100),
-          total: Math.round(orderTotal * 100),
+          subtotal: subtotal,
+          total: orderTotal,
           itemCount,
           currencyCode,
         },
@@ -244,7 +245,7 @@ export function CheckoutForm({
         deliveryMethod: data.deliveryMethod,
         hasShippingAddress: !!data.shippingAddressLine1,
         hasBillingAddress: !!data.billingAddressLine1,
-        total: Math.round(orderTotal * 100),
+        total: orderTotal,
       },
     });
   };
@@ -435,10 +436,11 @@ export function CheckoutForm({
                           {t.totals.orderSummary}
                         </span>
                         <span className='font-bold text-lg pr-2 self-center'>
-                          {new Intl.NumberFormat('en-us', {
-                            style: 'currency',
-                            currency: currencyCode,
-                          }).format(orderTotal)}
+                          {formatCurrency({
+                            amount: totals?.total?.value || 0,
+                            currencyCode,
+                            isInCents: true,
+                          })}
                         </span>
                       </div>
                     </AccordionTrigger>
@@ -447,9 +449,11 @@ export function CheckoutForm({
                         <DraftOrderLineItems
                           currencyCode={currencyCode}
                           items={items}
+                          isInCents
                         />
 
                         <DraftOrderTotals
+                          isInCents
                           currencyCode={currencyCode}
                           tip={tipTotal}
                           taxes={taxTotal}
@@ -476,9 +480,11 @@ export function CheckoutForm({
                 <DraftOrderLineItems
                   currencyCode={currencyCode}
                   items={items}
+                  isInCents
                 />
 
                 <DraftOrderTotals
+                  isInCents
                   currencyCode={currencyCode}
                   tip={tipTotal}
                   taxes={taxTotal}

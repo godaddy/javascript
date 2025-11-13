@@ -34,6 +34,7 @@ import {
   DraftOrderTotals,
   type DraftOrderTotalsProps,
 } from '@/components/checkout/totals/totals';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import {
   Accordion,
   AccordionContent,
@@ -447,10 +448,11 @@ export function PaymentForm(
                   {t.totals.orderSummary}
                 </span>
                 <span className='font-bold text-lg pr-2 self-center'>
-                  {new Intl.NumberFormat('en-us', {
-                    style: 'currency',
-                    currency: props.currencyCode,
-                  }).format(props.total || 0)}
+                  {formatCurrency({
+                    amount: props.total || 0,
+                    currencyCode: props.currencyCode || 'USD',
+                    isInCents: true,
+                  })}
                 </span>
               </div>
             </AccordionTrigger>
@@ -459,6 +461,7 @@ export function PaymentForm(
                 <DraftOrderLineItems
                   currencyCode={props.currencyCode}
                   items={props.items}
+                  isInCents
                 />
               </div>
             </AccordionContent>
@@ -466,6 +469,7 @@ export function PaymentForm(
         </Accordion>
         <div className='pt-4'>
           <DraftOrderTotals
+            isInCents
             currencyCode={props.currencyCode}
             tip={props.tip}
             taxes={props.taxes}

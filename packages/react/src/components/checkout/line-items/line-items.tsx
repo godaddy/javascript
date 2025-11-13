@@ -1,6 +1,7 @@
 // import { Badge } from "@/components/ui/badge";
 
 import { Image } from 'lucide-react';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import type { SKUProduct } from '@/types';
 
@@ -55,11 +56,13 @@ export type Product = Partial<SKUProduct> & {
 export interface DraftOrderLineItemsProps {
   items: Product[];
   currencyCode?: string;
+  isInCents?: boolean;
 }
 
 export function DraftOrderLineItems({
   items,
   currencyCode = 'USD',
+  isInCents = false,
 }: DraftOrderLineItemsProps) {
   const { t } = useGoDaddyContext();
 
@@ -129,10 +132,11 @@ export function DraftOrderLineItems({
                 <div className='text-right'>
                   <div>
                     <span className='text-sm'>
-                      {new Intl.NumberFormat('en-us', {
-                        style: 'currency',
-                        currency: currencyCode,
-                      }).format(item.originalPrice * item.quantity)}
+                      {formatCurrency({
+                        amount: item.originalPrice * item.quantity,
+                        currencyCode,
+                        isInCents,
+                      })}
                     </span>
                   </div>
                 </div>

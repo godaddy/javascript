@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -27,15 +28,8 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
   const [showCustomTip, setShowCustomTip] = useState(false);
 
   const calculateTipAmount = (percentage: number): number => {
-    return Math.round(((total * percentage) / 100) * 100);
-  };
-
-  const formatCurrency = (amount: number): string => {
-    // Convert from cents to dollars before formatting
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode || 'USD',
-    }).format(amount / 100);
+    // total is in minor units, so calculate percentage and return in minor units
+    return Math.round((total * percentage) / 100);
   };
 
   const handlePercentageSelect = (percentage: number) => {
@@ -116,7 +110,11 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
           >
             <span className='text-lg'>{percentage}%</span>
             <span className='text-sm'>
-              {formatCurrency(calculateTipAmount(percentage))}
+              {formatCurrency({
+                amount: calculateTipAmount(percentage),
+                currencyCode: currencyCode || 'USD',
+                isInCents: true,
+              })}
             </span>
           </Button>
         ))}
@@ -168,19 +166,32 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
                   {...field}
                   placeholder={t.tips.placeholder}
                   className='h-12'
-                  value={field.value > 0 ? field.value / 100 : ''}
+                  value={
+                    field.value > 0
+                      ? formatCurrency({
+                          amount: field.value,
+                          currencyCode: currencyCode || 'USD',
+                          isInCents: true,
+                          returnRaw: true,
+                        })
+                      : ''
+                  }
                   onChange={e => {
-                    // Convert dollars to cents when storing
-                    const tipAmount = Math.round(
-                      Number.parseFloat(e.target.value) * 100
-                    );
-                    field.onChange(tipAmount);
-
-                    // Only track when user stops typing (on blur)
+                    // User inputs in major units (e.g., $10.50), convert to minor units for storage
+                    const inputValue = Number.parseFloat(e.target.value);
+                    if (!Number.isNaN(inputValue)) {
+                      const tipAmount = Math.round(inputValue * 100);
+                      field.onChange(tipAmount);
+                    } else {
+                      field.onChange(0);
+                    }
                   }}
                   onBlur={e => {
-                    const tipAmount =
-                      Math.round(Number.parseFloat(e.target.value) * 100) || 0;
+                    // User inputs in major units (e.g., $10.50), convert to minor units for storage
+                    const inputValue = Number.parseFloat(e.target.value);
+                    const tipAmount = !Number.isNaN(inputValue)
+                      ? Math.round(inputValue * 100)
+                      : 0;
                     // Track custom tip amount entry
                     track({
                       eventId: eventIds.enterCustomTip,
