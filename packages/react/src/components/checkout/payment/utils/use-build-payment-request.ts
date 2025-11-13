@@ -585,9 +585,12 @@ export function useBuildPaymentRequest(): {
       ...(items || []).map(lineItem => {
         return {
           label: lineItem?.name || '',
-          amount: (
-            (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1)
-          ).toString(),
+          amount: formatCurrency({
+            amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
+            currencyCode,
+            isInCents: true,
+            returnRaw: true,
+          }),
         };
       }),
     ],
@@ -607,9 +610,12 @@ export function useBuildPaymentRequest(): {
       ...(items || []).map(lineItem => {
         return {
           label: lineItem?.name || '',
-          amount: (
-            (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1)
-          ).toString(),
+          amount: formatCurrency({
+            amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
+            currencyCode,
+            isInCents: true,
+            returnRaw: true,
+          }),
         };
       }),
       {
