@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.4
+
+### Patch Changes
+
+- f4f79d6: Add product grid and product details components using public storefront apis
+
 ## 1.0.3
 
 ### Patch Changes
