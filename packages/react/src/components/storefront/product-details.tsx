@@ -523,7 +523,7 @@ export function ProductDetails({
 
         {/* Description */}
         {htmlDescription || description ? (
-          <div className='border-t border-border pt-4'>
+          <div>
             {htmlDescription ? (
               <div
                 className='text-muted-foreground prose prose-sm max-w-none'
@@ -537,7 +537,7 @@ export function ProductDetails({
 
         {/* Product Attributes (Size, Color, etc.) */}
         {attributes.length > 0 && (
-          <div className='space-y-4 border-t border-border pt-4'>
+          <div className='space-y-4'>
             {attributes.map(attribute => (
               <div key={attribute.id}>
                 <label className='text-sm font-medium text-foreground mb-2 block'>
@@ -586,18 +586,13 @@ export function ProductDetails({
                     more attributes to narrow down.
                   </div>
                 )}
-                {!isSkuLoading && matchedSkus.length === 1 && selectedSku && (
-                  <div className='text-green-600 dark:text-green-400 font-medium'>
-                    ✓ Variant selected
-                  </div>
-                )}
               </div>
             )}
           </div>
         )}
 
         {/* Quantity Selector */}
-        <div className='border-t border-border pt-4'>
+        <div>
           <label className='text-sm font-medium text-foreground mb-2 block'>
             Quantity
           </label>
