@@ -1,10 +1,12 @@
 {
   "name": "@godaddy/react",
   "private": false,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     "./package.json": "./package.json",
     "./styles.css": "./dist/index.css",
@@ -21,8 +23,12 @@
   },
   "typesVersions": {
     "*": {
-      "server": ["./dist/server.d.ts"],
-      "*": ["./dist/index.d.ts"]
+      "server": [
+        "./dist/server.d.ts"
+      ],
+      "*": [
+        "./dist/index.d.ts"
+      ]
     }
   },
   "scripts": {
