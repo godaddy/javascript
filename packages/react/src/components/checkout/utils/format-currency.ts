@@ -28,6 +28,13 @@ export const currencyConfigs: Record<
   TRY: { symbol: '₺', precision: 2 },
   ZAR: { symbol: 'R', precision: 2 },
   CNY: { symbol: '¥', precision: 2 },
+  JPY: { symbol: '¥', precision: 0 },
+  KRW: { symbol: '₩', precision: 0 },
+  TWD: { symbol: 'NT$', precision: 0 },
+  KWD: { symbol: 'د.ك', precision: 3 },
+  BHD: { symbol: '.د.ب', precision: 3 },
+  JOD: { symbol: 'د.ا', precision: 3 },
+  OMR: { symbol: 'ر.ع.', precision: 3 },
 };
 
 export interface FormatCurrencyOptions {
@@ -65,13 +72,9 @@ export function formatCurrency({
   isInCents = true,
   returnRaw = false,
 }: FormatCurrencyOptions): string {
-  const config = currencyConfigs[currencyCode];
+  const config = currencyConfigs[currencyCode] || {};
 
-  if (!config) {
-    return amount.toString();
-  }
-
-  const { precision } = config;
+  const { precision = 2 } = config;
 
   if (!isInCents) {
     // Convert major units to minor units and return as string
@@ -81,10 +84,13 @@ export function formatCurrency({
   // Format value already in minor units
   const value = amount / Math.pow(10, precision);
 
-  return new Intl.NumberFormat(locale, {
+  const nfLocale = returnRaw ? 'en-US' : locale;
+
+  return new Intl.NumberFormat(nfLocale, {
     style: returnRaw ? 'decimal' : 'currency',
     currency: returnRaw ? undefined : currencyCode,
     minimumFractionDigits: precision,
     maximumFractionDigits: precision,
+    useGrouping: returnRaw ? false : undefined,
   }).format(value);
 }
