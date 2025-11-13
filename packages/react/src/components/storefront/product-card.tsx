@@ -1,6 +1,7 @@
 'use client';
 
-import { ChevronRight, ShoppingBag } from 'lucide-react';
+import { ChevronRight, Loader2, ShoppingBag } from 'lucide-react';
+import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,9 +12,16 @@ import { SKUGroup } from '@/types.ts';
 interface ProductCardProps {
   product: SKUGroup;
   href?: string;
+  onAddToCartSuccess?: () => void;
+  onAddToCartError?: (error: Error) => void;
 }
 
-export function ProductCard({ product, href }: ProductCardProps) {
+export function ProductCard({
+  product,
+  href,
+  onAddToCartSuccess,
+  onAddToCartError,
+}: ProductCardProps) {
   const title = product?.label || product?.name || 'Product';
   const description = product?.description || '';
   const priceMin = product?.priceRange?.min || 0;
@@ -27,8 +35,30 @@ export function ProductCard({ product, href }: ProductCardProps) {
     edge => edge?.node?.type === 'IMAGE'
   )?.node?.url;
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  // Get first SKU for products without options
+  const firstSku = product?.skus?.edges?.[0]?.node;
+  const skuId = firstSku?.code || product?.id || '';
+
+  // Use shared add to cart hook
+  const { addToCart, isLoading: isAddingToCart } = useAddToCart({
+    onSuccess: onAddToCartSuccess,
+    onError: onAddToCartError,
+  });
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+
+    if (!skuId) {
+      return;
+    }
+
+    await addToCart({
+      skuId,
+      name: title,
+      quantity: 1,
+      productAssetUrl: imageUrl || undefined,
+    });
   };
 
   const cardContent = (
@@ -70,9 +100,18 @@ export function ProductCard({ product, href }: ProductCardProps) {
               <ChevronRight className='h-4 w-4' />
             </Button>
           ) : (
-            <Button size='sm' onClick={handleAddToCart} className='gap-2'>
-              <ShoppingBag className='h-4 w-4' />
-              Add to Cart
+            <Button
+              size='sm'
+              onClick={handleAddToCart}
+              className='gap-2'
+              disabled={isAddingToCart}
+            >
+              {isAddingToCart ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <ShoppingBag className='h-4 w-4' />
+              )}
+              {isAddingToCart ? 'Adding...' : 'Add to Cart'}
             </Button>
           )}
         </div>

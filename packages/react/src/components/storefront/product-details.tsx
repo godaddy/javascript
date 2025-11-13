@@ -1,8 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Minus, Plus, ShoppingCart } from 'lucide-react';
+import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -24,6 +25,8 @@ interface ProductDetailsProps {
   productId: string;
   storeId?: string;
   clientId?: string;
+  onAddToCartSuccess?: () => void;
+  onAddToCartError?: (error: Error) => void;
 }
 
 // Flattened attribute structure for UI (transforms edges/node to flat array)
@@ -119,6 +122,8 @@ export function ProductDetails({
   productId,
   storeId: storeIdProp,
   clientId: clientIdProp,
+  onAddToCartSuccess,
+  onAddToCartError,
 }: ProductDetailsProps) {
   const context = useGoDaddyContext();
 
@@ -142,6 +147,15 @@ export function ProductDetails({
       result[key] = value;
     });
     return result;
+  });
+
+  // Use shared add to cart hook
+  const { addToCart, isLoading: isAddingToCart } = useAddToCart({
+    onSuccess: () => {
+      setQuantity(1); // Reset quantity
+      onAddToCartSuccess?.();
+    },
+    onError: onAddToCartError,
   });
 
   // Update URL when variant params change
@@ -377,8 +391,17 @@ export function ProductDetails({
 
   const canAddToCart = !isOutOfStock && (!attributes.length || selectedSku);
 
-  const handleAddToCart = () => {
-    // Placeholder for add to cart functionality
+  const handleAddToCart = async () => {
+    if (!canAddToCart) {
+      return;
+    }
+
+    await addToCart({
+      skuId: selectedSku?.code || productId,
+      name: title,
+      quantity,
+      productAssetUrl: images[0] || undefined,
+    });
   };
 
   return (
@@ -500,7 +523,7 @@ export function ProductDetails({
       </div>
 
       {/* Product Information */}
-      <div className='space-y-6 transition-opacity duration-200'>
+      <div className='space-y-6'>
         <div>
           <h1 className='text-3xl font-bold text-foreground mb-2'>{title}</h1>
 
@@ -623,10 +646,19 @@ export function ProductDetails({
           size='lg'
           className='w-full gap-2'
           onClick={handleAddToCart}
-          disabled={!canAddToCart}
+          disabled={!canAddToCart || isAddingToCart}
         >
-          <ShoppingCart className='h-5 w-5' />
-          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+          {isAddingToCart ? (
+            <>
+              <Loader2 className='h-5 w-5 animate-spin' />
+              Adding to Cart...
+            </>
+          ) : (
+            <>
+              <ShoppingCart className='h-5 w-5' />
+              {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+            </>
+          )}
         </Button>
 
         {/* Additional Product Information */}

@@ -73,6 +73,7 @@ interface GoDaddyContextValue {
   apiHost?: string;
   clientId?: string;
   storeId?: string;
+  channelId?: string;
   Link?: React.ComponentType<LinkComponentProps>;
 }
 
@@ -106,6 +107,7 @@ export interface GoDaddyProviderProps {
   apiHost?: string;
   clientId?: string;
   storeId?: string;
+  channelId?: string;
   queryClient?: QueryClient;
   Link?: React.ComponentType<LinkComponentProps>;
   children: QueryClientProviderProps['children'];
@@ -118,6 +120,7 @@ export function GoDaddyProvider({
   apiHost,
   clientId,
   storeId,
+  channelId,
   queryClient: providedQueryClient,
   Link,
   children,
@@ -211,6 +214,7 @@ export function GoDaddyProvider({
         apiHost,
         clientId,
         storeId,
+        channelId,
         Link,
       }}
     >

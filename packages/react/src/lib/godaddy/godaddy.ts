@@ -6,15 +6,28 @@ import {
   SkuGroupsQuery,
   SkuQuery,
 } from '@/lib/godaddy/catalog-storefront-queries.ts';
+import {
+  AddCartOrderMutation,
+  AddLineItemBySkuIdMutation,
+  ApplyDiscountCodesMutation,
+  DeleteLineItemByIdMutation,
+  UpdateCartOrderMutation,
+  UpdateLineItemByIdMutation,
+} from '@/lib/godaddy/orders-storefront-mutations.ts';
+import { GetCartOrderQuery } from '@/lib/godaddy/orders-storefront-queries.ts';
 import { graphqlRequestWithErrors } from '@/lib/graphql-with-errors';
 import type {
+  AddCartOrderInput,
+  AddLineItemBySkuIdInput,
   ApplyCheckoutSessionDeliveryMethodInput,
   ApplyCheckoutSessionDiscountInput,
   ApplyCheckoutSessionFulfillmentLocationInput,
   ApplyCheckoutSessionShippingMethodInput,
+  ApplyDiscountCodesInput,
   CheckoutSession,
   CheckoutSessionInput,
   ConfirmCheckoutMutationInput,
+  DeleteLineItemByIdInput,
   DraftOrderPriceAdjustmentsQueryInput,
   GetCheckoutSessionShippingRatesInput,
   GetCheckoutSessionTaxesInput,
@@ -22,7 +35,9 @@ import type {
   SkuGroupInput,
   SkuGroupsInput,
   SkuInput,
+  UpdateCartOrderInput,
   UpdateDraftOrderInput,
+  UpdateLineItemByIdInput,
 } from '@/types';
 import {
   ApplyCheckoutSessionDeliveryMethodMutation,
@@ -1110,6 +1125,140 @@ export function getSku(
     `${GODADDY_HOST}/storefront`,
     SkuQuery,
     input,
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
+    }
+  );
+}
+
+// Cart/Orders functions
+export function createCartOrder(
+  input: AddCartOrderInput,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+
+  return graphqlRequestWithErrors<ResultOf<typeof AddCartOrderMutation>>(
+    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    AddCartOrderMutation,
+    { input },
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
+    }
+  );
+}
+
+export function getCartOrder(
+  orderId: string,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+
+  return graphqlRequestWithErrors<ResultOf<typeof GetCartOrderQuery>>(
+    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    GetCartOrderQuery,
+    { id: orderId },
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
+    }
+  );
+}
+
+export function addCartLineItem(
+  input: AddLineItemBySkuIdInput,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+
+  return graphqlRequestWithErrors<ResultOf<typeof AddLineItemBySkuIdMutation>>(
+    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    AddLineItemBySkuIdMutation,
+    { input },
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
+    }
+  );
+}
+
+export function updateCartOrder(
+  input: UpdateCartOrderInput,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+
+  return graphqlRequestWithErrors<ResultOf<typeof UpdateCartOrderMutation>>(
+    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    UpdateCartOrderMutation,
+    { input },
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
+    }
+  );
+}
+
+export function deleteCartLineItem(
+  input: DeleteLineItemByIdInput,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+
+  return graphqlRequestWithErrors<ResultOf<typeof DeleteLineItemByIdMutation>>(
+    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    DeleteLineItemByIdMutation,
+    input,
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
+    }
+  );
+}
+
+export function applyCartDiscountCodes(
+  input: ApplyDiscountCodesInput,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+
+  return graphqlRequestWithErrors<ResultOf<typeof ApplyDiscountCodesMutation>>(
+    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    ApplyDiscountCodesMutation,
+    { input },
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
+    }
+  );
+}
+
+export function updateCartLineItem(
+  input: UpdateLineItemByIdInput,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+
+  return graphqlRequestWithErrors<ResultOf<typeof UpdateLineItemByIdMutation>>(
+    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    UpdateLineItemByIdMutation,
+    { input },
     {
       'X-Store-ID': storeId,
       'X-Client-ID': clientId,

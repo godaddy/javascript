@@ -1,8 +1,11 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Loader2, ShoppingCart } from 'lucide-react';
 import type { Product } from '@/components/checkout/line-items/line-items';
 import { CartLineItems } from '@/components/storefront/cart-line-items';
 import { CartTotals } from '@/components/storefront/cart-totals';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -10,6 +13,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { useGoDaddyContext } from '@/godaddy-provider';
+import { getCartOrderId } from '@/lib/cart-storage';
+import { deleteCartLineItem, getCartOrder } from '@/lib/godaddy/godaddy';
 
 interface CartProps {
   open: boolean;
@@ -17,39 +22,75 @@ interface CartProps {
 }
 
 export function Cart({ open, onOpenChange }: CartProps) {
-  // Mock data
-  const items: Product[] = [
-    {
-      id: 'LineItem_2y0l7o6Oi4BW6fpSiKPX1hhBccU',
-      name: 'Box of cookies',
-      image:
-        'https://isteam.dev-wsimg.com/ip/2f2e05ec-de6f-4a89-90f2-038c749655b0/cookies.webp',
-      quantity: 2,
-      originalPrice: 10.99,
-      price: 10.99,
-      notes: [],
+  const context = useGoDaddyContext();
+  const queryClient = useQueryClient();
+  const cartOrderId = getCartOrderId();
+
+  // Fetch cart order
+  const {
+    data: cartData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['cart-order', cartOrderId],
+    queryFn: () =>
+      getCartOrder(
+        cartOrderId!,
+        context.storeId!,
+        context.clientId!,
+        context?.apiHost
+      ),
+    enabled: !!cartOrderId && !!context.storeId && !!context.clientId,
+  });
+
+  // Delete line item mutation
+  const _deleteMutation = useMutation({
+    mutationFn: (lineItemId: string) =>
+      deleteCartLineItem(
+        { id: lineItemId, orderId: cartOrderId! },
+        context.storeId!,
+        context.clientId!,
+        context?.apiHost
+      ),
+    onSuccess: () => {
+      // Invalidate cart query to refetch
+      queryClient.invalidateQueries({ queryKey: ['cart-order', cartOrderId] });
     },
-    {
-      id: 'LineItem_2y0l9FykA04qp2pC6y3YZ0TbZFD',
-      name: 'Cupcakes',
-      image:
-        'https://isteam.dev-wsimg.com/ip/2f2e05ec-de6f-4a89-90f2-038c749655b0/cupcakes.webp/:/rs=w:600,h:600',
-      quantity: 1,
-      originalPrice: 5.99,
-      price: 5.99,
-      notes: [],
-    },
-  ];
+  });
+
+  const order = cartData?.orderById;
+
+  // Transform cart line items to Product format for CartLineItems component
+  const items: Product[] =
+    order?.lineItems?.map(item => ({
+      id: item.id,
+      name: item.name || 'Product',
+      image: item.details?.productAssetUrl || '',
+      quantity: item.quantity || 0,
+      originalPrice:
+        (item.totals?.subTotal?.value || 0) / 100 / (item.quantity || 1),
+      price: (item.totals?.subTotal?.value || 0) / 100 / (item.quantity || 1),
+      notes: item.notes?.map(note => note.content || '') || [],
+    })) || [];
+
+  // Calculate totals
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const currencyCode = order?.totals?.total?.currencyCode || 'USD';
+  const subtotal = (order?.totals?.subTotal?.value || 0) / 100;
+  const shipping = (order?.totals?.shippingTotal?.value || 0) / 100;
+  const taxes = (order?.totals?.taxTotal?.value || 0) / 100;
+  const discount = (order?.totals?.discountTotal?.value || 0) / 100;
+  const total = (order?.totals?.total?.value || 0) / 100;
 
   const totals = {
-    subtotal: 27.97,
-    discount: 0,
-    shipping: 0,
-    currencyCode: 'USD',
-    itemCount: 3,
-    total: 27.97,
+    subtotal,
+    discount,
+    shipping,
+    currencyCode,
+    itemCount,
+    total,
     tip: 0,
-    taxes: 0,
+    taxes,
     enableDiscounts: false,
     enableTaxes: true,
     isTaxLoading: false,
@@ -62,8 +103,48 @@ export function Cart({ open, onOpenChange }: CartProps) {
           <SheetTitle>Shopping Cart</SheetTitle>
         </SheetHeader>
         <div className='mt-8 space-y-6'>
-          <CartLineItems items={items} currencyCode={totals.currencyCode} />
-          <CartTotals {...totals} />
+          {isLoading && (
+            <div className='flex items-center justify-center py-12'>
+              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+            </div>
+          )}
+
+          {!isLoading && error && (
+            <div className='flex flex-col items-center justify-center py-12 text-center'>
+              <p className='text-destructive mb-2'>
+                Failed to load cart: {(error as Error).message}
+              </p>
+              <Button
+                variant='outline'
+                onClick={() =>
+                  queryClient.invalidateQueries({
+                    queryKey: ['cart-order', cartOrderId],
+                  })
+                }
+              >
+                Retry
+              </Button>
+            </div>
+          )}
+
+          {!isLoading && !error && (!cartOrderId || items.length === 0) && (
+            <div className='flex flex-col items-center justify-center py-12 text-center'>
+              <ShoppingCart className='h-16 w-16 text-muted-foreground mb-4' />
+              <p className='text-lg font-medium text-foreground mb-1'>
+                Your cart is empty
+              </p>
+              <p className='text-sm text-muted-foreground'>
+                Add items to get started
+              </p>
+            </div>
+          )}
+
+          {!isLoading && !error && cartOrderId && items.length > 0 && (
+            <>
+              <CartLineItems items={items} currencyCode={currencyCode} />
+              <CartTotals {...totals} />
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>
