@@ -334,7 +334,6 @@ export function Checkout(props: CheckoutProps) {
       }
     });
   }, [checkoutFormSchema, t]);
-  // }, [checkoutFormSchema, session?.paymentMethods]);
 
   const requiredFields = React.useMemo(() => {
     return getRequiredFieldsFromSchema(formSchema);

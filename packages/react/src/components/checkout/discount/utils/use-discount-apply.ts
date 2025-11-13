@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { ResultOf } from 'gql.tada';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import { useGoDaddyContext } from '@/godaddy-provider';
-import type { ResultOf } from '@/gql.tada';
+import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
 import { applyDiscount } from '@/lib/godaddy/godaddy';
-import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 import type { ApplyCheckoutSessionDiscountInput } from '@/types';
 
 export function useDiscountApply() {

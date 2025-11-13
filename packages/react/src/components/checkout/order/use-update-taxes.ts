@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { ResultOf } from 'gql.tada';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGoDaddyContext } from '@/godaddy-provider';
-import type { ResultOf } from '@/gql.tada';
+import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
 import { updateDraftOrderTaxes } from '@/lib/godaddy/godaddy';
-import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 
 export function useUpdateTaxes() {
   const { session, jwt } = useCheckoutContext();

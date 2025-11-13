@@ -1,6 +1,11 @@
+import type { ResultOf } from 'gql.tada';
 import { convertCSSVariablesToCamelCase } from '@/components/checkout/utils/case-conversion';
 import type { GoDaddyAppearance } from '@/godaddy-provider';
-import type { ResultOf } from '@/gql.tada';
+import {
+  SkuGroupQuery,
+  SkuGroupsQuery,
+  SkuQuery,
+} from '@/lib/godaddy/catalog-storefront-queries.ts';
 import { graphqlRequestWithErrors } from '@/lib/graphql-with-errors';
 import type {
   ApplyCheckoutSessionDeliveryMethodInput,
@@ -14,6 +19,9 @@ import type {
   GetCheckoutSessionShippingRatesInput,
   GetCheckoutSessionTaxesInput,
   RemoveAppliedCheckoutSessionShippingMethodInput,
+  SkuGroupInput,
+  SkuGroupsInput,
+  SkuInput,
   UpdateDraftOrderInput,
 } from '@/types';
 import {
@@ -29,7 +37,7 @@ import {
   RemoveAppliedCheckoutSessionShippingMethodMutation,
   UpdateCheckoutSessionDraftOrderMutation,
   VerifyCheckoutSessionAddressMutation,
-} from './mutations';
+} from './checkout-mutations.ts';
 import {
   AddressMatchesQuery,
   DraftOrderPriceAdjustmentsQuery,
@@ -38,11 +46,11 @@ import {
   DraftOrderSkusQuery,
   DraftOrderTaxesQuery,
   GetCheckoutSessionQuery,
-} from './queries';
+} from './checkout-queries.ts';
 
-function getHostByEnvironment(apiHost?: string): string {
+function getHostByEnvironment(apiHost?: string, service = 'checkout'): string {
   // Use provided apiHost, otherwise default to production
-  return `https://checkout.commerce.${apiHost || 'api.godaddy.com'}`;
+  return `https://${service}.commerce.${apiHost || 'api.godaddy.com'}`;
 }
 
 // Type for createCheckoutSession input with kebab-case appearance
@@ -1048,6 +1056,63 @@ export function applyFulfillmentLocation(
       'x-session-token': `${session.token}`,
       'x-session-id': session.id,
       'x-store-id': session.storeId,
+    }
+  );
+}
+
+export function getSkuGroups(
+  input: SkuGroupsInput,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'catalog');
+
+  return graphqlRequestWithErrors<ResultOf<typeof SkuGroupsQuery>>(
+    `${GODADDY_HOST}/storefront`,
+    SkuGroupsQuery,
+    input,
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
+    }
+  );
+}
+
+export function getSkuGroup(
+  input: SkuGroupInput,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'catalog');
+
+  return graphqlRequestWithErrors<ResultOf<typeof SkuGroupQuery>>(
+    `${GODADDY_HOST}/storefront`,
+    SkuGroupQuery,
+    input,
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
+    }
+  );
+}
+
+export function getSku(
+  input: SkuInput,
+  storeId: string,
+  clientId: string,
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost, 'catalog');
+
+  return graphqlRequestWithErrors<ResultOf<typeof SkuQuery>>(
+    `${GODADDY_HOST}/storefront`,
+    SkuQuery,
+    input,
+    {
+      'X-Store-ID': storeId,
+      'X-Client-ID': clientId,
     }
   );
 }
