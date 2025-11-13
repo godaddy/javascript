@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.5
+
+### Patch Changes
+
+- 4058d97: Refactor currency formatting to respect currency precision
+
 ## 1.0.4
 
 ### Patch Changes
