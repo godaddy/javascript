@@ -82,13 +82,14 @@ export function DeliveryMethodForm() {
   useEffect(() => {
     const currentValue = form.getValues('deliveryMethod');
     const isCurrentValueValid = availableMethods.some(
-      (method) => method.id === currentValue
+      method => method.id === currentValue
     );
 
     if (!currentValue || !isCurrentValueValid) {
-      const defaultMethod = availableMethods.length === 1
-        ? availableMethods[0].id
-        : DeliveryMethods.SHIP;
+      const defaultMethod =
+        availableMethods.length === 1
+          ? availableMethods[0].id
+          : DeliveryMethods.SHIP;
       form.setValue('deliveryMethod', defaultMethod);
     }
   }, [availableMethods, form]);

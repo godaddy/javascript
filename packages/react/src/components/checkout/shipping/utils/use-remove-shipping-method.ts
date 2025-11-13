@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { ResultOf } from 'gql.tada';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDiscountApply } from '@/components/checkout/discount';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useGoDaddyContext } from '@/godaddy-provider';
-import type { ResultOf } from '@/gql.tada';
+import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
 import { removeShippingMethod } from '@/lib/godaddy/godaddy';
-import type { DraftOrderQuery } from '@/lib/godaddy/queries';
 import type { RemoveAppliedCheckoutSessionShippingMethodInput } from '@/types';
 
 export function useRemoveShippingMethod() {

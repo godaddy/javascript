@@ -1,4 +1,4 @@
-import { graphql } from '@/gql.tada';
+import { graphql } from '@/lib/gql/gql-checkout.tada.ts';
 
 export const GetCheckoutSessionQuery = graphql(`
     query GetCheckoutSession {
@@ -472,7 +472,6 @@ export const DraftOrderSkusQuery = graphql(`
                             name
                             label
                         }
-                        mediaUrls
                     }
                 }
                 pageInfo {

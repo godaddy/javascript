@@ -1,4 +1,9 @@
-import type { ResultOf, VariablesOf } from '@/gql.tada';
+import type { ResultOf, VariablesOf } from 'gql.tada';
+import {
+  SkuGroupQuery,
+  SkuGroupsQuery,
+  SkuQuery,
+} from '@/lib/godaddy/catalog-storefront-queries.ts';
 import type {
   ApplyCheckoutSessionDeliveryMethodMutation,
   ApplyCheckoutSessionDiscountMutation,
@@ -10,14 +15,14 @@ import type {
   RemoveAppliedCheckoutSessionShippingMethodMutation,
   UpdateCheckoutSessionDraftOrderMutation,
   VerifyCheckoutSessionAddressMutation,
-} from '@/lib/godaddy/mutations';
-import type {
+} from '@/lib/godaddy/checkout-mutations.ts';
+import {
   DraftOrderPriceAdjustmentsQuery,
   DraftOrderQuery,
   DraftOrderShippingRatesQuery,
   DraftOrderSkusQuery,
   DraftOrderTaxesQuery,
-} from '@/lib/godaddy/queries';
+} from '@/lib/godaddy/checkout-queries.ts';
 
 export const PaymentProvider = {
   STRIPE: 'stripe',
@@ -180,16 +185,88 @@ export type CheckoutSessionLocation = NonNullable<
   NonNullable<CheckoutSession>['locations']
 >[number];
 
-export type Environments = NonNullable<
-  NonNullable<CheckoutSession>['environment']
->;
-
 export type SKUProduct = NonNullable<
   NonNullable<
     NonNullable<
       NonNullable<
         ResultOf<typeof DraftOrderSkusQuery>['checkoutSession']
       >['skus']
+    >['edges']
+  >[number]
+>['node'];
+
+export type SkuGroupsInput = VariablesOf<typeof SkuGroupsQuery>;
+
+export type SkuGroupInput = VariablesOf<typeof SkuGroupQuery>;
+
+export type SKUGroup = NonNullable<ResultOf<typeof SkuGroupQuery>['skuGroup']>;
+
+export type SKUGroupAttribute = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuGroupQuery>['skuGroup']>['attributes']
+    >['edges']
+  >[number]
+>['node'];
+
+export type SKUGroupAttributeValue = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<
+        NonNullable<
+          NonNullable<
+            NonNullable<
+              NonNullable<
+                ResultOf<typeof SkuGroupQuery>['skuGroup']
+              >['attributes']
+            >['edges']
+          >[number]
+        >['node']
+      >['values']
+    >['edges']
+  >[number]
+>['node'];
+
+export type SKUGroupSKU = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuGroupQuery>['skuGroup']>['skus']
+    >['edges']
+  >[number]
+>['node'];
+
+export type SkuInput = VariablesOf<typeof SkuQuery>;
+
+export type SKU = NonNullable<ResultOf<typeof SkuQuery>['sku']>;
+
+export type SKUPrice = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuQuery>['sku']>['prices']
+    >['edges']
+  >[number]
+>['node'];
+
+export type SKUInventoryCount = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuQuery>['sku']>['inventoryCounts']
+    >['edges']
+  >[number]
+>['node'];
+
+export type SKUMedia = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuQuery>['sku']>['mediaObjects']
+    >['edges']
+  >[number]
+>['node'];
+
+export type SKUAttributeValue = NonNullable<
+  NonNullable<
+    NonNullable<
+      NonNullable<ResultOf<typeof SkuQuery>['sku']>['attributeValues']
     >['edges']
   >[number]
 >['node'];

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useInsertionEffect, useMemo } from 'react';
 import { convertCamelCaseToKebabCase } from '@/components/checkout/utils/case-conversion';
 // hooks/use-variables.ts
 import {
@@ -16,6 +16,63 @@ function isKebabCase(obj: Record<string, unknown>): boolean {
 }
 
 /**
+ * Sanitize CSS values to prevent XSS attacks
+ */
+function sanitizeCSSValue(value: string): string {
+  // Remove any characters that could break out of CSS context
+  return value
+    .replace(/[<>{}]/g, '') // Remove characters that could close tags
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/data:/gi, '') // Remove data: protocol
+    .replace(/vbscript:/gi, '') // Remove vbscript: protocol
+    .replace(/expression\(/gi, ''); // Remove IE expression()
+}
+
+/**
+ * Processes and merges CSS variables
+ */
+function processVariables(
+  contextVariables?: GoDaddyVariables,
+  overrideVariables?: GoDaddyVariables
+): CSSVariables {
+  // Extract CSS variables from context (lowest priority)
+  let contextCssVars: CSSVariables | undefined;
+  if (contextVariables) {
+    if ('checkout' in contextVariables) {
+      contextCssVars = contextVariables.checkout;
+    } else {
+      contextCssVars = contextVariables as CSSVariables;
+    }
+  }
+
+  // Extract CSS variables from overrides (highest priority)
+  let overrideCssVars: CSSVariables | undefined;
+  if (overrideVariables) {
+    let rawVars: Record<string, string>;
+
+    // Extract the raw variables object
+    if ('checkout' in overrideVariables) {
+      rawVars = overrideVariables.checkout as Record<string, string>;
+    } else {
+      rawVars = overrideVariables as Record<string, string>;
+    }
+
+    // Convert to kebab-case only if NOT already in kebab-case
+    if (isKebabCase(rawVars)) {
+      overrideCssVars = rawVars as CSSVariables;
+    } else {
+      overrideCssVars = convertCamelCaseToKebabCase(rawVars);
+    }
+  }
+
+  // Merge the variables, with priority: override > context
+  return {
+    ...contextCssVars,
+    ...overrideCssVars,
+  };
+}
+
+/**
  * Hook that applies CSS variables from the GoDaddy context to the document
  * Priority: overrideVariables > context.appearance
  * @param {GoDaddyVariables} [overrideVariables] - Optional variables that override context variables (can be camelCase or kebab-case)
@@ -26,53 +83,22 @@ export function useVariables(overrideVariables?: GoDaddyVariables) {
   // Context variables are already in kebab-case
   const contextVariables = appearance?.variables;
 
-  useEffect(() => {
-    if (!contextVariables && !overrideVariables) return;
+  // Memoize the merged variables
+  const mergedVars = useMemo(
+    () => processVariables(contextVariables, overrideVariables),
+    [contextVariables, overrideVariables]
+  );
 
-    // Extract CSS variables from context (lowest priority)
-    let contextCssVars: CSSVariables | undefined;
-    if (contextVariables) {
-      if ('checkout' in contextVariables) {
-        contextCssVars = contextVariables.checkout;
-      } else {
-        contextCssVars = contextVariables as CSSVariables;
-      }
-    }
+  useInsertionEffect(() => {
+    if (Object.keys(mergedVars).length === 0) return;
 
-    // Extract CSS variables from overrides (highest priority)
-    let overrideCssVars: CSSVariables | undefined;
-    if (overrideVariables) {
-      let rawVars: Record<string, string>;
-
-      // Extract the raw variables object
-      if ('checkout' in overrideVariables) {
-        rawVars = overrideVariables.checkout as Record<string, string>;
-      } else {
-        rawVars = overrideVariables as Record<string, string>;
-      }
-
-      // Convert to kebab-case only if NOT already in kebab-case
-      // (session.appearance.variables are camelCase, props.appearance.variables are kebab-case)
-      if (isKebabCase(rawVars)) {
-        overrideCssVars = rawVars as CSSVariables;
-      } else {
-        overrideCssVars = convertCamelCaseToKebabCase(rawVars);
-      }
-    }
-
-    // Merge the variables, with priority: override > context
-    const mergedVars: CSSVariables = {
-      ...contextCssVars,
-      ...overrideCssVars,
-    };
-
-    // Reset any previously set CSS variables
     const rootStyle = document.documentElement.style;
 
     // Apply the CSS variables to the document
     for (const [key, value] of Object.entries(mergedVars)) {
       if (value != null) {
-        rootStyle.setProperty(`--gd-${key}`, value.toString());
+        const sanitizedValue = sanitizeCSSValue(String(value));
+        rootStyle.setProperty(`--gd-${key}`, sanitizedValue);
       }
     }
 
@@ -83,5 +109,5 @@ export function useVariables(overrideVariables?: GoDaddyVariables) {
         rootStyle.removeProperty(`--gd-${key}`);
       }
     };
-  }, [contextVariables, overrideVariables]);
+  }, [mergedVars]);
 }

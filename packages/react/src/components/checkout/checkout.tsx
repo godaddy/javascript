@@ -227,7 +227,7 @@ export function Checkout(props: CheckoutProps) {
   const [checkoutErrors, setCheckoutErrors] = React.useState<
     string[] | undefined
   >(undefined);
-  const { t } = useGoDaddyContext()
+  const { t } = useGoDaddyContext();
 
   const { session, jwt, isLoading: isLoadingJWT } = useCheckoutSession(props);
 
@@ -334,7 +334,6 @@ export function Checkout(props: CheckoutProps) {
       }
     });
   }, [checkoutFormSchema, t]);
-  // }, [checkoutFormSchema, session?.paymentMethods]);
 
   const requiredFields = React.useMemo(() => {
     return getRequiredFieldsFromSchema(formSchema);

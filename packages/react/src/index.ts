@@ -15,5 +15,6 @@ export {
   DraftOrderTotals,
   type DraftOrderTotalsProps,
 } from './components/checkout/totals/totals';
+export * from './components/storefront';
 export * from './godaddy-provider';
 export * from './types';

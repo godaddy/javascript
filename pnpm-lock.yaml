@@ -39,8 +39,8 @@ importers:
         specifier: ^7.37.5
         version: 7.37.5(eslint@9.34.0(jiti@2.6.1))
       react:
-        specifier: ^19.1.0
-        version: 19.1.1
+        specifier: ^19.2.0
+        version: 19.2.0
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
@@ -62,6 +62,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.76.1
         version: 5.90.2(@tanstack/react-query@5.90.5(react@19.2.0))(react@19.2.0)
+      lucide-react:
+        specifier: ^0.475.0
+        version: 0.475.0(react@19.2.0)
       next:
         specifier: 16.0.1
         version: 16.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -4778,10 +4781,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  react@19.1.1:
-    resolution: {integrity: sha512-w8nqGImo45dmMIfljjMwOGtbmC/mk4CMYhWIicdSflH91J9TyCyczcPFXJzrZ/ZXcgGRFeP6BU0BEJTw6tZdfQ==}
-    engines: {node: '>=0.10.0'}
 
   react@19.2.0:
     resolution: {integrity: sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ==}
@@ -9998,8 +9997,6 @@ snapshots:
       tslib: 2.8.1
     optionalDependencies:
       '@types/react': 19.2.2
-
-  react@19.1.1: {}
 
   react@19.2.0: {}
 

@@ -43,3 +43,16 @@ export function getEnvVar(key: string): string {
 
   return '';
 }
+
+export function formatCurrency(
+  value: number,
+  currencyCode = 'USD',
+  locale = 'en-US',
+  valueInCents = true
+): string {
+  const amount = valueInCents ? value / 100 : value;
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currencyCode,
+  }).format(amount);
+}
