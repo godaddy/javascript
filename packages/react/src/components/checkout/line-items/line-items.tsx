@@ -56,13 +56,13 @@ export type Product = Partial<SKUProduct> & {
 export interface DraftOrderLineItemsProps {
   items: Product[];
   currencyCode?: string;
-  isInCents?: boolean;
+  inputInMinorUnits?: boolean;
 }
 
 export function DraftOrderLineItems({
   items,
   currencyCode = 'USD',
-  isInCents = false,
+  inputInMinorUnits = false,
 }: DraftOrderLineItemsProps) {
   const { t } = useGoDaddyContext();
   const formatCurrency = useFormatCurrency();
@@ -136,7 +136,7 @@ export function DraftOrderLineItems({
                       {formatCurrency({
                         amount: item.originalPrice * item.quantity,
                         currencyCode,
-                        isInCents,
+                        inputInMinorUnits,
                       })}
                     </span>
                   </div>

@@ -509,21 +509,21 @@ export function ProductDetails({
           <div className='flex items-baseline gap-3 mb-4'>
             <span className='text-2xl font-bold text-foreground'>
               {isPriceRange
-                ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', isInCents: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', isInCents: true })}`
+                ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', inputInMinorUnits: true })}`
                 : formatCurrency({
                     amount: priceMin,
                     currencyCode: 'USD',
-                    isInCents: true,
+                    inputInMinorUnits: true,
                   })}
             </span>
             {isOnSale && compareAtMin && (
               <span className='text-lg text-muted-foreground line-through'>
                 {isCompareAtPriceRange
-                  ? `${formatCurrency({ amount: compareAtMin, currencyCode: 'USD', isInCents: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: 'USD', isInCents: true })}`
+                  ? `${formatCurrency({ amount: compareAtMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: 'USD', inputInMinorUnits: true })}`
                   : formatCurrency({
                       amount: compareAtMin,
                       currencyCode: 'USD',
-                      isInCents: true,
+                      inputInMinorUnits: true,
                     })}
               </span>
             )}

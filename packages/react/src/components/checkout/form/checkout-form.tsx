@@ -440,7 +440,7 @@ export function CheckoutForm({
                           {formatCurrency({
                             amount: totals?.total?.value || 0,
                             currencyCode,
-                            isInCents: true,
+                            inputInMinorUnits: true,
                           })}
                         </span>
                       </div>
@@ -450,11 +450,11 @@ export function CheckoutForm({
                         <DraftOrderLineItems
                           currencyCode={currencyCode}
                           items={items}
-                          isInCents
+                          inputInMinorUnits
                         />
 
                         <DraftOrderTotals
-                          isInCents
+                          inputInMinorUnits
                           currencyCode={currencyCode}
                           tip={tipTotal}
                           taxes={taxTotal}
@@ -481,11 +481,11 @@ export function CheckoutForm({
                 <DraftOrderLineItems
                   currencyCode={currencyCode}
                   items={items}
-                  isInCents
+                  inputInMinorUnits
                 />
 
                 <DraftOrderTotals
-                  isInCents
+                  inputInMinorUnits
                   currencyCode={currencyCode}
                   tip={tipTotal}
                   taxes={taxTotal}

@@ -114,7 +114,7 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
               {formatCurrency({
                 amount: calculateTipAmount(percentage),
                 currencyCode: currencyCode || 'USD',
-                isInCents: true,
+                inputInMinorUnits: true,
               })}
             </span>
           </Button>
@@ -172,7 +172,7 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
                       ? formatCurrency({
                           amount: field.value,
                           currencyCode: currencyCode || 'USD',
-                          isInCents: true,
+                          inputInMinorUnits: true,
                           returnRaw: true,
                         })
                       : ''

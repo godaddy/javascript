@@ -62,11 +62,11 @@ export function ProductCard({ product, href }: ProductCardProps) {
         <div className='flex items-center justify-between pt-2 mt-auto'>
           <span className='text-md font-semibold text-foreground'>
             {isPriceRange
-              ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', isInCents: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', isInCents: true })}`
+              ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', inputInMinorUnits: true })}`
               : formatCurrency({
                   amount: priceMin,
                   currencyCode: 'USD',
-                  isInCents: true,
+                  inputInMinorUnits: true,
                 })}
           </span>
           {hasOptions ? (

@@ -265,7 +265,7 @@ export function ShippingMethodForm() {
                     amount: shippingMethods[0]?.cost?.value || 0,
                     currencyCode:
                       shippingMethods[0]?.cost?.currencyCode || 'USD',
-                    isInCents: true,
+                    inputInMinorUnits: true,
                   })}
                 </span>
               )}
@@ -308,7 +308,7 @@ export function ShippingMethodForm() {
                         {formatCurrency({
                           amount: method?.cost?.value || 0,
                           currencyCode: method?.cost?.currencyCode || 'USD',
-                          isInCents: true,
+                          inputInMinorUnits: true,
                         })}
                       </span>
                     )}

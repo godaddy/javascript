@@ -140,7 +140,7 @@ export function ExpressCheckoutButton() {
         const shippingMethodPrice = formatCurrency({
           amount: method.cost?.value || 0,
           currencyCode: method.cost?.currencyCode || currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
         });
 
         return {
@@ -152,7 +152,7 @@ export function ExpressCheckoutButton() {
           amount: formatCurrency({
             amount: method.cost?.value || 0,
             currencyCode: method.cost?.currencyCode || currencyCode,
-            isInCents: true,
+            inputInMinorUnits: true,
             returnRaw: true,
           }),
           amountInMinorUnits: method.cost?.value || 0, // Keep original minor unit value
@@ -187,7 +187,7 @@ export function ExpressCheckoutButton() {
           amount: formatCurrency({
             amount: -priceAdjustment,
             currencyCode,
-            isInCents: true,
+            inputInMinorUnits: true,
             returnRaw: true,
           }),
           isPending: false,
@@ -200,7 +200,7 @@ export function ExpressCheckoutButton() {
         const totalAmount = formatCurrency({
           amount: totalInMinorUnits,
           currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
           returnRaw: true,
         });
 
@@ -218,7 +218,7 @@ export function ExpressCheckoutButton() {
             amount: formatCurrency({
               amount: -priceAdjustment,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             }),
           },
@@ -357,7 +357,7 @@ export function ExpressCheckoutButton() {
           amount: formatCurrency({
             amount: priceAdjustment,
             currencyCode,
-            isInCents: true,
+            inputInMinorUnits: true,
             returnRaw: true,
           }),
         };
@@ -554,7 +554,7 @@ export function ExpressCheckoutButton() {
             amount: formatCurrency({
               amount: godaddyTotals.shipping.value,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             }),
           });
@@ -566,7 +566,7 @@ export function ExpressCheckoutButton() {
             amount: formatCurrency({
               amount: godaddyTotals.taxes.value,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             }),
           });
@@ -581,7 +581,7 @@ export function ExpressCheckoutButton() {
         const totalAmount = formatCurrency({
           amount: totalInMinorUnits,
           currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
           returnRaw: true,
         });
 
@@ -632,7 +632,7 @@ export function ExpressCheckoutButton() {
                 amount: formatCurrency({
                   amount: godaddyTotals.shipping.value,
                   currencyCode,
-                  isInCents: true,
+                  inputInMinorUnits: true,
                   returnRaw: true,
                 }),
               });
@@ -644,7 +644,7 @@ export function ExpressCheckoutButton() {
                 amount: formatCurrency({
                   amount: godaddyTotals.taxes.value,
                   currencyCode,
-                  isInCents: true,
+                  inputInMinorUnits: true,
                   returnRaw: true,
                 }),
               });
@@ -656,7 +656,7 @@ export function ExpressCheckoutButton() {
               amount: formatCurrency({
                 amount: -adjustment,
                 currencyCode,
-                isInCents: true,
+                inputInMinorUnits: true,
                 returnRaw: true,
               }),
             });
@@ -671,7 +671,7 @@ export function ExpressCheckoutButton() {
             const totalAmount = formatCurrency({
               amount: totalInMinorUnits,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             });
 
@@ -687,7 +687,7 @@ export function ExpressCheckoutButton() {
                 amount: formatCurrency({
                   amount: -adjustment,
                   currencyCode,
-                  isInCents: true,
+                  inputInMinorUnits: true,
                   returnRaw: true,
                 }),
               },
@@ -981,7 +981,7 @@ export function ExpressCheckoutButton() {
                 amount: formatCurrency({
                   amount: taxesResult.value,
                   currencyCode,
-                  isInCents: true,
+                  inputInMinorUnits: true,
                   returnRaw: true,
                 }),
                 isPending: false,
@@ -1017,7 +1017,7 @@ export function ExpressCheckoutButton() {
             amount: formatCurrency({
               amount: -priceAdjustment,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             }),
             isPending: false,
@@ -1046,7 +1046,7 @@ export function ExpressCheckoutButton() {
             amount: formatCurrency({
               amount: -priceAdjustment,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             }),
           };
@@ -1162,7 +1162,7 @@ export function ExpressCheckoutButton() {
                 amount: formatCurrency({
                   amount: taxesResult.value,
                   currencyCode,
-                  isInCents: true,
+                  inputInMinorUnits: true,
                   returnRaw: true,
                 }),
                 isPending: false,
@@ -1201,7 +1201,7 @@ export function ExpressCheckoutButton() {
             amount: formatCurrency({
               amount: -priceAdjustment,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             }),
             isPending: false,
@@ -1231,7 +1231,7 @@ export function ExpressCheckoutButton() {
             amount: formatCurrency({
               amount: -priceAdjustment,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             }),
           };

@@ -259,7 +259,7 @@ export function useBuildPaymentRequest(): {
       amount: formatCurrency({
         amount: totals?.total?.value || 0,
         currencyCode,
-        isInCents: true,
+        inputInMinorUnits: true,
       }),
       type: 'final',
     },
@@ -269,7 +269,7 @@ export function useBuildPaymentRequest(): {
         amount: formatCurrency({
           amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 0),
           currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
         }),
         type: 'LINE_ITEM',
         status: 'FINAL',
@@ -279,7 +279,7 @@ export function useBuildPaymentRequest(): {
         amount: formatCurrency({
           amount: totals?.subTotal?.value || 0,
           currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
         }),
         type: 'final',
       },
@@ -288,7 +288,7 @@ export function useBuildPaymentRequest(): {
         amount: formatCurrency({
           amount: totals?.taxTotal?.value || 0,
           currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
         }),
         type: 'final',
       },
@@ -301,7 +301,7 @@ export function useBuildPaymentRequest(): {
               0
             ) || 0,
           currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
         }),
         type: 'final',
       },
@@ -310,7 +310,7 @@ export function useBuildPaymentRequest(): {
         amount: formatCurrency({
           amount: -1 * (totals?.discountTotal?.value || 0),
           currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
         }),
         type: 'final',
       },
@@ -353,7 +353,7 @@ export function useBuildPaymentRequest(): {
       totalPrice: formatCurrency({
         amount: totals?.total?.value || 0,
         currencyCode,
-        isInCents: true,
+        inputInMinorUnits: true,
       }),
       totalPriceLabel: 'Total',
       currencyCode,
@@ -370,7 +370,7 @@ export function useBuildPaymentRequest(): {
             formatCurrency({
               amount: subtotalMinorUnits,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             })
           ),
@@ -383,7 +383,7 @@ export function useBuildPaymentRequest(): {
             formatCurrency({
               amount: taxMinorUnits,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             })
           ),
@@ -396,7 +396,7 @@ export function useBuildPaymentRequest(): {
             formatCurrency({
               amount: shippingMinorUnits,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             })
           ),
@@ -409,7 +409,7 @@ export function useBuildPaymentRequest(): {
             formatCurrency({
               amount: -1 * discountMinorUnits,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             })
           ),
@@ -435,7 +435,7 @@ export function useBuildPaymentRequest(): {
           value: formatCurrency({
             amount: calculatedTotalMinorUnits,
             currencyCode,
-            isInCents: true,
+            inputInMinorUnits: true,
             returnRaw: true,
           }),
           breakdown: {
@@ -444,7 +444,7 @@ export function useBuildPaymentRequest(): {
               value: formatCurrency({
                 amount: subtotalMinorUnits,
                 currencyCode,
-                isInCents: true,
+                inputInMinorUnits: true,
                 returnRaw: true,
               }),
             },
@@ -453,7 +453,7 @@ export function useBuildPaymentRequest(): {
               value: formatCurrency({
                 amount: taxMinorUnits,
                 currencyCode,
-                isInCents: true,
+                inputInMinorUnits: true,
                 returnRaw: true,
               }),
             },
@@ -462,7 +462,7 @@ export function useBuildPaymentRequest(): {
               value: formatCurrency({
                 amount: shippingMinorUnits,
                 currencyCode,
-                isInCents: true,
+                inputInMinorUnits: true,
                 returnRaw: true,
               }),
             },
@@ -471,7 +471,7 @@ export function useBuildPaymentRequest(): {
               value: formatCurrency({
                 amount: discountMinorUnits,
                 currencyCode,
-                isInCents: true,
+                inputInMinorUnits: true,
                 returnRaw: true,
               }),
             },
@@ -484,7 +484,7 @@ export function useBuildPaymentRequest(): {
             value: formatCurrency({
               amount: lineItem?.originalPrice || 0,
               currencyCode,
-              isInCents: true,
+              inputInMinorUnits: true,
               returnRaw: true,
             }),
           },
@@ -578,7 +578,7 @@ export function useBuildPaymentRequest(): {
       amount: formatCurrency({
         amount: subtotalMinorUnits,
         currencyCode,
-        isInCents: true,
+        inputInMinorUnits: true,
         returnRaw: true,
       }),
     },
@@ -589,7 +589,7 @@ export function useBuildPaymentRequest(): {
           amount: formatCurrency({
             amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
             currencyCode,
-            isInCents: true,
+            inputInMinorUnits: true,
             returnRaw: true,
           }),
         };
@@ -603,7 +603,7 @@ export function useBuildPaymentRequest(): {
       amount: formatCurrency({
         amount: totalMinorUnits,
         currencyCode,
-        isInCents: true,
+        inputInMinorUnits: true,
         returnRaw: true,
       }),
     },
@@ -614,7 +614,7 @@ export function useBuildPaymentRequest(): {
           amount: formatCurrency({
             amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
             currencyCode,
-            isInCents: true,
+            inputInMinorUnits: true,
             returnRaw: true,
           }),
         };
@@ -624,7 +624,7 @@ export function useBuildPaymentRequest(): {
         amount: formatCurrency({
           amount: taxMinorUnits,
           currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
           returnRaw: true,
         }),
       },
@@ -633,7 +633,7 @@ export function useBuildPaymentRequest(): {
         amount: formatCurrency({
           amount: shippingMinorUnits,
           currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
           returnRaw: true,
         }),
       },
@@ -642,7 +642,7 @@ export function useBuildPaymentRequest(): {
         amount: formatCurrency({
           amount: -1 * discountMinorUnits,
           currencyCode,
-          isInCents: true,
+          inputInMinorUnits: true,
           returnRaw: true,
         }),
       },

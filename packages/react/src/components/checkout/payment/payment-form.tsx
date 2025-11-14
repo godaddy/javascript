@@ -452,7 +452,7 @@ export function PaymentForm(
                   {formatCurrency({
                     amount: props.total || 0,
                     currencyCode: props.currencyCode || 'USD',
-                    isInCents: true,
+                    inputInMinorUnits: true,
                   })}
                 </span>
               </div>
@@ -462,7 +462,7 @@ export function PaymentForm(
                 <DraftOrderLineItems
                   currencyCode={props.currencyCode}
                   items={props.items}
-                  isInCents
+                  inputInMinorUnits
                 />
               </div>
             </AccordionContent>
@@ -470,7 +470,7 @@ export function PaymentForm(
         </Accordion>
         <div className='pt-4'>
           <DraftOrderTotals
-            isInCents
+            inputInMinorUnits
             currencyCode={props.currencyCode}
             tip={props.tip}
             taxes={props.taxes}

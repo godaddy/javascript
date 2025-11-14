@@ -120,7 +120,7 @@ export function GoDaddyProvider({
   apiHost,
   clientId,
   storeId,
-  locale = 'fr-FR',
+  locale = 'en-US',
   queryClient: providedQueryClient,
   Link,
   children,
