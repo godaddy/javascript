@@ -1,12 +1,12 @@
 'use client';
 
 import { ChevronRight, Loader2, ShoppingBag } from 'lucide-react';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RouterLink } from '@/components/ui/link';
-import { formatCurrency } from '@/lib/utils';
 import { SKUGroup } from '@/types.ts';
 
 interface ProductCardProps {
@@ -22,6 +22,7 @@ export function ProductCard({
   onAddToCartSuccess,
   onAddToCartError,
 }: ProductCardProps) {
+  const formatCurrency = useFormatCurrency();
   const title = product?.label || product?.name || 'Product';
   const description = product?.description || '';
   const priceMin = product?.priceRange?.min || 0;
@@ -91,8 +92,12 @@ export function ProductCard({
         <div className='flex items-center justify-between pt-2 mt-auto'>
           <span className='text-md font-semibold text-foreground'>
             {isPriceRange
-              ? `${formatCurrency(priceMin)} - ${formatCurrency(priceMax)}`
-              : formatCurrency(priceMin)}
+              ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', inputInMinorUnits: true })}`
+              : formatCurrency({
+                  amount: priceMin,
+                  currencyCode: 'USD',
+                  inputInMinorUnits: true,
+                })}
           </span>
           {hasOptions ? (
             <Button size='sm' variant='outline' className='gap-1'>

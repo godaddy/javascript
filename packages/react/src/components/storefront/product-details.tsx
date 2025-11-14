@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSku, getSkuGroup } from '@/lib/godaddy/godaddy';
-import { formatCurrency } from '@/lib/utils';
 import type { SKUGroupAttribute, SKUGroupAttributeValue } from '@/types';
 
 interface ProductDetailsProps {
@@ -126,6 +126,7 @@ export function ProductDetails({
   onAddToCartError,
 }: ProductDetailsProps) {
   const context = useGoDaddyContext();
+  const formatCurrency = useFormatCurrency();
 
   // Props take priority over context values
   const storeId = storeIdProp || context.storeId;
@@ -531,14 +532,22 @@ export function ProductDetails({
           <div className='flex items-baseline gap-3 mb-4'>
             <span className='text-2xl font-bold text-foreground'>
               {isPriceRange
-                ? `${formatCurrency(priceMin)} - ${formatCurrency(priceMax)}`
-                : formatCurrency(priceMin)}
+                ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', inputInMinorUnits: true })}`
+                : formatCurrency({
+                    amount: priceMin,
+                    currencyCode: 'USD',
+                    inputInMinorUnits: true,
+                  })}
             </span>
             {isOnSale && compareAtMin && (
               <span className='text-lg text-muted-foreground line-through'>
                 {isCompareAtPriceRange
-                  ? `${formatCurrency(compareAtMin)} - ${formatCurrency(compareAtMax!)}`
-                  : formatCurrency(compareAtMin)}
+                  ? `${formatCurrency({ amount: compareAtMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: 'USD', inputInMinorUnits: true })}`
+                  : formatCurrency({
+                      amount: compareAtMin,
+                      currencyCode: 'USD',
+                      inputInMinorUnits: true,
+                    })}
               </span>
             )}
           </div>

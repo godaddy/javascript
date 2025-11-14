@@ -1,3 +1,5 @@
+import { useGoDaddyContext } from '@/godaddy-provider';
+
 /**
  * Currency configuration map with symbols and decimal precision.
  */
@@ -49,7 +51,7 @@ export interface FormatCurrencyOptions {
    * - true → format to currency string (default)
    * - false → convert to minor units and return as string
    */
-  isInCents?: boolean;
+  inputInMinorUnits?: boolean;
   /**
    * Return raw numeric value without currency symbol.
    * - true → returns "10.00" instead of "$10.00"
@@ -61,22 +63,22 @@ export interface FormatCurrencyOptions {
 /**
  * Formats or converts a currency amount.
  *
- * - When `isInCents = true` (default): returns formatted string like "$123.45"
- * - When `isInCents = false`: returns string representing minor units like "12345"
+ * - When `inputInMinorUnits = true` (default): returns formatted string like "$123.45"
+ * - When `inputInMinorUnits = false`: returns string representing minor units like "12345"
  * - When `returnRaw = true`: returns numeric value without currency symbol like "123.45"
  */
 export function formatCurrency({
   amount,
   currencyCode,
   locale = 'en-US',
-  isInCents = true,
+  inputInMinorUnits = true,
   returnRaw = false,
 }: FormatCurrencyOptions): string {
   const config = currencyConfigs[currencyCode] || {};
 
   const { precision = 2 } = config;
 
-  if (!isInCents) {
+  if (!inputInMinorUnits) {
     // Convert major units to minor units and return as string
     return Math.round(amount * Math.pow(10, precision)).toString();
   }
@@ -86,11 +88,37 @@ export function formatCurrency({
 
   const nfLocale = returnRaw ? 'en-US' : locale;
 
-  return new Intl.NumberFormat(nfLocale, {
-    style: returnRaw ? 'decimal' : 'currency',
-    currency: returnRaw ? undefined : currencyCode,
-    minimumFractionDigits: precision,
-    maximumFractionDigits: precision,
-    useGrouping: returnRaw ? false : undefined,
-  }).format(value);
+  try {
+    return new Intl.NumberFormat(nfLocale, {
+      style: returnRaw ? 'decimal' : 'currency',
+      currency: returnRaw ? undefined : currencyCode,
+      minimumFractionDigits: precision,
+      maximumFractionDigits: precision,
+      useGrouping: returnRaw ? false : undefined,
+    }).format(value);
+  } catch (_error) {
+    // Fallback to 'en-US' for invalid locales
+    return new Intl.NumberFormat('en-US', {
+      style: returnRaw ? 'decimal' : 'currency',
+      currency: returnRaw ? undefined : currencyCode,
+      minimumFractionDigits: precision,
+      maximumFractionDigits: precision,
+      useGrouping: returnRaw ? false : undefined,
+    }).format(value);
+  }
+}
+
+/**
+ * Hook that returns a formatCurrency function using the locale from GoDaddyProvider context.
+ * The returned function has the same signature as formatCurrency, but uses the context locale as default.
+ */
+export function useFormatCurrency() {
+  const { locale: contextLocale } = useGoDaddyContext();
+
+  return (options: FormatCurrencyOptions) => {
+    return formatCurrency({
+      ...options,
+      locale: options.locale ?? contextLocale ?? 'en-US',
+    });
+  };
 }

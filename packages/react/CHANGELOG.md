@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.6
+
+### Patch Changes
+
+- 16b571f: Add support for locale prop on context provider
+
 ## 1.0.5
 
 ### Patch Changes
