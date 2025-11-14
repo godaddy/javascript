@@ -1,6 +1,6 @@
 import { DiscountStandalone } from '@/components/checkout/discount/discount-standalone';
 import { TotalLineItemSkeleton } from '@/components/checkout/totals/totals-skeleton';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useGoDaddyContext } from '@/godaddy-provider';
 
 export interface DraftOrderTotalsProps {
@@ -35,6 +35,8 @@ function TotalLineItem({
   currencyCode?: string;
   isInCents?: boolean;
 }) {
+  const formatCurrency = useFormatCurrency();
+
   return (
     <div className='flex justify-between text-sm'>
       <div className='flex flex-col gap-0.5'>
@@ -72,6 +74,7 @@ export function DraftOrderTotals({
   isInCents = false,
 }: DraftOrderTotalsProps) {
   const { t } = useGoDaddyContext();
+  const formatCurrency = useFormatCurrency();
   const handleDiscountsChange = (discounts: string[]) => {
     // Discount changes are handled by the DiscountStandalone component
   };

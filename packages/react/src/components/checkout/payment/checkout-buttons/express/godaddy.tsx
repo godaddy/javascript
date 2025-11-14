@@ -34,7 +34,7 @@ import { filterAndSortShippingMethods } from '@/components/checkout/shipping/uti
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
 import { mapOrderToFormValues } from '@/components/checkout/utils/checkout-transformers';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -46,6 +46,7 @@ import {
 } from '@/tracking/track';
 
 export function ExpressCheckoutButton() {
+  const formatCurrency = useFormatCurrency();
   const { session, setCheckoutErrors } = useCheckoutContext();
   const { isPoyntLoaded } = useLoadPoyntCollect();
   const { godaddyPaymentsConfig } = useCheckoutContext();

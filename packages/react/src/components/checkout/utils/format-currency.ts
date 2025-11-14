@@ -1,3 +1,5 @@
+import { useGoDaddyContext } from '@/godaddy-provider';
+
 /**
  * Currency configuration map with symbols and decimal precision.
  */
@@ -93,4 +95,19 @@ export function formatCurrency({
     maximumFractionDigits: precision,
     useGrouping: returnRaw ? false : undefined,
   }).format(value);
+}
+
+/**
+ * Hook that returns a formatCurrency function using the locale from GoDaddyProvider context.
+ * The returned function has the same signature as formatCurrency, but uses the context locale as default.
+ */
+export function useFormatCurrency() {
+  const { locale: contextLocale } = useGoDaddyContext();
+
+  return (options: FormatCurrencyOptions) => {
+    return formatCurrency({
+      ...options,
+      locale: options.locale ?? contextLocale ?? 'en-US',
+    });
+  };
 }

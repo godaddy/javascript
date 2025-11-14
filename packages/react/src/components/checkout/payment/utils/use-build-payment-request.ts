@@ -8,7 +8,7 @@ import {
 } from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderProductsMap } from '@/components/checkout/order/use-draft-order-products';
 import { mapSkusToItemsDisplay } from '@/components/checkout/utils/checkout-transformers';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 
 // Apple Pay request interface
 export interface ApplePayRequest {
@@ -176,6 +176,7 @@ export function useBuildPaymentRequest(): {
   poyntStandardRequest: PoyntStandardRequest;
   squarePaymentRequest: SquarePaymentRequest;
 } {
+  const formatCurrency = useFormatCurrency();
   const { session } = useCheckoutContext();
 
   const draftOrderTotalsQuery = useDraftOrderTotals();

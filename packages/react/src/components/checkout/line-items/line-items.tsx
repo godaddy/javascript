@@ -1,7 +1,7 @@
 // import { Badge } from "@/components/ui/badge";
 
 import { Image } from 'lucide-react';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import type { SKUProduct } from '@/types';
 
@@ -65,6 +65,7 @@ export function DraftOrderLineItems({
   isInCents = false,
 }: DraftOrderLineItemsProps) {
   const { t } = useGoDaddyContext();
+  const formatCurrency = useFormatCurrency();
 
   return (
     <div className='space-y-4 mb-4'>

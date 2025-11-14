@@ -34,7 +34,7 @@ import {
   DraftOrderTotals,
   type DraftOrderTotalsProps,
 } from '@/components/checkout/totals/totals';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import {
   Accordion,
   AccordionContent,
@@ -72,6 +72,7 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
 export function PaymentForm(
   props: DraftOrderTotalsProps & { items: Product[] }
 ) {
+  const formatCurrency = useFormatCurrency();
   const { t } = useGoDaddyContext();
   const {
     session,

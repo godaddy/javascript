@@ -1,11 +1,11 @@
 'use client';
 
 import { ChevronRight, ShoppingBag } from 'lucide-react';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RouterLink } from '@/components/ui/link';
-import { formatCurrency } from '@/lib/utils';
 import { SKUGroup } from '@/types.ts';
 
 interface ProductCardProps {
@@ -14,6 +14,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, href }: ProductCardProps) {
+  const formatCurrency = useFormatCurrency();
   const title = product?.label || product?.name || 'Product';
   const description = product?.description || '';
   const priceMin = product?.priceRange?.min || 0;
@@ -61,8 +62,12 @@ export function ProductCard({ product, href }: ProductCardProps) {
         <div className='flex items-center justify-between pt-2 mt-auto'>
           <span className='text-md font-semibold text-foreground'>
             {isPriceRange
-              ? `${formatCurrency(priceMin)} - ${formatCurrency(priceMax)}`
-              : formatCurrency(priceMin)}
+              ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', isInCents: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', isInCents: true })}`
+              : formatCurrency({
+                  amount: priceMin,
+                  currencyCode: 'USD',
+                  isInCents: true,
+                })}
           </span>
           {hasOptions ? (
             <Button size='sm' variant='outline' className='gap-1'>
