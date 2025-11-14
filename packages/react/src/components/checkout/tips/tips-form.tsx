@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -25,6 +25,7 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
   const { t } = useGoDaddyContext();
   const { requiredFields } = useCheckoutContext();
   const form = useFormContext();
+  const formatCurrency = useFormatCurrency();
   const [showCustomTip, setShowCustomTip] = useState(false);
 
   const calculateTipAmount = (percentage: number): number => {
@@ -113,7 +114,7 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
               {formatCurrency({
                 amount: calculateTipAmount(percentage),
                 currencyCode: currencyCode || 'USD',
-                isInCents: true,
+                inputInMinorUnits: true,
               })}
             </span>
           </Button>
@@ -171,7 +172,7 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
                       ? formatCurrency({
                           amount: field.value,
                           currencyCode: currencyCode || 'USD',
-                          isInCents: true,
+                          inputInMinorUnits: true,
                           returnRaw: true,
                         })
                       : ''

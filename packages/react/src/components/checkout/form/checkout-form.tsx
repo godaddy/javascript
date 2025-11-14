@@ -38,7 +38,7 @@ import { ShippingMethodForm } from '@/components/checkout/shipping/shipping-meth
 import { Target } from '@/components/checkout/target/target';
 import { TipsForm } from '@/components/checkout/tips/tips-form';
 import { DraftOrderTotals } from '@/components/checkout/totals/totals';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import {
   Accordion,
   AccordionContent,
@@ -71,6 +71,7 @@ export function CheckoutForm({
   items,
   ...props
 }: CheckoutFormProps) {
+  const formatCurrency = useFormatCurrency();
   const { t } = useGoDaddyContext();
   const { session, isCheckoutDisabled } = useCheckoutContext();
 
@@ -439,7 +440,7 @@ export function CheckoutForm({
                           {formatCurrency({
                             amount: totals?.total?.value || 0,
                             currencyCode,
-                            isInCents: true,
+                            inputInMinorUnits: true,
                           })}
                         </span>
                       </div>
@@ -449,11 +450,11 @@ export function CheckoutForm({
                         <DraftOrderLineItems
                           currencyCode={currencyCode}
                           items={items}
-                          isInCents
+                          inputInMinorUnits
                         />
 
                         <DraftOrderTotals
-                          isInCents
+                          inputInMinorUnits
                           currencyCode={currencyCode}
                           tip={tipTotal}
                           taxes={taxTotal}
@@ -480,11 +481,11 @@ export function CheckoutForm({
                 <DraftOrderLineItems
                   currencyCode={currencyCode}
                   items={items}
-                  isInCents
+                  inputInMinorUnits
                 />
 
                 <DraftOrderTotals
-                  isInCents
+                  inputInMinorUnits
                   currencyCode={currencyCode}
                   tip={tipTotal}
                   taxes={taxTotal}

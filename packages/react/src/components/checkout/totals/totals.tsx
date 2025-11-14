@@ -1,6 +1,6 @@
 import { DiscountStandalone } from '@/components/checkout/discount/discount-standalone';
 import { TotalLineItemSkeleton } from '@/components/checkout/totals/totals-skeleton';
-import { formatCurrency } from '@/components/checkout/utils/format-currency';
+import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useGoDaddyContext } from '@/godaddy-provider';
 
 export interface DraftOrderTotalsProps {
@@ -19,7 +19,7 @@ export interface DraftOrderTotalsProps {
   enableTaxes?: boolean | null;
   enableDiscounts?: boolean | null;
   enableShipping?: boolean | null;
-  isInCents?: boolean;
+  inputInMinorUnits?: boolean;
 }
 
 function TotalLineItem({
@@ -27,14 +27,16 @@ function TotalLineItem({
   description,
   value,
   currencyCode = 'USD',
-  isInCents = false,
+  inputInMinorUnits = false,
 }: {
   title: string;
   description?: string;
   value: number;
   currencyCode?: string;
-  isInCents?: boolean;
+  inputInMinorUnits?: boolean;
 }) {
+  const formatCurrency = useFormatCurrency();
+
   return (
     <div className='flex justify-between text-sm'>
       <div className='flex flex-col gap-0.5'>
@@ -47,7 +49,7 @@ function TotalLineItem({
         {formatCurrency({
           amount: value,
           currencyCode,
-          isInCents,
+          inputInMinorUnits,
         })}
       </span>
     </div>
@@ -69,9 +71,10 @@ export function DraftOrderTotals({
   isShippingLoading = false,
   isDiscountLoading = false,
   enableShipping = true,
-  isInCents = false,
+  inputInMinorUnits = false,
 }: DraftOrderTotalsProps) {
   const { t } = useGoDaddyContext();
+  const formatCurrency = useFormatCurrency();
   const handleDiscountsChange = (discounts: string[]) => {
     // Discount changes are handled by the DiscountStandalone component
   };
@@ -88,7 +91,7 @@ export function DraftOrderTotals({
               : t.totals.noItems
           }
           value={subtotal}
-          isInCents={isInCents}
+          inputInMinorUnits={inputInMinorUnits}
         />
         {discount > 0 ? (
           isDiscountLoading ? (
@@ -98,7 +101,7 @@ export function DraftOrderTotals({
               currencyCode={currencyCode}
               title={t.totals.discount}
               value={-discount || 0}
-              isInCents={isInCents}
+              inputInMinorUnits={inputInMinorUnits}
             />
           )
         ) : null}
@@ -110,7 +113,7 @@ export function DraftOrderTotals({
               currencyCode={currencyCode}
               title={t.totals.shipping}
               value={shipping || 0}
-              isInCents={isInCents}
+              inputInMinorUnits={inputInMinorUnits}
             />
           ))}
         {tip ? (
@@ -118,7 +121,7 @@ export function DraftOrderTotals({
             currencyCode={currencyCode}
             title={t.totals.tip}
             value={tip || 0}
-            isInCents={isInCents}
+            inputInMinorUnits={inputInMinorUnits}
           />
         ) : null}
         {enableTaxes &&
@@ -129,7 +132,7 @@ export function DraftOrderTotals({
               currencyCode={currencyCode}
               title={t.totals.estimatedTaxes}
               value={taxes || 0}
-              isInCents={isInCents}
+              inputInMinorUnits={inputInMinorUnits}
             />
           ))}
       </div>
@@ -157,7 +160,7 @@ export function DraftOrderTotals({
               {formatCurrency({
                 amount: total,
                 currencyCode,
-                isInCents,
+                inputInMinorUnits,
               })}
             </span>
           </div>
