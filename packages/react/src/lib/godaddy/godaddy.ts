@@ -63,9 +63,13 @@ import {
   GetCheckoutSessionQuery,
 } from './checkout-queries.ts';
 
-function getHostByEnvironment(apiHost?: string, service = 'checkout'): string {
+function getHostByEnvironment(apiHost?: string): string {
   // Use provided apiHost, otherwise default to production
-  return `https://${service}.commerce.${apiHost || 'api.godaddy.com'}`;
+  return `https://checkout.commerce.${apiHost || 'api.godaddy.com'}`;
+}
+
+function getApiHostByEnvironment(apiHost?: string, endpoint?: string): string {
+  return `https://${apiHost || 'api.godaddy.com'}${endpoint ? endpoint : ''}`;
 }
 
 // Type for createCheckoutSession input with kebab-case appearance
@@ -1081,10 +1085,13 @@ export function getSkuGroups(
   clientId: string,
   apiHost?: string
 ) {
-  const GODADDY_HOST = getHostByEnvironment(apiHost, 'catalog');
+  const GODADDY_HOST = getApiHostByEnvironment(
+    apiHost,
+    `/v2/commerce/stores/${storeId}/catalog-subgraph/storefront`
+  );
 
   return graphqlRequestWithErrors<ResultOf<typeof SkuGroupsQuery>>(
-    `${GODADDY_HOST}/storefront`,
+    GODADDY_HOST,
     SkuGroupsQuery,
     input,
     {
@@ -1100,10 +1107,13 @@ export function getSkuGroup(
   clientId: string,
   apiHost?: string
 ) {
-  const GODADDY_HOST = getHostByEnvironment(apiHost, 'catalog');
+  const GODADDY_HOST = getApiHostByEnvironment(
+    apiHost,
+    `/v2/commerce/stores/${storeId}/catalog-subgraph/storefront`
+  );
 
   return graphqlRequestWithErrors<ResultOf<typeof SkuGroupQuery>>(
-    `${GODADDY_HOST}/storefront`,
+    GODADDY_HOST,
     SkuGroupQuery,
     input,
     {
@@ -1119,10 +1129,13 @@ export function getSku(
   clientId: string,
   apiHost?: string
 ) {
-  const GODADDY_HOST = getHostByEnvironment(apiHost, 'catalog');
+  const GODADDY_HOST = getApiHostByEnvironment(
+    apiHost,
+    `/v2/commerce/stores/${storeId}/catalog-subgraph/storefront`
+  );
 
   return graphqlRequestWithErrors<ResultOf<typeof SkuQuery>>(
-    `${GODADDY_HOST}/storefront`,
+    GODADDY_HOST,
     SkuQuery,
     input,
     {
@@ -1139,10 +1152,13 @@ export function createCartOrder(
   clientId: string,
   apiHost?: string
 ) {
-  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+  const GODADDY_HOST = getApiHostByEnvironment(
+    apiHost,
+    `/v1/commerce/order-storefront-subgraph`
+  );
 
   return graphqlRequestWithErrors<ResultOf<typeof AddCartOrderMutation>>(
-    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    GODADDY_HOST,
     AddCartOrderMutation,
     { input },
     {
@@ -1158,10 +1174,13 @@ export function getCartOrder(
   clientId: string,
   apiHost?: string
 ) {
-  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+  const GODADDY_HOST = getApiHostByEnvironment(
+    apiHost,
+    `/v1/commerce/order-storefront-subgraph`
+  );
 
   return graphqlRequestWithErrors<ResultOf<typeof GetCartOrderQuery>>(
-    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    GODADDY_HOST,
     GetCartOrderQuery,
     { id: orderId },
     {
@@ -1177,10 +1196,13 @@ export function addCartLineItem(
   clientId: string,
   apiHost?: string
 ) {
-  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+  const GODADDY_HOST = getApiHostByEnvironment(
+    apiHost,
+    `/v1/commerce/order-storefront-subgraph`
+  );
 
   return graphqlRequestWithErrors<ResultOf<typeof AddLineItemBySkuIdMutation>>(
-    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    GODADDY_HOST,
     AddLineItemBySkuIdMutation,
     { input },
     {
@@ -1196,10 +1218,13 @@ export function updateCartOrder(
   clientId: string,
   apiHost?: string
 ) {
-  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+  const GODADDY_HOST = getApiHostByEnvironment(
+    apiHost,
+    `/v1/commerce/order-storefront-subgraph`
+  );
 
   return graphqlRequestWithErrors<ResultOf<typeof UpdateCartOrderMutation>>(
-    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    GODADDY_HOST,
     UpdateCartOrderMutation,
     { input },
     {
@@ -1215,10 +1240,13 @@ export function deleteCartLineItem(
   clientId: string,
   apiHost?: string
 ) {
-  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+  const GODADDY_HOST = getApiHostByEnvironment(
+    apiHost,
+    `/v1/commerce/order-storefront-subgraph`
+  );
 
   return graphqlRequestWithErrors<ResultOf<typeof DeleteLineItemByIdMutation>>(
-    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    GODADDY_HOST,
     DeleteLineItemByIdMutation,
     input,
     {
@@ -1234,10 +1262,12 @@ export function applyCartDiscountCodes(
   clientId: string,
   apiHost?: string
 ) {
-  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
-
+  const GODADDY_HOST = getApiHostByEnvironment(
+    apiHost,
+    `/v1/commerce/order-storefront-subgraph`
+  );
   return graphqlRequestWithErrors<ResultOf<typeof ApplyDiscountCodesMutation>>(
-    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    GODADDY_HOST,
     ApplyDiscountCodesMutation,
     { input },
     {
@@ -1253,10 +1283,13 @@ export function updateCartLineItem(
   clientId: string,
   apiHost?: string
 ) {
-  const GODADDY_HOST = getHostByEnvironment(apiHost, 'orders');
+  const GODADDY_HOST = getApiHostByEnvironment(
+    apiHost,
+    `/v1/commerce/order-storefront-subgraph`
+  );
 
   return graphqlRequestWithErrors<ResultOf<typeof UpdateLineItemByIdMutation>>(
-    `${GODADDY_HOST}/v1/commerce/order-storefront-subgraph`,
+    GODADDY_HOST,
     UpdateLineItemByIdMutation,
     { input },
     {

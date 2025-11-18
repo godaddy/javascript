@@ -64,11 +64,8 @@ const introspection = {
           {
             name: 'totals',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'OrderTotalsInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'OrderTotalsInput',
             },
           },
           {
@@ -1322,6 +1319,15 @@ const introspection = {
             type: {
               kind: 'ENUM',
               name: 'LineItemTypes',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'unitAmount',
+            type: {
+              kind: 'OBJECT',
+              name: 'Money',
             },
             args: [],
             isDeprecated: false,
