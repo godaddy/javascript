@@ -40,6 +40,7 @@ export function ProductGrid({
   onAddToCartError,
 }: ProductGridProps) {
   const context = useGoDaddyContext();
+  const { t } = context;
   const storeId = storeIdProp || context.storeId;
   const clientId = clientIdProp || context.clientId;
 
@@ -55,7 +56,11 @@ export function ProductGrid({
   }
 
   if (error) {
-    return <div>Error loading products: {error.message}</div>;
+    return (
+      <div>
+        {t.storefront.errorLoadingProducts} {error.message}
+      </div>
+    );
   }
 
   const skuGroups = data?.skuGroups?.edges;

@@ -60,11 +60,13 @@ export function Cart({ open, onOpenChange }: CartProps) {
 
   const order = cartData?.orderById;
 
+  const { t } = useGoDaddyContext();
+
   // Transform cart line items to Product format for CartLineItems component
   const items: Product[] =
     order?.lineItems?.map(item => ({
       id: item.id,
-      name: item.name || 'Product',
+      name: item.name || t.storefront.product,
       image: item.details?.productAssetUrl || '',
       quantity: item.quantity || 0,
       originalPrice:
@@ -100,7 +102,7 @@ export function Cart({ open, onOpenChange }: CartProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className='w-full sm:max-w-lg overflow-y-auto'>
         <SheetHeader>
-          <SheetTitle>Shopping Cart</SheetTitle>
+          <SheetTitle>{t.storefront.shoppingCart}</SheetTitle>
         </SheetHeader>
         <div className='mt-8 space-y-6'>
           {isLoading && (
@@ -112,7 +114,7 @@ export function Cart({ open, onOpenChange }: CartProps) {
           {!isLoading && error && (
             <div className='flex flex-col items-center justify-center py-12 text-center'>
               <p className='text-destructive mb-2'>
-                Failed to load cart: {(error as Error).message}
+                {t.storefront.failedToLoadCart} {(error as Error).message}
               </p>
               <Button
                 variant='outline'
@@ -122,7 +124,7 @@ export function Cart({ open, onOpenChange }: CartProps) {
                   })
                 }
               >
-                Retry
+                {t.storefront.retry}
               </Button>
             </div>
           )}
@@ -131,10 +133,10 @@ export function Cart({ open, onOpenChange }: CartProps) {
             <div className='flex flex-col items-center justify-center py-12 text-center'>
               <ShoppingCart className='h-16 w-16 text-muted-foreground mb-4' />
               <p className='text-lg font-medium text-foreground mb-1'>
-                Your cart is empty
+                {t.storefront.yourCartIsEmpty}
               </p>
               <p className='text-sm text-muted-foreground'>
-                Add items to get started
+                {t.storefront.addItemsToGetStarted}
               </p>
             </div>
           )}

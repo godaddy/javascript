@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RouterLink } from '@/components/ui/link';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { SKUGroup } from '@/types.ts';
 
 interface ProductCardProps {
@@ -23,7 +24,8 @@ export function ProductCard({
   onAddToCartError,
 }: ProductCardProps) {
   const formatCurrency = useFormatCurrency();
-  const title = product?.label || product?.name || 'Product';
+  const { t } = useGoDaddyContext();
+  const title = product?.label || product?.name || t.storefront.product;
   const description = product?.description || '';
   const priceMin = product?.priceRange?.min || 0;
   const priceMax = product?.priceRange?.max || priceMin;
@@ -67,7 +69,7 @@ export function ProductCard({
       <div className='aspect-square overflow-hidden bg-muted relative'>
         {isOnSale && (
           <Badge className='absolute top-3 right-3 z-10 bg-destructive text-destructive-foreground font-semibold'>
-            SALE
+            {t.storefront.sale}
           </Badge>
         )}
         {imageUrl ? (
@@ -78,7 +80,7 @@ export function ProductCard({
           />
         ) : (
           <div className='w-full h-full flex items-center justify-center text-muted-foreground'>
-            No image
+            {t.storefront.noImage}
           </div>
         )}
       </div>
@@ -101,7 +103,7 @@ export function ProductCard({
           </span>
           {hasOptions ? (
             <Button size='sm' variant='outline' className='gap-1'>
-              <span>Select Options</span>
+              <span>{t.storefront.selectOptions}</span>
               <ChevronRight className='h-4 w-4' />
             </Button>
           ) : (
@@ -116,7 +118,7 @@ export function ProductCard({
               ) : (
                 <ShoppingBag className='h-4 w-4' />
               )}
-              {isAddingToCart ? 'Adding...' : 'Add to Cart'}
+              {isAddingToCart ? t.storefront.adding : t.storefront.addToCart}
             </Button>
           )}
         </div>
