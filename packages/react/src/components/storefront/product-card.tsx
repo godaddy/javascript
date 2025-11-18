@@ -38,7 +38,7 @@ export function ProductCard({
 
   // Get first SKU for products without options
   const firstSku = product?.skus?.edges?.[0]?.node;
-  const skuId = firstSku?.code || product?.id || '';
+  const skuId = firstSku?.id || product?.id || '';
 
   // Use shared add to cart hook
   const { addToCart, isLoading: isAddingToCart } = useAddToCart({
