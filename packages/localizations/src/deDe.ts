@@ -380,5 +380,6 @@ export const deDe = {
     inStock: 'Auf Lager',
     remove: 'Entfernen',
     removing: 'Wird entfernt...',
+    checkout: 'Zur Kasse',
   },
 };

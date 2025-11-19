@@ -344,5 +344,6 @@ export const zhCn = {
     inStock: '有货',
     remove: '删除',
     removing: '正在删除...',
+    checkout: '结账',
   },
 };

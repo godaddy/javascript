@@ -365,5 +365,6 @@ export const qaPs = {
     inStock: '[In Stock]',
     remove: '[Remove]',
     removing: '[Removing...]',
+    checkout: '[Checkout]',
   },
 };

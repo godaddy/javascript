@@ -380,5 +380,6 @@ export const itIt = {
     inStock: 'Disponibile',
     remove: 'Rimuovi',
     removing: 'Rimozione...',
+    checkout: 'Acquista',
   },
 };

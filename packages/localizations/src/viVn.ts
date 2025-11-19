@@ -357,5 +357,6 @@ export const viVn = {
     inStock: 'Còn hàng',
     remove: 'Xóa',
     removing: 'Đang xóa...',
+    checkout: 'Thanh toán',
   },
 };

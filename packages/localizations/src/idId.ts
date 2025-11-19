@@ -356,5 +356,6 @@ export const idId = {
     inStock: 'Tersedia',
     remove: 'Hapus',
     removing: 'Menghapus...',
+    checkout: 'Checkout',
   },
 };

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
@@ -19,9 +20,16 @@ import { deleteCartLineItem, getCartOrder } from '@/lib/godaddy/godaddy';
 interface CartProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCheckout?: (orderId: string) => void;
+  isCheckingOut?: boolean;
 }
 
-export function Cart({ open, onOpenChange }: CartProps) {
+export function Cart({
+  open,
+  onOpenChange,
+  onCheckout,
+  isCheckingOut = false,
+}: CartProps) {
   const context = useGoDaddyContext();
   const queryClient = useQueryClient();
   const cartOrderId = getCartOrderId();
@@ -177,6 +185,22 @@ export function Cart({ open, onOpenChange }: CartProps) {
                 enableTaxes={false}
                 enableShipping={false}
               />
+              {onCheckout ? (
+                <SheetFooter>
+                  <Button
+                    className='w-full'
+                    size='lg'
+                    onClick={() => onCheckout(cartOrderId)}
+                    disabled={isCheckingOut}
+                  >
+                    {isCheckingOut ? (
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                    ) : (
+                      t.storefront.checkout
+                    )}
+                  </Button>
+                </SheetFooter>
+              ) : null}
             </>
           )}
         </div>

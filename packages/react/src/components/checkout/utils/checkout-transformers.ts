@@ -157,7 +157,7 @@ export function mapSkusToItemsDisplay(
       return {
         id: orderItem.id || '',
         name: skuDetails?.label || orderItem.name || '',
-        image: orderItem.details?.productAssetUrl || skuDetails?.mediaUrls?.[0],
+        image: orderItem.details?.productAssetUrl,
         quantity: orderItem.quantity || 0,
         originalPrice:
           (orderItem.totals?.subTotal?.value ?? 0) / (orderItem.quantity || 0),

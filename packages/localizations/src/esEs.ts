@@ -368,5 +368,6 @@ export const esEs = {
     inStock: 'En stock',
     remove: 'Eliminar',
     removing: 'Eliminando...',
+    checkout: 'Pagar',
   },
 };

@@ -5,6 +5,7 @@ export const CreateCheckoutSessionMutation = graphql(`
     createCheckoutSession(input: $input) {
       id
       token
+      url
       sourceApp
       returnUrl
       successUrl

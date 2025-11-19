@@ -380,5 +380,6 @@ export const frCa = {
     inStock: 'En stock',
     remove: 'Supprimer',
     removing: 'Suppression...',
+    checkout: 'Commander',
   },
 };

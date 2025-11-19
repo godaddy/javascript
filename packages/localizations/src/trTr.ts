@@ -356,5 +356,6 @@ export const trTr = {
     inStock: 'Stokta',
     remove: 'Kaldır',
     removing: 'Kaldırılıyor...',
+    checkout: 'Ödeme yap',
   },
 };

@@ -3,6 +3,7 @@
 import { Cart } from '@godaddy/react';
 import { ShoppingCart } from 'lucide-react';
 import { createContext, useContext, useState } from 'react';
+import { checkoutWithOrder } from './actions';
 
 interface CartContextType {
   openCart: () => void;
@@ -25,9 +26,19 @@ export default function StoreLayout({
   children: React.ReactNode;
 }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
+
+  const handleCheckout = async (orderId: string) => {
+    setIsCheckingOut(true);
+    try {
+      await checkoutWithOrder(orderId);
+    } catch (_error) {
+      setIsCheckingOut(false);
+    }
+  };
 
   return (
     <CartContext.Provider value={{ openCart, closeCart }}>
@@ -43,7 +54,12 @@ export default function StoreLayout({
 
         {children}
 
-        <Cart open={isCartOpen} onOpenChange={setIsCartOpen} />
+        <Cart
+          open={isCartOpen}
+          onOpenChange={setIsCartOpen}
+          onCheckout={handleCheckout}
+          isCheckingOut={isCheckingOut}
+        />
       </section>
     </CartContext.Provider>
   );

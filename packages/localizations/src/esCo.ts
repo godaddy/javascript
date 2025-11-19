@@ -363,5 +363,6 @@ export const esCo = {
     inStock: 'En stock',
     remove: 'Eliminar',
     removing: 'Eliminando...',
+    checkout: 'Pagar',
   },
 };

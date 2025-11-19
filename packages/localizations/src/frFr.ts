@@ -381,5 +381,6 @@ export const frFr = {
     inStock: 'En stock',
     remove: 'Supprimer',
     removing: 'Suppression...',
+    checkout: 'Commander',
   },
 };

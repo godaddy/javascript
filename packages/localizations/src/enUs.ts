@@ -357,5 +357,6 @@ export const enUs = {
     inStock: 'In Stock',
     remove: 'Remove',
     removing: 'Removing...',
+    checkout: 'Checkout',
   },
 };

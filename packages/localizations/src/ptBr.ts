@@ -361,5 +361,6 @@ export const ptBr = {
     inStock: 'Em estoque',
     remove: 'Remover',
     removing: 'Removendo...',
+    checkout: 'Finalizar compra',
   },
 };

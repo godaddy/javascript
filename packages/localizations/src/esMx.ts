@@ -364,5 +364,6 @@ export const esMx = {
     inStock: 'En stock',
     remove: 'Eliminar',
     removing: 'Eliminando...',
+    checkout: 'Pagar',
   },
 };
