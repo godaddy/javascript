@@ -399,7 +399,7 @@ export function ProductDetails({
     }
 
     await addToCart({
-      skuId: selectedSku?.code || productId,
+      skuId: selectedSku?.id || productId,
       name: title,
       quantity,
       productAssetUrl: images[0] || undefined,

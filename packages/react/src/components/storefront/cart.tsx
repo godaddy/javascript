@@ -69,20 +69,18 @@ export function Cart({ open, onOpenChange }: CartProps) {
       name: item.name || t.storefront.product,
       image: item.details?.productAssetUrl || '',
       quantity: item.quantity || 0,
-      originalPrice:
-        (item.totals?.subTotal?.value || 0) / 100 / (item.quantity || 1),
-      price: (item.totals?.subTotal?.value || 0) / 100 / (item.quantity || 1),
-      notes: item.notes?.map(note => note.content || '') || [],
+      originalPrice: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
+      price: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
     })) || [];
 
   // Calculate totals
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const currencyCode = order?.totals?.total?.currencyCode || 'USD';
-  const subtotal = (order?.totals?.subTotal?.value || 0) / 100;
-  const shipping = (order?.totals?.shippingTotal?.value || 0) / 100;
-  const taxes = (order?.totals?.taxTotal?.value || 0) / 100;
-  const discount = (order?.totals?.discountTotal?.value || 0) / 100;
-  const total = (order?.totals?.total?.value || 0) / 100;
+  const subtotal = order?.totals?.subTotal?.value || 0;
+  const shipping = order?.totals?.shippingTotal?.value || 0;
+  const taxes = order?.totals?.taxTotal?.value || 0;
+  const discount = order?.totals?.discountTotal?.value || 0;
+  const total = order?.totals?.total?.value || 0;
 
   const totals = {
     subtotal,
@@ -143,8 +141,12 @@ export function Cart({ open, onOpenChange }: CartProps) {
 
           {!isLoading && !error && cartOrderId && items.length > 0 && (
             <>
-              <CartLineItems items={items} currencyCode={currencyCode} />
-              <CartTotals {...totals} />
+              <CartLineItems
+                items={items}
+                currencyCode={currencyCode}
+                inputInMinorUnits
+              />
+              <CartTotals {...totals} inputInMinorUnits />
             </>
           )}
         </div>
