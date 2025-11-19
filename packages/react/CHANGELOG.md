@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.7
+
+### Patch Changes
+
+- 6b5d7d9: fix formatting for major units in formatCurrency
+
 ## 1.0.6
 
 ### Patch Changes
