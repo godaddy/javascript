@@ -47,9 +47,9 @@ export interface FormatCurrencyOptions {
   /** Optional locale, defaults to 'en-US' */
   locale?: string;
   /**
-   * Indicates whether the input is already in cents (minor units).
-   * - true → format to currency string (default)
-   * - false → convert to minor units and return as string
+   * Indicates whether the input is in cents (minor units).
+   * - true → input is in cents/minor units, will be converted to dollars/major units for formatting (default)
+   * - false → input is already in dollars/major units, will be formatted as-is
    */
   inputInMinorUnits?: boolean;
   /**
@@ -61,10 +61,10 @@ export interface FormatCurrencyOptions {
 }
 
 /**
- * Formats or converts a currency amount.
+ * Formats a currency amount.
  *
- * - When `inputInMinorUnits = true` (default): returns formatted string like "$123.45"
- * - When `inputInMinorUnits = false`: returns string representing minor units like "12345"
+ * - When `inputInMinorUnits = true` (default): converts from minor units (cents) and returns formatted string like "$123.45"
+ * - When `inputInMinorUnits = false`: formats major units (dollars) directly and returns formatted string like "$123.45"
  * - When `returnRaw = true`: returns numeric value without currency symbol like "123.45"
  */
 export function formatCurrency({
@@ -78,13 +78,10 @@ export function formatCurrency({
 
   const { precision = 2 } = config;
 
-  if (!inputInMinorUnits) {
-    // Convert major units to minor units and return as string
-    return Math.round(amount * Math.pow(10, precision)).toString();
-  }
-
-  // Format value already in minor units
-  const value = amount / Math.pow(10, precision);
+  // Calculate the value to format
+  const value = inputInMinorUnits
+    ? amount / Math.pow(10, precision) // Convert from minor units (cents) to major units (dollars)
+    : amount; // Already in major units (dollars)
 
   const nfLocale = returnRaw ? 'en-US' : locale;
 
