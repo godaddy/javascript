@@ -379,5 +379,7 @@ export const frFr = {
     stockStatus: 'État du stock:',
     lowStock: 'Stock faible',
     inStock: 'En stock',
+    remove: 'Supprimer',
+    removing: 'Suppression...',
   },
 };

@@ -355,5 +355,7 @@ export const enUs = {
     stockStatus: 'Stock Status:',
     lowStock: 'Low Stock',
     inStock: 'In Stock',
+    remove: 'Remove',
+    removing: 'Removing...',
   },
 };

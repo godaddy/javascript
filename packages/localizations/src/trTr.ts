@@ -354,5 +354,7 @@ export const trTr = {
     stockStatus: 'Stok Durumu:',
     lowStock: 'Düşük stok',
     inStock: 'Stokta',
+    remove: 'Kaldır',
+    removing: 'Kaldırılıyor...',
   },
 };

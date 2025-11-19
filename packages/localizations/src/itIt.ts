@@ -378,5 +378,7 @@ export const itIt = {
     stockStatus: 'Stato delle scorte:',
     lowStock: 'Scorte limitate',
     inStock: 'Disponibile',
+    remove: 'Rimuovi',
+    removing: 'Rimozione...',
   },
 };

@@ -359,5 +359,7 @@ export const ptBr = {
     stockStatus: 'Status do estoque:',
     lowStock: 'Estoque baixo',
     inStock: 'Em estoque',
+    remove: 'Remover',
+    removing: 'Removendo...',
   },
 };

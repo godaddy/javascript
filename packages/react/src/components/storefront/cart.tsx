@@ -44,7 +44,7 @@ export function Cart({ open, onOpenChange }: CartProps) {
   });
 
   // Delete line item mutation
-  const _deleteMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: (lineItemId: string) =>
       deleteCartLineItem(
         { id: lineItemId, orderId: cartOrderId! },
@@ -57,6 +57,10 @@ export function Cart({ open, onOpenChange }: CartProps) {
       queryClient.invalidateQueries({ queryKey: ['cart-order', cartOrderId] });
     },
   });
+
+  const handleRemoveFromCart = (itemId: string) => {
+    deleteMutation.mutate(itemId);
+  };
 
   const order = cartData?.orderById;
 
@@ -71,6 +75,24 @@ export function Cart({ open, onOpenChange }: CartProps) {
       quantity: item.quantity || 0,
       originalPrice: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
       price: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
+      selectedOptions:
+        item?.details?.selectedOptions?.map(option => ({
+          attribute: option.attribute || '',
+          values: option.values || [],
+        })) || [],
+      addons: item.details?.selectedAddons?.map(addon => ({
+        attribute: addon.attribute || '',
+        sku: addon.sku || '',
+        values: addon.values?.map(value => ({
+          costAdjustment: value.costAdjustment
+            ? {
+                currencyCode: value.costAdjustment.currencyCode ?? undefined,
+                value: value.costAdjustment.value ?? undefined,
+              }
+            : undefined,
+          name: value.name ?? undefined,
+        })),
+      })),
     })) || [];
 
   // Calculate totals
@@ -145,8 +167,16 @@ export function Cart({ open, onOpenChange }: CartProps) {
                 items={items}
                 currencyCode={currencyCode}
                 inputInMinorUnits
+                onRemoveFromCart={handleRemoveFromCart}
+                isRemovingFromCart={deleteMutation.isPending}
+                removingItemId={deleteMutation.variables}
               />
-              <CartTotals {...totals} inputInMinorUnits />
+              <CartTotals
+                {...totals}
+                inputInMinorUnits
+                enableTaxes={false}
+                enableShipping={false}
+              />
             </>
           )}
         </div>

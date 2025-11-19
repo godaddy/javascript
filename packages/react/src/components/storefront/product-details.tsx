@@ -230,7 +230,11 @@ export function ProductDetails({
     ],
     queryFn: () =>
       getSkuGroup(
-        { id: productId!, attributeValues: selectedAttributeValues },
+        {
+          id: productId!,
+          attributeValues: selectedAttributeValues,
+          ...(!selectedAttributeValues.length ? { first: 1 } : {}),
+        },
         storeId!,
         clientId!,
         context?.apiHost
@@ -399,7 +403,7 @@ export function ProductDetails({
     }
 
     await addToCart({
-      skuId: selectedSku?.id || productId,
+      skuId: selectedSku?.id || product?.skus?.edges?.[0]?.node?.id || '',
       name: title,
       quantity,
       productAssetUrl: images[0] || undefined,

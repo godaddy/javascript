@@ -342,5 +342,7 @@ export const zhSg = {
     stockStatus: '库存状态:',
     lowStock: '库存不足',
     inStock: '有货',
+    remove: '删除',
+    removing: '正在删除...',
   },
 };

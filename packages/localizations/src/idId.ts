@@ -354,5 +354,7 @@ export const idId = {
     stockStatus: 'Status Stok:',
     lowStock: 'Stok rendah',
     inStock: 'Tersedia',
+    remove: 'Hapus',
+    removing: 'Menghapus...',
   },
 };

@@ -362,5 +362,7 @@ export const esMx = {
     stockStatus: 'Estado del stock:',
     lowStock: 'Stock bajo',
     inStock: 'En stock',
+    remove: 'Eliminar',
+    removing: 'Eliminando...',
   },
 };

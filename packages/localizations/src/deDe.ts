@@ -378,5 +378,7 @@ export const deDe = {
     stockStatus: 'Lagerstatus:',
     lowStock: 'Geringer Lagerbestand',
     inStock: 'Auf Lager',
+    remove: 'Entfernen',
+    removing: 'Wird entfernt...',
   },
 };

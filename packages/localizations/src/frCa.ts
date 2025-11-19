@@ -378,5 +378,7 @@ export const frCa = {
     stockStatus: 'État du stock:',
     lowStock: 'Stock faible',
     inStock: 'En stock',
+    remove: 'Supprimer',
+    removing: 'Suppression...',
   },
 };

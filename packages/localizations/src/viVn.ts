@@ -355,5 +355,7 @@ export const viVn = {
     stockStatus: 'Trạng thái kho:',
     lowStock: 'Sắp hết hàng',
     inStock: 'Còn hàng',
+    remove: 'Xóa',
+    removing: 'Đang xóa...',
   },
 };

@@ -2,6 +2,7 @@
 
 import { Image } from 'lucide-react';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
+import { Button } from '@/components/ui/button.tsx';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import type { SKUProduct } from '@/types';
 
@@ -57,12 +58,18 @@ export interface DraftOrderLineItemsProps {
   items: Product[];
   currencyCode?: string;
   inputInMinorUnits?: boolean;
+  onRemoveFromCart?: (itemId: string) => void;
+  isRemovingFromCart?: boolean;
+  removingItemId?: string;
 }
 
 export function DraftOrderLineItems({
   items,
   currencyCode = 'USD',
   inputInMinorUnits = false,
+  onRemoveFromCart,
+  isRemovingFromCart = false,
+  removingItemId,
 }: DraftOrderLineItemsProps) {
   const { t } = useGoDaddyContext();
   const formatCurrency = useFormatCurrency();
@@ -126,12 +133,29 @@ export function DraftOrderLineItems({
                   ) : null}
                 </span>
                 <span className='text-xs text-muted-foreground'>
-                  {t.general.quantity}: {item.quantity}
+                  {t.general.quantity}: {item.quantity} &middot;{' '}
+                  {onRemoveFromCart ? (
+                    <Button
+                      className='text-xs p-0 h-auto text-inherit underline'
+                      variant='link'
+                      onClick={() =>
+                        item.id ? onRemoveFromCart(item.id) : null
+                      }
+                      disabled={isRemovingFromCart}
+                      aria-label='Remove item'
+                    >
+                      {isRemovingFromCart && removingItemId === item.id ? (
+                        <span>{t.storefront.removing}</span>
+                      ) : (
+                        <span>{t.storefront.remove}</span>
+                      )}
+                    </Button>
+                  ) : null}
                 </span>
               </div>
               {item.originalPrice && item.quantity ? (
-                <div className='text-right'>
-                  <div>
+                <div className='text-right flex items-start gap-2'>
+                  <div className='pt-0.5'>
                     <span className='text-sm'>
                       {formatCurrency({
                         amount: item.originalPrice * item.quantity,
