@@ -348,6 +348,7 @@ export const trTr = {
     quantity: 'Miktar',
     addingToCart: 'Sepete ekleniyor...',
     outOfStock: 'Stokta yok',
+    viewDetails: 'Detayları Görüntüle',
     productType: 'Ürün Tipi:',
     productId: 'Ürün ID:',
     selectedSku: 'Seçili SKU:',

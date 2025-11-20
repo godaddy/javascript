@@ -336,6 +336,7 @@ export const zhCn = {
     quantity: '数量',
     addingToCart: '正在添加到购物车...',
     outOfStock: '缺货',
+    viewDetails: '查看详情',
     productType: '产品类型:',
     productId: '产品ID:',
     selectedSku: '已选SKU:',

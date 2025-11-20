@@ -8437,6 +8437,24 @@ const introspection = {
             isDeprecated: true,
           },
           {
+            name: 'skuCount',
+            type: {
+              kind: 'SCALAR',
+              name: 'Int',
+            },
+            args: [
+              {
+                name: 'status',
+                type: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'SKUStatusFilter',
+                },
+                defaultValue: '{in: ["ACTIVE", "DRAFT"]}',
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
             name: 'skus',
             type: {
               kind: 'OBJECT',

@@ -349,6 +349,7 @@ export const viVn = {
     quantity: 'Số lượng',
     addingToCart: 'Đang thêm vào giỏ hàng...',
     outOfStock: 'Hết hàng',
+    viewDetails: 'Xem chi tiết',
     productType: 'Loại sản phẩm:',
     productId: 'ID sản phẩm:',
     selectedSku: 'SKU đã chọn:',

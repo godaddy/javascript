@@ -360,6 +360,7 @@ export const esEs = {
     quantity: 'Cantidad',
     addingToCart: 'Añadiendo al carrito...',
     outOfStock: 'Agotado',
+    viewDetails: 'Ver detalles',
     productType: 'Tipo de producto:',
     productId: 'ID del producto:',
     selectedSku: 'SKU seleccionado:',

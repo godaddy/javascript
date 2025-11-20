@@ -233,7 +233,7 @@ export function ProductDetails({
         {
           id: productId!,
           attributeValues: selectedAttributeValues,
-          ...(!selectedAttributeValues.length ? { first: 1 } : {}),
+          ...(!selectedAttributeValues.length ? { first: 2 } : {}),
         },
         storeId!,
         clientId!,
@@ -395,7 +395,7 @@ export function ProductDetails({
       })()
     : false;
 
-  const canAddToCart = !isOutOfStock && (!attributes.length || selectedSku);
+  const canAddToCart = !isOutOfStock && Boolean(selectedSku);
 
   const handleAddToCart = async () => {
     if (!canAddToCart) {
@@ -417,7 +417,10 @@ export function ProductDetails({
         {/* Main Image Carousel */}
         <div className='relative'>
           {isOnSale && (
-            <Badge className='absolute top-4 right-4 z-10 bg-destructive text-destructive-foreground font-semibold'>
+            <Badge
+              variant='accent'
+              className='absolute top-4 right-4 z-10 font-semibold'
+            >
               {t.storefront.sale}
             </Badge>
           )}

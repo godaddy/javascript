@@ -372,6 +372,7 @@ export const deDe = {
     quantity: 'Menge',
     addingToCart: 'Wird zum Warenkorb hinzugefügt...',
     outOfStock: 'Nicht vorrätig',
+    viewDetails: 'Details anzeigen',
     productType: 'Produkttyp:',
     productId: 'Produkt-ID:',
     selectedSku: 'Ausgewählte SKU:',

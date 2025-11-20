@@ -357,6 +357,7 @@ export const esCl = {
     quantity: 'Cantidad',
     addingToCart: 'Agregando al carrito...',
     outOfStock: 'Agotado',
+    viewDetails: 'Ver detalles',
     productType: 'Tipo de producto:',
     productId: 'ID del producto:',
     selectedSku: 'SKU seleccionado:',

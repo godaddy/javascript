@@ -357,6 +357,7 @@ export const qaPs = {
     quantity: '[Quantity]',
     addingToCart: '[Adding to Cart...]',
     outOfStock: '[Out of Stock]',
+    viewDetails: '[View Details]',
     productType: '[Product Type:]',
     productId: '[Product ID:]',
     selectedSku: '[Selected SKU:]',

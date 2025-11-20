@@ -372,6 +372,7 @@ export const itIt = {
     quantity: 'Quantità',
     addingToCart: 'Aggiunta al carrello...',
     outOfStock: 'Esaurito',
+    viewDetails: 'Vedi dettagli',
     productType: 'Tipo di prodotto:',
     productId: 'ID prodotto:',
     selectedSku: 'SKU selezionato:',

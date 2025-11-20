@@ -353,6 +353,7 @@ export const ptBr = {
     quantity: 'Quantidade',
     addingToCart: 'Adicionando ao carrinho...',
     outOfStock: 'Fora de estoque',
+    viewDetails: 'Ver detalhes',
     productType: 'Tipo de produto:',
     productId: 'ID do produto:',
     selectedSku: 'SKU selecionado:',

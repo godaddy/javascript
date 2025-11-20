@@ -348,6 +348,7 @@ export const idId = {
     quantity: 'Jumlah',
     addingToCart: 'Menambahkan ke keranjang...',
     outOfStock: 'Stok habis',
+    viewDetails: 'Lihat Detail',
     productType: 'Jenis Produk:',
     productId: 'ID Produk:',
     selectedSku: 'SKU yang dipilih:',

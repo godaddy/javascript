@@ -372,6 +372,7 @@ export const frCa = {
     quantity: 'Quantité',
     addingToCart: 'Ajout au panier...',
     outOfStock: 'Rupture de stock',
+    viewDetails: 'Voir les détails',
     productType: 'Type de produit:',
     productId: 'ID du produit:',
     selectedSku: 'SKU sélectionné:',

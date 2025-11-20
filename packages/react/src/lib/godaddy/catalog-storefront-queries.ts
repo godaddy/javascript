@@ -12,6 +12,7 @@ export const SkuGroupsQuery = graphql(`
                     description
                     htmlDescription
                     type
+#                    skuCount(status: { in: ["ACTIVE"] })
                     priceRange {
                         min
                         max
@@ -48,12 +49,21 @@ export const SkuGroupsQuery = graphql(`
                             }
                         }
                     }
-                    skus(first: 1) {
+                    skus(first: 2) {
                         edges {
                             node {
                                 id
                                 label
                                 name
+                                inventoryCounts {
+                                    edges {
+                                        node {
+                                            id
+                                            quantity
+                                            type
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -78,6 +88,7 @@ export const SkuGroupQuery = graphql(`
             description
             htmlDescription
             type
+#            skuCount(status: { in: ["ACTIVE"] })
             priceRange {
                 min
                 max
@@ -123,6 +134,15 @@ export const SkuGroupQuery = graphql(`
                         id
                         label
                         name
+                        inventoryCounts {
+                            edges {
+                                node {
+                                    id
+                                    quantity
+                                    type
+                                }
+                            }
+                        }
                     }
                 }
             }
