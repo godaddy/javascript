@@ -1,6 +1,80 @@
 @import "tailwindcss" source(none);
 @source "./components/";
 
+@keyframes enter {
+	from {
+		opacity: 0;
+		transform: var(--tw-enter-transform);
+	}
+}
+
+@keyframes exit {
+	to {
+		opacity: 0;
+		transform: var(--tw-exit-transform);
+	}
+}
+
+@utility animate-in {
+	animation-name: enter;
+	animation-duration: 0.15s;
+	--tw-enter-transform: none;
+}
+
+@utility animate-out {
+	animation-name: exit;
+	animation-duration: 0.15s;
+	--tw-exit-transform: none;
+}
+
+@utility fade-in-0 {
+	--tw-enter-opacity: 0;
+}
+
+@utility fade-out-0 {
+	--tw-exit-opacity: 0;
+}
+
+@utility slide-in-from-right {
+	--tw-enter-transform: translateX(100%);
+}
+
+@utility slide-out-to-right {
+	--tw-exit-transform: translateX(100%);
+}
+
+@utility slide-in-from-left {
+	--tw-enter-transform: translateX(-100%);
+}
+
+@utility slide-out-to-left {
+	--tw-exit-transform: translateX(-100%);
+}
+
+@utility slide-in-from-top {
+	--tw-enter-transform: translateY(-100%);
+}
+
+@utility slide-out-to-top {
+	--tw-exit-transform: translateY(-100%);
+}
+
+@utility slide-in-from-bottom {
+	--tw-enter-transform: translateY(100%);
+}
+
+@utility slide-out-to-bottom {
+	--tw-exit-transform: translateY(100%);
+}
+
+@utility duration-300 {
+	animation-duration: 300ms;
+}
+
+@utility duration-500 {
+	animation-duration: 500ms;
+}
+
 @font-face {
 	font-family: "GD Sherpa";
 	src: url("https://d85ecz8votkqa.cloudfront.net/fonts/gd-sherpa-regular.eot"); /* IE9 Compat Modes */
