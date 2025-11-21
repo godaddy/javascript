@@ -25,6 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       apiHost={process.env.NEXT_PUBLIC_GODADDY_API_HOST}
       storeId={process.env.NEXT_PUBLIC_GODADDY_STORE_ID}
       clientId={process.env.NEXT_PUBLIC_GODADDY_CLIENT_ID}
+      channelId={process.env.NEXT_PUBLIC_GODADDY_CHANNEL_ID}
       Link={Link}
       appearance={{
         variables: { primary: '#ff0000', 'primary-foreground': '#FFFFFF' },

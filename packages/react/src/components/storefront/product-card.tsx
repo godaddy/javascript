@@ -1,21 +1,31 @@
 'use client';
 
-import { ChevronRight, ShoppingBag } from 'lucide-react';
+import { ChevronRight, Loader2, ShoppingBag } from 'lucide-react';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
+import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RouterLink } from '@/components/ui/link';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { SKUGroup } from '@/types.ts';
 
 interface ProductCardProps {
   product: SKUGroup;
   href?: string;
+  onAddToCartSuccess?: () => void;
+  onAddToCartError?: (error: Error) => void;
 }
 
-export function ProductCard({ product, href }: ProductCardProps) {
+export function ProductCard({
+  product,
+  href,
+  onAddToCartSuccess,
+  onAddToCartError,
+}: ProductCardProps) {
   const formatCurrency = useFormatCurrency();
-  const title = product?.label || product?.name || 'Product';
+  const { t } = useGoDaddyContext();
+  const title = product?.label || product?.name || t.storefront.product;
   const description = product?.description || '';
   const priceMin = product?.priceRange?.min || 0;
   const priceMax = product?.priceRange?.max || priceMin;
@@ -28,16 +38,99 @@ export function ProductCard({ product, href }: ProductCardProps) {
     edge => edge?.node?.type === 'IMAGE'
   )?.node?.url;
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  // Get first SKU and check inventory
+  const firstSku = product?.skus?.edges?.[0]?.node;
+  const skuId = firstSku?.id || product?.id || '';
+
+  // Check available inventory for first SKU
+  const inventoryCounts = firstSku?.inventoryCounts?.edges || [];
+  const availableInventory =
+    inventoryCounts.find((edge: any) => edge?.node?.type === 'AVAILABLE')?.node
+      ?.quantity || 0;
+
+  const isFirstSkuInStock = availableInventory > 0;
+  const hasMultipleSkus = (product?.skus?.edges?.length || 0) > 1;
+
+  // Use shared add to cart hook
+  const { addToCart, isLoading: isAddingToCart } = useAddToCart({
+    onSuccess: onAddToCartSuccess,
+    onError: onAddToCartError,
+  });
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+
+    if (!skuId) {
+      return;
+    }
+
+    await addToCart({
+      skuId,
+      name: title,
+      quantity: 1,
+      productAssetUrl: imageUrl || undefined,
+    });
+  };
+
+  // Determine which button to show based on inventory and variants
+  const getActionButton = () => {
+    // If product has options (future use case), show "Select Options"
+    if (hasOptions) {
+      return (
+        <Button size='sm' variant='outline' className='gap-1'>
+          <span>{t.storefront.selectOptions}</span>
+          <ChevronRight className='h-4 w-4' />
+        </Button>
+      );
+    }
+
+    // If first SKU is out of stock
+    if (!isFirstSkuInStock) {
+      // If there are multiple SKUs and an href, suggest viewing details
+      if (hasMultipleSkus && href) {
+        return (
+          <Button size='sm' variant='secondary' className='gap-1'>
+            <span>{t.storefront.viewDetails}</span>
+            <ChevronRight className='h-4 w-4' />
+          </Button>
+        );
+      }
+      // Otherwise show out of stock button
+      return (
+        <Button size='sm' variant='secondary' disabled>
+          {t.storefront.outOfStock}
+        </Button>
+      );
+    }
+
+    // First SKU is in stock, show "Add to Cart"
+    return (
+      <Button
+        size='sm'
+        onClick={handleAddToCart}
+        className='gap-2'
+        disabled={isAddingToCart}
+      >
+        {isAddingToCart ? (
+          <Loader2 className='h-4 w-4 animate-spin' />
+        ) : (
+          <ShoppingBag className='h-4 w-4' />
+        )}
+        {isAddingToCart ? t.storefront.adding : t.storefront.addToCart}
+      </Button>
+    );
   };
 
   const cardContent = (
     <>
       <div className='aspect-square overflow-hidden bg-muted relative'>
         {isOnSale && (
-          <Badge className='absolute top-3 right-3 z-10 bg-destructive text-destructive-foreground font-semibold'>
-            SALE
+          <Badge
+            variant='accent'
+            className='absolute top-3 right-3 z-10 font-semibold'
+          >
+            {t.storefront.sale}
           </Badge>
         )}
         {imageUrl ? (
@@ -48,7 +141,7 @@ export function ProductCard({ product, href }: ProductCardProps) {
           />
         ) : (
           <div className='w-full h-full flex items-center justify-center text-muted-foreground'>
-            No image
+            {t.storefront.noImage}
           </div>
         )}
       </div>
@@ -69,17 +162,7 @@ export function ProductCard({ product, href }: ProductCardProps) {
                   inputInMinorUnits: true,
                 })}
           </span>
-          {hasOptions ? (
-            <Button size='sm' variant='outline' className='gap-1'>
-              <span>Select Options</span>
-              <ChevronRight className='h-4 w-4' />
-            </Button>
-          ) : (
-            <Button size='sm' onClick={handleAddToCart} className='gap-2'>
-              <ShoppingBag className='h-4 w-4' />
-              Add to Cart
-            </Button>
-          )}
+          {getActionButton()}
         </div>
       </div>
     </>

@@ -23,6 +23,15 @@ import {
   DraftOrderSkusQuery,
   DraftOrderTaxesQuery,
 } from '@/lib/godaddy/checkout-queries.ts';
+import {
+  AddCartOrderMutation,
+  AddLineItemBySkuIdMutation,
+  ApplyDiscountCodesMutation,
+  DeleteLineItemByIdMutation,
+  UpdateCartOrderMutation,
+  UpdateLineItemByIdMutation,
+} from '@/lib/godaddy/orders-storefront-mutations.ts';
+import { GetCartOrderQuery } from '@/lib/godaddy/orders-storefront-queries.ts';
 
 export const PaymentProvider = {
   STRIPE: 'stripe',
@@ -270,3 +279,68 @@ export type SKUAttributeValue = NonNullable<
     >['edges']
   >[number]
 >['node'];
+
+// Cart/Orders types
+export type AddCartOrderInput = VariablesOf<
+  typeof AddCartOrderMutation
+>['input'];
+
+export type AddLineItemBySkuIdInput = VariablesOf<
+  typeof AddLineItemBySkuIdMutation
+>['input'];
+
+export type UpdateCartOrderInput = VariablesOf<
+  typeof UpdateCartOrderMutation
+>['input'];
+
+export type UpdateLineItemByIdInput = VariablesOf<
+  typeof UpdateLineItemByIdMutation
+>['input'];
+
+export type DeleteLineItemByIdInput = VariablesOf<
+  typeof DeleteLineItemByIdMutation
+>;
+
+export type ApplyDiscountCodesInput = VariablesOf<
+  typeof ApplyDiscountCodesMutation
+>['input'];
+
+export type CartOrder = NonNullable<
+  ResultOf<typeof GetCartOrderQuery>['orderById']
+>;
+
+export type CartLineItem = NonNullable<
+  NonNullable<ResultOf<typeof GetCartOrderQuery>['orderById']>['lineItems']
+>[number];
+
+export type CartOrderTotals = NonNullable<
+  NonNullable<ResultOf<typeof GetCartOrderQuery>['orderById']>['totals']
+>;
+
+export type CartLineItemTotals = NonNullable<
+  NonNullable<
+    NonNullable<ResultOf<typeof GetCartOrderQuery>['orderById']>['lineItems']
+  >[number]['totals']
+>;
+
+export type CartDiscount = NonNullable<
+  NonNullable<ResultOf<typeof GetCartOrderQuery>['orderById']>['discounts']
+>[number];
+
+export type CartTax = NonNullable<
+  NonNullable<ResultOf<typeof GetCartOrderQuery>['orderById']>['taxes']
+>[number];
+
+export type CartShippingInfo = NonNullable<
+  NonNullable<ResultOf<typeof GetCartOrderQuery>['orderById']>['shipping']
+>;
+
+export type CartNote = NonNullable<
+  NonNullable<ResultOf<typeof GetCartOrderQuery>['orderById']>['notes']
+>[number];
+
+export type CartLineItemDetails = NonNullable<
+  NonNullable<
+    NonNullable<ResultOf<typeof GetCartOrderQuery>['orderById']>['lineItems']
+  >[number]['details']
+>;

@@ -11,6 +11,8 @@ interface ProductGridProps {
   clientId?: string;
   first?: number;
   getProductHref?: (productId: string) => string;
+  onAddToCartSuccess?: () => void;
+  onAddToCartError?: (error: Error) => void;
 }
 
 function ProductGridSkeleton({ count = 6 }: { count?: number }) {
@@ -34,8 +36,11 @@ export function ProductGrid({
   clientId: clientIdProp,
   first = 100,
   getProductHref,
+  onAddToCartSuccess,
+  onAddToCartError,
 }: ProductGridProps) {
   const context = useGoDaddyContext();
+  const { t } = context;
   const storeId = storeIdProp || context.storeId;
   const clientId = clientIdProp || context.clientId;
 
@@ -51,7 +56,11 @@ export function ProductGrid({
   }
 
   if (error) {
-    return <div>Error loading products: {error.message}</div>;
+    return (
+      <div>
+        {t.storefront.errorLoadingProducts} {error.message}
+      </div>
+    );
   }
 
   const skuGroups = data?.skuGroups?.edges;
@@ -63,7 +72,15 @@ export function ProductGrid({
         if (!group?.id) return null;
 
         const href = getProductHref?.(group.id);
-        return <ProductCard key={group.id} product={group} href={href} />;
+        return (
+          <ProductCard
+            key={group.id}
+            product={group}
+            href={href}
+            onAddToCartSuccess={onAddToCartSuccess}
+            onAddToCartError={onAddToCartError}
+          />
+        );
       })}
     </div>
   );

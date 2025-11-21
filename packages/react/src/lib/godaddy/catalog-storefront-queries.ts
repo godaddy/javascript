@@ -1,7 +1,7 @@
 import { graphql } from '@/lib/gql/gql-catalog-storefront.tada.ts';
 
 export const SkuGroupsQuery = graphql(`
-    query SkuGroups($first: Int, $after: String, $id: SKUGroupIdsFilter, $attributeValues: [String!] = []) {
+    query SkuGroups($first: Int, $after: String, $id: SKUGroupIdsFilter) {
         skuGroups(first: $first, after: $after, id: $id) {
             edges {
                 cursor
@@ -48,12 +48,21 @@ export const SkuGroupsQuery = graphql(`
                             }
                         }
                     }
-                    skus(attributeValues: { has: $attributeValues }) {
+                    skus(first: 2) {
                         edges {
                             node {
                                 id
                                 label
                                 name
+                                inventoryCounts {
+                                    edges {
+                                        node {
+                                            id
+                                            quantity
+                                            type
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -70,7 +79,7 @@ export const SkuGroupsQuery = graphql(`
 `);
 
 export const SkuGroupQuery = graphql(`
-    query SkuGroup($id: String!, $attributeValues: [String!] = []) {
+    query SkuGroup($id: String!, $first: Int, $attributeValues: [String!] = []) {
         skuGroup(id: $id) {
             id
             name
@@ -114,12 +123,24 @@ export const SkuGroupQuery = graphql(`
                     }
                 }
             }
-            skus(attributeValues: { has: $attributeValues }) {
+            skus(
+                attributeValues: { has: $attributeValues }
+                first: $first
+            ) {
                 edges {
                     node {
                         id
                         label
                         name
+                        inventoryCounts {
+                            edges {
+                                node {
+                                    id
+                                    quantity
+                                    type
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -73,6 +73,7 @@ interface GoDaddyContextValue {
   apiHost?: string;
   clientId?: string;
   storeId?: string;
+  channelId?: string;
   locale?: string;
   Link?: React.ComponentType<LinkComponentProps>;
 }
@@ -101,13 +102,13 @@ export interface GoDaddyProviderProps {
    *
    * Internal devs can set to:
    * - "http://localhost:3000" for local development
-   * - "https://checkout.commerce.api.dev-godaddy.com" for DEV environment
-   * - "https://checkout.commerce.api.test-godaddy.com" for TEST environment
    */
   apiHost?: string;
   clientId?: string;
   storeId?: string;
+  channelId?: string;
   locale?: string;
+
   queryClient?: QueryClient;
   Link?: React.ComponentType<LinkComponentProps>;
   children: QueryClientProviderProps['children'];
@@ -120,6 +121,7 @@ export function GoDaddyProvider({
   apiHost,
   clientId,
   storeId,
+  channelId,
   locale = 'en-US',
   queryClient: providedQueryClient,
   Link,
@@ -214,6 +216,7 @@ export function GoDaddyProvider({
         apiHost,
         clientId,
         storeId,
+        channelId,
         locale,
         Link,
       }}

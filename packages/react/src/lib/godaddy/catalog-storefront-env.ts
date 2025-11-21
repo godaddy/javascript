@@ -1326,15 +1326,6 @@ const introspection = {
             isDeprecated: false,
           },
           {
-            name: 'status',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
             name: 'updatedAt',
             type: {
               kind: 'NON_NULL',
@@ -2526,15 +2517,6 @@ const introspection = {
                 defaultValue: 'CURSOR',
               },
             ],
-            isDeprecated: false,
-          },
-          {
-            name: 'status',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
             isDeprecated: false,
           },
           {
@@ -8453,6 +8435,24 @@ const introspection = {
             },
             args: [],
             isDeprecated: true,
+          },
+          {
+            name: 'skuCount',
+            type: {
+              kind: 'SCALAR',
+              name: 'Int',
+            },
+            args: [
+              {
+                name: 'status',
+                type: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'SKUStatusFilter',
+                },
+                defaultValue: '{in: ["ACTIVE", "DRAFT"]}',
+              },
+            ],
+            isDeprecated: false,
           },
           {
             name: 'skus',

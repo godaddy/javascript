@@ -1,9 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Minus, Plus, ShoppingCart } from 'lucide-react';
+import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
+import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -24,6 +25,8 @@ interface ProductDetailsProps {
   productId: string;
   storeId?: string;
   clientId?: string;
+  onAddToCartSuccess?: () => void;
+  onAddToCartError?: (error: Error) => void;
 }
 
 // Flattened attribute structure for UI (transforms edges/node to flat array)
@@ -119,8 +122,11 @@ export function ProductDetails({
   productId,
   storeId: storeIdProp,
   clientId: clientIdProp,
+  onAddToCartSuccess,
+  onAddToCartError,
 }: ProductDetailsProps) {
   const context = useGoDaddyContext();
+  const { t } = context;
   const formatCurrency = useFormatCurrency();
 
   // Props take priority over context values
@@ -143,6 +149,15 @@ export function ProductDetails({
       result[key] = value;
     });
     return result;
+  });
+
+  // Use shared add to cart hook
+  const { addToCart, isLoading: isAddingToCart } = useAddToCart({
+    onSuccess: () => {
+      setQuantity(1); // Reset quantity
+      onAddToCartSuccess?.();
+    },
+    onError: onAddToCartError,
   });
 
   // Update URL when variant params change
@@ -215,7 +230,11 @@ export function ProductDetails({
     ],
     queryFn: () =>
       getSkuGroup(
-        { id: productId!, attributeValues: selectedAttributeValues },
+        {
+          id: productId!,
+          attributeValues: selectedAttributeValues,
+          ...(!selectedAttributeValues.length ? { first: 2 } : {}),
+        },
         storeId!,
         clientId!,
         context?.apiHost
@@ -297,7 +316,7 @@ export function ProductDetails({
     return (
       <div className='p-4'>
         <div className='text-center text-destructive'>
-          Error loading product: {error.message}
+          {t.storefront.errorLoadingProduct} {error.message}
         </div>
       </div>
     );
@@ -309,13 +328,13 @@ export function ProductDetails({
     return (
       <div className='p-4'>
         <div className='text-center text-muted-foreground'>
-          Product not found
+          {t.storefront.productNotFound}
         </div>
       </div>
     );
   }
 
-  const title = product?.label || product?.name || 'Product';
+  const title = product?.label || product?.name || t.storefront.product;
   const description = product?.description || '';
   const htmlDescription = product?.htmlDescription || '';
 
@@ -376,10 +395,19 @@ export function ProductDetails({
       })()
     : false;
 
-  const canAddToCart = !isOutOfStock && (!attributes.length || selectedSku);
+  const canAddToCart = !isOutOfStock && Boolean(selectedSku);
 
-  const handleAddToCart = () => {
-    // Placeholder for add to cart functionality
+  const handleAddToCart = async () => {
+    if (!canAddToCart) {
+      return;
+    }
+
+    await addToCart({
+      skuId: selectedSku?.id || product?.skus?.edges?.[0]?.node?.id || '',
+      name: title,
+      quantity,
+      productAssetUrl: images[0] || undefined,
+    });
   };
 
   return (
@@ -389,8 +417,11 @@ export function ProductDetails({
         {/* Main Image Carousel */}
         <div className='relative'>
           {isOnSale && (
-            <Badge className='absolute top-4 right-4 z-10 bg-destructive text-destructive-foreground font-semibold'>
-              SALE
+            <Badge
+              variant='accent'
+              className='absolute top-4 right-4 z-10 font-semibold'
+            >
+              {t.storefront.sale}
             </Badge>
           )}
           <Carousel
@@ -418,7 +449,7 @@ export function ProductDetails({
                 <CarouselItem>
                   <Card className='overflow-hidden aspect-square bg-muted'>
                     <div className='w-full h-full flex items-center justify-center text-muted-foreground'>
-                      No image available
+                      {t.storefront.noImageAvailable}
                     </div>
                   </Card>
                 </CarouselItem>
@@ -501,7 +532,7 @@ export function ProductDetails({
       </div>
 
       {/* Product Information */}
-      <div className='space-y-6 transition-opacity duration-200'>
+      <div className='space-y-6'>
         <div>
           <h1 className='text-3xl font-bold text-foreground mb-2'>{title}</h1>
 
@@ -580,19 +611,17 @@ export function ProductDetails({
                 {isSkuLoading && (
                   <div className='flex items-center gap-2 text-muted-foreground'>
                     <div className='h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent' />
-                    Loading variant details...
+                    {t.storefront.loadingVariantDetails}
                   </div>
                 )}
                 {!isSkuLoading && matchedSkus.length === 0 && (
                   <div className='text-destructive'>
-                    This combination is not available. Please select different
-                    options.
+                    {t.storefront.combinationNotAvailable}
                   </div>
                 )}
                 {!isSkuLoading && matchedSkus.length > 1 && (
                   <div className='text-muted-foreground'>
-                    {matchedSkus.length} variants match your selection. Select
-                    more attributes to narrow down.
+                    {matchedSkus.length} {t.storefront.variantsMatch}
                   </div>
                 )}
               </div>
@@ -603,7 +632,7 @@ export function ProductDetails({
         {/* Quantity Selector */}
         <div>
           <label className='text-sm font-medium text-foreground mb-2 block'>
-            Quantity
+            {t.storefront.quantity}
           </label>
           <div className='flex items-center gap-3'>
             <Button
@@ -632,17 +661,28 @@ export function ProductDetails({
           size='lg'
           className='w-full gap-2'
           onClick={handleAddToCart}
-          disabled={!canAddToCart}
+          disabled={!canAddToCart || isAddingToCart}
         >
-          <ShoppingCart className='h-5 w-5' />
-          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+          {isAddingToCart ? (
+            <>
+              <Loader2 className='h-5 w-5 animate-spin' />
+              {t.storefront.addingToCart}
+            </>
+          ) : (
+            <>
+              <ShoppingCart className='h-5 w-5' />
+              {isOutOfStock ? t.storefront.outOfStock : t.storefront.addToCart}
+            </>
+          )}
         </Button>
 
         {/* Additional Product Information */}
         <div className='border-t border-border pt-4 space-y-2'>
           {product?.type && (
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Product Type:</span>
+              <span className='text-muted-foreground'>
+                {t.storefront.productType}
+              </span>
               <span className='font-medium text-foreground'>
                 {product.type}
               </span>
@@ -650,7 +690,9 @@ export function ProductDetails({
           )}
           {product?.id && (
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Product ID:</span>
+              <span className='text-muted-foreground'>
+                {t.storefront.productId}
+              </span>
               <span className='font-mono text-xs text-foreground'>
                 {product.id}
               </span>
@@ -659,7 +701,9 @@ export function ProductDetails({
           {selectedSku && (
             <>
               <div className='flex justify-between text-sm'>
-                <span className='text-muted-foreground'>Selected SKU:</span>
+                <span className='text-muted-foreground'>
+                  {t.storefront.selectedSku}
+                </span>
                 <span className='font-mono text-xs text-foreground'>
                   {selectedSku.code}
                 </span>
@@ -667,17 +711,20 @@ export function ProductDetails({
               {selectedSku.inventoryCounts?.edges &&
                 selectedSku.inventoryCounts.edges.length > 0 && (
                   <div className='flex justify-between text-sm'>
-                    <span className='text-muted-foreground'>Stock Status:</span>
+                    <span className='text-muted-foreground'>
+                      {t.storefront.stockStatus}
+                    </span>
                     <span className='font-medium text-foreground'>
                       {(() => {
                         const availableCount =
                           selectedSku.inventoryCounts.edges.find(
                             edge => edge?.node?.type === 'AVAILABLE'
                           )?.node?.quantity ?? 0;
-                        if (availableCount === 0) return 'Out of Stock';
+                        if (availableCount === 0)
+                          return t.storefront.outOfStock;
                         if (availableCount < 10)
-                          return `Low Stock (${availableCount})`;
-                        return 'In Stock';
+                          return `${t.storefront.lowStock} (${availableCount})`;
+                        return t.storefront.inStock;
                       })()}
                     </span>
                   </div>

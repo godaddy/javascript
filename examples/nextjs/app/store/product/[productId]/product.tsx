@@ -3,8 +3,11 @@
 import { ProductDetails } from '@godaddy/react';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useCart } from '../../layout';
 
 export default function Product({ productId }: { productId: string }) {
+  const { openCart } = useCart();
+
   return (
     <div className='container mx-auto'>
       <Link
@@ -14,7 +17,10 @@ export default function Product({ productId }: { productId: string }) {
         <ArrowLeft className='h-4 w-4' />
         Back to Store
       </Link>
-      <ProductDetails productId={productId} />
+      <ProductDetails
+        productId={productId}
+        onAddToCartSuccess={openCart}
+      />
     </div>
   );
 }

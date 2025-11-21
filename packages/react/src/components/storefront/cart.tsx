@@ -1,55 +1,131 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Loader2, ShoppingCart } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { Product } from '@/components/checkout/line-items/line-items';
 import { CartLineItems } from '@/components/storefront/cart-line-items';
 import { CartTotals } from '@/components/storefront/cart-totals';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
 import { useGoDaddyContext } from '@/godaddy-provider';
+import { getCartOrderId } from '@/lib/cart-storage';
+import { deleteCartLineItem, getCartOrder } from '@/lib/godaddy/godaddy';
 
 interface CartProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCheckout?: (orderId: string) => void;
+  isCheckingOut?: boolean;
 }
 
-export function Cart({ open, onOpenChange }: CartProps) {
-  // Mock data
-  const items: Product[] = [
-    {
-      id: 'LineItem_2y0l7o6Oi4BW6fpSiKPX1hhBccU',
-      name: 'Box of cookies',
-      image:
-        'https://isteam.dev-wsimg.com/ip/2f2e05ec-de6f-4a89-90f2-038c749655b0/cookies.webp',
-      quantity: 2,
-      originalPrice: 10.99,
-      price: 10.99,
-      notes: [],
+export function Cart({
+  open,
+  onOpenChange,
+  onCheckout,
+  isCheckingOut = false,
+}: CartProps) {
+  const context = useGoDaddyContext();
+  const queryClient = useQueryClient();
+  const [cartOrderId, setCartOrderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCartOrderId(getCartOrderId());
+  }, []);
+
+  // Fetch cart order
+  const {
+    data: cartData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['cart-order', cartOrderId],
+    queryFn: () =>
+      getCartOrder(
+        cartOrderId!,
+        context.storeId!,
+        context.clientId!,
+        context?.apiHost
+      ),
+    enabled: !!cartOrderId && !!context.storeId && !!context.clientId,
+  });
+
+  // Delete line item mutation
+  const deleteMutation = useMutation({
+    mutationFn: (lineItemId: string) =>
+      deleteCartLineItem(
+        { id: lineItemId, orderId: cartOrderId! },
+        context.storeId!,
+        context.clientId!,
+        context?.apiHost
+      ),
+    onSuccess: () => {
+      // Invalidate cart query to refetch
+      queryClient.invalidateQueries({ queryKey: ['cart-order', cartOrderId] });
     },
-    {
-      id: 'LineItem_2y0l9FykA04qp2pC6y3YZ0TbZFD',
-      name: 'Cupcakes',
-      image:
-        'https://isteam.dev-wsimg.com/ip/2f2e05ec-de6f-4a89-90f2-038c749655b0/cupcakes.webp/:/rs=w:600,h:600',
-      quantity: 1,
-      originalPrice: 5.99,
-      price: 5.99,
-      notes: [],
-    },
-  ];
+  });
+
+  const handleRemoveFromCart = (itemId: string) => {
+    deleteMutation.mutate(itemId);
+  };
+
+  const order = cartData?.orderById;
+
+  const { t } = useGoDaddyContext();
+
+  // Transform cart line items to Product format for CartLineItems component
+  const items: Product[] =
+    order?.lineItems?.map(item => ({
+      id: item.id,
+      name: item.name || t.storefront.product,
+      image: item.details?.productAssetUrl || '',
+      quantity: item.quantity || 0,
+      originalPrice: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
+      price: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
+      selectedOptions:
+        item?.details?.selectedOptions?.map(option => ({
+          attribute: option.attribute || '',
+          values: option.values || [],
+        })) || [],
+      addons: item.details?.selectedAddons?.map(addon => ({
+        attribute: addon.attribute || '',
+        sku: addon.sku || '',
+        values: addon.values?.map(value => ({
+          costAdjustment: value.costAdjustment
+            ? {
+                currencyCode: value.costAdjustment.currencyCode ?? undefined,
+                value: value.costAdjustment.value ?? undefined,
+              }
+            : undefined,
+          name: value.name ?? undefined,
+        })),
+      })),
+    })) || [];
+
+  // Calculate totals
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const currencyCode = order?.totals?.total?.currencyCode || 'USD';
+  const subtotal = order?.totals?.subTotal?.value || 0;
+  const shipping = order?.totals?.shippingTotal?.value || 0;
+  const taxes = order?.totals?.taxTotal?.value || 0;
+  const discount = order?.totals?.discountTotal?.value || 0;
+  const total = order?.totals?.total?.value || 0;
 
   const totals = {
-    subtotal: 27.97,
-    discount: 0,
-    shipping: 0,
-    currencyCode: 'USD',
-    itemCount: 3,
-    total: 27.97,
+    subtotal,
+    discount,
+    shipping,
+    currencyCode,
+    itemCount,
+    total,
     tip: 0,
-    taxes: 0,
+    taxes,
     enableDiscounts: false,
     enableTaxes: true,
     isTaxLoading: false,
@@ -59,11 +135,79 @@ export function Cart({ open, onOpenChange }: CartProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className='w-full sm:max-w-lg overflow-y-auto'>
         <SheetHeader>
-          <SheetTitle>Shopping Cart</SheetTitle>
+          <SheetTitle>{t.storefront.shoppingCart}</SheetTitle>
         </SheetHeader>
         <div className='mt-8 space-y-6'>
-          <CartLineItems items={items} currencyCode={totals.currencyCode} />
-          <CartTotals {...totals} />
+          {isLoading && (
+            <div className='flex items-center justify-center py-12'>
+              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+            </div>
+          )}
+
+          {!isLoading && error && (
+            <div className='flex flex-col items-center justify-center py-12 text-center'>
+              <p className='text-destructive mb-2'>
+                {t.storefront.failedToLoadCart} {(error as Error).message}
+              </p>
+              <Button
+                variant='outline'
+                onClick={() =>
+                  queryClient.invalidateQueries({
+                    queryKey: ['cart-order', cartOrderId],
+                  })
+                }
+              >
+                {t.storefront.retry}
+              </Button>
+            </div>
+          )}
+
+          {!isLoading && !error && (!cartOrderId || items.length === 0) && (
+            <div className='flex flex-col items-center justify-center py-12 text-center'>
+              <ShoppingCart className='h-16 w-16 text-muted-foreground mb-4' />
+              <p className='text-lg font-medium text-foreground mb-1'>
+                {t.storefront.yourCartIsEmpty}
+              </p>
+              <p className='text-sm text-muted-foreground'>
+                {t.storefront.addItemsToGetStarted}
+              </p>
+            </div>
+          )}
+
+          {!isLoading && !error && cartOrderId && items.length > 0 && (
+            <>
+              <CartLineItems
+                items={items}
+                currencyCode={currencyCode}
+                inputInMinorUnits
+                onRemoveFromCart={handleRemoveFromCart}
+                isRemovingFromCart={deleteMutation.isPending}
+                removingItemId={deleteMutation.variables}
+              />
+              <CartTotals
+                {...totals}
+                inputInMinorUnits
+                enableTaxes={false}
+                enableShipping={false}
+              />
+              {onCheckout ? (
+                <SheetFooter>
+                  <Button
+                    className='w-full'
+                    size='lg'
+                    onClick={() => onCheckout(cartOrderId)}
+                    disabled={isCheckingOut}
+                  >
+                    {isCheckingOut ? (
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                    ) : (
+                      t.storefront.checkout
+                    )}
+                  </Button>
+                </SheetFooter>
+              ) : null}
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>
