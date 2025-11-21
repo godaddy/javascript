@@ -7,13 +7,15 @@ export const useGetPoyntCollectCdn = () => {
   return useMemo(() => {
     switch (environment) {
       case 'prod':
-        return 'https://cdn.poynt.net/collect.js';
+        return 'https://collect.commerce.godaddy.com/sdk.js';
+      case 'ote':
+        return 'https://collect.commerce.ote-godaddy.com/sdk.js';
       case 'test':
-        return 'https://cdn.poynt.net/test/collect-test.js';
+        return 'https://collect.commerce.test-godaddy.com/sdk.js';
       case 'dev':
-        return 'https://cdn.poynt.net/ci/collect-ci.js';
+        return 'https://collect.commerce.dev-godaddy.com/sdk.js';
       default:
-        return 'https://cdn.poynt.net/collect.js';
+        return 'https://collect.commerce.godaddy.com/sdk.js';
     }
   }, [environment]);
 };
