@@ -102,8 +102,6 @@ export interface GoDaddyProviderProps {
    *
    * Internal devs can set to:
    * - "http://localhost:3000" for local development
-   * - "https://checkout.commerce.api.dev-godaddy.com" for DEV environment
-   * - "https://checkout.commerce.api.test-godaddy.com" for TEST environment
    */
   apiHost?: string;
   clientId?: string;

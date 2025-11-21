@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, ShoppingCart } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { Product } from '@/components/checkout/line-items/line-items';
 import { CartLineItems } from '@/components/storefront/cart-line-items';
 import { CartTotals } from '@/components/storefront/cart-totals';
@@ -32,7 +33,11 @@ export function Cart({
 }: CartProps) {
   const context = useGoDaddyContext();
   const queryClient = useQueryClient();
-  const cartOrderId = getCartOrderId();
+  const [cartOrderId, setCartOrderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCartOrderId(getCartOrderId());
+  }, []);
 
   // Fetch cart order
   const {
