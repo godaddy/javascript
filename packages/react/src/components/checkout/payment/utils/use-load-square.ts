@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useGetEnvFromContext } from '@/components/checkout/utils/use-get-env-from-context.ts';
+import { useGoDaddyContext } from '@/godaddy-provider.tsx';
 
 let isSquareLoaded = false;
 let isSquareCDNLoaded = false;
@@ -8,11 +8,11 @@ const listeners = new Set<(loaded: boolean) => void>();
 
 export function useLoadSquare() {
   const { squareConfig } = useCheckoutContext();
+  const { apiHost } = useGoDaddyContext();
   const [loaded, setLoaded] = useState(isSquareLoaded);
-  const environment = useGetEnvFromContext();
 
   const squareCDN =
-    environment === 'prod'
+    apiHost && !apiHost.includes('test') && !apiHost.includes('dev')
       ? 'https://web.squarecdn.com/v1/square.js'
       : 'https://sandbox.web.squarecdn.com/v1/square.js';
 
