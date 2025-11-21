@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.8
+
+### Patch Changes
+
+- c484494: Added cart functionality with `useAddToCart` hook and `Cart` component.
+  Fixed hydration mismatch in `Cart` component.
+  Removed internal environment references.
+
 ## 1.0.7
 
 ### Patch Changes

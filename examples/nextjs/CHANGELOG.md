@@ -1,5 +1,12 @@
 # nextjs
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [c484494]
+  - @godaddy/react@1.0.8
+
 ## 0.1.5
 
 ### Patch Changes
