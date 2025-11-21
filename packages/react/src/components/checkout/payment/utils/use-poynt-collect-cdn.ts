@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useGetEnvFromContext } from '@/components/checkout/utils/use-get-env-from-context.ts';
 import { useGoDaddyContext } from '@/godaddy-provider.tsx';
 
 export const useGetPoyntCollectCdn = () => {
