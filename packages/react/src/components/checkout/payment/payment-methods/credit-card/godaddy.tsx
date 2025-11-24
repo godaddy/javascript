@@ -190,7 +190,7 @@ export function GoDaddyCreditCardForm() {
     if (!isPoyntLoaded || !godaddyPaymentsConfig || collect.current) return;
 
     collect.current = new (window as any).TokenizeJs(
-      session?.businessId || godaddyPaymentsConfig?.businessId,
+      godaddyPaymentsConfig?.businessId || session?.businessId,
       godaddyPaymentsConfig?.appId
     );
 

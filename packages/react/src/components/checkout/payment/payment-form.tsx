@@ -155,7 +155,7 @@ export function PaymentForm(
       session?.paymentMethods?.paze?.processor === PaymentProvider.GODADDY
     ) {
       collect.current = new (window as any).TokenizeJs(
-        session?.businessId || godaddyPaymentsConfig?.businessId,
+        godaddyPaymentsConfig?.businessId || session?.businessId,
         godaddyPaymentsConfig?.appId,
         {
           country: countryCode,
