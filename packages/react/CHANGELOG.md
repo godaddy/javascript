@@ -1,5 +1,15 @@
 # @godaddy/react
 
+## 1.0.9
+
+### Patch Changes
+
+- 2cb4ac6: - Update collect SDK CDN urls
+  - Add localization keys for cart components
+  - Optional businessId for GDP config (will pull from store data if not provided)
+- Updated dependencies [2cb4ac6]
+  - @godaddy/localizations@1.0.3
+
 ## 1.0.8
 
 ### Patch Changes
