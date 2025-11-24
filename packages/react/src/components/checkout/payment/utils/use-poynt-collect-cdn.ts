@@ -1,19 +1,11 @@
 import { useMemo } from 'react';
-import { useGetEnvFromContext } from '@/components/checkout/utils/use-get-env-from-context.ts';
+import { useGoDaddyContext } from '@/godaddy-provider.tsx';
 
 export const useGetPoyntCollectCdn = () => {
-  const environment = useGetEnvFromContext();
+  const { apiHost } = useGoDaddyContext();
+  const HOST = apiHost?.replace('api.', 'collect.commerce.') || '';
 
   return useMemo(() => {
-    switch (environment) {
-      case 'prod':
-        return 'https://cdn.poynt.net/collect.js';
-      case 'test':
-        return 'https://cdn.poynt.net/test/collect-test.js';
-      case 'dev':
-        return 'https://cdn.poynt.net/ci/collect-ci.js';
-      default:
-        return 'https://cdn.poynt.net/collect.js';
-    }
-  }, [environment]);
+    return `https://${HOST}/sdk.js`;
+  }, [apiHost]);
 };
