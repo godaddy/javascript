@@ -5,6 +5,7 @@ export const GetCheckoutSessionQuery = graphql(`
         checkoutSession {
             id
             token
+            url
             sourceApp
             returnUrl
             successUrl
