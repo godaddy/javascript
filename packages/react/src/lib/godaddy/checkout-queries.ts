@@ -10,6 +10,7 @@ export const GetCheckoutSessionQuery = graphql(`
             successUrl
             storeId
             channelId
+            businessId
             customerId
             storeName
             environment
