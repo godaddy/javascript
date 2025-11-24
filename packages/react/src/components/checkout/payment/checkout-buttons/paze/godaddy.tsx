@@ -100,6 +100,7 @@ export function PazeCheckoutButton() {
     if (
       !collect.current &&
       godaddyPaymentsConfig &&
+      (godaddyPaymentsConfig?.businessId || session?.businessId) &&
       isCollectLoading &&
       isPoyntLoaded &&
       !hasMounted.current
@@ -132,6 +133,7 @@ export function PazeCheckoutButton() {
     if (
       !isPoyntLoaded ||
       !godaddyPaymentsConfig ||
+      (!godaddyPaymentsConfig?.businessId && !session?.businessId) ||
       !isCollectLoading ||
       !collect.current ||
       hasMounted.current

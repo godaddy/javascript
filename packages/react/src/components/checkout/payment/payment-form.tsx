@@ -149,6 +149,7 @@ export function PaymentForm(
     if (
       !collect.current &&
       godaddyPaymentsConfig &&
+      (godaddyPaymentsConfig?.businessId || session?.businessId) &&
       isPoyntLoaded &&
       countryCode &&
       currencyCode &&
