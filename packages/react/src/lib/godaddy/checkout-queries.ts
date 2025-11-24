@@ -5,11 +5,13 @@ export const GetCheckoutSessionQuery = graphql(`
         checkoutSession {
             id
             token
+            url
             sourceApp
             returnUrl
             successUrl
             storeId
             channelId
+            businessId
             customerId
             storeName
             environment

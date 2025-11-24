@@ -187,7 +187,13 @@ export function GoDaddyCreditCardForm() {
   const collect = useRef<TokenizeJs | null>(null);
 
   useLayoutEffect(() => {
-    if (!isPoyntLoaded || !godaddyPaymentsConfig || collect.current) return;
+    if (
+      !isPoyntLoaded ||
+      !godaddyPaymentsConfig ||
+      collect.current ||
+      (!godaddyPaymentsConfig?.businessId && !session?.businessId)
+    )
+      return;
 
     collect.current = new (window as any).TokenizeJs(
       godaddyPaymentsConfig?.businessId || session?.businessId,

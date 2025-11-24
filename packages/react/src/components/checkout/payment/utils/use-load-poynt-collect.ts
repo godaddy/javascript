@@ -9,6 +9,7 @@ const listeners = new Set<(loaded: boolean) => void>();
 // load collect.js globally so it can be used for card component and Apple/G Pay buttons
 export function useLoadPoyntCollect() {
   const { godaddyPaymentsConfig } = useCheckoutContext();
+  const { session } = useCheckoutContext();
   const collectCDN = useGetPoyntCollectCdn();
   const [loaded, setLoaded] = useState(isPoyntLoaded);
 
@@ -32,7 +33,8 @@ export function useLoadPoyntCollect() {
       isPoyntCDNLoaded ||
       isPoyntLoaded ||
       !godaddyPaymentsConfig ||
-      !collectCDN
+      !collectCDN ||
+      (!session?.businessId && !godaddyPaymentsConfig?.businessId)
     ) {
       return;
     }
@@ -48,7 +50,7 @@ export function useLoadPoyntCollect() {
     };
 
     document?.body?.appendChild(script);
-  }, [godaddyPaymentsConfig, collectCDN]);
+  }, [godaddyPaymentsConfig, collectCDN, session?.businessId]);
 
   return { isPoyntLoaded: loaded };
 }
