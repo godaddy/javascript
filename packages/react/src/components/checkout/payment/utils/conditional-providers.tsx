@@ -26,10 +26,7 @@ export function ConditionalPaymentProviders({
   }
 
   // Only wrap with PoyntCollectProvider (GoDaddy Payments) if configured
-  if (
-    godaddyPaymentsConfig?.businessId?.trim() &&
-    godaddyPaymentsConfig?.appId?.trim()
-  ) {
+  if (godaddyPaymentsConfig?.appId?.trim()) {
     wrappedChildren = (
       <PoyntCollectProvider>{wrappedChildren}</PoyntCollectProvider>
     );
