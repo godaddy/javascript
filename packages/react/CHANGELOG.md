@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.10
+
+### Patch Changes
+
+- 83aae9a: Fix bug where GDP tries to load before having session values
+
 ## 1.0.9
 
 ### Patch Changes
