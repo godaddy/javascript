@@ -16,6 +16,7 @@ import { PaymentMethodType } from '@/types';
 
 export function GoDaddyCreditCardForm() {
   const { t } = useGoDaddyContext();
+  const { session } = useCheckoutContext();
   const { setCollect, setIsLoadingNonce } = usePoyntCollect();
   const { isPoyntLoaded } = useLoadPoyntCollect();
   const { godaddyPaymentsConfig, setCheckoutErrors } = useCheckoutContext();
@@ -189,7 +190,7 @@ export function GoDaddyCreditCardForm() {
     if (!isPoyntLoaded || !godaddyPaymentsConfig || collect.current) return;
 
     collect.current = new (window as any).TokenizeJs(
-      godaddyPaymentsConfig?.businessId,
+      godaddyPaymentsConfig?.businessId || session?.businessId,
       godaddyPaymentsConfig?.appId
     );
 
@@ -240,6 +241,7 @@ export function GoDaddyCreditCardForm() {
     setCheckoutErrors,
     t,
     setIsLoadingNonce,
+    session?.businessId,
   ]);
 
   return (

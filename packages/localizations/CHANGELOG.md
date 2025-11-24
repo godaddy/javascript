@@ -1,5 +1,13 @@
 # @godaddy/localizations
 
+## 1.0.3
+
+### Patch Changes
+
+- 2cb4ac6: - Update collect SDK CDN urls
+  - Add localization keys for cart components
+  - Optional businessId for GDP config (will pull from store data if not provided)
+
 ## 1.0.2
 
 ### Patch Changes

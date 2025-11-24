@@ -10,6 +10,7 @@ export const CreateCheckoutSessionMutation = graphql(`
       returnUrl
       successUrl
       storeId
+      businessId
       channelId
       customerId
       storeName
