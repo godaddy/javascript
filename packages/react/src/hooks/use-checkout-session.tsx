@@ -98,7 +98,10 @@ export function useCheckoutSession(props?: CheckoutProps) {
       return;
     }
 
-    if (!sessionId || !sessionToken) return;
+    if (!sessionId || !sessionToken) {
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
 
