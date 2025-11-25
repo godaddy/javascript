@@ -6338,11 +6338,8 @@ const introspection = {
               {
                 name: 'sessionId',
                 type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
+                  kind: 'SCALAR',
+                  name: 'String',
                 },
               },
             ],
@@ -6444,11 +6441,8 @@ const introspection = {
               {
                 name: 'sessionId',
                 type: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'SCALAR',
-                    name: 'String',
-                  },
+                  kind: 'SCALAR',
+                  name: 'String',
                 },
               },
             ],
@@ -6796,11 +6790,8 @@ const introspection = {
           {
             name: 'channelId',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+              kind: 'SCALAR',
+              name: 'String',
             },
           },
           {
@@ -8316,24 +8307,6 @@ const introspection = {
             isDeprecated: false,
           },
           {
-            name: 'mediaObjects',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'LIST',
-                ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'OBJECT',
-                    name: 'SKUMediaObject',
-                  },
-                },
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
             name: 'metafields',
             type: {
               kind: 'NON_NULL',
@@ -8549,64 +8522,6 @@ const introspection = {
           },
           {
             name: 'name',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-        ],
-        interfaces: [],
-      },
-      {
-        kind: 'OBJECT',
-        name: 'SKUMediaObject',
-        fields: [
-          {
-            name: 'id',
-            type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'ID',
-              },
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'label',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'name',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'type',
-            type: {
-              kind: 'SCALAR',
-              name: 'String',
-            },
-            args: [],
-            isDeprecated: false,
-          },
-          {
-            name: 'url',
             type: {
               kind: 'NON_NULL',
               ofType: {
