@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.11
+
+### Patch Changes
+
+- 8c9ea85: Add missing session error state
+- Updated dependencies [8c9ea85]
+  - @godaddy/localizations@1.0.4
+
 ## 1.0.10
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @godaddy/localizations
 
+## 1.0.4
+
+### Patch Changes
+
+- 8c9ea85: Add missing session error state
+
 ## 1.0.3
 
 ### Patch Changes
