@@ -336,6 +336,7 @@ export function ExpressCheckoutButton() {
     if (
       !collect.current &&
       godaddyPaymentsConfig &&
+      (godaddyPaymentsConfig?.businessId || session?.businessId) &&
       isPoyntLoaded &&
       isCollectLoading &&
       !hasMounted.current &&
@@ -404,7 +405,8 @@ export function ExpressCheckoutButton() {
       !godaddyPaymentsConfig ||
       !isCollectLoading ||
       !collect.current ||
-      hasMounted.current
+      hasMounted.current ||
+      (!godaddyPaymentsConfig?.businessId && !session?.businessId)
     )
       return;
 
@@ -456,6 +458,7 @@ export function ExpressCheckoutButton() {
     godaddyPaymentsConfig,
     isCollectLoading,
     handleExpressPayClick,
+    session?.businessId,
   ]);
 
   // Function to convert shipping address to shippingLines format for price adjustments
