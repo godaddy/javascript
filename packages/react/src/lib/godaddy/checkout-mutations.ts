@@ -283,8 +283,8 @@ export const CalculateCheckoutSessionTaxesMutation = graphql(`
 `);
 
 export const ApplyCheckoutSessionDiscountMutation = graphql(`
-    mutation ApplyCheckoutSessionDiscount($input: MutationApplyCheckoutSessionDiscountInput!, $sessionId: String!)  {
-      applyCheckoutSessionDiscount(input: $input, sessionId: $sessionId) {
+    mutation ApplyCheckoutSessionDiscount($input: MutationApplyCheckoutSessionDiscountInput!)  {
+      applyCheckoutSessionDiscount(input: $input) {
           id
           lineItems {
             externalId
