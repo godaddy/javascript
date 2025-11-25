@@ -8,6 +8,8 @@ export const deDe = {
     apply: 'Anwenden',
     checkoutDisabled:
       'Der Checkout ist derzeit deaktiviert. Wir entschuldigen uns für die Unannehmlichkeiten.',
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: 'Unterstützt von',
   },
   contact: {
     title: 'Kontakt',

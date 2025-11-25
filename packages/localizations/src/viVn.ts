@@ -8,6 +8,8 @@ export const viVn = {
     apply: 'Áp dụng',
     checkoutDisabled:
       'Thanh toán hiện tại đang bị vô hiệu hóa. Chúng tôi xin lỗi vì sự bất tiện này.',
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: 'Được cung cấp bởi',
   },
   contact: {
     title: 'Liên hệ',

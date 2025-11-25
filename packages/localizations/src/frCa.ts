@@ -8,6 +8,8 @@ export const frCa = {
     apply: 'Appliquer',
     checkoutDisabled:
       "Le checkout est présentement désactivé. Nous nous excusons pour l'inconvénient.",
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: 'Propulsé par',
   },
   contact: {
     title: 'Contact',

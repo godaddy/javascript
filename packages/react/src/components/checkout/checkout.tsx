@@ -235,7 +235,6 @@ export function Checkout(props: CheckoutProps) {
   useTheme(session?.appearance?.theme);
   useVariables(session?.appearance?.variables || props?.appearance?.variables);
 
-
   const formSchema = React.useMemo(() => {
     const extendedSchema = checkoutFormSchema
       ? baseCheckoutSchema.extend(checkoutFormSchema)
@@ -341,16 +340,29 @@ export function Checkout(props: CheckoutProps) {
     return getRequiredFieldsFromSchema(formSchema);
   }, [formSchema]);
 
-
   if (!isLoadingJWT && !session) {
     return (
       <div className='flex items-center justify-center min-h-[50vh] p-4'>
-        <div className='mb-4 rounded-md border border-destructive bg-destructive/10 p-4 max-w-md w-full'>
-          <div className='flex items-start'>
+        <div className='max-w-md w-full'>
+          <h2 className='text-lg font-semibold mb-4 text-destructive-foreground'>
+            {t.general.godaddyCheckout}
+          </h2>
+
+          <div className='flex items-start mb-4 rounded-md border border-destructive bg-destructive/10 p-4 w-full'>
             <CircleAlert className='text-destructive w-5 h-5 mr-3 flex-shrink-0 mt-0.5' />
             <div className='text-destructive-foreground text-sm'>
               {t.apiErrors.CHECKOUT_SESSION_NOT_FOUND}
             </div>
+          </div>
+
+          <div className='text-xs text-muted-foreground border-t border-border pt-3 mt-4'>
+            {t.general.poweredBy}{' '}
+            <a
+              href='https://www.godaddy.com'
+              className='underline hover:text-foreground'
+            >
+              GoDaddy
+            </a>
           </div>
         </div>
       </div>
