@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.12
+
+### Patch Changes
+
+- e5504b4: remove sessionId requirement for applyDiscount
+
 ## 1.0.11
 
 ### Patch Changes
