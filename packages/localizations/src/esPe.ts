@@ -8,6 +8,8 @@ export const esPe = {
     apply: 'Aplicar',
     checkoutDisabled:
       'El checkout está deshabilitado actualmente. Disculpe las molestias.',
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: 'Desarrollado por',
   },
   contact: {
     title: 'Contacto',

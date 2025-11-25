@@ -8,6 +8,8 @@ export const enIe = {
     apply: 'Apply',
     checkoutDisabled:
       'Checkout is currently disabled. We apologise for the inconvenience.',
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: 'Powered by',
   },
   contact: {
     title: 'Contact',

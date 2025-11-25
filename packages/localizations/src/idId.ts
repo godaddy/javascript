@@ -8,6 +8,8 @@ export const idId = {
     apply: 'Terapkan',
     checkoutDisabled:
       'Checkout saat ini dinonaktifkan. Kami mohon maaf atas ketidaknyamanannya.',
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: 'Dipersembahkan oleh',
   },
   contact: {
     title: 'Kontak',

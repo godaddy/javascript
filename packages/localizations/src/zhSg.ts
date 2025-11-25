@@ -7,6 +7,8 @@ export const zhSg = {
     closed: '已关闭',
     apply: '应用',
     checkoutDisabled: '结账目前不可用。给您带来不便，深表歉意。',
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: '技术支持',
   },
   contact: {
     title: '联系信息',

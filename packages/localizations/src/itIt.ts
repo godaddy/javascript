@@ -8,6 +8,8 @@ export const itIt = {
     apply: 'Applica',
     checkoutDisabled:
       "Il checkout è attualmente disabilitato. Ci scusiamo per l'inconveniente.",
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: 'Offerto da',
   },
   contact: {
     title: 'Contatto',

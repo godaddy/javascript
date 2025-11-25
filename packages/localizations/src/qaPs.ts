@@ -8,6 +8,8 @@ export const qaPs = {
     apply: '[Âþþlÿ]',
     checkoutDisabled:
       '[Çhéçkøüť îš çürrëñťlÿ dîšâblëd. Wé âþöløgîžé før ťhé îñçöñvéñîéñçé ând áppreciate your patience.]',
+    godaddyCheckout: '[GôDâddÿ Çhéçkøüť]',
+    poweredBy: '[Pöwéréd bÿ]',
   },
   contact: {
     title: '[Çöñťâçť]',

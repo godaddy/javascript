@@ -8,6 +8,8 @@ export const trTr = {
     apply: 'Uygula',
     checkoutDisabled:
       'Ödeme işlemi şu anda devre dışı. Yaşanan rahatsızlık için özür dileriz.',
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: 'Tarafından desteklenmektedir',
   },
   contact: {
     title: 'İletişim',

@@ -8,6 +8,8 @@ export const ptBr = {
     apply: 'Aplicar',
     checkoutDisabled:
       'O checkout está temporariamente indisponível. Pedimos desculpas pelo inconveniente.',
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: 'Desenvolvido por',
   },
   contact: {
     title: 'Contato',

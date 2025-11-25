@@ -8,6 +8,8 @@ export const frFr = {
     apply: 'Appliquer',
     checkoutDisabled:
       'Le paiement est actuellement désactivé. Nous nous excusons pour la gêne occasionnée.',
+    godaddyCheckout: 'GoDaddy Checkout',
+    poweredBy: 'Propulsé par',
   },
   contact: {
     title: 'Contact',
