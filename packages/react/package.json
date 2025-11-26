@@ -10,6 +10,7 @@
   "exports": {
     "./package.json": "./package.json",
     "./styles.css": "./dist/index.css",
+    "./styles-tailwind.css": "./dist/index-tailwind.css",
     "./server": {
       "types": "./dist/server.d.ts",
       "import": "./dist/server.js",
@@ -34,7 +35,7 @@
   "scripts": {
     "dev": "tsdown --watch",
     "dev:https": "tsdown --watch",
-    "build": "tsdown && pnpm dlx @tailwindcss/cli -i ./src/globals.css -o ./dist/index.css --minify",
+    "build": "tsdown && pnpm dlx @tailwindcss/cli -i ./src/globals.css -o ./dist/index.css --minify && pnpm dlx @tailwindcss/cli -i ./src/globals-tailwind.css -o ./dist/index-tailwind.css --minify",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
