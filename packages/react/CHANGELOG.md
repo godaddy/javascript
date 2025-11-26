@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.13
+
+### Patch Changes
+
+- b17602f: Add Tailwind v3/v4 compatible CSS export
+
 ## 1.0.12
 
 ### Patch Changes
