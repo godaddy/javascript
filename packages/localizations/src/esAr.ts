@@ -367,5 +367,6 @@ export const esAr = {
     remove: 'Eliminar',
     removing: 'Eliminando...',
     checkout: 'Pagar',
+    itemsPerPage: 'Artículos por página:',
   },
 };

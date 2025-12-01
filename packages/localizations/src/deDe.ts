@@ -384,5 +384,6 @@ export const deDe = {
     remove: 'Entfernen',
     removing: 'Wird entfernt...',
     checkout: 'Zur Kasse',
+    itemsPerPage: 'Artikel pro Seite:',
   },
 };

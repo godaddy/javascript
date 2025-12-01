@@ -360,5 +360,6 @@ export const idId = {
     remove: 'Hapus',
     removing: 'Menghapus...',
     checkout: 'Checkout',
+    itemsPerPage: 'Item per halaman:',
   },
 };

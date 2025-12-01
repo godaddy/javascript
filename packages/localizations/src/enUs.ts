@@ -361,5 +361,6 @@ export const enUs = {
     remove: 'Remove',
     removing: 'Removing...',
     checkout: 'Checkout',
+    itemsPerPage: 'Items per page:',
   },
 };

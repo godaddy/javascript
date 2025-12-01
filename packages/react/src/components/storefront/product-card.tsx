@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Loader2, ShoppingBag } from 'lucide-react';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
@@ -7,24 +8,83 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RouterLink } from '@/components/ui/link';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
+import { getSkuGroup } from '@/lib/godaddy/godaddy';
 import { SKUGroup } from '@/types.ts';
 
 interface ProductCardProps {
-  product: SKUGroup;
+  product?: SKUGroup;
+  productId?: string;
+  storeId?: string;
+  clientId?: string;
   href?: string;
+  getProductHref?: (productId: string) => string;
   onAddToCartSuccess?: () => void;
   onAddToCartError?: (error: Error) => void;
 }
 
 export function ProductCard({
-  product,
-  href,
+  product: productProp,
+  productId,
+  storeId: storeIdProp,
+  clientId: clientIdProp,
+  href: hrefProp,
+  getProductHref,
   onAddToCartSuccess,
   onAddToCartError,
 }: ProductCardProps) {
+  // All hooks must be called at the top, before any conditional returns
+  const context = useGoDaddyContext();
+  const { t } = context;
   const formatCurrency = useFormatCurrency();
-  const { t } = useGoDaddyContext();
+  const storeId = storeIdProp || context.storeId;
+  const clientId = clientIdProp || context.clientId;
+
+  // Fetch product by ID if productId is provided
+  const { data: fetchedProductData, isLoading } = useQuery({
+    queryKey: ['sku-group', productId, storeId, clientId],
+    queryFn: () =>
+      getSkuGroup({ id: productId! }, storeId!, clientId!, context.apiHost),
+    enabled: !!productId && !!storeId && !!clientId && !productProp,
+  });
+
+  // Use shared add to cart hook
+  const { addToCart, isLoading: isAddingToCart } = useAddToCart({
+    onSuccess: onAddToCartSuccess,
+    onError: onAddToCartError,
+  });
+
+  // Use fetched product or prop product
+  const product = productProp || fetchedProductData?.skuGroup;
+
+  // Compute href with priority: explicit href > getProductHref > no link
+  const resolvedProductId = product?.id || productId;
+  const href =
+    hrefProp ||
+    (getProductHref && resolvedProductId
+      ? getProductHref(resolvedProductId)
+      : undefined);
+
+  // Show loading skeleton while fetching
+  if (isLoading || !product) {
+    return (
+      <Card className='overflow-hidden border-border flex flex-col h-full'>
+        <div className='aspect-square overflow-hidden bg-muted'>
+          <Skeleton className='w-full h-full' />
+        </div>
+        <div className='p-4 space-y-2 flex flex-col flex-1'>
+          <Skeleton className='h-5 w-3/4' />
+          <Skeleton className='h-4 w-full' />
+          <Skeleton className='h-4 w-2/3' />
+          <div className='flex items-center justify-between pt-2 mt-auto'>
+            <Skeleton className='h-6 w-20' />
+            <Skeleton className='h-9 w-24' />
+          </div>
+        </div>
+      </Card>
+    );
+  }
   const title = product?.label || product?.name || t.storefront.product;
   const description = product?.description || '';
   const priceMin = product?.priceRange?.min || 0;
@@ -50,12 +110,6 @@ export function ProductCard({
 
   const isFirstSkuInStock = availableInventory > 0;
   const hasMultipleSkus = (product?.skus?.edges?.length || 0) > 1;
-
-  // Use shared add to cart hook
-  const { addToCart, isLoading: isAddingToCart } = useAddToCart({
-    onSuccess: onAddToCartSuccess,
-    onError: onAddToCartError,
-  });
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();

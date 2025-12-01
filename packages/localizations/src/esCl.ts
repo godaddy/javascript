@@ -369,5 +369,6 @@ export const esCl = {
     remove: 'Eliminar',
     removing: 'Eliminando...',
     checkout: 'Pagar',
+    itemsPerPage: 'Artículos por página:',
   },
 };

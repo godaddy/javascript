@@ -74,6 +74,7 @@ export const SkuGroupsQuery = graphql(`
                 startCursor
                 endCursor
             }
+            totalCount
         }
     }
 `);

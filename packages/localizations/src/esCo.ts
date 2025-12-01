@@ -367,5 +367,6 @@ export const esCo = {
     remove: 'Eliminar',
     removing: 'Eliminando...',
     checkout: 'Pagar',
+    itemsPerPage: 'Artículos por página:',
   },
 };

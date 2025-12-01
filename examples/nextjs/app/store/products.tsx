@@ -9,6 +9,7 @@ export default function ProductsPage() {
   return (
     <div className='container mx-auto'>
       <ProductGrid
+        enablePagination
         getProductHref={sku => `/store/product/${sku}`}
         onAddToCartSuccess={openCart}
       />

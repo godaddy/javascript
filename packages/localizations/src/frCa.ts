@@ -384,5 +384,6 @@ export const frCa = {
     remove: 'Supprimer',
     removing: 'Suppression...',
     checkout: 'Commander',
+    itemsPerPage: 'Articles par page :',
   },
 };

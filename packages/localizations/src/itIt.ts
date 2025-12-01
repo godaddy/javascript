@@ -384,5 +384,6 @@ export const itIt = {
     remove: 'Rimuovi',
     removing: 'Rimozione...',
     checkout: 'Acquista',
+    itemsPerPage: 'Articoli per pagina:',
   },
 };
