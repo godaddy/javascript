@@ -21,11 +21,16 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSkuGroups } from '@/lib/godaddy/godaddy';
+import type { SkuGroupsInput } from '@/types';
 import { ProductCard } from './product-card';
 
 interface ProductGridProps {
   storeId?: string;
   clientId?: string;
+  /** Filter products by specific product IDs */
+  productIds?: string[];
+  /** Filter products by category IDs (maps to listId in GraphQL) */
+  categoryIds?: string[];
   enablePagination?: boolean;
   getProductHref?: (productId: string) => string;
   onAddToCartSuccess?: () => void;
@@ -51,6 +56,8 @@ function ProductGridSkeleton({ count = 6 }: { count?: number }) {
 export function ProductGrid({
   storeId: storeIdProp,
   clientId: clientIdProp,
+  productIds,
+  categoryIds,
   enablePagination = false,
   getProductHref,
   onAddToCartSuccess,
@@ -68,10 +75,19 @@ export function ProductGrid({
   const first = enablePagination ? perPage : 100;
   const after = pageCursors[currentPageIndex] || undefined;
 
+  // Build filter object for GraphQL query
+  // Map categoryIds to listId (GraphQL uses 'listId' for categories)
+  const filters: SkuGroupsInput = {
+    first,
+    after,
+    ...(productIds && productIds.length > 0 && { id: { in: productIds } }),
+    ...(categoryIds &&
+      categoryIds.length > 0 && { listId: { in: categoryIds } }),
+  };
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['sku-groups', { storeId, clientId, first, after }],
-    queryFn: () =>
-      getSkuGroups({ first, after }, storeId!, clientId!, context?.apiHost),
+    queryKey: ['sku-groups', { storeId, clientId, ...filters }],
+    queryFn: () => getSkuGroups(filters, storeId!, clientId!, context?.apiHost),
     enabled: !!storeId && !!clientId,
   });
 
@@ -178,12 +194,11 @@ export function ProductGrid({
           const group = edge?.node;
           if (!group?.id) return null;
 
-          const href = getProductHref?.(group.id);
           return (
             <ProductCard
               key={group.id}
               product={group}
-              href={href}
+              getProductHref={getProductHref}
               onAddToCartSuccess={onAddToCartSuccess}
               onAddToCartError={onAddToCartError}
             />
