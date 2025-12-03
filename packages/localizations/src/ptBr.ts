@@ -366,5 +366,7 @@ export const ptBr = {
     removing: 'Removendo...',
     checkout: 'Finalizar compra',
     itemsPerPage: 'Itens por página:',
+    search: 'Pesquisar',
+    searchPlaceholder: 'Pesquisar produtos...',
   },
 };

@@ -385,5 +385,7 @@ export const itIt = {
     removing: 'Rimozione...',
     checkout: 'Acquista',
     itemsPerPage: 'Articoli per pagina:',
+    search: 'Cerca',
+    searchPlaceholder: 'Cerca prodotti...',
   },
 };

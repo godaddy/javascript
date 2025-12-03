@@ -362,5 +362,7 @@ export const enIe = {
     removing: 'Removing...',
     checkout: 'Checkout',
     itemsPerPage: 'Items per page:',
+    search: 'Search',
+    searchPlaceholder: 'Search products...',
   },
 };

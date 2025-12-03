@@ -385,5 +385,7 @@ export const deDe = {
     removing: 'Wird entfernt...',
     checkout: 'Zur Kasse',
     itemsPerPage: 'Artikel pro Seite:',
+    search: 'Suchen',
+    searchPlaceholder: 'Produkte suchen...',
   },
 };

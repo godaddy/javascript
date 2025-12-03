@@ -362,5 +362,7 @@ export const viVn = {
     removing: 'Đang xóa...',
     checkout: 'Thanh toán',
     itemsPerPage: 'Mục trên mỗi trang:',
+    search: 'Tìm kiếm',
+    searchPlaceholder: 'Tìm kiếm sản phẩm...',
   },
 };

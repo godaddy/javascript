@@ -361,5 +361,7 @@ export const idId = {
     removing: 'Menghapus...',
     checkout: 'Checkout',
     itemsPerPage: 'Item per halaman:',
+    search: 'Cari',
+    searchPlaceholder: 'Cari produk...',
   },
 };

@@ -386,5 +386,7 @@ export const frFr = {
     removing: 'Suppression...',
     checkout: 'Commander',
     itemsPerPage: 'Articles par page :',
+    search: 'Rechercher',
+    searchPlaceholder: 'Rechercher des produits...',
   },
 };

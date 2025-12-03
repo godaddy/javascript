@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Pagination,
   PaginationContent,
@@ -71,18 +71,61 @@ export function ProductGrid({
   const [perPage, setPerPage] = useState(12);
   const [pageCursors, setPageCursors] = useState<(string | null)[]>([null]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const first = enablePagination ? perPage : 100;
   const after = pageCursors[currentPageIndex] || undefined;
 
+  // Get search query from URL and update state when it changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const updateSearchQuery = () => {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('q') || '';
+      setSearchQuery(q);
+    };
+
+    // Set initial value
+    updateSearchQuery();
+
+    // Listen for URL changes (both browser navigation and custom events)
+    const handleUrlChange = () => {
+      updateSearchQuery();
+    };
+
+    // Handle browser back/forward navigation
+    window.addEventListener('popstate', handleUrlChange);
+    // Handle custom URL change events (from ProductSearch)
+    window.addEventListener('urlchange', handleUrlChange);
+
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('urlchange', handleUrlChange);
+    };
+  }, []);
+
+  // Reset pagination when search query changes
+  useEffect(() => {
+    setCurrentPageIndex(0);
+    setPageCursors([null]);
+  }, [searchQuery]);
+
   // Build filter object for GraphQL query
   // Map categoryIds to listId (GraphQL uses 'listId' for categories)
+  // Only apply search filter if no productIds or categoryIds are provided
+  const hasExplicitFilters =
+    (productIds && productIds.length > 0) ||
+    (categoryIds && categoryIds.length > 0);
+
   const filters: SkuGroupsInput = {
     first,
     after,
     ...(productIds && productIds.length > 0 && { id: { in: productIds } }),
     ...(categoryIds &&
       categoryIds.length > 0 && { listId: { in: categoryIds } }),
+    ...(!hasExplicitFilters &&
+      searchQuery && { label: { contains: searchQuery } }),
   };
 
   const { data, isLoading, error } = useQuery({
