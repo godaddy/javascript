@@ -74,9 +74,8 @@ export function useAddToCart(options?: UseAddToCartOptions) {
         context?.apiHost
       ),
     onSuccess: () => {
-      // Invalidate cart query to refresh
-      const cartOrderId = getCartOrderId();
-      queryClient.invalidateQueries({ queryKey: ['cart-order', cartOrderId] });
+      // Invalidate all cart queries to refresh (queryKey prefix match)
+      queryClient.invalidateQueries({ queryKey: ['cart-order'] });
 
       // Call success callback
       options?.onSuccess?.();
