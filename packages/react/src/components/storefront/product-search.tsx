@@ -30,6 +30,8 @@ export function ProductSearch({
 
   const [hasUrlQuery, setHasUrlQuery] = React.useState(false);
 
+  // hasUrlQuery reflects whether the URL has ?q=..., not just the local input value.
+  // This keeps UI in sync with ProductGrid which reads from the URL.
   // Sync form with URL and track if URL has query param
   useEffect(() => {
     if (typeof window === 'undefined') return;

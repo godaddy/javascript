@@ -90,7 +90,7 @@ export function useAddToCart(options?: UseAddToCartOptions) {
     if (!context.storeId || !context.clientId) {
       const error = new Error('Store ID and Client ID are required');
       options?.onError?.(error);
-      throw error;
+      return;
     }
     let cartOrderId = getCartOrderId();
 
@@ -102,7 +102,7 @@ export function useAddToCart(options?: UseAddToCartOptions) {
       if (!cartOrderId) {
         const error = new Error('Failed to create cart');
         options?.onError?.(error);
-        throw error;
+        return;
       }
     }
 

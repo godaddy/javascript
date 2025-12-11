@@ -27,6 +27,7 @@ export const RouterLink = React.forwardRef<
   const { Link } = useGoDaddyContext();
   const LinkComponent = Link || DefaultLink;
 
+  // @ts-expect-error - LinkComponent type inference is tricky with ref
   return <LinkComponent ref={ref} {...props} />;
 });
 RouterLink.displayName = 'RouterLink';

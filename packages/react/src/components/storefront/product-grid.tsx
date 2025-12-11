@@ -124,6 +124,7 @@ export function ProductGrid({
     ...(productIds && productIds.length > 0 && { id: { in: productIds } }),
     ...(categoryIds &&
       categoryIds.length > 0 && { listId: { in: categoryIds } }),
+    // Search is only applied when no explicit product/category filters are set
     ...(!hasExplicitFilters &&
       searchQuery && { label: { contains: searchQuery } }),
   };
@@ -139,9 +140,10 @@ export function ProductGrid({
   }
 
   if (error) {
+    const message = error instanceof Error ? error.message : String(error);
     return (
       <div>
-        {t.storefront.errorLoadingProducts} {error.message}
+        {t.storefront.errorLoadingProducts} {message}
       </div>
     );
   }
@@ -152,13 +154,14 @@ export function ProductGrid({
   const totalPages = Math.ceil(totalCount / perPage);
   const currentPage = currentPageIndex + 1;
 
-  if (
-    pageInfo?.endCursor &&
-    pageInfo?.hasNextPage &&
-    !pageCursors[currentPageIndex + 1]
-  ) {
-    setPageCursors([...pageCursors, pageInfo.endCursor]);
-  }
+  useEffect(() => {
+    if (pageInfo?.endCursor && pageInfo?.hasNextPage) {
+      setPageCursors(prev => {
+        if (prev[currentPageIndex + 1]) return prev;
+        return [...prev, pageInfo.endCursor];
+      });
+    }
+  }, [pageInfo?.endCursor, pageInfo?.hasNextPage, currentPageIndex]);
 
   const handlePageChange = (page: number) => {
     setCurrentPageIndex(page - 1);

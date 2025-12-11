@@ -143,7 +143,8 @@ export function Cart({
           {!isLoading && error && (
             <div className='flex flex-col items-center justify-center py-12 text-center'>
               <p className='text-destructive mb-2'>
-                {t.storefront.failedToLoadCart} {(error as Error).message}
+                {t.storefront.failedToLoadCart}{' '}
+                {error instanceof Error ? error.message : String(error)}
               </p>
               <Button
                 variant='outline'

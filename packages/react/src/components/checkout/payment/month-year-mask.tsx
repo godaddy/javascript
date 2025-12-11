@@ -1,4 +1,3 @@
-// @ts-expect-error
 const matcher = /(?<month>\d{0,2})(?<separator>\s?\/?\s?)(?<year>\d{0,2})/;
 export function monthYearMask({ value }: { value?: string }) {
   if (typeof value !== 'string') {

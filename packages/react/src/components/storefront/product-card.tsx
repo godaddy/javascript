@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Loader2, ShoppingBag } from 'lucide-react';
+import type React from 'react';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
 import { Badge } from '@/components/ui/badge';
@@ -42,7 +43,11 @@ export function ProductCard({
   const clientId = clientIdProp || context.clientId;
 
   // Fetch product by ID if productId is provided
-  const { data: fetchedProductData, isLoading } = useQuery({
+  const {
+    data: fetchedProductData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['sku-group', productId, storeId, clientId],
     queryFn: () =>
       getSkuGroup({ id: productId! }, storeId!, clientId!, context.apiHost),
@@ -67,7 +72,7 @@ export function ProductCard({
       : undefined);
 
   // Show loading skeleton while fetching
-  if (isLoading || !product) {
+  if (isLoading && !product) {
     return (
       <Card className='overflow-hidden border-border flex flex-col h-full'>
         <div className='aspect-square overflow-hidden bg-muted'>
@@ -85,6 +90,18 @@ export function ProductCard({
       </Card>
     );
   }
+
+  if (error && !product) {
+    const message = error instanceof Error ? error.message : String(error);
+    return (
+      <Card className='overflow-hidden border-border flex flex-col h-full'>
+        <div className='p-4 text-sm text-destructive'>
+          {t.storefront.errorLoadingProducts} {message}
+        </div>
+      </Card>
+    );
+  }
+
   const title = product?.label || product?.name || t.storefront.product;
   const description = product?.description || '';
   const priceMin = product?.priceRange?.min || 0;
@@ -208,6 +225,7 @@ export function ProductCard({
         </p>
         <div className='flex items-center justify-between pt-2 mt-auto'>
           <span className='text-md font-semibold text-foreground'>
+            {/* TODO: Use dynamic currency from store/product when available instead of hardcoded USD */}
             {isPriceRange
               ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', inputInMinorUnits: true })}`
               : formatCurrency({
