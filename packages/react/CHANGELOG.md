@@ -1,5 +1,16 @@
 # @godaddy/react
 
+## 1.0.14
+
+### Patch Changes
+
+- d99b69d: - Add filtering by `productIds` and `categoryIds` to ProductGrid
+  - Add `productId` prop to ProductCard for single product rendering
+  - Add pagination support to ProductGrid with `enablePagination` prop
+  - Add translations for pagination controls
+- Updated dependencies [d99b69d]
+  - @godaddy/localizations@1.0.5
+
 ## 1.0.13
 
 ### Patch Changes
