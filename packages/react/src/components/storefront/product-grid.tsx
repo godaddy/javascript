@@ -135,6 +135,17 @@ export function ProductGrid({
     enabled: !!storeId && !!clientId,
   });
 
+  const pageInfo = data?.skuGroups?.pageInfo;
+
+  useEffect(() => {
+    if (pageInfo?.endCursor && pageInfo?.hasNextPage) {
+      setPageCursors(prev => {
+        if (prev[currentPageIndex + 1]) return prev;
+        return [...prev, pageInfo.endCursor];
+      });
+    }
+  }, [pageInfo?.endCursor, pageInfo?.hasNextPage, currentPageIndex]);
+
   if (isLoading || !data) {
     return <ProductGridSkeleton count={enablePagination ? perPage : 6} />;
   }
@@ -149,19 +160,9 @@ export function ProductGrid({
   }
 
   const skuGroups = data?.skuGroups?.edges;
-  const pageInfo = data?.skuGroups?.pageInfo;
   const totalCount = data?.skuGroups?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / perPage);
   const currentPage = currentPageIndex + 1;
-
-  useEffect(() => {
-    if (pageInfo?.endCursor && pageInfo?.hasNextPage) {
-      setPageCursors(prev => {
-        if (prev[currentPageIndex + 1]) return prev;
-        return [...prev, pageInfo.endCursor];
-      });
-    }
-  }, [pageInfo?.endCursor, pageInfo?.hasNextPage, currentPageIndex]);
 
   const handlePageChange = (page: number) => {
     setCurrentPageIndex(page - 1);
