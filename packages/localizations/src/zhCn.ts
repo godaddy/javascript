@@ -348,5 +348,8 @@ export const zhCn = {
     remove: '删除',
     removing: '正在删除...',
     checkout: '结账',
+    itemsPerPage: '每页项目数：',
+    search: '搜索',
+    searchPlaceholder: '搜索产品...',
   },
 };

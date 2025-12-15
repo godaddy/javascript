@@ -367,5 +367,8 @@ export const esAr = {
     remove: 'Eliminar',
     removing: 'Eliminando...',
     checkout: 'Pagar',
+    itemsPerPage: 'Artículos por página:',
+    search: 'Buscar',
+    searchPlaceholder: 'Buscar productos...',
   },
 };

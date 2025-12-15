@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, ShoppingCart } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import type { Product } from '@/components/checkout/line-items/line-items';
 import { CartLineItems } from '@/components/storefront/cart-line-items';
 import { CartTotals } from '@/components/storefront/cart-totals';
@@ -33,11 +32,8 @@ export function Cart({
 }: CartProps) {
   const context = useGoDaddyContext();
   const queryClient = useQueryClient();
-  const [cartOrderId, setCartOrderId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setCartOrderId(getCartOrderId());
-  }, []);
+  // Read cart order ID fresh on every render
+  const cartOrderId = getCartOrderId();
 
   // Fetch cart order
   const {
@@ -147,7 +143,8 @@ export function Cart({
           {!isLoading && error && (
             <div className='flex flex-col items-center justify-center py-12 text-center'>
               <p className='text-destructive mb-2'>
-                {t.storefront.failedToLoadCart} {(error as Error).message}
+                {t.storefront.failedToLoadCart}{' '}
+                {error instanceof Error ? error.message : String(error)}
               </p>
               <Button
                 variant='outline'

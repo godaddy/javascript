@@ -360,5 +360,8 @@ export const trTr = {
     remove: 'Kaldır',
     removing: 'Kaldırılıyor...',
     checkout: 'Ödeme yap',
+    itemsPerPage: 'Sayfa başına öğe:',
+    search: 'Ara',
+    searchPlaceholder: 'Ürün ara...',
   },
 };

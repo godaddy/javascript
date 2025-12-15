@@ -1,8 +1,8 @@
 import { graphql } from '@/lib/gql/gql-catalog-storefront.tada.ts';
 
 export const SkuGroupsQuery = graphql(`
-    query SkuGroups($first: Int, $after: String, $id: SKUGroupIdsFilter) {
-        skuGroups(first: $first, after: $after, id: $id) {
+    query SkuGroups($first: Int, $after: String, $id: SKUGroupIdsFilter, $listId: ListIdFilter, $label: LabelFilter) {
+        skuGroups(first: $first, after: $after, id: $id, listId: $listId, label: $label) {
             edges {
                 cursor
                 node {
@@ -74,6 +74,7 @@ export const SkuGroupsQuery = graphql(`
                 startCursor
                 endCursor
             }
+            totalCount
         }
     }
 `);

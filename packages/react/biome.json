@@ -2,7 +2,11 @@
   "$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
   "extends": ["biome-config-godaddy/biome.json"],
   "files": {
-    "includes": ["**/*", "!!**/src/globals.css"]
+    "includes": [
+      "**/*",
+      "!!**/src/globals.css",
+      "!!**/src/globals-tailwind.css"
+    ]
   },
   "linter": {
     "rules": {

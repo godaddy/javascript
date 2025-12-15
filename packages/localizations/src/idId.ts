@@ -360,5 +360,8 @@ export const idId = {
     remove: 'Hapus',
     removing: 'Menghapus...',
     checkout: 'Checkout',
+    itemsPerPage: 'Item per halaman:',
+    search: 'Cari',
+    searchPlaceholder: 'Cari produk...',
   },
 };
