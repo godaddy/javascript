@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.15
+
+### Patch Changes
+
+- 40aeb75: Set default storefront lineItem fulfillmentMode to NONE when adding to cart
+
 ## 1.0.14
 
 ### Patch Changes
