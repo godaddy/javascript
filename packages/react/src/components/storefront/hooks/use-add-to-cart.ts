@@ -63,7 +63,7 @@ export function useAddToCart(options?: UseAddToCartOptions) {
           skuId: input.skuId,
           name: input.name,
           quantity: input.quantity,
-          fulfillmentMode: 'SHIP',
+          fulfillmentMode: 'NONE',
           status: 'DRAFT',
           details: {
             productAssetUrl: input.productAssetUrl || undefined,
