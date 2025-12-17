@@ -55,7 +55,7 @@ export default async function Home() {
       ],
       paymentMethods: {
         card: {
-          processor: 'godaddy',
+          processor: 'paypal',
           checkoutTypes: ['standard'],
         },
         express: {

@@ -243,6 +243,10 @@ export const enUs = {
     selectState: 'Select a state/province',
     selectCountry: 'Select a country',
     enterCountry: 'Enter a country',
+    invalidCardNumber: 'Invalid card number',
+    invalidExpiry: 'Invalid expiration date',
+    invalidCvv: 'Invalid security code',
+    paymentSubmissionFailed: 'Payment submission failed. Please try again.',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Server error',

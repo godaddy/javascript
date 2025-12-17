@@ -243,6 +243,10 @@ export const viVn = {
     selectState: 'Chọn tỉnh/thành phố',
     selectCountry: 'Chọn quốc gia',
     enterCountry: 'Nhập quốc gia',
+    invalidCardNumber: 'Số thẻ không hợp lệ',
+    invalidExpiry: 'Ngày hết hạn không hợp lệ',
+    invalidCvv: 'Mã bảo mật không hợp lệ',
+    paymentSubmissionFailed: 'Gửi thanh toán thất bại. Vui lòng thử lại.',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Lỗi máy chủ',

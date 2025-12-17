@@ -243,6 +243,10 @@ export const idId = {
     selectState: 'Pilih provinsi',
     selectCountry: 'Pilih negara',
     enterCountry: 'Masukkan negara',
+    invalidCardNumber: 'Nomor kartu tidak valid',
+    invalidExpiry: 'Tanggal kedaluwarsa tidak valid',
+    invalidCvv: 'Kode keamanan tidak valid',
+    paymentSubmissionFailed: 'Pengiriman pembayaran gagal. Silakan coba lagi.',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Error server',

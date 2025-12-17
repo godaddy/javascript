@@ -236,6 +236,10 @@ export const zhSg = {
     selectState: '选择州/省',
     selectCountry: '选择国家',
     enterCountry: '输入国家',
+    invalidCardNumber: '卡號無效',
+    invalidExpiry: '有效期無效',
+    invalidCvv: '安全碼無效',
+    paymentSubmissionFailed: '付款提交失敗。請重試。',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: '服务器错误',
