@@ -115,11 +115,6 @@ export function PayPalCreditCardForm() {
     );
   }
 
-  // @ts-ignore
-  // @ts-ignore
-  // @ts-ignore
-  // @ts-ignore
-  // @ts-ignore
   return (
     <PayPalCardFieldsProvider
       createOrder={() => Promise.resolve('ORDER_ID_PLACEHOLDER')}
