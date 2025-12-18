@@ -6392,6 +6392,26 @@ const introspection = {
             isDeprecated: false,
           },
           {
+            name: 'authorizeCheckoutSession',
+            type: {
+              kind: 'OBJECT',
+              name: 'CheckoutSession',
+            },
+            args: [
+              {
+                name: 'input',
+                type: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'INPUT_OBJECT',
+                    name: 'MutationAuthorizeCheckoutSessionInput',
+                  },
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
             name: 'calculateCheckoutSessionTaxes',
             type: {
               kind: 'OBJECT',
@@ -6659,6 +6679,40 @@ const introspection = {
         inputFields: [
           {
             name: 'fulfillmentLocationId',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'MutationAuthorizeCheckoutSessionInput',
+        inputFields: [
+          {
+            name: 'paymentProvider',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+          },
+          {
+            name: 'paymentToken',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'paymentType',
             type: {
               kind: 'NON_NULL',
               ofType: {

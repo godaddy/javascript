@@ -9,6 +9,7 @@ import {
 import { useEffect } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { usePayPalProvider } from '@/components/checkout/payment/utils/paypal-provider';
+import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import {
   PaymentProvider,
   useConfirmCheckout,
@@ -106,6 +107,7 @@ export function PayPalCreditCardForm() {
   const { t } = useGoDaddyContext();
 
   const confirmCheckout = useConfirmCheckout();
+  const authorizeCheckout = useAuthorizeCheckout();
 
   if (!paypalConfig?.clientId) {
     return (
@@ -117,7 +119,13 @@ export function PayPalCreditCardForm() {
 
   return (
     <PayPalCardFieldsProvider
-      createOrder={() => Promise.resolve('ORDER_ID_PLACEHOLDER')}
+      createOrder={async () => {
+        const result = await authorizeCheckout.mutateAsync({
+          paymentType: PaymentMethodType.CREDIT_CARD,
+          paymentProvider: PaymentProvider.PAYPAL,
+        });
+        return result?.id ?? '';
+      }}
       onApprove={async data => {
         try {
           await confirmCheckout.mutateAsync({
