@@ -1,0 +1,41 @@
+{
+  "name": "@godaddy/react-native",
+  "private": false,
+  "version": "0.0.1",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "echo ok",
+    "clean": "rimraf node_modules dist"
+  },
+  "peerDependencies": {
+    "react": "18.x || 19.x",
+    "react-native": ">=0.70",
+    "react-native-webview": ">=13"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.8",
+    "react": "^19",
+    "react-native": "^0.76.0",
+    "react-native-webview": "^13.12.5",
+    "tsdown": "^0.15.6",
+    "typescript": "~5.7.3"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  }
+}

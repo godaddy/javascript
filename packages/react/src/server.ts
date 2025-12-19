@@ -2,8 +2,23 @@
 
 import * as GoDaddy from '@/lib/godaddy/godaddy';
 import { CreateCheckoutSessionInputWithKebabCase } from '@/lib/godaddy/godaddy';
-import { getEnvVar } from '@/lib/utils';
+import { getEnvVar, normalizeApiHost } from '@/lib/utils';
 import type { CheckoutSessionOptions } from '@/types';
+
+export interface ExchangeIdpTokenOptions {
+  clientId: string;
+  clientSecret: string;
+  idpToken: string;
+  scopes?: string[];
+  apiHost?: string;
+}
+
+export interface ExchangeIdpTokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  scope: string;
+}
 
 let accessToken: string | undefined;
 let accessTokenExpiresAt: number | undefined;
@@ -42,7 +57,7 @@ export async function createCheckoutSession(
 }
 
 function getHostByEnvironment(): string {
-  return `https://${getEnvVar('GODADDY_API_HOST') || 'api.godaddy.com'}`;
+  return normalizeApiHost();
 }
 
 async function getAccessToken({
@@ -86,4 +101,49 @@ async function getAccessToken({
     scope: string;
     expires_in: number;
   };
+}
+
+export async function exchangeIdpToken({
+  clientId,
+  clientSecret,
+  idpToken,
+  scopes = [],
+  apiHost,
+}: ExchangeIdpTokenOptions): Promise<ExchangeIdpTokenResponse> {
+  if (!clientId || !clientSecret) {
+    throw new Error('Client ID and secret are required');
+  }
+
+  if (!idpToken) {
+    throw new Error('IDP token is required');
+  }
+
+  const host = normalizeApiHost(apiHost);
+
+  const data = new URLSearchParams();
+  data.append('grant_type', 'urn:ietf:params:oauth:grant-type:jwt-bearer');
+  data.append('client_id', clientId);
+  data.append('client_secret', clientSecret);
+  data.append('assertion', idpToken);
+
+  if (scopes.length > 0) {
+    data.append('scope', scopes.join(' '));
+  }
+
+  const response = await fetch(`${host}/v2/oauth2/token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: data.toString(),
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to exchange IDP token: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return (await response.json()) as ExchangeIdpTokenResponse;
 }

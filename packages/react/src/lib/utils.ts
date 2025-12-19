@@ -43,3 +43,10 @@ export function getEnvVar(key: string): string {
 
   return '';
 }
+
+export const DEFAULT_API_HOST = 'api.godaddy.com';
+
+export function normalizeApiHost(host?: string): string {
+  const baseUrl = host || getEnvVar('GODADDY_API_HOST') || DEFAULT_API_HOST;
+  return baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+}
