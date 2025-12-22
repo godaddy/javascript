@@ -15,7 +15,7 @@ import type { TrackingProperties } from '@/tracking/event-properties';
 import { TrackingProvider } from '@/tracking/tracking-provider';
 import type { CheckoutSession } from '@/types';
 import { CheckoutFormContainer } from './form/checkout-form-container';
-import type { Target } from './target/target';
+import type { CheckoutTarget } from './target/target';
 
 // Utility function for redirecting to success URL after checkout
 export function redirectToSuccessUrl(successUrl?: string): void {
@@ -83,7 +83,7 @@ export type PayPalConfig = {
 interface CheckoutContextValue {
   elements?: CheckoutElements;
   targets?: Partial<
-    Record<Target, (session?: CheckoutSession | null) => ReactNode>
+    Record<CheckoutTarget, (session?: CheckoutSession | null) => ReactNode>
   >;
   session?: CheckoutSession | null;
   jwt?: string;
@@ -207,7 +207,7 @@ export interface CheckoutProps {
   showStoreHours?: boolean;
   enableTracking?: boolean;
   trackingProperties?: TrackingProperties;
-  targets?: Partial<Record<Target, () => ReactNode>>;
+  targets?: Partial<Record<CheckoutTarget, () => ReactNode>>;
   checkoutFormSchema?: CheckoutFormSchema;
   defaultValues?: Pick<CheckoutFormData, 'contactEmail'>;
 }

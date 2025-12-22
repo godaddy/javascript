@@ -76,6 +76,7 @@ interface GoDaddyContextValue {
   channelId?: string;
   locale?: string;
   Link?: React.ComponentType<LinkComponentProps>;
+  accessToken?: string;
 }
 
 export interface LinkComponentProps {
@@ -108,6 +109,12 @@ export interface GoDaddyProviderProps {
   storeId?: string;
   channelId?: string;
   locale?: string;
+  /**
+   * OAuth access token for authenticated GoDaddy API requests.
+   * Obtained by exchanging the auth_idp cookie via the server-side
+   * `exchangeIdpToken` function.
+   */
+  accessToken?: string;
 
   queryClient?: QueryClient;
   Link?: React.ComponentType<LinkComponentProps>;
@@ -123,6 +130,7 @@ export function GoDaddyProvider({
   storeId,
   channelId,
   locale = 'en-US',
+  accessToken,
   queryClient: providedQueryClient,
   Link,
   children,
@@ -219,6 +227,7 @@ export function GoDaddyProvider({
         channelId,
         locale,
         Link,
+        accessToken,
       }}
     >
       {inlineStyles && (

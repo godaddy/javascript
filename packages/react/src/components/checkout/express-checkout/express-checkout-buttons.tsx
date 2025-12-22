@@ -2,7 +2,7 @@ import React from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { PaymentMethodRenderer } from '@/components/checkout/payment/payment-method-renderer';
-import { Target } from '@/components/checkout/target/target';
+import { CheckoutTargetSlot } from '@/components/checkout/target/target';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import type { AvailablePaymentProviders, PaymentMethodValue } from '@/types';
@@ -67,7 +67,7 @@ export function ExpressCheckoutButtons() {
 
   return (
     <CheckoutSection style={{ gridArea: 'express-checkout' }}>
-      <Target id='checkout.form.express-checkout.before' />
+      <CheckoutTargetSlot id='checkout.form.express-checkout.before' />
       <div className='grid gap-4 mb-0'>
         <div className='flex flex-col gap-3'>{availableExpressButtons}</div>
         <div className='relative'>
@@ -84,7 +84,7 @@ export function ExpressCheckoutButtons() {
           </div>
         </div>
       </div>
-      <Target id='checkout.form.express-checkout.after' />
+      <CheckoutTargetSlot id='checkout.form.express-checkout.after' />
     </CheckoutSection>
   );
 }

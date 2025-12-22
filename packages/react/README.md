@@ -83,6 +83,126 @@ The checkout session automatically requests the following OAuth2 scopes:
 - `commerce.order:update`
 - `location.address-verification:execute`
 
+## Authentication
+
+### OAuth Token Exchange
+
+For authenticated API requests (e.g., UI extensions via the `Target` component), you need to obtain an OAuth access token. The approach depends on your framework.
+
+### Security Considerations
+
+> **⚠️ Important:** The `exchangeIdpToken` function must only run server-side. Never import `@godaddy/react/server` in client code—doing so would expose your `clientSecret` to the browser.
+>
+> When using the `useAccessToken` hook, the `exchangeToken` callback must call a trusted backend endpoint that performs the token exchange. Never include `clientId` or `clientSecret` in browser code or call the GoDaddy OAuth endpoint directly from the client.
+
+#### Next.js with Server Actions
+
+Use the `exchangeIdpToken` server action:
+
+```typescript
+// app/layout.tsx or a server component
+import { exchangeIdpToken } from "@godaddy/react/server";
+import { cookies } from "next/headers";
+
+export default async function Layout({ children }) {
+  const cookieStore = await cookies();
+  const idpToken = cookieStore.get("auth_idp")?.value;
+
+  let accessToken: string | undefined;
+
+  if (idpToken) {
+    try {
+      const result = await exchangeIdpToken({
+        clientId: process.env.GODADDY_CLIENT_ID!,
+        clientSecret: process.env.GODADDY_CLIENT_SECRET!,
+        idpToken,
+        scopes: ["commerce.extensions:read"], // optional
+      });
+      accessToken = result.access_token;
+    } catch (error) {
+      console.error("Token exchange failed:", error);
+    }
+  }
+
+  return (
+    <GoDaddyProvider accessToken={accessToken}>{children}</GoDaddyProvider>
+  );
+}
+```
+
+#### Other Frameworks (Express, Fastify, etc.)
+
+Call the GoDaddy OAuth endpoint directly from your backend:
+
+```
+POST https://api.godaddy.com/v2/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
+client_id={clientId}
+client_secret={clientSecret}
+assertion={idpToken}
+scope={optional space-separated scopes}
+```
+
+**Response:**
+
+```json
+{
+  "access_token": "eyJ...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "commerce.extensions:read"
+}
+```
+
+Then pass the token to your frontend and provide it to `GoDaddyProvider`:
+
+```typescript
+<GoDaddyProvider accessToken={accessTokenFromServer}>
+  {children}
+</GoDaddyProvider>
+```
+
+#### Client-Side Token Management
+
+For SPAs where the token is managed client-side, use the `useAccessToken` hook:
+
+```typescript
+import { useAccessToken, GoDaddyProvider } from "@godaddy/react";
+
+function App() {
+  const { accessToken, isLoading, error } = useAccessToken({
+    exchangeToken: async () => {
+      // Call your backend API that exchanges the IDP token
+      const response = await fetch("/api/auth/token");
+      return response.json(); // { access_token, expires_in }
+    },
+    onRefreshError: (error) => {
+      // Handle refresh failure - e.g., redirect to login
+      console.error("Token refresh failed:", error);
+      window.location.href = "/login";
+    },
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Authentication failed</div>;
+
+  return (
+    <GoDaddyProvider accessToken={accessToken}>{/* ... */}</GoDaddyProvider>
+  );
+}
+```
+
+The hook automatically refreshes the token before expiry (default: 60 seconds before).
+
+#### Environment Endpoints
+
+| Environment | OAuth Endpoint                           |
+| ----------- | ---------------------------------------- |
+| Production  | `https://api.godaddy.com/v2/oauth2/token` |
+| OTE         | `https://api.ote-godaddy.com/v2/oauth2/token` |
+
 ## Codegen
 
 For now the schema will be downloaded from the order schema.

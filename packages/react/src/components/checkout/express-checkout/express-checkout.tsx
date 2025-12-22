@@ -10,7 +10,7 @@ import {
 import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { PaymentMethodRenderer } from '@/components/checkout/payment/payment-method-renderer';
 import { ConditionalExpressProviders } from '@/components/checkout/payment/utils/conditional-providers';
-import { Target } from '@/components/checkout/target/target';
+import { CheckoutTargetSlot } from '@/components/checkout/target/target';
 import type { GoDaddyVariables } from '@/godaddy-provider';
 import { type Theme, useTheme } from '@/hooks/use-theme';
 import { useVariables } from '@/hooks/use-variables';
@@ -77,9 +77,9 @@ function DraftOrderExpressCheckoutButtons() {
 
   return (
     <CheckoutSection style={{ gridArea: 'express-checkout' }}>
-      <Target id='checkout.form.express-checkout.before' />
+      <CheckoutTargetSlot id='checkout.form.express-checkout.before' />
       <div className='flex flex-col gap-3'>{availableExpressButtons}</div>
-      <Target id='checkout.form.express-checkout.after' />
+      <CheckoutTargetSlot id='checkout.form.express-checkout.after' />
     </CheckoutSection>
   );
 }

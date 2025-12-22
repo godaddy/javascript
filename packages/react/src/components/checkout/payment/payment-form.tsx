@@ -29,7 +29,7 @@ import type { TokenizeJs } from '@/components/checkout/payment/types';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import { useGetSelectedPaymentMethod } from '@/components/checkout/payment/utils/use-get-selected-payment-method';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
-import { Target } from '@/components/checkout/target/target';
+import { CheckoutTargetSlot } from '@/components/checkout/target/target';
 import {
   DraftOrderTotals,
   type DraftOrderTotalsProps,
@@ -493,10 +493,10 @@ export function PaymentForm(
 
       <div>
         <div className='flex flex-col gap-2'>
-          <Target id='checkout.form.submit.before' />
+          <CheckoutTargetSlot id='checkout.form.submit.before' />
           {/* The payment form is handled inside the payment method component; the checkout button is rendered below */}
           {getCheckoutButton()}
-          <Target id='checkout.form.submit.after' />
+          <CheckoutTargetSlot id='checkout.form.submit.after' />
         </div>
       </div>
     </div>

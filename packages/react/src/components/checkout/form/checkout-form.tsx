@@ -35,7 +35,7 @@ import {
 } from '@/components/checkout/payment/utils/conditional-providers';
 import { LocalPickupForm } from '@/components/checkout/pickup/local-pickup';
 import { ShippingMethodForm } from '@/components/checkout/shipping/shipping-method';
-import { Target } from '@/components/checkout/target/target';
+import { CheckoutTargetSlot } from '@/components/checkout/target/target';
 import { TipsForm } from '@/components/checkout/tips/tips-form';
 import { DraftOrderTotals } from '@/components/checkout/totals/totals';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
@@ -269,7 +269,7 @@ export function CheckoutForm({
   return (
     <CustomFormProvider {...form}>
       <div>
-        <Target id='checkout.before' />
+        <CheckoutTargetSlot id='checkout.before' />
         <div
           className={`grid min-h-screen grid-cols-1 ${
             props.direction === 'rtl'
@@ -285,7 +285,7 @@ export function CheckoutForm({
             className={`flex ${props.direction === 'rtl' ? 'md:justify-start' : 'md:justify-end'} h-full bg-background border-r border-border sm:border-r-0 md:border-r`}
           >
             <div className='p-8 w-full md:max-w-[618px]'>
-              <Target id='checkout.form.before' />
+              <CheckoutTargetSlot id='checkout.form.before' />
               <CheckoutErrorList />
               <form
                 onSubmit={form.handleSubmit(onSubmit, onInvalid)}
@@ -306,36 +306,36 @@ export function CheckoutForm({
                   ) : null}
 
                   <CheckoutSection style={{ gridArea: 'contact' }}>
-                    <Target id='checkout.form.contact.before' />
+                    <CheckoutTargetSlot id='checkout.form.contact.before' />
                     <CheckoutSectionHeader
                       title={t.contact.title}
                       description={t.contact.description}
                     />
                     <ContactForm />
-                    <Target id='checkout.form.contact.after' />
+                    <CheckoutTargetSlot id='checkout.form.contact.after' />
                   </CheckoutSection>
                   {session?.enableShipping || session?.enableLocalPickup ? (
                     <CheckoutSection style={{ gridArea: 'delivery' }}>
-                      <Target id='checkout.form.delivery.before' />
+                      <CheckoutTargetSlot id='checkout.form.delivery.before' />
                       <CheckoutSectionHeader title={t.delivery?.title} />
                       <DeliveryMethodForm />
-                      <Target id='checkout.form.delivery.after' />
+                      <CheckoutTargetSlot id='checkout.form.delivery.after' />
                     </CheckoutSection>
                   ) : null}
                   {session?.enableTips ? (
                     <CheckoutSection style={{ gridArea: 'tips' }}>
-                      <Target id='checkout.form.tips.before' />
+                      <CheckoutTargetSlot id='checkout.form.tips.before' />
                       <CheckoutSectionHeader title={t.tips?.title} />
                       <TipsForm
                         currencyCode={currencyCode}
                         total={orderTotal}
                       />
-                      <Target id='checkout.form.tips.after' />
+                      <CheckoutTargetSlot id='checkout.form.tips.after' />
                     </CheckoutSection>
                   ) : null}
                   {isPickup && session?.enableLocalPickup ? (
                     <CheckoutSection style={{ gridArea: 'pickup' }}>
-                      <Target id='checkout.form.pickup.before' />
+                      <CheckoutTargetSlot id='checkout.form.pickup.before' />
                       <CheckoutSectionHeader
                         title={t.pickup.title}
                         description={t.pickup.description}
@@ -343,14 +343,14 @@ export function CheckoutForm({
                           description: 'text-xs',
                         }}
                       />
-                      <Target id='checkout.form.pickup.form.before' />
+                      <CheckoutTargetSlot id='checkout.form.pickup.form.before' />
                       <LocalPickupForm showStoreHours={props?.showStoreHours} />
-                      <Target id='checkout.form.pickup.after' />
+                      <CheckoutTargetSlot id='checkout.form.pickup.after' />
                     </CheckoutSection>
                   ) : null}
                   {isShipping && session?.enableShipping ? (
                     <CheckoutSection style={{ gridArea: 'shipping' }}>
-                      <Target id='checkout.form.shipping.before' />
+                      <CheckoutTargetSlot id='checkout.form.shipping.before' />
                       <CheckoutSectionHeader
                         title={t.shipping.title}
                         description={
@@ -374,11 +374,11 @@ export function CheckoutForm({
                         )}
                         {session?.enableNotesCollection ? <NotesForm /> : null}
                       </div>
-                      <Target id='checkout.form.shipping.after' />
+                      <CheckoutTargetSlot id='checkout.form.shipping.after' />
                     </CheckoutSection>
                   ) : null}
                   <CheckoutSection style={{ gridArea: 'payment' }}>
-                    <Target id='checkout.form.payment.before' />
+                    <CheckoutTargetSlot id='checkout.form.payment.before' />
                     <CheckoutSectionHeader
                       title={t.payment.title}
                       description={t.payment.description}
@@ -411,11 +411,11 @@ export function CheckoutForm({
                         )
                       ) : null}
                     </div>
-                    <Target id='checkout.form.payment.after' />
+                    <CheckoutTargetSlot id='checkout.form.payment.after' />
                   </CheckoutSection>
                 </div>
               </form>
-              <Target id='checkout.form.after' />
+              <CheckoutTargetSlot id='checkout.form.after' />
             </div>
           </div>
 
@@ -427,7 +427,7 @@ export function CheckoutForm({
             <div
               className={`p-0 md:p-8 w-full md:max-w-xl md:sticky md:top-0 ${props.direction === 'rtl' ? 'md:ml-auto' : ''}`}
             >
-              <Target id='checkout.summary.before' />
+              <CheckoutTargetSlot id='checkout.summary.before' />
               <div className='md:hidden'>
                 <Accordion type='single' collapsible>
                   <AccordionItem value='order-summary' className='border-none'>
@@ -503,11 +503,11 @@ export function CheckoutForm({
                   enableShipping={isShipping && session?.enableShipping}
                 />
               </div>
-              <Target id='checkout.summary.after' />
+              <CheckoutTargetSlot id='checkout.summary.after' />
             </div>
           </div>
         </div>
-        <Target id='checkout.after' />
+        <CheckoutTargetSlot id='checkout.after' />
       </div>
     </CustomFormProvider>
   );

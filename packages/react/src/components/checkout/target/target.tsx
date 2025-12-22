@@ -4,7 +4,7 @@ import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
 
-export type Target =
+export type CheckoutTarget =
   | 'checkout.before'
   | 'checkout.after'
   | 'checkout.form.before'
@@ -29,7 +29,7 @@ export type Target =
   | 'checkout.summary.before'
   | 'checkout.summary.after';
 
-export function Target({ id }: { id: Target }) {
+export function CheckoutTargetSlot({ id }: { id: CheckoutTarget }) {
   const { debug } = useGoDaddyContext();
   const { targets, session } = useCheckoutContext();
 

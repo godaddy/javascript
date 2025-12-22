@@ -16,5 +16,12 @@ export {
   type DraftOrderTotalsProps,
 } from './components/checkout/totals/totals';
 export * from './components/storefront';
+export * from './components/target';
 export * from './godaddy-provider';
+export {
+  useAccessToken,
+  type AccessTokenState,
+  type UseAccessTokenOptions,
+  type UseAccessTokenResult,
+} from './hooks/use-access-token';
 export * from './types';
