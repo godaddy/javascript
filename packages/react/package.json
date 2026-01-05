@@ -4,9 +4,7 @@
   "version": "1.0.15",
   "type": "module",
   "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "exports": {
     "./package.json": "./package.json",
     "./styles.css": "./dist/index.css",
@@ -24,12 +22,8 @@
   },
   "typesVersions": {
     "*": {
-      "server": [
-        "./dist/server.d.ts"
-      ],
-      "*": [
-        "./dist/index.d.ts"
-      ]
+      "server": ["./dist/server.d.ts"],
+      "*": ["./dist/index.d.ts"]
     }
   },
   "scripts": {
@@ -39,7 +33,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "biome check .",
+    "lint": "biome check ./src",
     "lint:fix": "biome check --write --unsafe ./src",
     "prepublishOnly": "pnpm run build"
   },
