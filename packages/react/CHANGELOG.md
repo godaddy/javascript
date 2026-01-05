@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.16
+
+### Patch Changes
+
+- bfdd630: Apply shipping intent when no shipping methods returned
+
 ## 1.0.15
 
 ### Patch Changes
