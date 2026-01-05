@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { applyDeliveryMethod } from '@/lib/godaddy/godaddy';
@@ -7,6 +7,7 @@ import type { ApplyCheckoutSessionDeliveryMethodInput } from '@/types';
 export function useApplyDeliveryMethod() {
   const { session, jwt } = useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationKey: session?.id
@@ -20,6 +21,12 @@ export function useApplyDeliveryMethod() {
         ? await applyDeliveryMethod({ mode }, { accessToken: jwt }, apiHost)
         : await applyDeliveryMethod({ mode }, session, apiHost);
       return data;
+    },
+    onSuccess: () => {
+      if (!session) return;
+      queryClient.invalidateQueries({
+        queryKey: ['draft-order', session.id],
+      });
     },
   });
 }
