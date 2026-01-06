@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
-import { useApplyDeliveryMethod } from '@/components/checkout/delivery/utils/use-apply-delivery-method';
 import {
   useDraftOrder,
   useDraftOrderShipping,
@@ -74,7 +73,6 @@ export function ShippingMethodForm() {
   });
 
   const applyShippingMethod = useApplyShippingMethod();
-  const applyDeliveryMethod = useApplyDeliveryMethod();
 
   // Track the last processed state to avoid duplicate API calls
   const lastProcessedStateRef = useRef<{
@@ -82,13 +80,13 @@ export function ShippingMethodForm() {
     cost: number | null;
     hadShippingMethods: boolean;
     wasPickup: boolean;
-    appliedDeliveryMethod: boolean;
+    clearedShippingMethod: boolean;
   }>({
     serviceCode: null,
     cost: null,
     hadShippingMethods: false,
     wasPickup: false,
-    appliedDeliveryMethod: false,
+    clearedShippingMethod: false,
   });
 
   useEffect(() => {
@@ -99,36 +97,24 @@ export function ShippingMethodForm() {
     const currentCost = shippingLines?.amount?.value ?? null;
     const lastState = lastProcessedStateRef.current;
 
-    // Case 1: No shipping methods available
+    // Case 1: No shipping methods available - clear shipping and set fulfillment to SHIP
     if (!hasShippingMethods && hasShippingAddress) {
-      // If pickup mode, clear the shipping method
-      if (isPickup && (currentServiceCode || !lastState.wasPickup)) {
+      // Apply empty shipping method if:
+      // - Pickup mode and has shipping code OR wasn't pickup before
+      // - Shipping mode and (had methods before OR haven't cleared yet)
+      const shouldClearShipping = isPickup
+        ? currentServiceCode || !lastState.wasPickup
+        : lastState.hadShippingMethods || !lastState.clearedShippingMethod;
+
+      if (shouldClearShipping) {
         form.setValue('shippingMethod', '', { shouldDirty: false });
         applyShippingMethod.mutate([]);
         lastProcessedStateRef.current = {
           serviceCode: null,
           cost: null,
           hadShippingMethods: false,
-          wasPickup: true,
-          appliedDeliveryMethod: false,
-        };
-        return;
-      }
-
-      // If shipping mode with no methods, apply SHIP delivery method
-      // Apply if: transitioning from having methods OR haven't applied it yet
-      if (
-        !isPickup &&
-        (lastState.hadShippingMethods || !lastState.appliedDeliveryMethod)
-      ) {
-        form.setValue('shippingMethod', '', { shouldDirty: false });
-        applyDeliveryMethod.mutate(DeliveryMethods.SHIP);
-        lastProcessedStateRef.current = {
-          serviceCode: null,
-          cost: null,
-          hadShippingMethods: false,
-          wasPickup: false,
-          appliedDeliveryMethod: true,
+          wasPickup: isPickup,
+          clearedShippingMethod: true,
         };
       }
       return;
@@ -182,7 +168,7 @@ export function ShippingMethodForm() {
           cost: methodCost,
           hadShippingMethods: true,
           wasPickup: false,
-          appliedDeliveryMethod: false,
+          clearedShippingMethod: false,
         };
       }
     }
@@ -193,7 +179,6 @@ export function ShippingMethodForm() {
     isShippingMethodsLoading,
     form,
     applyShippingMethod,
-    applyDeliveryMethod,
     updateTaxes.mutate,
     session?.enableTaxCollection,
     isPickup,
