@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.17
+
+### Patch Changes
+
+- 34354ab: Adjust shipping intent logic to clear shippingLines when no new shipping methods are returned
+
 ## 1.0.16
 
 ### Patch Changes
