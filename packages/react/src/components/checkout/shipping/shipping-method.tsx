@@ -80,11 +80,13 @@ export function ShippingMethodForm() {
     cost: number | null;
     hadShippingMethods: boolean;
     wasPickup: boolean;
+    clearedShippingMethod: boolean;
   }>({
     serviceCode: null,
     cost: null,
     hadShippingMethods: false,
     wasPickup: false,
+    clearedShippingMethod: false,
   });
 
   useEffect(() => {
@@ -95,22 +97,26 @@ export function ShippingMethodForm() {
     const currentCost = shippingLines?.amount?.value ?? null;
     const lastState = lastProcessedStateRef.current;
 
-    // Case 1: No shipping methods available but shipping line exists - clear it
-    // Only clear once when transitioning from having methods to no methods, or when switching to pickup
-    if (
-      !hasShippingMethods &&
-      hasShippingAddress &&
-      ((currentServiceCode && lastState.hadShippingMethods) ||
-        (isPickup && !lastState.wasPickup))
-    ) {
-      form.setValue('shippingMethod', '', { shouldDirty: false });
-      applyShippingMethod.mutate([]);
-      lastProcessedStateRef.current = {
-        serviceCode: null,
-        cost: null,
-        hadShippingMethods: false,
-        wasPickup: isPickup,
-      };
+    // Case 1: No shipping methods available - clear shipping and set fulfillment to SHIP
+    if (!hasShippingMethods && hasShippingAddress) {
+      // Apply empty shipping method if:
+      // - Pickup mode and has shipping code OR wasn't pickup before
+      // - Shipping mode and (had methods before OR haven't cleared yet)
+      const shouldClearShipping = isPickup
+        ? currentServiceCode || !lastState.wasPickup
+        : lastState.hadShippingMethods || !lastState.clearedShippingMethod;
+
+      if (shouldClearShipping) {
+        form.setValue('shippingMethod', '', { shouldDirty: false });
+        applyShippingMethod.mutate([]);
+        lastProcessedStateRef.current = {
+          serviceCode: null,
+          cost: null,
+          hadShippingMethods: false,
+          wasPickup: isPickup,
+          clearedShippingMethod: true,
+        };
+      }
       return;
     }
 
@@ -162,6 +168,7 @@ export function ShippingMethodForm() {
           cost: methodCost,
           hadShippingMethods: true,
           wasPickup: false,
+          clearedShippingMethod: false,
         };
       }
     }

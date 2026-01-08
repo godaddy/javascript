@@ -1,7 +1,7 @@
 {
   "name": "@godaddy/react",
   "private": false,
-  "version": "1.0.15",
+  "version": "1.0.17",
   "type": "module",
   "types": "./dist/index.d.ts",
   "files": [
@@ -39,7 +39,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "biome check .",
+    "lint": "biome check ./src",
     "lint:fix": "biome check --write --unsafe ./src",
     "prepublishOnly": "pnpm run build"
   },
