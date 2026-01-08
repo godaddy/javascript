@@ -247,6 +247,11 @@ export const qaPs = {
     selectState: '[Šëlëçţ â šţâţë/þrövîñçë frôm ţhë âvâîlâblë öþţîöñš]',
     selectCountry: '[Šëlëçţ â çöüñţrÿ frôm ţhë âvâîlâblë öþţîöñš]',
     enterCountry: '[Ëñţër â çöüñţrÿ ñâmë fôr löçâţîöñ]',
+    invalidCardNumber: '[Invalid card number ℓσяєм]',
+    invalidExpiry: '[Invalid expiration date ℓσяєм ιρѕυм]',
+    invalidCvv: '[Invalid security code ℓσяєм]',
+    paymentSubmissionFailed:
+      '[Payment submission failed. Please try again. ℓσяєм ιρѕυм ∂σℓσя]',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: '[Šërvër ërrör öççürrëd]',

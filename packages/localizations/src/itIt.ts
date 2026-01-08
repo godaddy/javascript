@@ -251,6 +251,10 @@ export const itIt = {
     selectState: 'Seleziona una regione/provincia',
     selectCountry: 'Seleziona un paese',
     enterCountry: 'Inserisci un paese',
+    invalidCardNumber: 'Numero di carta non valido',
+    invalidExpiry: 'Data di scadenza non valida',
+    invalidCvv: 'Codice di sicurezza non valido',
+    paymentSubmissionFailed: 'Invio del pagamento non riuscito. Riprova.',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Errore del server',

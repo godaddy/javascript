@@ -33,6 +33,13 @@ const LazyComponents = {
       default: module.SquareCreditCardForm,
     }))
   ),
+  PayPalCreditCardForm: lazy(() =>
+    import(
+      '@/components/checkout/payment/payment-methods/credit-card/paypal'
+    ).then(module => ({
+      default: module.PayPalCreditCardForm,
+    }))
+  ),
 
   // Credit Card Buttons
   CreditCardCheckoutButton: lazy(() =>
@@ -54,6 +61,13 @@ const LazyComponents = {
       '@/components/checkout/payment/checkout-buttons/credit-card/square'
     ).then(module => ({
       default: module.SquareCreditCardCheckoutButton,
+    }))
+  ),
+  PayPalCreditCardCheckoutButton: lazy(() =>
+    import(
+      '@/components/checkout/payment/checkout-buttons/credit-card/paypal'
+    ).then(module => ({
+      default: module.PayPalCreditCardCheckoutButton,
     }))
   ),
 
@@ -132,6 +146,10 @@ type PaymentComponentRegistry = {
       form: PaymentComponentKey;
       button: PaymentComponentKey;
     };
+    [PaymentProvider.PAYPAL]: {
+      form: PaymentComponentKey;
+      button: PaymentComponentKey;
+    };
   };
   [PaymentMethodType.EXPRESS]?: {
     [PaymentProvider.GODADDY]: {
@@ -176,6 +194,10 @@ export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
     [PaymentProvider.SQUARE]: {
       form: 'SquareCreditCardForm',
       button: 'SquareCreditCardCheckoutButton',
+    },
+    [PaymentProvider.PAYPAL]: {
+      form: 'PayPalCreditCardForm',
+      button: 'PayPalCreditCardCheckoutButton',
     },
   },
   [PaymentMethodType.EXPRESS]: {

@@ -248,6 +248,11 @@ export const deDe = {
     selectState: 'Bundesland/Provinz auswählen',
     selectCountry: 'Land auswählen',
     enterCountry: 'Land eingeben',
+    invalidCardNumber: 'Ungültige Kartennummer',
+    invalidExpiry: 'Ungültiges Ablaufdatum',
+    invalidCvv: 'Ungültiger Sicherheitscode',
+    paymentSubmissionFailed:
+      'Zahlung fehlgeschlagen. Bitte versuchen Sie es erneut.',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Serverfehler',

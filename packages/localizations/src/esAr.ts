@@ -245,6 +245,11 @@ export const esAr = {
     selectState: 'Seleccioná una provincia/región',
     selectCountry: 'Seleccioná un país',
     enterCountry: 'Ingresá un país',
+    invalidCardNumber: 'Número de tarjeta no válido',
+    invalidExpiry: 'Fecha de vencimiento no válida',
+    invalidCvv: 'Código de seguridad no válido',
+    paymentSubmissionFailed:
+      'Error al procesar el pago. Por favor, inténtalo de nuevo.',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Error del servidor',

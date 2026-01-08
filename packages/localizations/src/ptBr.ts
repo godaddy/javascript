@@ -245,6 +245,11 @@ export const ptBr = {
     selectState: 'Selecione um estado/província',
     selectCountry: 'Selecione um país',
     enterCountry: 'Digite um país',
+    invalidCardNumber: 'Número de cartão inválido',
+    invalidExpiry: 'Data de validade inválida',
+    invalidCvv: 'Código de segurança inválido',
+    paymentSubmissionFailed:
+      'Falha no envio do pagamento. Por favor, tente novamente.',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Erro no servidor',

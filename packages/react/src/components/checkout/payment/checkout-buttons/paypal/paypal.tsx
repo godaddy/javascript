@@ -1,8 +1,4 @@
-import {
-  PayPalButtons,
-  PayPalScriptProvider,
-  usePayPalScriptReducer,
-} from '@paypal/react-paypal-js';
+import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
@@ -113,7 +109,6 @@ function PayPalButtonsWrapper() {
 export function PayPalCheckoutButton() {
   const { t } = useGoDaddyContext();
   const { paypalConfig } = useCheckoutContext();
-  const { payPalRequest } = useBuildPaymentRequest();
 
   if (!paypalConfig) {
     return (
@@ -123,22 +118,7 @@ export function PayPalCheckoutButton() {
 
   return (
     <div className='w-full'>
-      <PayPalScriptProvider
-        options={{
-          clientId: paypalConfig?.clientId,
-          currency:
-            payPalRequest?.purchase_units?.[0]?.amount?.currency_code || 'USD',
-          intent: 'capture',
-          disableFunding: paypalConfig?.disableFunding || [
-            'credit',
-            'card',
-            'paylater',
-            'venmo',
-          ],
-        }}
-      >
-        <PayPalButtonsWrapper />
-      </PayPalScriptProvider>
+      <PayPalButtonsWrapper />
     </div>
   );
 }
