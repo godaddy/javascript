@@ -451,8 +451,12 @@ export const RefreshCheckoutTokenMutation = graphql(`
 export const AuthorizeCheckoutSessionMutation = graphql(`
     mutation AuthorizeCheckoutSession($input: MutationAuthorizeCheckoutSessionInput!) {
         authorizeCheckoutSession(input: $input) {
-            id
-            token
+          ... on SaleTransaction {
+            transactionRefNum
+          }
+          ... on AuthorizeTransaction {
+            transactionRefNum
+          }
         }
     }
 `);

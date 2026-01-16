@@ -381,6 +381,94 @@ const introspection = {
         isOneOf: false,
       },
       {
+        kind: 'OBJECT',
+        name: 'AuthorizeTransaction',
+        fields: [
+          {
+            name: 'amount',
+            type: {
+              kind: 'OBJECT',
+              name: 'TransactionAmount',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'captureBy',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'createdAt',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'fundingSource',
+            type: {
+              kind: 'OBJECT',
+              name: 'TransactionFundingSource',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'status',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'transactionId',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'transactionRefNum',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'type',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'updatedAt',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
         kind: 'SCALAR',
         name: 'Boolean',
       },
@@ -6394,8 +6482,8 @@ const introspection = {
           {
             name: 'authorizeCheckoutSession',
             type: {
-              kind: 'OBJECT',
-              name: 'CheckoutSession',
+              kind: 'UNION',
+              name: 'Transaction',
             },
             args: [
               {
@@ -8736,6 +8824,85 @@ const introspection = {
       },
       {
         kind: 'OBJECT',
+        name: 'SaleTransaction',
+        fields: [
+          {
+            name: 'amount',
+            type: {
+              kind: 'OBJECT',
+              name: 'TransactionAmount',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'createdAt',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'fundingSource',
+            type: {
+              kind: 'OBJECT',
+              name: 'TransactionFundingSource',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'status',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'transactionId',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'transactionRefNum',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'type',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'updatedAt',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
         name: 'SelectedAddon',
         fields: [
           {
@@ -9477,6 +9644,97 @@ const introspection = {
           },
         ],
         isOneOf: false,
+      },
+      {
+        kind: 'UNION',
+        name: 'Transaction',
+        possibleTypes: [
+          {
+            kind: 'OBJECT',
+            name: 'AuthorizeTransaction',
+          },
+          {
+            kind: 'OBJECT',
+            name: 'SaleTransaction',
+          },
+        ],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'TransactionAmount',
+        fields: [
+          {
+            name: 'amountType',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'currency',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'subTotal',
+            type: {
+              kind: 'SCALAR',
+              name: 'Float',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'total',
+            type: {
+              kind: 'SCALAR',
+              name: 'Float',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'TransactionFundingSource',
+        fields: [
+          {
+            name: 'customFundingType',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'provider',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'sourceType',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
       },
       {
         kind: 'INPUT_OBJECT',

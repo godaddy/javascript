@@ -123,8 +123,9 @@ export function PayPalCreditCardForm() {
         const result = await authorizeCheckout.mutateAsync({
           paymentType: PaymentMethodType.CREDIT_CARD,
           paymentProvider: PaymentProvider.PAYPAL,
+          paymentToken: '',
         });
-        return result?.id ?? '';
+        return result?.transactionRefNum ?? '';
       }}
       onApprove={async data => {
         try {
