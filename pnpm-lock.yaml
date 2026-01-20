@@ -328,10 +328,10 @@ importers:
         version: 1.2.8(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@stripe/react-stripe-js':
         specifier: ^3.7.0
-        version: 3.10.0(@stripe/stripe-js@7.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 3.10.0(@stripe/stripe-js@8.6.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@stripe/stripe-js':
-        specifier: ^7.3.1
-        version: 7.9.0
+        specifier: ^8.6.3
+        version: 8.6.3
       '@tailwindcss/cli':
         specifier: ^4.1.10
         version: 4.1.15
@@ -2544,8 +2544,8 @@ packages:
       react: '>=16.8.0 <20.0.0'
       react-dom: '>=16.8.0 <20.0.0'
 
-  '@stripe/stripe-js@7.9.0':
-    resolution: {integrity: sha512-ggs5k+/0FUJcIgNY08aZTqpBTtbExkJMYMLSMwyucrhtWexVOEY1KJmhBsxf+E/Q15f5rbwBpj+t0t2AW2oCsQ==}
+  '@stripe/stripe-js@8.6.3':
+    resolution: {integrity: sha512-MQsPNsMMprOu+p+BWYvD69aPjD52yQNXZaENRQX7IkbWqu7lp9k04D+RPeHWJEsuyzmCCoHx3Kqqf3tcXPoNvQ==}
     engines: {node: '>=12.16'}
 
   '@swc/helpers@0.5.15':
@@ -4867,8 +4867,8 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
-  rou3@0.7.8:
-    resolution: {integrity: sha512-21X/el5fdOaEsqwl3an/d9kpZ8hshVIyrwFCpsoleJ4ccAGRbN+PVoxyXzWXkHDxfMkVnLe4yzx+imz2qoem2Q==}
+  rou3@0.7.12:
+    resolution: {integrity: sha512-iFE4hLDuloSWcD7mjdCDhx2bKcIsYbtOTpfH5MHHLSKMOUyjqQXTeZVa289uuwEGEKFoE/BAPbhaU4B774nceg==}
 
   rrweb-cssom@0.8.0:
     resolution: {integrity: sha512-guoltQEx+9aMf2gDZ0s62EcV8lsXR+0w8915TC3ITdn2YueuNjdAYh/levpU9nFaoChh9RUS5ZdQMrKfVEN9tw==}
@@ -5479,6 +5479,7 @@ packages:
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@4.0.0:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
@@ -7447,14 +7448,14 @@ snapshots:
 
   '@standard-schema/utils@0.3.0': {}
 
-  '@stripe/react-stripe-js@3.10.0(@stripe/stripe-js@7.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@stripe/react-stripe-js@3.10.0(@stripe/stripe-js@8.6.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
-      '@stripe/stripe-js': 7.9.0
+      '@stripe/stripe-js': 8.6.3
       prop-types: 15.8.1
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
-  '@stripe/stripe-js@7.9.0': {}
+  '@stripe/stripe-js@8.6.3': {}
 
   '@swc/helpers@0.5.15':
     dependencies:
@@ -9178,7 +9179,7 @@ snapshots:
     dependencies:
       cookie-es: 2.0.0
       fetchdts: 0.1.7
-      rou3: 0.7.8
+      rou3: 0.7.12
       srvx: 0.8.16
 
   has-bigints@1.1.0: {}
@@ -10128,7 +10129,7 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.52.5
       fsevents: 2.3.3
 
-  rou3@0.7.8: {}
+  rou3@0.7.12: {}
 
   rrweb-cssom@0.8.0: {}
 
