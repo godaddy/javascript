@@ -14,7 +14,7 @@ export function PayPalCreditCardCheckoutButton() {
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const { cardFieldsRef, isCardFieldsReady } = usePayPalProvider();
-  const [_isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSubmit = useCallback(async () => {
     try {
@@ -54,7 +54,12 @@ export function PayPalCreditCardCheckoutButton() {
       size='lg'
       type='button'
       onClick={handleSubmit}
-      disabled={isConfirmingCheckout || isPaymentDisabled || !isCardFieldsReady}
+      disabled={
+        isConfirmingCheckout ||
+        isPaymentDisabled ||
+        !isCardFieldsReady ||
+        isProcessing
+      }
     >
       {t.payment.payNow}
     </Button>
