@@ -1,5 +1,11 @@
 # @godaddy/localizations
 
+## 1.0.6
+
+### Patch Changes
+
+- 75784b7: Add support for paypal credit card provider
+
 ## 1.0.5
 
 ### Patch Changes

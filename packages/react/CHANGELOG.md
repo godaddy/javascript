@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.18
+
+### Patch Changes
+
+- 75784b7: Add support for paypal credit card provider
+- Updated dependencies [75784b7]
+  - @godaddy/localizations@1.0.6
+
 ## 1.0.17
 
 ### Patch Changes
