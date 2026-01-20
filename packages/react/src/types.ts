@@ -9,6 +9,7 @@ import type {
   ApplyCheckoutSessionDiscountMutation,
   ApplyCheckoutSessionFulfillmentLocationMutation,
   ApplyCheckoutSessionShippingMethodMutation,
+  AuthorizeCheckoutSessionMutation,
   CalculateCheckoutSessionTaxesMutation,
   ConfirmCheckoutSessionMutation,
   CreateCheckoutSessionMutation,
@@ -158,6 +159,10 @@ export type MutationVerifyAddress = ResultOf<
 
 export type ConfirmCheckoutMutationInput = VariablesOf<
   typeof ConfirmCheckoutSessionMutation
+>;
+
+export type AuthorizeCheckoutSessionInput = VariablesOf<
+  typeof AuthorizeCheckoutSessionMutation
 >;
 
 export type GetCheckoutSessionShippingRatesInput = VariablesOf<

@@ -236,6 +236,10 @@ export const zhCn = {
     selectState: '选择省份/地区',
     selectCountry: '选择国家',
     enterCountry: '请输入国家',
+    invalidCardNumber: '卡号无效',
+    invalidExpiry: '有效期无效',
+    invalidCvv: '安全码无效',
+    paymentSubmissionFailed: '付款提交失败。请重试。',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: '服务器错误',

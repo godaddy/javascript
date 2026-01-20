@@ -250,6 +250,11 @@ export const frFr = {
     selectState: 'Sélectionnez un état/province',
     selectCountry: 'Sélectionnez un pays',
     enterCountry: 'Entrez un pays',
+    invalidCardNumber: 'Numéro de carte invalide',
+    invalidExpiry: "Date d'expiration invalide",
+    invalidCvv: 'Code de sécurité invalide',
+    paymentSubmissionFailed:
+      'Échec de la soumission du paiement. Veuillez réessayer.',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Erreur du serveur',

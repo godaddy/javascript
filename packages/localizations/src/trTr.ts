@@ -244,6 +244,11 @@ export const trTr = {
     selectState: 'Bir il/eyalet seçin',
     selectCountry: 'Bir ülke seçin',
     enterCountry: 'Bir ülke girin',
+    invalidCardNumber: 'Geçersiz kart numarası',
+    invalidExpiry: 'Geçersiz son kullanma tarihi',
+    invalidCvv: 'Geçersiz güvenlik kodu',
+    paymentSubmissionFailed:
+      'Ödeme gönderimi başarısız oldu. Lütfen tekrar deneyin.',
   },
   apiErrors: {
     INTERNAL_SERVER_ERROR: 'Sunucu hatası',

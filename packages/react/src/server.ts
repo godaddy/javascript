@@ -62,10 +62,7 @@ async function getAccessToken({
   data.append('grant_type', 'client_credentials');
   data.append('client_id', clientId);
   data.append('client_secret', clientSecret);
-  data.append(
-    'scope',
-    'commerce.product:read commerce.order:read commerce.order:update location.address-verification:execute'
-  );
+  data.append('scope', 'commerce.product:read');
   const response = await fetch(`${host}/v2/oauth2/token`, {
     method: 'POST',
     headers: {

@@ -24,6 +24,7 @@ import type {
   ApplyCheckoutSessionFulfillmentLocationInput,
   ApplyCheckoutSessionShippingMethodInput,
   ApplyDiscountCodesInput,
+  AuthorizeCheckoutSessionInput,
   CheckoutSession,
   CheckoutSessionInput,
   ConfirmCheckoutMutationInput,
@@ -44,6 +45,7 @@ import {
   ApplyCheckoutSessionDiscountMutation,
   ApplyCheckoutSessionFulfillmentLocationMutation,
   ApplyCheckoutSessionShippingMethodMutation,
+  AuthorizeCheckoutSessionMutation,
   CalculateCheckoutSessionTaxesMutation,
   ConfirmCheckoutSessionMutation,
   CreateCheckoutSessionMutation,
@@ -845,6 +847,62 @@ export function confirmCheckout(
     GODADDY_HOST,
     ConfirmCheckoutSessionMutation,
     { input, sessionId: session.id },
+    {
+      'x-session-token': `${session.token}`,
+      'x-session-id': session.id,
+      'x-store-id': session.storeId,
+    }
+  );
+}
+
+export function authorizeCheckoutSession(
+  input: AuthorizeCheckoutSessionInput['input'],
+  session: CheckoutSession | undefined | null,
+  apiHost?: string
+): Promise<ResultOf<typeof AuthorizeCheckoutSessionMutation>>;
+export function authorizeCheckoutSession(
+  input: AuthorizeCheckoutSessionInput['input'],
+  auth: { accessToken: string | undefined },
+  apiHost?: string
+): Promise<ResultOf<typeof AuthorizeCheckoutSessionMutation>>;
+export function authorizeCheckoutSession(
+  input: AuthorizeCheckoutSessionInput['input'],
+  sessionOrAuth:
+    | CheckoutSession
+    | undefined
+    | null
+    | { accessToken: string | undefined },
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost);
+
+  if (sessionOrAuth && 'accessToken' in sessionOrAuth) {
+    if (!sessionOrAuth.accessToken) {
+      throw new Error('No access token provided');
+    }
+    return graphqlRequestWithErrors<
+      ResultOf<typeof AuthorizeCheckoutSessionMutation>
+    >(
+      GODADDY_HOST,
+      AuthorizeCheckoutSessionMutation,
+      { input },
+      {
+        Authorization: `Bearer ${sessionOrAuth.accessToken}`,
+      }
+    );
+  }
+
+  const session = sessionOrAuth;
+  if (!session?.token || !session?.id) {
+    throw new Error('No session token or ID provided');
+  }
+
+  return graphqlRequestWithErrors<
+    ResultOf<typeof AuthorizeCheckoutSessionMutation>
+  >(
+    GODADDY_HOST,
+    AuthorizeCheckoutSessionMutation,
+    { input },
     {
       'x-session-token': `${session.token}`,
       'x-session-id': session.id,

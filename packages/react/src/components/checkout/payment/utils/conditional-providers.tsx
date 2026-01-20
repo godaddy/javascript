@@ -1,7 +1,10 @@
+import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { PayPalProvider } from './paypal-provider';
 import { PoyntCollectProvider } from './poynt-provider';
 import { SquareProvider } from './square-provider';
 import { StripeProvider } from './stripe-provider';
+import { useBuildPaymentRequest } from './use-build-payment-request';
 
 interface ConditionalPaymentProvidersProps {
   children: React.ReactNode;
@@ -14,8 +17,9 @@ interface ConditionalPaymentProvidersProps {
 export function ConditionalPaymentProviders({
   children,
 }: ConditionalPaymentProvidersProps) {
-  const { stripeConfig, godaddyPaymentsConfig, squareConfig } =
+  const { stripeConfig, godaddyPaymentsConfig, squareConfig, paypalConfig } =
     useCheckoutContext();
+  const { payPalRequest } = useBuildPaymentRequest();
 
   // Start with the children and conditionally wrap with providers
   let wrappedChildren = children;
@@ -35,6 +39,24 @@ export function ConditionalPaymentProviders({
   // Only wrap with StripeProvider if Stripe is configured
   if (stripeConfig?.publishableKey?.trim()) {
     wrappedChildren = <StripeProvider>{wrappedChildren}</StripeProvider>;
+  }
+
+  // Only wrap with PayPal providers if PayPal is configured
+  if (paypalConfig?.clientId?.trim()) {
+    wrappedChildren = (
+      <PayPalScriptProvider
+        options={{
+          clientId: paypalConfig.clientId,
+          currency:
+            payPalRequest?.purchase_units?.[0]?.amount?.currency_code || 'USD',
+          intent: 'capture',
+          components: 'buttons,card-fields,hosted-fields',
+          disableFunding: paypalConfig.disableFunding || ['paylater', 'venmo'],
+        }}
+      >
+        <PayPalProvider>{wrappedChildren}</PayPalProvider>
+      </PayPalScriptProvider>
+    );
   }
 
   return <>{wrappedChildren}</>;
