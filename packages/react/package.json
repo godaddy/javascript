@@ -1,7 +1,7 @@
 {
   "name": "@godaddy/react",
   "private": false,
-  "version": "1.0.18",
+  "version": "1.0.19",
   "type": "module",
   "types": "./dist/index.d.ts",
   "files": [
