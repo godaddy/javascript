@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.19
+
+### Patch Changes
+
+- cf9ea1b: fix payload amount precision for godaddy payment express checkout on shipping changes
+
 ## 1.0.18
 
 ### Patch Changes
