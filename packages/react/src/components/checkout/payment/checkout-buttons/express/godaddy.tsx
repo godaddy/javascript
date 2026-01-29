@@ -34,7 +34,10 @@ import { filterAndSortShippingMethods } from '@/components/checkout/shipping/uti
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
 import { mapOrderToFormValues } from '@/components/checkout/utils/checkout-transformers';
-import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
+import {
+  useConvertMajorToMinorUnits,
+  useFormatCurrency,
+} from '@/components/checkout/utils/format-currency';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -47,6 +50,7 @@ import {
 
 export function ExpressCheckoutButton() {
   const formatCurrency = useFormatCurrency();
+  const convertMajorToMinorUnits = useConvertMajorToMinorUnits();
   const { session, setCheckoutErrors } = useCheckoutContext();
   const { isPoyntLoaded } = useLoadPoyntCollect();
   const { godaddyPaymentsConfig } = useCheckoutContext();
@@ -104,7 +108,7 @@ export function ExpressCheckoutButton() {
             subtotalPrice: {
               currencyCode: currency,
               // Wallet APIs provide amounts in major units (e.g., "10.50"), convert to minor units for our API
-              value: Number(amount) * 100 || 0,
+              value: convertMajorToMinorUnits(amount || '0', currency),
             },
           },
         ],
@@ -927,7 +931,10 @@ export function ExpressCheckoutButton() {
           shipping: {
             currencyCode: currencyCode,
             // Convert wallet API amount from major to minor units for internal storage
-            value: Number(shippingAmount) * 100 || 0,
+            value: convertMajorToMinorUnits(
+              shippingAmount || '0',
+              currencyCode
+            ),
           },
         }));
 
@@ -938,7 +945,10 @@ export function ExpressCheckoutButton() {
               shippingAddress,
               {
                 // Convert wallet API amount from major to minor units for API request
-                amountInMinorUnits: Number(shippingAmount) * 100 || 0,
+                amountInMinorUnits: convertMajorToMinorUnits(
+                  shippingAmount || '0',
+                  currencyCode
+                ),
                 name: e.shippingMethod?.label || t.totals.shipping,
               }
             );
@@ -1036,7 +1046,12 @@ export function ExpressCheckoutButton() {
           ...updatedOrder,
           total: {
             label: t.payment.orderTotal,
-            amount: totalAmount.toString(),
+            amount: formatCurrency({
+              amount: totalAmount,
+              currencyCode: currencyCode,
+              inputInMinorUnits: false,
+              returnRaw: true,
+            }),
           },
           lineItems: poyntLineItems,
         };
@@ -1220,7 +1235,12 @@ export function ExpressCheckoutButton() {
           ...poyntExpressRequest,
           total: {
             label: t.payment.orderTotal,
-            amount: totalAmount.toString(),
+            amount: formatCurrency({
+              amount: totalAmount,
+              currencyCode: currencyCode,
+              inputInMinorUnits: false,
+              returnRaw: true,
+            }),
           },
           shippingMethods: methods as ShippingMethod[],
           lineItems: poyntLineItems,

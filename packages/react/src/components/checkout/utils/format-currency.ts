@@ -106,6 +106,28 @@ export function formatCurrency({
 }
 
 /**
+ * Converts a currency amount from major units (dollars) to minor units (cents).
+ *
+ * This is the reverse operation of formatCurrency with inputInMinorUnits=true.
+ * It properly handles different currency precisions:
+ * - 2 decimals (USD, EUR, etc.): multiply by 100
+ * - 0 decimals (JPY, KRW, VND, etc.): multiply by 1
+ * - 3 decimals (KWD, BHD, JOD, OMR): multiply by 1000
+ *
+ * @param amount - The amount in major units (e.g., "10.50" or 10.50)
+ * @param currencyCode - ISO 4217 currency code (e.g., 'USD', 'JPY', 'KWD')
+ * @returns The amount in minor units (e.g., 1050 for USD, 10 for JPY, 10500 for KWD)
+ */
+export function convertMajorToMinorUnits(
+  amount: number | string,
+  currencyCode: string
+): number {
+  const config = currencyConfigs[currencyCode] || { precision: 2 };
+  const numAmount = typeof amount === 'string' ? Number(amount) : amount;
+  return Math.round(numAmount * Math.pow(10, config.precision));
+}
+
+/**
  * Hook that returns a formatCurrency function using the locale from GoDaddyProvider context.
  * The returned function has the same signature as formatCurrency, but uses the context locale as default.
  */
@@ -117,5 +139,17 @@ export function useFormatCurrency() {
       ...options,
       locale: options.locale ?? contextLocale ?? 'en-US',
     });
+  };
+}
+
+/**
+ * Hook that returns a convertMajorToMinorUnits function.
+ * This follows the same pattern as useFormatCurrency for consistency.
+ * Note: Locale is not used in currency conversion (only in display formatting),
+ * but we access context to maintain the same hook pattern.
+ */
+export function useConvertMajorToMinorUnits() {
+  return (amount: number | string, currencyCode: string) => {
+    return convertMajorToMinorUnits(amount, currencyCode);
   };
 }
