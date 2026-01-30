@@ -47,6 +47,7 @@ import {
   TrackingEventType,
   track,
 } from '@/tracking/track';
+import type { CalculatedAdjustments, CalculatedTaxes } from '@/types';
 
 export function ExpressCheckoutButton() {
   const formatCurrency = useFormatCurrency();
@@ -60,7 +61,10 @@ export function ExpressCheckoutButton() {
     undefined
   );
   const [error, setError] = useState('');
-  const [priceAdjustment, setPriceAdjustment] = useState<number | null>(null);
+  const [calculatedAdjustments, setCalculatedAdjustments] =
+    useState<CalculatedAdjustments | null>(null);
+  const [calculatedTaxes, setCalculatedTaxes] =
+    useState<CalculatedTaxes | null>(null);
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(
     null
   );
@@ -177,7 +181,7 @@ export function ExpressCheckoutButton() {
       let expressRequest = { ...poyntExpressRequest };
 
       // If there's an applied coupon code and price adjustment, add it to the request
-      if (appliedCouponCode && priceAdjustment !== null) {
+      if (appliedCouponCode && calculatedAdjustments?.totalDiscountAmount) {
         // console.log("[poynt collect] Adding discount to express request", {
         // 	appliedCouponCode,
         // 	priceAdjustment,
@@ -189,7 +193,7 @@ export function ExpressCheckoutButton() {
         updatedLineItems.push({
           label: t.totals.discount,
           amount: formatCurrency({
-            amount: -priceAdjustment,
+            amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
             currencyCode,
             inputInMinorUnits: true,
             returnRaw: true,
@@ -199,7 +203,8 @@ export function ExpressCheckoutButton() {
 
         // Calculate the correct total in minor units
         const totalInMinorUnits =
-          (totals?.subTotal?.value || 0) - priceAdjustment;
+          (totals?.subTotal?.value || 0) -
+          (calculatedAdjustments?.totalDiscountAmount?.value || 0);
 
         const totalAmount = formatCurrency({
           amount: totalInMinorUnits,
@@ -220,7 +225,7 @@ export function ExpressCheckoutButton() {
             code: appliedCouponCode,
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -priceAdjustment,
+              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -270,7 +275,7 @@ export function ExpressCheckoutButton() {
     [
       poyntExpressRequest,
       appliedCouponCode,
-      priceAdjustment,
+      calculatedAdjustments,
       t,
       setCheckoutErrors,
     ]
@@ -322,7 +327,7 @@ export function ExpressCheckoutButton() {
 
         if (result) {
           setAppliedCouponCode(discountCodes?.[0]);
-          setPriceAdjustment(result);
+          setCalculatedAdjustments(result);
         }
       }
       // Mark the fetch as complete regardless of whether there were discounts
@@ -355,12 +360,12 @@ export function ExpressCheckoutButton() {
       let couponConfig:
         | { code: string; label: string; amount: string }
         | undefined;
-      if (priceAdjustment && appliedCouponCode) {
+      if (calculatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
         couponConfig = {
           code: appliedCouponCode,
           label: t.totals.discount,
           amount: formatCurrency({
-            amount: priceAdjustment,
+            amount: calculatedAdjustments?.totalDiscountAmount?.value || 0,
             currencyCode,
             inputInMinorUnits: true,
             returnRaw: true,
@@ -392,7 +397,7 @@ export function ExpressCheckoutButton() {
     session,
     isPoyntLoaded,
     isCollectLoading,
-    priceAdjustment,
+    calculatedAdjustments,
     appliedCouponCode,
     draftOrder,
     couponFetchStatus,
@@ -550,7 +555,7 @@ export function ExpressCheckoutButton() {
       if (!couponCode) {
         // User removed the coupon code
         setAppliedCouponCode(null);
-        setPriceAdjustment(null);
+        setCalculatedAdjustments(null);
 
         // Add shipping and taxes if they exist
         const finalLineItems = [...baseLineItems];
@@ -621,14 +626,16 @@ export function ExpressCheckoutButton() {
           }
 
           // Call the price adjustments mutation with the new coupon code
-          const adjustment = await getPriceAdjustments.mutateAsync({
+          const adjustments = await getPriceAdjustments.mutateAsync({
             discountCodes: [couponCode],
             shippingLines,
           });
 
-          if (adjustment) {
+          if (adjustments?.totalDiscountAmount?.value) {
             setAppliedCouponCode(couponCode);
-            setPriceAdjustment(adjustment);
+            setCalculatedAdjustments(adjustments);
+
+            const adjustmentValue = adjustments.totalDiscountAmount.value;
 
             // Build line items with shipping, taxes, and the new discount
             const finalLineItems = [...baseLineItems];
@@ -661,7 +668,7 @@ export function ExpressCheckoutButton() {
             finalLineItems.push({
               label: t.totals.discount,
               amount: formatCurrency({
-                amount: -adjustment,
+                amount: -adjustmentValue,
                 currencyCode,
                 inputInMinorUnits: true,
                 returnRaw: true,
@@ -673,7 +680,7 @@ export function ExpressCheckoutButton() {
               (totals?.subTotal?.value || 0) +
               godaddyTotals.shipping.value +
               godaddyTotals.taxes.value -
-              adjustment;
+              adjustmentValue;
 
             const totalAmount = formatCurrency({
               amount: totalInMinorUnits,
@@ -692,7 +699,7 @@ export function ExpressCheckoutButton() {
                 code: couponCode,
                 label: t.totals.discount,
                 amount: formatCurrency({
-                  amount: -adjustment,
+                  amount: -adjustmentValue,
                   currencyCode,
                   inputInMinorUnits: true,
                   returnRaw: true,
@@ -766,14 +773,8 @@ export function ExpressCheckoutButton() {
                 shippingTotal: godaddyTotals.shipping,
               }
             : {}),
-          ...(godaddyTotals.taxes
-            ? {
-                taxTotal: {
-                  value: godaddyTotals.taxes.value,
-                  currencyCode: godaddyTotals.taxes.currencyCode,
-                },
-              }
-            : {}),
+          ...(calculatedTaxes ? { calculatedTaxes } : {}),
+          ...(calculatedAdjustments ? { calculatedAdjustments } : {}),
           ...(event?.billingAddress
             ? {
                 billing: {
@@ -958,10 +959,10 @@ export function ExpressCheckoutButton() {
               shippingLines,
             });
 
-            if (newAdjustments) {
-              setPriceAdjustment(newAdjustments);
+            if (newAdjustments?.totalDiscountAmount) {
+              setCalculatedAdjustments(newAdjustments);
             } else {
-              setPriceAdjustment(null);
+              setCalculatedAdjustments(null);
               setAppliedCouponCode('');
             }
           } catch (err) {
@@ -988,11 +989,14 @@ export function ExpressCheckoutButton() {
               shippingAmount || '0'
             );
 
-            if (taxesResult?.value) {
+            if (taxesResult?.totalTaxAmount?.value) {
+              // Store the full tax calculation response
+              setCalculatedTaxes(taxesResult);
+
               poyntLineItems.push({
                 label: t.totals.estimatedTaxes,
                 amount: formatCurrency({
-                  amount: taxesResult.value,
+                  amount: taxesResult.totalTaxAmount.value,
                   currencyCode,
                   inputInMinorUnits: true,
                   returnRaw: true,
@@ -1003,7 +1007,7 @@ export function ExpressCheckoutButton() {
                 ...value,
                 taxes: {
                   currencyCode: currencyCode,
-                  value: taxesResult.value || 0,
+                  value: taxesResult.totalTaxAmount.value || 0,
                 },
               }));
             }
@@ -1024,11 +1028,11 @@ export function ExpressCheckoutButton() {
         }
 
         // Add discount line if a coupon is applied
-        if (priceAdjustment && appliedCouponCode) {
+        if (calculatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
           poyntLineItems.push({
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -priceAdjustment,
+              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1057,12 +1061,12 @@ export function ExpressCheckoutButton() {
         };
 
         // Add coupon code to the request if one is applied
-        if (appliedCouponCode && priceAdjustment !== null) {
+        if (appliedCouponCode && calculatedAdjustments?.totalDiscountAmount) {
           updatedOrder.couponCode = {
             code: appliedCouponCode,
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -priceAdjustment,
+              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1126,10 +1130,10 @@ export function ExpressCheckoutButton() {
                 shippingLines,
               });
 
-              if (newAdjustments) {
-                setPriceAdjustment(newAdjustments);
+              if (newAdjustments?.totalDiscountAmount) {
+                setCalculatedAdjustments(newAdjustments);
               } else {
-                setPriceAdjustment(null);
+                setCalculatedAdjustments(null);
                 setAppliedCouponCode('');
               }
             } catch (err) {
@@ -1174,11 +1178,14 @@ export function ExpressCheckoutButton() {
 
             // console.log("[poynt collect] Taxes result", { taxesResult });
 
-            if (taxesResult?.value) {
+            if (taxesResult?.totalTaxAmount?.value) {
+              // Store the full tax calculation response
+              setCalculatedTaxes(taxesResult);
+
               poyntLineItems.push({
                 label: t.totals.estimatedTaxes,
                 amount: formatCurrency({
-                  amount: taxesResult.value,
+                  amount: taxesResult.totalTaxAmount.value,
                   currencyCode,
                   inputInMinorUnits: true,
                   returnRaw: true,
@@ -1189,7 +1196,7 @@ export function ExpressCheckoutButton() {
                 ...value,
                 taxes: {
                   currencyCode: currencyCode,
-                  value: taxesResult.value || 0,
+                  value: taxesResult.totalTaxAmount.value || 0,
                 },
               }));
             }
@@ -1213,11 +1220,11 @@ export function ExpressCheckoutButton() {
         }
 
         // Add discount line if a coupon is applied
-        if (priceAdjustment && appliedCouponCode) {
+        if (calculatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
           poyntLineItems.push({
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -priceAdjustment,
+              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1247,12 +1254,12 @@ export function ExpressCheckoutButton() {
         };
 
         // Add coupon code to the request if one is applied
-        if (appliedCouponCode && priceAdjustment !== null) {
+        if (appliedCouponCode && calculatedAdjustments?.totalDiscountAmount) {
           updatedOrder.couponCode = {
             code: appliedCouponCode,
             label: appliedCouponCode || 'Discount',
             amount: formatCurrency({
-              amount: -priceAdjustment,
+              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1296,7 +1303,7 @@ export function ExpressCheckoutButton() {
     getSortedShippingMethods,
     convertAddressToShippingLines,
     getPriceAdjustments.mutateAsync,
-    priceAdjustment,
+    calculatedAdjustments,
     appliedCouponCode,
     t,
     form,

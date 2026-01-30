@@ -173,6 +173,14 @@ export type DraftOrderPriceAdjustmentsQueryInput = VariablesOf<
   typeof DraftOrderPriceAdjustmentsQuery
 >;
 
+export type CalculatedAdjustments = NonNullable<
+  ConfirmCheckoutMutationInput['input']['calculatedAdjustments']
+>;
+
+export type CalculatedTaxes = NonNullable<
+  ConfirmCheckoutMutationInput['input']['calculatedTaxes']
+>;
+
 export type GetCheckoutSessionTaxesInput = VariablesOf<
   typeof DraftOrderTaxesQuery
 >;

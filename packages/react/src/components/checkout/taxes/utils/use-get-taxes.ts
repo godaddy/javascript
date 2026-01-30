@@ -29,7 +29,7 @@ export function useGetTaxes() {
           )
         : await getDraftOrderTaxes(session, { destination, lines }, apiHost);
 
-      return data.checkoutSession?.draftOrder?.calculatedTaxes?.totalTaxAmount;
+      return data.checkoutSession?.draftOrder?.calculatedTaxes;
     },
   });
 }

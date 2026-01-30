@@ -584,128 +584,68 @@ export const DraftOrderPriceAdjustmentsQuery = graphql(`
             draftOrder {
                 id
                 calculatedAdjustments(discountCodes: $discountCodes, shippingLines: $shippingLines) {
-#                    adjustments {
-#                        adjustment {
-#                            ... on CalculatedDiscount {
-#                                description
-#                                id
-#                                label
-#                                name
-#                                value {
-#                                    ... on AdjustmentAmount {
-#                                        amount {
-#                                            currencyCode
-#                                            value
-#                                        }
-#                                    }
-#                                    ... on AdjustmentPercentage {
-#                                        maximumAmount {
-#                                            currencyCode
-#                                            value
-#                                        }
-#                                        percentage
-#                                    }
-#                                }
-#                            }
-#                            ... on CalculatedFee {
-#                                description
-#                                id
-#                                label
-#                                name
-#                                value {
-#                                    ... on AdjustmentAmount {
-#                                        amount {
-#                                            currencyCode
-#                                            value
-#                                        }
-#                                    }
-#                                    ... on AdjustmentPercentage {
-#                                        maximumAmount {
-#                                            currencyCode
-#                                            value
-#                                        }
-#                                        percentage
-#                                    }
-#                                }
-#                            }
-#                        }
-#                        totalAmount {
-#                            currencyCode
-#                            value
-#                        }
-#                    }
-#                    lines {
-#                        adjustments {
-#                            adjustment {
-#                                ... on CalculatedDiscount {
-#                                    description
-#                                    id
-#                                    label
-#                                    name
-#                                    value {
-#                                        ... on AdjustmentAmount {
-#                                            amount {
-#                                                currencyCode
-#                                                value
-#                                            }
-#                                        }
-#                                        ... on AdjustmentPercentage {
-#                                            maximumAmount {
-#                                                currencyCode
-#                                                value
-#                                            }
-#                                            percentage
-#                                        }
-#                                    }
-#                                }
-#                                ... on CalculatedFee {
-#                                    description
-#                                    id
-#                                    label
-#                                    name
-#                                    value {
-#                                        ... on AdjustmentAmount {
-#                                            amount {
-#                                                currencyCode
-#                                                value
-#                                            }
-#                                        }
-#                                        ... on AdjustmentPercentage {
-#                                            maximumAmount {
-#                                                currencyCode
-#                                                value
-#                                            }
-#                                            percentage
-#                                        }
-#                                    }
-#                                }
-#                            }
-#                            totalAmount {
-#                                currencyCode
-#                                value
-#                            }
-#                        }
-#                        calculationLine {
-#                            id
-#                            type
-#                        }
-#                        totalDiscountAmount {
-#                            currencyCode
-#                            value
-#                        }
-#                        totalFeeAmount {
-#                            currencyCode
-#                            value
-#                        }
-#                    }
+                    adjustments {
+                        adjustment {
+                            ... on CalculatedDiscount {
+                                description
+                                id
+                                label
+                                name
+                            }
+                            ... on CalculatedFee {
+                                description
+                                id
+                                label
+                                name
+                            }
+                        }
+                        totalAmount {
+                            currencyCode
+                            value
+                        }
+                    }
+                    lines {
+                        calculationLine {
+                            id
+                            type
+                        }
+                        adjustments {
+                            adjustment {
+                                ... on CalculatedDiscount {
+                                    description
+                                    id
+                                    label
+                                    name
+                                }
+                                ... on CalculatedFee {
+                                    description
+                                    id
+                                    label
+                                    name
+                                }
+                            }
+                            totalAmount {
+                                currencyCode
+                                value
+                            }
+                        }
+                        totalDiscountAmount {
+                            currencyCode
+                            value
+                        }
+                        totalFeeAmount {
+                            currencyCode
+                            value
+                        }
+                    }
                     totalDiscountAmount {
                         currencyCode
                         value
                     }
-#                    totalFeeAmount {
-#                        currencyCode
-#                        value
-#                    }
+                    totalFeeAmount {
+                        currencyCode
+                        value
+                    }
                 }
             }
         }

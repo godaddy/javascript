@@ -3,7 +3,10 @@ import { useMutation } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getDraftOrderPriceAdjustments } from '@/lib/godaddy/godaddy';
-import type { DraftOrderPriceAdjustmentsQueryInput } from '@/types';
+import type {
+  CalculatedAdjustments,
+  DraftOrderPriceAdjustmentsQueryInput,
+} from '@/types';
 
 type Vars = {
   discountCodes: DraftOrderPriceAdjustmentsQueryInput['discountCodes'];
@@ -14,7 +17,7 @@ export function useGetPriceAdjustments() {
   const { session, jwt } = useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
 
-  return useMutation<number | null | undefined, Error, Vars>({
+  return useMutation<CalculatedAdjustments | null | undefined, Error, Vars>({
     mutationKey: [
       'get-price-adjustments-by-discount-code',
       session?.id ?? 'no-session',
@@ -34,8 +37,7 @@ export function useGetPriceAdjustments() {
             apiHost
           );
 
-      return data.checkoutSession?.draftOrder?.calculatedAdjustments
-        ?.totalDiscountAmount?.value;
+      return data.checkoutSession?.draftOrder?.calculatedAdjustments;
     },
   });
 }
