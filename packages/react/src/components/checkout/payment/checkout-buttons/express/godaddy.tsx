@@ -996,7 +996,7 @@ export function ExpressCheckoutButton() {
               poyntLineItems.push({
                 label: t.totals.estimatedTaxes,
                 amount: formatCurrency({
-                  amount: taxesResult.totalTaxAmount.value,
+                  amount: taxesResult?.totalTaxAmount?.value,
                   currencyCode,
                   inputInMinorUnits: true,
                   returnRaw: true,
@@ -1007,7 +1007,7 @@ export function ExpressCheckoutButton() {
                 ...value,
                 taxes: {
                   currencyCode: currencyCode,
-                  value: taxesResult.totalTaxAmount.value || 0,
+                  value: taxesResult?.totalTaxAmount?.value || 0,
                 },
               }));
             }
@@ -1196,7 +1196,7 @@ export function ExpressCheckoutButton() {
                 ...value,
                 taxes: {
                   currencyCode: currencyCode,
-                  value: taxesResult.totalTaxAmount.value || 0,
+                  value: taxesResult?.totalTaxAmount?.value || 0,
                 },
               }));
             }

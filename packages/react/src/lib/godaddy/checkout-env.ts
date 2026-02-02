@@ -928,11 +928,8 @@ const introspection = {
           {
             name: 'name',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+              kind: 'SCALAR',
+              name: 'String',
             },
           },
         ],
@@ -945,21 +942,15 @@ const introspection = {
           {
             name: 'adjustment',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'CalculatedAdjustmentDetailsInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'CalculatedAdjustmentDetailsInput',
             },
           },
           {
             name: 'totalAmount',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
             },
           },
         ],
@@ -997,15 +988,12 @@ const introspection = {
           {
             name: 'adjustments',
             type: {
-              kind: 'NON_NULL',
+              kind: 'LIST',
               ofType: {
-                kind: 'LIST',
+                kind: 'NON_NULL',
                 ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'CalculatedAdjustmentInput',
-                  },
+                  kind: 'INPUT_OBJECT',
+                  name: 'CalculatedAdjustmentInput',
                 },
               },
             },
@@ -1026,18 +1014,15 @@ const introspection = {
           {
             name: 'totalDiscountAmount',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
             },
           },
           {
             name: 'totalFeeAmount',
             type: {
               kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
+              name: 'UpdateMoneyInput',
             },
           },
         ],
@@ -1167,28 +1152,22 @@ const introspection = {
           {
             name: 'calculationLine',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'CalculationLineInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'CalculationLineInput',
             },
           },
           {
             name: 'totalDiscountAmount',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
             },
           },
           {
             name: 'totalFeeAmount',
             type: {
               kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
+              name: 'UpdateMoneyInput',
             },
           },
         ],
@@ -1263,15 +1242,12 @@ const introspection = {
           {
             name: 'taxAmounts',
             type: {
-              kind: 'NON_NULL',
+              kind: 'LIST',
               ofType: {
-                kind: 'LIST',
+                kind: 'NON_NULL',
                 ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'TaxAmountInput',
-                  },
+                  kind: 'INPUT_OBJECT',
+                  name: 'TaxAmountInput',
                 },
               },
             },
@@ -1279,11 +1255,8 @@ const introspection = {
           {
             name: 'totalTaxAmount',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
             },
           },
         ],
@@ -1296,21 +1269,15 @@ const introspection = {
           {
             name: 'id',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+              kind: 'SCALAR',
+              name: 'String',
             },
           },
           {
             name: 'type',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+              kind: 'SCALAR',
+              name: 'String',
             },
           },
         ],
@@ -9673,21 +9640,15 @@ const introspection = {
           {
             name: 'rate',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'TaxRateInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'TaxRateInput',
             },
           },
           {
             name: 'totalTaxAmount',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
             },
           },
         ],
@@ -9700,25 +9661,19 @@ const introspection = {
           {
             name: 'calculationLine',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'TaxCalculationLineInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'TaxCalculationLineInput',
             },
           },
           {
             name: 'taxAmounts',
             type: {
-              kind: 'NON_NULL',
+              kind: 'LIST',
               ofType: {
-                kind: 'LIST',
+                kind: 'NON_NULL',
                 ofType: {
-                  kind: 'NON_NULL',
-                  ofType: {
-                    kind: 'INPUT_OBJECT',
-                    name: 'TaxAmountInput',
-                  },
+                  kind: 'INPUT_OBJECT',
+                  name: 'TaxAmountInput',
                 },
               },
             },
@@ -9726,11 +9681,8 @@ const introspection = {
           {
             name: 'totalTaxAmount',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'INPUT_OBJECT',
-                name: 'MoneyInput',
-              },
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
             },
           },
         ],
@@ -9743,11 +9695,8 @@ const introspection = {
           {
             name: 'id',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+              kind: 'SCALAR',
+              name: 'String',
             },
           },
         ],
@@ -9984,11 +9933,8 @@ const introspection = {
           {
             name: 'calculationMethod',
             type: {
-              kind: 'NON_NULL',
-              ofType: {
-                kind: 'SCALAR',
-                name: 'String',
-              },
+              kind: 'SCALAR',
+              name: 'String',
             },
           },
           {
@@ -10030,14 +9976,14 @@ const introspection = {
             name: 'amount',
             type: {
               kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
+              name: 'UpdateMoneyInput',
             },
           },
           {
             name: 'appliedAmount',
             type: {
               kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
+              name: 'UpdateMoneyInput',
             },
           },
           {
