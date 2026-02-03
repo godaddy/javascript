@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.20
+
+### Patch Changes
+
+- 41f7d3b: Send new tax, price adjustment, and shipping data to express checkout confirmation
+
 ## 1.0.19
 
 ### Patch Changes
