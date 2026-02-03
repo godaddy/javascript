@@ -901,6 +901,62 @@ const introspection = {
         ],
       },
       {
+        kind: 'INPUT_OBJECT',
+        name: 'CalculatedAdjustmentDetailsInput',
+        inputFields: [
+          {
+            name: 'description',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'id',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'label',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'CalculatedAdjustmentInput',
+        inputFields: [
+          {
+            name: 'adjustment',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CalculatedAdjustmentDetailsInput',
+            },
+          },
+          {
+            name: 'totalAmount',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
         kind: 'OBJECT',
         name: 'CalculatedAdjustmentOutput',
         fields: [
@@ -924,6 +980,53 @@ const introspection = {
           },
         ],
         interfaces: [],
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'CalculatedAdjustmentsInput',
+        inputFields: [
+          {
+            name: 'adjustments',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'CalculatedAdjustmentInput',
+                },
+              },
+            },
+          },
+          {
+            name: 'lines',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'CalculatedLineInput',
+                },
+              },
+            },
+          },
+          {
+            name: 'totalDiscountAmount',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
+            },
+          },
+          {
+            name: 'totalFeeAmount',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
+            },
+          },
+        ],
+        isOneOf: false,
       },
       {
         kind: 'OBJECT',
@@ -1030,6 +1133,47 @@ const introspection = {
         interfaces: [],
       },
       {
+        kind: 'INPUT_OBJECT',
+        name: 'CalculatedLineInput',
+        inputFields: [
+          {
+            name: 'adjustments',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'CalculatedAdjustmentInput',
+                },
+              },
+            },
+          },
+          {
+            name: 'calculationLine',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CalculationLineInput',
+            },
+          },
+          {
+            name: 'totalDiscountAmount',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
+            },
+          },
+          {
+            name: 'totalFeeAmount',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
         kind: 'OBJECT',
         name: 'CalculatedLineOutput',
         fields: [
@@ -1077,6 +1221,67 @@ const introspection = {
           },
         ],
         interfaces: [],
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'CalculatedTaxesInput',
+        inputFields: [
+          {
+            name: 'lines',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'TaxCalculatedLineInput',
+                },
+              },
+            },
+          },
+          {
+            name: 'taxAmounts',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'TaxAmountInput',
+                },
+              },
+            },
+          },
+          {
+            name: 'totalTaxAmount',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'CalculationLineInput',
+        inputFields: [
+          {
+            name: 'id',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'type',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+        ],
+        isOneOf: false,
       },
       {
         kind: 'OBJECT',
@@ -6824,6 +7029,20 @@ const introspection = {
             },
           },
           {
+            name: 'calculatedAdjustments',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CalculatedAdjustmentsInput',
+            },
+          },
+          {
+            name: 'calculatedTaxes',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CalculatedTaxesInput',
+            },
+          },
+          {
             name: 'fulfillmentEndAt',
             type: {
               kind: 'SCALAR',
@@ -6903,13 +7122,6 @@ const introspection = {
           },
           {
             name: 'shippingTotal',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
-            },
-          },
-          {
-            name: 'taxTotal',
             type: {
               kind: 'INPUT_OBJECT',
               name: 'MoneyInput',
@@ -9423,6 +9635,75 @@ const introspection = {
       },
       {
         kind: 'INPUT_OBJECT',
+        name: 'TaxAmountInput',
+        inputFields: [
+          {
+            name: 'rate',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'TaxRateInput',
+            },
+          },
+          {
+            name: 'totalTaxAmount',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'TaxCalculatedLineInput',
+        inputFields: [
+          {
+            name: 'calculationLine',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'TaxCalculationLineInput',
+            },
+          },
+          {
+            name: 'taxAmounts',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'TaxAmountInput',
+                },
+              },
+            },
+          },
+          {
+            name: 'totalTaxAmount',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'TaxCalculationLineInput',
+        inputFields: [
+          {
+            name: 'id',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
         name: 'TaxDestinationAddressInput',
         inputFields: [
           {
@@ -9640,6 +9921,83 @@ const introspection = {
             type: {
               kind: 'INPUT_OBJECT',
               name: 'MoneyInput',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'TaxRateInput',
+        inputFields: [
+          {
+            name: 'calculationMethod',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'id',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'label',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'value',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'TaxRateValueInput',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'TaxRateValueInput',
+        inputFields: [
+          {
+            name: 'amount',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
+            },
+          },
+          {
+            name: 'appliedAmount',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
+            },
+          },
+          {
+            name: 'appliedPercentage',
+            type: {
+              kind: 'SCALAR',
+              name: 'Float',
+            },
+          },
+          {
+            name: 'percentage',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
             },
           },
         ],
