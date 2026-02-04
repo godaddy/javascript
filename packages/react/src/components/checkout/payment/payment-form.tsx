@@ -155,15 +155,19 @@ export function PaymentForm(
       currencyCode &&
       session?.paymentMethods?.paze?.processor === PaymentProvider.GODADDY
     ) {
-      collect.current = new (window as any).TokenizeJs({
-        businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
-        storeId: session?.storeId,
-        channelId: session?.channelId,
-        applicationId: godaddyPaymentsConfig?.appId,
-        country: countryCode,
-        currency: currencyCode,
-        merchantName: session?.storeName || '',
-      });
+      collect.current = new (window as any).TokenizeJs(
+        {
+          businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+          storeId: session?.storeId,
+          channelId: session?.channelId,
+          applicationId: godaddyPaymentsConfig?.appId,
+        },
+        {
+          country: countryCode,
+          currency: currencyCode,
+          merchantName: session?.storeName || '',
+        }
+      );
 
       collect.current?.supportWalletPayments().then(supports => {
         if (supports.paze) {
