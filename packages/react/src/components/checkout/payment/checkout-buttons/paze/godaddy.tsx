@@ -106,24 +106,26 @@ export function PazeCheckoutButton() {
       !hasMounted.current
     ) {
       // console.log("[poynt collect] Initializing TokenizeJs instance");
-      collect.current = new (window as any).TokenizeJs(
-        godaddyPaymentsConfig?.businessId || session?.businessId,
-        godaddyPaymentsConfig?.appId,
-        {
-          country: countryCode,
-          currency: currencyCode,
-          merchantName: session?.storeName || '',
-          requireEmail: false,
-          requireShippingAddress: false,
-          supportCouponCode: false,
-        }
-      );
+      collect.current = new (window as any).TokenizeJs({
+        businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+        storeId: session?.storeId,
+        channelId: session?.channelId,
+        applicationId: godaddyPaymentsConfig?.appId,
+        country: countryCode,
+        currency: currencyCode,
+        merchantName: session?.storeName || '',
+        requireEmail: false,
+        requireShippingAddress: false,
+        supportCouponCode: false,
+      });
     }
   }, [
     godaddyPaymentsConfig,
     countryCode,
     currencyCode,
-    session,
+    session?.businessId,
+    session?.storeId,
+    session?.channelId,
     isPoyntLoaded,
     isCollectLoading,
   ]);

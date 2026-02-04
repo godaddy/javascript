@@ -376,25 +376,29 @@ export function ExpressCheckoutButton() {
       // console.log("[poynt collect] TokenizeJsing initialized", {
       // 	couponConfig,
       // });
-      collect.current = new (window as any).TokenizeJs(
-        godaddyPaymentsConfig?.businessId || session?.businessId,
-        godaddyPaymentsConfig?.appId,
-        {
-          country: countryCode,
-          currency: currencyCode,
-          merchantName: session?.storeName || '',
-          requireEmail: true,
-          requireShippingAddress: !!session?.enableShippingAddressCollection,
-          supportCouponCode: !!session?.enablePromotionCodes,
-          ...(couponConfig ? { couponCode: couponConfig } : {}),
-        }
-      );
+      collect.current = new (window as any).TokenizeJs({
+        businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+        storeId: session?.storeId,
+        channelId: session?.channelId,
+        applicationId: godaddyPaymentsConfig?.appId,
+        country: countryCode,
+        currency: currencyCode,
+        merchantName: session?.storeName || '',
+        requireEmail: true,
+        requireShippingAddress: !!session?.enableShippingAddressCollection,
+        supportCouponCode: !!session?.enablePromotionCodes,
+        ...(couponConfig ? { couponCode: couponConfig } : {}),
+      });
     }
   }, [
     godaddyPaymentsConfig,
     countryCode,
     currencyCode,
-    session,
+    session?.businessId,
+    session?.storeId,
+    session?.channelId,
+    session?.enablePromotionCodes,
+    session?.storeName,
     isPoyntLoaded,
     isCollectLoading,
     calculatedAdjustments,
