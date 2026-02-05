@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.21
+
+### Patch Changes
+
+- 569cc34: Add storeId and channelId for GDPayments Initialization
+
 ## 1.0.20
 
 ### Patch Changes
