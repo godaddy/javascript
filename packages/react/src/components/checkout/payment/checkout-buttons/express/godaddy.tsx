@@ -377,8 +377,12 @@ export function ExpressCheckoutButton() {
       // 	couponConfig,
       // });
       collect.current = new (window as any).TokenizeJs(
-        godaddyPaymentsConfig?.businessId || session?.businessId,
-        godaddyPaymentsConfig?.appId,
+        {
+          businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+          storeId: session?.storeId,
+          channelId: session?.channelId,
+          applicationId: godaddyPaymentsConfig?.appId,
+        },
         {
           country: countryCode,
           currency: currencyCode,
@@ -394,7 +398,11 @@ export function ExpressCheckoutButton() {
     godaddyPaymentsConfig,
     countryCode,
     currencyCode,
-    session,
+    session?.businessId,
+    session?.storeId,
+    session?.channelId,
+    session?.enablePromotionCodes,
+    session?.storeName,
     isPoyntLoaded,
     isCollectLoading,
     calculatedAdjustments,

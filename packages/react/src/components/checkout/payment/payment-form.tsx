@@ -156,8 +156,12 @@ export function PaymentForm(
       session?.paymentMethods?.paze?.processor === PaymentProvider.GODADDY
     ) {
       collect.current = new (window as any).TokenizeJs(
-        godaddyPaymentsConfig?.businessId || session?.businessId,
-        godaddyPaymentsConfig?.appId,
+        {
+          businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+          storeId: session?.storeId,
+          channelId: session?.channelId,
+          applicationId: godaddyPaymentsConfig?.appId,
+        },
         {
           country: countryCode,
           currency: currencyCode,
@@ -180,6 +184,8 @@ export function PaymentForm(
     session?.paymentMethods?.paze?.processor,
     session?.storeName,
     session?.businessId,
+    session?.storeId,
+    session?.channelId,
     isPoyntLoaded,
   ]);
 

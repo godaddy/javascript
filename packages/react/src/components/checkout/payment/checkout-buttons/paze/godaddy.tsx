@@ -107,8 +107,12 @@ export function PazeCheckoutButton() {
     ) {
       // console.log("[poynt collect] Initializing TokenizeJs instance");
       collect.current = new (window as any).TokenizeJs(
-        godaddyPaymentsConfig?.businessId || session?.businessId,
-        godaddyPaymentsConfig?.appId,
+        {
+          businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+          storeId: session?.storeId,
+          channelId: session?.channelId,
+          applicationId: godaddyPaymentsConfig?.appId,
+        },
         {
           country: countryCode,
           currency: currencyCode,
@@ -123,7 +127,9 @@ export function PazeCheckoutButton() {
     godaddyPaymentsConfig,
     countryCode,
     currencyCode,
-    session,
+    session?.businessId,
+    session?.storeId,
+    session?.channelId,
     isPoyntLoaded,
     isCollectLoading,
   ]);

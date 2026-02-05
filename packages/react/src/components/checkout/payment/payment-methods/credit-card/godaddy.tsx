@@ -195,10 +195,12 @@ export function GoDaddyCreditCardForm() {
     )
       return;
 
-    collect.current = new (window as any).TokenizeJs(
-      godaddyPaymentsConfig?.businessId || session?.businessId,
-      godaddyPaymentsConfig?.appId
-    );
+    collect.current = new (window as any).TokenizeJs({
+      businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+      storeId: session?.storeId,
+      channelId: session?.channelId,
+      applicationId: godaddyPaymentsConfig?.appId,
+    });
 
     collect?.current?.on('ready', () => {
       setCollect(collect.current);
@@ -248,6 +250,8 @@ export function GoDaddyCreditCardForm() {
     t,
     setIsLoadingNonce,
     session?.businessId,
+    session?.storeId,
+    session?.channelId,
   ]);
 
   return (
