@@ -511,6 +511,8 @@ export function ExpressCheckoutButton() {
       // Reset coupon fetch status to trigger a re-fetch on next open
       setCouponFetchStatus('idle');
       setAppliedCouponCode(null);
+      setCalculatedAdjustments(null);
+      setCalculatedTaxes(null);
 
       // Clear any error messages
       setError('');
