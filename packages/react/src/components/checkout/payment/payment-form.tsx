@@ -66,6 +66,7 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   applePay: <ApplePayIcon className='h-5 w-5' />,
   googlePay: <GooglePayIcon className='h-5 w-10' />,
   paze: <PazeIcon className='h-5 w-8' />,
+  mercadopago: <PazeIcon className='h-5 w-8' />,
   offline: <Wallet className='h-5 w-5' />,
 };
 
@@ -114,6 +115,8 @@ export function PaymentForm(
           return t.payment.methods.paze;
         case PaymentMethodType.OFFLINE:
           return t.payment.methods.offline;
+        case PaymentMethodType.MERCADOPAGO:
+          return 'MercadoPago';
         default:
           return key;
       }
@@ -137,6 +140,8 @@ export function PaymentForm(
           return t.payment.descriptions?.paze;
         case PaymentMethodType.OFFLINE:
           return t.payment.descriptions?.offline;
+        case PaymentMethodType.MERCADOPAGO:
+          return undefined;
         default:
           return undefined;
       }

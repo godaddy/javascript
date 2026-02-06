@@ -1,5 +1,6 @@
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { MercadoPagoProvider } from './mercadopago-provider';
 import { PayPalProvider } from './paypal-provider';
 import { PoyntCollectProvider } from './poynt-provider';
 import { SquareProvider } from './square-provider';
@@ -17,8 +18,13 @@ interface ConditionalPaymentProvidersProps {
 export function ConditionalPaymentProviders({
   children,
 }: ConditionalPaymentProvidersProps) {
-  const { stripeConfig, godaddyPaymentsConfig, squareConfig, paypalConfig } =
-    useCheckoutContext();
+  const {
+    stripeConfig,
+    godaddyPaymentsConfig,
+    squareConfig,
+    paypalConfig,
+    mercadoPagoConfig,
+  } = useCheckoutContext();
   const { payPalRequest } = useBuildPaymentRequest();
 
   // Start with the children and conditionally wrap with providers
@@ -33,6 +39,13 @@ export function ConditionalPaymentProviders({
   if (godaddyPaymentsConfig?.appId?.trim()) {
     wrappedChildren = (
       <PoyntCollectProvider>{wrappedChildren}</PoyntCollectProvider>
+    );
+  }
+
+  // Only wrap with MercadoPagoProvider if MercadoPago is configured
+  if (mercadoPagoConfig?.publicKey?.trim()) {
+    wrappedChildren = (
+      <MercadoPagoProvider>{wrappedChildren}</MercadoPagoProvider>
     );
   }
 

@@ -40,6 +40,13 @@ const LazyComponents = {
       default: module.PayPalCreditCardForm,
     }))
   ),
+  MercadoPagoCreditCardForm: lazy(() =>
+    import(
+      '@/components/checkout/payment/payment-methods/credit-card/mercadopago'
+    ).then(module => ({
+      default: module.MercadoPagoCreditCardForm,
+    }))
+  ),
 
   // Credit Card Buttons
   CreditCardCheckoutButton: lazy(() =>
@@ -68,6 +75,13 @@ const LazyComponents = {
       '@/components/checkout/payment/checkout-buttons/credit-card/paypal'
     ).then(module => ({
       default: module.PayPalCreditCardCheckoutButton,
+    }))
+  ),
+  MercadoPagoCreditCardCheckoutButton: lazy(() =>
+    import(
+      '@/components/checkout/payment/checkout-buttons/credit-card/mercadopago'
+    ).then(module => ({
+      default: module.MercadoPagoCreditCardCheckoutButton,
     }))
   ),
 
@@ -179,6 +193,12 @@ type PaymentComponentRegistry = {
       button: PaymentComponentKey;
     };
   };
+  [PaymentMethodType.MERCADOPAGO]?: {
+    [PaymentProvider.MERCADOPAGO]: {
+      form: PaymentComponentKey;
+      button: PaymentComponentKey;
+    };
+  };
 };
 
 export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
@@ -228,6 +248,12 @@ export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
       button: 'PazeCheckoutButton',
     },
   },
+  [PaymentMethodType.MERCADOPAGO]: {
+    [PaymentProvider.MERCADOPAGO]: {
+      form: 'MercadoPagoCreditCardForm',
+      button: 'MercadoPagoCreditCardCheckoutButton',
+    },
+  },
 };
 
 // Payment loading skeleton component
@@ -261,6 +287,7 @@ export function LazyPaymentMethodRenderer({
   provider,
   isExpress,
 }: LazyPaymentMethodRendererProps) {
+  console.log(`Rendering LazyPaymentMethodRenderer for method: ${method}, provider: ${provider}, type: ${type}, isExpress: ${isExpress}`)
   const methodRegistry =
     lazyPaymentComponentRegistry[
       method as keyof typeof lazyPaymentComponentRegistry
