@@ -96,8 +96,16 @@ export function ExpressCheckoutButton() {
   const collect = useRef<TokenizeJs | null>(null);
 
   const calculateGodaddyExpressTaxes = useCallback(
-    async (address: Address | null, currency: string, amount: string) => {
-      if (!address) return null;
+    async ({
+      address,
+      shippingAmount,
+      discountAdjustments,
+    }: {
+      address: Address | null;
+      shippingAmount: number;
+      discountAdjustments?: CalculatedAdjustments | null;
+    }) => {
+      if (!address || !session?.enableTaxCollection) return null;
 
       const taxesRequest = {
         destination: {
@@ -110,17 +118,17 @@ export function ExpressCheckoutButton() {
           {
             type: 'SHIPPING' as const,
             subtotalPrice: {
-              currencyCode: currency,
-              // Wallet APIs provide amounts in major units (e.g., "10.50"), convert to minor units for our API
-              value: convertMajorToMinorUnits(amount || '0', currency),
+              currencyCode: currencyCode,
+              value: shippingAmount,
             },
           },
         ],
+        discountAdjustments: discountAdjustments || undefined,
       };
 
       return await getTaxes.mutateAsync(taxesRequest);
     },
-    [getTaxes]
+    [getTaxes, session?.enableTaxCollection, currencyCode]
   );
 
   const getSortedShippingMethods = useCallback(
@@ -157,13 +165,13 @@ export function ExpressCheckoutButton() {
           detail: method.description
             ? `(${method.description}) ${shippingMethodPrice}`
             : `${shippingMethodPrice}`,
-          amount: formatCurrency({
+          amount: method.cost?.value || 0,
+          displayAmount: formatCurrency({
             amount: method.cost?.value || 0,
             currencyCode: method.cost?.currencyCode || currencyCode,
             inputInMinorUnits: true,
             returnRaw: true,
           }),
-          amountInMinorUnits: method.cost?.value || 0, // Keep original minor unit value
         };
       });
 
@@ -482,7 +490,7 @@ export function ExpressCheckoutButton() {
   const convertAddressToShippingLines = useCallback(
     (
       address: Address | null,
-      selectedMethod: { amountInMinorUnits: number; name: string }
+      selectedMethod: { amount: number; name: string }
     ) => {
       if (!address) return undefined;
 
@@ -490,7 +498,7 @@ export function ExpressCheckoutButton() {
         {
           subTotal: {
             currencyCode: currencyCode,
-            value: selectedMethod.amountInMinorUnits,
+            value: selectedMethod.amount,
           },
           name: selectedMethod.name,
         },
@@ -567,6 +575,39 @@ export function ExpressCheckoutButton() {
         setAppliedCouponCode(null);
         setCalculatedAdjustments(null);
 
+        // Initialize with current value before potential async update
+        let updatedTaxValue = godaddyTotals.taxes.value;
+
+        // Recalculate taxes on the full (non-discounted) order
+        if (shippingAddress) {
+          try {
+            const recalculatedTaxes = await calculateGodaddyExpressTaxes({
+              address: shippingAddress,
+              shippingAmount: godaddyTotals.shipping.value,
+            });
+
+            if (recalculatedTaxes?.totalTaxAmount?.value != null) {
+              updatedTaxValue = recalculatedTaxes.totalTaxAmount.value;
+              setCalculatedTaxes(recalculatedTaxes);
+              setGoDaddyTotals(value => ({
+                ...value,
+                taxes: {
+                  currencyCode: currencyCode,
+                  value: updatedTaxValue,
+                },
+              }));
+            }
+          } catch (_taxError) {
+            e.updateWith({
+              error: {
+                code: 'unknown',
+                message: 'Unable to calculate taxes. Please try again.',
+              },
+            });
+            return;
+          }
+        }
+
         // Add shipping and taxes if they exist
         const finalLineItems = [...baseLineItems];
 
@@ -582,11 +623,11 @@ export function ExpressCheckoutButton() {
           });
         }
 
-        if (godaddyTotals.taxes.value > 0) {
+        if (updatedTaxValue > 0) {
           finalLineItems.push({
             label: t.totals.estimatedTaxes,
             amount: formatCurrency({
-              amount: godaddyTotals.taxes.value,
+              amount: updatedTaxValue,
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -598,7 +639,7 @@ export function ExpressCheckoutButton() {
         const totalInMinorUnits =
           (totals?.subTotal?.value || 0) +
           godaddyTotals.shipping.value +
-          godaddyTotals.taxes.value;
+          updatedTaxValue;
 
         const totalAmount = formatCurrency({
           amount: totalInMinorUnits,
@@ -626,7 +667,7 @@ export function ExpressCheckoutButton() {
           let shippingLines: ReturnType<typeof convertAddressToShippingLines>;
           if (shippingAddress && shippingMethod) {
             const selectedMethodInfo = {
-              amountInMinorUnits: godaddyTotals.shipping.value,
+              amount: godaddyTotals.shipping.value,
               name: shippingMethod,
             };
             shippingLines = convertAddressToShippingLines(
@@ -647,7 +688,41 @@ export function ExpressCheckoutButton() {
 
             const adjustmentValue = adjustments.totalDiscountAmount.value;
 
-            // Build line items with shipping, taxes, and the new discount
+            // Initialize with current value before potential async update
+            let updatedTaxValue = godaddyTotals.taxes.value;
+
+            // Recalculate taxes on the discounted order
+            if (shippingAddress) {
+              try {
+                const recalculatedTaxes = await calculateGodaddyExpressTaxes({
+                  address: shippingAddress,
+                  shippingAmount: godaddyTotals.shipping.value,
+                  discountAdjustments: adjustments,
+                });
+
+                if (recalculatedTaxes?.totalTaxAmount?.value != null) {
+                  updatedTaxValue = recalculatedTaxes.totalTaxAmount.value;
+                  setCalculatedTaxes(recalculatedTaxes);
+                  setGoDaddyTotals(value => ({
+                    ...value,
+                    taxes: {
+                      currencyCode: currencyCode,
+                      value: updatedTaxValue,
+                    },
+                  }));
+                }
+              } catch (_taxError) {
+                e.updateWith({
+                  error: {
+                    code: 'unknown',
+                    message: 'Unable to calculate taxes. Please try again.',
+                  },
+                });
+                return;
+              }
+            }
+
+            // Build line items with shipping, recalculated taxes, and the new discount
             const finalLineItems = [...baseLineItems];
 
             if (godaddyTotals.shipping.value > 0) {
@@ -662,11 +737,11 @@ export function ExpressCheckoutButton() {
               });
             }
 
-            if (godaddyTotals.taxes.value > 0) {
+            if (updatedTaxValue > 0) {
               finalLineItems.push({
                 label: t.totals.estimatedTaxes,
                 amount: formatCurrency({
-                  amount: godaddyTotals.taxes.value,
+                  amount: updatedTaxValue,
                   currencyCode,
                   inputInMinorUnits: true,
                   returnRaw: true,
@@ -689,7 +764,7 @@ export function ExpressCheckoutButton() {
             const totalInMinorUnits =
               (totals?.subTotal?.value || 0) +
               godaddyTotals.shipping.value +
-              godaddyTotals.taxes.value -
+              updatedTaxValue -
               adjustmentValue;
 
             const totalAmount = formatCurrency({
@@ -956,7 +1031,7 @@ export function ExpressCheckoutButton() {
               shippingAddress,
               {
                 // Convert wallet API amount from major to minor units for API request
-                amountInMinorUnits: convertMajorToMinorUnits(
+                amount: convertMajorToMinorUnits(
                   shippingAmount || '0',
                   currencyCode
                 ),
@@ -993,11 +1068,16 @@ export function ExpressCheckoutButton() {
 
         if (session?.enableTaxCollection) {
           try {
-            const taxesResult = await calculateGodaddyExpressTaxes(
-              shippingAddress,
-              currencyCode,
-              shippingAmount || '0'
-            );
+            // Calculate taxes on shipping with optional discount adjustments
+            // Wallet API provides amounts in major units, convert to minor units
+            const taxesResult = await calculateGodaddyExpressTaxes({
+              address: shippingAddress,
+              shippingAmount: convertMajorToMinorUnits(
+                shippingAmount || '0',
+                currencyCode
+              ),
+              discountAdjustments: calculatedAdjustments,
+            });
 
             if (taxesResult?.totalTaxAmount?.value) {
               // Store the full tax calculation response
@@ -1110,13 +1190,13 @@ export function ExpressCheckoutButton() {
             ...value,
             shipping: {
               currencyCode: currencyCode,
-              value: methods?.[0]?.amountInMinorUnits || 0,
+              value: methods?.[0]?.amount || 0,
             },
           }));
 
           poyntLineItems.push({
             label: t.totals.shipping,
-            amount: methods?.[0]?.amount || '0',
+            amount: methods?.[0]?.displayAmount || '0',
             isPending: false,
           });
 
@@ -1130,7 +1210,7 @@ export function ExpressCheckoutButton() {
               const shippingLines = convertAddressToShippingLines(
                 e.shippingAddress,
                 {
-                  amountInMinorUnits: methods[0]?.amountInMinorUnits || 0,
+                  amount: methods[0]?.amount || 0,
                   name: methods[0]?.label || t.totals.shipping,
                 }
               );
@@ -1180,11 +1260,12 @@ export function ExpressCheckoutButton() {
         if (session?.enableTaxCollection) {
           try {
             // console.log("[poynt collect] getting taxes!");
-            const taxesResult = await calculateGodaddyExpressTaxes(
-              e.shippingAddress,
-              currencyCode,
-              methods?.[0]?.amount
-            );
+            // Calculate taxes on shipping with optional discount adjustments
+            const taxesResult = await calculateGodaddyExpressTaxes({
+              address: e.shippingAddress,
+              shippingAmount: methods?.[0]?.amount || 0,
+              discountAdjustments: calculatedAdjustments,
+            });
 
             // console.log("[poynt collect] Taxes result", { taxesResult });
 
@@ -1259,7 +1340,12 @@ export function ExpressCheckoutButton() {
               returnRaw: true,
             }),
           },
-          shippingMethods: methods as ShippingMethod[],
+          shippingMethods: methods.map(method => ({
+            id: method.id || '',
+            label: method.label,
+            detail: method.detail,
+            amount: method.displayAmount,
+          })),
           lineItems: poyntLineItems,
         };
 
