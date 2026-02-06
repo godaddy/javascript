@@ -578,12 +578,14 @@ export function ExpressCheckoutButton() {
         // Initialize with current value before potential async update
         let updatedTaxValue = godaddyTotals.taxes.value;
 
-        // Recalculate taxes on the full (non-discounted) order
+        // Recalculate taxes with zero discounts to override the order's stale discount
+        // Pass empty object {} to trigger adjustment override logic (returns 0 for all lines)
         if (shippingAddress) {
           try {
             const recalculatedTaxes = await calculateGodaddyExpressTaxes({
               address: shippingAddress,
               shippingAmount: godaddyTotals.shipping.value,
+              discountAdjustments: {},
             });
 
             if (recalculatedTaxes?.totalTaxAmount?.value != null) {
@@ -1024,6 +1026,9 @@ export function ExpressCheckoutButton() {
           },
         }));
 
+        // Initialize with current value before potential async update
+        let updatedAdjustments = calculatedAdjustments;
+
         // If there's an applied coupon, recalculate price adjustments with the new shipping method
         if (appliedCouponCode) {
           try {
@@ -1045,8 +1050,10 @@ export function ExpressCheckoutButton() {
             });
 
             if (newAdjustments?.totalDiscountAmount) {
+              updatedAdjustments = newAdjustments;
               setCalculatedAdjustments(newAdjustments);
             } else {
+              updatedAdjustments = null;
               setCalculatedAdjustments(null);
               setAppliedCouponCode('');
             }
@@ -1076,7 +1083,7 @@ export function ExpressCheckoutButton() {
                 shippingAmount || '0',
                 currencyCode
               ),
-              discountAdjustments: calculatedAdjustments,
+              discountAdjustments: updatedAdjustments,
             });
 
             if (taxesResult?.totalTaxAmount?.value) {
@@ -1118,11 +1125,11 @@ export function ExpressCheckoutButton() {
         }
 
         // Add discount line if a coupon is applied
-        if (calculatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
+        if (updatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
           poyntLineItems.push({
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+              amount: -(updatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1151,12 +1158,12 @@ export function ExpressCheckoutButton() {
         };
 
         // Add coupon code to the request if one is applied
-        if (appliedCouponCode && calculatedAdjustments?.totalDiscountAmount) {
+        if (appliedCouponCode && updatedAdjustments?.totalDiscountAmount) {
           updatedOrder.couponCode = {
             code: appliedCouponCode,
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+              amount: -(updatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1171,6 +1178,8 @@ export function ExpressCheckoutButton() {
     collect.current.on('shipping_address_change', async e => {
       let updatedOrder: PoyntExpressRequest = poyntExpressRequest;
       const poyntLineItems = [...poyntExpressRequest.lineItems];
+      // Initialize with current value before potential async update
+      let updatedAdjustments = calculatedAdjustments;
 
       // Update the shipping address in the draft order
       if (e.shippingAddress) {
@@ -1221,8 +1230,10 @@ export function ExpressCheckoutButton() {
               });
 
               if (newAdjustments?.totalDiscountAmount) {
+                updatedAdjustments = newAdjustments;
                 setCalculatedAdjustments(newAdjustments);
               } else {
+                updatedAdjustments = null;
                 setCalculatedAdjustments(null);
                 setAppliedCouponCode('');
               }
@@ -1264,7 +1275,7 @@ export function ExpressCheckoutButton() {
             const taxesResult = await calculateGodaddyExpressTaxes({
               address: e.shippingAddress,
               shippingAmount: methods?.[0]?.amount || 0,
-              discountAdjustments: calculatedAdjustments,
+              discountAdjustments: updatedAdjustments,
             });
 
             // console.log("[poynt collect] Taxes result", { taxesResult });
@@ -1311,11 +1322,11 @@ export function ExpressCheckoutButton() {
         }
 
         // Add discount line if a coupon is applied
-        if (calculatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
+        if (updatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
           poyntLineItems.push({
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+              amount: -(updatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1350,12 +1361,12 @@ export function ExpressCheckoutButton() {
         };
 
         // Add coupon code to the request if one is applied
-        if (appliedCouponCode && calculatedAdjustments?.totalDiscountAmount) {
+        if (appliedCouponCode && updatedAdjustments?.totalDiscountAmount) {
           updatedOrder.couponCode = {
             code: appliedCouponCode,
             label: appliedCouponCode || 'Discount',
             amount: formatCurrency({
-              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+              amount: -(updatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
