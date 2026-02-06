@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.22
+
+### Patch Changes
+
+- 79d3dab: Reset express wallet taxes and adjustments on close
+
 ## 1.0.21
 
 ### Patch Changes
