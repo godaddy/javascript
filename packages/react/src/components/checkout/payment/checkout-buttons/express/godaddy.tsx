@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -294,76 +295,108 @@ export function ExpressCheckoutButton() {
     'idle' | 'fetching' | 'done'
   >('idle');
 
-  useEffect(() => {
-    // Skip if we've already loaded this once or have an applied code
-    if (couponFetchStatus !== 'idle' || appliedCouponCode !== null) return;
+  // Extract discount codes from draft order for comparison
+  const draftOrderDiscountCodes = useMemo(() => {
+    const allCodes = new Set<string>();
 
-    // Mark that we've started the fetch process
-    setCouponFetchStatus('fetching');
-
-    const fetchPriceAdjustments = async () => {
-      const allCodes = new Set<string>();
-
-      // Add order-level discount codes
-      if (draftOrder?.discounts) {
-        for (const discount of draftOrder.discounts) {
-          if (discount.code) {
-            allCodes.add(discount.code);
-          }
+    // Add order-level discount codes
+    if (draftOrder?.discounts) {
+      for (const discount of draftOrder.discounts) {
+        if (discount.code) {
+          allCodes.add(discount.code);
         }
       }
+    }
 
-      // Add line item-level discount codes
-      if (draftOrder?.lineItems) {
-        for (const lineItem of draftOrder.lineItems) {
-          if (lineItem.discounts) {
-            for (const discount of lineItem.discounts) {
-              if (discount.code) {
-                allCodes.add(discount.code);
-              }
+    // Add line item-level discount codes
+    if (draftOrder?.lineItems) {
+      for (const lineItem of draftOrder.lineItems) {
+        if (lineItem.discounts) {
+          for (const discount of lineItem.discounts) {
+            if (discount.code) {
+              allCodes.add(discount.code);
             }
           }
         }
       }
+    }
 
-      const discountCodes = Array.from(allCodes);
+    return Array.from(allCodes).sort().join(','); // Stable string for comparison
+  }, [draftOrder]);
 
-      if (discountCodes?.length && discountCodes?.[0]) {
-        const result = await getPriceAdjustments.mutateAsync({
-          discountCodes: [discountCodes?.[0]],
-        });
+  useEffect(() => {
+    if (!draftOrder) return;
+    // Prevent concurrent fetches
+    if (couponFetchStatus === 'fetching') return;
 
-        if (result) {
-          setAppliedCouponCode(discountCodes?.[0]);
-          setCalculatedAdjustments(result);
+    const fetchPriceAdjustments = async () => {
+      setCouponFetchStatus('fetching');
+
+      try {
+        const allCodes = new Set<string>();
+
+        // Add order-level discount codes
+        if (draftOrder?.discounts) {
+          for (const discount of draftOrder.discounts) {
+            if (discount.code) {
+              allCodes.add(discount.code);
+            }
+          }
         }
+
+        // Add line item-level discount codes
+        if (draftOrder?.lineItems) {
+          for (const lineItem of draftOrder.lineItems) {
+            if (lineItem.discounts) {
+              for (const discount of lineItem.discounts) {
+                if (discount.code) {
+                  allCodes.add(discount.code);
+                }
+              }
+            }
+          }
+        }
+
+        const discountCodes = Array.from(allCodes);
+
+        // Update state based on what's in the draft order
+        if (discountCodes?.length && discountCodes?.[0]) {
+          const result = await getPriceAdjustments.mutateAsync({
+            discountCodes: [discountCodes?.[0]],
+          });
+
+          if (result) {
+            setAppliedCouponCode(discountCodes?.[0]);
+            setCalculatedAdjustments(result);
+          }
+        } else {
+          // No coupons in draft order - clear state
+          setAppliedCouponCode(null);
+          setCalculatedAdjustments(null);
+        }
+      } finally {
+        setCouponFetchStatus('done');
       }
-      // Mark the fetch as complete regardless of whether there were discounts
-      setCouponFetchStatus('done');
     };
 
-    if (draftOrder) {
-      fetchPriceAdjustments();
-    }
-  }, [draftOrder, getPriceAdjustments, appliedCouponCode, couponFetchStatus]);
+    fetchPriceAdjustments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftOrder, draftOrderDiscountCodes]);
 
   // Initialize the TokenizeJs instance when the component mounts
   // But only after price adjustments have been fetched
   useLayoutEffect(() => {
-    if (
-      !collect.current &&
+    const shouldInitialize =
       godaddyPaymentsConfig &&
       (godaddyPaymentsConfig?.businessId || session?.businessId) &&
       isPoyntLoaded &&
       isCollectLoading &&
-      !hasMounted.current &&
       draftOrder &&
-      couponFetchStatus === 'done'
-    ) {
-      // console.log("[poynt collect] Initializing TokenizeJs", {
-      // 	appliedCouponCode,
-      // 	priceAdjustment,
-      // });
+      couponFetchStatus === 'done';
+
+    if (!shouldInitialize) return;
+
+    if (!collect.current && !hasMounted.current) {
       // Create coupon config if there's a price adjustment from existing coupon
       let couponConfig:
         | { code: string; label: string; amount: string }
@@ -381,9 +414,6 @@ export function ExpressCheckoutButton() {
         };
       }
 
-      // console.log("[poynt collect] TokenizeJsing initialized", {
-      // 	couponConfig,
-      // });
       collect.current = new (window as any).TokenizeJs(
         {
           businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
@@ -410,6 +440,7 @@ export function ExpressCheckoutButton() {
     session?.storeId,
     session?.channelId,
     session?.enablePromotionCodes,
+    session?.enableShippingAddressCollection,
     session?.storeName,
     isPoyntLoaded,
     isCollectLoading,
@@ -418,6 +449,7 @@ export function ExpressCheckoutButton() {
     draftOrder,
     couponFetchStatus,
     t,
+    handleExpressPayClick,
   ]);
 
   // Reference to track if mounting has already occurred
@@ -515,17 +547,16 @@ export function ExpressCheckoutButton() {
     collect.current.on('close_wallet', () => {
       // console.log("[poynt collect] Wallet closed");
 
-      // Reset the state when wallet is closed to ensure fresh state when reopening
-      // Reset coupon fetch status to trigger a re-fetch on next open
+      // Reset wallet-specific state when closed
+      // Reset coupon fetch status to trigger re-sync with draft order on next open
+      // This ensures any coupon changes made inside the wallet (but not committed) are discarded
       setCouponFetchStatus('idle');
-      setAppliedCouponCode(null);
-      setCalculatedAdjustments(null);
       setCalculatedTaxes(null);
 
       // Clear any error messages
       setError('');
 
-      // Reset shipping-related state
+      // Reset shipping-related state (wallet-specific)
       setShippingAddress(null);
       setShippingMethods(null);
       setShippingMethod(null);
