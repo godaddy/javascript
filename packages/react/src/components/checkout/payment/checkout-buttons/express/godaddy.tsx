@@ -95,6 +95,7 @@ export function ExpressCheckoutButton() {
 
   const confirmCheckout = useConfirmCheckout();
   const collect = useRef<TokenizeJs | null>(null);
+  const hasMounted = useRef(false);
 
   const calculateGodaddyExpressTaxes = useCallback(
     async ({
@@ -451,9 +452,6 @@ export function ExpressCheckoutButton() {
     t,
     handleExpressPayClick,
   ]);
-
-  // Reference to track if mounting has already occurred
-  const hasMounted = useRef(false);
 
   // Mount the TokenizeJs instance
   useEffect(() => {
