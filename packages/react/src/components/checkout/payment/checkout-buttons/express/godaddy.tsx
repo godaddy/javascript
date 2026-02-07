@@ -97,6 +97,10 @@ export function ExpressCheckoutButton() {
   const collect = useRef<TokenizeJs | null>(null);
   const hasMounted = useRef(false);
 
+  // Use refs to store current coupon state to avoid stale closures in event handlers
+  const appliedCouponCodeRef = useRef<string | null>(null);
+  const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
+
   const calculateGodaddyExpressTaxes = useCallback(
     async ({
       address,
@@ -184,6 +188,10 @@ export function ExpressCheckoutButton() {
 
   const handleExpressPayClick = useCallback(
     async ({ source }: { source?: 'apple_pay' | 'google_pay' | 'paze' }) => {
+      // Read from refs to get current values (avoid stale closure)
+      const currentCouponCode = appliedCouponCodeRef.current;
+      const currentAdjustments = calculatedAdjustmentsRef.current;
+
       // Track the click event for the specific wallet
       let eventId: TrackingEventId;
 
@@ -191,7 +199,7 @@ export function ExpressCheckoutButton() {
       let expressRequest = { ...poyntExpressRequest };
 
       // If there's an applied coupon code and price adjustment, add it to the request
-      if (appliedCouponCode && calculatedAdjustments?.totalDiscountAmount) {
+      if (currentCouponCode && currentAdjustments?.totalDiscountAmount) {
         // console.log("[poynt collect] Adding discount to express request", {
         // 	appliedCouponCode,
         // 	priceAdjustment,
@@ -199,11 +207,11 @@ export function ExpressCheckoutButton() {
         // Create a new array of lineItems that includes the discount
         const updatedLineItems = [...expressRequest.lineItems];
 
-        // Always add the discount line item, using state variables directly
+        // Always add the discount line item, using current values from refs
         updatedLineItems.push({
           label: t.totals.discount,
           amount: formatCurrency({
-            amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+            amount: -(currentAdjustments?.totalDiscountAmount?.value || 0),
             currencyCode,
             inputInMinorUnits: true,
             returnRaw: true,
@@ -214,7 +222,7 @@ export function ExpressCheckoutButton() {
         // Calculate the correct total in minor units
         const totalInMinorUnits =
           (totals?.subTotal?.value || 0) -
-          (calculatedAdjustments?.totalDiscountAmount?.value || 0);
+          (currentAdjustments?.totalDiscountAmount?.value || 0);
 
         const totalAmount = formatCurrency({
           amount: totalInMinorUnits,
@@ -232,10 +240,10 @@ export function ExpressCheckoutButton() {
             isPending: false,
           },
           couponCode: {
-            code: appliedCouponCode,
+            code: currentCouponCode,
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+              amount: -(currentAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -284,10 +292,11 @@ export function ExpressCheckoutButton() {
     },
     [
       poyntExpressRequest,
-      appliedCouponCode,
-      calculatedAdjustments,
       t,
       setCheckoutErrors,
+      currencyCode,
+      totals,
+      formatCurrency,
     ]
   );
 
@@ -369,11 +378,17 @@ export function ExpressCheckoutButton() {
           if (result) {
             setAppliedCouponCode(discountCodes?.[0]);
             setCalculatedAdjustments(result);
+            // Update refs to avoid stale closures
+            appliedCouponCodeRef.current = discountCodes?.[0];
+            calculatedAdjustmentsRef.current = result;
           }
         } else {
           // No coupons in draft order - clear state
           setAppliedCouponCode(null);
           setCalculatedAdjustments(null);
+          // Update refs to avoid stale closures
+          appliedCouponCodeRef.current = null;
+          calculatedAdjustmentsRef.current = null;
         }
       } finally {
         setCouponFetchStatus('done');
