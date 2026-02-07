@@ -15,19 +15,25 @@ export function useGetTaxes() {
     mutationFn: async ({
       destination,
       lines,
+      discountAdjustments,
     }: {
       destination?: GetCheckoutSessionTaxesInput['destination'];
       lines?: GetCheckoutSessionTaxesInput['lines'];
+      discountAdjustments?: GetCheckoutSessionTaxesInput['discountAdjustments'];
     }) => {
       if (!session) return;
 
       const data = jwt
         ? await getDraftOrderTaxes(
             { accessToken: jwt },
-            { destination, lines },
+            { destination, lines, discountAdjustments },
             apiHost
           )
-        : await getDraftOrderTaxes(session, { destination, lines }, apiHost);
+        : await getDraftOrderTaxes(
+            session,
+            { destination, lines, discountAdjustments },
+            apiHost
+          );
 
       return data.checkoutSession?.draftOrder?.calculatedTaxes;
     },

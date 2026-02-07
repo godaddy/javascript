@@ -4400,6 +4400,13 @@ const introspection = {
                 },
               },
               {
+                name: 'discountAdjustments',
+                type: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'CalculatedAdjustmentsInput',
+                },
+              },
+              {
                 name: 'lines',
                 type: {
                   kind: 'LIST',
@@ -9920,7 +9927,7 @@ const introspection = {
             name: 'unitPrice',
             type: {
               kind: 'INPUT_OBJECT',
-              name: 'MoneyInput',
+              name: 'UpdateMoneyInput',
             },
           },
         ],
