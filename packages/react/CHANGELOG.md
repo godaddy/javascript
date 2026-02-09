@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.23
+
+### Patch Changes
+
+- 8e31daf: Recalculate taxes on express coupon code and shipping changes
+
 ## 1.0.22
 
 ### Patch Changes
