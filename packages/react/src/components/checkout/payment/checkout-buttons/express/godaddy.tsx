@@ -62,13 +62,8 @@ export function ExpressCheckoutButton() {
     undefined
   );
   const [error, setError] = useState('');
-  const [calculatedAdjustments, setCalculatedAdjustments] =
-    useState<CalculatedAdjustments | null>(null);
   const [calculatedTaxes, setCalculatedTaxes] =
     useState<CalculatedTaxes | null>(null);
-  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(
-    null
-  );
   const [shippingAddress, setShippingAddress] = useState<Address | null>(null);
   const [shippingMethods, setShippingMethods] =
     useState<ShippingMethods | null>(null);
@@ -376,17 +371,12 @@ export function ExpressCheckoutButton() {
           });
 
           if (result) {
-            setAppliedCouponCode(discountCodes?.[0]);
-            setCalculatedAdjustments(result);
-            // Update refs to avoid stale closures
+            // Update refs with current coupon state
             appliedCouponCodeRef.current = discountCodes?.[0];
             calculatedAdjustmentsRef.current = result;
           }
         } else {
-          // No coupons in draft order - clear state
-          setAppliedCouponCode(null);
-          setCalculatedAdjustments(null);
-          // Update refs to avoid stale closures
+          // No coupons in draft order - clear refs
           appliedCouponCodeRef.current = null;
           calculatedAdjustmentsRef.current = null;
         }
@@ -414,15 +404,19 @@ export function ExpressCheckoutButton() {
 
     if (!collect.current && !hasMounted.current) {
       // Create coupon config if there's a price adjustment from existing coupon
+      // Read from refs to get current values
+      const currentAdjustments = calculatedAdjustmentsRef.current;
+      const currentCouponCode = appliedCouponCodeRef.current;
+
       let couponConfig:
         | { code: string; label: string; amount: string }
         | undefined;
-      if (calculatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
+      if (currentAdjustments?.totalDiscountAmount && currentCouponCode) {
         couponConfig = {
-          code: appliedCouponCode,
+          code: currentCouponCode,
           label: t.totals.discount,
           amount: formatCurrency({
-            amount: calculatedAdjustments?.totalDiscountAmount?.value || 0,
+            amount: currentAdjustments?.totalDiscountAmount?.value || 0,
             currencyCode,
             inputInMinorUnits: true,
             returnRaw: true,
@@ -460,12 +454,11 @@ export function ExpressCheckoutButton() {
     session?.storeName,
     isPoyntLoaded,
     isCollectLoading,
-    calculatedAdjustments,
-    appliedCouponCode,
     draftOrder,
     couponFetchStatus,
     t,
     handleExpressPayClick,
+    formatCurrency,
   ]);
 
   // Mount the TokenizeJs instance
@@ -615,9 +608,9 @@ export function ExpressCheckoutButton() {
       const baseLineItems = [...poyntExpressRequest.lineItems];
 
       if (!couponCode) {
-        // User removed the coupon code
-        setAppliedCouponCode(null);
-        setCalculatedAdjustments(null);
+        // User removed the coupon code - clear refs
+        appliedCouponCodeRef.current = null;
+        calculatedAdjustmentsRef.current = null;
 
         // Initialize with current value before potential async update
         let updatedTaxValue = godaddyTotals.taxes.value;
@@ -729,8 +722,9 @@ export function ExpressCheckoutButton() {
           });
 
           if (adjustments?.totalDiscountAmount?.value) {
-            setAppliedCouponCode(couponCode);
-            setCalculatedAdjustments(adjustments);
+            // Update refs with applied coupon
+            appliedCouponCodeRef.current = couponCode;
+            calculatedAdjustmentsRef.current = adjustments;
 
             const adjustmentValue = adjustments.totalDiscountAmount.value;
 
@@ -886,6 +880,9 @@ export function ExpressCheckoutButton() {
     });
 
     collect.current.on('payment_authorized', async event => {
+      // Read from refs to avoid stale closures
+      const currentAdjustments = calculatedAdjustmentsRef.current;
+
       const nonce = event?.nonce;
 
       const selectedShippingMethod = shippingMethods?.find(
@@ -905,7 +902,9 @@ export function ExpressCheckoutButton() {
               }
             : {}),
           ...(calculatedTaxes ? { calculatedTaxes } : {}),
-          ...(calculatedAdjustments ? { calculatedAdjustments } : {}),
+          ...(currentAdjustments
+            ? { calculatedAdjustments: currentAdjustments }
+            : {}),
           ...(event?.billingAddress
             ? {
                 billing: {
@@ -1071,10 +1070,12 @@ export function ExpressCheckoutButton() {
         }));
 
         // Initialize with current value before potential async update
-        let updatedAdjustments = calculatedAdjustments;
+        // Read from refs to avoid stale closures
+        let updatedAdjustments = calculatedAdjustmentsRef.current;
+        const currentCouponCode = appliedCouponCodeRef.current;
 
         // If there's an applied coupon, recalculate price adjustments with the new shipping method
-        if (appliedCouponCode) {
+        if (currentCouponCode) {
           try {
             const shippingLines = convertAddressToShippingLines(
               shippingAddress,
@@ -1089,17 +1090,17 @@ export function ExpressCheckoutButton() {
             );
 
             const newAdjustments = await getPriceAdjustments.mutateAsync({
-              discountCodes: [appliedCouponCode],
+              discountCodes: [currentCouponCode],
               shippingLines,
             });
 
             if (newAdjustments?.totalDiscountAmount) {
               updatedAdjustments = newAdjustments;
-              setCalculatedAdjustments(newAdjustments);
+              calculatedAdjustmentsRef.current = newAdjustments;
             } else {
               updatedAdjustments = null;
-              setCalculatedAdjustments(null);
-              setAppliedCouponCode('');
+              calculatedAdjustmentsRef.current = null;
+              appliedCouponCodeRef.current = '';
             }
           } catch (err) {
             // Track error with price adjustment calculation for shipping method
@@ -1109,7 +1110,7 @@ export function ExpressCheckoutButton() {
               properties: {
                 success: false,
                 errorType: 'shipping_method_price_adjustment_error',
-                couponCode: appliedCouponCode,
+                couponCode: currentCouponCode,
                 errorCodes: err instanceof Error ? err.name : 'unknown',
                 shippingMethod: e.shippingMethod?.label || '',
               },
@@ -1169,7 +1170,7 @@ export function ExpressCheckoutButton() {
         }
 
         // Add discount line if a coupon is applied
-        if (updatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
+        if (updatedAdjustments?.totalDiscountAmount && currentCouponCode) {
           poyntLineItems.push({
             label: t.totals.discount,
             amount: formatCurrency({
@@ -1202,9 +1203,9 @@ export function ExpressCheckoutButton() {
         };
 
         // Add coupon code to the request if one is applied
-        if (appliedCouponCode && updatedAdjustments?.totalDiscountAmount) {
+        if (currentCouponCode && updatedAdjustments?.totalDiscountAmount) {
           updatedOrder.couponCode = {
-            code: appliedCouponCode,
+            code: currentCouponCode,
             label: t.totals.discount,
             amount: formatCurrency({
               amount: -(updatedAdjustments?.totalDiscountAmount?.value || 0),
@@ -1223,7 +1224,9 @@ export function ExpressCheckoutButton() {
       let updatedOrder: PoyntExpressRequest = poyntExpressRequest;
       const poyntLineItems = [...poyntExpressRequest.lineItems];
       // Initialize with current value before potential async update
-      let updatedAdjustments = calculatedAdjustments;
+      // Read from refs to avoid stale closures
+      let updatedAdjustments = calculatedAdjustmentsRef.current;
+      const currentCouponCode = appliedCouponCodeRef.current;
 
       // Update the shipping address in the draft order
       if (e.shippingAddress) {
@@ -1258,7 +1261,7 @@ export function ExpressCheckoutButton() {
           // });
 
           // If there's an applied coupon, recalculate price adjustments with the new shipping
-          if (appliedCouponCode) {
+          if (currentCouponCode) {
             try {
               const shippingLines = convertAddressToShippingLines(
                 e.shippingAddress,
@@ -1269,17 +1272,17 @@ export function ExpressCheckoutButton() {
               );
 
               const newAdjustments = await getPriceAdjustments.mutateAsync({
-                discountCodes: [appliedCouponCode],
+                discountCodes: [currentCouponCode],
                 shippingLines,
               });
 
               if (newAdjustments?.totalDiscountAmount) {
                 updatedAdjustments = newAdjustments;
-                setCalculatedAdjustments(newAdjustments);
+                calculatedAdjustmentsRef.current = newAdjustments;
               } else {
                 updatedAdjustments = null;
-                setCalculatedAdjustments(null);
-                setAppliedCouponCode('');
+                calculatedAdjustmentsRef.current = null;
+                appliedCouponCodeRef.current = '';
               }
             } catch (err) {
               // Track error with price adjustment calculation for shipping address
@@ -1289,7 +1292,7 @@ export function ExpressCheckoutButton() {
                 properties: {
                   success: false,
                   errorType: 'shipping_price_adjustment_error',
-                  couponCode: appliedCouponCode,
+                  couponCode: currentCouponCode,
                   errorCodes: err instanceof Error ? err.name : 'unknown',
                   shippingMethod: methods[0]?.label || '',
                 },
@@ -1366,7 +1369,7 @@ export function ExpressCheckoutButton() {
         }
 
         // Add discount line if a coupon is applied
-        if (updatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
+        if (updatedAdjustments?.totalDiscountAmount && currentCouponCode) {
           poyntLineItems.push({
             label: t.totals.discount,
             amount: formatCurrency({
@@ -1405,10 +1408,10 @@ export function ExpressCheckoutButton() {
         };
 
         // Add coupon code to the request if one is applied
-        if (appliedCouponCode && updatedAdjustments?.totalDiscountAmount) {
+        if (currentCouponCode && updatedAdjustments?.totalDiscountAmount) {
           updatedOrder.couponCode = {
-            code: appliedCouponCode,
-            label: appliedCouponCode || 'Discount',
+            code: currentCouponCode,
+            label: currentCouponCode || 'Discount',
             amount: formatCurrency({
               amount: -(updatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
@@ -1454,8 +1457,6 @@ export function ExpressCheckoutButton() {
     getSortedShippingMethods,
     convertAddressToShippingLines,
     getPriceAdjustments.mutateAsync,
-    calculatedAdjustments,
-    appliedCouponCode,
     t,
     form,
     draftOrder,
