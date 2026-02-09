@@ -331,7 +331,7 @@ export function ExpressCheckoutButton() {
 
   useEffect(() => {
     if (!draftOrder) return;
-    // Prevent concurrent fetches
+    // Prevent concurrent fetches (but allow new fetches when draft order changes)
     if (couponFetchStatus === 'fetching') return;
 
     const fetchPriceAdjustments = async () => {
@@ -364,7 +364,7 @@ export function ExpressCheckoutButton() {
 
         const discountCodes = Array.from(allCodes);
 
-        // Update state based on what's in the draft order
+        // Update refs based on what's in the draft order
         if (discountCodes?.length && discountCodes?.[0]) {
           const result = await getPriceAdjustments.mutateAsync({
             discountCodes: [discountCodes?.[0]],
@@ -558,6 +558,10 @@ export function ExpressCheckoutButton() {
       // This ensures any coupon changes made inside the wallet (but not committed) are discarded
       setCouponFetchStatus('idle');
       setCalculatedTaxes(null);
+
+      // Clear coupon refs - will be re-synced with draft order on next fetch
+      appliedCouponCodeRef.current = null;
+      calculatedAdjustmentsRef.current = null;
 
       // Clear any error messages
       setError('');
