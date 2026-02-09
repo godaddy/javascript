@@ -488,13 +488,13 @@ export const DraftOrderSkusQuery = graphql(`
 `);
 
 export const DraftOrderTaxesQuery = graphql(`
-    query Taxes($destination: TaxDestinationAddressInput, $lines: [TaxLineInput!]) {
+    query Taxes($destination: TaxDestinationAddressInput, $lines: [TaxLineInput!], $discountAdjustments: CalculatedAdjustmentsInput) {
         checkoutSession {
             id
             storeId
             draftOrder {
                 id
-                calculatedTaxes(destination: $destination, lines: $lines) {
+                calculatedTaxes(destination: $destination, lines: $lines, discountAdjustments: $discountAdjustments) {
                     totalTaxAmount {
                         currencyCode
                         value

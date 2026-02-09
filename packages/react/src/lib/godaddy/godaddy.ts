@@ -295,6 +295,7 @@ export function getDraftOrderTaxes(
   params: {
     destination?: GetCheckoutSessionTaxesInput['destination'];
     lines?: GetCheckoutSessionTaxesInput['lines'];
+    discountAdjustments?: GetCheckoutSessionTaxesInput['discountAdjustments'];
   },
   apiHost?: string
 ): Promise<ResultOf<typeof DraftOrderTaxesQuery>>;
@@ -303,6 +304,7 @@ export function getDraftOrderTaxes(
   params: {
     destination?: GetCheckoutSessionTaxesInput['destination'];
     lines?: GetCheckoutSessionTaxesInput['lines'];
+    discountAdjustments?: GetCheckoutSessionTaxesInput['discountAdjustments'];
   },
   apiHost?: string
 ): Promise<ResultOf<typeof DraftOrderTaxesQuery>>;
@@ -314,9 +316,11 @@ export function getDraftOrderTaxes(
   {
     destination,
     lines,
+    discountAdjustments,
   }: {
     destination?: GetCheckoutSessionTaxesInput['destination'];
     lines?: GetCheckoutSessionTaxesInput['lines'];
+    discountAdjustments?: GetCheckoutSessionTaxesInput['discountAdjustments'];
   },
   apiHost?: string
 ) {
@@ -329,7 +333,7 @@ export function getDraftOrderTaxes(
     return graphqlRequestWithErrors<ResultOf<typeof DraftOrderTaxesQuery>>(
       GODADDY_HOST,
       DraftOrderTaxesQuery,
-      { destination, lines },
+      { destination, lines, discountAdjustments },
       {
         Authorization: `Bearer ${sessionOrAuth.accessToken}`,
       }
@@ -344,7 +348,7 @@ export function getDraftOrderTaxes(
   return graphqlRequestWithErrors<ResultOf<typeof DraftOrderTaxesQuery>>(
     GODADDY_HOST,
     DraftOrderTaxesQuery,
-    { destination, lines },
+    { destination, lines, discountAdjustments },
     {
       'x-session-token': `${session.token}`,
       'x-session-id': session.id,

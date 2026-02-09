@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -61,13 +62,8 @@ export function ExpressCheckoutButton() {
     undefined
   );
   const [error, setError] = useState('');
-  const [calculatedAdjustments, setCalculatedAdjustments] =
-    useState<CalculatedAdjustments | null>(null);
   const [calculatedTaxes, setCalculatedTaxes] =
     useState<CalculatedTaxes | null>(null);
-  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(
-    null
-  );
   const [shippingAddress, setShippingAddress] = useState<Address | null>(null);
   const [shippingMethods, setShippingMethods] =
     useState<ShippingMethods | null>(null);
@@ -94,10 +90,23 @@ export function ExpressCheckoutButton() {
 
   const confirmCheckout = useConfirmCheckout();
   const collect = useRef<TokenizeJs | null>(null);
+  const hasMounted = useRef(false);
+
+  // Use refs to store current coupon state to avoid stale closures in event handlers
+  const appliedCouponCodeRef = useRef<string | null>(null);
+  const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
 
   const calculateGodaddyExpressTaxes = useCallback(
-    async (address: Address | null, currency: string, amount: string) => {
-      if (!address) return null;
+    async ({
+      address,
+      shippingAmount,
+      discountAdjustments,
+    }: {
+      address: Address | null;
+      shippingAmount: number;
+      discountAdjustments?: CalculatedAdjustments | null;
+    }) => {
+      if (!address || !session?.enableTaxCollection) return null;
 
       const taxesRequest = {
         destination: {
@@ -110,17 +119,17 @@ export function ExpressCheckoutButton() {
           {
             type: 'SHIPPING' as const,
             subtotalPrice: {
-              currencyCode: currency,
-              // Wallet APIs provide amounts in major units (e.g., "10.50"), convert to minor units for our API
-              value: convertMajorToMinorUnits(amount || '0', currency),
+              currencyCode: currencyCode,
+              value: shippingAmount,
             },
           },
         ],
+        discountAdjustments: discountAdjustments || undefined,
       };
 
       return await getTaxes.mutateAsync(taxesRequest);
     },
-    [getTaxes]
+    [getTaxes, session?.enableTaxCollection, currencyCode]
   );
 
   const getSortedShippingMethods = useCallback(
@@ -157,13 +166,13 @@ export function ExpressCheckoutButton() {
           detail: method.description
             ? `(${method.description}) ${shippingMethodPrice}`
             : `${shippingMethodPrice}`,
-          amount: formatCurrency({
+          amount: method.cost?.value || 0,
+          displayAmount: formatCurrency({
             amount: method.cost?.value || 0,
             currencyCode: method.cost?.currencyCode || currencyCode,
             inputInMinorUnits: true,
             returnRaw: true,
           }),
-          amountInMinorUnits: method.cost?.value || 0, // Keep original minor unit value
         };
       });
 
@@ -174,6 +183,10 @@ export function ExpressCheckoutButton() {
 
   const handleExpressPayClick = useCallback(
     async ({ source }: { source?: 'apple_pay' | 'google_pay' | 'paze' }) => {
+      // Read from refs to get current values (avoid stale closure)
+      const currentCouponCode = appliedCouponCodeRef.current;
+      const currentAdjustments = calculatedAdjustmentsRef.current;
+
       // Track the click event for the specific wallet
       let eventId: TrackingEventId;
 
@@ -181,7 +194,7 @@ export function ExpressCheckoutButton() {
       let expressRequest = { ...poyntExpressRequest };
 
       // If there's an applied coupon code and price adjustment, add it to the request
-      if (appliedCouponCode && calculatedAdjustments?.totalDiscountAmount) {
+      if (currentCouponCode && currentAdjustments?.totalDiscountAmount) {
         // console.log("[poynt collect] Adding discount to express request", {
         // 	appliedCouponCode,
         // 	priceAdjustment,
@@ -189,11 +202,11 @@ export function ExpressCheckoutButton() {
         // Create a new array of lineItems that includes the discount
         const updatedLineItems = [...expressRequest.lineItems];
 
-        // Always add the discount line item, using state variables directly
+        // Always add the discount line item, using current values from refs
         updatedLineItems.push({
           label: t.totals.discount,
           amount: formatCurrency({
-            amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+            amount: -(currentAdjustments?.totalDiscountAmount?.value || 0),
             currencyCode,
             inputInMinorUnits: true,
             returnRaw: true,
@@ -204,7 +217,7 @@ export function ExpressCheckoutButton() {
         // Calculate the correct total in minor units
         const totalInMinorUnits =
           (totals?.subTotal?.value || 0) -
-          (calculatedAdjustments?.totalDiscountAmount?.value || 0);
+          (currentAdjustments?.totalDiscountAmount?.value || 0);
 
         const totalAmount = formatCurrency({
           amount: totalInMinorUnits,
@@ -222,10 +235,10 @@ export function ExpressCheckoutButton() {
             isPending: false,
           },
           couponCode: {
-            code: appliedCouponCode,
+            code: currentCouponCode,
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+              amount: -(currentAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -274,10 +287,11 @@ export function ExpressCheckoutButton() {
     },
     [
       poyntExpressRequest,
-      appliedCouponCode,
-      calculatedAdjustments,
       t,
       setCheckoutErrors,
+      currencyCode,
+      totals,
+      formatCurrency,
     ]
   );
 
@@ -286,86 +300,123 @@ export function ExpressCheckoutButton() {
     'idle' | 'fetching' | 'done'
   >('idle');
 
-  useEffect(() => {
-    // Skip if we've already loaded this once or have an applied code
-    if (couponFetchStatus !== 'idle' || appliedCouponCode !== null) return;
+  // Extract discount codes from draft order for comparison
+  const draftOrderDiscountCodes = useMemo(() => {
+    const allCodes = new Set<string>();
 
-    // Mark that we've started the fetch process
-    setCouponFetchStatus('fetching');
-
-    const fetchPriceAdjustments = async () => {
-      const allCodes = new Set<string>();
-
-      // Add order-level discount codes
-      if (draftOrder?.discounts) {
-        for (const discount of draftOrder.discounts) {
-          if (discount.code) {
-            allCodes.add(discount.code);
-          }
+    // Add order-level discount codes
+    if (draftOrder?.discounts) {
+      for (const discount of draftOrder.discounts) {
+        if (discount.code) {
+          allCodes.add(discount.code);
         }
       }
+    }
 
-      // Add line item-level discount codes
-      if (draftOrder?.lineItems) {
-        for (const lineItem of draftOrder.lineItems) {
-          if (lineItem.discounts) {
-            for (const discount of lineItem.discounts) {
-              if (discount.code) {
-                allCodes.add(discount.code);
-              }
+    // Add line item-level discount codes
+    if (draftOrder?.lineItems) {
+      for (const lineItem of draftOrder.lineItems) {
+        if (lineItem.discounts) {
+          for (const discount of lineItem.discounts) {
+            if (discount.code) {
+              allCodes.add(discount.code);
             }
           }
         }
       }
+    }
 
-      const discountCodes = Array.from(allCodes);
+    return Array.from(allCodes).sort().join(','); // Stable string for comparison
+  }, [draftOrder]);
 
-      if (discountCodes?.length && discountCodes?.[0]) {
-        const result = await getPriceAdjustments.mutateAsync({
-          discountCodes: [discountCodes?.[0]],
-        });
+  useEffect(() => {
+    if (!draftOrder) return;
+    // Prevent concurrent fetches (but allow new fetches when draft order changes)
+    if (couponFetchStatus === 'fetching') return;
 
-        if (result) {
-          setAppliedCouponCode(discountCodes?.[0]);
-          setCalculatedAdjustments(result);
+    const fetchPriceAdjustments = async () => {
+      setCouponFetchStatus('fetching');
+
+      try {
+        const allCodes = new Set<string>();
+
+        // Add order-level discount codes
+        if (draftOrder?.discounts) {
+          for (const discount of draftOrder.discounts) {
+            if (discount.code) {
+              allCodes.add(discount.code);
+            }
+          }
         }
+
+        // Add line item-level discount codes
+        if (draftOrder?.lineItems) {
+          for (const lineItem of draftOrder.lineItems) {
+            if (lineItem.discounts) {
+              for (const discount of lineItem.discounts) {
+                if (discount.code) {
+                  allCodes.add(discount.code);
+                }
+              }
+            }
+          }
+        }
+
+        const discountCodes = Array.from(allCodes);
+
+        // Update refs based on what's in the draft order
+        if (discountCodes?.length && discountCodes?.[0]) {
+          const result = await getPriceAdjustments.mutateAsync({
+            discountCodes: [discountCodes?.[0]],
+          });
+
+          if (result) {
+            // Update refs with current coupon state
+            appliedCouponCodeRef.current = discountCodes?.[0];
+            calculatedAdjustmentsRef.current = result;
+          }
+        } else {
+          // No coupons in draft order - clear refs
+          appliedCouponCodeRef.current = null;
+          calculatedAdjustmentsRef.current = null;
+        }
+      } finally {
+        setCouponFetchStatus('done');
       }
-      // Mark the fetch as complete regardless of whether there were discounts
-      setCouponFetchStatus('done');
     };
 
-    if (draftOrder) {
-      fetchPriceAdjustments();
-    }
-  }, [draftOrder, getPriceAdjustments, appliedCouponCode, couponFetchStatus]);
+    fetchPriceAdjustments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftOrder, draftOrderDiscountCodes]);
 
   // Initialize the TokenizeJs instance when the component mounts
   // But only after price adjustments have been fetched
   useLayoutEffect(() => {
-    if (
-      !collect.current &&
+    const shouldInitialize =
       godaddyPaymentsConfig &&
       (godaddyPaymentsConfig?.businessId || session?.businessId) &&
       isPoyntLoaded &&
       isCollectLoading &&
-      !hasMounted.current &&
       draftOrder &&
-      couponFetchStatus === 'done'
-    ) {
-      // console.log("[poynt collect] Initializing TokenizeJs", {
-      // 	appliedCouponCode,
-      // 	priceAdjustment,
-      // });
+      couponFetchStatus === 'done';
+
+    if (!shouldInitialize) return;
+
+    if (!collect.current && !hasMounted.current) {
       // Create coupon config if there's a price adjustment from existing coupon
+      // Read from refs to get current values
+      const currentAdjustments = calculatedAdjustmentsRef.current;
+      const currentCouponCode = appliedCouponCodeRef.current;
+
       let couponConfig:
         | { code: string; label: string; amount: string }
         | undefined;
-      if (calculatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
+      if (currentAdjustments?.totalDiscountAmount && currentCouponCode) {
         couponConfig = {
-          code: appliedCouponCode,
+          code: currentCouponCode,
           label: t.totals.discount,
           amount: formatCurrency({
-            amount: calculatedAdjustments?.totalDiscountAmount?.value || 0,
+            amount: currentAdjustments?.totalDiscountAmount?.value || 0,
             currencyCode,
             inputInMinorUnits: true,
             returnRaw: true,
@@ -373,9 +424,6 @@ export function ExpressCheckoutButton() {
         };
       }
 
-      // console.log("[poynt collect] TokenizeJsing initialized", {
-      // 	couponConfig,
-      // });
       collect.current = new (window as any).TokenizeJs(
         {
           businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
@@ -402,18 +450,16 @@ export function ExpressCheckoutButton() {
     session?.storeId,
     session?.channelId,
     session?.enablePromotionCodes,
+    session?.enableShippingAddressCollection,
     session?.storeName,
     isPoyntLoaded,
     isCollectLoading,
-    calculatedAdjustments,
-    appliedCouponCode,
     draftOrder,
     couponFetchStatus,
     t,
+    handleExpressPayClick,
+    formatCurrency,
   ]);
-
-  // Reference to track if mounting has already occurred
-  const hasMounted = useRef(false);
 
   // Mount the TokenizeJs instance
   useEffect(() => {
@@ -482,7 +528,7 @@ export function ExpressCheckoutButton() {
   const convertAddressToShippingLines = useCallback(
     (
       address: Address | null,
-      selectedMethod: { amountInMinorUnits: number; name: string }
+      selectedMethod: { amount: number; name: string }
     ) => {
       if (!address) return undefined;
 
@@ -490,7 +536,7 @@ export function ExpressCheckoutButton() {
         {
           subTotal: {
             currencyCode: currencyCode,
-            value: selectedMethod.amountInMinorUnits,
+            value: selectedMethod.amount,
           },
           name: selectedMethod.name,
         },
@@ -507,17 +553,20 @@ export function ExpressCheckoutButton() {
     collect.current.on('close_wallet', () => {
       // console.log("[poynt collect] Wallet closed");
 
-      // Reset the state when wallet is closed to ensure fresh state when reopening
-      // Reset coupon fetch status to trigger a re-fetch on next open
+      // Reset wallet-specific state when closed
+      // Reset coupon fetch status to trigger re-sync with draft order on next open
+      // This ensures any coupon changes made inside the wallet (but not committed) are discarded
       setCouponFetchStatus('idle');
-      setAppliedCouponCode(null);
-      setCalculatedAdjustments(null);
       setCalculatedTaxes(null);
+
+      // Clear coupon refs - will be re-synced with draft order on next fetch
+      appliedCouponCodeRef.current = null;
+      calculatedAdjustmentsRef.current = null;
 
       // Clear any error messages
       setError('');
 
-      // Reset shipping-related state
+      // Reset shipping-related state (wallet-specific)
       setShippingAddress(null);
       setShippingMethods(null);
       setShippingMethod(null);
@@ -563,9 +612,44 @@ export function ExpressCheckoutButton() {
       const baseLineItems = [...poyntExpressRequest.lineItems];
 
       if (!couponCode) {
-        // User removed the coupon code
-        setAppliedCouponCode(null);
-        setCalculatedAdjustments(null);
+        // User removed the coupon code - clear refs
+        appliedCouponCodeRef.current = null;
+        calculatedAdjustmentsRef.current = null;
+
+        // Initialize with current value before potential async update
+        let updatedTaxValue = godaddyTotals.taxes.value;
+
+        // Recalculate taxes with zero discounts to override the order's stale discount
+        // Pass empty object {} to trigger adjustment override logic (returns 0 for all lines)
+        if (shippingAddress) {
+          try {
+            const recalculatedTaxes = await calculateGodaddyExpressTaxes({
+              address: shippingAddress,
+              shippingAmount: godaddyTotals.shipping.value,
+              discountAdjustments: {},
+            });
+
+            if (recalculatedTaxes?.totalTaxAmount?.value != null) {
+              updatedTaxValue = recalculatedTaxes.totalTaxAmount.value;
+              setCalculatedTaxes(recalculatedTaxes);
+              setGoDaddyTotals(value => ({
+                ...value,
+                taxes: {
+                  currencyCode: currencyCode,
+                  value: updatedTaxValue,
+                },
+              }));
+            }
+          } catch (_taxError) {
+            e.updateWith({
+              error: {
+                code: 'unknown',
+                message: 'Unable to calculate taxes. Please try again.',
+              },
+            });
+            return;
+          }
+        }
 
         // Add shipping and taxes if they exist
         const finalLineItems = [...baseLineItems];
@@ -582,11 +666,11 @@ export function ExpressCheckoutButton() {
           });
         }
 
-        if (godaddyTotals.taxes.value > 0) {
+        if (updatedTaxValue > 0) {
           finalLineItems.push({
             label: t.totals.estimatedTaxes,
             amount: formatCurrency({
-              amount: godaddyTotals.taxes.value,
+              amount: updatedTaxValue,
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -598,7 +682,7 @@ export function ExpressCheckoutButton() {
         const totalInMinorUnits =
           (totals?.subTotal?.value || 0) +
           godaddyTotals.shipping.value +
-          godaddyTotals.taxes.value;
+          updatedTaxValue;
 
         const totalAmount = formatCurrency({
           amount: totalInMinorUnits,
@@ -626,7 +710,7 @@ export function ExpressCheckoutButton() {
           let shippingLines: ReturnType<typeof convertAddressToShippingLines>;
           if (shippingAddress && shippingMethod) {
             const selectedMethodInfo = {
-              amountInMinorUnits: godaddyTotals.shipping.value,
+              amount: godaddyTotals.shipping.value,
               name: shippingMethod,
             };
             shippingLines = convertAddressToShippingLines(
@@ -642,12 +726,47 @@ export function ExpressCheckoutButton() {
           });
 
           if (adjustments?.totalDiscountAmount?.value) {
-            setAppliedCouponCode(couponCode);
-            setCalculatedAdjustments(adjustments);
+            // Update refs with applied coupon
+            appliedCouponCodeRef.current = couponCode;
+            calculatedAdjustmentsRef.current = adjustments;
 
             const adjustmentValue = adjustments.totalDiscountAmount.value;
 
-            // Build line items with shipping, taxes, and the new discount
+            // Initialize with current value before potential async update
+            let updatedTaxValue = godaddyTotals.taxes.value;
+
+            // Recalculate taxes on the discounted order
+            if (shippingAddress) {
+              try {
+                const recalculatedTaxes = await calculateGodaddyExpressTaxes({
+                  address: shippingAddress,
+                  shippingAmount: godaddyTotals.shipping.value,
+                  discountAdjustments: adjustments,
+                });
+
+                if (recalculatedTaxes?.totalTaxAmount?.value != null) {
+                  updatedTaxValue = recalculatedTaxes.totalTaxAmount.value;
+                  setCalculatedTaxes(recalculatedTaxes);
+                  setGoDaddyTotals(value => ({
+                    ...value,
+                    taxes: {
+                      currencyCode: currencyCode,
+                      value: updatedTaxValue,
+                    },
+                  }));
+                }
+              } catch (_taxError) {
+                e.updateWith({
+                  error: {
+                    code: 'unknown',
+                    message: 'Unable to calculate taxes. Please try again.',
+                  },
+                });
+                return;
+              }
+            }
+
+            // Build line items with shipping, recalculated taxes, and the new discount
             const finalLineItems = [...baseLineItems];
 
             if (godaddyTotals.shipping.value > 0) {
@@ -662,11 +781,11 @@ export function ExpressCheckoutButton() {
               });
             }
 
-            if (godaddyTotals.taxes.value > 0) {
+            if (updatedTaxValue > 0) {
               finalLineItems.push({
                 label: t.totals.estimatedTaxes,
                 amount: formatCurrency({
-                  amount: godaddyTotals.taxes.value,
+                  amount: updatedTaxValue,
                   currencyCode,
                   inputInMinorUnits: true,
                   returnRaw: true,
@@ -689,7 +808,7 @@ export function ExpressCheckoutButton() {
             const totalInMinorUnits =
               (totals?.subTotal?.value || 0) +
               godaddyTotals.shipping.value +
-              godaddyTotals.taxes.value -
+              updatedTaxValue -
               adjustmentValue;
 
             const totalAmount = formatCurrency({
@@ -765,6 +884,9 @@ export function ExpressCheckoutButton() {
     });
 
     collect.current.on('payment_authorized', async event => {
+      // Read from refs to avoid stale closures
+      const currentAdjustments = calculatedAdjustmentsRef.current;
+
       const nonce = event?.nonce;
 
       const selectedShippingMethod = shippingMethods?.find(
@@ -784,7 +906,9 @@ export function ExpressCheckoutButton() {
               }
             : {}),
           ...(calculatedTaxes ? { calculatedTaxes } : {}),
-          ...(calculatedAdjustments ? { calculatedAdjustments } : {}),
+          ...(currentAdjustments
+            ? { calculatedAdjustments: currentAdjustments }
+            : {}),
           ...(event?.billingAddress
             ? {
                 billing: {
@@ -949,14 +1073,19 @@ export function ExpressCheckoutButton() {
           },
         }));
 
+        // Initialize with current value before potential async update
+        // Read from refs to avoid stale closures
+        let updatedAdjustments = calculatedAdjustmentsRef.current;
+        const currentCouponCode = appliedCouponCodeRef.current;
+
         // If there's an applied coupon, recalculate price adjustments with the new shipping method
-        if (appliedCouponCode) {
+        if (currentCouponCode) {
           try {
             const shippingLines = convertAddressToShippingLines(
               shippingAddress,
               {
                 // Convert wallet API amount from major to minor units for API request
-                amountInMinorUnits: convertMajorToMinorUnits(
+                amount: convertMajorToMinorUnits(
                   shippingAmount || '0',
                   currencyCode
                 ),
@@ -965,15 +1094,17 @@ export function ExpressCheckoutButton() {
             );
 
             const newAdjustments = await getPriceAdjustments.mutateAsync({
-              discountCodes: [appliedCouponCode],
+              discountCodes: [currentCouponCode],
               shippingLines,
             });
 
             if (newAdjustments?.totalDiscountAmount) {
-              setCalculatedAdjustments(newAdjustments);
+              updatedAdjustments = newAdjustments;
+              calculatedAdjustmentsRef.current = newAdjustments;
             } else {
-              setCalculatedAdjustments(null);
-              setAppliedCouponCode('');
+              updatedAdjustments = null;
+              calculatedAdjustmentsRef.current = null;
+              appliedCouponCodeRef.current = '';
             }
           } catch (err) {
             // Track error with price adjustment calculation for shipping method
@@ -983,7 +1114,7 @@ export function ExpressCheckoutButton() {
               properties: {
                 success: false,
                 errorType: 'shipping_method_price_adjustment_error',
-                couponCode: appliedCouponCode,
+                couponCode: currentCouponCode,
                 errorCodes: err instanceof Error ? err.name : 'unknown',
                 shippingMethod: e.shippingMethod?.label || '',
               },
@@ -993,11 +1124,16 @@ export function ExpressCheckoutButton() {
 
         if (session?.enableTaxCollection) {
           try {
-            const taxesResult = await calculateGodaddyExpressTaxes(
-              shippingAddress,
-              currencyCode,
-              shippingAmount || '0'
-            );
+            // Calculate taxes on shipping with optional discount adjustments
+            // Wallet API provides amounts in major units, convert to minor units
+            const taxesResult = await calculateGodaddyExpressTaxes({
+              address: shippingAddress,
+              shippingAmount: convertMajorToMinorUnits(
+                shippingAmount || '0',
+                currencyCode
+              ),
+              discountAdjustments: updatedAdjustments,
+            });
 
             if (taxesResult?.totalTaxAmount?.value) {
               // Store the full tax calculation response
@@ -1038,11 +1174,11 @@ export function ExpressCheckoutButton() {
         }
 
         // Add discount line if a coupon is applied
-        if (calculatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
+        if (updatedAdjustments?.totalDiscountAmount && currentCouponCode) {
           poyntLineItems.push({
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+              amount: -(updatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1071,12 +1207,12 @@ export function ExpressCheckoutButton() {
         };
 
         // Add coupon code to the request if one is applied
-        if (appliedCouponCode && calculatedAdjustments?.totalDiscountAmount) {
+        if (currentCouponCode && updatedAdjustments?.totalDiscountAmount) {
           updatedOrder.couponCode = {
-            code: appliedCouponCode,
+            code: currentCouponCode,
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+              amount: -(updatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1091,6 +1227,10 @@ export function ExpressCheckoutButton() {
     collect.current.on('shipping_address_change', async e => {
       let updatedOrder: PoyntExpressRequest = poyntExpressRequest;
       const poyntLineItems = [...poyntExpressRequest.lineItems];
+      // Initialize with current value before potential async update
+      // Read from refs to avoid stale closures
+      let updatedAdjustments = calculatedAdjustmentsRef.current;
+      const currentCouponCode = appliedCouponCodeRef.current;
 
       // Update the shipping address in the draft order
       if (e.shippingAddress) {
@@ -1110,13 +1250,13 @@ export function ExpressCheckoutButton() {
             ...value,
             shipping: {
               currencyCode: currencyCode,
-              value: methods?.[0]?.amountInMinorUnits || 0,
+              value: methods?.[0]?.amount || 0,
             },
           }));
 
           poyntLineItems.push({
             label: t.totals.shipping,
-            amount: methods?.[0]?.amount || '0',
+            amount: methods?.[0]?.displayAmount || '0',
             isPending: false,
           });
 
@@ -1125,26 +1265,28 @@ export function ExpressCheckoutButton() {
           // });
 
           // If there's an applied coupon, recalculate price adjustments with the new shipping
-          if (appliedCouponCode) {
+          if (currentCouponCode) {
             try {
               const shippingLines = convertAddressToShippingLines(
                 e.shippingAddress,
                 {
-                  amountInMinorUnits: methods[0]?.amountInMinorUnits || 0,
+                  amount: methods[0]?.amount || 0,
                   name: methods[0]?.label || t.totals.shipping,
                 }
               );
 
               const newAdjustments = await getPriceAdjustments.mutateAsync({
-                discountCodes: [appliedCouponCode],
+                discountCodes: [currentCouponCode],
                 shippingLines,
               });
 
               if (newAdjustments?.totalDiscountAmount) {
-                setCalculatedAdjustments(newAdjustments);
+                updatedAdjustments = newAdjustments;
+                calculatedAdjustmentsRef.current = newAdjustments;
               } else {
-                setCalculatedAdjustments(null);
-                setAppliedCouponCode('');
+                updatedAdjustments = null;
+                calculatedAdjustmentsRef.current = null;
+                appliedCouponCodeRef.current = '';
               }
             } catch (err) {
               // Track error with price adjustment calculation for shipping address
@@ -1154,7 +1296,7 @@ export function ExpressCheckoutButton() {
                 properties: {
                   success: false,
                   errorType: 'shipping_price_adjustment_error',
-                  couponCode: appliedCouponCode,
+                  couponCode: currentCouponCode,
                   errorCodes: err instanceof Error ? err.name : 'unknown',
                   shippingMethod: methods[0]?.label || '',
                 },
@@ -1180,11 +1322,12 @@ export function ExpressCheckoutButton() {
         if (session?.enableTaxCollection) {
           try {
             // console.log("[poynt collect] getting taxes!");
-            const taxesResult = await calculateGodaddyExpressTaxes(
-              e.shippingAddress,
-              currencyCode,
-              methods?.[0]?.amount
-            );
+            // Calculate taxes on shipping with optional discount adjustments
+            const taxesResult = await calculateGodaddyExpressTaxes({
+              address: e.shippingAddress,
+              shippingAmount: methods?.[0]?.amount || 0,
+              discountAdjustments: updatedAdjustments,
+            });
 
             // console.log("[poynt collect] Taxes result", { taxesResult });
 
@@ -1230,11 +1373,11 @@ export function ExpressCheckoutButton() {
         }
 
         // Add discount line if a coupon is applied
-        if (calculatedAdjustments?.totalDiscountAmount && appliedCouponCode) {
+        if (updatedAdjustments?.totalDiscountAmount && currentCouponCode) {
           poyntLineItems.push({
             label: t.totals.discount,
             amount: formatCurrency({
-              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+              amount: -(updatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1259,17 +1402,22 @@ export function ExpressCheckoutButton() {
               returnRaw: true,
             }),
           },
-          shippingMethods: methods as ShippingMethod[],
+          shippingMethods: methods.map(method => ({
+            id: method.id || '',
+            label: method.label,
+            detail: method.detail,
+            amount: method.displayAmount,
+          })),
           lineItems: poyntLineItems,
         };
 
         // Add coupon code to the request if one is applied
-        if (appliedCouponCode && calculatedAdjustments?.totalDiscountAmount) {
+        if (currentCouponCode && updatedAdjustments?.totalDiscountAmount) {
           updatedOrder.couponCode = {
-            code: appliedCouponCode,
-            label: appliedCouponCode || 'Discount',
+            code: currentCouponCode,
+            label: currentCouponCode || 'Discount',
             amount: formatCurrency({
-              amount: -(calculatedAdjustments?.totalDiscountAmount?.value || 0),
+              amount: -(updatedAdjustments?.totalDiscountAmount?.value || 0),
               currencyCode,
               inputInMinorUnits: true,
               returnRaw: true,
@@ -1313,8 +1461,6 @@ export function ExpressCheckoutButton() {
     getSortedShippingMethods,
     convertAddressToShippingLines,
     getPriceAdjustments.mutateAsync,
-    calculatedAdjustments,
-    appliedCouponCode,
     t,
     form,
     draftOrder,
