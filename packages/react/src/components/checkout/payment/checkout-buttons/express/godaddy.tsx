@@ -1073,6 +1073,9 @@ export function ExpressCheckoutButton() {
           },
         }));
 
+        // Update shipping method name to match selection
+        setShippingMethod(e.shippingMethod?.label || null);
+
         // Initialize with current value before potential async update
         // Read from refs to avoid stale closures
         let updatedAdjustments = calculatedAdjustmentsRef.current;
