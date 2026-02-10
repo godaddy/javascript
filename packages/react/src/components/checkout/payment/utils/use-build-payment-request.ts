@@ -551,7 +551,12 @@ export function useBuildPaymentRequest(): {
   };
 
   const squarePaymentRequest: SquarePaymentRequest = {
-    amount: (totals?.total?.value || 0).toString(),
+    amount: formatCurrency({
+      amount: totals?.total?.value || 0,
+      currencyCode,
+      inputInMinorUnits: true,
+      returnRaw: true,
+    }),
     billingContact: {
       givenName: order?.billing?.firstName || '',
       familyName: order?.billing?.lastName || '',
