@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.24
+
+### Patch Changes
+
+- 3d85a32: Send major unit price for square payments
+
 ## 1.0.23
 
 ### Patch Changes
