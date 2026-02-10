@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.25
+
+### Patch Changes
+
+- de0b740: Update shipping method on change to match correct shipping provider and service for express checkout
+
 ## 1.0.24
 
 ### Patch Changes
