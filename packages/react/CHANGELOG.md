@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.26
+
+### Patch Changes
+
+- 172059f: Limit paypal express to paypal button only
+
 ## 1.0.25
 
 ### Patch Changes
