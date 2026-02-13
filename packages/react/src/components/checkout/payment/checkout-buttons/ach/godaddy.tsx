@@ -15,7 +15,6 @@ export function ACHCheckoutButton() {
   const { t } = useGoDaddyContext();
 
   const handleSubmit = useCallback(async () => {
-    console.log('handle ACH submit');
     const valid = await form.trigger();
     if (!valid) {
       const firstError = Object.keys(form.formState.errors)[0];

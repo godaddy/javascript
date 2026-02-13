@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import type {
   TokenizeJs,
@@ -23,6 +23,8 @@ export function GoDaddyCreditCardForm() {
   const [error, setError] = useState('');
 
   const confirmCheckout = useConfirmCheckout();
+
+  const elementId = `gdpay-card-element-${useId()}`;
 
   const options = {
     iFrame: {
@@ -206,7 +208,7 @@ export function GoDaddyCreditCardForm() {
       setCollect(collect.current);
     });
 
-    collect?.current?.mount('gdpay-card-element', document, options);
+    collect?.current?.mount(elementId, document, options);
 
     collect?.current?.on('nonce', async (event: TokenizeJsEvent) => {
       const nonce = event?.data?.nonce;
@@ -256,7 +258,7 @@ export function GoDaddyCreditCardForm() {
 
   return (
     <>
-      <div id='gdpay-card-element' />
+      <div id={elementId} />
       {error ? (
         <p className='text-[0.8rem] font-medium text-destructive'>{error}</p>
       ) : null}

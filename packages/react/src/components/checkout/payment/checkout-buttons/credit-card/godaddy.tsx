@@ -17,7 +17,6 @@ export function CreditCardCheckoutButton() {
   const { t } = useGoDaddyContext();
 
   const handleSubmit = useCallback(async () => {
-    console.log('handle CARD submit');
     const valid = await form.trigger();
     if (!valid) {
       const firstError = Object.keys(form.formState.errors)[0];

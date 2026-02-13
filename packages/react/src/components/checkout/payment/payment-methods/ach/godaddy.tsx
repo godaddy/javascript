@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import type {
   TokenizeJs,
@@ -23,6 +23,8 @@ export function GoDaddyACHForm() {
   const [error, setError] = useState('');
 
   const confirmCheckout = useConfirmCheckout();
+
+  const elementId = `gdpay-ach-element-${useId()}`;
 
   const fontFamily =
     '"GD Sherpa", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"';
@@ -159,7 +161,7 @@ export function GoDaddyACHForm() {
       setCollect(collect.current);
     });
 
-    collect?.current?.mount('gdpay-ach-element', document, options);
+    collect?.current?.mount(elementId, document, options);
 
     collect?.current?.on('nonce', async (event: TokenizeJsEvent) => {
       const nonce = event?.data?.nonce;
@@ -209,7 +211,7 @@ export function GoDaddyACHForm() {
 
   return (
     <>
-      <div id='gdpay-ach-element' />
+      <div id={elementId} />
       {error ? (
         <p className='text-[0.8rem] font-medium text-destructive'>{error}</p>
       ) : null}
