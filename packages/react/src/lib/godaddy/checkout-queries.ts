@@ -105,6 +105,10 @@ export const GetCheckoutSessionQuery = graphql(`
                 processor
                 checkoutTypes
               }
+              ach {
+                processor
+                checkoutTypes
+              }
             }
             locations {
               id

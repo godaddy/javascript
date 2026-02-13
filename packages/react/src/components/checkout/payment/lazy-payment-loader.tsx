@@ -70,6 +70,23 @@ const LazyComponents = {
       default: module.PayPalCreditCardCheckoutButton,
     }))
   ),
+  // ACH Form
+  GoDaddyACHForm: lazy(() =>
+    import('@/components/checkout/payment/payment-methods/ach/godaddy').then(
+      module => ({
+        default: module.GoDaddyACHForm,
+      })
+    )
+  ),
+
+  // ACH Buttons
+  ACHCheckoutButton: lazy(() =>
+    import('@/components/checkout/payment/checkout-buttons/ach/godaddy').then(
+      module => ({
+        default: module.ACHCheckoutButton,
+      })
+    )
+  ),
 
   // Express Buttons
   ExpressCheckoutButton: lazy(() =>
@@ -179,6 +196,12 @@ type PaymentComponentRegistry = {
       button: PaymentComponentKey;
     };
   };
+  [PaymentMethodType.ACH]?: {
+    [PaymentProvider.GODADDY]: {
+      form: PaymentComponentKey;
+      button: PaymentComponentKey;
+    };
+  };
 };
 
 export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
@@ -226,6 +249,12 @@ export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
   [PaymentMethodType.PAZE]: {
     [PaymentProvider.GODADDY]: {
       button: 'PazeCheckoutButton',
+    },
+  },
+  [PaymentMethodType.ACH]: {
+    [PaymentProvider.GODADDY]: {
+      form: 'GoDaddyACHForm',
+      button: 'ACHCheckoutButton',
     },
   },
 };

@@ -107,6 +107,7 @@ export const itIt = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagamenti offline',
+      ach: 'Conto Bancario',
     },
     descriptions: {
       creditCard: '',
@@ -115,6 +116,7 @@ export const itIt = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
     },
     noMethodsAvailable: 'Nessun metodo di pagamento disponibile',
     cardNumber: 'Numero della carta',

@@ -58,6 +58,10 @@ export default async function Home() {
           processor: 'godaddy',
           checkoutTypes: ['standard'],
         },
+        ach: {
+          processor: 'godaddy',
+          checkoutTypes: ['standard'],
+        },
         express: {
           processor: 'godaddy',
           checkoutTypes: ['express'],

@@ -106,6 +106,7 @@ export const idId = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pembayaran offline',
+      ach: 'Rekening Bank',
     },
     descriptions: {
       creditCard: '',
@@ -114,6 +115,7 @@ export const idId = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
     },
     noMethodsAvailable: 'Tidak ada metode pembayaran tersedia',
     cardNumber: 'Nomor kartu',

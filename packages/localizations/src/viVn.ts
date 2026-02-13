@@ -106,6 +106,7 @@ export const viVn = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Thanh toán ngoại tuyến',
+      ach: 'Tài khoản ngân hàng',
     },
     descriptions: {
       creditCard: '',
@@ -114,6 +115,7 @@ export const viVn = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
     },
     noMethodsAvailable: 'Không có phương thức thanh toán nào',
     cardNumber: 'Số thẻ',

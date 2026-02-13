@@ -106,6 +106,7 @@ export const deDe = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Offline-Zahlungen',
+      ach: 'Bankkonto',
     },
     descriptions: {
       creditCard: '',
@@ -114,6 +115,7 @@ export const deDe = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
     },
     noMethodsAvailable: 'Keine Zahlungsmethoden verfügbar',
     cardNumber: 'Kartennummer',

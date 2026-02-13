@@ -107,6 +107,7 @@ export const esMx = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagos fuera de línea',
+      ach: 'Cuenta Bancaria',
     },
     descriptions: {
       creditCard: '',
@@ -115,6 +116,7 @@ export const esMx = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
     },
     noMethodsAvailable: 'No hay métodos de pago disponibles',
     cardNumber: 'Número de tarjeta',

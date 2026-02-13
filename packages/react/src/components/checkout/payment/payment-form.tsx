@@ -1,4 +1,10 @@
-import { Circle, CreditCard, LoaderCircle, Wallet } from 'lucide-react';
+import {
+  Circle,
+  CreditCard,
+  Landmark,
+  LoaderCircle,
+  Wallet,
+} from 'lucide-react';
 import React, {
   useCallback,
   useEffect,
@@ -62,6 +68,7 @@ import {
 // UI config for payment methods (labels will be resolved from translations)
 const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   card: <CreditCard className='h-5 w-5' />,
+  ach: <Landmark className='h-5 w-5' />,
   paypal: <PayPalIcon className='h-5 w-5' />,
   applePay: <ApplePayIcon className='h-5 w-5' />,
   googlePay: <GooglePayIcon className='h-5 w-10' />,
@@ -104,6 +111,8 @@ export function PaymentForm(
       switch (key) {
         case PaymentMethodType.CREDIT_CARD:
           return t.payment.methods.creditCard;
+        case PaymentMethodType.ACH:
+          return t.payment.methods.ach;
         case PaymentMethodType.PAYPAL:
           return t.payment.methods.paypal;
         case PaymentMethodType.APPLE_PAY:
@@ -127,6 +136,8 @@ export function PaymentForm(
       switch (key) {
         case PaymentMethodType.CREDIT_CARD:
           return t.payment.descriptions?.creditCard;
+        case PaymentMethodType.ACH:
+          return t.payment.descriptions?.ach;
         case PaymentMethodType.PAYPAL:
           return t.payment.descriptions?.paypal;
         case PaymentMethodType.APPLE_PAY:

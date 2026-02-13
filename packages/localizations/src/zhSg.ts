@@ -102,6 +102,7 @@ export const zhSg = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: '线下付款',
+      ach: '银行账户',
     },
     descriptions: {
       creditCard: '',
@@ -110,6 +111,7 @@ export const zhSg = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
     },
     noMethodsAvailable: '无可用付款方式',
     cardNumber: '卡号',

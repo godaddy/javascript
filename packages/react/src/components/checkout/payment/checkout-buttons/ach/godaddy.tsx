@@ -1,23 +1,21 @@
 import { useCallback, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { usePoyntCollect } from '@/components/checkout/payment/utils/poynt-provider';
-import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
+import { usePoyntACHCollect } from '@/components/checkout/payment/utils/poynt-ach-provider';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 
-export function CreditCardCheckoutButton() {
-  const { collect, isLoadingNonce } = usePoyntCollect();
+export function ACHCheckoutButton() {
+  const { collect, isLoadingNonce } = usePoyntACHCollect();
   const { isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
-  const { poyntCardRequest } = useBuildPaymentRequest();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { t } = useGoDaddyContext();
 
   const handleSubmit = useCallback(async () => {
-    console.log('handle CARD submit');
+    console.log('handle ACH submit');
     const valid = await form.trigger();
     if (!valid) {
       const firstError = Object.keys(form.formState.errors)[0];
@@ -27,8 +25,8 @@ export function CreditCardCheckoutButton() {
       return;
     }
 
-    collect?.getNonce(poyntCardRequest);
-  }, [poyntCardRequest, form, collect]);
+    collect?.getNonce({});
+  }, [form, collect]);
 
   if (!collect) return null;
 

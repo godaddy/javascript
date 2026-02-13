@@ -1,6 +1,7 @@
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { PayPalProvider } from './paypal-provider';
+import { PoyntACHCollectProvider } from './poynt-ach-provider';
 import { PoyntCollectProvider } from './poynt-provider';
 import { SquareProvider } from './square-provider';
 import { StripeProvider } from './stripe-provider';
@@ -17,8 +18,13 @@ interface ConditionalPaymentProvidersProps {
 export function ConditionalPaymentProviders({
   children,
 }: ConditionalPaymentProvidersProps) {
-  const { stripeConfig, godaddyPaymentsConfig, squareConfig, paypalConfig } =
-    useCheckoutContext();
+  const {
+    stripeConfig,
+    godaddyPaymentsConfig,
+    squareConfig,
+    paypalConfig,
+    session,
+  } = useCheckoutContext();
   const { payPalRequest } = useBuildPaymentRequest();
 
   // Start with the children and conditionally wrap with providers
@@ -27,6 +33,16 @@ export function ConditionalPaymentProviders({
   // Only wrap with SquareProvider if Square is configured
   if (squareConfig?.appId?.trim() && squareConfig?.locationId?.trim()) {
     wrappedChildren = <SquareProvider>{wrappedChildren}</SquareProvider>;
+  }
+
+  // Only wrap with PoyntACHCollectProvider if GoDaddy ACH is configured
+  if (
+    godaddyPaymentsConfig?.appId?.trim() &&
+    session?.paymentMethods?.ach?.processor === 'godaddy'
+  ) {
+    wrappedChildren = (
+      <PoyntACHCollectProvider>{wrappedChildren}</PoyntACHCollectProvider>
+    );
   }
 
   // Only wrap with PoyntCollectProvider (GoDaddy Payments) if configured

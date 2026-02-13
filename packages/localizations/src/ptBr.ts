@@ -106,6 +106,7 @@ export const ptBr = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagamentos offline',
+      ach: 'Conta Bancária',
     },
     descriptions: {
       creditCard: '',
@@ -114,6 +115,7 @@ export const ptBr = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
     },
     noMethodsAvailable: 'Nenhum método de pagamento disponível',
     cardNumber: 'Número do cartão',

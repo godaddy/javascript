@@ -107,6 +107,7 @@ export const esPe = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagos en efectivo',
+      ach: 'Cuenta Bancaria',
     },
     descriptions: {
       creditCard: '',
@@ -115,6 +116,7 @@ export const esPe = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
     },
     noMethodsAvailable: 'No hay métodos de pago disponibles',
     cardNumber: 'Número de tarjeta',
