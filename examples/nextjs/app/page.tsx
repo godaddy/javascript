@@ -54,22 +54,15 @@ export default async function Home() {
         },
       ],
       paymentMethods: {
-        card: {
-          processor: 'godaddy',
+        mercadopago: {
+          processor: 'mercadopago',
           checkoutTypes: ['standard'],
         },
-        express: {
-          processor: 'godaddy',
-          checkoutTypes: ['express'],
-        },
-        paypal: {
+        paypal:
+        {
           processor: 'paypal',
-          checkoutTypes: ['standard'],
-        },
-        offline: {
-          processor: 'offline',
-          checkoutTypes: ['standard'],
-        },
+          checkoutTypes: ['express', 'standard'],
+        }
       },
       operatingHours: {
         default: {

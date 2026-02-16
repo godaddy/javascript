@@ -376,7 +376,7 @@ export function Checkout(props: CheckoutProps) {
       </div>
     );
   }
-  
+
   return (
     <TrackingProvider
       session={session}

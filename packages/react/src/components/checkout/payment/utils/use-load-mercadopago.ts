@@ -4,6 +4,7 @@ import { useCheckoutContext } from '@/components/checkout/checkout';
 let isMercadoPagoLoaded = false;
 let isMercadoPagoCDNLoaded = false;
 const listeners = new Set<(loaded: boolean) => void>();
+const MERCADOPAGO_SDK_ID = 'mercadopago-sdk';
 
 export function useLoadMercadoPago() {
   const { mercadoPagoConfig } = useCheckoutContext();
@@ -36,8 +37,15 @@ export function useLoadMercadoPago() {
       return;
     }
 
+    const existingScript = document.getElementById(MERCADOPAGO_SDK_ID);
+    if (existingScript) {
+      isMercadoPagoCDNLoaded = true;
+      return;
+    }
+
     isMercadoPagoCDNLoaded = true;
     const script = document.createElement('script');
+    script.id = MERCADOPAGO_SDK_ID;
     script.src = mercadoPagoCDN;
     script.async = true;
     script.onload = () => {

@@ -10,32 +10,13 @@ const customSchema: CheckoutFormSchema = {
 };
 
 export function CheckoutPage({ session }: { session: CheckoutSession }) {
-  const s = {
-    ...session, 
-    ...{
-      paymentMethods: {
-        mercadopago: {
-          processor: 'mercadopago',
-          checkoutTypes: ['standard'],
-        },
-        paypal: {
-          processor: 'paypal',
-          checkoutTypes: ['standard'],
-        },
-        offline: {
-          processor: 'offline',
-          checkoutTypes: ['standard'],
-        },
-      }
-    }
-  };
-
   return (
     <Checkout
-      session={s}
+      session={session}
       checkoutFormSchema={customSchema}
       squareConfig={
-        process.env.NEXT_PUBLIC_SQUARE_APP_ID && process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID
+        process.env.NEXT_PUBLIC_SQUARE_APP_ID &&
+        process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID
           ? {
               appId: process.env.NEXT_PUBLIC_SQUARE_APP_ID,
               locationId: process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID,
@@ -53,7 +34,14 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
         process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
           ? {
               publicKey: process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY,
-              country: (process.env.NEXT_PUBLIC_MERCADOPAGO_COUNTRY as 'AR' | 'BR' | 'CO' | 'CL' | 'PE' | 'MX') || 'AR',
+              country:
+                (process.env.NEXT_PUBLIC_MERCADOPAGO_COUNTRY as
+                  | 'AR'
+                  | 'BR'
+                  | 'CO'
+                  | 'CL'
+                  | 'PE'
+                  | 'MX') || 'AR',
             }
           : undefined
       }

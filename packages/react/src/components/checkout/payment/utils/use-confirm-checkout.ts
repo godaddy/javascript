@@ -155,6 +155,9 @@ export function useConfirmCheckout() {
         case 'paze':
           completedEventId = eventIds.pazePayCompleted;
           break;
+        case 'mercadopago':
+          completedEventId = eventIds.mercadopagoCompleted;
+          break;
         default:
           completedEventId = null;
       }

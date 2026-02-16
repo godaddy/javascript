@@ -1,6 +1,7 @@
 import React, {
   createContext,
   type ReactNode,
+  useCallback,
   useContext,
   useState,
 } from 'react';
@@ -29,15 +30,27 @@ export const MercadoPagoProvider = ({ children }: { children: ReactNode }) => {
   const [bricksBuilder, setBricksBuilder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const setMpInstanceCallback = useCallback((instance: MercadoPagoInstance | null) => {
+    setMpInstance(instance);
+  }, []);
+
+  const setBricksBuilderCallback = useCallback((builder: any) => {
+    setBricksBuilder(builder);
+  }, []);
+
+  const setIsLoadingCallback = useCallback((loading: boolean) => {
+    setIsLoading(loading);
+  }, []);
+
   return (
     <MercadoPagoContext.Provider
       value={{
         mpInstance,
-        setMpInstance,
+        setMpInstance: setMpInstanceCallback,
         bricksBuilder,
-        setBricksBuilder,
+        setBricksBuilder: setBricksBuilderCallback,
         isLoading,
-        setIsLoading,
+        setIsLoading: setIsLoadingCallback,
       }}
     >
       {children}
@@ -48,9 +61,7 @@ export const MercadoPagoProvider = ({ children }: { children: ReactNode }) => {
 export const useMercadoPago = () => {
   const context = useContext(MercadoPagoContext);
   if (!context) {
-    throw new Error(
-      'useMercadoPago must be used within a MercadoPagoProvider'
-    );
+    throw new Error('useMercadoPago must be used within a MercadoPagoProvider');
   }
   return context;
 };

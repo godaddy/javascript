@@ -287,7 +287,6 @@ export function LazyPaymentMethodRenderer({
   provider,
   isExpress,
 }: LazyPaymentMethodRendererProps) {
-  console.log(`Rendering LazyPaymentMethodRenderer for method: ${method}, provider: ${provider}, type: ${type}, isExpress: ${isExpress}`)
   const methodRegistry =
     lazyPaymentComponentRegistry[
       method as keyof typeof lazyPaymentComponentRegistry
