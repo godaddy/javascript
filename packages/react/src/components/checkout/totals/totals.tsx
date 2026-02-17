@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { DiscountStandalone } from '@/components/checkout/discount/discount-standalone';
 import { TotalLineItemSkeleton } from '@/components/checkout/totals/totals-skeleton';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
@@ -79,6 +80,11 @@ export function DraftOrderTotals({
     // Discount changes are handled by the DiscountStandalone component
   };
 
+  // Calculates the total plus tips and surcharge
+  const calculatedTotal = useMemo(() => {
+    return total + tip;
+  }, [total, tip]);
+
   return (
     <div className='grid gap-4'>
       <div className='space-y-2'>
@@ -158,7 +164,7 @@ export function DraftOrderTotals({
             </span>
             <span className='font-bold text-lg'>
               {formatCurrency({
-                amount: total,
+                amount: calculatedTotal,
                 currencyCode,
                 inputInMinorUnits,
               })}

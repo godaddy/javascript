@@ -114,9 +114,12 @@ export function formatCurrency({
  * - 0 decimals (JPY, KRW, VND, etc.): multiply by 1
  * - 3 decimals (KWD, BHD, JOD, OMR): multiply by 1000
  *
+ * Returns 0 for NaN, negative, null-ish, or otherwise unparseable input
+ * so callers don't need to guard individually.
+ *
  * @param amount - The amount in major units (e.g., "10.50" or 10.50)
  * @param currencyCode - ISO 4217 currency code (e.g., 'USD', 'JPY', 'KWD')
- * @returns The amount in minor units (e.g., 1050 for USD, 10 for JPY, 10500 for KWD)
+ * @returns The amount in minor units (e.g., 1050 for USD, 10 for JPY, 10500 for KWD), or 0 for invalid input
  */
 export function convertMajorToMinorUnits(
   amount: number | string,
@@ -124,6 +127,7 @@ export function convertMajorToMinorUnits(
 ): number {
   const config = currencyConfigs[currencyCode] || { precision: 2 };
   const numAmount = typeof amount === 'string' ? Number(amount) : amount;
+  if (!Number.isFinite(numAmount) || numAmount < 0) return 0;
   return Math.round(numAmount * Math.pow(10, config.precision));
 }
 
