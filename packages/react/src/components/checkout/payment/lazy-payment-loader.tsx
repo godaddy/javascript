@@ -84,7 +84,6 @@ const LazyComponents = {
       default: module.MercadoPagoCreditCardCheckoutButton,
     }))
   ),
-
   // Express Buttons
   ExpressCheckoutButton: lazy(() =>
     import(

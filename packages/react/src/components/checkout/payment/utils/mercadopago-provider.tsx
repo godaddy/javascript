@@ -11,12 +11,10 @@ type MercadoPagoInstance = {
 };
 
 type MercadoPagoContextType = {
-  mpInstance: MercadoPagoInstance | null;
-  setMpInstance: (instance: MercadoPagoInstance | null) => void;
-  bricksBuilder: any;
-  setBricksBuilder: (builder: any) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  handleBrickSubmit: (() => Promise<void>) | null;
+  setHandleBrickSubmit: (handler: (() => Promise<void>) | null) => void;
 };
 
 const MercadoPagoContext = createContext<MercadoPagoContextType | undefined>(
@@ -24,36 +22,24 @@ const MercadoPagoContext = createContext<MercadoPagoContextType | undefined>(
 );
 
 export const MercadoPagoProvider = ({ children }: { children: ReactNode }) => {
-  const [mpInstance, setMpInstance] = useState<MercadoPagoInstance | null>(
-    null
-  );
-  const [bricksBuilder, setBricksBuilder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const setMpInstanceCallback = useCallback(
-    (instance: MercadoPagoInstance | null) => {
-      setMpInstance(instance);
-    },
-    []
-  );
-
-  const setBricksBuilderCallback = useCallback((builder: any) => {
-    setBricksBuilder(builder);
-  }, []);
+  const [handleBrickSubmit, setHandleBrickSubmit] = useState<(() => Promise<void>) | null>(null);
 
   const setIsLoadingCallback = useCallback((loading: boolean) => {
     setIsLoading(loading);
   }, []);
 
+  const setHandleBrickSubmitCallback = useCallback((handler: (() => Promise<void>) | null) => {
+    setHandleBrickSubmit(() => handler);
+  }, []);
+
   return (
     <MercadoPagoContext.Provider
       value={{
-        mpInstance,
-        setMpInstance: setMpInstanceCallback,
-        bricksBuilder,
-        setBricksBuilder: setBricksBuilderCallback,
         isLoading,
         setIsLoading: setIsLoadingCallback,
+        handleBrickSubmit,
+        setHandleBrickSubmit: setHandleBrickSubmitCallback,
       }}
     >
       {children}

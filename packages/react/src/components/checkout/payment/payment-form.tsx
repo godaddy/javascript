@@ -256,6 +256,15 @@ export function PaymentForm(
 
     if (!hasForm) return null;
 
+    // Show message for MercadoPago, form renders outside accordion
+    if (paymentMethod === PaymentMethodType.MERCADOPAGO) {
+      return (
+        <p className='text-sm text-muted-foreground'>
+          Use the MercadoPago form below to complete your purchase securely.
+        </p>
+      );
+    }
+
     return (
       <PaymentMethodRenderer
         type='form'
@@ -433,6 +442,15 @@ export function PaymentForm(
               </FormControl>
             </FormItem>
           )}
+        />
+      ) : null}
+
+      {/* Render MercadoPago form outside accordion */}
+      {paymentMethod === PaymentMethodType.MERCADOPAGO && methodConfig ? (
+        <PaymentMethodRenderer
+          type='form'
+          method={paymentMethod}
+          provider={methodConfig.processor}
         />
       ) : null}
 

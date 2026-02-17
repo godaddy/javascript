@@ -26,27 +26,33 @@ export function MercadoPagoCreditCardForm() {
   const { data: totals } = useDraftOrderTotals();
   const form = useFormContext();
   const {
-    mpInstance,
-    setMpInstance,
-    bricksBuilder,
-    setBricksBuilder,
     setIsLoading: setMercadoPagoLoading,
+    setHandleBrickSubmit,
   } = useMercadoPago();
   const { isMercadoPagoLoaded } = useLoadMercadoPago();
   const [error, setError] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [mpInstance, setMpInstance] = useState<any>(null);
+  const [bricksBuilder, setBricksBuilder] = useState<any>(null);
   const brickControllerRef = useRef<any>(null);
   const isInitializingRef = useRef(false);
   const hasRenderedRef = useRef(false);
-  const onReadyRef = useRef<() => void>();
-  const onSubmitRef = useRef<(args: any) => void>();
-  const onErrorRef = useRef<(err: any) => void>();
+  const onReadyRef = useRef<() => void>(null);
+  const onSubmitRef = useRef<(args: any) => void>(null);
+  const onErrorRef = useRef<(err: any) => void>(null);
 
   const confirmCheckout = useConfirmCheckout();
 
   // Memoize brick callbacks to prevent recreating the brick on every render
   const handleReady = useCallback(() => {
     setMercadoPagoLoading(false);
+    
+    // Remove padding from internal form after brick loads
+    const container = document.getElementById('mercadopago-brick-container');
+    const form = container?.querySelector('form');
+    if (form) {
+      form.style.padding = '0';
+    }
   }, [setMercadoPagoLoading]);
 
   const handleSubmit = useCallback(
@@ -121,6 +127,30 @@ export function MercadoPagoCreditCardForm() {
     onErrorRef.current = handleError;
   }, [handleReady, handleSubmit, handleError]);
 
+  // Exposing a function to submit the brick from the external button
+  useEffect(() => {
+    if (brickControllerRef.current) {
+      const submitHandler = async () => {
+        try {
+          const { formData } = await brickControllerRef.current.getFormData();
+          
+          // Manually trigger the onSubmit callback with the form data
+          if (onSubmitRef.current) {
+            await onSubmitRef.current({ formData });
+          }
+        } catch (error) {
+          console.error('Error getting/submitting MercadoPago form data:', error);
+          if (onErrorRef.current) {
+            onErrorRef.current(error);
+          }
+        }
+      };
+      setHandleBrickSubmit(submitHandler);
+    } else {
+      setHandleBrickSubmit(null);
+    }
+  }, [brickControllerRef.current, setHandleBrickSubmit]);
+
   // Initialize MercadoPago instance
   useLayoutEffect(() => {
     if (
@@ -178,6 +208,8 @@ export function MercadoPagoCreditCardForm() {
           },
           customization: {
             visual: {
+              hideFormTitle: true,
+              hidePaymentButton: true,
               style: {
                 theme: 'default',
               },
@@ -196,10 +228,11 @@ export function MercadoPagoCreditCardForm() {
         };
 
         const controller = await bricksBuilder.create(
-          'cardPayment',
+          'payment',
           'mercadopago-brick-container',
           settings
         );
+
         brickControllerRef.current = controller;
         isInitializingRef.current = false;
       } catch (_err) {
