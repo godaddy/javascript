@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
@@ -32,9 +38,9 @@ export function MercadoPagoCreditCardForm() {
   const brickControllerRef = useRef<any>(null);
   const isInitializingRef = useRef(false);
   const hasRenderedRef = useRef(false);
-  const onReadyRef = useRef<() => void>(() => {});
-  const onSubmitRef = useRef<(args: any) => void>(() => {});
-  const onErrorRef = useRef<(err: any) => void>(() => {});
+  const onReadyRef = useRef<() => void>();
+  const onSubmitRef = useRef<(args: any) => void>();
+  const onErrorRef = useRef<(err: any) => void>();
 
   const confirmCheckout = useConfirmCheckout();
 
@@ -43,59 +49,71 @@ export function MercadoPagoCreditCardForm() {
     setMercadoPagoLoading(false);
   }, [setMercadoPagoLoading]);
 
-  const handleSubmit = useCallback(async ({ formData }: any) => {
-    setMercadoPagoLoading(true);
+  const handleSubmit = useCallback(
+    async ({ formData }: any) => {
+      setMercadoPagoLoading(true);
 
-    // Validate form before processing payment
-    const valid = await form.trigger();
-    if (!valid) {
-      const firstError = Object.keys(form.formState.errors)[0];
-      if (firstError) {
-        form.setFocus(firstError);
-      }
-      setMercadoPagoLoading(false);
-      return;
-    }
-
-    // Track MercadoPago click
-    track({
-      eventId: eventIds.mercadopagoClick,
-      type: TrackingEventType.CLICK,
-      properties: {
-        paymentType: PaymentMethodType.MERCADOPAGO,
-      },
-    });
-
-    try {
-      // MercadoPago SDK provides the payment token in formData.token
-      const paymentToken = formData?.token;
-
-      if (!paymentToken) {
-        throw new Error('No payment token received from MercadoPago');
+      // Validate form before processing payment
+      const valid = await form.trigger();
+      if (!valid) {
+        const firstError = Object.keys(form.formState.errors)[0];
+        if (firstError) {
+          form.setFocus(firstError);
+        }
+        setMercadoPagoLoading(false);
+        return;
       }
 
-      await confirmCheckout.mutateAsync({
-        paymentToken,
-        paymentType: PaymentMethodType.MERCADOPAGO,
-        paymentProvider: PaymentProvider.MERCADOPAGO,
+      // Track MercadoPago click
+      track({
+        eventId: eventIds.mercadopagoClick,
+        type: TrackingEventType.CLICK,
+        properties: {
+          paymentType: PaymentMethodType.MERCADOPAGO,
+        },
       });
-      setError('');
-    } catch (err: unknown) {
-      if (err instanceof GraphQLErrorWithCodes) {
-        setCheckoutErrors(err.codes);
-      } else {
-        setError(t.errors.errorProcessingPayment);
-      }
-    } finally {
-      setMercadoPagoLoading(false);
-    }
-  }, [form, confirmCheckout, setCheckoutErrors, setMercadoPagoLoading, t.errors.errorProcessingPayment]);
 
-  const handleError = useCallback((err: any) => {
-    const _errorMessage = err?.message || err?.error || 'Unknown error';
-    setError(t.errors.errorProcessingPayment);
-    setMercadoPagoLoading(false);
-  }, [setMercadoPagoLoading, t.errors.errorProcessingPayment]);
+      try {
+        // MercadoPago SDK provides the payment token in formData.token
+        const paymentToken = formData?.token;
+
+        if (!paymentToken) {
+          throw new Error('No payment token received from MercadoPago');
+        }
+
+        await confirmCheckout.mutateAsync({
+          paymentToken,
+          paymentType: PaymentMethodType.MERCADOPAGO,
+          paymentProvider: PaymentProvider.MERCADOPAGO,
+        });
+        setError('');
+      } catch (err: unknown) {
+        if (err instanceof GraphQLErrorWithCodes) {
+          setCheckoutErrors(err.codes);
+        } else {
+          setError(t.errors.errorProcessingPayment);
+        }
+      } finally {
+        setMercadoPagoLoading(false);
+      }
+    },
+    [
+      form,
+      confirmCheckout,
+      setCheckoutErrors,
+      setMercadoPagoLoading,
+      t.errors.errorProcessingPayment,
+    ]
+  );
+
+  const handleError = useCallback(
+    (err: any) => {
+      const _errorMessage = err?.message || err?.error || 'Unknown error';
+      setError(t.errors.errorProcessingPayment);
+      setMercadoPagoLoading(false);
+    },
+    [setMercadoPagoLoading, t.errors.errorProcessingPayment]
+  );
 
   useEffect(() => {
     onReadyRef.current = handleReady;
@@ -178,7 +196,7 @@ export function MercadoPagoCreditCardForm() {
         };
 
         const controller = await bricksBuilder.create(
-          'payment',
+          'cardPayment',
           'mercadopago-brick-container',
           settings
         );
@@ -192,9 +210,7 @@ export function MercadoPagoCreditCardForm() {
     };
 
     renderBrick();
-  }, [
-    bricksBuilder,
-  ]);
+  }, [bricksBuilder]);
 
   // Unmount MercadoPago brick on component unmount only
   useEffect(() => {

@@ -1,20 +1,20 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.3.3/schema.json",
-	"extends": ["biome-config-godaddy/biome.json"],
-	"css": {
-		"parser": {
-			"cssModules": true,
-			"tailwindDirectives": true
-		}
-	},
-	"files": {
-		"includes": ["**/*", "!!**/src/globals.css"]
-	},
-	"linter": {
-		"rules": {
-			"correctness": {
-				"useUniqueElementIds": "off"
-			}
-		}
-	}
+  "$schema": "https://biomejs.dev/schemas/2.3.3/schema.json",
+  "extends": ["biome-config-godaddy/biome.json"],
+  "css": {
+    "parser": {
+      "cssModules": true,
+      "tailwindDirectives": true
+    }
+  },
+  "files": {
+    "includes": ["**/*", "!!**/src/globals.css"]
+  },
+  "linter": {
+    "rules": {
+      "correctness": {
+        "useUniqueElementIds": "off"
+      }
+    }
+  }
 }

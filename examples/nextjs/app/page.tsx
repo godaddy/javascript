@@ -58,11 +58,10 @@ export default async function Home() {
           processor: 'mercadopago',
           checkoutTypes: ['standard'],
         },
-        paypal:
-        {
+        paypal: {
           processor: 'paypal',
           checkoutTypes: ['express', 'standard'],
-        }
+        },
       },
       operatingHours: {
         default: {

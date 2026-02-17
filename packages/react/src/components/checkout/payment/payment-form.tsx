@@ -18,9 +18,9 @@ import {
 } from '@/components/checkout/line-items';
 import ApplePayIcon from '@/components/checkout/payment/icons/ApplePay';
 import GooglePayIcon from '@/components/checkout/payment/icons/GooglePay';
+import MercadoPagoIcon from '@/components/checkout/payment/icons/MercadoPago';
 import PayPalIcon from '@/components/checkout/payment/icons/PayPal';
 import PazeIcon from '@/components/checkout/payment/icons/Paze';
-import MercadoPagoIcon from '@/components/checkout/payment/icons/MercadoPago';
 import {
   hasPaymentMethodButton,
   hasPaymentMethodForm,

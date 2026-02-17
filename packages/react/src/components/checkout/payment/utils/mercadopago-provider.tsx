@@ -30,9 +30,12 @@ export const MercadoPagoProvider = ({ children }: { children: ReactNode }) => {
   const [bricksBuilder, setBricksBuilder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const setMpInstanceCallback = useCallback((instance: MercadoPagoInstance | null) => {
-    setMpInstance(instance);
-  }, []);
+  const setMpInstanceCallback = useCallback(
+    (instance: MercadoPagoInstance | null) => {
+      setMpInstance(instance);
+    },
+    []
+  );
 
   const setBricksBuilderCallback = useCallback((builder: any) => {
     setBricksBuilder(builder);
