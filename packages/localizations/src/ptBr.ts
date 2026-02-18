@@ -114,6 +114,8 @@ export const ptBr = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Use o formulário do MercadoPago abaixo para concluir sua compra com segurança.',
     },
     noMethodsAvailable: 'Nenhum método de pagamento disponível',
     cardNumber: 'Número do cartão',

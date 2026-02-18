@@ -114,6 +114,8 @@ export const deDe = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Verwende das MercadoPago-Formular unten, um deinen Kauf sicher abzuschließen.',
     },
     noMethodsAvailable: 'Keine Zahlungsmethoden verfügbar',
     cardNumber: 'Kartennummer',

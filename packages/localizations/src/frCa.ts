@@ -115,6 +115,8 @@ export const frCa = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Utilisez le formulaire MercadoPago ci-dessous pour finaliser votre achat en toute sécurité.',
     },
     noMethodsAvailable: 'Aucune méthode de paiement disponible',
     cardNumber: 'Numéro de carte',

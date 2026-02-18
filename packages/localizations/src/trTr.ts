@@ -114,6 +114,8 @@ export const trTr = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Satın alımınızı güvenle tamamlamak için aşağıdaki MercadoPago formunu kullanın.',
     },
     noMethodsAvailable: 'Kullanılabilir ödeme yöntemi yok',
     cardNumber: 'Kart numarası',

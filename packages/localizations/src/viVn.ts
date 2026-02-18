@@ -114,6 +114,8 @@ export const viVn = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Hãy sử dụng biểu mẫu MercadoPago bên dưới để hoàn tất mua hàng một cách an toàn.',
     },
     noMethodsAvailable: 'Không có phương thức thanh toán nào',
     cardNumber: 'Số thẻ',

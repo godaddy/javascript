@@ -114,6 +114,8 @@ export const enIe = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Use the MercadoPago form below to complete your purchase securely.',
     },
     noMethodsAvailable: 'No payment methods available',
     cardNumber: 'Card number',

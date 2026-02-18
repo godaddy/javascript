@@ -110,6 +110,7 @@ export const zhSg = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago: '请使用下方的 MercadoPago 表单安全完成购买。',
     },
     noMethodsAvailable: '无可用付款方式',
     cardNumber: '卡号',

@@ -142,7 +142,7 @@ export function PaymentForm(
         case PaymentMethodType.OFFLINE:
           return t.payment.descriptions?.offline;
         case PaymentMethodType.MERCADOPAGO:
-          return undefined;
+          return t.payment.descriptions?.mercadopago;
         default:
           return undefined;
       }
@@ -255,15 +255,6 @@ export function PaymentForm(
     const hasForm = hasPaymentMethodForm(paymentMethod, methodConfig.processor);
 
     if (!hasForm) return null;
-
-    // Show message for MercadoPago, form renders outside accordion
-    if (paymentMethod === PaymentMethodType.MERCADOPAGO) {
-      return (
-        <p className='text-sm text-muted-foreground'>
-          Use the MercadoPago form below to complete your purchase securely.
-        </p>
-      );
-    }
 
     return (
       <PaymentMethodRenderer

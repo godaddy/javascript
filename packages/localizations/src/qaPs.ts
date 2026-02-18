@@ -115,6 +115,8 @@ export const qaPs = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        '[Üšë ţhë MërçâðöÞâgö förm këlöw ţö çömþlëţë ÿöür þürçhâšë šëçürëlÿ.]',
     },
     noMethodsAvailable: '[Ñö þâÿmëñţ mëţhödš âvâîlâblë âţ ţhîš ţîmë]',
     cardNumber: '[Çârd ñümkër îñþüţ fîëld]',
