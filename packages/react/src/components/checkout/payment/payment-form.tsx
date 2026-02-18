@@ -275,7 +275,10 @@ export function PaymentForm(
 
   // Render the correct checkout button(s) for the selected payment method
   const getCheckoutButton = () => {
-    if (isConfirmingCheckout) {
+    if (
+      isConfirmingCheckout &&
+      paymentMethod !== PaymentMethodType.MERCADOPAGO
+    ) {
       return (
         <Button
           type='button'

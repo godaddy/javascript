@@ -1,10 +1,5 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { LoaderCircle } from 'lucide-react';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
@@ -21,6 +16,21 @@ import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import { PaymentMethodType } from '@/types';
 
+// Module-level singletons to prevent multiple SDK/brick instantiations
+let mpInstance: any = null;
+let bricksBuilderInstance: any = null;
+let brickController: any = null;
+let brickCreationPromise: Promise<any> | null = null;
+let isSubmitting = false;
+
+function getMercadoPagoInstance(publicKey: string) {
+  if (!mpInstance) {
+    mpInstance = new (window as any).MercadoPago(publicKey);
+    bricksBuilderInstance = mpInstance.bricks();
+  }
+  return { mpInstance, bricksBuilderInstance };
+}
+
 export function MercadoPagoCheckoutButton() {
   const { t } = useGoDaddyContext();
   const { mercadoPagoConfig, setCheckoutErrors, isConfirmingCheckout } =
@@ -32,35 +42,13 @@ export function MercadoPagoCheckoutButton() {
   const confirmCheckout = useConfirmCheckout();
 
   const [error, setError] = useState('');
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [mpInstance, setMpInstance] = useState<any>(null);
-  const [bricksBuilder, setBricksBuilder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isBrickReady, setIsBrickReady] = useState(false);
-  const brickControllerRef = useRef<any>(null);
-  const isInitializingRef = useRef(false);
-  const hasRenderedRef = useRef(false);
-  const onReadyRef = useRef<() => void>(null);
-  const onSubmitRef = useRef<(args: any) => void>(null);
-  const onErrorRef = useRef<(err: any) => void>(null);
-
-  const handleReady = useCallback(() => {
-    setIsLoading(false);
-
-    const container = document.getElementById('mercadopago-brick-container');
-    const formElement = container?.querySelector('form');
-    if (formElement) {
-      formElement.style.padding = '0';
-      const childDiv = formElement.querySelector(':scope > div');
-      if (childDiv instanceof HTMLElement) {
-        childDiv.style.margin = '0';
-      }
-    }
-  }, []);
+  const [isBrickReady, setIsBrickReady] = useState(!!brickController);
+  const elementId = 'mercadopago-brick-container';
 
   const handleSubmit = useCallback(
     async ({ formData }: any) => {
-      setIsLoading(true);
+      isSubmitting = true;
 
       const valid = await form.trigger();
       if (!valid) {
@@ -68,7 +56,7 @@ export function MercadoPagoCheckoutButton() {
         if (firstError) {
           form.setFocus(firstError);
         }
-        setIsLoading(false);
+        isSubmitting = false;
         return;
       }
 
@@ -99,139 +87,106 @@ export function MercadoPagoCheckoutButton() {
         } else {
           setError(t.errors.errorProcessingPayment);
         }
-      } finally {
-        setIsLoading(false);
+        isSubmitting = false;
       }
     },
     [confirmCheckout, form, setCheckoutErrors, t.errors.errorProcessingPayment]
   );
 
-  const handleError = useCallback(
-    (err: any) => {
-      const _errorMessage = err?.message || err?.error || 'Unknown error';
-      setError(t.errors.errorProcessingPayment);
-      setIsLoading(false);
-    },
-    [t.errors.errorProcessingPayment]
-  );
-
-  useEffect(() => {
-    onReadyRef.current = handleReady;
-    onSubmitRef.current = handleSubmit;
-    onErrorRef.current = handleError;
-  }, [handleReady, handleSubmit, handleError]);
-
   useLayoutEffect(() => {
-    if (
-      !isMercadoPagoLoaded ||
-      !mercadoPagoConfig?.publicKey ||
-      mpInstance ||
-      isInitialized
-    )
-      return;
+    const canInitialize = isMercadoPagoLoaded && mercadoPagoConfig?.publicKey;
 
-    try {
-      const mp = new (window as any).MercadoPago(mercadoPagoConfig.publicKey);
-      const builder = mp.bricks();
-      setMpInstance(mp);
-      setBricksBuilder(builder);
-      setIsInitialized(true);
-    } catch (_err) {
-      setError(t.errors.errorProcessingPayment);
-    }
-  }, [
-    isMercadoPagoLoaded,
-    mercadoPagoConfig?.publicKey,
-    mpInstance,
-    isInitialized,
-    t.errors.errorProcessingPayment,
-  ]);
+    if (canInitialize) {
+      if (brickController) {
+        // Brick already exists, just mark as ready
+        setIsBrickReady(true);
+      } else if (brickCreationPromise) {
+        // Brick creation in progress, wait for it
+        brickCreationPromise.then(() => setIsBrickReady(true));
+      } else {
+        // Create new brick
+        const renderBrick = async () => {
+          const total = totals?.total?.value || 0;
 
-  useLayoutEffect(() => {
-    if (
-      !bricksBuilder ||
-      brickControllerRef.current ||
-      isInitializingRef.current ||
-      hasRenderedRef.current
-    )
-      return;
+          try {
+            const container = document.getElementById(elementId);
+            if (container) {
+              container.innerHTML = '';
+            }
 
-    const renderBrick = async () => {
-      const total = totals?.total?.value || 0;
+            const { bricksBuilderInstance: bricksBuilder } =
+              getMercadoPagoInstance(mercadoPagoConfig.publicKey);
 
-      try {
-        isInitializingRef.current = true;
-        hasRenderedRef.current = true;
-        const container = document.getElementById(
-          'mercadopago-brick-container'
-        );
-        if (container) {
-          container.innerHTML = '';
-        }
-        const settings = {
-          initialization: {
-            amount: total,
-            payer: { email: 'dummy@testuser.com' },
-          },
-          customization: {
-            visual: {
-              hideFormTitle: true,
-              hidePaymentButton: true,
-              style: {
-                theme: 'default',
+            brickController = await bricksBuilder.create('payment', elementId, {
+              initialization: {
+                amount: total,
+                payer: { email: 'dummy@testuser.com' },
               },
-            },
-            paymentMethods: {
-              creditCard: 'all',
-              debitCard: 'all',
-              maxInstallments: 1,
-            },
-          },
-          callbacks: {
-            onReady: () => onReadyRef.current?.(),
-            onSubmit: (args: any) => onSubmitRef.current?.(args),
-            onError: (err: any) => onErrorRef.current?.(err),
-          },
+              customization: {
+                visual: {
+                  hideFormTitle: true,
+                  hidePaymentButton: true,
+                  style: { theme: 'default' },
+                },
+                paymentMethods: {
+                  creditCard: 'all',
+                  debitCard: 'all',
+                  maxInstallments: 1,
+                },
+              },
+              callbacks: {
+                onReady: () => {
+                  setIsLoading(false);
+                  const brickContainer = document.getElementById(elementId);
+                  const formElement = brickContainer?.querySelector('form');
+                  if (formElement) {
+                    formElement.style.padding = '0';
+                    const childDiv = formElement.querySelector(':scope > div');
+                    if (childDiv instanceof HTMLElement) {
+                      childDiv.style.margin = '0';
+                    }
+                  }
+                },
+                onError: () => {
+                  setError(t.errors.errorProcessingPayment);
+                  setIsLoading(false);
+                },
+              },
+            });
+
+            setIsBrickReady(true);
+          } catch (_err) {
+            setError(t.errors.errorProcessingPayment);
+            setIsBrickReady(false);
+            brickCreationPromise = null;
+          }
         };
 
-        const controller = await bricksBuilder.create(
-          'payment',
-          'mercadopago-brick-container',
-          settings
-        );
-
-        brickControllerRef.current = controller;
-        setIsBrickReady(true);
-        isInitializingRef.current = false;
-      } catch (_err) {
-        setError(t.errors.errorProcessingPayment);
-        isInitializingRef.current = false;
-        hasRenderedRef.current = false;
-        setIsBrickReady(false);
+        brickCreationPromise = renderBrick();
+        brickCreationPromise.finally(() => {
+          brickCreationPromise = null;
+        });
       }
-    };
+    }
 
-    renderBrick();
-  }, [bricksBuilder]);
-
-  useEffect(() => {
     return () => {
-      if (brickControllerRef.current) {
+      // Don't unmount if submitting (parent replaces component with loading button)
+      // or if creation is in progress (React Strict Mode double-invocation)
+      if (brickController && !brickCreationPromise && !isSubmitting) {
         try {
-          brickControllerRef.current.unmount();
+          brickController.unmount();
         } catch (_e) {
           // Ignore unmount errors
         }
-        brickControllerRef.current = null;
+        brickController = null;
       }
-      const container = document.getElementById('mercadopago-brick-container');
-      if (container) {
-        container.innerHTML = '';
-      }
-      isInitializingRef.current = false;
-      setIsBrickReady(false);
     };
-  }, []);
+  }, [
+    isMercadoPagoLoaded,
+    mercadoPagoConfig?.publicKey,
+    elementId,
+    t.errors.errorProcessingPayment,
+  ]);
 
   const handleClick = async () => {
     const valid = await form.trigger();
@@ -243,32 +198,39 @@ export function MercadoPagoCheckoutButton() {
       return;
     }
 
-    if (brickControllerRef.current && onSubmitRef.current) {
-      const { formData } = await brickControllerRef.current.getFormData();
-      await onSubmitRef.current({ formData });
+    if (brickController) {
+      const { formData } = await brickController.getFormData();
+      await handleSubmit({ formData });
     }
   };
 
   return (
     <div className='flex flex-col gap-2'>
-      <div id='mercadopago-brick-container' />
+      <div id={elementId} />
       {error ? (
         <p className='text-[0.8rem] font-medium text-destructive'>{error}</p>
       ) : null}
-      <Button
-        className='w-full'
-        size='lg'
-        type='button'
-        onClick={handleClick}
-        disabled={
-          isConfirmingCheckout ||
-          isPaymentDisabled ||
-          isLoading ||
-          !isBrickReady
-        }
-      >
-        {t.payment.payNow}
-      </Button>
+      {!isConfirmingCheckout ? (
+        <Button
+          className='w-full mt-4'
+          size='lg'
+          type='button'
+          onClick={handleClick}
+          disabled={isPaymentDisabled || isLoading || !isBrickReady}
+        >
+          {t.payment.payNow}
+        </Button>
+      ) : (
+        <Button
+          type='button'
+          size='lg'
+          className='w-full flex items-center justify-center gap-2 px-8 h-13 mt-4'
+          disabled
+        >
+          <LoaderCircle className='h-5 w-5 animate-spin' />
+          {t.payment.processingPayment}
+        </Button>
+      )}
     </div>
   );
 }
