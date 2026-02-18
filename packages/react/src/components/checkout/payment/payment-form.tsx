@@ -436,7 +436,6 @@ export function PaymentForm(
         />
       ) : null}
 
-
       {isShipping &&
       session?.enableShipping &&
       paymentMethod !== PaymentMethodType.CREDIT_CARD ? (

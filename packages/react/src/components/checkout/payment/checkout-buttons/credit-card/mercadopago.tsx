@@ -7,12 +7,12 @@ import {
 } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
 import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadMercadoPago } from '@/components/checkout/payment/utils/use-load-mercadopago';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -83,7 +83,7 @@ export function MercadoPagoCheckoutButton() {
       try {
         const paymentToken = formData?.token;
 
-          if (!paymentToken) {
+        if (!paymentToken) {
           throw new Error('No payment token received from MercadoPago');
         }
 
@@ -103,12 +103,7 @@ export function MercadoPagoCheckoutButton() {
         setIsLoading(false);
       }
     },
-    [
-      confirmCheckout,
-      form,
-      setCheckoutErrors,
-      t.errors.errorProcessingPayment,
-    ]
+    [confirmCheckout, form, setCheckoutErrors, t.errors.errorProcessingPayment]
   );
 
   const handleError = useCallback(
@@ -249,12 +244,8 @@ export function MercadoPagoCheckoutButton() {
     }
 
     if (brickControllerRef.current && onSubmitRef.current) {
-      try {
-        const { formData } = await brickControllerRef.current.getFormData();
-        await onSubmitRef.current({ formData });
-      } catch (error) {
-        console.error('MercadoPago submission error:', error);
-      }
+      const { formData } = await brickControllerRef.current.getFormData();
+      await onSubmitRef.current({ formData });
     }
   };
 

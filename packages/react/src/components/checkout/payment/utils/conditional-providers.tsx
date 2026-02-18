@@ -17,12 +17,8 @@ interface ConditionalPaymentProvidersProps {
 export function ConditionalPaymentProviders({
   children,
 }: ConditionalPaymentProvidersProps) {
-  const {
-    stripeConfig,
-    godaddyPaymentsConfig,
-    squareConfig,
-    paypalConfig,
-  } = useCheckoutContext();
+  const { stripeConfig, godaddyPaymentsConfig, squareConfig, paypalConfig } =
+    useCheckoutContext();
   const { payPalRequest } = useBuildPaymentRequest();
 
   // Start with the children and conditionally wrap with providers
