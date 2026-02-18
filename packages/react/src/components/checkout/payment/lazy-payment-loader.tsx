@@ -72,7 +72,7 @@ const LazyComponents = {
   ),
   MercadoPagoCheckoutButton: lazy(() =>
     import(
-      '@/components/checkout/payment/checkout-buttons/credit-card/mercadopago'
+      '@/components/checkout/payment/checkout-buttons/mercadopago/mercadopago'
     ).then(module => ({
       default: module.MercadoPagoCheckoutButton,
     }))
