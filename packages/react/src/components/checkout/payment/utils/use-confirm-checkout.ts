@@ -63,6 +63,7 @@ export enum PaymentProvider {
   CHECK_COMMERCE = 'CHECK_COMMERCE',
   SQUARE = 'SQUARE',
   OFFLINE = 'OFFLINE',
+  CCAVENUE = 'CCAVENUE',
 }
 
 export function useConfirmCheckout() {

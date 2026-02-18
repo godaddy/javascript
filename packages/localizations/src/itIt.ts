@@ -108,6 +108,7 @@ export const itIt = {
       paze: 'Paze',
       offline: 'Pagamenti offline',
       mercadopago: 'Mercado Pago',
+      ccavenue: 'Paga con CCAvenue',
     },
     descriptions: {
       creditCard: '',
@@ -118,6 +119,7 @@ export const itIt = {
       offline: '',
       mercadopago:
         'Usa il modulo MercadoPago qui sotto per completare l’acquisto in modo sicuro.',
+      ccavenue: '',
     },
     noMethodsAvailable: 'Nessun metodo di pagamento disponibile',
     cardNumber: 'Numero della carta',

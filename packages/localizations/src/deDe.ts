@@ -107,6 +107,7 @@ export const deDe = {
       paze: 'Paze',
       offline: 'Offline-Zahlungen',
       mercadopago: 'Mercado Pago',
+      ccavenue: 'Mit CCAvenue bezahlen',
     },
     descriptions: {
       creditCard: '',
@@ -117,6 +118,7 @@ export const deDe = {
       offline: '',
       mercadopago:
         'Verwende das MercadoPago-Formular unten, um deinen Kauf sicher abzuschließen.',
+      ccavenue: '',
     },
     noMethodsAvailable: 'Keine Zahlungsmethoden verfügbar',
     cardNumber: 'Kartennummer',

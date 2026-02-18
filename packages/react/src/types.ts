@@ -44,6 +44,7 @@ export const PaymentProvider = {
   PAZE: 'paze',
   OFFLINE: 'offline',
   MERCADOPAGO: 'mercadopago',
+  CCAVENUE: 'ccavenue',
 } as const;
 
 export const CheckoutType = {
@@ -64,6 +65,7 @@ export const PaymentMethodType = {
   OFFLINE: 'offline',
   PAZE: 'paze',
   MERCADOPAGO: 'mercadopago',
+  CCAVENUE: 'ccavenue',
 } as const;
 
 // Union of all payment method keys

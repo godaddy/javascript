@@ -1,5 +1,6 @@
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { CCAvenueReturnProvider } from './ccavenue-return-provider';
 import { PayPalProvider } from './paypal-provider';
 import { PoyntCollectProvider } from './poynt-provider';
 import { SquareProvider } from './square-provider';
@@ -17,8 +18,13 @@ interface ConditionalPaymentProvidersProps {
 export function ConditionalPaymentProviders({
   children,
 }: ConditionalPaymentProvidersProps) {
-  const { stripeConfig, godaddyPaymentsConfig, squareConfig, paypalConfig } =
-    useCheckoutContext();
+  const {
+    stripeConfig,
+    godaddyPaymentsConfig,
+    squareConfig,
+    paypalConfig,
+    ccavenueConfig,
+  } = useCheckoutContext();
   const { payPalRequest } = useBuildPaymentRequest();
 
   // Start with the children and conditionally wrap with providers
@@ -56,6 +62,13 @@ export function ConditionalPaymentProviders({
       >
         <PayPalProvider>{wrappedChildren}</PayPalProvider>
       </PayPalScriptProvider>
+    );
+  }
+
+  // CCAvenue return flow: only when CCAvenue is configured (has access code)
+  if (ccavenueConfig?.accessCodeId?.trim()) {
+    wrappedChildren = (
+      <CCAvenueReturnProvider>{wrappedChildren}</CCAvenueReturnProvider>
     );
   }
 
