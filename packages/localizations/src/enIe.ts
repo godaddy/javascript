@@ -106,6 +106,7 @@ export const enIe = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Offline payments',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',

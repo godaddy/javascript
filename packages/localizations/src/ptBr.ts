@@ -106,6 +106,7 @@ export const ptBr = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagamentos offline',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',

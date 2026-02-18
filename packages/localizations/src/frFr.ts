@@ -107,6 +107,7 @@ export const frFr = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Paiements hors ligne',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',

@@ -106,6 +106,7 @@ export const idId = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pembayaran offline',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',

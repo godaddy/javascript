@@ -106,6 +106,7 @@ export const deDe = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Offline-Zahlungen',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',

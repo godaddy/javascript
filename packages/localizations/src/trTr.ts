@@ -106,6 +106,7 @@ export const trTr = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Çevrimdışı ödemeler',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',

@@ -107,6 +107,7 @@ export const qaPs = {
       googlePay: '[Göögië Þâÿ Þâÿmëñţ]',
       paze: '[Þâžë Þâÿmëñţ Šërvîçë]',
       offline: '[Öfflîñë þâÿmëñţ mëţhödš]',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',

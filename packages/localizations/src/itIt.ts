@@ -107,6 +107,7 @@ export const itIt = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagamenti offline',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',

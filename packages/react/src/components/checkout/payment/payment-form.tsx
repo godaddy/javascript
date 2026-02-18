@@ -117,7 +117,7 @@ export function PaymentForm(
         case PaymentMethodType.OFFLINE:
           return t.payment.methods.offline;
         case PaymentMethodType.MERCADOPAGO:
-          return 'MercadoPago';
+          return t.payment.methods.mercadopago;
         default:
           return key;
       }
@@ -436,14 +436,6 @@ export function PaymentForm(
         />
       ) : null}
 
-      {/* Render MercadoPago form outside accordion */}
-      {paymentMethod === PaymentMethodType.MERCADOPAGO && methodConfig ? (
-        <PaymentMethodRenderer
-          type='form'
-          method={paymentMethod}
-          provider={methodConfig.processor}
-        />
-      ) : null}
 
       {isShipping &&
       session?.enableShipping &&

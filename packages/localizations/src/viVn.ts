@@ -106,6 +106,7 @@ export const viVn = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Thanh toán ngoại tuyến',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',

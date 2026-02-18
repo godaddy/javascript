@@ -107,6 +107,7 @@ export const esMx = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagos fuera de línea',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',

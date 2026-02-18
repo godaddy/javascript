@@ -102,6 +102,7 @@ export const zhSg = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: '线下付款',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',
