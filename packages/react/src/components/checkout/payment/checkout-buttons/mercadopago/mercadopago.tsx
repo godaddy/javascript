@@ -60,14 +60,6 @@ export function MercadoPagoCheckoutButton() {
         return;
       }
 
-      track({
-        eventId: eventIds.mercadopagoClick,
-        type: TrackingEventType.CLICK,
-        properties: {
-          paymentType: PaymentMethodType.MERCADOPAGO,
-        },
-      });
-
       try {
         const paymentToken = formData?.token;
 

@@ -27,8 +27,6 @@ export const eventIds = {
   pazePayImpression: 'paze_pay.impression',
   pazePayClick: 'paze_pay.click',
   pazePayCompleted: 'paze_pay_completed.event',
-  mercadopagoClick: 'mercadopago.click',
-  mercadopagoCompleted: 'mercadopago_completed.event',
   expressCheckoutError: 'express_checkout_error.event',
   // Express checkout coupon events
   expressApplyCouponEvent: 'express_checkout_apply_coupon.event',

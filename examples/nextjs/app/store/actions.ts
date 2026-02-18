@@ -77,6 +77,8 @@ export async function checkoutWithOrder(orderId: string) {
     throw new Error('Failed to create checkout session');
   }
 
+  console.log({ session });
+
   if (!session.url) {
     throw new Error('No checkout URL returned');
   }
