@@ -31,10 +31,11 @@ export function MercadoPagoCreditCardCheckoutButton() {
 
   return (
     <Button
+      className='w-full'
+      size='lg'
       type='button'
       onClick={handleSubmit}
       disabled={!handleBrickSubmit || isLoading}
-      className='w-full'
     >
       {t.payment.payNow}
     </Button>
