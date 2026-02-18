@@ -102,6 +102,7 @@ export const zhCn = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: '线下付款',
+      ccavenue: '使用 CCAvenue 支付',
     },
     descriptions: {
       creditCard: '',
@@ -110,6 +111,7 @@ export const zhCn = {
       googlePay: '',
       paze: '',
       offline: '',
+      ccavenue: '',
     },
     noMethodsAvailable: '暂无可用的付款方式',
     cardNumber: '卡号',

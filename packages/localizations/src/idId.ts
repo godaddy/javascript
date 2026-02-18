@@ -106,6 +106,7 @@ export const idId = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pembayaran offline',
+      ccavenue: 'Bayar dengan CCAvenue',
     },
     descriptions: {
       creditCard: '',
@@ -114,6 +115,7 @@ export const idId = {
       googlePay: '',
       paze: '',
       offline: '',
+      ccavenue: '',
     },
     noMethodsAvailable: 'Tidak ada metode pembayaran tersedia',
     cardNumber: 'Nomor kartu',

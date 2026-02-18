@@ -43,6 +43,7 @@ export const PaymentProvider = {
   PAYPAL: 'paypal',
   PAZE: 'paze',
   OFFLINE: 'offline',
+  CCAVENUE: 'ccavenue',
 } as const;
 
 export const CheckoutType = {
@@ -62,6 +63,7 @@ export const PaymentMethodType = {
   GOOGLE_PAY: 'googlePay',
   OFFLINE: 'offline',
   PAZE: 'paze',
+  CCAVENUE: 'ccavenue',
 } as const;
 
 // Union of all payment method keys
