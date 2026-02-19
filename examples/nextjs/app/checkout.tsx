@@ -28,6 +28,16 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
       paypalConfig={{
         clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
       }}
+      ccavenueConfig={
+        process.env.NEXT_PUBLIC_CCAVENUE_ACCESS_CODE_ID &&
+        process.env.NEXT_PUBLIC_CCAVENUE_REDIRECT_URL
+          ? {
+              accessCodeId:
+                process.env.NEXT_PUBLIC_CCAVENUE_ACCESS_CODE_ID,
+              redirectURL: process.env.NEXT_PUBLIC_CCAVENUE_REDIRECT_URL,
+            }
+          : undefined
+      }
     />
   );
 }

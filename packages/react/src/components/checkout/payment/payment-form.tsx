@@ -117,7 +117,7 @@ export function PaymentForm(
         case PaymentMethodType.OFFLINE:
           return t.payment.methods.offline;
         case PaymentMethodType.CCAVENUE:
-          return (t.payment.methods as Record<string, string>).ccavenue ?? 'Pay with CCAvenue';
+          return t.payment.methods.ccavenue ?? 'Pay with CCAvenue';
         default:
           return key;
       }
@@ -142,7 +142,7 @@ export function PaymentForm(
         case PaymentMethodType.OFFLINE:
           return t.payment.descriptions?.offline;
         case PaymentMethodType.CCAVENUE:
-          return (t.payment.descriptions as Record<string, string | undefined> | undefined)?.ccavenue;
+          return t.payment.descriptions?.ccavenue;
         default:
           return undefined;
       }

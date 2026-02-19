@@ -16,18 +16,15 @@ export function CCAvenueCheckoutButton() {
   const { t } = useGoDaddyContext();
   const { setCheckoutErrors, isConfirmingCheckout, ccavenueConfig } =
     useCheckoutContext();
-  console.log('ccavenueConfig', ccavenueConfig);
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const authorizeCheckout = useAuthorizeCheckout();
 
   const handleClick = useCallback(async () => {
     const valid = await form.trigger();
-    console.log('valid', valid);
     if (!valid) {
       const firstError = Object.keys(form.formState.errors)[0];
       if (firstError) {
-        console.log('firstError', firstError);
         form.setFocus(firstError);
       }
       return;
@@ -45,8 +42,7 @@ export function CCAvenueCheckoutButton() {
         paymentToken: '',
       });
       console.log('resData', resData);
-      const transactionRefNum = (resData as { transactionRefNum?: string })
-        ?.transactionRefNum;
+      const transactionRefNum = resData?.transactionRefNum ?? '';
       if (!transactionRefNum) {
         setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
         return;
@@ -84,18 +80,17 @@ export function CCAvenueCheckoutButton() {
     ccavenueConfig?.accessCodeId,
   ]);
 
-  const isBusy = isConfirmingCheckout || authorizeCheckout.isPending;
+  const isBusy = isConfirmingCheckout || isPaymentDisabled;
 
   return (
     <Button
       type='button'
       size='lg'
-      className={cn('w-full', isPaymentDisabled || isBusy ? 'opacity-80' : '')}
+      className={cn('w-full')}
       disabled={isPaymentDisabled || isBusy}
       onClick={handleClick}
     >
-      {(t.payment.methods as Record<string, string>).ccavenue ??
-        'Pay with CCAvenue'}
+      {t.payment.methods.ccavenue ?? 'Pay with CCAvenue'}
     </Button>
   );
 }
