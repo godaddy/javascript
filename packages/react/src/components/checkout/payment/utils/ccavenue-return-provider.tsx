@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useCheckoutContext } from '@/components/checkout/checkout';
 import {
-  redirectToSuccessUrl,
-  useCheckoutContext,
-} from '@/components/checkout/checkout';
-import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
-import { useGoDaddyContext } from '@/godaddy-provider';
-import { confirmCheckout } from '@/lib/godaddy/godaddy';
+  PaymentProvider,
+  useConfirmCheckout,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 
 export function CCAvenueReturnProvider({
@@ -15,12 +13,8 @@ export function CCAvenueReturnProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const {
-    session,
-    setCheckoutErrors,
-    setIsConfirmingCheckout,
-  } = useCheckoutContext();
-  const { apiHost } = useGoDaddyContext();
+  const { session, setCheckoutErrors } = useCheckoutContext();
+  const confirmCheckout = useConfirmCheckout();
   const hasRun = useRef(false);
 
   useEffect(() => {
@@ -36,8 +30,6 @@ export function CCAvenueReturnProvider({
     }
 
     hasRun.current = true;
-    setIsConfirmingCheckout(true);
-    setCheckoutErrors(undefined);
 
     const confirmInput = {
       paymentToken: encResp,
@@ -45,18 +37,9 @@ export function CCAvenueReturnProvider({
       paymentProvider: PaymentProvider.CCAVENUE,
     };
 
-    (async () => {
-      try {
-
-        await confirmCheckout(confirmInput, session, apiHost);
-
-        const url = new URL(window.location.href);
-        url.searchParams.delete('encResp');
-        url.searchParams.delete('sessionId');
-        window.history.replaceState({}, '', url.pathname + url.search);
-
-        redirectToSuccessUrl(session.successUrl);
-      } catch (err) {
+    confirmCheckout
+      .mutateAsync(confirmInput)
+      .catch(err => {
         if (err instanceof GraphQLErrorWithCodes) {
           setCheckoutErrors(err.codes);
         } else {
@@ -66,18 +49,8 @@ export function CCAvenueReturnProvider({
               : 'Payment confirmation failed.',
           ]);
         }
-      } finally {
-        setIsConfirmingCheckout(false);
-      }
-    })();
-  }, [
-    apiHost,
-    session?.token,
-    session?.id,
-    session?.successUrl,
-    setCheckoutErrors,
-    setIsConfirmingCheckout,
-  ]);
+      });
+  }, [session?.token, session?.id, setCheckoutErrors]);
 
   return <>{children}</>;
 }
