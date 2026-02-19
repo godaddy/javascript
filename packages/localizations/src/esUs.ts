@@ -107,6 +107,7 @@ export const esUs = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagos offline',
+      ccavenue: 'Pagar con CCAvenue',
     },
     descriptions: {
       creditCard: '',
@@ -115,6 +116,7 @@ export const esUs = {
       googlePay: '',
       paze: '',
       offline: '',
+      ccavenue: '',
     },
     noMethodsAvailable: 'No hay métodos de pago disponibles',
     cardNumber: 'Número de tarjeta',

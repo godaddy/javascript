@@ -106,6 +106,7 @@ export const trTr = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Çevrimdışı ödemeler',
+      ccavenue: 'CCAvenue ile öde',
     },
     descriptions: {
       creditCard: '',
@@ -114,6 +115,7 @@ export const trTr = {
       googlePay: '',
       paze: '',
       offline: '',
+      ccavenue: '',
     },
     noMethodsAvailable: 'Kullanılabilir ödeme yöntemi yok',
     cardNumber: 'Kart numarası',

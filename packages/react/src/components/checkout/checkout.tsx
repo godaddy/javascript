@@ -80,6 +80,11 @@ export type PayPalConfig = {
   disableFunding?: Array<'credit' | 'card' | 'paylater' | 'venmo'>;
 };
 
+export type CCAvenueConfig = {
+  accessCodeId: string;
+  redirectURL: string;
+};
+
 interface CheckoutContextValue {
   elements?: CheckoutElements;
   targets?: Partial<
@@ -92,6 +97,7 @@ interface CheckoutContextValue {
   godaddyPaymentsConfig?: GodaddyPaymentsConfig;
   squareConfig?: SquareConfig;
   paypalConfig?: PayPalConfig;
+  ccavenueConfig?: CCAvenueConfig;
   isConfirmingCheckout: boolean;
   setIsConfirmingCheckout: (isConfirming: boolean) => void;
   checkoutErrors?: string[] | undefined;
@@ -202,6 +208,7 @@ export interface CheckoutProps {
   godaddyPaymentsConfig?: GodaddyPaymentsConfig;
   squareConfig?: SquareConfig;
   paypalConfig?: PayPalConfig;
+  ccavenueConfig?: CCAvenueConfig;
   layout?: LayoutSection[];
   direction?: 'ltr' | 'rtl';
   showStoreHours?: boolean;
@@ -221,6 +228,7 @@ export function Checkout(props: CheckoutProps) {
     godaddyPaymentsConfig,
     squareConfig,
     paypalConfig,
+    ccavenueConfig,
     isCheckoutDisabled,
   } = props;
 
@@ -386,6 +394,7 @@ export function Checkout(props: CheckoutProps) {
           godaddyPaymentsConfig,
           squareConfig,
           paypalConfig,
+          ccavenueConfig,
           requiredFields,
           isConfirmingCheckout,
           setIsConfirmingCheckout,

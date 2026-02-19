@@ -107,6 +107,7 @@ export const qaPs = {
       googlePay: '[Göögië Þâÿ Þâÿmëñţ]',
       paze: '[Þâžë Þâÿmëñţ Šërvîçë]',
       offline: '[Öfflîñë þâÿmëñţ mëţhödš]',
+      ccavenue: '[Þâÿ ïñ ÇÇÂvëñûë]',
     },
     descriptions: {
       creditCard: '',
@@ -115,6 +116,7 @@ export const qaPs = {
       googlePay: '',
       paze: '',
       offline: '',
+      ccavenue: '',
     },
     noMethodsAvailable: '[Ñö þâÿmëñţ mëţhödš âvâîlâblë âţ ţhîš ţîmë]',
     cardNumber: '[Çârd ñümkër îñþüţ fîëld]',
