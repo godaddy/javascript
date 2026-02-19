@@ -12,8 +12,6 @@ import { useLoadMercadoPago } from '@/components/checkout/payment/utils/use-load
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
-import { eventIds } from '@/tracking/events';
-import { TrackingEventType, track } from '@/tracking/track';
 import { PaymentMethodType } from '@/types';
 
 // Module-level singletons to prevent multiple SDK/brick instantiations
