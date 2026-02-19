@@ -355,6 +355,7 @@ export const itIt = {
       "Impossibile applicare l'indirizzo o il metodo di spedizione",
     DEPENDENCY_ERROR:
       'Non riusciamo a elaborare il tuo ordine in questo momento. Aspetta un momento e riprova',
+    AUTHORIZATION_FAILED: "Errore nell'autorizzazione del pagamento",
   },
   storefront: {
     product: 'Prodotto',

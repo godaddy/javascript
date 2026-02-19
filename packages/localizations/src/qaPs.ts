@@ -341,6 +341,7 @@ export const qaPs = {
     MISSING_SHIPPING_INFO: '[Šĥîţţîñg âddrëšš ör mëţĥöd fâîlëd ţö âţţļÿ]',
     DEPENDENCY_ERROR:
       'موږ اوس ستاسو امر پروسس نشو کولی. مهرباني وکړئ یو شېبه انتظار وکړئ او بیا هڅه وکړئ',
+    AUTHORIZATION_FAILED: '[Fâîlëd ţö âüţhörîžë þâÿmëñţ]',
   },
   storefront: {
     product: '[Product]',

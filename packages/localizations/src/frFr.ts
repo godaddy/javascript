@@ -357,6 +357,7 @@ export const frFr = {
       "L'adresse ou la méthode de livraison n'a pas pu être appliquée",
     DEPENDENCY_ERROR:
       'Nous ne pouvons pas traiter votre commande actuellement. Veuillez patienter un moment et réessayer',
+    AUTHORIZATION_FAILED: "Échec de l'autorisation du paiement",
   },
   storefront: {
     product: 'Produit',

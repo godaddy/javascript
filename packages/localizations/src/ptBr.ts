@@ -337,6 +337,7 @@ export const ptBr = {
     MISSING_SHIPPING_INFO: 'Falha ao aplicar endereço ou método de entrega',
     DEPENDENCY_ERROR:
       'Não conseguimos processar seu pedido no momento. Aguarde um momento e tente novamente',
+    AUTHORIZATION_FAILED: 'Falha ao autorizar pagamento',
   },
   storefront: {
     product: 'Produto',

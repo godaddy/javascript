@@ -332,6 +332,7 @@ export const enUs = {
     MISSING_SHIPPING_INFO: 'Shipping address or method failed to apply',
     DEPENDENCY_ERROR:
       "We're unable to process your order right now. Please wait a moment and try again",
+    AUTHORIZATION_FAILED: 'Failed to authorize payment',
   },
   storefront: {
     product: 'Product',

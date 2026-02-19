@@ -356,6 +356,7 @@ export const deDe = {
       'Lieferadresse oder -methode konnte nicht angewendet werden',
     DEPENDENCY_ERROR:
       'Wir können Ihre Bestellung derzeit nicht bearbeiten. Bitte warten Sie einen Moment und versuchen Sie es erneut',
+    AUTHORIZATION_FAILED: 'Zahlungsautorisierung fehlgeschlagen',
   },
   storefront: {
     product: 'Produkt',

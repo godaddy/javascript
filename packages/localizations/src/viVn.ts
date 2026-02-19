@@ -332,6 +332,7 @@ export const viVn = {
       'Địa chỉ hoặc phương thức giao hàng không thể áp dụng',
     DEPENDENCY_ERROR:
       'Chúng tôi không thể xử lý đơn hàng của bạn ngay bây giờ. Vui lòng đợi một chút và thử lại',
+    AUTHORIZATION_FAILED: 'Không thể ủy quyền thanh toán',
   },
   storefront: {
     product: 'Sản phẩm',

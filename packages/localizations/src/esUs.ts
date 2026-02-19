@@ -339,6 +339,7 @@ export const esUs = {
     MISSING_SHIPPING_INFO: 'No se pudo aplicar la dirección o método de envío',
     DEPENDENCY_ERROR:
       'No podemos procesar su pedido en este momento. Espere un momento e inténtelo de nuevo',
+    AUTHORIZATION_FAILED: 'Error al autorizar el pago',
   },
   storefront: {
     product: 'Producto',

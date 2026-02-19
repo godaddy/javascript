@@ -331,6 +331,7 @@ export const idId = {
     MISSING_SHIPPING_INFO: 'Alamat atau metode pengiriman gagal diterapkan',
     DEPENDENCY_ERROR:
       'Kami tidak dapat memproses pesanan Anda saat ini. Silakan tunggu sebentar dan coba lagi',
+    AUTHORIZATION_FAILED: 'Gagal mengotorisasi pembayaran',
   },
   storefront: {
     product: 'Produk',

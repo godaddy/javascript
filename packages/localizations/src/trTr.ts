@@ -332,6 +332,7 @@ export const trTr = {
     MISSING_SHIPPING_INFO: 'Kargo adresi veya yöntemi uygulanamadı',
     DEPENDENCY_ERROR:
       'Şu anda siparişinizi işleme alamıyoruz. Lütfen bir dakika bekleyin ve tekrar deneyin',
+    AUTHORIZATION_FAILED: 'Ödeme yetkilendirmesi başarısız',
   },
   storefront: {
     product: 'Ürün',
