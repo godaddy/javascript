@@ -105,6 +105,10 @@ export const CreateCheckoutSessionMutation = graphql(`
           processor
           checkoutTypes
         }
+        mercadopago {
+          processor
+          checkoutTypes
+        }
       }
       draftOrder {
         id

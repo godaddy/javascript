@@ -102,6 +102,7 @@ export const zhCn = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: '线下付款',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',
@@ -110,6 +111,7 @@ export const zhCn = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago: '请使用下方的 MercadoPago 表单安全完成购买。',
     },
     noMethodsAvailable: '暂无可用的付款方式',
     cardNumber: '卡号',

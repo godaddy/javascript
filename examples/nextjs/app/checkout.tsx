@@ -14,20 +14,52 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
     <Checkout
       session={session}
       checkoutFormSchema={customSchema}
-      squareConfig={{
-        appId: process.env.NEXT_PUBLIC_SQUARE_APP_ID || '',
-        locationId: process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID || '',
-      }}
-      stripeConfig={{
-        publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
-      }}
-      godaddyPaymentsConfig={{
-        businessId: process.env.NEXT_PUBLIC_GODADDY_BUSINESS_ID || '',
-        appId: process.env.NEXT_PUBLIC_GODADDY_APP_ID || '',
-      }}
-      paypalConfig={{
-        clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
-      }}
+      squareConfig={
+        process.env.NEXT_PUBLIC_SQUARE_APP_ID &&
+        process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID
+          ? {
+              appId: process.env.NEXT_PUBLIC_SQUARE_APP_ID,
+              locationId: process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID,
+            }
+          : undefined
+      }
+      stripeConfig={
+        process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+          ? {
+              publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+            }
+          : undefined
+      }
+      mercadoPagoConfig={
+        process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
+          ? {
+              publicKey: process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY,
+              country:
+                (process.env.NEXT_PUBLIC_MERCADOPAGO_COUNTRY as
+                  | 'AR'
+                  | 'BR'
+                  | 'CO'
+                  | 'CL'
+                  | 'PE'
+                  | 'MX') || 'AR',
+            }
+          : undefined
+      }
+      godaddyPaymentsConfig={
+        process.env.NEXT_PUBLIC_GODADDY_APP_ID
+          ? {
+              businessId: process.env.NEXT_PUBLIC_GODADDY_BUSINESS_ID || '',
+              appId: process.env.NEXT_PUBLIC_GODADDY_APP_ID,
+            }
+          : undefined
+      }
+      paypalConfig={
+        process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID
+          ? {
+              clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
+            }
+          : undefined
+      }
     />
   );
 }

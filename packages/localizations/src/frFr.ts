@@ -107,6 +107,7 @@ export const frFr = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Paiements hors ligne',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',
@@ -115,6 +116,8 @@ export const frFr = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Utilisez le formulaire MercadoPago ci-dessous pour finaliser votre achat en toute sécurité.',
     },
     noMethodsAvailable: 'Aucune méthode de paiement disponible',
     cardNumber: 'Numéro de carte',

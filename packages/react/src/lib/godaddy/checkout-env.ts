@@ -3003,6 +3003,15 @@ const introspection = {
             isDeprecated: false,
           },
           {
+            name: 'ccavenue',
+            type: {
+              kind: 'OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfig',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
             name: 'express',
             type: {
               kind: 'OBJECT',
@@ -3013,6 +3022,15 @@ const introspection = {
           },
           {
             name: 'googlePay',
+            type: {
+              kind: 'OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfig',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'mercadopago',
             type: {
               kind: 'OBJECT',
               name: 'CheckoutSessionPaymentMethodConfig',
@@ -3069,6 +3087,13 @@ const introspection = {
             },
           },
           {
+            name: 'ccavenue',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfigInput',
+            },
+          },
+          {
             name: 'express',
             type: {
               kind: 'INPUT_OBJECT',
@@ -3098,6 +3123,13 @@ const introspection = {
           },
           {
             name: 'paze',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfigInput',
+            },
+          },
+          {
+            name: 'mercadopago',
             type: {
               kind: 'INPUT_OBJECT',
               name: 'CheckoutSessionPaymentMethodConfigInput',
@@ -9921,6 +9953,13 @@ const introspection = {
             type: {
               kind: 'ENUM',
               name: 'ShippingLineType',
+            },
+          },
+          {
+            name: 'unitPrice',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
             },
           },
           {

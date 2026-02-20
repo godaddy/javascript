@@ -106,6 +106,7 @@ export const viVn = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Thanh toán ngoại tuyến',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',
@@ -114,6 +115,8 @@ export const viVn = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Hãy sử dụng biểu mẫu MercadoPago bên dưới để hoàn tất mua hàng một cách an toàn.',
     },
     noMethodsAvailable: 'Không có phương thức thanh toán nào',
     cardNumber: 'Số thẻ',

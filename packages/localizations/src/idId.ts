@@ -106,6 +106,7 @@ export const idId = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pembayaran offline',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',
@@ -114,6 +115,8 @@ export const idId = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Gunakan formulir MercadoPago di bawah untuk menyelesaikan pembelian Anda dengan aman.',
     },
     noMethodsAvailable: 'Tidak ada metode pembayaran tersedia',
     cardNumber: 'Nomor kartu',

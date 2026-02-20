@@ -80,6 +80,11 @@ export type PayPalConfig = {
   disableFunding?: Array<'credit' | 'card' | 'paylater' | 'venmo'>;
 };
 
+export type MercadoPagoConfig = {
+  publicKey: string;
+  country: 'AR' | 'BR' | 'CO' | 'CL' | 'PE' | 'MX';
+};
+
 interface CheckoutContextValue {
   elements?: CheckoutElements;
   targets?: Partial<
@@ -92,6 +97,7 @@ interface CheckoutContextValue {
   godaddyPaymentsConfig?: GodaddyPaymentsConfig;
   squareConfig?: SquareConfig;
   paypalConfig?: PayPalConfig;
+  mercadoPagoConfig?: MercadoPagoConfig;
   isConfirmingCheckout: boolean;
   setIsConfirmingCheckout: (isConfirming: boolean) => void;
   checkoutErrors?: string[] | undefined;
@@ -202,6 +208,7 @@ export interface CheckoutProps {
   godaddyPaymentsConfig?: GodaddyPaymentsConfig;
   squareConfig?: SquareConfig;
   paypalConfig?: PayPalConfig;
+  mercadoPagoConfig?: MercadoPagoConfig;
   layout?: LayoutSection[];
   direction?: 'ltr' | 'rtl';
   showStoreHours?: boolean;
@@ -221,6 +228,7 @@ export function Checkout(props: CheckoutProps) {
     godaddyPaymentsConfig,
     squareConfig,
     paypalConfig,
+    mercadoPagoConfig,
     isCheckoutDisabled,
   } = props;
 
@@ -385,6 +393,7 @@ export function Checkout(props: CheckoutProps) {
           stripeConfig,
           godaddyPaymentsConfig,
           squareConfig,
+          mercadoPagoConfig,
           paypalConfig,
           requiredFields,
           isConfirmingCheckout,

@@ -107,6 +107,7 @@ export const itIt = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagamenti offline',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',
@@ -115,6 +116,8 @@ export const itIt = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Usa il modulo MercadoPago qui sotto per completare l’acquisto in modo sicuro.',
     },
     noMethodsAvailable: 'Nessun metodo di pagamento disponibile',
     cardNumber: 'Numero della carta',
