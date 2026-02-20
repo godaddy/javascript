@@ -1,6 +1,6 @@
 ---
-"@godaddy/react": minor
-"@godaddy/localizations": minor
+"@godaddy/react": patch
+"@godaddy/localizations": patch
 ---
 
 Implementation of mercadopago
