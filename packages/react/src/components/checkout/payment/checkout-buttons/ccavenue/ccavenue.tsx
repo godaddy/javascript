@@ -12,13 +12,24 @@ import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { cn } from '@/lib/utils';
 import { PaymentMethodType } from '@/types';
 
+const CCAVENUE_PROD_URL =
+  'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+const CCAVENUE_TEST_URL =
+  'https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+
 export function CCAvenueCheckoutButton() {
-  const { t } = useGoDaddyContext();
+  const { t, apiHost } = useGoDaddyContext();
   const { setCheckoutErrors, isConfirmingCheckout, ccavenueConfig } =
     useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const authorizeCheckout = useAuthorizeCheckout();
+
+  // Same pattern as Square CDN in use-load-square: choose gateway URL by environment
+  const ccavenueRedirectUrl =
+    apiHost && !apiHost.includes('test') && !apiHost.includes('dev')
+      ? CCAVENUE_PROD_URL
+      : CCAVENUE_TEST_URL;
 
   const handleClick = useCallback(async () => {
     const valid = await form.trigger();
@@ -30,10 +41,12 @@ export function CCAvenueCheckoutButton() {
       return;
     }
 
-    if (!ccavenueConfig?.redirectURL || !ccavenueConfig?.accessCodeId) {
+    if (!ccavenueConfig?.accessCodeId) {
       setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
       return;
     }
+
+    const redirectUrl = ccavenueConfig.redirectURL ?? ccavenueRedirectUrl;
 
     try {
       const resData = await authorizeCheckout.mutateAsync({
@@ -48,7 +61,6 @@ export function CCAvenueCheckoutButton() {
         return;
       }
 
-      const redirectUrl = ccavenueConfig.redirectURL;
       const formEl = document.createElement('form');
       formEl.method = 'POST';
       formEl.action = redirectUrl;
@@ -78,6 +90,7 @@ export function CCAvenueCheckoutButton() {
     setCheckoutErrors,
     ccavenueConfig?.redirectURL,
     ccavenueConfig?.accessCodeId,
+    ccavenueRedirectUrl,
   ]);
 
   const isBusy = isConfirmingCheckout || isPaymentDisabled;
@@ -87,7 +100,7 @@ export function CCAvenueCheckoutButton() {
       type='button'
       size='lg'
       className={cn('w-full')}
-      disabled={isPaymentDisabled || isBusy}
+      disabled={isBusy}
       onClick={handleClick}
     >
       {t.payment.methods.ccavenue ?? 'Pay with CCAvenue'}

@@ -66,10 +66,6 @@ export default async function Home() {
           processor: 'ccavenue',
           checkoutTypes: ['standard'],
         },
-        express: {
-          processor: 'godaddy',
-          checkoutTypes: ['express'],
-        },
         paypal: {
           processor: 'paypal',
           checkoutTypes: ['express', 'standard'],

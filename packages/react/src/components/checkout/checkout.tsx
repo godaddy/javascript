@@ -87,7 +87,7 @@ export type MercadoPagoConfig = {
 
 export type CCAvenueConfig = {
   accessCodeId: string;
-  redirectURL: string;
+  redirectURL?: string;
 };
 
 interface CheckoutContextValue {

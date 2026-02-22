@@ -61,12 +61,10 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
           : undefined
       }
       ccavenueConfig={
-        process.env.NEXT_PUBLIC_CCAVENUE_ACCESS_CODE_ID &&
-        process.env.NEXT_PUBLIC_CCAVENUE_REDIRECT_URL
+        process.env.NEXT_PUBLIC_CCAVENUE_ACCESS_CODE_ID
           ? {
               accessCodeId:
                 process.env.NEXT_PUBLIC_CCAVENUE_ACCESS_CODE_ID,
-              redirectURL: process.env.NEXT_PUBLIC_CCAVENUE_REDIRECT_URL,
             }
           : undefined
       }
