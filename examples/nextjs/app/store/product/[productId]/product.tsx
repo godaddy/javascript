@@ -17,10 +17,7 @@ export default function Product({ productId }: { productId: string }) {
         <ArrowLeft className='h-4 w-4' />
         Back to Store
       </Link>
-      <ProductDetails
-        productId={productId}
-        onAddToCartSuccess={openCart}
-      />
+      <ProductDetails productId={productId} onAddToCartSuccess={openCart} />
     </div>
   );
 }

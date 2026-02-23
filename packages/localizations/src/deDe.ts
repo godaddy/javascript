@@ -106,6 +106,7 @@ export const deDe = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Offline-Zahlungen',
+      mercadopago: 'Mercado Pago',
       ach: 'Bankkonto',
     },
     descriptions: {
@@ -115,6 +116,8 @@ export const deDe = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Verwende das MercadoPago-Formular unten, um deinen Kauf sicher abzuschließen.',
       ach: '',
     },
     noMethodsAvailable: 'Keine Zahlungsmethoden verfügbar',

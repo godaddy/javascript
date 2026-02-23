@@ -1,5 +1,11 @@
 # @godaddy/localizations
 
+## 1.0.7
+
+### Patch Changes
+
+- 97ffe4d: Implementation of mercadopago
+
 ## 1.0.6
 
 ### Patch Changes

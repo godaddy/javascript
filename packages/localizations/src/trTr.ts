@@ -107,6 +107,7 @@ export const trTr = {
       paze: 'Paze',
       offline: 'Çevrimdışı ödemeler',
       ach: 'Banka Hesabı',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',
@@ -116,6 +117,8 @@ export const trTr = {
       paze: '',
       offline: '',
       ach: '',
+      mercadopago:
+        'Satın alımınızı güvenle tamamlamak için aşağıdaki MercadoPago formunu kullanın.',
     },
     noMethodsAvailable: 'Kullanılabilir ödeme yöntemi yok',
     cardNumber: 'Kart numarası',

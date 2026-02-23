@@ -107,6 +107,7 @@ export const idId = {
       paze: 'Paze',
       offline: 'Pembayaran offline',
       ach: 'Rekening Bank',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',
@@ -116,6 +117,8 @@ export const idId = {
       paze: '',
       offline: '',
       ach: '',
+      mercadopago:
+        'Gunakan formulir MercadoPago di bawah untuk menyelesaikan pembelian Anda dengan aman.',
     },
     noMethodsAvailable: 'Tidak ada metode pembayaran tersedia',
     cardNumber: 'Nomor kartu',

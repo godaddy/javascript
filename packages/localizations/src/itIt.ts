@@ -108,6 +108,7 @@ export const itIt = {
       paze: 'Paze',
       offline: 'Pagamenti offline',
       ach: 'Conto Bancario',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',
@@ -117,6 +118,8 @@ export const itIt = {
       paze: '',
       offline: '',
       ach: '',
+      mercadopago:
+        'Usa il modulo MercadoPago qui sotto per completare l’acquisto in modo sicuro.',
     },
     noMethodsAvailable: 'Nessun metodo di pagamento disponibile',
     cardNumber: 'Numero della carta',

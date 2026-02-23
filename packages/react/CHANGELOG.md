@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.27
+
+### Patch Changes
+
+- 97ffe4d: Implementation of mercadopago
+- Updated dependencies [97ffe4d]
+  - @godaddy/localizations@1.0.7
+
 ## 1.0.26
 
 ### Patch Changes

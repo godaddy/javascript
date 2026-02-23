@@ -3151,6 +3151,13 @@ const introspection = {
               name: 'CheckoutSessionPaymentMethodConfigInput',
             },
           },
+          {
+            name: 'mercadopago',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfigInput',
+            },
+          },
         ],
         isOneOf: false,
       },
@@ -9969,6 +9976,13 @@ const introspection = {
             type: {
               kind: 'ENUM',
               name: 'ShippingLineType',
+            },
+          },
+          {
+            name: 'unitPrice',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'UpdateMoneyInput',
             },
           },
           {

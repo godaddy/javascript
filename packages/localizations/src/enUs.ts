@@ -107,6 +107,7 @@ export const enUs = {
       paze: 'Paze',
       offline: 'Offline payments',
       ach: 'Bank Account',
+      mercadopago: 'Mercado Pago',
     },
     descriptions: {
       creditCard: '',
@@ -116,6 +117,8 @@ export const enUs = {
       paze: '',
       offline: '',
       ach: '',
+      mercadopago:
+        'Use the MercadoPago form below to complete your purchase securely.',
     },
     noMethodsAvailable: 'No payment methods available',
     cardNumber: 'Card number',
