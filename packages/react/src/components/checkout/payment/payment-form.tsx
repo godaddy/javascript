@@ -121,7 +121,7 @@ export function PaymentForm(
         case PaymentMethodType.MERCADOPAGO:
           return t.payment.methods.mercadopago;
         case PaymentMethodType.CCAVENUE:
-          return t.payment.methods.ccavenue ?? 'Pay with CCAvenue';
+          return t.payment.methods.ccavenue;
         default:
           return key;
       }

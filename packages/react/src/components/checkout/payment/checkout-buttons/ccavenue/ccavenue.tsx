@@ -54,7 +54,6 @@ export function CCAvenueCheckoutButton() {
         paymentProvider: PaymentProvider.CCAVENUE,
         paymentToken: '',
       });
-      console.log('resData', resData);
       const transactionRefNum = resData?.transactionRefNum ?? '';
       if (!transactionRefNum) {
         setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
