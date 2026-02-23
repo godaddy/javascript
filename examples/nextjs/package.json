@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:https": "next dev --experimental-https --experimental-https-key ./certificates/checkout.dev-godaddy.com-key.pem --experimental-https-cert ./certificates/checkout.dev-godaddy.com.pem --hostname checkout.dev-godaddy.com",
     "build": "next build",
     "start": "next start",
     "lint": "biome check .",
