@@ -576,8 +576,8 @@ export function StripeExpressCheckoutForm() {
     <ExpressCheckoutElement
       options={{
         paymentMethods: {
-          applePay: 'always',
-          googlePay: 'never',
+          applePay: 'auto',
+          googlePay: 'auto',
           link: 'never',
           paypal: 'never',
           amazonPay: 'never',
