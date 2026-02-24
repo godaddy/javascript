@@ -177,8 +177,8 @@ importers:
         specifier: '>=7'
         version: 7.28.3
       '@babel/eslint-parser':
-        specifier: ^7.27.0
-        version: 7.28.0(@babel/core@7.28.3)(eslint@9.34.0(jiti@2.6.1))
+        specifier: ^7.28.6
+        version: 7.28.6(@babel/core@7.28.3)(eslint@9.34.0(jiti@2.6.1))
       eslint-config-godaddy:
         specifier: workspace:^
         version: link:../eslint-config-godaddy
@@ -491,8 +491,8 @@ packages:
     resolution: {integrity: sha512-yDBHV9kQNcr2/sUr9jghVyz9C3Y5G2zUM2H2lo+9mKv4sFgbA8s8Z9t8D1jiTkGoO/NoIfKMyKWr4s6CN23ZwQ==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/eslint-parser@7.28.0':
-    resolution: {integrity: sha512-N4ntErOlKvcbTt01rr5wj3y55xnIdx1ymrfIr8C2WnM1Y9glFgWaGDEULJIazOX3XM9NRzhfJ6zZnQ1sBNWU+w==}
+  '@babel/eslint-parser@7.28.6':
+    resolution: {integrity: sha512-QGmsKi2PBO/MHSQk+AAgA9R6OHQr+VqnniFE0eMWZcVcfBZoA2dKn2hUsl3Csg/Plt9opRUWdY7//VXsrIlEiA==}
     engines: {node: ^10.13.0 || ^12.13.0 || >=14.0.0}
     peerDependencies:
       '@babel/core': ^7.11.0
@@ -5762,7 +5762,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/eslint-parser@7.28.0(@babel/core@7.28.3)(eslint@9.34.0(jiti@2.6.1))':
+  '@babel/eslint-parser@7.28.6(@babel/core@7.28.3)(eslint@9.34.0(jiti@2.6.1))':
     dependencies:
       '@babel/core': 7.28.3
       '@nicolo-ribaudo/eslint-scope-5-internals': 5.1.1-v1

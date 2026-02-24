@@ -31,7 +31,7 @@
     "eslint": "^10"
   },
   "dependencies": {
-    "@babel/eslint-parser": "^7.27.0",
+    "@babel/eslint-parser": "^7.28.6",
     "eslint-config-godaddy": "workspace:^",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
