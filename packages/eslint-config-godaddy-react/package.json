@@ -28,7 +28,7 @@
   ],
   "peerDependencies": {
     "@babel/core": ">=7",
-    "eslint": "^9"
+    "eslint": "^10.0.2"
   },
   "dependencies": {
     "@babel/eslint-parser": "^7.27.0",
