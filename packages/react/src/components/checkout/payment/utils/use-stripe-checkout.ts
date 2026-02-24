@@ -64,7 +64,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
           });
 
           if (error) {
-            setCheckoutErrors([error.code || 'payment_method_creation_failed']);
+            setCheckoutErrors([error.code || 'TRANSACTION_PROCESSING_FAILED']);
             return;
           }
 
@@ -82,7 +82,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
               // Other errors are silently ignored
             }
           } else {
-            setCheckoutErrors(['payment_method_creation_failed']);
+            setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
           }
         }
 
@@ -93,7 +93,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
           });
 
           if (error) {
-            setCheckoutErrors([error.code || 'payment_method_creation_failed']);
+            setCheckoutErrors([error.code || 'TRANSACTION_PROCESSING_FAILED']);
             return;
           }
 
@@ -214,7 +214,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
               throw err; // Re-throw so caller can handle
             }
           } else {
-            setCheckoutErrors(['payment_method_creation_failed']);
+            setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
           }
         }
 
