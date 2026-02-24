@@ -199,24 +199,24 @@ importers:
   packages/eslint-config-godaddy-react-typescript:
     dependencies:
       '@typescript-eslint/eslint-plugin':
-        specifier: ^8.35.0
-        version: 8.41.0(@typescript-eslint/parser@8.41.0(eslint@9.34.0(jiti@2.6.1))(typescript@5.9.2))(eslint@9.34.0(jiti@2.6.1))(typescript@5.9.2)
+        specifier: ^8.54.0
+        version: 8.56.1(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.2))(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.2)
       '@typescript-eslint/parser':
-        specifier: ^8.30.1
-        version: 8.41.0(eslint@9.34.0(jiti@2.6.1))(typescript@5.9.2)
+        specifier: ^8.54.0
+        version: 8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.2)
       eslint-config-godaddy-react:
         specifier: workspace:^
         version: link:../eslint-config-godaddy-react
       eslint-plugin-react-hooks:
         specifier: ^5.2.0
-        version: 5.2.0(eslint@9.34.0(jiti@2.6.1))
+        version: 5.2.0(eslint@10.0.2(jiti@2.6.1))
       typescript:
         specifier: '>=5'
         version: 5.9.2
     devDependencies:
       eslint:
-        specifier: ^9.24.0
-        version: 9.34.0(jiti@2.6.1)
+        specifier: ^10.0.2
+        version: 10.0.2(jiti@2.6.1)
 
   packages/eslint-config-godaddy-typescript:
     dependencies:
@@ -6399,6 +6399,11 @@ snapshots:
       eslint: 10.0.2(jiti@2.6.1)
       eslint-visitor-keys: 3.4.3
 
+  '@eslint-community/eslint-utils@4.9.1(eslint@9.34.0(jiti@2.6.1))':
+    dependencies:
+      eslint: 9.34.0(jiti@2.6.1)
+      eslint-visitor-keys: 3.4.3
+
   '@eslint-community/regexpp@4.12.1': {}
 
   '@eslint-community/regexpp@4.12.2': {}
@@ -8158,7 +8163,7 @@ snapshots:
   '@typescript-eslint/project-service@8.41.0(typescript@5.9.2)':
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.41.0(typescript@5.9.2)
-      '@typescript-eslint/types': 8.41.0
+      '@typescript-eslint/types': 8.56.1
       debug: 4.4.3
       typescript: 5.9.2
     transitivePeerDependencies:
@@ -8196,9 +8201,9 @@ snapshots:
       '@typescript-eslint/types': 8.41.0
       '@typescript-eslint/typescript-estree': 8.41.0(typescript@5.9.2)
       '@typescript-eslint/utils': 8.41.0(eslint@9.34.0(jiti@2.6.1))(typescript@5.9.2)
-      debug: 4.4.1
+      debug: 4.4.3
       eslint: 9.34.0(jiti@2.6.1)
-      ts-api-utils: 2.1.0(typescript@5.9.2)
+      ts-api-utils: 2.4.0(typescript@5.9.2)
       typescript: 5.9.2
     transitivePeerDependencies:
       - supports-color
@@ -8225,12 +8230,12 @@ snapshots:
       '@typescript-eslint/tsconfig-utils': 8.41.0(typescript@5.9.2)
       '@typescript-eslint/types': 8.41.0
       '@typescript-eslint/visitor-keys': 8.41.0
-      debug: 4.4.1
+      debug: 4.4.3
       fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.5
       semver: 7.7.2
-      ts-api-utils: 2.1.0(typescript@5.9.2)
+      ts-api-utils: 2.4.0(typescript@5.9.2)
       typescript: 5.9.2
     transitivePeerDependencies:
       - supports-color
@@ -8252,7 +8257,7 @@ snapshots:
 
   '@typescript-eslint/utils@8.41.0(eslint@9.34.0(jiti@2.6.1))(typescript@5.9.2)':
     dependencies:
-      '@eslint-community/eslint-utils': 4.7.0(eslint@9.34.0(jiti@2.6.1))
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.34.0(jiti@2.6.1))
       '@typescript-eslint/scope-manager': 8.41.0
       '@typescript-eslint/types': 8.41.0
       '@typescript-eslint/typescript-estree': 8.41.0(typescript@5.9.2)
@@ -9109,6 +9114,10 @@ snapshots:
       globals: 13.24.0
       rambda: 7.5.0
 
+  eslint-plugin-react-hooks@5.2.0(eslint@10.0.2(jiti@2.6.1)):
+    dependencies:
+      eslint: 10.0.2(jiti@2.6.1)
+
   eslint-plugin-react-hooks@5.2.0(eslint@9.34.0(jiti@2.6.1)):
     dependencies:
       eslint: 9.34.0(jiti@2.6.1)
@@ -9559,14 +9568,14 @@ snapshots:
   http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.1
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
   https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.1
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -10922,7 +10931,7 @@ snapshots:
   unplugin@2.3.10:
     dependencies:
       '@jridgewell/remapping': 2.3.5
-      acorn: 8.15.0
+      acorn: 8.16.0
       picomatch: 4.0.3
       webpack-virtual-modules: 0.6.2
 
