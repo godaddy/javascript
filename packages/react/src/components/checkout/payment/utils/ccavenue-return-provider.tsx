@@ -13,7 +13,7 @@ export function CCAvenueReturnProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { session, setCheckoutErrors } = useCheckoutContext();
+  const { session, jwt, setCheckoutErrors } = useCheckoutContext();
   const confirmCheckout = useConfirmCheckout();
   const hasRun = useRef(false);
 
@@ -25,7 +25,7 @@ export function CCAvenueReturnProvider({
     if (!encResp) return;
 
     // Wait for session from context (cookie); re-run when session loads
-    if (!session?.token || !session?.id) {
+    if (!(session?.token || jwt) || !session?.id) {
       return;
     }
 
@@ -37,19 +37,15 @@ export function CCAvenueReturnProvider({
       paymentProvider: PaymentProvider.CCAVENUE,
     };
 
-    confirmCheckout
-      .mutateAsync(confirmInput)
-      .catch(err => {
-        if (err instanceof GraphQLErrorWithCodes) {
-          setCheckoutErrors(err.codes);
-        } else {
-          setCheckoutErrors([
-            err instanceof Error
-              ? err.message
-              : 'Payment confirmation failed.',
-          ]);
-        }
-      });
+    confirmCheckout.mutateAsync(confirmInput).catch(err => {
+      if (err instanceof GraphQLErrorWithCodes) {
+        setCheckoutErrors(err.codes);
+      } else {
+        setCheckoutErrors([
+          err instanceof Error ? err.message : 'Payment confirmation failed.',
+        ]);
+      }
+    });
   }, [session?.token, session?.id, setCheckoutErrors]);
 
   return <>{children}</>;

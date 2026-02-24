@@ -3,9 +3,11 @@
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
+import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -25,8 +27,14 @@ export function CCAvenueCheckoutButton() {
   const form = useFormContext();
   const authorizeCheckout = useAuthorizeCheckout();
 
+  const deliveryMethod = form.watch('deliveryMethod');
+  const isShipping = deliveryMethod === DeliveryMethods.SHIP;
+  const { data: shippingMethodsData, isLoading: isShippingMethodsLoading } =
+    useDraftOrderShippingMethods();
+  const hasShippingMethods = (shippingMethodsData?.length ?? 0) > 0;
+
   // Same pattern as Square CDN in use-load-square: choose gateway URL by environment
-  const ccavenueRedirectUrl =
+  const redirectUrl =
     apiHost && !apiHost.includes('test') && !apiHost.includes('dev')
       ? CCAVENUE_PROD_URL
       : CCAVENUE_TEST_URL;
@@ -46,7 +54,10 @@ export function CCAvenueCheckoutButton() {
       return;
     }
 
-    const redirectUrl = ccavenueConfig.redirectURL ?? ccavenueRedirectUrl;
+    if (isShipping && (isShippingMethodsLoading || !hasShippingMethods)) {
+      setCheckoutErrors(['SHIPPING_METHOD_NOT_FOUND']);
+      return;
+    }
 
     try {
       const resData = await authorizeCheckout.mutateAsync({
@@ -67,7 +78,7 @@ export function CCAvenueCheckoutButton() {
         encRequest: transactionRefNum,
         access_code: ccavenueConfig.accessCodeId,
       };
-      Object.keys(fields).forEach((key) => {
+      Object.keys(fields).forEach(key => {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = key;
@@ -85,11 +96,13 @@ export function CCAvenueCheckoutButton() {
     }
   }, [
     form,
+    isShipping,
+    isShippingMethodsLoading,
+    hasShippingMethods,
     authorizeCheckout.mutateAsync,
     setCheckoutErrors,
-    ccavenueConfig?.redirectURL,
     ccavenueConfig?.accessCodeId,
-    ccavenueRedirectUrl,
+    redirectUrl,
   ]);
 
   const isBusy = isConfirmingCheckout || isPaymentDisabled;
@@ -102,7 +115,7 @@ export function CCAvenueCheckoutButton() {
       disabled={isBusy}
       onClick={handleClick}
     >
-      {t.payment.methods.ccavenue ?? 'Pay with CCAvenue'}
+      {t.payment.methods.ccavenue}
     </Button>
   );
 }
