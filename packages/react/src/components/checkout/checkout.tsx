@@ -239,7 +239,10 @@ export function Checkout(props: CheckoutProps) {
     isCheckoutDisabled,
   } = props;
 
-  const [isConfirmingCheckout, setIsConfirmingCheckout] = React.useState(false);
+  const [isConfirmingCheckout, setIsConfirmingCheckout] = React.useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).has('encResp');
+  });
   const [checkoutErrors, setCheckoutErrors] = React.useState<
     string[] | undefined
   >(undefined);

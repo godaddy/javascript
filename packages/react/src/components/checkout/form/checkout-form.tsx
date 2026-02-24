@@ -73,13 +73,15 @@ export function CheckoutForm({
 }: CheckoutFormProps) {
   const formatCurrency = useFormatCurrency();
   const { t } = useGoDaddyContext();
-  const { session, isCheckoutDisabled } = useCheckoutContext();
+  const { session, isCheckoutDisabled, isConfirmingCheckout } =
+    useCheckoutContext();
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {},
     reValidateMode: 'onBlur',
     mode: 'onBlur',
+    disabled: isConfirmingCheckout,
   });
 
   const deliveryMethod = form.watch('deliveryMethod');
