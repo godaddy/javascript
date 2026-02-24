@@ -87,27 +87,26 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
         }
 
         if (mode === 'express') {
-          const { error, confirmationToken: expressToken } =
-            await stripe.createConfirmationToken({
-              elements,
-              params: {
-                ...stripePaymentExpressRequest,
-              },
-            });
+          const { error, paymentMethod } = await stripe.createPaymentMethod({
+            elements,
+            params: stripePaymentExpressRequest,
+          });
 
           if (error) {
-            setCheckoutErrors([
-              error.code || 'confirmation_token_creation_failed',
-            ]);
+            setCheckoutErrors([error.code || 'payment_method_creation_failed']);
             return;
           }
 
-          if (expressToken) {
+          if (paymentMethod) {
             try {
               // Build the checkout body similar to godaddy.tsx
               const event = expressData?.event;
               const currencyCode =
                 expressData?.shippingTotal?.currencyCode || 'USD';
+
+              const walletType = paymentMethod.card?.wallet?.type;
+              const paymentType =
+                walletType || event?.expressPaymentType || 'card';
 
               // Map Stripe billing details to checkout format
               const billing = event?.billingDetails
@@ -185,8 +184,8 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 : undefined;
 
               await confirmCheckout.mutateAsync({
-                paymentToken: expressToken.id,
-                paymentType: expressToken?.payment_method_preview?.type,
+                paymentToken: paymentMethod.id,
+                paymentType,
                 paymentProvider: PaymentProvider.STRIPE,
                 isExpress: true,
                 // Include shipping total if available
@@ -215,7 +214,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
               throw err; // Re-throw so caller can handle
             }
           } else {
-            setCheckoutErrors(['confirmation_token_creation_failed']);
+            setCheckoutErrors(['payment_method_creation_failed']);
           }
         }
 
@@ -224,14 +223,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
         setIsProcessingPayment(false);
       }
     },
-    [
-      mode,
-      stripe,
-      elements,
-      stripePaymentExpressRequest,
-      confirmCheckout.mutateAsync,
-      setCheckoutErrors,
-    ]
+    [mode, stripe, elements, confirmCheckout.mutateAsync, setCheckoutErrors]
   );
 
   return {

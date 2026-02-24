@@ -1,4 +1,4 @@
-import { ExpressCheckoutElement } from '@stripe/react-stripe-js';
+import { ExpressCheckoutElement, useElements } from '@stripe/react-stripe-js';
 import type {
   LineItem,
   ShippingRate,
@@ -15,6 +15,7 @@ import {
   useDraftOrder,
   useDraftOrderTotals,
 } from '@/components/checkout/order/use-draft-order';
+import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useStripeCheckout } from '@/components/checkout/payment/utils/use-stripe-checkout';
 import { useStripePaymentIntent } from '@/components/checkout/payment/utils/use-stripe-payment-intent';
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
@@ -41,10 +42,16 @@ interface StripePartialAddress {
 
 export function StripeExpressCheckoutForm() {
   const { t } = useGoDaddyContext();
-  const { session, setCheckoutErrors } = useCheckoutContext();
+  const { session, setCheckoutErrors, isConfirmingCheckout } =
+    useCheckoutContext();
+  const elements = useElements();
+  const isPaymentDisabled = useIsPaymentDisabled();
   const { handleSubmit } = useStripeCheckout({
     mode: 'express',
   });
+
+  // Combined disabled state
+  const isDisabled = isConfirmingCheckout || isPaymentDisabled;
 
   // Data hooks
   const { data: totals } = useDraftOrderTotals();
@@ -67,11 +74,16 @@ export function StripeExpressCheckoutForm() {
   const [shippingAddress, setShippingAddress] =
     useState<StripePartialAddress | null>(null);
 
+  // Track the status of coupon code fetching
+  const [couponFetchStatus, setCouponFetchStatus] = useState<
+    'idle' | 'fetching' | 'done'
+  >('idle');
+
   // Use refs for values needed in event handlers to avoid stale closures
   const appliedCouponCodeRef = useRef<string | null>(null);
   const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
 
-  // Extract discount codes from draft order
+  // Extract discount codes from draft order for comparison (stable string)
   const draftOrderDiscountCodes = useMemo(() => {
     const allCodes = new Set<string>();
 
@@ -97,36 +109,69 @@ export function StripeExpressCheckoutForm() {
       }
     }
 
-    return Array.from(allCodes);
+    return Array.from(allCodes).sort().join(','); // Stable string for comparison
   }, [draftOrder]);
 
   // Fetch and cache price adjustments for pre-applied coupons
   useEffect(() => {
-    if (!draftOrder || draftOrderDiscountCodes.length === 0) {
-      appliedCouponCodeRef.current = null;
-      calculatedAdjustmentsRef.current = null;
-      return;
-    }
+    if (!draftOrder) return;
+    // Prevent concurrent fetches (but allow new fetches when draft order changes)
+    if (couponFetchStatus === 'fetching') return;
 
     const fetchPriceAdjustments = async () => {
-      try {
-        const result = await getPriceAdjustments.mutateAsync({
-          discountCodes: [draftOrderDiscountCodes[0]],
-        });
+      setCouponFetchStatus('fetching');
 
-        if (result) {
-          appliedCouponCodeRef.current = draftOrderDiscountCodes[0];
-          calculatedAdjustmentsRef.current = result;
+      try {
+        const allCodes = new Set<string>();
+
+        // Add order-level discount codes
+        if (draftOrder?.discounts) {
+          for (const discount of draftOrder.discounts) {
+            if (discount.code) {
+              allCodes.add(discount.code);
+            }
+          }
         }
-      } catch {
-        // Silently handle errors - coupon may be invalid
-        appliedCouponCodeRef.current = null;
-        calculatedAdjustmentsRef.current = null;
+
+        // Add line item-level discount codes
+        if (draftOrder?.lineItems) {
+          for (const lineItem of draftOrder.lineItems) {
+            if (lineItem.discounts) {
+              for (const discount of lineItem.discounts) {
+                if (discount.code) {
+                  allCodes.add(discount.code);
+                }
+              }
+            }
+          }
+        }
+
+        const discountCodes = Array.from(allCodes);
+
+        // Update refs based on what's in the draft order
+        if (discountCodes?.length && discountCodes?.[0]) {
+          const result = await getPriceAdjustments.mutateAsync({
+            discountCodes: [discountCodes[0]],
+          });
+
+          if (result) {
+            // Update refs with current coupon state
+            appliedCouponCodeRef.current = discountCodes[0];
+            calculatedAdjustmentsRef.current = result;
+          }
+        } else {
+          // No coupons in draft order - clear refs
+          appliedCouponCodeRef.current = null;
+          calculatedAdjustmentsRef.current = null;
+        }
+      } finally {
+        setCouponFetchStatus('done');
       }
     };
 
     fetchPriceAdjustments();
-  }, [draftOrder, draftOrderDiscountCodes, getPriceAdjustments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftOrder, draftOrderDiscountCodes]);
 
   // Calculate taxes for express checkout
   const calculateExpressTaxes = useCallback(
@@ -325,6 +370,12 @@ export function StripeExpressCheckoutForm() {
   // Handle click event - configure initial details
   const handleClick = useCallback(
     (event: StripeExpressCheckoutElementClickEvent) => {
+      // Reject if payment is disabled
+      if (isDisabled) {
+        event.reject();
+        return;
+      }
+
       // Track click
       if (event.expressPaymentType === 'apple_pay') {
         track({
@@ -353,7 +404,7 @@ export function StripeExpressCheckoutForm() {
         lineItems: buildLineItems({ discountAmount }),
       });
     },
-    [buildLineItems, setCheckoutErrors]
+    [buildLineItems, setCheckoutErrors, isDisabled]
   );
 
   // Handle shipping address change
@@ -405,6 +456,13 @@ export function StripeExpressCheckoutForm() {
         }
 
         const discountAmount = adjustments?.totalDiscountAmount?.value || 0;
+        const subtotal = totals?.subTotal?.value || 0;
+
+        // Calculate new total and update Elements amount before resolving
+        // This ensures Stripe's lineItems validation passes
+        const newTotal =
+          subtotal + defaultRate.amount + taxAmount - discountAmount;
+        elements?.update({ amount: newTotal });
 
         event.resolve({
           shippingRates: stripeShippingRates,
@@ -426,6 +484,8 @@ export function StripeExpressCheckoutForm() {
       buildLineItems,
       session?.enableTaxCollection,
       setCheckoutErrors,
+      elements,
+      totals?.subTotal?.value,
       t.apiErrors,
     ]
   );
@@ -470,6 +530,13 @@ export function StripeExpressCheckoutForm() {
         }
 
         const discountAmount = adjustments?.totalDiscountAmount?.value || 0;
+        const subtotal = totals?.subTotal?.value || 0;
+
+        // Calculate new total and update Elements amount before resolving
+        // This ensures Stripe's lineItems validation passes
+        const newTotal =
+          subtotal + selectedRate.amount + taxAmount - discountAmount;
+        elements?.update({ amount: newTotal });
 
         event.resolve({
           lineItems: buildLineItems({
@@ -489,6 +556,8 @@ export function StripeExpressCheckoutForm() {
       buildLineItems,
       session?.enableTaxCollection,
       calculatedTaxes,
+      elements,
+      totals?.subTotal?.value,
     ]
   );
 
@@ -563,56 +632,52 @@ export function StripeExpressCheckoutForm() {
     setShippingAddress(null);
   }, []);
 
-  // Determine allowed shipping countries from session config
-  const allowedShippingCountries = useMemo(() => {
-    // Default to common countries if not specified in session
-    // This could be enhanced to read from session.shipping.allowedCountries if available
-    return session?.shipping?.originAddress?.countryCode
-      ? [session.shipping.originAddress.countryCode]
-      : ['US'];
-  }, [session?.shipping?.originAddress?.countryCode]);
-
   return (
-    <ExpressCheckoutElement
-      options={{
-        paymentMethods: {
-          applePay: 'auto',
-          googlePay: 'auto',
-          link: 'never',
-          paypal: 'never',
-          amazonPay: 'never',
-          klarna: 'never',
-        },
-        // Button styling
-        buttonHeight: 50,
-        buttonType: {
-          applePay: 'plain',
-        },
-        buttonTheme: {
-          applePay: 'black',
-        },
-        // Layout
-        layout: {
-          maxColumns: 1,
-          maxRows: 1,
-        },
-        // Shipping configuration
-        shippingAddressRequired: !!session?.enableShippingAddressCollection,
-        allowedShippingCountries: allowedShippingCountries,
-        // Billing and contact info
-        billingAddressRequired: true,
-        emailRequired: true,
-        phoneNumberRequired: false,
-        // Business info
-        business: session?.storeName ? { name: session.storeName } : undefined,
-      }}
-      onReady={handleReady}
-      onClick={handleClick}
-      onShippingAddressChange={handleShippingAddressChange}
-      onShippingRateChange={handleShippingRateChange}
-      onConfirm={handleConfirm}
-      onCancel={handleCancel}
-    />
+    <div className={isDisabled ? 'opacity-50 pointer-events-none' : undefined}>
+      <ExpressCheckoutElement
+        options={{
+          paymentMethods: {
+            applePay: 'auto',
+            googlePay: 'auto',
+            link: 'never',
+            paypal: 'never',
+            amazonPay: 'never',
+            klarna: 'never',
+          },
+          // Button styling
+          buttonHeight: 50,
+          buttonType: {
+            applePay: 'plain',
+            googlePay: 'plain',
+          },
+          buttonTheme: {
+            applePay: 'black',
+            googlePay: 'black',
+          },
+          // Layout
+          layout: {
+            maxColumns: 2,
+            maxRows: 1,
+          },
+          // Shipping configuration
+          shippingAddressRequired: !!session?.enableShippingAddressCollection,
+          // Billing and contact info
+          billingAddressRequired: !!session?.enableBillingAddressCollection,
+          emailRequired: true,
+          phoneNumberRequired: false,
+          // Business info
+          business: session?.storeName
+            ? { name: session.storeName }
+            : undefined,
+        }}
+        onReady={handleReady}
+        onClick={handleClick}
+        onShippingAddressChange={handleShippingAddressChange}
+        onShippingRateChange={handleShippingRateChange}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
+    </div>
   );
 }
 

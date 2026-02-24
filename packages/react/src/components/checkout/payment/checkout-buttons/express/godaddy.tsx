@@ -30,6 +30,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
@@ -53,8 +54,12 @@ import type { CalculatedAdjustments, CalculatedTaxes } from '@/types';
 export function ExpressCheckoutButton() {
   const formatCurrency = useFormatCurrency();
   const convertMajorToMinorUnits = useConvertMajorToMinorUnits();
-  const { session, setCheckoutErrors } = useCheckoutContext();
+  const { session, setCheckoutErrors, isConfirmingCheckout } =
+    useCheckoutContext();
+  const isPaymentDisabled = useIsPaymentDisabled();
   const { isPoyntLoaded } = useLoadPoyntCollect();
+
+  const isDisabled = isConfirmingCheckout || isPaymentDisabled;
   const { godaddyPaymentsConfig } = useCheckoutContext();
   const { t } = useGoDaddyContext();
   const [isCollectLoading, setIsCollectLoading] = useState(true);
@@ -183,6 +188,10 @@ export function ExpressCheckoutButton() {
 
   const handleExpressPayClick = useCallback(
     async ({ source }: { source?: 'apple_pay' | 'google_pay' | 'paze' }) => {
+      if (isDisabled) {
+        return;
+      }
+
       // Read from refs to get current values (avoid stale closure)
       const currentCouponCode = appliedCouponCodeRef.current;
       const currentAdjustments = calculatedAdjustmentsRef.current;
@@ -292,6 +301,7 @@ export function ExpressCheckoutButton() {
       currencyCode,
       totals,
       formatCurrency,
+      isDisabled,
     ]
   );
 
@@ -1475,7 +1485,10 @@ export function ExpressCheckoutButton() {
 
   return (
     <>
-      <div id='gdpay-express-pay-element' />
+      <div
+        id='gdpay-express-pay-element'
+        className={isDisabled ? 'opacity-50 pointer-events-none' : undefined}
+      />
       {isCollectLoading ? (
         <div className='grid gap-1 grid-cols-1 sm:grid-cols-2'>
           <Skeleton className='h-12 w-full mb-1' />
