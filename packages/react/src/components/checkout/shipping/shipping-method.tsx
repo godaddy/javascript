@@ -90,7 +90,8 @@ export function ShippingMethodForm() {
   });
 
   useEffect(() => {
-    if (isShippingMethodsLoading || isDraftOrderLoading || isConfirmingCheckout) return;
+    if (isShippingMethodsLoading || isDraftOrderLoading || isConfirmingCheckout)
+      return;
 
     const hasShippingMethods = (shippingMethods?.length ?? 0) > 0;
     const currentServiceCode = shippingLines?.requestedService || null;
