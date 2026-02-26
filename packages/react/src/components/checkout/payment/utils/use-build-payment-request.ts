@@ -1,5 +1,7 @@
-import type { CreateTokenCardData } from '@stripe/stripe-js';
-import type { ConfirmationTokenCreateParams } from '@stripe/stripe-js/dist/api/confirmation-tokens';
+import type {
+  CreateTokenCardData,
+  PaymentMethodCreateParams,
+} from '@stripe/stripe-js';
 import { useMemo } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import {
@@ -170,7 +172,7 @@ export function useBuildPaymentRequest(): {
   googlePayRequest: GooglePayRequest;
   payPalRequest: PayPalRequest;
   stripePaymentCardRequest: CreateTokenCardData;
-  stripePaymentExpressRequest: ConfirmationTokenCreateParams;
+  stripePaymentExpressRequest: PaymentMethodCreateParams;
   poyntCardRequest: PoyntCardRequest;
   poyntExpressRequest: PoyntExpressRequest;
   poyntStandardRequest: PoyntStandardRequest;
@@ -508,32 +510,19 @@ export function useBuildPaymentRequest(): {
     address_country: order?.billing?.address?.countryCode || undefined,
   };
 
-  const stripePaymentExpressRequest: ConfirmationTokenCreateParams = {
-    payment_method_data: {
-      billing_details: {
-        name:
-          `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() ||
-          undefined,
-        email: order?.billing?.email || undefined,
-        address: {
-          line1: order?.billing?.address?.addressLine1 || undefined,
-          line2: order?.billing?.address?.addressLine2 || undefined,
-          city: order?.billing?.address?.adminArea2 || undefined,
-          state: order?.billing?.address?.adminArea1 || undefined,
-          postal_code: order?.billing?.address?.postalCode || undefined,
-          country: order?.billing?.address?.countryCode || undefined,
-        },
-      },
-    },
-    shipping: {
-      name: `${order?.shipping?.firstName || ''} ${order?.shipping?.lastName || ''}`.trim(),
+  const stripePaymentExpressRequest: PaymentMethodCreateParams = {
+    billing_details: {
+      name:
+        `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() ||
+        undefined,
+      email: order?.billing?.email || undefined,
       address: {
-        line1: order?.shipping?.address?.addressLine1 || null,
-        line2: order?.shipping?.address?.addressLine2 || null,
-        city: order?.shipping?.address?.adminArea2 || null,
-        state: order?.shipping?.address?.adminArea1 || null,
-        postal_code: order?.shipping?.address?.postalCode || null,
-        country: order?.shipping?.address?.countryCode || null,
+        line1: order?.billing?.address?.addressLine1 || undefined,
+        line2: order?.billing?.address?.addressLine2 || undefined,
+        city: order?.billing?.address?.adminArea2 || undefined,
+        state: order?.billing?.address?.adminArea1 || undefined,
+        postal_code: order?.billing?.address?.postalCode || undefined,
+        country: order?.billing?.address?.countryCode || undefined,
       },
     },
   };
