@@ -108,6 +108,7 @@ export const frFr = {
       paze: 'Paze',
       offline: 'Paiements hors ligne',
       mercadopago: 'Mercado Pago',
+      ccavenue: 'Payer avec CCAvenue',
     },
     descriptions: {
       creditCard: '',
@@ -118,6 +119,7 @@ export const frFr = {
       offline: '',
       mercadopago:
         'Utilisez le formulaire MercadoPago ci-dessous pour finaliser votre achat en toute sécurité.',
+      ccavenue: '',
     },
     noMethodsAvailable: 'Aucune méthode de paiement disponible',
     cardNumber: 'Numéro de carte',
