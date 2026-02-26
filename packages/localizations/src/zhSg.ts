@@ -103,6 +103,7 @@ export const zhSg = {
       paze: 'Paze',
       offline: '线下付款',
       mercadopago: 'Mercado Pago',
+      ccavenue: '使用 CCAvenue 支付',
     },
     descriptions: {
       creditCard: '',
@@ -112,6 +113,7 @@ export const zhSg = {
       paze: '',
       offline: '',
       mercadopago: '请使用下方的 MercadoPago 表单安全完成购买。',
+      ccavenue: '',
     },
     noMethodsAvailable: '无可用付款方式',
     cardNumber: '卡号',

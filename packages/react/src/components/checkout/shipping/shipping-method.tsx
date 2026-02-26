@@ -45,7 +45,7 @@ export function ShippingMethodForm() {
   const formatCurrency = useFormatCurrency();
   const form = useFormContext();
   const { t } = useGoDaddyContext();
-  const { session } = useCheckoutContext();
+  const { session, isConfirmingCheckout } = useCheckoutContext();
   const updateTaxes = useUpdateTaxes();
   const isPaymentDisabled = useIsPaymentDisabled();
 
@@ -90,7 +90,8 @@ export function ShippingMethodForm() {
   });
 
   useEffect(() => {
-    if (isShippingMethodsLoading || isDraftOrderLoading) return;
+    if (isShippingMethodsLoading || isDraftOrderLoading || isConfirmingCheckout)
+      return;
 
     const hasShippingMethods = (shippingMethods?.length ?? 0) > 0;
     const currentServiceCode = shippingLines?.requestedService || null;
@@ -173,6 +174,7 @@ export function ShippingMethodForm() {
       }
     }
   }, [
+    isConfirmingCheckout,
     shippingMethods,
     shippingLines,
     hasShippingAddress,

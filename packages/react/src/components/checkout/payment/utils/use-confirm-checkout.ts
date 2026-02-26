@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   redirectToSuccessUrl,
@@ -63,18 +64,15 @@ export enum PaymentProvider {
   CHECK_COMMERCE = 'CHECK_COMMERCE',
   SQUARE = 'SQUARE',
   OFFLINE = 'OFFLINE',
+  CCAVENUE = 'CCAVENUE',
 }
 
 export function useConfirmCheckout() {
-  const {
-    session,
-    jwt,
-    setIsConfirmingCheckout,
-    isConfirmingCheckout,
-    setCheckoutErrors,
-  } = useCheckoutContext();
+  const { session, jwt, setIsConfirmingCheckout, setCheckoutErrors } =
+    useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
   const form = useFormContext();
+  const isPendingRef = useRef(false);
 
   return useMutation({
     mutationFn: async (
@@ -83,7 +81,9 @@ export function useConfirmCheckout() {
         isExpress?: boolean;
       }
     ) => {
-      if (!session || !input?.paymentType || isConfirmingCheckout) return;
+      if (!session || !input?.paymentType) return;
+      if (isPendingRef.current) return; // Prevent double-calls
+      isPendingRef.current = true;
 
       const { isExpress, ...confirmCheckoutInput } = input;
 
@@ -202,6 +202,9 @@ export function useConfirmCheckout() {
       });
 
       setIsConfirmingCheckout(false);
+    },
+    onSettled: () => {
+      isPendingRef.current = false;
     },
   });
 }

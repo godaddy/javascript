@@ -120,6 +120,11 @@ const LazyComponents = {
       module => ({ default: module.PazeCheckoutButton })
     )
   ),
+  CCAvenueCheckoutButton: lazy(() =>
+    import(
+      '@/components/checkout/payment/checkout-buttons/ccavenue/ccavenue'
+    ).then(module => ({ default: module.CCAvenueCheckoutButton }))
+  ),
 
   // Container Components
   CreditCardContainer: lazy(() =>
@@ -190,6 +195,11 @@ type PaymentComponentRegistry = {
       button: PaymentComponentKey;
     };
   };
+  [PaymentMethodType.CCAVENUE]?: {
+    [PaymentProvider.CCAVENUE]: {
+      button: PaymentComponentKey;
+    };
+  };
 };
 
 export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
@@ -242,6 +252,11 @@ export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
   [PaymentMethodType.MERCADOPAGO]: {
     [PaymentProvider.MERCADOPAGO]: {
       button: 'MercadoPagoCheckoutButton',
+    },
+  },
+  [PaymentMethodType.CCAVENUE]: {
+    [PaymentProvider.CCAVENUE]: {
+      button: 'CCAvenueCheckoutButton',
     },
   },
 };

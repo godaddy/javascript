@@ -81,6 +81,10 @@ export const GetCheckoutSessionQuery = graphql(`
                 processor
                 checkoutTypes
               }
+              ccavenue {
+                processor
+                checkoutTypes
+              }
               express {
                 processor
                 checkoutTypes
