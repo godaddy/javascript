@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Loader2, ShoppingBag } from 'lucide-react';
 import type React from 'react';
+import { useState } from 'react';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,12 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSkuGroup } from '@/lib/godaddy/godaddy';
 import { SKUGroup } from '@/types.ts';
 
+/** Response shape: { groups?: Array<{ sellingPlans?: Array<{ planId?, id?, name?, displayName?, category? }> }> } */
+export type GetSellingPlansFn = (
+  storeId: string,
+  skuIds: string[]
+) => Promise<{ groups?: unknown[] }>;
+
 interface ProductCardProps {
   product?: SKUGroup;
   productId?: string;
@@ -21,8 +28,33 @@ interface ProductCardProps {
   clientId?: string;
   href?: string;
   getProductHref?: (productId: string) => string;
+  /** When provided, fetches selling plans for this card's SKU and shows a dropdown if any exist */
+  getSellingPlans?: GetSellingPlansFn;
   onAddToCartSuccess?: () => void;
   onAddToCartError?: (error: Error) => void;
+}
+
+function parseSellingPlansFromResponse(data: { groups?: unknown[] }): Array<{ planId: string; name: string; category?: string }> {
+  const list: Array<{ planId: string; name: string; category?: string }> = [];
+  const groups = Array.isArray(data?.groups) ? data.groups : [];
+  for (const group of groups) {
+    const g = group as { sellingPlans?: unknown[]; selling_plans?: unknown[] };
+    const plans = g?.sellingPlans ?? g?.selling_plans ?? [];
+    if (!Array.isArray(plans)) continue;
+    for (const plan of plans) {
+      const p = plan as { planId?: string; id?: string; plan_id?: string; name?: string; displayName?: string; category?: string; planCategory?: string };
+      const planId = p?.planId ?? p?.id ?? p?.plan_id;
+      const name = p?.name ?? p?.displayName ?? '';
+      if (planId && name) {
+        list.push({
+          planId: String(planId),
+          name: String(name),
+          category: p?.category ?? p?.planCategory,
+        });
+      }
+    }
+  }
+  return list;
 }
 
 export function ProductCard({
@@ -32,6 +64,7 @@ export function ProductCard({
   clientId: clientIdProp,
   href: hrefProp,
   getProductHref,
+  getSellingPlans,
   onAddToCartSuccess,
   onAddToCartError,
 }: ProductCardProps) {
@@ -41,6 +74,7 @@ export function ProductCard({
   const formatCurrency = useFormatCurrency();
   const storeId = storeIdProp || context.storeId;
   const clientId = clientIdProp || context.clientId;
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
 
   // Fetch product by ID if productId is provided
   const {
@@ -54,14 +88,22 @@ export function ProductCard({
     enabled: !!productId && !!storeId && !!clientId && !productProp,
   });
 
-  // Use shared add to cart hook
+  const product = productProp || fetchedProductData?.skuGroup;
+  const sellingPlanSkuId =
+    product?.skus?.edges?.[0]?.node?.id ?? product?.id ?? productId ?? '';
+
+  const { data: sellingPlansData } = useQuery({
+    queryKey: ['selling-plans', storeId, sellingPlanSkuId],
+    queryFn: () => getSellingPlans!(storeId!, [sellingPlanSkuId]),
+    enabled: !!getSellingPlans && !!storeId && !!sellingPlanSkuId,
+  });
+
+  const sellingPlanOptions = sellingPlansData ? parseSellingPlansFromResponse(sellingPlansData) : [];
+
   const { addToCart, isLoading: isAddingToCart } = useAddToCart({
     onSuccess: onAddToCartSuccess,
     onError: onAddToCartError,
   });
-
-  // Use fetched product or prop product
-  const product = productProp || fetchedProductData?.skuGroup;
 
   // Compute href with priority: explicit href > getProductHref > no link
   const resolvedProductId = product?.id || productId;
@@ -141,6 +183,7 @@ export function ProductCard({
       name: title,
       quantity: 1,
       productAssetUrl: imageUrl || undefined,
+      sellingPlanId: selectedPlanId ?? undefined,
     });
   };
 
@@ -223,6 +266,32 @@ export function ProductCard({
         <p className='text-sm text-muted-foreground line-clamp-2'>
           {description}
         </p>
+        {sellingPlanOptions.length > 0 && (
+          <div className='space-y-1'>
+            <label htmlFor={`selling-plan-card-${skuId}`} className='sr-only'>
+              {t.storefront.product}
+            </label>
+            <select
+              id={`selling-plan-card-${skuId}`}
+              value={selectedPlanId ?? ''}
+              onChange={e => {
+                const v = e.target.value;
+                setSelectedPlanId(v === '' ? null : v);
+              }}
+              onClick={e => e.stopPropagation()}
+              aria-label='Purchase option'
+              className='w-full rounded border border-input bg-background px-2 py-1.5 text-xs ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1'
+            >
+              <option value=''>One-time</option>
+              {sellingPlanOptions.map(plan => (
+                <option key={plan.planId} value={plan.planId}>
+                  {plan.name}
+                  {plan.category ? ` · ${plan.category}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className='flex items-center justify-between pt-2 mt-auto'>
           <span className='text-md font-semibold text-foreground'>
             {/* TODO: Use dynamic currency from store/product when available instead of hardcoded USD */}

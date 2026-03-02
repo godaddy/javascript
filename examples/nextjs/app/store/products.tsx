@@ -2,6 +2,7 @@
 
 import { ProductGrid, ProductSearch } from '@godaddy/react';
 import { useCart } from './layout';
+import { getSellingSellingPlans } from './actions';
 
 export default function ProductsPage() {
   const { openCart } = useCart();
@@ -14,6 +15,9 @@ export default function ProductsPage() {
       <ProductGrid
         enablePagination
         getProductHref={sku => `/store/product/${sku}`}
+        getSellingPlans={(storeId, skuIds) =>
+          getSellingSellingPlans(storeId, { skuIds })
+        }
         onAddToCartSuccess={openCart}
       />
     </div>

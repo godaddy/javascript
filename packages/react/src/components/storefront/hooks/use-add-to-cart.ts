@@ -8,6 +8,7 @@ export interface AddToCartInput {
   name: string;
   quantity: number;
   productAssetUrl?: string;
+  sellingPlanId?: string | null;
 }
 
 export interface UseAddToCartOptions {
@@ -67,7 +68,10 @@ export function useAddToCart(options?: UseAddToCartOptions) {
           status: 'DRAFT',
           details: {
             productAssetUrl: input.productAssetUrl || undefined,
-          },
+            ...(input.sellingPlanId && {
+              sellingPlanId: input.sellingPlanId,
+            }),
+          } as Parameters<typeof addCartLineItem>[0]['details'],
         },
         context.storeId!,
         context.clientId!,

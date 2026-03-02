@@ -27,6 +27,10 @@ interface ProductDetailsProps {
   clientId?: string;
   onAddToCartSuccess?: () => void;
   onAddToCartError?: (error: Error) => void;
+  /** Renders above the Add to Cart button; receives current matched SKU id (null when no single variant is selected). */
+  childrenAboveAddToCart?: (props: { skuId: string | null }) => React.ReactNode;
+  /** When set, the selected selling plan id is sent with add-to-cart so the line item is bundled with that plan (e.g. subscription). Omit or null for one-time purchase. */
+  selectedSellingPlanId?: string | null;
 }
 
 // Flattened attribute structure for UI (transforms edges/node to flat array)
@@ -124,6 +128,8 @@ export function ProductDetails({
   clientId: clientIdProp,
   onAddToCartSuccess,
   onAddToCartError,
+  childrenAboveAddToCart,
+  selectedSellingPlanId,
 }: ProductDetailsProps) {
   const context = useGoDaddyContext();
   const { t } = context;
@@ -407,6 +413,7 @@ export function ProductDetails({
       name: title,
       quantity,
       productAssetUrl: images[0] || undefined,
+      sellingPlanId: selectedSellingPlanId ?? undefined,
     });
   };
 
@@ -655,6 +662,14 @@ export function ProductDetails({
             </Button>
           </div>
         </div>
+
+        {childrenAboveAddToCart != null && (
+          <div>
+            {childrenAboveAddToCart({
+              skuId: selectedSku?.id ?? matchedSkuId ?? null,
+            })}
+          </div>
+        )}
 
         {/* Add to Cart Button */}
         <Button

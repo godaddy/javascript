@@ -22,6 +22,7 @@ export const GetCartOrderQuery = graphql(`
           productAssetUrl
           sku
           unitOfMeasure
+          sellingPlanId
           selectedOptions {
             attribute
             values

@@ -80,6 +80,7 @@ export const AddLineItemBySkuIdMutation = graphql(`
         productAssetUrl
         sku
         unitOfMeasure
+        sellingPlanId
         selectedOptions {
           attribute
           values

@@ -22,7 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSkuGroups } from '@/lib/godaddy/godaddy';
 import type { SkuGroupsInput } from '@/types';
-import { ProductCard } from './product-card';
+import { ProductCard, type GetSellingPlansFn } from './product-card';
 
 interface ProductGridProps {
   storeId?: string;
@@ -33,6 +33,8 @@ interface ProductGridProps {
   categoryIds?: string[];
   enablePagination?: boolean;
   getProductHref?: (productId: string) => string;
+  /** When provided, each product card fetches selling plans and shows a dropdown if any exist */
+  getSellingPlans?: GetSellingPlansFn;
   onAddToCartSuccess?: () => void;
   onAddToCartError?: (error: Error) => void;
 }
@@ -60,6 +62,7 @@ export function ProductGrid({
   categoryIds,
   enablePagination = false,
   getProductHref,
+  getSellingPlans,
   onAddToCartSuccess,
   onAddToCartError,
 }: ProductGridProps) {
@@ -246,6 +249,7 @@ export function ProductGrid({
               key={group.id}
               product={group}
               getProductHref={getProductHref}
+              getSellingPlans={getSellingPlans}
               onAddToCartSuccess={onAddToCartSuccess}
               onAddToCartError={onAddToCartError}
             />

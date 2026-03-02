@@ -1,7 +1,74 @@
 'use server';
 
+import https from 'node:https';
 import { createCheckoutSession } from '@godaddy/react/server';
 import { redirect } from 'next/navigation';
+
+export async function getSellingSellingPlans(
+  storeId: string,
+  options: { skuIds?: string[]; skuGroupIds?: string[] } = {}
+) {
+  const baseUrl = (
+    process.env.SELLING_PLANS_API_URL?.trim() || 'https://localhost:8443'
+  ).replace(/\/$/, '');
+  const url = new URL(`${baseUrl}/api/v1/selling-plans/${storeId}/groups`);
+
+  if (options.skuIds?.length) {
+    for (const id of options.skuIds) {
+      url.searchParams.append('skuIds', id);
+    }
+  }
+
+  if (options.skuGroupIds?.length) {
+    for (const id of options.skuGroupIds) {
+      url.searchParams.append('skuGroupIds', id);
+    }
+  }
+
+  const isLocalHttps =
+    url.protocol === 'https:' &&
+    (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+
+  try {
+    let res: Response;
+    if (isLocalHttps && process.env.NODE_ENV === 'development') {
+      const { body, status } = await new Promise<{ body: string; status: number }>(
+        (resolve, reject) => {
+          https
+            .get(url.toString(), { rejectUnauthorized: false }, (r) => {
+              let data = '';
+              r.on('data', (chunk) => (data += chunk));
+              r.on('end', () =>
+                resolve({ body: data, status: r.statusCode ?? 0 })
+              );
+              r.on('error', reject);
+            })
+            .on('error', reject);
+        }
+      );
+      res = new Response(body, {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } else {
+      res = await fetch(url.toString(), {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      });
+    }
+    if (!res.ok) {
+      throw new Error(
+        `Selling plans API error: ${res.status} ${res.statusText}`
+      );
+    }
+    return res.json();
+  } catch (err) {
+    if (process.env.NODE_ENV === 'development') {
+      return { groups: [] };
+    }
+    throw err;
+  }
+}
 
 export async function checkoutWithOrder(orderId: string) {
   const session = await createCheckoutSession(
