@@ -107,6 +107,8 @@ export const esPe = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagos en efectivo',
+      mercadopago: 'Mercado Pago',
+      ccavenue: 'Pagar con CCAvenue',
     },
     descriptions: {
       creditCard: '',
@@ -115,6 +117,9 @@ export const esPe = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Usa el formulario de MercadoPago a continuación para completar tu compra de forma segura.',
+      ccavenue: '',
     },
     noMethodsAvailable: 'No hay métodos de pago disponibles',
     cardNumber: 'Número de tarjeta',

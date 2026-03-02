@@ -1,5 +1,56 @@
 # nextjs
 
+## 0.1.27
+
+### Patch Changes
+
+- Updated dependencies [eaa8496]
+  - @godaddy/react@1.0.29
+  - @godaddy/localizations@1.0.8
+
+## 0.1.26
+
+### Patch Changes
+
+- Updated dependencies [f24654b]
+  - @godaddy/react@1.0.28
+
+## 0.1.25
+
+### Patch Changes
+
+- Updated dependencies [97ffe4d]
+  - @godaddy/react@1.0.27
+  - @godaddy/localizations@1.0.7
+
+## 0.1.24
+
+### Patch Changes
+
+- Updated dependencies [172059f]
+  - @godaddy/react@1.0.26
+
+## 0.1.23
+
+### Patch Changes
+
+- Updated dependencies [de0b740]
+  - @godaddy/react@1.0.25
+
+## 0.1.22
+
+### Patch Changes
+
+- Updated dependencies [3d85a32]
+  - @godaddy/react@1.0.24
+
+## 0.1.21
+
+### Patch Changes
+
+- Updated dependencies [8e31daf]
+  - @godaddy/react@1.0.23
+
 ## 0.1.20
 
 ### Patch Changes

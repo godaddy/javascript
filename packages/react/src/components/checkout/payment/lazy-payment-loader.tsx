@@ -70,7 +70,13 @@ const LazyComponents = {
       default: module.PayPalCreditCardCheckoutButton,
     }))
   ),
-
+  MercadoPagoCheckoutButton: lazy(() =>
+    import(
+      '@/components/checkout/payment/checkout-buttons/mercadopago/mercadopago'
+    ).then(module => ({
+      default: module.MercadoPagoCheckoutButton,
+    }))
+  ),
   // Express Buttons
   ExpressCheckoutButton: lazy(() =>
     import(
@@ -113,6 +119,11 @@ const LazyComponents = {
     import('@/components/checkout/payment/checkout-buttons/paze/godaddy').then(
       module => ({ default: module.PazeCheckoutButton })
     )
+  ),
+  CCAvenueCheckoutButton: lazy(() =>
+    import(
+      '@/components/checkout/payment/checkout-buttons/ccavenue/ccavenue'
+    ).then(module => ({ default: module.CCAvenueCheckoutButton }))
   ),
 
   // Container Components
@@ -179,6 +190,16 @@ type PaymentComponentRegistry = {
       button: PaymentComponentKey;
     };
   };
+  [PaymentMethodType.MERCADOPAGO]?: {
+    [PaymentProvider.MERCADOPAGO]: {
+      button: PaymentComponentKey;
+    };
+  };
+  [PaymentMethodType.CCAVENUE]?: {
+    [PaymentProvider.CCAVENUE]: {
+      button: PaymentComponentKey;
+    };
+  };
 };
 
 export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
@@ -226,6 +247,16 @@ export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
   [PaymentMethodType.PAZE]: {
     [PaymentProvider.GODADDY]: {
       button: 'PazeCheckoutButton',
+    },
+  },
+  [PaymentMethodType.MERCADOPAGO]: {
+    [PaymentProvider.MERCADOPAGO]: {
+      button: 'MercadoPagoCheckoutButton',
+    },
+  },
+  [PaymentMethodType.CCAVENUE]: {
+    [PaymentProvider.CCAVENUE]: {
+      button: 'CCAvenueCheckoutButton',
     },
   },
 };

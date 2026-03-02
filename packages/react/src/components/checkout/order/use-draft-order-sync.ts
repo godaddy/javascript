@@ -240,7 +240,7 @@ export function useDraftOrderFieldSync<T>({
 }) {
   const lastSubmittedRef = React.useRef<Record<string, string>>({});
   const updateDraftOrder = useUpdateOrder();
-  const { session } = useCheckoutContext();
+  const { session, isConfirmingCheckout } = useCheckoutContext();
   const { data: draftOrderData } = useDraftOrder();
   const form = useFormContext<CheckoutFormData>();
   const pendingResetRef = React.useRef<string[]>([]);
@@ -272,7 +272,7 @@ export function useDraftOrderFieldSync<T>({
   );
 
   React.useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || isConfirmingCheckout) return;
 
     const memoKey = key ?? 'default';
     const currentSerialized = JSON.stringify(data);
@@ -353,6 +353,7 @@ export function useDraftOrderFieldSync<T>({
       }
     );
   }, [
+    isConfirmingCheckout,
     enabled,
     data,
     mapToInput,

@@ -1,5 +1,63 @@
 # @godaddy/react
 
+## 1.0.29
+
+### Patch Changes
+
+- eaa8496: Add CCAvenue payment provider support and improvements
+
+  **@godaddy/react**
+
+  - Add CCAvenue checkout button with shipping validation (require shipping methods when delivery is SHIP)
+  - Add CCAvenueReturnProvider for return flow with JWT auth support and confirm checkout loader
+  - Use env-based redirect URL for CCAvenue gateway
+  - Disable form and mutations when confirming checkout
+
+  **@godaddy/localizations**
+
+  - Add CCAvenue payment method labels and descriptions for all supported locales
+
+- Updated dependencies [eaa8496]
+  - @godaddy/localizations@1.0.8
+
+## 1.0.28
+
+### Patch Changes
+
+- f24654b: Add google and apple pay stripe express payment methods
+
+## 1.0.27
+
+### Patch Changes
+
+- 97ffe4d: Implementation of mercadopago
+- Updated dependencies [97ffe4d]
+  - @godaddy/localizations@1.0.7
+
+## 1.0.26
+
+### Patch Changes
+
+- 172059f: Limit paypal express to paypal button only
+
+## 1.0.25
+
+### Patch Changes
+
+- de0b740: Update shipping method on change to match correct shipping provider and service for express checkout
+
+## 1.0.24
+
+### Patch Changes
+
+- 3d85a32: Send major unit price for square payments
+
+## 1.0.23
+
+### Patch Changes
+
+- 8e31daf: Recalculate taxes on express coupon code and shipping changes
+
 ## 1.0.22
 
 ### Patch Changes

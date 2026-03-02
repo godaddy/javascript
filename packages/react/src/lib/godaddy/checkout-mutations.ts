@@ -81,6 +81,10 @@ export const CreateCheckoutSessionMutation = graphql(`
           processor
           checkoutTypes
         }
+        ccavenue {
+          processor
+          checkoutTypes
+        }
         express {
           processor
           checkoutTypes
@@ -102,6 +106,10 @@ export const CreateCheckoutSessionMutation = graphql(`
           checkoutTypes
         }
         offline {
+          processor
+          checkoutTypes
+        }
+        mercadopago {
           processor
           checkoutTypes
         }

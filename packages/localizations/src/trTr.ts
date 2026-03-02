@@ -106,6 +106,8 @@ export const trTr = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Çevrimdışı ödemeler',
+      mercadopago: 'Mercado Pago',
+      ccavenue: 'CCAvenue ile öde',
     },
     descriptions: {
       creditCard: '',
@@ -114,6 +116,9 @@ export const trTr = {
       googlePay: '',
       paze: '',
       offline: '',
+      mercadopago:
+        'Satın alımınızı güvenle tamamlamak için aşağıdaki MercadoPago formunu kullanın.',
+      ccavenue: '',
     },
     noMethodsAvailable: 'Kullanılabilir ödeme yöntemi yok',
     cardNumber: 'Kart numarası',

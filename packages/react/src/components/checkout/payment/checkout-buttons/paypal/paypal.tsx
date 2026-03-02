@@ -1,4 +1,8 @@
-import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
+import {
+  FUNDING,
+  PayPalButtons,
+  usePayPalScriptReducer,
+} from '@paypal/react-paypal-js';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
@@ -88,6 +92,7 @@ function PayPalButtonsWrapper() {
 
   return (
     <PayPalButtons
+      fundingSource={FUNDING.PAYPAL}
       style={{
         layout: 'vertical',
         label: 'pay',

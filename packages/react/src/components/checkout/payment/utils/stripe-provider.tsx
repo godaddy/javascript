@@ -42,6 +42,8 @@ export function StripeProvider({ children }: { children: React.ReactNode }) {
           amount: amount,
           currency,
           capture_method: 'manual',
+          paymentMethodCreation: 'manual',
+          payment_method_types: ['card'],
         }}
       >
         <StripeElementsUpdater />

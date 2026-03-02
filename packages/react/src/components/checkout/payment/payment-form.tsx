@@ -17,7 +17,9 @@ import {
   type Product,
 } from '@/components/checkout/line-items';
 import ApplePayIcon from '@/components/checkout/payment/icons/ApplePay';
+import CcavenueIcon from '@/components/checkout/payment/icons/Ccavenue';
 import GooglePayIcon from '@/components/checkout/payment/icons/GooglePay';
+import MercadoPagoIcon from '@/components/checkout/payment/icons/MercadoPago';
 import PayPalIcon from '@/components/checkout/payment/icons/PayPal';
 import PazeIcon from '@/components/checkout/payment/icons/Paze';
 import {
@@ -66,7 +68,9 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   applePay: <ApplePayIcon className='h-5 w-5' />,
   googlePay: <GooglePayIcon className='h-5 w-10' />,
   paze: <PazeIcon className='h-5 w-8' />,
+  mercadopago: <MercadoPagoIcon className='h-5 w-8' />,
   offline: <Wallet className='h-5 w-5' />,
+  ccavenue: <CcavenueIcon className='h-5 w-5' />,
 };
 
 export function PaymentForm(
@@ -114,6 +118,10 @@ export function PaymentForm(
           return t.payment.methods.paze;
         case PaymentMethodType.OFFLINE:
           return t.payment.methods.offline;
+        case PaymentMethodType.MERCADOPAGO:
+          return t.payment.methods.mercadopago;
+        case PaymentMethodType.CCAVENUE:
+          return t.payment.methods.ccavenue;
         default:
           return key;
       }
@@ -137,6 +145,10 @@ export function PaymentForm(
           return t.payment.descriptions?.paze;
         case PaymentMethodType.OFFLINE:
           return t.payment.descriptions?.offline;
+        case PaymentMethodType.MERCADOPAGO:
+          return t.payment.descriptions?.mercadopago;
+        case PaymentMethodType.CCAVENUE:
+          return t.payment.descriptions?.ccavenue;
         default:
           return undefined;
       }
@@ -269,7 +281,10 @@ export function PaymentForm(
 
   // Render the correct checkout button(s) for the selected payment method
   const getCheckoutButton = () => {
-    if (isConfirmingCheckout) {
+    if (
+      isConfirmingCheckout &&
+      paymentMethod !== PaymentMethodType.MERCADOPAGO
+    ) {
       return (
         <Button
           type='button'

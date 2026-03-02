@@ -58,17 +58,17 @@ export default async function Home() {
           processor: 'godaddy',
           checkoutTypes: ['standard'],
         },
-        express: {
-          processor: 'godaddy',
-          checkoutTypes: ['express'],
+        mercadopago: {
+          processor: 'mercadopago',
+          checkoutTypes: ['standard'],
+        },
+        ccavenue: {
+          processor: 'ccavenue',
+          checkoutTypes: ['standard'],
         },
         paypal: {
           processor: 'paypal',
-          checkoutTypes: ['standard'],
-        },
-        offline: {
-          processor: 'offline',
-          checkoutTypes: ['standard'],
+          checkoutTypes: ['express', 'standard'],
         },
       },
       operatingHours: {
