@@ -586,7 +586,7 @@ export function LocalPickupForm({
         )}
       />
 
-      {storeHours?.pickupWindowInDays !== 0 && (
+      {storeHours && storeHours.pickupWindowInDays !== 0 && (
         <FormField
           control={form.control}
           name='pickupDate'
@@ -679,7 +679,8 @@ export function LocalPickupForm({
         />
       )}
 
-      {storeHours?.pickupWindowInDays !== 0 &&
+      {storeHours &&
+        storeHours.pickupWindowInDays !== 0 &&
         selectedDate &&
         availableTimeSlots.length > 0 && (
           <FormField
@@ -728,7 +729,8 @@ export function LocalPickupForm({
           />
         )}
 
-      {storeHours?.pickupWindowInDays !== 0 &&
+      {storeHours &&
+        storeHours.pickupWindowInDays !== 0 &&
         selectedDate &&
         availableTimeSlots.length === 0 && (
           <div className='rounded-md bg-yellow-50 p-4'>
