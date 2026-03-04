@@ -108,6 +108,7 @@ export const enIe = {
       offline: 'Offline payments',
       ach: 'Bank Account',
       mercadopago: 'Mercado Pago',
+      ccavenue: 'Pay with CCAvenue',
     },
     descriptions: {
       creditCard: '',
@@ -119,6 +120,7 @@ export const enIe = {
       ach: '',
       mercadopago:
         'Use the MercadoPago form below to complete your purchase securely.',
+      ccavenue: '',
     },
     noMethodsAvailable: 'No payment methods available',
     cardNumber: 'Card number',

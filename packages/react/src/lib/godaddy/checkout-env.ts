@@ -9985,13 +9985,6 @@ const introspection = {
               name: 'UpdateMoneyInput',
             },
           },
-          {
-            name: 'unitPrice',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'UpdateMoneyInput',
-            },
-          },
         ],
         isOneOf: false,
       },

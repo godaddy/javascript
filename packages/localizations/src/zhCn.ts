@@ -104,6 +104,7 @@ export const zhCn = {
       offline: '线下付款',
       ach: '银行账户',
       mercadopago: 'Mercado Pago',
+      ccavenue: '使用 CCAvenue 支付',
     },
     descriptions: {
       creditCard: '',
@@ -114,6 +115,7 @@ export const zhCn = {
       offline: '',
       ach: '',
       mercadopago: '请使用下方的 MercadoPago 表单安全完成购买。',
+      ccavenue: '',
     },
     noMethodsAvailable: '暂无可用的付款方式',
     cardNumber: '卡号',

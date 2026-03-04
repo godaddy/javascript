@@ -60,6 +60,14 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
             }
           : undefined
       }
+      ccavenueConfig={
+        process.env.NEXT_PUBLIC_CCAVENUE_ACCESS_CODE_ID
+          ? {
+              accessCodeId:
+                process.env.NEXT_PUBLIC_CCAVENUE_ACCESS_CODE_ID,
+            }
+          : undefined
+      }
     />
   );
 }

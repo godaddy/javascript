@@ -1,5 +1,25 @@
 # @godaddy/react
 
+## 1.0.29
+
+### Patch Changes
+
+- eaa8496: Add CCAvenue payment provider support and improvements
+
+  **@godaddy/react**
+
+  - Add CCAvenue checkout button with shipping validation (require shipping methods when delivery is SHIP)
+  - Add CCAvenueReturnProvider for return flow with JWT auth support and confirm checkout loader
+  - Use env-based redirect URL for CCAvenue gateway
+  - Disable form and mutations when confirming checkout
+
+  **@godaddy/localizations**
+
+  - Add CCAvenue payment method labels and descriptions for all supported locales
+
+- Updated dependencies [eaa8496]
+  - @godaddy/localizations@1.0.8
+
 ## 1.0.28
 
 ### Patch Changes

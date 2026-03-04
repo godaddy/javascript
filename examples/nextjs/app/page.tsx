@@ -70,6 +70,10 @@ export default async function Home() {
           processor: 'mercadopago',
           checkoutTypes: ['standard'],
         },
+        ccavenue: {
+          processor: 'ccavenue',
+          checkoutTypes: ['standard'],
+        },
         paypal: {
           processor: 'paypal',
           checkoutTypes: ['express', 'standard'],

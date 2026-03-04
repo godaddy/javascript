@@ -108,6 +108,7 @@ export const trTr = {
       offline: 'Çevrimdışı ödemeler',
       ach: 'Banka Hesabı',
       mercadopago: 'Mercado Pago',
+      ccavenue: 'CCAvenue ile öde',
     },
     descriptions: {
       creditCard: '',
@@ -119,6 +120,7 @@ export const trTr = {
       ach: '',
       mercadopago:
         'Satın alımınızı güvenle tamamlamak için aşağıdaki MercadoPago formunu kullanın.',
+      ccavenue: '',
     },
     noMethodsAvailable: 'Kullanılabilir ödeme yöntemi yok',
     cardNumber: 'Kart numarası',

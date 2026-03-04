@@ -85,6 +85,10 @@ export type MercadoPagoConfig = {
   country: 'AR' | 'BR' | 'CO' | 'CL' | 'PE' | 'MX';
 };
 
+export type CCAvenueConfig = {
+  accessCodeId: string;
+};
+
 interface CheckoutContextValue {
   elements?: CheckoutElements;
   targets?: Partial<
@@ -98,6 +102,7 @@ interface CheckoutContextValue {
   squareConfig?: SquareConfig;
   paypalConfig?: PayPalConfig;
   mercadoPagoConfig?: MercadoPagoConfig;
+  ccavenueConfig?: CCAvenueConfig;
   isConfirmingCheckout: boolean;
   setIsConfirmingCheckout: (isConfirming: boolean) => void;
   checkoutErrors?: string[] | undefined;
@@ -209,6 +214,7 @@ export interface CheckoutProps {
   squareConfig?: SquareConfig;
   paypalConfig?: PayPalConfig;
   mercadoPagoConfig?: MercadoPagoConfig;
+  ccavenueConfig?: CCAvenueConfig;
   layout?: LayoutSection[];
   direction?: 'ltr' | 'rtl';
   showStoreHours?: boolean;
@@ -229,10 +235,14 @@ export function Checkout(props: CheckoutProps) {
     squareConfig,
     paypalConfig,
     mercadoPagoConfig,
+    ccavenueConfig,
     isCheckoutDisabled,
   } = props;
 
-  const [isConfirmingCheckout, setIsConfirmingCheckout] = React.useState(false);
+  const [isConfirmingCheckout, setIsConfirmingCheckout] = React.useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).has('encResp');
+  });
   const [checkoutErrors, setCheckoutErrors] = React.useState<
     string[] | undefined
   >(undefined);
@@ -395,6 +405,7 @@ export function Checkout(props: CheckoutProps) {
           squareConfig,
           mercadoPagoConfig,
           paypalConfig,
+          ccavenueConfig,
           requiredFields,
           isConfirmingCheckout,
           setIsConfirmingCheckout,

@@ -51,6 +51,10 @@ export async function checkoutWithOrder(orderId: string) {
           processor: 'godaddy',
           checkoutTypes: ['standard'],
         },
+        ccavenue: {
+          processor: 'ccavenue',
+          checkoutTypes: ['standard'],
+        },
         express: {
           processor: 'godaddy',
           checkoutTypes: ['express'],

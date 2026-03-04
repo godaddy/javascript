@@ -108,6 +108,7 @@ export const idId = {
       offline: 'Pembayaran offline',
       ach: 'Rekening Bank',
       mercadopago: 'Mercado Pago',
+      ccavenue: 'Bayar dengan CCAvenue',
     },
     descriptions: {
       creditCard: '',
@@ -119,6 +120,7 @@ export const idId = {
       ach: '',
       mercadopago:
         'Gunakan formulir MercadoPago di bawah untuk menyelesaikan pembelian Anda dengan aman.',
+      ccavenue: '',
     },
     noMethodsAvailable: 'Tidak ada metode pembayaran tersedia',
     cardNumber: 'Nomor kartu',

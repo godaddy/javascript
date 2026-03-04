@@ -109,6 +109,7 @@ export const qaPs = {
       offline: '[Öfflîñë þâÿmëñţ mëţhödš]',
       ach: '[Bâñk Âççöüñţ Þâÿmëñţ]',
       mercadopago: 'Mercado Pago',
+      ccavenue: '[Þâÿ ïñ ÇÇÂvëñûë]',
     },
     descriptions: {
       creditCard: '',
@@ -120,6 +121,7 @@ export const qaPs = {
       ach: '',
       mercadopago:
         '[Üšë ţhë MërçâðöÞâgö förm këlöw ţö çömþlëţë ÿöür þürçhâšë šëçürëlÿ.]',
+      ccavenue: '',
     },
     noMethodsAvailable: '[Ñö þâÿmëñţ mëţhödš âvâîlâblë âţ ţhîš ţîmë]',
     cardNumber: '[Çârd ñümkër îñþüţ fîëld]',

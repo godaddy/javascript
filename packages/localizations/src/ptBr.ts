@@ -108,6 +108,7 @@ export const ptBr = {
       offline: 'Pagamentos offline',
       ach: 'Conta Bancária',
       mercadopago: 'Mercado Pago',
+      ccavenue: 'Pagar com CCAvenue',
     },
     descriptions: {
       creditCard: '',
@@ -119,6 +120,7 @@ export const ptBr = {
       ach: '',
       mercadopago:
         'Use o formulário do MercadoPago abaixo para concluir sua compra com segurança.',
+      ccavenue: '',
     },
     noMethodsAvailable: 'Nenhum método de pagamento disponível',
     cardNumber: 'Número do cartão',

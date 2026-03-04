@@ -1,5 +1,6 @@
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { CCAvenueReturnProvider } from './ccavenue-return-provider';
 import { PayPalProvider } from './paypal-provider';
 import { PoyntACHCollectProvider } from './poynt-ach-provider';
 import { PoyntCollectProvider } from './poynt-provider';
@@ -23,6 +24,7 @@ export function ConditionalPaymentProviders({
     godaddyPaymentsConfig,
     squareConfig,
     paypalConfig,
+    ccavenueConfig,
     session,
   } = useCheckoutContext();
   const { payPalRequest } = useBuildPaymentRequest();
@@ -72,6 +74,13 @@ export function ConditionalPaymentProviders({
       >
         <PayPalProvider>{wrappedChildren}</PayPalProvider>
       </PayPalScriptProvider>
+    );
+  }
+
+  // CCAvenue return flow: only when CCAvenue is configured (has access code)
+  if (ccavenueConfig?.accessCodeId?.trim()) {
+    wrappedChildren = (
+      <CCAvenueReturnProvider>{wrappedChildren}</CCAvenueReturnProvider>
     );
   }
 
