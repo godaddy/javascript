@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.30
+
+### Patch Changes
+
+- c1ebb52: Format local pickup times to store timezone
+
 ## 1.0.29
 
 ### Patch Changes
