@@ -76,7 +76,7 @@ export default async function Home() {
         },
         paypal: {
           processor: 'paypal',
-          checkoutTypes: ['express', 'standard'],
+          checkoutTypes: ['standard'],
         },
       },
       operatingHours: {
