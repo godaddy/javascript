@@ -76,33 +76,56 @@ export function Cart({
   const { t } = useGoDaddyContext();
 
   // Transform cart line items to Product format for CartLineItems component
+  // Selling plan comes from backend (line item metafields).
   const items: Product[] =
-    order?.lineItems?.map(item => ({
-      id: item.id,
-      name: item.name || t.storefront.product,
-      image: item.details?.productAssetUrl || '',
-      quantity: item.quantity || 0,
-      originalPrice: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
-      price: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
-      selectedOptions:
-        item?.details?.selectedOptions?.map(option => ({
-          attribute: option.attribute || '',
-          values: option.values || [],
-        })) || [],
-      addons: item.details?.selectedAddons?.map(addon => ({
-        attribute: addon.attribute || '',
-        sku: addon.sku || '',
-        values: addon.values?.map(value => ({
-          costAdjustment: value.costAdjustment
-            ? {
-                currencyCode: value.costAdjustment.currencyCode ?? undefined,
-                value: value.costAdjustment.value ?? undefined,
-              }
-            : undefined,
-          name: value.name ?? undefined,
+    order?.lineItems?.map(item => {
+      const fromMetafield = item.details?.metafields?.find(m => m?.key === 'SELLING_PLAN');
+      let sellingPlan: { name?: string; category?: string } | null = null;
+      if (fromMetafield?.value) {
+        try {
+          const parsed = JSON.parse(fromMetafield.value) as {
+            name?: string;
+            category?: string;
+          };
+          sellingPlan = {
+            name: parsed.name,
+            category: parsed.category,
+          };
+        } catch {
+          sellingPlan = null;
+        }
+      }
+      return {
+        id: item.id,
+        name: item.name || t.storefront.product,
+        image: item.details?.productAssetUrl || '',
+        quantity: item.quantity || 0,
+        originalPrice: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
+        price: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
+        selectedOptions:
+          item?.details?.selectedOptions?.map(option => ({
+            attribute: option.attribute || '',
+            values: option.values || [],
+          })) || [],
+        addons: item.details?.selectedAddons?.map(addon => ({
+          attribute: addon.attribute || '',
+          sku: addon.sku || '',
+          values: addon.values?.map(value => ({
+            costAdjustment: value.costAdjustment
+              ? {
+                  currencyCode: value.costAdjustment.currencyCode ?? undefined,
+                  value: value.costAdjustment.value ?? undefined,
+                }
+              : undefined,
+            name: value.name ?? undefined,
+          })),
         })),
-      })),
-    })) || [];
+        sellingPlan:
+          sellingPlan?.name != null || sellingPlan?.category != null
+            ? { name: sellingPlan.name, category: sellingPlan.category }
+            : undefined,
+      };
+    }) || [];
 
   // Calculate totals
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);

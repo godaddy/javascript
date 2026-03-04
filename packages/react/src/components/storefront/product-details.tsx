@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
@@ -21,12 +22,26 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSku, getSkuGroup } from '@/lib/godaddy/godaddy';
 import type { SKUGroupAttribute, SKUGroupAttributeValue } from '@/types';
 
+/** Selling plan option for add-to-cart (from PDP selector). */
+export type SellingPlanSelection = {
+  planId: string;
+  name?: string;
+  category?: string;
+  [key: string]: unknown;
+};
+
 interface ProductDetailsProps {
   productId: string;
   storeId?: string;
   clientId?: string;
   onAddToCartSuccess?: () => void;
   onAddToCartError?: (error: Error) => void;
+  /** Selected selling plan id (from dropdown). */
+  selectedSellingPlanId?: string | null;
+  /** Full selected selling plan for display and cart metafield. */
+  selectedSellingPlan?: SellingPlanSelection | null;
+  /** Renders above the Add to Cart button; receives current skuId and storeId for selling plan dropdown. */
+  childrenAboveAddToCart?: (props: { skuId: string | null; storeId: string | undefined }) => ReactNode;
 }
 
 // Flattened attribute structure for UI (transforms edges/node to flat array)
@@ -124,6 +139,9 @@ export function ProductDetails({
   clientId: clientIdProp,
   onAddToCartSuccess,
   onAddToCartError,
+  selectedSellingPlanId,
+  selectedSellingPlan,
+  childrenAboveAddToCart,
 }: ProductDetailsProps) {
   const context = useGoDaddyContext();
   const { t } = context;
@@ -402,11 +420,16 @@ export function ProductDetails({
       return;
     }
 
+    const skuId = selectedSku?.id || product?.skus?.edges?.[0]?.node?.id || '';
     await addToCart({
-      skuId: selectedSku?.id || product?.skus?.edges?.[0]?.node?.id || '',
+      skuId,
       name: title,
       quantity,
       productAssetUrl: images[0] || undefined,
+      ...(selectedSellingPlan && {
+        sellingPlanId: selectedSellingPlanId ?? selectedSellingPlan.planId,
+        sellingPlan: selectedSellingPlan,
+      }),
     });
   };
 
@@ -655,6 +678,11 @@ export function ProductDetails({
             </Button>
           </div>
         </div>
+
+        {childrenAboveAddToCart?.({
+          skuId: selectedSku?.id ?? product?.skus?.edges?.[0]?.node?.id ?? null,
+          storeId,
+        })}
 
         {/* Add to Cart Button */}
         <Button
