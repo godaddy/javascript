@@ -374,7 +374,14 @@ export function LocalPickupForm({
       }
     }
 
+    const selectedDayStr = format(selectedDate, 'yyyy-MM-dd');
+
     while (true) {
+      // Break if we've rolled past the selected date (midnight overflow)
+      if (format(currentTime, 'yyyy-MM-dd') !== selectedDayStr) {
+        break;
+      }
+
       // Get the current slot's hour and minute for comparison
       const currentSlotHours = currentTime.getHours();
       const currentSlotMins = currentTime.getMinutes();

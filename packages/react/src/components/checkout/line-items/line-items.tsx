@@ -153,7 +153,7 @@ export function DraftOrderLineItems({
                   ) : null}
                 </span>
               </div>
-              {item.originalPrice && item.quantity ? (
+              {item.originalPrice != null && item.quantity ? (
                 <div className='text-right flex items-start gap-2'>
                   <div className='pt-0.5'>
                     <span className='text-sm'>

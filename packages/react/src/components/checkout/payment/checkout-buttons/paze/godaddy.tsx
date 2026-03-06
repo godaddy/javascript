@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
@@ -27,6 +27,7 @@ export function PazeCheckoutButton() {
   const { t } = useGoDaddyContext();
   const [isCollectLoading, setIsCollectLoading] = useState(true);
   const [error, setError] = useState('');
+  const elementId = `paze-pay-element-${useId()}`;
   const { data: totals } = useDraftOrderTotals();
   const { poyntStandardRequest } = useBuildPaymentRequest();
 
@@ -67,7 +68,7 @@ export function PazeCheckoutButton() {
     if (!hasMounted.current && collect?.current) {
       hasMounted.current = true;
       // console.log("[poynt collect] Mounting paze-pay-element");
-      collect?.current.mount('paze-pay-element', document, {
+      collect?.current.mount(elementId, document, {
         paymentMethods: ['paze'],
         buttonsContainerOptions: {
           className: 'gap-1 !flex-col sm:!flex-row place-items-center',
@@ -244,7 +245,7 @@ export function PazeCheckoutButton() {
 
   return (
     <>
-      <div id='paze-pay-element' />
+      <div id={elementId} />
       {isCollectLoading ? (
         <div className='grid gap-1 grid-cols-1'>
           <Skeleton className='h-12 w-full mb-1' />

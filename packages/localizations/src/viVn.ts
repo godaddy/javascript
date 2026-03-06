@@ -106,6 +106,7 @@ export const viVn = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Thanh toán ngoại tuyến',
+      ach: 'Tài khoản ngân hàng',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Thanh toán bằng CCAvenue',
     },
@@ -116,6 +117,7 @@ export const viVn = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago:
         'Hãy sử dụng biểu mẫu MercadoPago bên dưới để hoàn tất mua hàng một cách an toàn.',
       ccavenue: '',
@@ -335,6 +337,7 @@ export const viVn = {
       'Địa chỉ hoặc phương thức giao hàng không thể áp dụng',
     DEPENDENCY_ERROR:
       'Chúng tôi không thể xử lý đơn hàng của bạn ngay bây giờ. Vui lòng đợi một chút và thử lại',
+    AUTHORIZATION_FAILED: 'Không thể ủy quyền thanh toán',
   },
   storefront: {
     product: 'Sản phẩm',

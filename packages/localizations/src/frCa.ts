@@ -107,6 +107,7 @@ export const frCa = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Paiements hors ligne',
+      ach: 'Compte bancaire',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Payer avec CCAvenue',
     },
@@ -117,6 +118,7 @@ export const frCa = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago:
         'Utilisez le formulaire MercadoPago ci-dessous pour finaliser votre achat en toute sécurité.',
       ccavenue: '',
@@ -359,6 +361,7 @@ export const frCa = {
       "L'adresse ou la méthode de livraison n'a pas pu être appliquée",
     DEPENDENCY_ERROR:
       'Nous ne pouvons pas traiter votre commande actuellement. Veuillez patienter un moment et réessayer',
+    AUTHORIZATION_FAILED: "Échec de l'autorisation du paiement",
   },
   storefront: {
     product: 'Produit',

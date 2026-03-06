@@ -2985,6 +2985,15 @@ const introspection = {
         name: 'CheckoutSessionPaymentMethods',
         fields: [
           {
+            name: 'ach',
+            type: {
+              kind: 'OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfig',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
             name: 'applePay',
             type: {
               kind: 'OBJECT',
@@ -3073,6 +3082,13 @@ const introspection = {
         name: 'CheckoutSessionPaymentMethodsInput',
         inputFields: [
           {
+            name: 'ach',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfigInput',
+            },
+          },
+          {
             name: 'applePay',
             type: {
               kind: 'INPUT_OBJECT',
@@ -3108,6 +3124,13 @@ const introspection = {
             },
           },
           {
+            name: 'mercadopago',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfigInput',
+            },
+          },
+          {
             name: 'offline',
             type: {
               kind: 'INPUT_OBJECT',
@@ -3123,13 +3146,6 @@ const introspection = {
           },
           {
             name: 'paze',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfigInput',
-            },
-          },
-          {
-            name: 'mercadopago',
             type: {
               kind: 'INPUT_OBJECT',
               name: 'CheckoutSessionPaymentMethodConfigInput',

@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -63,6 +64,7 @@ export function ExpressCheckoutButton() {
   const { godaddyPaymentsConfig } = useCheckoutContext();
   const { t } = useGoDaddyContext();
   const [isCollectLoading, setIsCollectLoading] = useState(true);
+  const elementId = `gdpay-express-pay-element-${useId()}`;
   const [walletSource, setWalletSource] = useState<string | undefined>(
     undefined
   );
@@ -510,7 +512,7 @@ export function ExpressCheckoutButton() {
       if (paymentMethods.length > 0 && !hasMounted.current) {
         hasMounted.current = true;
         // console.log("[poynt collect] Mounting");
-        collect?.current?.mount('gdpay-express-pay-element', document, {
+        collect?.current?.mount(elementId, document, {
           paymentMethods: paymentMethods,
           buttonsContainerOptions: {
             className: 'gap-1 !flex-col sm:!flex-row place-items-center',
@@ -1456,7 +1458,7 @@ export function ExpressCheckoutButton() {
     // return function unmount() {
     // 	if (collect.current) {
     // 		console.log("poynt collect unmounting");
-    // 		collect.current.unmount("gdpay-express-pay-element", document);
+    // 		collect.current.unmount(elementId, document);
     // 	}
     // };
   }, [
@@ -1486,7 +1488,7 @@ export function ExpressCheckoutButton() {
   return (
     <>
       <div
-        id='gdpay-express-pay-element'
+        id={elementId}
         className={isDisabled ? 'opacity-50 pointer-events-none' : undefined}
       />
       {isCollectLoading ? (

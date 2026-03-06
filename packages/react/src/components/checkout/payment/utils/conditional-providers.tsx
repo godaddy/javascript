@@ -2,6 +2,7 @@ import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { CCAvenueReturnProvider } from './ccavenue-return-provider';
 import { PayPalProvider } from './paypal-provider';
+import { PoyntACHCollectProvider } from './poynt-ach-provider';
 import { PoyntCollectProvider } from './poynt-provider';
 import { SquareProvider } from './square-provider';
 import { StripeProvider } from './stripe-provider';
@@ -24,6 +25,7 @@ export function ConditionalPaymentProviders({
     squareConfig,
     paypalConfig,
     ccavenueConfig,
+    session,
   } = useCheckoutContext();
   const { payPalRequest } = useBuildPaymentRequest();
 
@@ -33,6 +35,16 @@ export function ConditionalPaymentProviders({
   // Only wrap with SquareProvider if Square is configured
   if (squareConfig?.appId?.trim() && squareConfig?.locationId?.trim()) {
     wrappedChildren = <SquareProvider>{wrappedChildren}</SquareProvider>;
+  }
+
+  // Only wrap with PoyntACHCollectProvider if GoDaddy ACH is configured
+  if (
+    godaddyPaymentsConfig?.appId?.trim() &&
+    session?.paymentMethods?.ach?.processor === 'godaddy'
+  ) {
+    wrappedChildren = (
+      <PoyntACHCollectProvider>{wrappedChildren}</PoyntACHCollectProvider>
+    );
   }
 
   // Only wrap with PoyntCollectProvider (GoDaddy Payments) if configured

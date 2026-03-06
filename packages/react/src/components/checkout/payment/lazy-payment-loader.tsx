@@ -70,6 +70,24 @@ const LazyComponents = {
       default: module.PayPalCreditCardCheckoutButton,
     }))
   ),
+  // ACH Form
+  GoDaddyACHForm: lazy(() =>
+    import('@/components/checkout/payment/payment-methods/ach/godaddy').then(
+      module => ({
+        default: module.GoDaddyACHForm,
+      })
+    )
+  ),
+
+  // ACH Buttons
+  ACHCheckoutButton: lazy(() =>
+    import('@/components/checkout/payment/checkout-buttons/ach/godaddy').then(
+      module => ({
+        default: module.ACHCheckoutButton,
+      })
+    )
+  ),
+
   MercadoPagoCheckoutButton: lazy(() =>
     import(
       '@/components/checkout/payment/checkout-buttons/mercadopago/mercadopago'
@@ -190,6 +208,12 @@ type PaymentComponentRegistry = {
       button: PaymentComponentKey;
     };
   };
+  [PaymentMethodType.ACH]?: {
+    [PaymentProvider.GODADDY]: {
+      form: PaymentComponentKey;
+      button: PaymentComponentKey;
+    };
+  };
   [PaymentMethodType.MERCADOPAGO]?: {
     [PaymentProvider.MERCADOPAGO]: {
       button: PaymentComponentKey;
@@ -252,6 +276,12 @@ export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
   [PaymentMethodType.MERCADOPAGO]: {
     [PaymentProvider.MERCADOPAGO]: {
       button: 'MercadoPagoCheckoutButton',
+    },
+  },
+  [PaymentMethodType.ACH]: {
+    [PaymentProvider.GODADDY]: {
+      form: 'GoDaddyACHForm',
+      button: 'ACHCheckoutButton',
     },
   },
   [PaymentMethodType.CCAVENUE]: {

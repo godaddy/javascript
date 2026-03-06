@@ -106,6 +106,7 @@ export const trTr = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Çevrimdışı ödemeler',
+      ach: 'Banka Hesabı',
       mercadopago: 'Mercado Pago',
       ccavenue: 'CCAvenue ile öde',
     },
@@ -116,6 +117,7 @@ export const trTr = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago:
         'Satın alımınızı güvenle tamamlamak için aşağıdaki MercadoPago formunu kullanın.',
       ccavenue: '',
@@ -335,6 +337,7 @@ export const trTr = {
     MISSING_SHIPPING_INFO: 'Kargo adresi veya yöntemi uygulanamadı',
     DEPENDENCY_ERROR:
       'Şu anda siparişinizi işleme alamıyoruz. Lütfen bir dakika bekleyin ve tekrar deneyin',
+    AUTHORIZATION_FAILED: 'Ödeme yetkilendirmesi başarısız',
   },
   storefront: {
     product: 'Ürün',

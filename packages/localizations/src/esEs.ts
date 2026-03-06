@@ -107,6 +107,7 @@ export const esEs = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagos sin conexión',
+      ach: 'Cuenta bancaria',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Pagar con CCAvenue',
     },
@@ -117,6 +118,7 @@ export const esEs = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago:
         'Usa el formulario de MercadoPago a continuación para completar tu compra de forma segura.',
       ccavenue: '',
@@ -347,6 +349,7 @@ export const esEs = {
     MISSING_SHIPPING_INFO: 'No se pudo aplicar la dirección o método de envío',
     DEPENDENCY_ERROR:
       'No podemos procesar su pedido en este momento. Espere un momento e inténtelo de nuevo',
+    AUTHORIZATION_FAILED: 'Error al autorizar el pago',
   },
   storefront: {
     product: 'Producto',

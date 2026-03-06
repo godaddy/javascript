@@ -109,6 +109,10 @@ export const GetCheckoutSessionQuery = graphql(`
                 processor
                 checkoutTypes
               }
+              ach {
+                processor
+                checkoutTypes
+              }
               mercadopago {
                 processor
                 checkoutTypes

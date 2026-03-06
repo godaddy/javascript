@@ -58,6 +58,7 @@ export type AvailablePaymentProviders =
 
 export const PaymentMethodType = {
   CREDIT_CARD: 'card',
+  ACH: 'ach',
   EXPRESS: 'express',
   PAYPAL: 'paypal',
   APPLE_PAY: 'applePay',

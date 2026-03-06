@@ -102,6 +102,7 @@ export const zhCn = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: '线下付款',
+      ach: '银行账户',
       mercadopago: 'Mercado Pago',
       ccavenue: '使用 CCAvenue 支付',
     },
@@ -112,6 +113,7 @@ export const zhCn = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago: '请使用下方的 MercadoPago 表单安全完成购买。',
       ccavenue: '',
     },
@@ -323,6 +325,7 @@ export const zhCn = {
     BILLING_ADDRESS_VERIFICATION_FAILED: '账单地址验证失败',
     MISSING_SHIPPING_INFO: '配送地址或方式应用失败',
     DEPENDENCY_ERROR: '我们目前无法处理您的订单。请稍等片刻再试',
+    AUTHORIZATION_FAILED: '付款授权失败',
   },
   storefront: {
     product: '产品',
