@@ -2,6 +2,7 @@ import gdConfig from 'eslint-config-godaddy';
 import react from 'eslint-plugin-react';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 
+import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
 import { FlatCompat } from '@eslint/eslintrc';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -14,9 +15,12 @@ const compat = new FlatCompat({
   baseDirectory: __dirname
 });
 
+// Wrap react plugin for ESLint 10 compatibility (context.getFilename etc.)
+const reactCompat = fixupPluginRules(react);
+
 const config = [
   ...gdConfig,
-  react.configs.flat.recommended,
+  ...fixupConfigRules([react.configs.flat.recommended]),
   // This is needed due to react-hooks not being Flat Config compatible there is an open
   // issue for this https://github.com/facebook/react/issues/28313 and PR for this change
   // https://github.com/facebook/react/pull/30774
@@ -33,7 +37,7 @@ const config = [
       }
     },
     plugins: {
-      react,
+      react: reactCompat,
       jsxA11y
     },
     rules: {
