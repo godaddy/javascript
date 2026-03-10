@@ -4,16 +4,16 @@ import { ProductDetails } from '@godaddy/react';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import type { SellingPlanOption } from '../../actions';
 import { SellingPlanDropdown } from '../selling-plan-dropdown';
 import { useCart } from '../../layout';
 
+/** Route param productId is the SKU Group id (product id from catalog skuGroups). */
 export default function Product({ productId }: { productId: string }) {
   const { openCart } = useCart();
   const [selectedSellingPlanId, setSelectedSellingPlanId] = useState<string | null>(null);
-  const [selectedSellingPlan, setSelectedSellingPlan] = useState<SellingPlanOption | null>(null);
+  const [selectedSellingPlan, setSelectedSellingPlan] = useState<any>(null);
 
-  const handleSellingPlanChange = (planId: string | null, plan: SellingPlanOption | null) => {
+  const handleSellingPlanChange = (planId: string | null, plan: any) => {
     setSelectedSellingPlanId(planId);
     setSelectedSellingPlan(plan);
   };
@@ -36,6 +36,7 @@ export default function Product({ productId }: { productId: string }) {
           <SellingPlanDropdown
             storeId={storeId ?? process.env.NEXT_PUBLIC_GODADDY_STORE_ID ?? ''}
             skuId={skuId}
+            skuGroupId={productId}
             selectedPlanId={selectedSellingPlanId}
             onSelectionChange={handleSellingPlanChange}
           />

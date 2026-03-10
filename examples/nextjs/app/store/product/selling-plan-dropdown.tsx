@@ -1,52 +1,74 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import {
-  getSellingPlans,
-  type SellingPlanOption,
-  type SellingPlanGroup,
-} from '../actions';
-
-interface SellingPlanDropdownProps {
-  storeId: string;
-  skuId: string | null;
-  selectedPlanId: string | null;
-  onSelectionChange: (planId: string | null, plan: SellingPlanOption | null) => void;
-}
+import { getSellingPlans } from '../actions';
 
 export function SellingPlanDropdown({
   storeId,
   skuId,
+  skuGroupId,
   selectedPlanId,
   onSelectionChange,
-}: SellingPlanDropdownProps) {
-  const [plans, setPlans] = useState<SellingPlanOption[]>([]);
+}: {
+  storeId: string;
+  skuId: string | null;
+  skuGroupId: string | null;
+  selectedPlanId: string | null;
+  onSelectionChange: (planId: string | null, plan: any) => void;
+}) {
+  const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Loads selling plans from the selling-plans API for the current skuId/skuGroupId.
+   *
+   * Production note: This triggers one API call per product (or per PDP visit). To reduce
+   * requests, consider a strategy to preload selling groups on the store list page: fetch 
+   * groups for all visible skuIds and skuGroupIds once, pass the result (e.g. via context 
+   * or cache) into this component.
+   */ 
   const loadPlans = useCallback(async () => {
-    if (!storeId || !skuId) {
+    if (!storeId || (!skuId && !skuGroupId)) {
       setPlans([]);
       return;
     }
     setLoading(true);
     try {
-      const res = await getSellingPlans(storeId, { skuIds: [skuId] });
-      const list =
-        res.sellingPlanGroups?.flatMap((g: SellingPlanGroup) => g.sellingPlans ?? []) ?? [];
-      setPlans(list);
-      if (list.length === 0) {
+      const groups: any = await getSellingPlans(storeId, {
+        skuIds: skuId ? [skuId] : [],
+        skuGroupIds: skuGroupId ? [skuGroupId] : [],
+      }) ?? [];
+      // 1. Max 2 selling groups: one for skuId, one for skuGroupId
+      // 2. Each group has sellingPlans and allocations
+      // 3. Each allocation has resourceType (SKU | SKU_GROUP) and resourceId
+      // 4. Prefer group that matches skuId; else group that matches skuGroupId; else []
+      const forSku = groups?.find((g: any) =>
+        (g.allocations ?? []).some(
+          (a: any) => a.resourceType === 'SKU' && a.resourceId === skuId
+        )
+      );
+      const forSkuGroup = groups?.find((g: any) =>
+        (g.allocations ?? []).some(
+          (a: any) =>
+            a.resourceType === 'SKU_GROUP' && a.resourceId === skuGroupId
+        )
+      );
+      const sellingPlans = (forSku ?? forSkuGroup)?.sellingPlans ?? [];
+      setPlans(sellingPlans);
+      console.log({ "sellingPlans": JSON.stringify(sellingPlans) });
+      if (sellingPlans.length === 0) {
         onSelectionChange(null, null);
       }
     } finally {
       setLoading(false);
     }
-  }, [storeId, skuId]); // omit onSelectionChange so we don't refetch on every parent re-render
+  }, [storeId, skuId, skuGroupId, onSelectionChange]);
 
   useEffect(() => {
     loadPlans();
   }, [loadPlans]);
 
-  if (loading || !skuId || plans.length === 0) {
+  if (loading || plans.length === 0) {
     return null;
   }
 
