@@ -22,11 +22,19 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSku, getSkuGroup } from '@/lib/godaddy/godaddy';
 import type { SKUGroupAttribute, SKUGroupAttributeValue } from '@/types';
 
+/** Price at checkout (e.g. subscription price). Value in minor units (cents). */
+export type SellingPlanCheckoutPrice = {
+  value: number;
+  currencyCode?: string;
+};
+
 /** Selling plan option for add-to-cart (from PDP selector). */
 export type SellingPlanSelection = {
   planId: string;
   name?: string;
   category?: string;
+  /** When set, product details shows this as the main price (checkout/subscription price). Value in minor units. */
+  checkoutPrice?: SellingPlanCheckoutPrice;
   [key: string]: unknown;
 };
 
@@ -358,16 +366,42 @@ export function ProductDetails({
 
   // Use SKU-specific pricing if available, otherwise fall back to SKU Group pricing
   const skuPrice = selectedSku?.prices?.edges?.[0]?.node;
-  const priceMin = skuPrice?.value?.value ?? product?.priceRange?.min ?? 0;
-  const priceMax = selectedSku
-    ? priceMin
-    : (product?.priceRange?.max ?? priceMin);
+  const catalogPriceMin = skuPrice?.value?.value ?? product?.priceRange?.min ?? 0;
+  const catalogPriceMax = selectedSku
+    ? catalogPriceMin
+    : (product?.priceRange?.max ?? catalogPriceMin);
   const compareAtMin =
     skuPrice?.compareAtValue?.value ?? product?.compareAtPriceRange?.min;
   const compareAtMax = selectedSku
     ? compareAtMin
     : product?.compareAtPriceRange?.max;
-  const isOnSale = compareAtMin && compareAtMin > priceMin;
+
+  // When a selling plan is selected, use checkout price for the current SKU (from plan.checkoutPrice or plan.catalogPrices[skuId].checkoutPrices[0])
+  const resolvedCheckoutPrice = (() => {
+    if (!selectedSellingPlan) return undefined;
+    const currentSkuId = selectedSku?.id;
+    const catalogPrices = selectedSellingPlan.catalogPrices as Array<{ skuId?: string; checkoutPrices?: Array<{ value?: number; currency?: string; currencyCode?: string }> }> | undefined;
+    if (currentSkuId && Array.isArray(catalogPrices)) {
+      const forSku = catalogPrices.find(c => c.skuId === currentSkuId);
+      const checkout = forSku?.checkoutPrices?.[0];
+      if (checkout?.value != null) {
+        return { value: Number(checkout.value), currencyCode: checkout.currencyCode ?? checkout.currency };
+      }
+    }
+    const cp = selectedSellingPlan.checkoutPrice;
+    if (cp?.value != null) return { value: Number(cp.value), currencyCode: cp.currencyCode };
+    return undefined;
+  })();
+  const sellingPlanCheckoutPrice = resolvedCheckoutPrice?.value;
+  const hasCheckoutPrice = sellingPlanCheckoutPrice != null;
+  const priceMin = hasCheckoutPrice ? sellingPlanCheckoutPrice : catalogPriceMin;
+  const priceMax = hasCheckoutPrice ? sellingPlanCheckoutPrice : catalogPriceMax;
+  const priceCurrency = (resolvedCheckoutPrice?.currencyCode as string) || 'USD';
+  const compareAtWhenPlan =
+    hasCheckoutPrice ? catalogPriceMin : undefined;
+  const isOnSale =
+    (compareAtMin && compareAtMin > priceMin) ||
+    (compareAtWhenPlan != null && compareAtWhenPlan > priceMin);
   const isPriceRange = priceMin !== priceMax;
   const isCompareAtPriceRange =
     compareAtMin && compareAtMax && compareAtMin !== compareAtMax;
@@ -563,20 +597,20 @@ export function ProductDetails({
           <div className='flex items-baseline gap-3 mb-4'>
             <span className='text-2xl font-bold text-foreground'>
               {isPriceRange
-                ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', inputInMinorUnits: true })}`
+                ? `${formatCurrency({ amount: priceMin, currencyCode: priceCurrency, inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: priceCurrency, inputInMinorUnits: true })}`
                 : formatCurrency({
                     amount: priceMin,
-                    currencyCode: 'USD',
+                    currencyCode: priceCurrency,
                     inputInMinorUnits: true,
                   })}
             </span>
-            {isOnSale && compareAtMin && (
+            {isOnSale && (compareAtMin || compareAtWhenPlan != null) && (
               <span className='text-lg text-muted-foreground line-through'>
                 {isCompareAtPriceRange
-                  ? `${formatCurrency({ amount: compareAtMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: 'USD', inputInMinorUnits: true })}`
+                  ? `${formatCurrency({ amount: compareAtMin!, currencyCode: priceCurrency, inputInMinorUnits: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: priceCurrency, inputInMinorUnits: true })}`
                   : formatCurrency({
-                      amount: compareAtMin,
-                      currencyCode: 'USD',
+                      amount: compareAtWhenPlan ?? compareAtMin!,
+                      currencyCode: priceCurrency,
                       inputInMinorUnits: true,
                     })}
               </span>

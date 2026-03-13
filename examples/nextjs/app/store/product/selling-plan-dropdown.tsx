@@ -3,6 +3,49 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getSellingPlans } from '../actions';
 
+/**
+ * Resolve checkout price for the current SKU from the plan's catalogPrices.
+ * API shape: plan.catalogPrices[] has { skuId, checkoutPrices: [{ value, currency }] }.
+ * Picks the entry matching skuId and returns checkoutPrices[0] as { value, currencyCode }.
+ * Value is in minor units (cents).
+ */
+function normalizeCheckoutPrice(
+  plan: any,
+  skuId: string | null
+): { value: number; currencyCode?: string } | undefined {
+  if (plan.checkoutPrice?.value != null) {
+    return {
+      value: Number(plan.checkoutPrice.value),
+      currencyCode: plan.checkoutPrice.currencyCode ?? plan.checkoutPrice.currency,
+    };
+  }
+  if (skuId && Array.isArray(plan.catalogPrices)) {
+    const forSku = plan.catalogPrices.find((c: any) => c.skuId === skuId);
+    const checkout = forSku?.checkoutPrices?.[0];
+    if (checkout?.value != null) {
+      return {
+        value: Number(checkout.value),
+        currencyCode: checkout.currencyCode ?? checkout.currency,
+      };
+    }
+  }
+  const first = plan.catalogPrices?.[0];
+  const checkoutFirst = first?.checkoutPrices?.[0];
+  if (checkoutFirst?.value != null) {
+    return {
+      value: Number(checkoutFirst.value),
+      currencyCode: checkoutFirst.currencyCode ?? checkoutFirst.currency,
+    };
+  }
+  if (plan.priceAtCheckout?.value != null) {
+    return {
+      value: Number(plan.priceAtCheckout.value),
+      currencyCode: plan.priceAtCheckout.currencyCode ?? plan.priceAtCheckout.currency,
+    };
+  }
+  return undefined;
+}
+
 export function SellingPlanDropdown({
   storeId,
   skuId,
@@ -55,7 +98,6 @@ export function SellingPlanDropdown({
       );
       const sellingPlans = (forSku ?? forSkuGroup)?.sellingPlans ?? [];
       setPlans(sellingPlans);
-      console.log({ "sellingPlans": JSON.stringify(sellingPlans) });
       if (sellingPlans.length === 0) {
         onSelectionChange(null, null);
       }
@@ -85,7 +127,13 @@ export function SellingPlanDropdown({
         value={value}
         onChange={e => {
           const val = e.target.value;
-          const plan = val ? plans.find(p => p.planId === val) ?? null : null;
+          const raw = val ? plans.find(p => p.planId === val) ?? null : null;
+          const plan = raw
+            ? {
+                ...raw,
+                checkoutPrice: normalizeCheckoutPrice(raw, skuId),
+              }
+            : null;
           onSelectionChange(val || null, plan);
         }}
       >
