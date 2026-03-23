@@ -9,7 +9,7 @@ import { redirect } from 'next/navigation';
  * empty so no request is made and no 404 is logged.
  */
 export async function getSellingPlans(storeId: string, options: any) {
-  const base = process.env.SELLING_PLANS_API_URL; // don't fucking make change
+  const base = process.env.SELLING_PLANS_API_URL;
   if (!base) {
     return null;
   }
