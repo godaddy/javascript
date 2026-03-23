@@ -3,6 +3,7 @@ import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import {
   PaymentProvider,
   useConfirmCheckout,
@@ -96,7 +97,15 @@ export function MercadoPagoCheckoutButton() {
       } else {
         // Create new brick
         const renderBrick = async () => {
-          const total = totals?.total?.value || 0;
+          // Convert from minor units (cents) to major units
+          const total = parseFloat(
+            formatCurrency({
+              amount: totals?.total?.value || 0,
+              currencyCode: totals?.total?.currencyCode || 'USD',
+              inputInMinorUnits: true,
+              returnRaw: true,
+            })
+          );
 
           try {
             const container = document.getElementById(elementId);
