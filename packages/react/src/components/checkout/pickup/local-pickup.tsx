@@ -272,14 +272,19 @@ export function LocalPickupForm({
         10
       );
       const closeTimeInMinutes = closeTimeHours * 60 + closeTimeMins;
-      const minimumBufferMinutes = 30;
 
       let hasAsap = false;
-      if (nowInMinutes + minimumBufferMinutes < closeTimeInMinutes) {
-        const leadTimeDisplay =
-          leadTimeMinutes >= 60
-            ? `${leadTimeMinutes / 60} ${leadTimeMinutes === 60 ? t.pickup.hour : t.pickup.hours}`
-            : `${leadTimeMinutes} ${t.pickup.minutes}`;
+      if (nowInMinutes + leadTimeMinutes < closeTimeInMinutes) {
+        const leadHours = Math.floor(leadTimeMinutes / 60);
+        const leadMins = leadTimeMinutes % 60;
+        let leadTimeDisplay: string;
+        if (leadHours === 0) {
+          leadTimeDisplay = `${leadMins} ${t.pickup.minutes}`;
+        } else if (leadMins === 0) {
+          leadTimeDisplay = `${leadHours} ${leadHours === 1 ? t.pickup.hour : t.pickup.hours}`;
+        } else {
+          leadTimeDisplay = `${leadHours} ${leadHours === 1 ? t.pickup.hour : t.pickup.hours} ${leadMins} ${t.pickup.minutes}`;
+        }
         slots.push({
           label: `${t.pickup.asap} (${leadTimeDisplay})`,
           value: 'ASAP',

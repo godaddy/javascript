@@ -1,5 +1,5 @@
-import { addDays, set } from 'date-fns';
-import { format as formatTz, toZonedTime } from 'date-fns-tz';
+import { addDays, format, set } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 export const DEFAULT_SLOT_INTERVAL = 30;
 export const FALLBACK_LEAD_TIME = 30;
@@ -151,17 +151,19 @@ export function generatePickupTimeSlots({
     .split(':')
     .map(Number);
 
+  // All date math uses zoned dates so comparisons are consistent
+  // when the UTC date and store-local date differ (e.g. UTC Tue 3am = NYC Mon 11pm).
   const now = toZonedTime(nowInput ?? new Date(), tz);
   const earliestPickup = new Date(now.getTime() + leadTimeMinutes * 60000);
 
-  const openTime = set(new Date(selectedDate), {
+  const openTime = set(new Date(zonedSelected), {
     hours: openTimeHours,
     minutes: openTimeMins,
     seconds: 0,
     milliseconds: 0,
   });
 
-  const closeDateTime = set(new Date(selectedDate), {
+  const closeDateTime = set(new Date(zonedSelected), {
     hours: closeTimeHours,
     minutes: closeTimeMins,
     seconds: 0,
@@ -169,10 +171,9 @@ export function generatePickupTimeSlots({
   });
 
   const isToday =
-    formatTz(selectedDate, 'yyyy-MM-dd', { timeZone: tz }) ===
-    formatTz(nowInput ?? new Date(), 'yyyy-MM-dd', { timeZone: tz });
+    format(zonedSelected, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
 
-  let currentTime = set(new Date(selectedDate), {
+  let currentTime = set(new Date(zonedSelected), {
     hours: openTimeHours,
     minutes: openTimeMins,
     seconds: 0,
@@ -218,8 +219,8 @@ export function generatePickupTimeSlots({
       continue;
     }
 
-    const timeString = formatTz(currentTime, 'HH:mm', { timeZone: tz });
-    const slotLabel = formatTz(currentTime, 'h:mm a', { timeZone: tz });
+    const timeString = format(currentTime, 'HH:mm');
+    const slotLabel = format(currentTime, 'h:mm a');
 
     slots.push({ label: slotLabel, value: timeString });
 
