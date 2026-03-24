@@ -40,7 +40,9 @@ import type { CheckoutSessionLocation, StoreHours } from '@/types';
 import {
   FALLBACK_LEAD_TIME,
   findFirstAvailablePickupDate,
+  formatLeadTimeDisplay,
   generatePickupTimeSlots,
+  isAsapAvailable,
 } from './utils/generate-pickup-time-slots';
 
 // Map day of week to the corresponding property in hours
@@ -274,17 +276,12 @@ export function LocalPickupForm({
       const closeTimeInMinutes = closeTimeHours * 60 + closeTimeMins;
 
       let hasAsap = false;
-      if (nowInMinutes + leadTimeMinutes < closeTimeInMinutes) {
-        const leadHours = Math.floor(leadTimeMinutes / 60);
-        const leadMins = leadTimeMinutes % 60;
-        let leadTimeDisplay: string;
-        if (leadHours === 0) {
-          leadTimeDisplay = `${leadMins} ${t.pickup.minutes}`;
-        } else if (leadMins === 0) {
-          leadTimeDisplay = `${leadHours} ${leadHours === 1 ? t.pickup.hour : t.pickup.hours}`;
-        } else {
-          leadTimeDisplay = `${leadHours} ${leadHours === 1 ? t.pickup.hour : t.pickup.hours} ${leadMins} ${t.pickup.minutes}`;
-        }
+      if (isAsapAvailable(nowInMinutes, leadTimeMinutes, closeTimeInMinutes)) {
+        const leadTimeDisplay = formatLeadTimeDisplay(leadTimeMinutes, {
+          hour: t.pickup.hour,
+          hours: t.pickup.hours,
+          minutes: t.pickup.minutes,
+        });
         slots.push({
           label: `${t.pickup.asap} (${leadTimeDisplay})`,
           value: 'ASAP',

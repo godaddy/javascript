@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_SLOT_INTERVAL,
   findFirstAvailablePickupDate,
+  formatLeadTimeDisplay,
   generatePickupTimeSlots,
+  isAsapAvailable,
   type OperatingHours,
 } from './generate-pickup-time-slots';
 
@@ -781,5 +783,83 @@ describe('generatePickupTimeSlots', () => {
       expect(slots.length).toBeGreaterThan(0);
       expect(slotValues(slots)[0]).toBe('11:00');
     });
+  });
+});
+
+// ── formatLeadTimeDisplay ────────────────────────────────────────────────
+
+const labels = { hour: 'hour', hours: 'hours', minutes: 'minutes' };
+
+describe('formatLeadTimeDisplay', () => {
+  it('shows only minutes when under an hour', () => {
+    expect(formatLeadTimeDisplay(45, labels)).toBe('45 minutes');
+  });
+
+  it('shows only minutes for small values', () => {
+    expect(formatLeadTimeDisplay(5, labels)).toBe('5 minutes');
+  });
+
+  it('shows singular hour for exactly 60 minutes', () => {
+    expect(formatLeadTimeDisplay(60, labels)).toBe('1 hour');
+  });
+
+  it('shows plural hours for exact multiples', () => {
+    expect(formatLeadTimeDisplay(120, labels)).toBe('2 hours');
+    expect(formatLeadTimeDisplay(1440, labels)).toBe('24 hours');
+  });
+
+  it('shows hours and minutes for non-exact values', () => {
+    expect(formatLeadTimeDisplay(90, labels)).toBe('1 hour 30 minutes');
+    expect(formatLeadTimeDisplay(1400, labels)).toBe('23 hours 20 minutes');
+  });
+
+  it('handles large lead times', () => {
+    expect(formatLeadTimeDisplay(5500, labels)).toBe('91 hours 40 minutes');
+  });
+
+  it('handles zero', () => {
+    expect(formatLeadTimeDisplay(0, labels)).toBe('0 minutes');
+  });
+});
+
+// ── isAsapAvailable ──────────────────────────────────────────────────────
+
+describe('isAsapAvailable', () => {
+  // Store closes at 3pm (900 minutes since midnight)
+  const closeTime = 15 * 60; // 900
+
+  it('returns true when now + leadTime is before close', () => {
+    // 10am (600) + 30min lead = 10:30am < 3pm
+    expect(isAsapAvailable(600, 30, closeTime)).toBe(true);
+  });
+
+  it('returns false when now + leadTime is after close', () => {
+    // 10am (600) + 1400min lead = ~9:20pm next day > 3pm
+    expect(isAsapAvailable(600, 1400, closeTime)).toBe(false);
+  });
+
+  it('returns false when now + leadTime equals close exactly', () => {
+    // 2pm (840) + 60min lead = 3pm = close → not strictly before
+    expect(isAsapAvailable(840, 60, closeTime)).toBe(false);
+  });
+
+  it('returns true when just barely fits before close', () => {
+    // 2pm (840) + 59min lead = 2:59pm < 3pm
+    expect(isAsapAvailable(840, 59, closeTime)).toBe(true);
+  });
+
+  it('returns false when already past close', () => {
+    // 4pm (960) + 30min lead = 4:30pm > 3pm
+    expect(isAsapAvailable(960, 30, closeTime)).toBe(false);
+  });
+
+  it('returns false with large leadTime and early now', () => {
+    // 9am (540) + 360min (6hr) lead = 3pm = close → not strictly before
+    expect(isAsapAvailable(540, 360, closeTime)).toBe(false);
+  });
+
+  it('returns true with zero leadTime', () => {
+    // 2pm (840) + 0 = 2pm < 3pm
+    expect(isAsapAvailable(840, 0, closeTime)).toBe(true);
   });
 });

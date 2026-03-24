@@ -51,6 +51,33 @@ export type TimeSlot = {
   value: string;
 };
 
+/**
+ * Format a lead time in minutes for display.
+ * e.g. 90 → "1 hour 30 minutes", 60 → "1 hour", 45 → "45 minutes"
+ */
+export function formatLeadTimeDisplay(
+  leadTimeMinutes: number,
+  labels: { hour: string; hours: string; minutes: string }
+): string {
+  const hours = Math.floor(leadTimeMinutes / 60);
+  const mins = leadTimeMinutes % 60;
+  if (hours === 0) return `${mins} ${labels.minutes}`;
+  if (mins === 0) return `${hours} ${hours === 1 ? labels.hour : labels.hours}`;
+  return `${hours} ${hours === 1 ? labels.hour : labels.hours} ${mins} ${labels.minutes}`;
+}
+
+/**
+ * Determine whether an ASAP pickup option should be shown for today.
+ * True when the store can fulfill the order (now + leadTime) before closing.
+ */
+export function isAsapAvailable(
+  nowMinutesSinceMidnight: number,
+  leadTimeMinutes: number,
+  closeTimeMinutes: number
+): boolean {
+  return nowMinutesSinceMidnight + leadTimeMinutes < closeTimeMinutes;
+}
+
 /** Resolve the effective slot interval, with fallback. */
 function getSlotInterval(hours: OperatingHours): number {
   return hours.pickupSlotInterval && hours.pickupSlotInterval > 0
