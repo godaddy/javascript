@@ -723,15 +723,28 @@ describe('generatePickupTimeSlots', () => {
       expect(slotValues(slots)[0]).toBe('10:00');
     });
 
-    it('isToday detection works across timezone boundary', () => {
-      // UTC 03:00 Tue = Mon 11pm NYC (still Monday in NYC)
+    it('generates zero slots when current time is past close in store timezone', () => {
+      // UTC 20:00 Mon = Mon 4pm NYC (EDT) — past 3pm close, same day in both timezones
+      const pastCloseNYC = new Date('2024-03-25T20:00:00Z');
+      const slots = generatePickupTimeSlots({
+        selectedDate: pastCloseNYC,
+        storeHours: makeNYCHours({ leadTime: 30, pickupWindowInDays: 7 }),
+        now: pastCloseNYC,
+      });
+      // In NYC it's Mon 4pm, store closes at 3pm — zero slots
+      expect(slots).toEqual([]);
+    });
+
+    it('uses store timezone day-of-week, not system timezone', () => {
+      // UTC 03:00 Tue = Mon 11pm NYC — getDay() in UTC would say Tuesday,
+      // but in the store timezone it's still Monday
       const lateNightUTC = new Date('2024-03-26T03:00:00Z');
       const slots = generatePickupTimeSlots({
         selectedDate: lateNightUTC,
         storeHours: makeNYCHours({ leadTime: 30, pickupWindowInDays: 7 }),
         now: lateNightUTC,
       });
-      // In NYC it's Mon 11pm, store closes at 3pm — should be zero slots (past close)
+      // In NYC it's Mon 11pm, store closes at 3pm — zero slots
       expect(slots).toEqual([]);
     });
 

@@ -82,12 +82,12 @@ export function findFirstAvailablePickupDate(
   const maxDays = storeHours.pickupWindowInDays;
 
   for (let i = 0; i < maxDays; i++) {
-    const dayOfWeek = dateToCheck.getDay();
+    const zonedDate = toZonedTime(dateToCheck, storeHours.timeZone);
+    const dayOfWeek = zonedDate.getDay();
     const dayProperty = dayToProperty[dayOfWeek as keyof typeof dayToProperty];
     const dayHours = storeHours.hours[dayProperty];
 
     if (dayHours?.enabled && dayHours.closeTime) {
-      const zonedDate = toZonedTime(dateToCheck, storeHours.timeZone);
       const [closeH, closeM] = dayHours.closeTime.split(':').map(Number);
       const dayCloseTime = set(zonedDate, {
         hours: closeH,
@@ -131,7 +131,8 @@ export function generatePickupTimeSlots({
 
   if (storeHours.pickupWindowInDays === 0) return [];
 
-  const dayOfWeek = selectedDate.getDay();
+  const zonedSelected = toZonedTime(selectedDate, tz);
+  const dayOfWeek = zonedSelected.getDay();
   const dayProperty = dayToProperty[dayOfWeek as keyof typeof dayToProperty];
   const hoursForDay = storeHours.hours[dayProperty];
 
