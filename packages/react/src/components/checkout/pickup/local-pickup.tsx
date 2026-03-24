@@ -1,7 +1,8 @@
-import { addDays, format, set } from 'date-fns';
+import { addDays, format } from 'date-fns';
 import { format as formatTz, toZonedTime } from 'date-fns-tz';
 import { CalendarIcon, ChevronDown, Clock, MapPin, Store } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useApplyFulfillmentLocation } from '@/components/checkout/delivery/utils/use-apply-fulfillment-location';
 import { NotesForm } from '@/components/checkout/notes/notes-form';
@@ -36,10 +37,11 @@ import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import type { CheckoutSessionLocation, StoreHours } from '@/types';
-
-const FALLBACK_LEAD_TIME = 30; // Default lead time in minutes
-
-import { useFormContext } from 'react-hook-form';
+import {
+  FALLBACK_LEAD_TIME,
+  findFirstAvailablePickupDate,
+  generatePickupTimeSlots,
+} from './utils/generate-pickup-time-slots';
 
 // Map day of week to the corresponding property in hours
 const dayToProperty = {
@@ -136,21 +138,12 @@ export function LocalPickupForm({
         return;
       }
 
-      let dateToCheck = new Date();
-      const maxDays = locationHours.pickupWindowInDays;
-      for (let i = 0; i < maxDays; i++) {
-        const dayOfWeek = dateToCheck.getDay();
-        const dayProperty =
-          dayToProperty[dayOfWeek as keyof typeof dayToProperty];
-        if (locationHours.hours[dayProperty]?.enabled) {
-          const zonedDate = toZonedTime(dateToCheck, locationHours.timeZone);
-          setSelectedDate(zonedDate);
-          if (form.getValues('pickupDate') === '') {
-            form.setValue('pickupDate', format(zonedDate, 'yyyy-MM-dd'));
-          }
-          break;
+      const date = findFirstAvailablePickupDate(locationHours);
+      if (date) {
+        setSelectedDate(date);
+        if (form.getValues('pickupDate') === '') {
+          form.setValue('pickupDate', format(date, 'yyyy-MM-dd'));
         }
-        dateToCheck = addDays(dateToCheck, 1);
       }
     },
     [session?.locations, getStoreHours, form]
@@ -244,77 +237,44 @@ export function LocalPickupForm({
     const dayOfWeek = selectedDate.getDay();
     const dayProperty = dayToProperty[dayOfWeek as keyof typeof dayToProperty];
     const hoursForDay = locationHours.hours[dayProperty];
-    if (!hoursForDay?.enabled) {
+    if (
+      !hoursForDay?.enabled ||
+      !hoursForDay.openTime ||
+      !hoursForDay.closeTime
+    ) {
       setAvailableTimeSlots([]);
       return;
     }
-    const leadTimeMinutes = locationHours.leadTime || FALLBACK_LEAD_TIME;
-    // We'll get the raw open time values directly for consistency
-    if (!hoursForDay.openTime) {
-      setAvailableTimeSlots([]);
-      return;
-    }
-    const openTimeHours = Number.parseInt(
-      hoursForDay?.openTime?.split(':')?.[0] ?? '00',
-      10
-    );
-    const openTimeMins = Number.parseInt(
-      hoursForDay?.openTime?.split(':')?.[1] ?? '00',
-      10
-    );
 
-    // Create a base date object for the selected date
-    const baseDate = new Date(selectedDate);
-    // Set hours and minutes directly to match opening time
-    const openTime = set(baseDate, {
-      hours: openTimeHours,
-      minutes: openTimeMins,
-      seconds: 0,
-      milliseconds: 0,
+    const leadTimeMinutes = locationHours.leadTime || FALLBACK_LEAD_TIME;
+
+    // Delegate timed-slot generation to the pure utility
+    const timedSlots = generatePickupTimeSlots({
+      selectedDate,
+      storeHours: locationHours,
     });
-    // We'll get the raw close time values directly from the hours object
 
     const slots: TimeSlot[] = [];
+
     const isToday =
       formatTz(selectedDate, 'yyyy-MM-dd', { timeZone: locationTimeZone }) ===
       formatTz(new Date(), 'yyyy-MM-dd', { timeZone: locationTimeZone });
 
-    // Extract hours and minutes for direct string comparison to avoid timezone issues
-    if (!hoursForDay.closeTime) {
-      setAvailableTimeSlots([]);
-      return;
-    }
-    const closeTimeHours = Number.parseInt(
-      hoursForDay?.closeTime?.split(':')?.[0] ?? '23',
-      10
-    );
-    const closeTimeMins = Number.parseInt(
-      hoursForDay?.closeTime?.split(':')?.[1] ?? '59',
-      10
-    );
-
-    // Get the current time in the location's timezone only
-    const now = toZonedTime(new Date(), locationTimeZone);
-    const earliestPickup = isToday
-      ? new Date(now.getTime() + leadTimeMinutes * 60000)
-      : openTime;
-    // Initialize currentTime to openTime (exactly matching the hours/minutes)
-    let currentTime = set(new Date(selectedDate), {
-      hours: openTimeHours,
-      minutes: openTimeMins,
-      seconds: 0,
-      milliseconds: 0,
-    });
-
-    // Only add ASAP option if there will be at least one other time slot available today
-    // Calculate if any time slots would be available after earliest pickup time
-    let hasAvailableTimeSlots = false;
     if (isToday) {
+      const now = toZonedTime(new Date(), locationTimeZone);
       const nowInMinutes = now.getHours() * 60 + now.getMinutes();
+      const closeTimeHours = Number.parseInt(
+        hoursForDay.closeTime.split(':')[0] ?? '23',
+        10
+      );
+      const closeTimeMins = Number.parseInt(
+        hoursForDay.closeTime.split(':')[1] ?? '59',
+        10
+      );
       const closeTimeInMinutes = closeTimeHours * 60 + closeTimeMins;
-      const minimumBufferMinutes = 30; // Same buffer as in our main logic
+      const minimumBufferMinutes = 30;
 
-      // Check if there's enough time remaining in the day for at least one time slot
+      let hasAsap = false;
       if (nowInMinutes + minimumBufferMinutes < closeTimeInMinutes) {
         const leadTimeDisplay =
           leadTimeMinutes >= 60
@@ -324,112 +284,24 @@ export function LocalPickupForm({
           label: `${t.pickup.asap} (${leadTimeDisplay})`,
           value: 'ASAP',
         });
-        hasAvailableTimeSlots = true;
-      }
-      if (earliestPickup > openTime) {
-        const minutesSinceMidnight =
-          earliestPickup.getHours() * 60 + earliestPickup.getMinutes();
-        const roundedMinutes =
-          Math.ceil(minutesSinceMidnight / leadTimeMinutes) * leadTimeMinutes;
-        currentTime = set(openTime, {
-          hours: Math.floor(roundedMinutes / 60),
-          minutes: roundedMinutes % 60,
-          seconds: 0,
-        });
+        hasAsap = true;
       }
 
-      // If no time slots will be available today, find the next available day
-      if (!hasAvailableTimeSlots) {
-        // Reset the slots array since we'll be finding a new day
-        slots.length = 0;
-
-        let nextAvailableDate = addDays(selectedDate, 1);
-        const maxDays = storeHours?.pickupWindowInDays;
-        let foundNextDay = false;
-
-        for (let i = 1; i < maxDays; i++) {
-          const nextDayOfWeek = nextAvailableDate.getDay();
-          const nextDayProperty =
-            dayToProperty[nextDayOfWeek as keyof typeof dayToProperty];
-
-          if (storeHours?.hours[nextDayProperty]?.enabled) {
-            // We found the next available day
-            const nextDayZoned = toZonedTime(
-              nextAvailableDate,
-              locationTimeZone
-            );
-            setSelectedDate(nextDayZoned);
-            form.setValue('pickupDate', format(nextDayZoned, 'yyyy-MM-dd'));
-            foundNextDay = true;
-            break;
-          }
-
-          nextAvailableDate = addDays(nextAvailableDate, 1);
-        }
-
-        // Early return as we'll rerun this effect with the new selected date
-        if (foundNextDay) {
-          return;
+      // If today has no ASAP and no timed slots, jump to the next bookable day
+      if (!hasAsap && timedSlots.length === 0) {
+        const nextDate = findFirstAvailablePickupDate(locationHours);
+        if (
+          nextDate &&
+          format(nextDate, 'yyyy-MM-dd') !== format(selectedDate, 'yyyy-MM-dd')
+        ) {
+          setSelectedDate(nextDate);
+          form.setValue('pickupDate', format(nextDate, 'yyyy-MM-dd'));
+          return; // re-run effect with the new date
         }
       }
     }
 
-    while (true) {
-      // Get the current slot's hour and minute for comparison
-      const currentSlotHours = currentTime.getHours();
-      const currentSlotMins = currentTime.getMinutes();
-
-      // Make sure current time is at or after opening time
-      const isAfterOrAtOpeningTime =
-        currentSlotHours > openTimeHours ||
-        (currentSlotHours === openTimeHours && currentSlotMins >= openTimeMins);
-
-      // If current time is at or after closing time, break
-      if (
-        !isAfterOrAtOpeningTime ||
-        currentSlotHours > closeTimeHours ||
-        (currentSlotHours === closeTimeHours &&
-          currentSlotMins >= closeTimeMins)
-      ) {
-        break;
-      }
-      if (isToday) {
-        // If current slot time is before the earliest pickup time (now + lead time), skip to next slot
-        if (currentTime < earliestPickup) {
-          currentTime = set(currentTime, {
-            minutes: currentTime.getMinutes() + leadTimeMinutes,
-          });
-          continue;
-        }
-
-        const currentTimeInMinutes =
-          currentTime.getHours() * 60 + currentTime.getMinutes();
-        const nowInMinutes = now.getHours() * 60 + now.getMinutes();
-
-        const minimumBufferMinutes =
-          locationHours.leadTime || FALLBACK_LEAD_TIME; // Use locationHours.leadTime with fallback
-        if (currentTimeInMinutes < nowInMinutes + minimumBufferMinutes) {
-          currentTime = set(currentTime, {
-            minutes: currentTime.getMinutes() + leadTimeMinutes,
-          });
-          continue;
-        }
-      }
-      const timeString = formatTz(currentTime, 'HH:mm', {
-        timeZone: locationTimeZone,
-      });
-      // Format the time in the location's timezone, not the user's timezone
-      const slotLabel = formatTz(currentTime, 'h:mm a', {
-        timeZone: locationTimeZone,
-      });
-      slots.push({
-        label: slotLabel,
-        value: timeString, // <-- Only HH:MM
-      });
-      currentTime = set(currentTime, {
-        minutes: currentTime.getMinutes() + leadTimeMinutes,
-      });
-    }
+    slots.push(...timedSlots);
     slots.sort((a, b) => {
       if (a.value === 'ASAP') return -1;
       if (b.value === 'ASAP') return 1;

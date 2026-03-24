@@ -3108,6 +3108,13 @@ const introspection = {
             },
           },
           {
+            name: 'mercadopago',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfigInput',
+            },
+          },
+          {
             name: 'offline',
             type: {
               kind: 'INPUT_OBJECT',
@@ -3123,13 +3130,6 @@ const introspection = {
           },
           {
             name: 'paze',
-            type: {
-              kind: 'INPUT_OBJECT',
-              name: 'CheckoutSessionPaymentMethodConfigInput',
-            },
-          },
-          {
-            name: 'mercadopago',
             type: {
               kind: 'INPUT_OBJECT',
               name: 'CheckoutSessionPaymentMethodConfigInput',
@@ -3298,6 +3298,15 @@ const introspection = {
             isDeprecated: false,
           },
           {
+            name: 'pickupSlotInterval',
+            type: {
+              kind: 'SCALAR',
+              name: 'Int',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
             name: 'pickupWindowInDays',
             type: {
               kind: 'NON_NULL',
@@ -3349,10 +3358,20 @@ const introspection = {
             },
           },
           {
-            name: 'pickupWindowInDays',
+            name: 'pickupSlotInterval',
             type: {
               kind: 'SCALAR',
               name: 'Int',
+            },
+          },
+          {
+            name: 'pickupWindowInDays',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'Int',
+              },
             },
           },
           {
