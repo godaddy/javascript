@@ -96,6 +96,9 @@ export function ExpressCheckoutButton() {
   const confirmCheckout = useConfirmCheckout();
   const collect = useRef<TokenizeJs | null>(null);
   const hasMounted = useRef(false);
+  const handleExpressPayClickRef = useRef<
+    (args: { source?: 'apple_pay' | 'google_pay' | 'paze' }) => Promise<void>
+  >(async () => {});
 
   // Use refs to store current coupon state to avoid stale closures in event handlers
   const appliedCouponCodeRef = useRef<string | null>(null);
@@ -304,6 +307,9 @@ export function ExpressCheckoutButton() {
       isDisabled,
     ]
   );
+
+  // Keep ref in sync so the SDK's stale onClick closure always calls the latest handler
+  handleExpressPayClickRef.current = handleExpressPayClick;
 
   // Track the status of coupon code fetching with a state variable
   const [couponFetchStatus, setCouponFetchStatus] = useState<
@@ -521,7 +527,8 @@ export function ExpressCheckoutButton() {
             height: '50px',
             width: '100%',
             justifyContent: 'flex-start',
-            onClick: handleExpressPayClick,
+            onClick: (args: { source?: 'apple_pay' | 'google_pay' | 'paze' }) =>
+              handleExpressPayClickRef.current(args),
           },
         });
       }
@@ -530,7 +537,6 @@ export function ExpressCheckoutButton() {
     isPoyntLoaded,
     godaddyPaymentsConfig,
     isCollectLoading,
-    handleExpressPayClick,
     session?.businessId,
   ]);
 
