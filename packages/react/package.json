@@ -1,7 +1,7 @@
 {
   "name": "@godaddy/react",
   "private": false,
-  "version": "1.0.31",
+  "version": "1.0.32",
   "type": "module",
   "types": "./dist/index.d.ts",
   "files": [
@@ -119,8 +119,8 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
- 	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/godaddy/javascript.git"
-	}
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/godaddy/javascript.git"
+  }
 }
