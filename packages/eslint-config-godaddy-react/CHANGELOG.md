@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 11.0.0
+
+### Major Changes
+
+- 0fabf67: Upgrade to ESLint 10
+
+### Patch Changes
+
+- Updated dependencies [0fabf67]
+  - eslint-config-godaddy@9.0.0
+
 ## 10.0.0
 
 ### Major Changes
