@@ -4,6 +4,10 @@
   "description": "Internationalization localizations for GoDaddy checkout components",
   "type": "module",
   "types": "./dist/index.d.ts",
+ 	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/godaddy/javascript.git"
+	},
   "files": [
     "dist"
   ],
