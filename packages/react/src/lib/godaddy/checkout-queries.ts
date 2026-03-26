@@ -131,6 +131,7 @@ export const GetCheckoutSessionQuery = graphql(`
               operatingHours {
                 pickupWindowInDays
                 leadTime
+                pickupSlotInterval
                 timeZone
                 hours {
                   monday {
@@ -174,6 +175,7 @@ export const GetCheckoutSessionQuery = graphql(`
             defaultOperatingHours {
               pickupWindowInDays
               leadTime
+              pickupSlotInterval
               timeZone
               hours {
                 monday {
