@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.32
+
+### Patch Changes
+
+- ed3cbef: Fix bug with large leadTimes and add pickupSlotInterval to uncouple leadTime from time slot generation
+
 ## 1.0.31
 
 ### Patch Changes
