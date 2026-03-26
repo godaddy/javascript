@@ -21,13 +21,13 @@ export type DayHours = {
 };
 
 export type WeekHours = {
-  monday: DayHours;
-  tuesday: DayHours;
-  wednesday: DayHours;
-  thursday: DayHours;
-  friday: DayHours;
-  saturday: DayHours;
-  sunday: DayHours;
+  monday: DayHours | null;
+  tuesday: DayHours | null;
+  wednesday: DayHours | null;
+  thursday: DayHours | null;
+  friday: DayHours | null;
+  saturday: DayHours | null;
+  sunday: DayHours | null;
 };
 
 export type OperatingHours = {
