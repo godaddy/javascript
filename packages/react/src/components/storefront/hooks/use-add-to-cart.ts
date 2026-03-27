@@ -110,33 +110,22 @@ export function useAddToCart(options?: UseAddToCartOptions) {
           status: 'DRAFT',
           details: {
             productAssetUrl: input.productAssetUrl || undefined,
-            ...(input.sellingPlan
-              ? {
-                  metafields: [
-                    {
-                      key: 'SELLING_PLAN',
-                      type: 'JSON',
-                      value: JSON.stringify(input.sellingPlan),
-                    },
-                  ],
-                }
-              : {}),
           },
+          ...(input.sellingPlan
+            ? {
+                metafields: [
+                  {
+                    key: 'SELLING_PLAN',
+                    type: 'JSON',
+                    value: JSON.stringify(input.sellingPlan),
+                  },
+                ],
+              }
+            : {}),
         },
         context.storeId!,
         context.clientId!,
         context?.apiHost
-        // ...(input.sellingPlan
-        //   ? {
-        //       metafields: [
-        //         {
-        //           key: 'SELLING_PLAN',
-        //           type: 'JSON',
-        //           value: JSON.stringify(input.sellingPlan),
-        //         },
-        //       ],
-        //     }
-        //   : {}),
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart-order'] });
