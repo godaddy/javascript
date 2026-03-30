@@ -8,7 +8,6 @@ import {
   updateCartLineItem,
 } from '@/lib/godaddy/godaddy';
 
-/** Selling plan to attach to the line item (sent to backend via details.metafields). */
 export type AddToCartSellingPlan = {
   planId: string;
   name?: string;
@@ -21,9 +20,7 @@ export interface AddToCartInput {
   name: string;
   quantity: number;
   productAssetUrl?: string;
-  /** Selling plan id (for display). */
   sellingPlanId?: string | null;
-  /** Full selling plan; sent to backend in details.metafields and returned on line item. */
   sellingPlan?: AddToCartSellingPlan | null;
 }
 
@@ -91,7 +88,7 @@ export function useAddToCart(options?: UseAddToCartOptions) {
     },
   });
 
-  // Add line item mutation. Sends selling plan in details.metafields when present.
+  // Add line item: optional top-level metafields (SELLING_PLAN JSON) — API-supported way to attach the plan.
   const addLineItemMutation = useMutation({
     mutationFn: ({
       orderId,
@@ -168,11 +165,11 @@ export function useAddToCart(options?: UseAddToCartOptions) {
     const inputPlanId = input.sellingPlan?.planId ?? null;
     const matchingItem = order?.lineItems?.find(item => {
       if (item.skuId !== input.skuId) return false;
-      const meta = item.details?.metafields?.find(m => m?.key === 'SELLING_PLAN');
+      const metaValue = item.metafields?.find(m => m?.key === 'SELLING_PLAN')?.value;
       let existingPlanId: string | null = null;
-      if (meta?.value) {
+      if (metaValue) {
         try {
-          const parsed = JSON.parse(meta.value) as { planId?: string };
+          const parsed = JSON.parse(metaValue) as { planId?: string };
           existingPlanId = parsed?.planId ?? null;
         } catch {
           existingPlanId = null;

@@ -75,33 +75,52 @@ export function Cart({
 
   const { t } = useGoDaddyContext();
 
-  // Transform cart line items to Product format for CartLineItems component
-  // Selling plan comes from backend (line item metafields).
+  // Transform cart line items to Product format for CartLineItems component.
+  // Selling plan JSON lives on line metafields (SELLING_PLAN); use its checkout price for display
+  // when present so the cart matches PDP, which may differ from draft line totals.subTotal.
   const items: Product[] =
     order?.lineItems?.map(item => {
-      const fromMetafield = item.details?.metafields?.find(m => m?.key === 'SELLING_PLAN');
+      const rawPlan = item.metafields?.find(m => m?.key === 'SELLING_PLAN')?.value;
       let sellingPlan: { name?: string; category?: string } | null = null;
-      if (fromMetafield?.value) {
+      let checkoutPriceMinor: number | undefined;
+      if (rawPlan) {
         try {
-          const parsed = JSON.parse(fromMetafield.value) as {
+          const parsed = JSON.parse(rawPlan) as {
             name?: string;
             category?: string;
+            catalogPrices?: Array<{
+              skuId?: string;
+              checkoutPrices?: Array<{ value?: number }>;
+            }>;
+            checkoutPrice?: { value?: number };
           };
-          sellingPlan = {
-            name: parsed.name,
-            category: parsed.category,
-          };
+          sellingPlan = { name: parsed.name, category: parsed.category };
+          const skuId = item.skuId;
+          const forSku = skuId
+            ? parsed.catalogPrices?.find(c => c.skuId === skuId)
+            : undefined;
+          const cpFromCatalog = forSku?.checkoutPrices?.[0]?.value;
+          checkoutPriceMinor =
+            cpFromCatalog != null
+              ? Number(cpFromCatalog)
+              : parsed.checkoutPrice?.value != null
+                ? Number(parsed.checkoutPrice.value)
+                : undefined;
         } catch {
           sellingPlan = null;
         }
       }
+      const qty = item.quantity || 1;
+      const apiUnit =
+        qty > 0 ? (item.totals?.subTotal?.value || 0) / qty : 0;
+      const unitPrice = checkoutPriceMinor != null ? checkoutPriceMinor : apiUnit;
       return {
         id: item.id,
         name: item.name || t.storefront.product,
         image: item.details?.productAssetUrl || '',
         quantity: item.quantity || 0,
-        originalPrice: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
-        price: (item.totals?.subTotal?.value || 0) / (item.quantity || 1),
+        originalPrice: unitPrice,
+        price: unitPrice,
         selectedOptions:
           item?.details?.selectedOptions?.map(option => ({
             attribute: option.attribute || '',
@@ -127,14 +146,20 @@ export function Cart({
       };
     }) || [];
 
-  // Calculate totals
+  // Calculate totals: subtotal matches sum of displayed line amounts (selling-plan metafield prices when set).
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const currencyCode = order?.totals?.total?.currencyCode || 'USD';
-  const subtotal = order?.totals?.subTotal?.value || 0;
+  const apiSubtotal = order?.totals?.subTotal?.value || 0;
+  const lineSubtotalSum = items.reduce(
+    (sum, item) => sum + item.originalPrice * (item.quantity || 0),
+    0
+  );
+  const subtotal = lineSubtotalSum;
   const shipping = order?.totals?.shippingTotal?.value || 0;
   const taxes = order?.totals?.taxTotal?.value || 0;
   const discount = order?.totals?.discountTotal?.value || 0;
-  const total = order?.totals?.total?.value || 0;
+  const apiTotal = order?.totals?.total?.value || 0;
+  const total = apiTotal + (lineSubtotalSum - apiSubtotal);
 
   const totals = {
     subtotal,
