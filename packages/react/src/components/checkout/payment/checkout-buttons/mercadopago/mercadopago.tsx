@@ -9,6 +9,7 @@ import {
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadMercadoPago } from '@/components/checkout/payment/utils/use-load-mercadopago';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -96,7 +97,15 @@ export function MercadoPagoCheckoutButton() {
       } else {
         // Create new brick
         const renderBrick = async () => {
-          const total = totals?.total?.value || 0;
+          // Convert from minor units (cents) to major units
+          const total = parseFloat(
+            formatCurrency({
+              amount: totals?.total?.value || 0,
+              currencyCode: totals?.total?.currencyCode || 'USD',
+              inputInMinorUnits: true,
+              returnRaw: true,
+            })
+          );
 
           try {
             const container = document.getElementById(elementId);

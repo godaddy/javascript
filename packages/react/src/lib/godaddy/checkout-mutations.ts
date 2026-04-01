@@ -143,6 +143,7 @@ export const CreateCheckoutSessionMutation = graphql(`
         operatingHours {
           pickupWindowInDays
           leadTime
+          pickupSlotInterval
           timeZone
           hours {
             monday {
@@ -186,6 +187,7 @@ export const CreateCheckoutSessionMutation = graphql(`
       defaultOperatingHours {
         pickupWindowInDays
         leadTime
+        pickupSlotInterval
         timeZone
         hours {
           monday {

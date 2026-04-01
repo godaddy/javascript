@@ -1,5 +1,23 @@
 # @godaddy/react
 
+## 1.0.32
+
+### Patch Changes
+
+- ed3cbef: Fix bug with large leadTimes and add pickupSlotInterval to uncouple leadTime from time slot generation
+
+## 1.0.31
+
+### Patch Changes
+
+- b3c0dad: Fix MercadoPago amount conversion from minor units to major units. The SDK expects amounts in major units (e.g., 90.00 BRL) but we were sending minor units (e.g., 9000 cents).
+
+## 1.0.30
+
+### Patch Changes
+
+- c1ebb52: Format local pickup times to store timezone
+
 ## 1.0.29
 
 ### Patch Changes

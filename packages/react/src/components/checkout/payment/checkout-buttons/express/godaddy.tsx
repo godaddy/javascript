@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
@@ -16,7 +9,6 @@ import {
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import type {
   Address,
-  ShippingMethod,
   ShippingMethods,
   TokenizeJs,
   WalletError,
@@ -96,6 +88,9 @@ export function ExpressCheckoutButton() {
   const confirmCheckout = useConfirmCheckout();
   const collect = useRef<TokenizeJs | null>(null);
   const hasMounted = useRef(false);
+  const handleExpressPayClickRef = useRef<
+    (args: { source?: 'apple_pay' | 'google_pay' | 'paze' }) => Promise<void>
+  >(async () => undefined);
 
   // Use refs to store current coupon state to avoid stale closures in event handlers
   const appliedCouponCodeRef = useRef<string | null>(null);
@@ -305,6 +300,9 @@ export function ExpressCheckoutButton() {
     ]
   );
 
+  // Keep ref in sync so the SDK's stale onClick closure always calls the latest handler
+  handleExpressPayClickRef.current = handleExpressPayClick;
+
   // Track the status of coupon code fetching with a state variable
   const [couponFetchStatus, setCouponFetchStatus] = useState<
     'idle' | 'fetching' | 'done'
@@ -401,20 +399,21 @@ export function ExpressCheckoutButton() {
 
   // Initialize the TokenizeJs instance when the component mounts
   // But only after price adjustments have been fetched
-  useLayoutEffect(() => {
-    const shouldInitialize =
-      godaddyPaymentsConfig &&
-      (godaddyPaymentsConfig?.businessId || session?.businessId) &&
-      isPoyntLoaded &&
-      isCollectLoading &&
-      draftOrder &&
-      couponFetchStatus === 'done';
+  // Initialize TokenizeJs and mount wallet buttons in a single effect
+  useEffect(() => {
+    if (
+      !isPoyntLoaded ||
+      !godaddyPaymentsConfig ||
+      !isCollectLoading ||
+      !draftOrder ||
+      hasMounted.current ||
+      couponFetchStatus !== 'done' ||
+      (!godaddyPaymentsConfig?.businessId && !session?.businessId)
+    )
+      return;
 
-    if (!shouldInitialize) return;
-
-    if (!collect.current && !hasMounted.current) {
+    if (!collect.current) {
       // Create coupon config if there's a price adjustment from existing coupon
-      // Read from refs to get current values
       const currentAdjustments = calculatedAdjustmentsRef.current;
       const currentCouponCode = appliedCouponCodeRef.current;
 
@@ -452,8 +451,58 @@ export function ExpressCheckoutButton() {
         }
       );
     }
+
+    if (collect.current) {
+      collect.current.supportWalletPayments().then(supports => {
+        const paymentMethods: string[] = [];
+        if (supports.applePay) {
+          track({
+            eventId: eventIds.expressApplePayImpression,
+            type: TrackingEventType.IMPRESSION,
+            properties: {
+              provider: 'poynt',
+            },
+          });
+          paymentMethods.push('apple_pay');
+        }
+        if (supports.googlePay) {
+          paymentMethods.push('google_pay');
+          track({
+            eventId: eventIds.expressGooglePayImpression,
+            type: TrackingEventType.IMPRESSION,
+            properties: {
+              provider: 'poynt',
+            },
+          });
+        }
+
+        if (paymentMethods.length > 0 && !hasMounted.current) {
+          hasMounted.current = true;
+          collect.current?.mount('gdpay-express-pay-element', document, {
+            paymentMethods: paymentMethods,
+            buttonsContainerOptions: {
+              className: 'gap-1 !flex-col sm:!flex-row place-items-center',
+            },
+            buttonOptions: {
+              type: 'plain',
+              margin: '0',
+              height: '50px',
+              width: '100%',
+              justifyContent: 'flex-start',
+              onClick: (args: {
+                source?: 'apple_pay' | 'google_pay' | 'paze';
+              }) => handleExpressPayClickRef.current(args),
+            },
+          });
+        }
+      });
+    }
   }, [
+    isPoyntLoaded,
     godaddyPaymentsConfig,
+    isCollectLoading,
+    draftOrder,
+    couponFetchStatus,
     countryCode,
     currencyCode,
     session?.businessId,
@@ -462,76 +511,8 @@ export function ExpressCheckoutButton() {
     session?.enablePromotionCodes,
     session?.enableShippingAddressCollection,
     session?.storeName,
-    isPoyntLoaded,
-    isCollectLoading,
-    draftOrder,
-    couponFetchStatus,
     t,
-    handleExpressPayClick,
     formatCurrency,
-  ]);
-
-  // Mount the TokenizeJs instance
-  useEffect(() => {
-    if (
-      !isPoyntLoaded ||
-      !godaddyPaymentsConfig ||
-      !isCollectLoading ||
-      !collect.current ||
-      hasMounted.current ||
-      (!godaddyPaymentsConfig?.businessId && !session?.businessId)
-    )
-      return;
-
-    collect.current?.supportWalletPayments().then(supports => {
-      const paymentMethods: string[] = [];
-      if (supports.applePay) {
-        track({
-          eventId: eventIds.expressApplePayImpression,
-          type: TrackingEventType.IMPRESSION,
-          properties: {
-            provider: 'poynt',
-          },
-        });
-        paymentMethods.push('apple_pay');
-      }
-      if (supports.googlePay) {
-        paymentMethods.push('google_pay');
-        track({
-          eventId: eventIds.expressGooglePayImpression,
-          type: TrackingEventType.IMPRESSION,
-          properties: {
-            provider: 'poynt',
-          },
-        });
-      }
-      // if (supports.paze) paymentMethods.push("paze"); // paze is not an "express" payment and needs to be implemented as a standard flow
-
-      if (paymentMethods.length > 0 && !hasMounted.current) {
-        hasMounted.current = true;
-        // console.log("[poynt collect] Mounting");
-        collect?.current?.mount('gdpay-express-pay-element', document, {
-          paymentMethods: paymentMethods,
-          buttonsContainerOptions: {
-            className: 'gap-1 !flex-col sm:!flex-row place-items-center',
-          },
-          buttonOptions: {
-            type: 'plain',
-            margin: '0',
-            height: '50px',
-            width: '100%',
-            justifyContent: 'flex-start',
-            onClick: handleExpressPayClick,
-          },
-        });
-      }
-    });
-  }, [
-    isPoyntLoaded,
-    godaddyPaymentsConfig,
-    isCollectLoading,
-    handleExpressPayClick,
-    session?.businessId,
   ]);
 
   // Function to convert shipping address to shippingLines format for price adjustments

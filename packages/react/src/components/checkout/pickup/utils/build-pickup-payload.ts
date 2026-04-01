@@ -1,4 +1,4 @@
-import { format as formatTz, toZonedTime } from 'date-fns-tz';
+import { format as formatTz, fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 type FormFields = {
   pickupDate?: string | Date | null;
@@ -14,9 +14,18 @@ type PickupPayload = {
   fulfillmentLocationId: string | null;
 };
 
-function parseDate(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
+/**
+ * Extract a yyyy-MM-dd date string from either a string or Date.
+ * When given a Date, reads its local (runtime) fields — this is safe
+ * because the calendar UI stores dates as yyyy-MM-dd strings or as
+ * midnight-local Date objects whose year/month/day are always correct.
+ */
+function toDateString(pickupDate: string | Date): string {
+  if (typeof pickupDate === 'string') return pickupDate;
+  const y = pickupDate.getFullYear();
+  const m = String(pickupDate.getMonth() + 1).padStart(2, '0');
+  const d = String(pickupDate.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 export function buildPickupPayload({
@@ -26,27 +35,34 @@ export function buildPickupPayload({
   leadTime = 0,
   timezone = 'UTC',
 }: FormFields): PickupPayload {
+  const tz = timezone ?? 'UTC';
   let date: Date;
 
   if (pickupTime === 'ASAP') {
     const now = new Date();
     now.setMinutes(now.getMinutes() + leadTime);
-    date = toZonedTime(now, timezone ?? 'UTC');
+    date = toZonedTime(now, tz);
   } else if (pickupDate && pickupTime) {
-    const baseDate =
-      typeof pickupDate === 'string' ? parseDate(pickupDate) : pickupDate;
+    const dateStr = toDateString(pickupDate);
     const [hours, minutes] = pickupTime.split(':').map(Number);
-    const zonedDate = toZonedTime(baseDate, timezone ?? 'UTC');
-    zonedDate.setHours(hours || 0, minutes || 0, 0, 0);
-    date = zonedDate;
+    const h = String(hours || 0).padStart(2, '0');
+    const m = String(minutes || 0).padStart(2, '0');
+
+    // Build the wall-clock datetime in the store timezone, then convert to
+    // a correct UTC instant via fromZonedTime before creating the zoned
+    // representation that formatTz expects.
+    const utcDate = fromZonedTime(`${dateStr}T${h}:${m}:00`, tz);
+    date = toZonedTime(utcDate, tz);
   } else if (pickupDate) {
-    date = typeof pickupDate === 'string' ? parseDate(pickupDate) : pickupDate;
+    const dateStr = toDateString(pickupDate);
+    const utcDate = fromZonedTime(`${dateStr}T00:00:00`, tz);
+    date = toZonedTime(utcDate, tz);
   } else {
-    date = new Date();
+    date = toZonedTime(new Date(), tz);
   }
 
   const isoString = formatTz(date, "yyyy-MM-dd'T'HH:mm:ssXXX", {
-    timeZone: timezone ?? 'UTC',
+    timeZone: tz,
   });
 
   return {
