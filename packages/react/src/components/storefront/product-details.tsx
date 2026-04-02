@@ -21,9 +21,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSku, getSkuGroup } from '@/lib/godaddy/godaddy';
 import type { SKUGroupAttribute, SKUGroupAttributeValue } from '@/types';
-import { ProductDetailsProvider } from './product-details-context';
-import type { ProductDetailsTarget } from './target/target';
-import { ProductDetailsTargetSlot } from './target/target';
+import { ProductDetailsProvider } from './contexts/product-details-context';
+import type { ProductDetailsTarget } from './targets/product-details-target';
+import { ProductDetailsTargetSlot } from './targets/product-details-target';
 
 /** Price at checkout (e.g. subscription price). Value in minor units (cents). */
 export type SellingPlanCheckoutPrice = {
@@ -58,11 +58,6 @@ interface ProductDetailsProps {
       (props: { skuId: string | null; storeId: string | undefined }) => ReactNode
     >
   >;
-  /**
-   * @deprecated Use `targets['product-details.add-to-cart.before']` instead.
-   * Renders above the Add to Cart button; receives current skuId and storeId for selling plan dropdown.
-   */
-  childrenAboveAddToCart?: (props: { skuId: string | null; storeId: string | undefined }) => ReactNode;
 }
 
 // Flattened attribute structure for UI (transforms edges/node to flat array)
@@ -162,8 +157,7 @@ export function ProductDetails({
   onAddToCartError,
   selectedSellingPlanId,
   selectedSellingPlan,
-  targets: targetsProp,
-  childrenAboveAddToCart,
+  targets,
 }: ProductDetailsProps) {
   const context = useGoDaddyContext();
   const { t } = context;
@@ -325,15 +319,6 @@ export function ProductDetails({
   const resolvedSkuId =
     selectedSku?.id ?? data?.skuGroup?.skus?.edges?.[0]?.node?.id ?? null;
 
-  const targets = useMemo(() => {
-    if (!childrenAboveAddToCart) return targetsProp;
-    if (targetsProp?.['product-details.add-to-cart.before']) return targetsProp;
-    return {
-      ...targetsProp,
-      'product-details.add-to-cart.before': childrenAboveAddToCart,
-    } as typeof targetsProp;
-  }, [targetsProp, childrenAboveAddToCart]);
-
   // Track main carousel selection and sync thumbnail carousel
   useEffect(() => {
     if (!carouselApi) return;
@@ -494,7 +479,7 @@ export function ProductDetails({
   };
 
   return (
-    <ProductDetailsProvider value={{ targets, skuId: resolvedSkuId, storeId }}>
+    <ProductDetailsProvider value={{ targets, skuId: resolvedSkuId }}>
       <ProductDetailsTargetSlot id='product-details.before' />
       <div className='grid md:grid-cols-2 gap-8 p-4'>
         {/* Product Images */}

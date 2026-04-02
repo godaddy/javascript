@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
-import type { ProductDetailsTarget } from './target/target';
+import type { ProductDetailsTarget } from '../targets/product-details-target';
 
 export interface ProductDetailsContextValue {
   targets?: Partial<
@@ -12,7 +12,6 @@ export interface ProductDetailsContextValue {
     >
   >;
   skuId: string | null;
-  storeId: string | undefined;
 }
 
 const productDetailsContext = createContext<ProductDetailsContextValue | null>(

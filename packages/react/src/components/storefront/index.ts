@@ -5,4 +5,4 @@ export * from './product-card';
 export * from './product-details.tsx';
 export * from './product-grid';
 export * from './product-search';
-export type { ProductDetailsTarget } from './target/target';
+export type { ProductDetailsTarget } from './targets/product-details-target';

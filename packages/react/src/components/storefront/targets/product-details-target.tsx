@@ -2,7 +2,7 @@
 
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
-import { useProductDetailsContext } from '../product-details-context';
+import { useProductDetailsContext } from '../contexts/product-details-context';
 
 export type ProductDetailsTarget =
   | 'product-details.before'
@@ -27,8 +27,8 @@ export function ProductDetailsTargetSlot({
 }: {
   id: ProductDetailsTarget;
 }) {
-  const { debug } = useGoDaddyContext();
-  const { targets, skuId, storeId } = useProductDetailsContext();
+  const { debug, storeId } = useGoDaddyContext();
+  const { targets, skuId } = useProductDetailsContext();
 
   const target = targets?.[id];
 
