@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.33
+
+### Patch Changes
+
+- 353dc8b: Add support for enAu localizations
+- Updated dependencies [353dc8b]
+  - @godaddy/localizations@1.0.9
+
 ## 1.0.32
 
 ### Patch Changes

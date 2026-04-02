@@ -1,5 +1,11 @@
 # @godaddy/localizations
 
+## 1.0.9
+
+### Patch Changes
+
+- 353dc8b: Add support for enAu localizations
+
 ## 1.0.8
 
 ### Patch Changes
