@@ -32,15 +32,17 @@ export default function Product({ productId }: { productId: string }) {
         onAddToCartSuccess={openCart}
         selectedSellingPlanId={selectedSellingPlanId}
         selectedSellingPlan={selectedSellingPlan}
-        childrenAboveAddToCart={({ skuId, storeId }) => (
-          <SellingPlanDropdown
-            storeId={storeId ?? process.env.NEXT_PUBLIC_GODADDY_STORE_ID ?? ''}
-            skuId={skuId}
-            skuGroupId={productId}
-            selectedPlanId={selectedSellingPlanId}
-            onSelectionChange={handleSellingPlanChange}
-          />
-        )}
+        targets={{
+          'product-details.add-to-cart.before': ({ skuId, storeId }) => (
+            <SellingPlanDropdown
+              storeId={storeId ?? process.env.NEXT_PUBLIC_GODADDY_STORE_ID ?? ''}
+              skuId={skuId}
+              skuGroupId={productId}
+              selectedPlanId={selectedSellingPlanId}
+              onSelectionChange={handleSellingPlanChange}
+            />
+          ),
+        }}
       />
     </div>
   );

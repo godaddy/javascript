@@ -21,6 +21,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSku, getSkuGroup } from '@/lib/godaddy/godaddy';
 import type { SKUGroupAttribute, SKUGroupAttributeValue } from '@/types';
+import { ProductDetailsProvider } from './product-details-context';
+import type { ProductDetailsTarget } from './target/target';
+import { ProductDetailsTargetSlot } from './target/target';
 
 /** Price at checkout (e.g. subscription price). Value in minor units (cents). */
 export type SellingPlanCheckoutPrice = {
@@ -48,7 +51,17 @@ interface ProductDetailsProps {
   selectedSellingPlanId?: string | null;
   /** Full selected selling plan for display and cart metafield. */
   selectedSellingPlan?: SellingPlanSelection | null;
-  /** Renders above the Add to Cart button; receives current skuId and storeId for selling plan dropdown. */
+  /** Extensibility slots — keyed render functions injected at predefined locations. */
+  targets?: Partial<
+    Record<
+      ProductDetailsTarget,
+      (props: { skuId: string | null; storeId: string | undefined }) => ReactNode
+    >
+  >;
+  /**
+   * @deprecated Use `targets['product-details.add-to-cart.before']` instead.
+   * Renders above the Add to Cart button; receives current skuId and storeId for selling plan dropdown.
+   */
   childrenAboveAddToCart?: (props: { skuId: string | null; storeId: string | undefined }) => ReactNode;
 }
 
@@ -149,6 +162,7 @@ export function ProductDetails({
   onAddToCartError,
   selectedSellingPlanId,
   selectedSellingPlan,
+  targets: targetsProp,
   childrenAboveAddToCart,
 }: ProductDetailsProps) {
   const context = useGoDaddyContext();
@@ -307,6 +321,18 @@ export function ProductDetails({
 
   // Use individual SKU data if available, otherwise use SKU Group data
   const selectedSku = individualSkuData?.sku;
+
+  const resolvedSkuId =
+    selectedSku?.id ?? data?.skuGroup?.skus?.edges?.[0]?.node?.id ?? null;
+
+  const targets = useMemo(() => {
+    if (!childrenAboveAddToCart) return targetsProp;
+    if (targetsProp?.['product-details.add-to-cart.before']) return targetsProp;
+    return {
+      ...targetsProp,
+      'product-details.add-to-cart.before': childrenAboveAddToCart,
+    } as typeof targetsProp;
+  }, [targetsProp, childrenAboveAddToCart]);
 
   // Track main carousel selection and sync thumbnail carousel
   useEffect(() => {
@@ -468,334 +494,350 @@ export function ProductDetails({
   };
 
   return (
-    <div className='grid md:grid-cols-2 gap-8 p-4'>
-      {/* Product Images */}
-      <div className='space-y-4'>
-        {/* Main Image Carousel */}
-        <div className='relative'>
-          {isOnSale && (
-            <Badge
-              variant='accent'
-              className='absolute top-4 right-4 z-10 font-semibold'
+    <ProductDetailsProvider value={{ targets, skuId: resolvedSkuId, storeId }}>
+      <ProductDetailsTargetSlot id='product-details.before' />
+      <div className='grid md:grid-cols-2 gap-8 p-4'>
+        {/* Product Images */}
+        <div className='space-y-4'>
+          <ProductDetailsTargetSlot id='product-details.media.before' />
+
+          {/* Main Image Carousel */}
+          <div className='relative'>
+            {isOnSale && (
+              <Badge
+                variant='accent'
+                className='absolute top-4 right-4 z-10 font-semibold'
+              >
+                {t.storefront.sale}
+              </Badge>
+            )}
+            <Carousel
+              setApi={setCarouselApi}
+              opts={{
+                align: 'center',
+                loop: true,
+              }}
+              className='w-full'
             >
-              {t.storefront.sale}
-            </Badge>
-          )}
-          <Carousel
-            setApi={setCarouselApi}
-            opts={{
-              align: 'center',
-              loop: true,
-            }}
-            className='w-full'
-          >
-            <CarouselContent>
-              {images.length > 0 ? (
-                images.map((image: string, index: number) => (
-                  <CarouselItem key={index}>
-                    <Card className='overflow-hidden aspect-square bg-muted border-border'>
-                      <img
-                        src={image}
-                        alt={`${title} - ${index + 1}`}
-                        className='w-full h-full object-cover'
-                      />
+              <CarouselContent>
+                {images.length > 0 ? (
+                  images.map((image: string, index: number) => (
+                    <CarouselItem key={index}>
+                      <Card className='overflow-hidden aspect-square bg-muted border-border'>
+                        <img
+                          src={image}
+                          alt={`${title} - ${index + 1}`}
+                          className='w-full h-full object-cover'
+                        />
+                      </Card>
+                    </CarouselItem>
+                  ))
+                ) : (
+                  <CarouselItem>
+                    <Card className='overflow-hidden aspect-square bg-muted'>
+                      <div className='w-full h-full flex items-center justify-center text-muted-foreground'>
+                        {t.storefront.noImageAvailable}
+                      </div>
                     </Card>
                   </CarouselItem>
-                ))
-              ) : (
-                <CarouselItem>
-                  <Card className='overflow-hidden aspect-square bg-muted'>
-                    <div className='w-full h-full flex items-center justify-center text-muted-foreground'>
-                      {t.storefront.noImageAvailable}
-                    </div>
-                  </Card>
-                </CarouselItem>
+                )}
+              </CarouselContent>
+              {images.length > 1 && (
+                <>
+                  <CarouselPrevious className='left-4' />
+                  <CarouselNext className='right-4' />
+                </>
               )}
-            </CarouselContent>
-            {images.length > 1 && (
-              <>
-                <CarouselPrevious className='left-4' />
-                <CarouselNext className='right-4' />
-              </>
-            )}
-          </Carousel>
+            </Carousel>
+          </div>
+
+          {/* Thumbnail Grid or Carousel */}
+          {images.length > 1 && (
+            <>
+              {images.length <= 4 ? (
+                // Simple grid for 4 or fewer images
+                <div className='grid grid-cols-4 gap-2'>
+                  {images.map((image: string, index: number) => (
+                    <Button
+                      key={index}
+                      variant='outline'
+                      className={`p-0 h-auto aspect-square overflow-hidden ${
+                        currentImageIndex === index
+                          ? 'ring-2 ring-primary ring-offset-2'
+                          : 'opacity-60 hover:opacity-100'
+                      }`}
+                      onClick={() => handleThumbnailClick(index)}
+                    >
+                      <img
+                        src={image}
+                        alt={`${title} - thumbnail ${index + 1}`}
+                        className='w-full h-full object-cover'
+                      />
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                // Carousel for more than 4 images
+                <Carousel
+                  setApi={setThumbnailApi}
+                  opts={{
+                    align: 'start',
+                    slidesToScroll: 1,
+                    containScroll: 'keepSnaps',
+                  }}
+                  className='w-full'
+                >
+                  <CarouselContent className='-ml-2'>
+                    {images.map((image: string, index: number) => (
+                      <CarouselItem key={index} className='pl-2 basis-1/4'>
+                        <div className='p-1'>
+                          <Button
+                            variant='outline'
+                            className={`p-0 h-auto aspect-square overflow-hidden w-full ${
+                              currentImageIndex === index
+                                ? 'ring-2 ring-primary ring-offset-2'
+                                : 'opacity-60 hover:opacity-100'
+                            }`}
+                            onClick={() => handleThumbnailClick(index)}
+                          >
+                            <img
+                              src={image}
+                              alt={`${title} - thumbnail ${index + 1}`}
+                              className='w-full h-full object-cover'
+                            />
+                          </Button>
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className='-left-4' />
+                  <CarouselNext className='-right-4' />
+                </Carousel>
+              )}
+            </>
+          )}
+
+          <ProductDetailsTargetSlot id='product-details.media.after' />
         </div>
 
-        {/* Thumbnail Grid or Carousel */}
-        {images.length > 1 && (
-          <>
-            {images.length <= 4 ? (
-              // Simple grid for 4 or fewer images
-              <div className='grid grid-cols-4 gap-2'>
-                {images.map((image: string, index: number) => (
-                  <Button
-                    key={index}
-                    variant='outline'
-                    className={`p-0 h-auto aspect-square overflow-hidden ${
-                      currentImageIndex === index
-                        ? 'ring-2 ring-primary ring-offset-2'
-                        : 'opacity-60 hover:opacity-100'
-                    }`}
-                    onClick={() => handleThumbnailClick(index)}
-                  >
-                    <img
-                      src={image}
-                      alt={`${title} - thumbnail ${index + 1}`}
-                      className='w-full h-full object-cover'
-                    />
-                  </Button>
-                ))}
-              </div>
-            ) : (
-              // Carousel for more than 4 images
-              <Carousel
-                setApi={setThumbnailApi}
-                opts={{
-                  align: 'start',
-                  slidesToScroll: 1,
-                  containScroll: 'keepSnaps',
-                }}
-                className='w-full'
-              >
-                <CarouselContent className='-ml-2'>
-                  {images.map((image: string, index: number) => (
-                    <CarouselItem key={index} className='pl-2 basis-1/4'>
-                      <div className='p-1'>
-                        <Button
-                          variant='outline'
-                          className={`p-0 h-auto aspect-square overflow-hidden w-full ${
-                            currentImageIndex === index
-                              ? 'ring-2 ring-primary ring-offset-2'
-                              : 'opacity-60 hover:opacity-100'
-                          }`}
-                          onClick={() => handleThumbnailClick(index)}
-                        >
-                          <img
-                            src={image}
-                            alt={`${title} - thumbnail ${index + 1}`}
-                            className='w-full h-full object-cover'
-                          />
-                        </Button>
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className='-left-4' />
-                <CarouselNext className='-right-4' />
-              </Carousel>
-            )}
-          </>
-        )}
-      </div>
+        {/* Product Information */}
+        <div className='space-y-6'>
+          <ProductDetailsTargetSlot id='product-details.title.before' />
+          <div>
+            <h1 className='text-3xl font-bold text-foreground mb-2'>{title}</h1>
 
-      {/* Product Information */}
-      <div className='space-y-6'>
-        <div>
-          <h1 className='text-3xl font-bold text-foreground mb-2'>{title}</h1>
-
-          {/* Price */}
-          <div className='flex items-baseline gap-3 mb-4'>
-            <span className='text-2xl font-bold text-foreground'>
-              {isPriceRange
-                ? `${formatCurrency({ amount: priceMin, currencyCode: priceCurrency, inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: priceCurrency, inputInMinorUnits: true })}`
-                : formatCurrency({
-                    amount: priceMin,
-                    currencyCode: priceCurrency,
-                    inputInMinorUnits: true,
-                  })}
-            </span>
-            {isOnSale && (compareAtMin || compareAtWhenPlan != null) && (
-              <span className='text-lg text-muted-foreground line-through'>
-                {isCompareAtPriceRange
-                  ? `${formatCurrency({ amount: compareAtMin!, currencyCode: priceCurrency, inputInMinorUnits: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: priceCurrency, inputInMinorUnits: true })}`
+            {/* Price */}
+            <div className='flex items-baseline gap-3 mb-4'>
+              <span className='text-2xl font-bold text-foreground'>
+                {isPriceRange
+                  ? `${formatCurrency({ amount: priceMin, currencyCode: priceCurrency, inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: priceCurrency, inputInMinorUnits: true })}`
                   : formatCurrency({
-                      amount: compareAtWhenPlan ?? compareAtMin!,
+                      amount: priceMin,
                       currencyCode: priceCurrency,
                       inputInMinorUnits: true,
                     })}
               </span>
-            )}
+              {isOnSale && (compareAtMin || compareAtWhenPlan != null) && (
+                <span className='text-lg text-muted-foreground line-through'>
+                  {isCompareAtPriceRange
+                    ? `${formatCurrency({ amount: compareAtMin!, currencyCode: priceCurrency, inputInMinorUnits: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: priceCurrency, inputInMinorUnits: true })}`
+                    : formatCurrency({
+                        amount: compareAtWhenPlan ?? compareAtMin!,
+                        currencyCode: priceCurrency,
+                        inputInMinorUnits: true,
+                      })}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+          <ProductDetailsTargetSlot id='product-details.title.after' />
 
-        {/* Description */}
-        {htmlDescription || description ? (
-          <div>
-            {htmlDescription ? (
-              <div
-                className='text-muted-foreground prose prose-sm max-w-none'
-                dangerouslySetInnerHTML={{ __html: htmlDescription }}
-              />
-            ) : (
-              <p className='text-muted-foreground'>{description}</p>
-            )}
-          </div>
-        ) : null}
+          <ProductDetailsTargetSlot id='product-details.description.before' />
+          {/* Description */}
+          {htmlDescription || description ? (
+            <div>
+              {htmlDescription ? (
+                <div
+                  className='text-muted-foreground prose prose-sm max-w-none'
+                  dangerouslySetInnerHTML={{ __html: htmlDescription }}
+                />
+              ) : (
+                <p className='text-muted-foreground'>{description}</p>
+              )}
+            </div>
+          ) : null}
+          <ProductDetailsTargetSlot id='product-details.description.after' />
 
-        {/* Product Attributes (Size, Color, etc.) */}
-        {attributes.length > 0 && (
-          <div className='space-y-4'>
-            {attributes.map(attribute => (
-              <div key={attribute.id}>
-                <label className='text-sm font-medium text-foreground mb-2 block'>
-                  {attribute.label}
-                </label>
-                <div className='flex flex-wrap gap-2'>
-                  {attribute.values.map(value => (
-                    <Button
-                      key={value.id}
-                      variant={
-                        selectedAttributes[attribute.name] === value.name
-                          ? 'default'
-                          : 'outline'
-                      }
-                      size='sm'
-                      onClick={() =>
-                        handleAttributeChange(attribute.name, value.name)
-                      }
-                      className='min-w-[60px]'
-                    >
-                      {value.label}
-                    </Button>
-                  ))}
+          <ProductDetailsTargetSlot id='product-details.attributes.before' />
+          {/* Product Attributes (Size, Color, etc.) */}
+          {attributes.length > 0 && (
+            <div className='space-y-4'>
+              {attributes.map(attribute => (
+                <div key={attribute.id}>
+                  <label className='text-sm font-medium text-foreground mb-2 block'>
+                    {attribute.label}
+                  </label>
+                  <div className='flex flex-wrap gap-2'>
+                    {attribute.values.map(value => (
+                      <Button
+                        key={value.id}
+                        variant={
+                          selectedAttributes[attribute.name] === value.name
+                            ? 'default'
+                            : 'outline'
+                        }
+                        size='sm'
+                        onClick={() =>
+                          handleAttributeChange(attribute.name, value.name)
+                        }
+                        className='min-w-[60px]'
+                      >
+                        {value.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
-            {/* SKU Match Status */}
-            {selectedAttributeValues.length > 0 && (
-              <div className='text-sm'>
-                {isSkuLoading && (
-                  <div className='flex items-center gap-2 text-muted-foreground'>
-                    <div className='h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent' />
-                    {t.storefront.loadingVariantDetails}
-                  </div>
-                )}
-                {!isSkuLoading && matchedSkus.length === 0 && (
-                  <div className='text-destructive'>
-                    {t.storefront.combinationNotAvailable}
-                  </div>
-                )}
-                {!isSkuLoading && matchedSkus.length > 1 && (
-                  <div className='text-muted-foreground'>
-                    {matchedSkus.length} {t.storefront.variantsMatch}
-                  </div>
-                )}
-              </div>
+              {/* SKU Match Status */}
+              {selectedAttributeValues.length > 0 && (
+                <div className='text-sm'>
+                  {isSkuLoading && (
+                    <div className='flex items-center gap-2 text-muted-foreground'>
+                      <div className='h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent' />
+                      {t.storefront.loadingVariantDetails}
+                    </div>
+                  )}
+                  {!isSkuLoading && matchedSkus.length === 0 && (
+                    <div className='text-destructive'>
+                      {t.storefront.combinationNotAvailable}
+                    </div>
+                  )}
+                  {!isSkuLoading && matchedSkus.length > 1 && (
+                    <div className='text-muted-foreground'>
+                      {matchedSkus.length} {t.storefront.variantsMatch}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          <ProductDetailsTargetSlot id='product-details.attributes.after' />
+
+          <ProductDetailsTargetSlot id='product-details.quantity.before' />
+          {/* Quantity Selector */}
+          <div>
+            <label className='text-sm font-medium text-foreground mb-2 block'>
+              {t.storefront.quantity}
+            </label>
+            <div className='flex items-center gap-3'>
+              <Button
+                variant='outline'
+                size='icon'
+                onClick={() => handleQuantityChange(-1)}
+                disabled={quantity <= 1}
+              >
+                <Minus className='h-4 w-4' />
+              </Button>
+              <span className='text-lg font-medium min-w-[40px] text-center'>
+                {quantity}
+              </span>
+              <Button
+                variant='outline'
+                size='icon'
+                onClick={() => handleQuantityChange(1)}
+              >
+                <Plus className='h-4 w-4' />
+              </Button>
+            </div>
+          </div>
+          <ProductDetailsTargetSlot id='product-details.quantity.after' />
+
+          <ProductDetailsTargetSlot id='product-details.add-to-cart.before' />
+
+          {/* Add to Cart Button */}
+          <Button
+            size='lg'
+            className='w-full gap-2'
+            onClick={handleAddToCart}
+            disabled={!canAddToCart || isAddingToCart}
+          >
+            {isAddingToCart ? (
+              <>
+                <Loader2 className='h-5 w-5 animate-spin' />
+                {t.storefront.addingToCart}
+              </>
+            ) : (
+              <>
+                <ShoppingCart className='h-5 w-5' />
+                {isOutOfStock ? t.storefront.outOfStock : t.storefront.addToCart}
+              </>
             )}
-          </div>
-        )}
+          </Button>
+          <ProductDetailsTargetSlot id='product-details.add-to-cart.after' />
 
-        {/* Quantity Selector */}
-        <div>
-          <label className='text-sm font-medium text-foreground mb-2 block'>
-            {t.storefront.quantity}
-          </label>
-          <div className='flex items-center gap-3'>
-            <Button
-              variant='outline'
-              size='icon'
-              onClick={() => handleQuantityChange(-1)}
-              disabled={quantity <= 1}
-            >
-              <Minus className='h-4 w-4' />
-            </Button>
-            <span className='text-lg font-medium min-w-[40px] text-center'>
-              {quantity}
-            </span>
-            <Button
-              variant='outline'
-              size='icon'
-              onClick={() => handleQuantityChange(1)}
-            >
-              <Plus className='h-4 w-4' />
-            </Button>
-          </div>
-        </div>
-
-        {childrenAboveAddToCart?.({
-          skuId: selectedSku?.id ?? product?.skus?.edges?.[0]?.node?.id ?? null,
-          storeId,
-        })}
-
-        {/* Add to Cart Button */}
-        <Button
-          size='lg'
-          className='w-full gap-2'
-          onClick={handleAddToCart}
-          disabled={!canAddToCart || isAddingToCart}
-        >
-          {isAddingToCart ? (
-            <>
-              <Loader2 className='h-5 w-5 animate-spin' />
-              {t.storefront.addingToCart}
-            </>
-          ) : (
-            <>
-              <ShoppingCart className='h-5 w-5' />
-              {isOutOfStock ? t.storefront.outOfStock : t.storefront.addToCart}
-            </>
-          )}
-        </Button>
-
-        {/* Additional Product Information */}
-        <div className='border-t border-border pt-4 space-y-2'>
-          {product?.type && (
-            <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>
-                {t.storefront.productType}
-              </span>
-              <span className='font-medium text-foreground'>
-                {product.type}
-              </span>
-            </div>
-          )}
-          {product?.id && (
-            <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>
-                {t.storefront.productId}
-              </span>
-              <span className='font-mono text-xs text-foreground'>
-                {product.id}
-              </span>
-            </div>
-          )}
-          {selectedSku && (
-            <>
+          <ProductDetailsTargetSlot id='product-details.metadata.before' />
+          {/* Additional Product Information */}
+          <div className='border-t border-border pt-4 space-y-2'>
+            {product?.type && (
               <div className='flex justify-between text-sm'>
                 <span className='text-muted-foreground'>
-                  {t.storefront.selectedSku}
+                  {t.storefront.productType}
                 </span>
-                <span className='font-mono text-xs text-foreground'>
-                  {selectedSku.code}
+                <span className='font-medium text-foreground'>
+                  {product.type}
                 </span>
               </div>
-              {selectedSku.inventoryCounts?.edges &&
-                selectedSku.inventoryCounts.edges.length > 0 && (
-                  <div className='flex justify-between text-sm'>
-                    <span className='text-muted-foreground'>
-                      {t.storefront.stockStatus}
-                    </span>
-                    <span className='font-medium text-foreground'>
-                      {(() => {
-                        const availableCount =
-                          selectedSku.inventoryCounts.edges.find(
-                            edge => edge?.node?.type === 'AVAILABLE'
-                          )?.node?.quantity ?? 0;
-                        if (availableCount === 0)
-                          return t.storefront.outOfStock;
-                        if (availableCount < 10)
-                          return `${t.storefront.lowStock} (${availableCount})`;
-                        return t.storefront.inStock;
-                      })()}
-                    </span>
-                  </div>
-                )}
-            </>
-          )}
+            )}
+            {product?.id && (
+              <div className='flex justify-between text-sm'>
+                <span className='text-muted-foreground'>
+                  {t.storefront.productId}
+                </span>
+                <span className='font-mono text-xs text-foreground'>
+                  {product.id}
+                </span>
+              </div>
+            )}
+            {selectedSku && (
+              <>
+                <div className='flex justify-between text-sm'>
+                  <span className='text-muted-foreground'>
+                    {t.storefront.selectedSku}
+                  </span>
+                  <span className='font-mono text-xs text-foreground'>
+                    {selectedSku.code}
+                  </span>
+                </div>
+                {selectedSku.inventoryCounts?.edges &&
+                  selectedSku.inventoryCounts.edges.length > 0 && (
+                    <div className='flex justify-between text-sm'>
+                      <span className='text-muted-foreground'>
+                        {t.storefront.stockStatus}
+                      </span>
+                      <span className='font-medium text-foreground'>
+                        {(() => {
+                          const availableCount =
+                            selectedSku.inventoryCounts.edges.find(
+                              edge => edge?.node?.type === 'AVAILABLE'
+                            )?.node?.quantity ?? 0;
+                          if (availableCount === 0)
+                            return t.storefront.outOfStock;
+                          if (availableCount < 10)
+                            return `${t.storefront.lowStock} (${availableCount})`;
+                          return t.storefront.inStock;
+                        })()}
+                      </span>
+                    </div>
+                  )}
+              </>
+            )}
+          </div>
+          <ProductDetailsTargetSlot id='product-details.metadata.after' />
         </div>
       </div>
-    </div>
+      <ProductDetailsTargetSlot id='product-details.after' />
+    </ProductDetailsProvider>
   );
 }
 
