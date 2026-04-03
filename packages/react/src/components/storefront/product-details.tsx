@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useAddToCart } from '@/components/storefront/hooks/use-add-to-cart';
@@ -20,6 +21,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getSku, getSkuGroup } from '@/lib/godaddy/godaddy';
 import type { SKUGroupAttribute, SKUGroupAttributeValue } from '@/types';
+import { ProductDetailsProvider } from './contexts/product-details-context';
+import type { ProductDetailsTarget } from './targets/product-details-target';
+import { ProductDetailsTargetSlot } from './targets/product-details-target';
+
+/** Price at checkout (e.g. subscription price). Value in minor units (cents). */
+export type SellingPlanCheckoutPrice = {
+  value: number;
+  currencyCode?: string;
+};
+
+/** Selling plan option for add-to-cart (from PDP selector). */
+export type SellingPlanSelection = {
+  planId: string;
+  name?: string;
+  category?: string;
+  /** When set, product details shows this as the main price (checkout/subscription price). Value in minor units. */
+  checkoutPrice?: SellingPlanCheckoutPrice;
+  [key: string]: unknown;
+};
 
 interface ProductDetailsProps {
   productId: string;
@@ -27,6 +47,17 @@ interface ProductDetailsProps {
   clientId?: string;
   onAddToCartSuccess?: () => void;
   onAddToCartError?: (error: Error) => void;
+  /** Selected selling plan id (from dropdown). */
+  selectedSellingPlanId?: string | null;
+  /** Full selected selling plan for display and cart metafield. */
+  selectedSellingPlan?: SellingPlanSelection | null;
+  /** Extensibility slots — keyed render functions injected at predefined locations. */
+  targets?: Partial<
+    Record<
+      ProductDetailsTarget,
+      (props: { skuId: string | null; storeId: string | undefined }) => ReactNode
+    >
+  >;
 }
 
 // Flattened attribute structure for UI (transforms edges/node to flat array)
@@ -124,6 +155,9 @@ export function ProductDetails({
   clientId: clientIdProp,
   onAddToCartSuccess,
   onAddToCartError,
+  selectedSellingPlanId,
+  selectedSellingPlan,
+  targets,
 }: ProductDetailsProps) {
   const context = useGoDaddyContext();
   const { t } = context;
@@ -282,6 +316,9 @@ export function ProductDetails({
   // Use individual SKU data if available, otherwise use SKU Group data
   const selectedSku = individualSkuData?.sku;
 
+  const resolvedSkuId =
+    selectedSku?.id ?? data?.skuGroup?.skus?.edges?.[0]?.node?.id ?? null;
+
   // Track main carousel selection and sync thumbnail carousel
   useEffect(() => {
     if (!carouselApi) return;
@@ -340,16 +377,42 @@ export function ProductDetails({
 
   // Use SKU-specific pricing if available, otherwise fall back to SKU Group pricing
   const skuPrice = selectedSku?.prices?.edges?.[0]?.node;
-  const priceMin = skuPrice?.value?.value ?? product?.priceRange?.min ?? 0;
-  const priceMax = selectedSku
-    ? priceMin
-    : (product?.priceRange?.max ?? priceMin);
+  const catalogPriceMin = skuPrice?.value?.value ?? product?.priceRange?.min ?? 0;
+  const catalogPriceMax = selectedSku
+    ? catalogPriceMin
+    : (product?.priceRange?.max ?? catalogPriceMin);
   const compareAtMin =
     skuPrice?.compareAtValue?.value ?? product?.compareAtPriceRange?.min;
   const compareAtMax = selectedSku
     ? compareAtMin
     : product?.compareAtPriceRange?.max;
-  const isOnSale = compareAtMin && compareAtMin > priceMin;
+
+  // When a selling plan is selected, use checkout price for the current SKU (from plan.checkoutPrice or plan.catalogPrices[skuId].checkoutPrices[0])
+  const resolvedCheckoutPrice = (() => {
+    if (!selectedSellingPlan) return undefined;
+    const currentSkuId = selectedSku?.id;
+    const catalogPrices = selectedSellingPlan.catalogPrices as Array<{ skuId?: string; checkoutPrices?: Array<{ value?: number; currency?: string; currencyCode?: string }> }> | undefined;
+    if (currentSkuId && Array.isArray(catalogPrices)) {
+      const forSku = catalogPrices.find(c => c.skuId === currentSkuId);
+      const checkout = forSku?.checkoutPrices?.[0];
+      if (checkout?.value != null) {
+        return { value: Number(checkout.value), currencyCode: checkout.currencyCode ?? checkout.currency };
+      }
+    }
+    const cp = selectedSellingPlan.checkoutPrice;
+    if (cp?.value != null) return { value: Number(cp.value), currencyCode: cp.currencyCode };
+    return undefined;
+  })();
+  const sellingPlanCheckoutPrice = resolvedCheckoutPrice?.value;
+  const hasCheckoutPrice = sellingPlanCheckoutPrice != null;
+  const priceMin = hasCheckoutPrice ? sellingPlanCheckoutPrice : catalogPriceMin;
+  const priceMax = hasCheckoutPrice ? sellingPlanCheckoutPrice : catalogPriceMax;
+  const priceCurrency = (resolvedCheckoutPrice?.currencyCode as string) || 'USD';
+  const compareAtWhenPlan =
+    hasCheckoutPrice ? catalogPriceMin : undefined;
+  const isOnSale =
+    (compareAtMin && compareAtMin > priceMin) ||
+    (compareAtWhenPlan != null && compareAtWhenPlan > priceMin);
   const isPriceRange = priceMin !== priceMax;
   const isCompareAtPriceRange =
     compareAtMin && compareAtMax && compareAtMin !== compareAtMax;
@@ -402,338 +465,364 @@ export function ProductDetails({
       return;
     }
 
+    const skuId = selectedSku?.id || product?.skus?.edges?.[0]?.node?.id || '';
     await addToCart({
-      skuId: selectedSku?.id || product?.skus?.edges?.[0]?.node?.id || '',
+      skuId,
       name: title,
       quantity,
       productAssetUrl: images[0] || undefined,
+      ...(selectedSellingPlan && {
+        sellingPlanId: selectedSellingPlanId ?? selectedSellingPlan.planId,
+        sellingPlan: selectedSellingPlan,
+      }),
     });
   };
 
   return (
-    <div className='grid md:grid-cols-2 gap-8 p-4'>
-      {/* Product Images */}
-      <div className='space-y-4'>
-        {/* Main Image Carousel */}
-        <div className='relative'>
-          {isOnSale && (
-            <Badge
-              variant='accent'
-              className='absolute top-4 right-4 z-10 font-semibold'
+    <ProductDetailsProvider value={{ targets, skuId: resolvedSkuId }}>
+      <ProductDetailsTargetSlot id='product-details.before' />
+      <div className='grid md:grid-cols-2 gap-8 p-4'>
+        {/* Product Images */}
+        <div className='space-y-4'>
+          <ProductDetailsTargetSlot id='product-details.media.before' />
+
+          {/* Main Image Carousel */}
+          <div className='relative'>
+            {isOnSale && (
+              <Badge
+                variant='accent'
+                className='absolute top-4 right-4 z-10 font-semibold'
+              >
+                {t.storefront.sale}
+              </Badge>
+            )}
+            <Carousel
+              setApi={setCarouselApi}
+              opts={{
+                align: 'center',
+                loop: true,
+              }}
+              className='w-full'
             >
-              {t.storefront.sale}
-            </Badge>
-          )}
-          <Carousel
-            setApi={setCarouselApi}
-            opts={{
-              align: 'center',
-              loop: true,
-            }}
-            className='w-full'
-          >
-            <CarouselContent>
-              {images.length > 0 ? (
-                images.map((image: string, index: number) => (
-                  <CarouselItem key={index}>
-                    <Card className='overflow-hidden aspect-square bg-muted border-border'>
-                      <img
-                        src={image}
-                        alt={`${title} - ${index + 1}`}
-                        className='w-full h-full object-cover'
-                      />
+              <CarouselContent>
+                {images.length > 0 ? (
+                  images.map((image: string, index: number) => (
+                    <CarouselItem key={index}>
+                      <Card className='overflow-hidden aspect-square bg-muted border-border'>
+                        <img
+                          src={image}
+                          alt={`${title} - ${index + 1}`}
+                          className='w-full h-full object-cover'
+                        />
+                      </Card>
+                    </CarouselItem>
+                  ))
+                ) : (
+                  <CarouselItem>
+                    <Card className='overflow-hidden aspect-square bg-muted'>
+                      <div className='w-full h-full flex items-center justify-center text-muted-foreground'>
+                        {t.storefront.noImageAvailable}
+                      </div>
                     </Card>
                   </CarouselItem>
-                ))
-              ) : (
-                <CarouselItem>
-                  <Card className='overflow-hidden aspect-square bg-muted'>
-                    <div className='w-full h-full flex items-center justify-center text-muted-foreground'>
-                      {t.storefront.noImageAvailable}
-                    </div>
-                  </Card>
-                </CarouselItem>
+                )}
+              </CarouselContent>
+              {images.length > 1 && (
+                <>
+                  <CarouselPrevious className='left-4' />
+                  <CarouselNext className='right-4' />
+                </>
               )}
-            </CarouselContent>
-            {images.length > 1 && (
-              <>
-                <CarouselPrevious className='left-4' />
-                <CarouselNext className='right-4' />
-              </>
-            )}
-          </Carousel>
-        </div>
+            </Carousel>
+          </div>
 
-        {/* Thumbnail Grid or Carousel */}
-        {images.length > 1 && (
-          <>
-            {images.length <= 4 ? (
-              // Simple grid for 4 or fewer images
-              <div className='grid grid-cols-4 gap-2'>
-                {images.map((image: string, index: number) => (
-                  <Button
-                    key={index}
-                    variant='outline'
-                    className={`p-0 h-auto aspect-square overflow-hidden ${
-                      currentImageIndex === index
-                        ? 'ring-2 ring-primary ring-offset-2'
-                        : 'opacity-60 hover:opacity-100'
-                    }`}
-                    onClick={() => handleThumbnailClick(index)}
-                  >
-                    <img
-                      src={image}
-                      alt={`${title} - thumbnail ${index + 1}`}
-                      className='w-full h-full object-cover'
-                    />
-                  </Button>
-                ))}
-              </div>
-            ) : (
-              // Carousel for more than 4 images
-              <Carousel
-                setApi={setThumbnailApi}
-                opts={{
-                  align: 'start',
-                  slidesToScroll: 1,
-                  containScroll: 'keepSnaps',
-                }}
-                className='w-full'
-              >
-                <CarouselContent className='-ml-2'>
+          {/* Thumbnail Grid or Carousel */}
+          {images.length > 1 && (
+            <>
+              {images.length <= 4 ? (
+                // Simple grid for 4 or fewer images
+                <div className='grid grid-cols-4 gap-2'>
                   {images.map((image: string, index: number) => (
-                    <CarouselItem key={index} className='pl-2 basis-1/4'>
-                      <div className='p-1'>
-                        <Button
-                          variant='outline'
-                          className={`p-0 h-auto aspect-square overflow-hidden w-full ${
-                            currentImageIndex === index
-                              ? 'ring-2 ring-primary ring-offset-2'
-                              : 'opacity-60 hover:opacity-100'
-                          }`}
-                          onClick={() => handleThumbnailClick(index)}
-                        >
-                          <img
-                            src={image}
-                            alt={`${title} - thumbnail ${index + 1}`}
-                            className='w-full h-full object-cover'
-                          />
-                        </Button>
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className='-left-4' />
-                <CarouselNext className='-right-4' />
-              </Carousel>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Product Information */}
-      <div className='space-y-6'>
-        <div>
-          <h1 className='text-3xl font-bold text-foreground mb-2'>{title}</h1>
-
-          {/* Price */}
-          <div className='flex items-baseline gap-3 mb-4'>
-            <span className='text-2xl font-bold text-foreground'>
-              {isPriceRange
-                ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', inputInMinorUnits: true })}`
-                : formatCurrency({
-                    amount: priceMin,
-                    currencyCode: 'USD',
-                    inputInMinorUnits: true,
-                  })}
-            </span>
-            {isOnSale && compareAtMin && (
-              <span className='text-lg text-muted-foreground line-through'>
-                {isCompareAtPriceRange
-                  ? `${formatCurrency({ amount: compareAtMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: 'USD', inputInMinorUnits: true })}`
-                  : formatCurrency({
-                      amount: compareAtMin,
-                      currencyCode: 'USD',
-                      inputInMinorUnits: true,
-                    })}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Description */}
-        {htmlDescription || description ? (
-          <div>
-            {htmlDescription ? (
-              <div
-                className='text-muted-foreground prose prose-sm max-w-none'
-                dangerouslySetInnerHTML={{ __html: htmlDescription }}
-              />
-            ) : (
-              <p className='text-muted-foreground'>{description}</p>
-            )}
-          </div>
-        ) : null}
-
-        {/* Product Attributes (Size, Color, etc.) */}
-        {attributes.length > 0 && (
-          <div className='space-y-4'>
-            {attributes.map(attribute => (
-              <div key={attribute.id}>
-                <label className='text-sm font-medium text-foreground mb-2 block'>
-                  {attribute.label}
-                </label>
-                <div className='flex flex-wrap gap-2'>
-                  {attribute.values.map(value => (
                     <Button
-                      key={value.id}
-                      variant={
-                        selectedAttributes[attribute.name] === value.name
-                          ? 'default'
-                          : 'outline'
-                      }
-                      size='sm'
-                      onClick={() =>
-                        handleAttributeChange(attribute.name, value.name)
-                      }
-                      className='min-w-[60px]'
+                      key={index}
+                      variant='outline'
+                      className={`p-0 h-auto aspect-square overflow-hidden ${
+                        currentImageIndex === index
+                          ? 'ring-2 ring-primary ring-offset-2'
+                          : 'opacity-60 hover:opacity-100'
+                      }`}
+                      onClick={() => handleThumbnailClick(index)}
                     >
-                      {value.label}
+                      <img
+                        src={image}
+                        alt={`${title} - thumbnail ${index + 1}`}
+                        className='w-full h-full object-cover'
+                      />
                     </Button>
                   ))}
                 </div>
-              </div>
-            ))}
+              ) : (
+                // Carousel for more than 4 images
+                <Carousel
+                  setApi={setThumbnailApi}
+                  opts={{
+                    align: 'start',
+                    slidesToScroll: 1,
+                    containScroll: 'keepSnaps',
+                  }}
+                  className='w-full'
+                >
+                  <CarouselContent className='-ml-2'>
+                    {images.map((image: string, index: number) => (
+                      <CarouselItem key={index} className='pl-2 basis-1/4'>
+                        <div className='p-1'>
+                          <Button
+                            variant='outline'
+                            className={`p-0 h-auto aspect-square overflow-hidden w-full ${
+                              currentImageIndex === index
+                                ? 'ring-2 ring-primary ring-offset-2'
+                                : 'opacity-60 hover:opacity-100'
+                            }`}
+                            onClick={() => handleThumbnailClick(index)}
+                          >
+                            <img
+                              src={image}
+                              alt={`${title} - thumbnail ${index + 1}`}
+                              className='w-full h-full object-cover'
+                            />
+                          </Button>
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className='-left-4' />
+                  <CarouselNext className='-right-4' />
+                </Carousel>
+              )}
+            </>
+          )}
 
-            {/* SKU Match Status */}
-            {selectedAttributeValues.length > 0 && (
-              <div className='text-sm'>
-                {isSkuLoading && (
-                  <div className='flex items-center gap-2 text-muted-foreground'>
-                    <div className='h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent' />
-                    {t.storefront.loadingVariantDetails}
-                  </div>
-                )}
-                {!isSkuLoading && matchedSkus.length === 0 && (
-                  <div className='text-destructive'>
-                    {t.storefront.combinationNotAvailable}
-                  </div>
-                )}
-                {!isSkuLoading && matchedSkus.length > 1 && (
-                  <div className='text-muted-foreground'>
-                    {matchedSkus.length} {t.storefront.variantsMatch}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Quantity Selector */}
-        <div>
-          <label className='text-sm font-medium text-foreground mb-2 block'>
-            {t.storefront.quantity}
-          </label>
-          <div className='flex items-center gap-3'>
-            <Button
-              variant='outline'
-              size='icon'
-              onClick={() => handleQuantityChange(-1)}
-              disabled={quantity <= 1}
-            >
-              <Minus className='h-4 w-4' />
-            </Button>
-            <span className='text-lg font-medium min-w-[40px] text-center'>
-              {quantity}
-            </span>
-            <Button
-              variant='outline'
-              size='icon'
-              onClick={() => handleQuantityChange(1)}
-            >
-              <Plus className='h-4 w-4' />
-            </Button>
-          </div>
+          <ProductDetailsTargetSlot id='product-details.media.after' />
         </div>
 
-        {/* Add to Cart Button */}
-        <Button
-          size='lg'
-          className='w-full gap-2'
-          onClick={handleAddToCart}
-          disabled={!canAddToCart || isAddingToCart}
-        >
-          {isAddingToCart ? (
-            <>
-              <Loader2 className='h-5 w-5 animate-spin' />
-              {t.storefront.addingToCart}
-            </>
-          ) : (
-            <>
-              <ShoppingCart className='h-5 w-5' />
-              {isOutOfStock ? t.storefront.outOfStock : t.storefront.addToCart}
-            </>
-          )}
-        </Button>
+        {/* Product Information */}
+        <div className='space-y-6'>
+          <ProductDetailsTargetSlot id='product-details.title.before' />
+          <div>
+            <h1 className='text-3xl font-bold text-foreground mb-2'>{title}</h1>
 
-        {/* Additional Product Information */}
-        <div className='border-t border-border pt-4 space-y-2'>
-          {product?.type && (
-            <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>
-                {t.storefront.productType}
+            {/* Price */}
+            <div className='flex items-baseline gap-3 mb-4'>
+              <span className='text-2xl font-bold text-foreground'>
+                {isPriceRange
+                  ? `${formatCurrency({ amount: priceMin, currencyCode: priceCurrency, inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: priceCurrency, inputInMinorUnits: true })}`
+                  : formatCurrency({
+                      amount: priceMin,
+                      currencyCode: priceCurrency,
+                      inputInMinorUnits: true,
+                    })}
               </span>
-              <span className='font-medium text-foreground'>
-                {product.type}
-              </span>
+              {isOnSale && (compareAtMin || compareAtWhenPlan != null) && (
+                <span className='text-lg text-muted-foreground line-through'>
+                  {isCompareAtPriceRange
+                    ? `${formatCurrency({ amount: compareAtMin!, currencyCode: priceCurrency, inputInMinorUnits: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: priceCurrency, inputInMinorUnits: true })}`
+                    : formatCurrency({
+                        amount: compareAtWhenPlan ?? compareAtMin!,
+                        currencyCode: priceCurrency,
+                        inputInMinorUnits: true,
+                      })}
+                </span>
+              )}
+            </div>
+          </div>
+          <ProductDetailsTargetSlot id='product-details.title.after' />
+
+          <ProductDetailsTargetSlot id='product-details.description.before' />
+          {/* Description */}
+          {htmlDescription || description ? (
+            <div>
+              {htmlDescription ? (
+                <div
+                  className='text-muted-foreground prose prose-sm max-w-none'
+                  dangerouslySetInnerHTML={{ __html: htmlDescription }}
+                />
+              ) : (
+                <p className='text-muted-foreground'>{description}</p>
+              )}
+            </div>
+          ) : null}
+          <ProductDetailsTargetSlot id='product-details.description.after' />
+
+          <ProductDetailsTargetSlot id='product-details.attributes.before' />
+          {/* Product Attributes (Size, Color, etc.) */}
+          {attributes.length > 0 && (
+            <div className='space-y-4'>
+              {attributes.map(attribute => (
+                <div key={attribute.id}>
+                  <label className='text-sm font-medium text-foreground mb-2 block'>
+                    {attribute.label}
+                  </label>
+                  <div className='flex flex-wrap gap-2'>
+                    {attribute.values.map(value => (
+                      <Button
+                        key={value.id}
+                        variant={
+                          selectedAttributes[attribute.name] === value.name
+                            ? 'default'
+                            : 'outline'
+                        }
+                        size='sm'
+                        onClick={() =>
+                          handleAttributeChange(attribute.name, value.name)
+                        }
+                        className='min-w-[60px]'
+                      >
+                        {value.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {/* SKU Match Status */}
+              {selectedAttributeValues.length > 0 && (
+                <div className='text-sm'>
+                  {isSkuLoading && (
+                    <div className='flex items-center gap-2 text-muted-foreground'>
+                      <div className='h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent' />
+                      {t.storefront.loadingVariantDetails}
+                    </div>
+                  )}
+                  {!isSkuLoading && matchedSkus.length === 0 && (
+                    <div className='text-destructive'>
+                      {t.storefront.combinationNotAvailable}
+                    </div>
+                  )}
+                  {!isSkuLoading && matchedSkus.length > 1 && (
+                    <div className='text-muted-foreground'>
+                      {matchedSkus.length} {t.storefront.variantsMatch}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
-          {product?.id && (
-            <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>
-                {t.storefront.productId}
+          <ProductDetailsTargetSlot id='product-details.attributes.after' />
+
+          <ProductDetailsTargetSlot id='product-details.quantity.before' />
+          {/* Quantity Selector */}
+          <div>
+            <label className='text-sm font-medium text-foreground mb-2 block'>
+              {t.storefront.quantity}
+            </label>
+            <div className='flex items-center gap-3'>
+              <Button
+                variant='outline'
+                size='icon'
+                onClick={() => handleQuantityChange(-1)}
+                disabled={quantity <= 1}
+              >
+                <Minus className='h-4 w-4' />
+              </Button>
+              <span className='text-lg font-medium min-w-[40px] text-center'>
+                {quantity}
               </span>
-              <span className='font-mono text-xs text-foreground'>
-                {product.id}
-              </span>
+              <Button
+                variant='outline'
+                size='icon'
+                onClick={() => handleQuantityChange(1)}
+              >
+                <Plus className='h-4 w-4' />
+              </Button>
             </div>
-          )}
-          {selectedSku && (
-            <>
+          </div>
+          <ProductDetailsTargetSlot id='product-details.quantity.after' />
+
+          <ProductDetailsTargetSlot id='product-details.add-to-cart.before' />
+
+          {/* Add to Cart Button */}
+          <Button
+            size='lg'
+            className='w-full gap-2'
+            onClick={handleAddToCart}
+            disabled={!canAddToCart || isAddingToCart}
+          >
+            {isAddingToCart ? (
+              <>
+                <Loader2 className='h-5 w-5 animate-spin' />
+                {t.storefront.addingToCart}
+              </>
+            ) : (
+              <>
+                <ShoppingCart className='h-5 w-5' />
+                {isOutOfStock ? t.storefront.outOfStock : t.storefront.addToCart}
+              </>
+            )}
+          </Button>
+          <ProductDetailsTargetSlot id='product-details.add-to-cart.after' />
+
+          <ProductDetailsTargetSlot id='product-details.metadata.before' />
+          {/* Additional Product Information */}
+          <div className='border-t border-border pt-4 space-y-2'>
+            {product?.type && (
               <div className='flex justify-between text-sm'>
                 <span className='text-muted-foreground'>
-                  {t.storefront.selectedSku}
+                  {t.storefront.productType}
                 </span>
-                <span className='font-mono text-xs text-foreground'>
-                  {selectedSku.code}
+                <span className='font-medium text-foreground'>
+                  {product.type}
                 </span>
               </div>
-              {selectedSku.inventoryCounts?.edges &&
-                selectedSku.inventoryCounts.edges.length > 0 && (
-                  <div className='flex justify-between text-sm'>
-                    <span className='text-muted-foreground'>
-                      {t.storefront.stockStatus}
-                    </span>
-                    <span className='font-medium text-foreground'>
-                      {(() => {
-                        const availableCount =
-                          selectedSku.inventoryCounts.edges.find(
-                            edge => edge?.node?.type === 'AVAILABLE'
-                          )?.node?.quantity ?? 0;
-                        if (availableCount === 0)
-                          return t.storefront.outOfStock;
-                        if (availableCount < 10)
-                          return `${t.storefront.lowStock} (${availableCount})`;
-                        return t.storefront.inStock;
-                      })()}
-                    </span>
-                  </div>
-                )}
-            </>
-          )}
+            )}
+            {product?.id && (
+              <div className='flex justify-between text-sm'>
+                <span className='text-muted-foreground'>
+                  {t.storefront.productId}
+                </span>
+                <span className='font-mono text-xs text-foreground'>
+                  {product.id}
+                </span>
+              </div>
+            )}
+            {selectedSku && (
+              <>
+                <div className='flex justify-between text-sm'>
+                  <span className='text-muted-foreground'>
+                    {t.storefront.selectedSku}
+                  </span>
+                  <span className='font-mono text-xs text-foreground'>
+                    {selectedSku.code}
+                  </span>
+                </div>
+                {selectedSku.inventoryCounts?.edges &&
+                  selectedSku.inventoryCounts.edges.length > 0 && (
+                    <div className='flex justify-between text-sm'>
+                      <span className='text-muted-foreground'>
+                        {t.storefront.stockStatus}
+                      </span>
+                      <span className='font-medium text-foreground'>
+                        {(() => {
+                          const availableCount =
+                            selectedSku.inventoryCounts.edges.find(
+                              edge => edge?.node?.type === 'AVAILABLE'
+                            )?.node?.quantity ?? 0;
+                          if (availableCount === 0)
+                            return t.storefront.outOfStock;
+                          if (availableCount < 10)
+                            return `${t.storefront.lowStock} (${availableCount})`;
+                          return t.storefront.inStock;
+                        })()}
+                      </span>
+                    </div>
+                  )}
+              </>
+            )}
+          </div>
+          <ProductDetailsTargetSlot id='product-details.metadata.after' />
         </div>
       </div>
-    </div>
+      <ProductDetailsTargetSlot id='product-details.after' />
+    </ProductDetailsProvider>
   );
 }
 

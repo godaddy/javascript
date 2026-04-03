@@ -18,6 +18,11 @@ export const GetCartOrderQuery = graphql(`
         skuId
         type
         fulfillmentMode
+        metafields {
+          key
+          type
+          value
+        }
         details {
           productAssetUrl
           sku
