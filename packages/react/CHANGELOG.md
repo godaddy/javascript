@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.34
+
+### Patch Changes
+
+- 57d6115: Add commerce api skill
+
 ## 1.0.33
 
 ### Patch Changes

@@ -1,11 +1,12 @@
 {
   "name": "@godaddy/react",
   "private": false,
-  "version": "1.0.33",
+  "version": "1.0.34",
   "type": "module",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "exports": {
     "./package.json": "./package.json",
@@ -122,5 +123,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/godaddy/javascript.git"
-  }
+  },
+  "keywords": [
+    "tanstack-intent"
+  ]
 }
