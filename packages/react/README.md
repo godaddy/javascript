@@ -184,6 +184,34 @@ All fields are optional strings. Pass any subset to override the defaults.
 | `secondaryBackground` | Secondary background |
 | `secondaryForeground` | Text on secondary backgrounds |
 
+## AI Agent Skills
+
+This package ships a [TanStack Intent](https://tanstack.com/intent/latest) skill that teaches AI coding agents how to connect to the GoDaddy Commerce GraphQL APIs (Orders, Catalog, Taxes, Price Adjustments).
+
+### Loading the skill
+
+Tell your agent:
+
+```
+Read node_modules/@godaddy/react/skills/commerce-api/SKILL.md and use it to connect to the GoDaddy Commerce APIs.
+```
+
+### Automatic discovery
+
+From your project directory, run:
+
+```
+npx @tanstack/intent@latest list
+```
+
+This will show the `commerce-api` skill and its path. To set up persistent skill-to-task mappings in your `AGENTS.md`, run:
+
+```
+npx @tanstack/intent@latest install
+```
+
+Then ask your agent to follow the instructions it outputs.
+
 ## Codegen
 
 For now the schema will be downloaded from the order schema.
