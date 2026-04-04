@@ -1,22 +1,21 @@
 ---
 name: commerce-api
 description: >
-  Connect to GoDaddy Commerce Platform GraphQL APIs using OAuth2
-  client credentials. Covers authentication via the /v2/oauth2/token
-  endpoint, GraphQL schema introspection, and usage of Orders, Catalog,
-  Taxes, and Price Adjustments subgraphs. Activate when an agent needs to
-  obtain an OAuth token with a client ID and secret, query order-subgraph,
-  catalog-subgraph, tax-subgraph, or price-adjustment-subgraph, calculate
-  taxes or price adjustments, or discover available schema fields via
-  introspection.
+  Authenticate with the GoDaddy Commerce Platform using OAuth2 client
+  credentials or JWT grants. Covers the /v2/oauth2/token endpoint,
+  environments (ote, prod), required headers, and scopes. For API
+  discovery, schema introspection, and testing use @godaddy/cli
+  (godaddy api list, godaddy api describe, godaddy api call). For
+  checkout session creation use the Checkout API. Activate when an
+  agent needs to obtain an OAuth token, configure commerce API auth,
+  create checkout sessions, or discover available commerce endpoints.
 type: core
 library: "@godaddy/react"
-library_version: "1.0.32"
 sources:
   - "godaddy/javascript:packages/react/skills/commerce-api/SKILL.md"
 ---
 
-# GoDaddy Commerce API Connection Guide
+# GoDaddy Commerce API — Authentication & Discovery
 
 ## Setup
 
@@ -62,18 +61,7 @@ async function getAccessToken(env: 'ote' | 'prod' = 'ote'): Promise<string> {
 
 Tokens are short-lived (~1 hour). Cache and refresh before expiry.
 
-**GraphQL subgraph endpoints** — all four APIs share the same host:
-
-| API               | Path                                                        |
-|-------------------|-------------------------------------------------------------|
-| Orders            | `/v1/commerce/order-subgraph`                               |
-| Catalog           | `/v2/commerce/stores/{storeId}/catalog-subgraph`            |
-| Taxes             | `/v2/commerce/stores/{storeId}/tax-subgraph`                |
-| Price Adjustments | `/v2/commerce/stores/{storeId}/price-adjustment-subgraph`   |
-
-Full URL example (ote): `https://api.ote-godaddy.com/v2/commerce/stores/{storeId}/catalog-subgraph`
-
-**Required headers** for all subgraph requests:
+**Required headers** for all API requests:
 
 ```typescript
 const headers = {
@@ -84,9 +72,9 @@ const headers = {
 };
 ```
 
-**OAuth scopes** are enforced at the operation level, not the endpoint
-level. Any valid commerce token can reach any subgraph and introspect its
-schema. Specific mutations/queries require the appropriate scope.
+**OAuth scopes** — request only the scopes your application needs. If a
+scope is not provisioned for your OAuth app, the token request returns
+`invalid_scope`.
 
 | Scope                    | Purpose                          |
 |--------------------------|----------------------------------|
@@ -94,100 +82,52 @@ schema. Specific mutations/queries require the appropriate scope.
 | `commerce.product:write` | Create and update catalog data   |
 | `commerce.order:read`    | Read order data                  |
 
-Request only the scopes your application needs. If a scope is not
-provisioned for your OAuth app, the token request returns `invalid_scope`.
-
 ## Core Patterns
 
-### Introspect a GraphQL Schema
+### Discover APIs with @godaddy/cli
 
-Any valid token can introspect any subgraph to discover available types,
-queries, and mutations.
+Use the `@godaddy/cli` package to discover available endpoints, inspect
+schemas, and test API calls. Install globally:
 
-```typescript
-async function introspectSchema(endpoint: string, token: string, storeId: string) {
-  const query = `{
-    __schema {
-      queryType { name fields { name description } }
-      mutationType { name fields { name description } }
-    }
-  }`;
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`, 'Content-Type': 'application/json',
-      'x-store-id': storeId, 'user-agent': 'introspection/1.0.0',
-    },
-    body: JSON.stringify({ query }),
-  });
-  return (await res.json()).data.__schema;
-}
-
-const host = 'api.ote-godaddy.com';
-const schema = await introspectSchema(
-  `https://${host}/v2/commerce/stores/${storeId}/catalog-subgraph`, token, storeId
-);
-console.log('Queries:', schema.queryType.fields.map(f => f.name));
-console.log('Mutations:', schema.mutationType.fields.map(f => f.name));
+```bash
+npm install -g @godaddy/cli
 ```
 
-### Available Queries and Mutations (verified via introspection)
+Discover available API domains and endpoints:
 
-**Orders** — 11 queries, 17 mutations:
-- Queries: `orderById`, `orderByNumber`, `orderByExternalId`, `orders`, `ordersByIds`, `filterOrders`, `orderReturns`, `returnsByOrderId`, `previewReturn`
-- Key mutations: `addDraftOrder`, `addLineItemBySkuId`, `updateDraftOrder`, `openOrder`, `applyDiscountCodes`, `updateOrder`, `completeOrder`, `cancelOrder`, `refundOrder`
+```bash
+# List all API domains
+godaddy api list
 
-**Catalog** — 29 queries, 110 mutations:
-- Queries: `sku`, `skus`, `skuGroup`, `skuGroups`, `attribute`, `attributes`, `list`, `lists`, `locations`, `inventoryCounts`
-- Key mutations: `createSku`, `createSkuGroup`, `updateSku`, `addSkusToSkuGroup`, `createList`, `stockInventory`, `adjustInventory`
+# List endpoints in a specific domain
+godaddy api list --domain catalog-products
+godaddy api list --domain orders
 
-**Taxes** — 8 queries, 39 mutations:
-- Queries: `rate`, `rates`, `classification`, `classifications`, `jurisdiction`, `jurisdictions`, `override`, `overrides`
-- Key mutations: `calculateTaxes`, `createRate`, `createClassification`, `createJurisdiction`, `createOverride`
+# Search for endpoints by keyword
+godaddy api search checkout
+godaddy api search tax
 
-**Price Adjustments** — 8 queries, 36 mutations:
-- Queries: `discount`, `discounts`, `discountCode`, `discountCodes`, `fee`, `fees`, `ruleset`, `rulesets`
-- Key mutations: `calculateAdjustments`, `createDiscount`, `createDiscountCode`, `createFee`, `createRuleset`
+# Describe an endpoint's schema, parameters, and scopes
+godaddy api describe /location/addresses
 
-### Query Orders
+# Make an authenticated API call
+godaddy api call /v1/commerce/catalog/products
+godaddy api call /v1/commerce/orders -s commerce.order:read
+```
+
+All CLI commands return structured JSON with `next_actions` that suggest
+what to run next. Use `godaddy api describe` to inspect request/response
+schemas and required scopes before implementing API calls in code.
+
+### Create and Update Checkout Sessions
+
+The Checkout API uses a dedicated host: `checkout.commerce.api.{host}`
 
 ```typescript
 import { GraphQLClient } from 'graphql-request';
 
-const ordersClient = new GraphQLClient(
-  `https://api.ote-godaddy.com/v1/commerce/order-subgraph`,
-  {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'X-Store-ID': storeId,
-      'user-agent': 'my-app/1.0.0 (GoDaddy Commerce Platform)',
-    },
-  }
-);
-
-const order = await ordersClient.request(`
-  query OrderById($id: ID!) {
-    orderById(id: $id) {
-      id number numberDisplay
-      statuses { status paymentStatus fulfillmentStatus }
-      totals {
-        subTotal { value currencyCode }
-        shippingTotal { value currencyCode }
-        taxTotal { value currencyCode }
-        discountTotal { value currencyCode }
-        total { value currencyCode }
-      }
-      lineItems { edges { node { id name quantity unitPrice { value currencyCode } } } }
-    }
-  }
-`, { id: orderId });
-```
-
-### Query Catalog
-
-```typescript
-const catalogClient = new GraphQLClient(
-  `https://api.ote-godaddy.com/v2/commerce/stores/${storeId}/catalog-subgraph`,
+const checkoutClient = new GraphQLClient(
+  `https://checkout.commerce.api.ote-godaddy.com/`,
   {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -197,88 +137,71 @@ const catalogClient = new GraphQLClient(
   }
 );
 
-const skus = await catalogClient.request(`
-  query GetSkus($first: Int, $after: String) {
-    skus(first: $first, after: $after) {
-      totalCount
-      pageInfo { hasNextPage endCursor }
-      edges {
-        node {
-          id name label code status
-          prices { edges { node { value { currencyCode value } } } }
-        }
+const session = await checkoutClient.request(`
+  mutation CreateCheckoutSession($input: MutationCreateCheckoutSessionInput!) {
+    createCheckoutSession(input: $input) {
+      id url status expiresAt
+      draftOrder {
+        id number
+        totals { total { value currencyCode } }
+        lineItems { edges { node { id name quantity unitPrice { value currencyCode } } } }
       }
-    }
-  }
-`, { first: 20 });
-```
-
-### Calculate Taxes (GraphQL)
-
-```typescript
-const taxClient = new GraphQLClient(
-  `https://api.ote-godaddy.com/v2/commerce/stores/${storeId}/tax-subgraph`,
-  {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'x-store-id': storeId,
-      'user-agent': 'my-app/1.0.0 (GoDaddy Commerce Platform)',
-    },
-  }
-);
-
-const taxes = await taxClient.request(`
-  mutation CalculateTaxes($input: CalculateTaxesInput!) {
-    calculateTaxes(input: $input) {
-      totalTaxAmount { value currencyCode }
-      taxAmounts { totalTaxAmount { value currencyCode } rate { name label } }
-      lines { calculationLine { id } totalTaxAmount { value currencyCode } }
     }
   }
 `, {
   input: {
-    destination: {
-      address: { postalCode: '85001', countryCode: 'US', adminArea1: 'AZ' },
-    },
-    lines: [
-      { id: 'line-1', type: 'SKU', quantity: 1,
-        subtotalPrice: { value: 1999, currencyCode: 'USD' } },
+    storeId,
+    returnUrl: 'https://example.com/cart',
+    successUrl: 'https://example.com/thank-you',
+    lineItems: [
+      { skuId: 'sku-123', quantity: 1 },
     ],
+  },
+});
+
+const updated = await checkoutClient.request(`
+  mutation UpdateCheckoutSession($id: String!, $input: MutationUpdateCheckoutSessionInput!) {
+    updateCheckoutSession(id: $id, input: $input) {
+      id status
+    }
+  }
+`, {
+  id: session.createCheckoutSession.id,
+  input: {
+    enablePromotionCodes: true,
+    enableShipping: true,
+    enableTaxCollection: true,
   },
 });
 ```
 
-### Calculate Price Adjustments (GraphQL)
+### Token Caching
 
 ```typescript
-const adjustClient = new GraphQLClient(
-  `https://api.ote-godaddy.com/v2/commerce/stores/${storeId}/price-adjustment-subgraph`,
-  {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'x-store-id': storeId,
-      'user-agent': 'my-app/1.0.0 (GoDaddy Commerce Platform)',
-    },
-  }
-);
+let cached = { token: '', expiresAt: 0 };
 
-const adjustments = await adjustClient.request(`
-  mutation CalculateAdjustments($input: CalculateAdjustmentsInput!) {
-    calculateAdjustments(input: $input) {
-      totalDiscountAmount { value currencyCode }
-      totalFeeAmount { value currencyCode }
-      lines { calculationLine { id } totalDiscountAmount { value currencyCode } }
-    }
-  }
-`, {
-  input: {
-    discountCodes: ['SUMMER20'],
-    lines: [
-      { id: 'sku-123', type: 'SKU', quantity: 2,
-        subtotalPrice: { value: 4998, currencyCode: 'USD' } },
-    ],
-  },
-});
+async function getValidToken(env: 'ote' | 'prod' = 'ote'): Promise<string> {
+  if (Date.now() < cached.expiresAt - 60_000) return cached.token;
+  const host = env === 'prod' ? 'api.godaddy.com' : 'api.ote-godaddy.com';
+
+  const response = await fetch(`https://${host}/v2/oauth2/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: process.env.OAUTH_CLIENT_ID!,
+      client_secret: process.env.OAUTH_CLIENT_SECRET!,
+      grant_type: 'client_credentials',
+      scope: 'commerce.product:read commerce.order:read',
+    }),
+  });
+
+  const data = await response.json();
+  cached = {
+    token: data.access_token,
+    expiresAt: Date.now() + data.expires_in * 1000,
+  };
+  return cached.token;
+}
 ```
 
 ## Common Mistakes
@@ -318,25 +241,6 @@ The OAuth token endpoint is `/v2/oauth2/token` on the **API host**
 (`api.godaddy.com` or `api.ote-godaddy.com`). Using any other host or
 path returns 404 or 405.
 
-### HIGH Subgraph URL missing storeId in path
-
-Wrong:
-
-```typescript
-const url = `https://api.ote-godaddy.com/v2/commerce/stores/catalog-subgraph`;
-```
-
-Correct:
-
-```typescript
-const url = `https://api.ote-godaddy.com/v2/commerce/stores/${storeId}/catalog-subgraph`;
-```
-
-The Catalog, Tax, and Price Adjustment subgraph URLs all require
-`stores/{storeId}` in the path. Omitting it returns 404. The Orders
-subgraph (`/v1/commerce/order-subgraph`) does not require storeId in
-the path — it uses the `X-Store-ID` header and GraphQL variables instead.
-
 ### HIGH Omitting scope in token request
 
 Wrong:
@@ -359,6 +263,23 @@ Omitting `scope` may return a token without commerce permissions, causing
 403 Forbidden on API calls despite having a valid token. Requesting a scope
 not provisioned for your OAuth app returns an `invalid_scope` error.
 
+### HIGH Checkout API uses a different host than subgraph APIs
+
+Wrong:
+
+```typescript
+const url = `https://api.ote-godaddy.com/checkout`;
+```
+
+Correct:
+
+```typescript
+const url = `https://checkout.commerce.api.ote-godaddy.com/`;
+```
+
+The Checkout API uses a dedicated subdomain (`checkout.commerce.api.{host}`),
+not a path on the standard API host. Using the wrong host returns 404.
+
 ### MEDIUM Using expired token without refresh
 
 Wrong:
@@ -371,37 +292,8 @@ const token = await getAccessToken();
 Correct:
 
 ```typescript
-let cached = { token: '', expiresAt: 0 };
-async function getValidToken(): Promise<string> {
-  if (Date.now() < cached.expiresAt - 60_000) return cached.token;
-  const res = await fetchNewToken();
-  cached = { token: res.access_token, expiresAt: Date.now() + res.expires_in * 1000 };
-  return cached.token;
-}
+const token = await getValidToken(); // see Token Caching pattern above
 ```
 
 Tokens expire in ~1 hour. Cache the token and refresh with a 1-minute
 buffer before `expires_in` elapses. After expiry, requests fail with 401.
-
-### MEDIUM Not checking order status before calling draft mutations
-
-Wrong:
-
-```typescript
-// Blindly calling updateDraftOrder without knowing current status
-await ordersClient.request(UPDATE_DRAFT_ORDER, { input: { id: someOrderId } });
-```
-
-Correct:
-
-```typescript
-const order = await ordersClient.request(GET_ORDER, { id: orderId });
-// Verify the order is in the expected state before mutating
-console.log('Order status:', order.orderById.statuses.status);
-await ordersClient.request(UPDATE_DRAFT_ORDER, { input: { id: orderId } });
-```
-
-Mutations like `updateDraftOrder`, `addLineItemBySkuId`, and
-`deleteLineItemById` are designed for draft orders. Query the order
-first to confirm its status before attempting mutations to avoid
-unexpected errors.
