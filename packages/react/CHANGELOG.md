@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.35
+
+### Patch Changes
+
+- 8d3f2c2: Update commerce api skill to utilize godaddy cli as api source
+
 ## 1.0.34
 
 ### Patch Changes
