@@ -186,14 +186,14 @@ All fields are optional strings. Pass any subset to override the defaults.
 
 ## AI Agent Skills
 
-This package ships a [TanStack Intent](https://tanstack.com/intent/latest) skill that teaches AI coding agents how to connect to the GoDaddy Commerce GraphQL APIs (Orders, Catalog, Taxes, Price Adjustments).
+This package ships a [TanStack Intent](https://tanstack.com/intent/latest) skill that teaches AI coding agents how to authenticate with the GoDaddy Commerce Platform using OAuth2 client credentials and create checkout sessions. For API discovery and testing, the skill directs agents to use [`@godaddy/cli`](https://www.npmjs.com/package/@godaddy/cli).
 
 ### Loading the skill
 
 Tell your agent:
 
 ```
-Read node_modules/@godaddy/react/skills/commerce-api/SKILL.md and use it to connect to the GoDaddy Commerce APIs.
+Read node_modules/@godaddy/react/skills/commerce-api/SKILL.md and use it to authenticate with the GoDaddy Commerce APIs.
 ```
 
 ### Automatic discovery
