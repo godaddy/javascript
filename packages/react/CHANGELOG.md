@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.36
+
+### Patch Changes
+
+- 815fa6c: Fix pickup tax recalculation to always use the pickup location address when billing address fields are updated.
+
 ## 1.0.35
 
 ### Patch Changes
