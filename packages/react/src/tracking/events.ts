@@ -27,6 +27,10 @@ export const eventIds = {
   pazePayImpression: 'paze_pay.impression',
   pazePayClick: 'paze_pay.click',
   pazePayCompleted: 'paze_pay_completed.event',
+  applePayImpression: 'apple_pay.impression',
+  applePayClick: 'apple_pay.click',
+  googlePayImpression: 'google_pay.impression',
+  googlePayClick: 'google_pay.click',
   expressCheckoutError: 'express_checkout_error.event',
   // Express checkout coupon events
   expressApplyCouponEvent: 'express_checkout_apply_coupon.event',
