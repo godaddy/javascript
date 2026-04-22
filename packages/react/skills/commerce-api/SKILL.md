@@ -86,8 +86,9 @@ scope is not provisioned for your OAuth app, the token request returns
 
 ### Discover APIs with @godaddy/cli
 
-Use the `@godaddy/cli` package to discover available endpoints, inspect
-schemas, and test API calls. Install globally:
+Use the `@godaddy/cli` package (https://www.npmjs.com/package/@godaddy/cli)
+to discover available endpoints, inspect schemas, and test API calls.
+Install globally from the npm public registry:
 
 ```bash
 npm install -g @godaddy/cli
@@ -111,8 +112,9 @@ godaddy api search tax
 godaddy api describe /location/addresses
 
 # Make an authenticated API call
-godaddy api call /v1/commerce/catalog/products
-godaddy api call /v1/commerce/orders -s commerce.order:read
+# Note: Most commerce endpoints require {storeId} in the path
+godaddy api call /v2/commerce/stores/{storeId}/catalog-subgraph -s commerce.product:read
+godaddy api call /v1/commerce/stores/{storeId}/orders -s commerce.order:read
 ```
 
 All CLI commands return structured JSON with `next_actions` that suggest
