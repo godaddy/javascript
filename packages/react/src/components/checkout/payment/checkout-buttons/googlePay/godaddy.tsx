@@ -11,6 +11,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -20,7 +21,9 @@ import { TrackingEventType, track } from '@/tracking/track';
 import { PaymentMethodType } from '@/types';
 
 export function GoDaddyGooglePayCheckoutButton() {
-  const { session, setCheckoutErrors } = useCheckoutContext();
+  const { session, setCheckoutErrors, isConfirmingCheckout } =
+    useCheckoutContext();
+  const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const { isPoyntLoaded } = useLoadPoyntCollect();
   const { godaddyPaymentsConfig } = useCheckoutContext();
@@ -37,13 +40,15 @@ export function GoDaddyGooglePayCheckoutButton() {
   const collect = useRef<TokenizeJs | null>(null);
   const hasMounted = useRef(false);
 
+  const isDisabled = isConfirmingCheckout || isPaymentDisabled;
+
   // Use a ref so the SDK's stale onClick closure always calls the latest handler
   const handleGooglePayClickRef = useRef<() => Promise<void>>(
     async () => undefined
   );
 
   const handleGooglePayClick = useCallback(async () => {
-    if (!poyntStandardRequest) return;
+    if (!poyntStandardRequest || isDisabled) return;
 
     const valid = await form.trigger();
     if (!valid) {
@@ -65,7 +70,7 @@ export function GoDaddyGooglePayCheckoutButton() {
         paymentType: PaymentMethodType.GOOGLE_PAY,
       },
     });
-  }, [poyntStandardRequest, setCheckoutErrors, form]);
+  }, [poyntStandardRequest, setCheckoutErrors, form, isDisabled]);
 
   // Keep ref in sync so the SDK's stale onClick closure always calls the latest handler
   handleGooglePayClickRef.current = handleGooglePayClick;
@@ -243,7 +248,10 @@ export function GoDaddyGooglePayCheckoutButton() {
 
   return (
     <>
-      <div id='google-pay-element' />
+      <div
+        id='google-pay-element'
+        className={isDisabled ? 'opacity-50 pointer-events-none' : undefined}
+      />
       {isCollectLoading ? (
         <div className='grid gap-1 grid-cols-1'>
           <Skeleton className='h-12 w-full mb-1' />

@@ -11,6 +11,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -20,7 +21,9 @@ import { TrackingEventType, track } from '@/tracking/track';
 import { PaymentMethodType } from '@/types';
 
 export function PazeCheckoutButton() {
-  const { session, setCheckoutErrors } = useCheckoutContext();
+  const { session, setCheckoutErrors, isConfirmingCheckout } =
+    useCheckoutContext();
+  const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const { isPoyntLoaded } = useLoadPoyntCollect();
   const { godaddyPaymentsConfig } = useCheckoutContext();
@@ -37,8 +40,13 @@ export function PazeCheckoutButton() {
   const collect = useRef<TokenizeJs | null>(null);
   const hasMounted = useRef(false);
 
+  const isDisabled = isConfirmingCheckout || isPaymentDisabled;
+
+  // Use a ref so the SDK's stale onClick closure always calls the latest handler
+  const handlePazeClickRef = useRef<() => Promise<void>>(async () => undefined);
+
   const handlePazeClick = useCallback(async () => {
-    if (!poyntStandardRequest) return;
+    if (!poyntStandardRequest || isDisabled) return;
 
     const valid = await form.trigger();
     if (!valid) {
@@ -61,39 +69,10 @@ export function PazeCheckoutButton() {
         paymentType: PaymentMethodType.PAZE,
       },
     });
-  }, [poyntStandardRequest, setCheckoutErrors, form]);
+  }, [poyntStandardRequest, setCheckoutErrors, form, isDisabled]);
 
-  const mountPazeElement = useCallback(() => {
-    if (!hasMounted.current && collect?.current) {
-      hasMounted.current = true;
-      // console.log("[poynt collect] Mounting paze-pay-element");
-      collect?.current.mount('paze-pay-element', document, {
-        paymentMethods: ['paze'],
-        buttonsContainerOptions: {
-          className: 'gap-1 !flex-col sm:!flex-row place-items-center',
-        },
-
-        buttonOptions: {
-          type: 'plain',
-          margin: '0',
-          height: '50px',
-          width: '100%',
-          justifyContent: 'flex-start',
-          onClick: handlePazeClick,
-        },
-      });
-
-      setIsCollectLoading(false);
-
-      track({
-        eventId: eventIds.pazePayImpression,
-        type: TrackingEventType.IMPRESSION,
-        properties: {
-          provider: 'poynt',
-        },
-      });
-    }
-  }, [handlePazeClick]);
+  // Keep ref in sync so the SDK's stale onClick closure always calls the latest handler
+  handlePazeClickRef.current = handlePazeClick;
 
   // Initialize the TokenizeJs instance when the component mounts
   useEffect(() => {
@@ -105,7 +84,6 @@ export function PazeCheckoutButton() {
       isPoyntLoaded &&
       !hasMounted.current
     ) {
-      // console.log("[poynt collect] Initializing TokenizeJs instance");
       collect.current = new (window as any).TokenizeJs(
         {
           businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
@@ -148,14 +126,39 @@ export function PazeCheckoutButton() {
 
     collect.current?.supportWalletPayments().then(supports => {
       if (!hasMounted.current && supports.paze) {
-        mountPazeElement();
+        hasMounted.current = true;
+
+        collect?.current?.mount('paze-pay-element', document, {
+          paymentMethods: ['paze'],
+          buttonsContainerOptions: {
+            className: 'gap-1 !flex-col sm:!flex-row place-items-center',
+          },
+          buttonOptions: {
+            type: 'plain',
+            margin: '0',
+            height: '50px',
+            width: '100%',
+            justifyContent: 'flex-start',
+            onClick: () => handlePazeClickRef.current(),
+          },
+        });
+
+        setIsCollectLoading(false);
+
+        track({
+          eventId: eventIds.pazePayImpression,
+          type: TrackingEventType.IMPRESSION,
+          properties: {
+            provider: 'poynt',
+          },
+        });
       }
     });
   }, [
     isPoyntLoaded,
     godaddyPaymentsConfig,
     isCollectLoading,
-    mountPazeElement,
+    session?.businessId,
   ]);
 
   // Set up event listeners for TokenizeJs
@@ -244,7 +247,10 @@ export function PazeCheckoutButton() {
 
   return (
     <>
-      <div id='paze-pay-element' />
+      <div
+        id='paze-pay-element'
+        className={isDisabled ? 'opacity-50 pointer-events-none' : undefined}
+      />
       {isCollectLoading ? (
         <div className='grid gap-1 grid-cols-1'>
           <Skeleton className='h-12 w-full mb-1' />
