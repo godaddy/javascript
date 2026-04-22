@@ -2,13 +2,13 @@
 name: commerce-api
 description: >
   Authenticate with the GoDaddy Commerce Platform using OAuth2 client
-  credentials or JWT grants. Covers the /v2/oauth2/token endpoint,
-  environments (ote, prod), required headers, and scopes. For API
-  discovery, schema introspection, and testing use @godaddy/cli
-  (godaddy api list, godaddy api describe, godaddy api call). For
-  checkout session creation use the Checkout API. Activate when an
-  agent needs to obtain an OAuth token, configure commerce API auth,
-  create checkout sessions, or discover available commerce endpoints.
+  credentials. Covers the /v2/oauth2/token endpoint, environments
+  (ote, prod), required headers, scopes, and monetary value formats.
+  Always collect client ID, client secret, store ID, and environment
+  from the user before making API calls. For API discovery and schema
+  introspection use @godaddy/cli (godaddy api list, godaddy api
+  describe, godaddy api search) to find endpoints and required scopes.
+  For checkout session creation use the Checkout API.
 type: core
 library: "@godaddy/react"
 sources:
@@ -19,8 +19,16 @@ sources:
 
 ## Setup
 
-Connecting to the GoDaddy Commerce Platform requires an OAuth client ID,
-client secret, and a store ID (UUID).
+Connecting to the GoDaddy Commerce Platform requires three pieces of
+information from the user. **Always ask for these before making any API
+calls:**
+
+1. **OAuth client ID** and **client secret** — from their GoDaddy app
+2. **Store ID** (UUID) — identifies the merchant store
+3. **Environment** — `ote` or `prod` (if not specified, default to `ote`)
+
+If the user provides a custom API host (e.g., for an internal environment),
+use it directly instead of the mappings below.
 
 **Environments:**
 
@@ -72,9 +80,10 @@ const headers = {
 };
 ```
 
-**OAuth scopes** — request only the scopes your application needs. If a
-scope is not provisioned for your OAuth app, the token request returns
-`invalid_scope`.
+**OAuth scopes** — request only the scopes your application needs. Use
+`godaddy api describe <endpoint>` to find the exact scopes required for
+each endpoint. If a scope is not provisioned for your OAuth app, the
+token request returns `invalid_scope`.
 
 | Scope                    | Purpose                          |
 |--------------------------|----------------------------------|
@@ -82,12 +91,19 @@ scope is not provisioned for your OAuth app, the token request returns
 | `commerce.product:write` | Create and update catalog data   |
 | `commerce.order:read`    | Read order data                  |
 
+**Monetary values** — all money amounts in API responses are in **minor
+units** (cents). For example, `"value": 2500` with `"currencyCode": "USD"`
+means **$25.00**, not $2,500. Always divide by 100 for USD display.
+
 ## Core Patterns
 
 ### Discover APIs with @godaddy/cli
 
 Use the `@godaddy/cli` package (https://www.npmjs.com/package/@godaddy/cli)
-to discover available endpoints, inspect schemas, and test API calls.
+to discover available endpoints, inspect their schemas, and identify
+required scopes. The CLI is a **discovery tool only** — use the OAuth
+token (see Setup above) to make actual API calls in your application code.
+
 Install globally from the npm public registry:
 
 ```bash
@@ -108,18 +124,41 @@ godaddy api list --domain orders
 godaddy api search checkout
 godaddy api search tax
 
-# Describe an endpoint's schema, parameters, and scopes
+# Describe an endpoint's schema, parameters, and required scopes
 godaddy api describe /location/addresses
-
-# Make an authenticated API call
-# Note: Most commerce endpoints require {storeId} in the path
-godaddy api call /v2/commerce/stores/{storeId}/catalog-subgraph -s commerce.product:read
-godaddy api call /v1/commerce/stores/{storeId}/orders -s commerce.order:read
+godaddy api describe /v1/commerce/stores/{storeId}/orders
 ```
 
 All CLI commands return structured JSON with `next_actions` that suggest
 what to run next. Use `godaddy api describe` to inspect request/response
-schemas and required scopes before implementing API calls in code.
+schemas and required scopes, then use that information to make
+authenticated requests with your OAuth token.
+
+**Example: calling the orders API directly using the discovered path and scopes**
+
+```typescript
+// 1. Discover: `godaddy api describe /v1/commerce/stores/{storeId}/orders`
+//    tells us: GET, scope commerce.order:read, storeId required in path
+//
+// 2. Request a token with the required scope (see Setup)
+// 3. Call the API directly:
+const response = await fetch(
+  `https://${host}/v1/commerce/stores/${storeId}/orders`,
+  {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'x-store-id': storeId,
+    },
+  }
+);
+```
+
+> **Note:** Most commerce endpoints require `{storeId}` in the path
+> (e.g., `/v1/commerce/stores/{storeId}/orders`,
+> `/v2/commerce/stores/{storeId}/catalog-subgraph`). Always check the
+> endpoint schema with `godaddy api describe` before implementing.
 
 ### Create and Update Checkout Sessions
 
