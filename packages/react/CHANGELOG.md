@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.37
+
+### Patch Changes
+
+- 2f604ef: Update skill to suggest correct godaddy/cli URL and fix example CLI calls
+
 ## 1.0.36
 
 ### Patch Changes
