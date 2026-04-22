@@ -108,6 +108,13 @@ const LazyComponents = {
       default: module.GoDaddyGooglePayCheckoutButton,
     }))
   ),
+  GoDaddyApplePayCheckoutButton: lazy(() =>
+    import(
+      '@/components/checkout/payment/checkout-buttons/applePay/godaddy'
+    ).then(module => ({
+      default: module.GoDaddyApplePayCheckoutButton,
+    }))
+  ),
   OfflinePaymentCheckoutButton: lazy(() =>
     import(
       '@/components/checkout/payment/checkout-buttons/offline/default'
@@ -180,6 +187,11 @@ type PaymentComponentRegistry = {
       button: PaymentComponentKey;
     };
   };
+  [PaymentMethodType.APPLE_PAY]?: {
+    [PaymentProvider.GODADDY]: {
+      button: PaymentComponentKey;
+    };
+  };
   [PaymentMethodType.OFFLINE]?: {
     [PaymentProvider.OFFLINE]: {
       button: PaymentComponentKey;
@@ -237,6 +249,11 @@ export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
   [PaymentMethodType.GOOGLE_PAY]: {
     [PaymentProvider.GODADDY]: {
       button: 'GoDaddyGooglePayCheckoutButton',
+    },
+  },
+  [PaymentMethodType.APPLE_PAY]: {
+    [PaymentProvider.GODADDY]: {
+      button: 'GoDaddyApplePayCheckoutButton',
     },
   },
   [PaymentMethodType.OFFLINE]: {

@@ -97,6 +97,12 @@ export function PaymentForm(
   const { isPoyntLoaded } = useLoadPoyntCollect();
 
   const [pazeSupported, setPazeSupported] = useState<boolean | null>(null);
+  const [applePaySupported, setApplePaySupported] = useState<boolean | null>(
+    null
+  );
+  const [googlePaySupported, setGooglePaySupported] = useState<boolean | null>(
+    null
+  );
   const collect = useRef<TokenizeJs | null>(null);
 
   const currencyCode = props.currencyCode || 'USD';
@@ -156,7 +162,13 @@ export function PaymentForm(
     [t]
   );
 
-  // Initialize TokenizeJs for Paze with GoDaddy processor
+  // Check if any GoDaddy wallet payment method is configured
+  const hasGoDaddyWalletPayment =
+    session?.paymentMethods?.paze?.processor === PaymentProvider.GODADDY ||
+    session?.paymentMethods?.applePay?.processor === PaymentProvider.GODADDY ||
+    session?.paymentMethods?.googlePay?.processor === PaymentProvider.GODADDY;
+
+  // Initialize TokenizeJs for GoDaddy wallet payments (Paze, Apple Pay, Google Pay)
   useLayoutEffect(() => {
     if (
       !collect.current &&
@@ -165,7 +177,7 @@ export function PaymentForm(
       isPoyntLoaded &&
       countryCode &&
       currencyCode &&
-      session?.paymentMethods?.paze?.processor === PaymentProvider.GODADDY
+      hasGoDaddyWalletPayment
     ) {
       collect.current = new (window as any).TokenizeJs(
         {
@@ -182,18 +194,16 @@ export function PaymentForm(
       );
 
       collect.current?.supportWalletPayments().then(supports => {
-        if (supports.paze) {
-          setPazeSupported(true);
-        } else {
-          setPazeSupported(false);
-        }
+        setPazeSupported(supports.paze ?? false);
+        setApplePaySupported(supports.applePay ?? false);
+        setGooglePaySupported(supports.googlePay ?? false);
       });
     }
   }, [
     godaddyPaymentsConfig,
     countryCode,
     currencyCode,
-    session?.paymentMethods?.paze?.processor,
+    hasGoDaddyWalletPayment,
     session?.storeName,
     session?.businessId,
     session?.storeId,
@@ -206,28 +216,37 @@ export function PaymentForm(
     return Object.keys(session.paymentMethods).filter(key => {
       const method = session.paymentMethods?.[key as PaymentMethodValue];
 
-      // Special handling for Paze with GoDaddy processor
+      const baseCheck =
+        PAYMENT_METHOD_ICONS[key as PaymentMethodValue] &&
+        method &&
+        Array.isArray(method.checkoutTypes) &&
+        method.checkoutTypes.includes(CheckoutType.STANDARD);
+
+      // Special handling for GoDaddy wallet payments — only show when device supports them
       if (
         key === PaymentMethodType.PAZE &&
         method?.processor === PaymentProvider.GODADDY
       ) {
-        return (
-          PAYMENT_METHOD_ICONS[key as PaymentMethodValue] &&
-          method &&
-          Array.isArray(method.checkoutTypes) &&
-          method.checkoutTypes.includes(CheckoutType.STANDARD) &&
-          pazeSupported === true
-        );
+        return baseCheck && pazeSupported === true;
       }
 
-      return (
-        PAYMENT_METHOD_ICONS[key as PaymentMethodValue] &&
-        method &&
-        Array.isArray(method.checkoutTypes) &&
-        method.checkoutTypes.includes(CheckoutType.STANDARD)
-      );
+      if (
+        key === PaymentMethodType.APPLE_PAY &&
+        method?.processor === PaymentProvider.GODADDY
+      ) {
+        return baseCheck && applePaySupported === true;
+      }
+
+      if (
+        key === PaymentMethodType.GOOGLE_PAY &&
+        method?.processor === PaymentProvider.GODADDY
+      ) {
+        return baseCheck && googlePaySupported === true;
+      }
+
+      return baseCheck;
     });
-  }, [session, pazeSupported]);
+  }, [session, pazeSupported, applePaySupported, googlePaySupported]);
 
   const isBillingAddressRequired =
     session?.enableBillingAddressCollection &&
