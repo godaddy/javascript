@@ -194,7 +194,7 @@ export function PazeCheckoutButton() {
             setCheckoutErrors(err.codes);
 
             track({
-              eventId: eventIds.expressCheckoutError,
+              eventId: eventIds.checkoutError,
               type: TrackingEventType.EVENT,
               properties: {
                 paymentType: event.source,
@@ -206,7 +206,7 @@ export function PazeCheckoutButton() {
             event.complete({ error: walletError });
           } else {
             track({
-              eventId: eventIds.expressCheckoutError,
+              eventId: eventIds.checkoutError,
               type: TrackingEventType.EVENT,
               properties: {
                 paymentType: event.source,
@@ -224,7 +224,7 @@ export function PazeCheckoutButton() {
         }
       } else {
         track({
-          eventId: eventIds.expressCheckoutError,
+          eventId: eventIds.checkoutError,
           type: TrackingEventType.EVENT,
           properties: {
             paymentType: event.source,

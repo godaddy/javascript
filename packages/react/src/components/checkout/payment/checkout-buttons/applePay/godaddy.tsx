@@ -195,7 +195,7 @@ export function GoDaddyApplePayCheckoutButton() {
             setCheckoutErrors(err.codes);
 
             track({
-              eventId: eventIds.expressCheckoutError,
+              eventId: eventIds.checkoutError,
               type: TrackingEventType.EVENT,
               properties: {
                 paymentType: event.source,
@@ -207,7 +207,7 @@ export function GoDaddyApplePayCheckoutButton() {
             event.complete({ error: walletError });
           } else {
             track({
-              eventId: eventIds.expressCheckoutError,
+              eventId: eventIds.checkoutError,
               type: TrackingEventType.EVENT,
               properties: {
                 paymentType: event.source,
@@ -225,7 +225,7 @@ export function GoDaddyApplePayCheckoutButton() {
         }
       } else {
         track({
-          eventId: eventIds.expressCheckoutError,
+          eventId: eventIds.checkoutError,
           type: TrackingEventType.EVENT,
           properties: {
             paymentType: event.source,
