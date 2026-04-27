@@ -114,7 +114,7 @@
     "react-hook-form": "^7.54.2",
     "tsdown": "^0.15.6",
     "typescript": "~5.7.3",
-    "vite": "^6.4.1",
+    "vite": "^6.4.2",
     "vitest": "^4.1.2"
   },
   "publishConfig": {
