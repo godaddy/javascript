@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.38
+
+### Patch Changes
+
+- 93b26ea: Add standard google pay and apple pay payment methods using GDP
+
 ## 1.0.37
 
 ### Patch Changes
