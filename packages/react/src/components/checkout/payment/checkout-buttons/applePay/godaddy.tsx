@@ -176,7 +176,7 @@ export function GoDaddyApplePayCheckoutButton() {
       if (nonce) {
         const checkoutBody = {
           paymentToken: nonce,
-          paymentType: event?.source,
+          paymentType: PaymentMethodType.CREDIT_CARD,
           paymentProvider: PaymentProvider.POYNT,
         };
 
