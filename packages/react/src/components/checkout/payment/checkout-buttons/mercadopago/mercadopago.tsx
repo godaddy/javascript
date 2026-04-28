@@ -9,6 +9,7 @@ import {
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadMercadoPago } from '@/components/checkout/payment/utils/use-load-mercadopago';
+import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -39,11 +40,21 @@ export function MercadoPagoCheckoutButton() {
   const form = useFormContext();
   const { isMercadoPagoLoaded } = useLoadMercadoPago();
   const confirmCheckout = useConfirmCheckout();
+  const authorizeCheckout = useAuthorizeCheckout();
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isBrickReady, setIsBrickReady] = useState(!!brickController);
   const elementId = 'mercadopago-brick-container';
+
+  const getPreferenceId = async () => {
+    const response = await authorizeCheckout.mutateAsync({
+      paymentToken: '',
+      paymentType: PaymentMethodType.MERCADOPAGO,
+      paymentProvider: PaymentProvider.MERCADOPAGO,
+    });
+    return response?.transactionRefNum;
+  }
 
   const handleSubmit = useCallback(
     async ({ formData }: any) => {
@@ -115,10 +126,13 @@ export function MercadoPagoCheckoutButton() {
 
             const { bricksBuilderInstance: bricksBuilder } =
               getMercadoPagoInstance(mercadoPagoConfig.publicKey);
+            
+            const mercadoPagoPreferenceId = await getPreferenceId();
 
             brickController = await bricksBuilder.create('payment', elementId, {
               initialization: {
                 amount: total,
+                preferenceId: mercadoPagoPreferenceId,
                 payer: { email: 'dummy@testuser.com' },
               },
               customization: {
