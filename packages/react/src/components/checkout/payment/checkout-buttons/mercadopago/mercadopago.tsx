@@ -161,7 +161,7 @@ export function MercadoPagoCheckoutButton() {
                   }
                 },
                 onError: () => {
-                  setError(t.errors.errorProcessingPayment);
+                  setError(t.errors.failedToInitializePayment);
                   setIsLoading(false);
                 },
               },
@@ -169,7 +169,7 @@ export function MercadoPagoCheckoutButton() {
 
             setIsBrickReady(true);
           } catch (_err) {
-            setError(t.errors.errorProcessingPayment);
+            setError(t.errors.failedToInitializePayment);
             setIsBrickReady(false);
             brickCreationPromise = null;
           }
@@ -198,7 +198,7 @@ export function MercadoPagoCheckoutButton() {
     isMercadoPagoLoaded,
     mercadoPagoConfig?.publicKey,
     elementId,
-    t.errors.errorProcessingPayment,
+    t.errors.failedToInitializePayment,
   ]);
 
   const handleClick = async () => {
