@@ -43,8 +43,7 @@ export function MercadoPagoCheckoutButton() {
   const authorizeCheckout = useAuthorizeCheckout();
 
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isBrickReady, setIsBrickReady] = useState(!!brickController);
+  const [isBrickReady, setIsBrickReady] = useState(false);
   const elementId = 'mercadopago-brick-container';
 
   const getPreferenceId = async () => {
@@ -100,11 +99,10 @@ export function MercadoPagoCheckoutButton() {
 
     if (canInitialize) {
       if (brickController) {
-        // Brick already exists, just mark as ready
+        // Brick already exists, onReady callback will mark as ready
         setIsBrickReady(true);
       } else if (brickCreationPromise) {
-        // Brick creation in progress, wait for it
-        brickCreationPromise.then(() => setIsBrickReady(true));
+        // Brick creation in progress, onReady/onError callbacks will handle state
       } else {
         // Create new brick
         const renderBrick = async () => {
@@ -149,7 +147,7 @@ export function MercadoPagoCheckoutButton() {
               },
               callbacks: {
                 onReady: () => {
-                  setIsLoading(false);
+                  setIsBrickReady(true);
                   const brickContainer = document.getElementById(elementId);
                   const formElement = brickContainer?.querySelector('form');
                   if (formElement) {
@@ -162,12 +160,11 @@ export function MercadoPagoCheckoutButton() {
                 },
                 onError: () => {
                   setError(t.errors.failedToInitializePayment);
-                  setIsLoading(false);
+                  setIsBrickReady(false);
                 },
               },
             });
 
-            setIsBrickReady(true);
           } catch (_err) {
             setError(t.errors.failedToInitializePayment);
             setIsBrickReady(false);
@@ -229,9 +226,16 @@ export function MercadoPagoCheckoutButton() {
           size='lg'
           type='button'
           onClick={handleClick}
-          disabled={isPaymentDisabled || isLoading || !isBrickReady}
+          disabled={isPaymentDisabled || authorizeCheckout.isPending || !isBrickReady}
         >
-          {t.payment.payNow}
+          {authorizeCheckout.isPending && !error ? (
+            <>
+              <LoaderCircle className='h-5 w-5 animate-spin' />
+              {t.payment.payNow}
+            </>
+          ) : (
+            t.payment.payNow
+          )}
         </Button>
       ) : (
         <Button
