@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.39
+
+### Patch Changes
+
+- a53681a: This PR adds payment authorization integration to the MercadoPago checkout button component, implementing preference ID generation for brick initialization
+
 ## 1.0.38
 
 ### Patch Changes
