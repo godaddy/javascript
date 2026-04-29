@@ -159,8 +159,12 @@ export function MercadoPagoCheckoutButton() {
                   }
                 },
                 onError: () => {
-                  setError(t.errors.failedToInitializePayment);
-                  setIsBrickReady(false);
+                  // Only treat as initialization failure if the brick never became ready.
+                  // Card validation errors are handled by the brick's own UI.
+                  if (!brickController) {
+                    setError(t.errors.failedToInitializePayment);
+                    setIsBrickReady(false);
+                  }
                 },
               },
             });
