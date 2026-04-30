@@ -134,6 +134,11 @@ export const AddLineItemBySkuIdMutation = graphql(`
       }
       createdAt
       updatedAt
+      metafields {
+        key
+        type
+        value
+      }
     }
   }
 `);

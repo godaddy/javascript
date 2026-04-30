@@ -52,6 +52,8 @@ export type Product = Partial<SKUProduct> & {
   addons?: SelectedAddon[];
   selectedOptions?: SelectedOption[];
   discounts?: ProductDiscount[];
+  /** Selling plan (subscription) from PDP selection; shown in cart. */
+  sellingPlan?: { name?: string; category?: string };
 };
 
 export interface DraftOrderLineItemsProps {
@@ -109,6 +111,12 @@ export function DraftOrderLineItems({
                     </span>
                   ) : null}
                 </span>
+                {item.sellingPlan?.name ? (
+                  <span className='text-xs text-muted-foreground'>
+                    {item.sellingPlan.name}
+                    {item.sellingPlan.category ? ` · ${item.sellingPlan.category}` : ''}
+                  </span>
+                ) : null}
                 <span className='text-xs grid'>
                   {item?.addons?.map((addon: SelectedAddon, index: number) => (
                     <span key={`addon-${index}`} className='text-xs'>
