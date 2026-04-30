@@ -134,7 +134,11 @@ describe('useUpdateOrder - Tax calculation address logic', () => {
 
   describe('Edge cases', () => {
     it('should handle pickupLocationId being undefined for pickup', () => {
-      const result = getTaxDestinationAddress('PICKUP', undefined, mockLocations);
+      const result = getTaxDestinationAddress(
+        'PICKUP',
+        undefined,
+        mockLocations
+      );
 
       expect(result).toBeUndefined();
     });

@@ -6,6 +6,7 @@ import type {
   TokenizeJs,
   WalletError,
 } from '@/components/checkout/payment/types';
+import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
 import {
   PaymentProvider,
@@ -89,7 +90,10 @@ export function PazeCheckoutButton() {
           businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
           storeId: session?.storeId,
           channelId: session?.channelId,
-          applicationId: godaddyPaymentsConfig?.appId,
+          applicationId: getApplicationId(
+            session,
+            godaddyPaymentsConfig?.appId
+          ),
         },
         {
           country: countryCode,

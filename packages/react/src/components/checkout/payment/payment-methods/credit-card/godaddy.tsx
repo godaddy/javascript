@@ -4,6 +4,7 @@ import type {
   TokenizeJs,
   TokenizeJsEvent,
 } from '@/components/checkout/payment/types';
+import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { usePoyntCollect } from '@/components/checkout/payment/utils/poynt-provider';
 import {
   PaymentProvider,
@@ -199,7 +200,7 @@ export function GoDaddyCreditCardForm() {
       businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
       storeId: session?.storeId,
       channelId: session?.channelId,
-      applicationId: godaddyPaymentsConfig?.appId,
+      applicationId: getApplicationId(session, godaddyPaymentsConfig?.appId),
     });
 
     collect?.current?.on('ready', () => {

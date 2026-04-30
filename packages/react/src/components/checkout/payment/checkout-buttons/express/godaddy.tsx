@@ -14,6 +14,7 @@ import type {
   WalletError,
   WalletRequestUpdate,
 } from '@/components/checkout/payment/types';
+import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import {
   type PoyntExpressRequest,
   useBuildPaymentRequest,
@@ -438,7 +439,10 @@ export function ExpressCheckoutButton() {
           businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
           storeId: session?.storeId,
           channelId: session?.channelId,
-          applicationId: godaddyPaymentsConfig?.appId,
+          applicationId: getApplicationId(
+            session,
+            godaddyPaymentsConfig?.appId
+          ),
         },
         {
           country: countryCode,
