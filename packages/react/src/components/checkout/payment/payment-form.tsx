@@ -28,6 +28,7 @@ import {
   PaymentMethodRenderer,
 } from '@/components/checkout/payment/payment-method-renderer';
 import type { TokenizeJs } from '@/components/checkout/payment/types';
+import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import { useGetSelectedPaymentMethod } from '@/components/checkout/payment/utils/use-get-selected-payment-method';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
@@ -184,7 +185,10 @@ export function PaymentForm(
           businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
           storeId: session?.storeId,
           channelId: session?.channelId,
-          applicationId: godaddyPaymentsConfig?.appId,
+          applicationId: getApplicationId(
+            session,
+            godaddyPaymentsConfig?.appId
+          ),
         },
         {
           country: countryCode,

@@ -1364,6 +1364,146 @@ const introspection = {
         interfaces: [],
       },
       {
+        kind: 'INPUT_OBJECT',
+        name: 'CheckoutCustomerAddressInput',
+        inputFields: [
+          {
+            name: 'addressLine1',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'addressLine2',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'addressLine3',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'adminArea1',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'adminArea2',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'adminArea3',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'adminArea4',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'countryCode',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'postalCode',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'CheckoutCustomerContactInput',
+        inputFields: [
+          {
+            name: 'address',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutCustomerAddressInput',
+            },
+          },
+          {
+            name: 'companyName',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'email',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'firstName',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'lastName',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'phone',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'CheckoutCustomerInput',
+        inputFields: [
+          {
+            name: 'billing',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutCustomerContactInput',
+            },
+          },
+          {
+            name: 'shipping',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutCustomerContactInput',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
         kind: 'OBJECT',
         name: 'CheckoutSession',
         fields: [
@@ -2605,6 +2745,15 @@ const introspection = {
             isDeprecated: false,
           },
           {
+            name: 'gopay_override',
+            type: {
+              kind: 'OBJECT',
+              name: 'CheckoutSessionGoPayOverrideRule',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
             name: 'localDelivery',
             type: {
               kind: 'OBJECT',
@@ -2625,6 +2774,13 @@ const introspection = {
             type: {
               kind: 'INPUT_OBJECT',
               name: 'CheckoutSessionFreeShippingRuleInput',
+            },
+          },
+          {
+            name: 'gopay_override',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutSessionGoPayOverrideRuleInput',
             },
           },
         ],
@@ -2709,6 +2865,64 @@ const introspection = {
               ofType: {
                 kind: 'SCALAR',
                 name: 'Float',
+              },
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'OBJECT',
+        name: 'CheckoutSessionGoPayOverrideRule',
+        fields: [
+          {
+            name: 'enabled',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'Boolean',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'goPayAppId',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'CheckoutSessionGoPayOverrideRuleInput',
+        inputFields: [
+          {
+            name: 'enabled',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'Boolean',
+              },
+            },
+          },
+          {
+            name: 'goPayAppId',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
               },
             },
           },
@@ -7204,6 +7418,13 @@ const introspection = {
             type: {
               kind: 'SCALAR',
               name: 'String',
+            },
+          },
+          {
+            name: 'customer',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutCustomerInput',
             },
           },
           {

@@ -62,6 +62,10 @@ export const GetCheckoutSessionQuery = graphql(`
                 enabled
                   minimumOrderTotal
               }
+              gopay_override {
+                enabled
+                goPayAppId
+              }
             }
             shipping {
               originAddress {

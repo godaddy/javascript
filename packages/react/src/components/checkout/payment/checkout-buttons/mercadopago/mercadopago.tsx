@@ -3,13 +3,13 @@ import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadMercadoPago } from '@/components/checkout/payment/utils/use-load-mercadopago';
-import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -53,7 +53,7 @@ export function MercadoPagoCheckoutButton() {
       paymentProvider: PaymentProvider.MERCADOPAGO,
     });
     return response?.transactionRefNum;
-  }
+  };
 
   const handleSubmit = useCallback(
     async ({ formData }: any) => {
@@ -124,7 +124,7 @@ export function MercadoPagoCheckoutButton() {
 
             const { bricksBuilderInstance: bricksBuilder } =
               getMercadoPagoInstance(mercadoPagoConfig.publicKey);
-            
+
             const mercadoPagoPreferenceId = await getPreferenceId();
 
             brickController = await bricksBuilder.create('payment', elementId, {
@@ -168,7 +168,6 @@ export function MercadoPagoCheckoutButton() {
                 },
               },
             });
-
           } catch (_err) {
             setError(t.errors.failedToInitializePayment);
             setIsBrickReady(false);
@@ -230,7 +229,9 @@ export function MercadoPagoCheckoutButton() {
           size='lg'
           type='button'
           onClick={handleClick}
-          disabled={isPaymentDisabled || authorizeCheckout.isPending || !isBrickReady}
+          disabled={
+            isPaymentDisabled || authorizeCheckout.isPending || !isBrickReady
+          }
         >
           {authorizeCheckout.isPending && !error ? (
             <>
