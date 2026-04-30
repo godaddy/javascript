@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.40
+
+### Patch Changes
+
+- f43f2dd: Add gopay appId override experimental rule
+
 ## 1.0.39
 
 ### Patch Changes
