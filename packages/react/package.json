@@ -79,7 +79,7 @@
     "@tailwindcss/cli": "^4.1.10",
     "@tailwindcss/vite": "^4.1.4",
     "@tanstack/react-pacer": "^0.2.0",
-    "@tanstack/react-query": "^5.66.0",
+    "@tanstack/react-query": "^5.100.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",
