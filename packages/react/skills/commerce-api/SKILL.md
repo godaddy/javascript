@@ -104,11 +104,62 @@ to discover available endpoints, inspect their schemas, and identify
 required scopes. The CLI is a **discovery tool only** — use the OAuth
 token (see Setup above) to make actual API calls in your application code.
 
-Install globally from the npm public registry:
+#### Ensure @godaddy/cli is installed and up to date
+
+Before using any `godaddy api` commands, verify the CLI is available and
+running the latest version so you have the most recent API schemas for
+discovery.
+
+**Step 1 — Check for an existing installation:**
 
 ```bash
-npm install -g @godaddy/cli
+# Check global install
+npm ls -g @godaddy/cli --depth=0 2>/dev/null
+
+# Check local dev dependency (from the project root)
+pnpm ls @godaddy/cli 2>/dev/null
 ```
+
+If either command shows `@godaddy/cli` is installed, skip to **Step 3**
+(update to latest).
+
+**Step 2 — Install (if not found):**
+
+Ask the user whether they want the CLI installed **globally** or as a
+**dev dependency** in the project. Explain the trade-offs:
+
+| Option              | Command                              | When to choose                                    |
+|---------------------|--------------------------------------|---------------------------------------------------|
+| Global              | `npm install -g @godaddy/cli@latest` | Shared across projects; available everywhere       |
+| Dev dependency      | `pnpm add -Dw @godaddy/cli@latest`  | Pinned to the repo; consistent across contributors |
+
+Wait for the user's preference before running the install command.
+
+**Step 3 — Update to the latest version (if already installed):**
+
+Always ensure the installed version is up to date so the agent has access
+to the latest API schemas:
+
+```bash
+# Global update
+npm install -g @godaddy/cli@latest
+
+# Dev dependency update (from the project root)
+pnpm up -Dw @godaddy/cli@latest
+```
+
+Use the same install location (global vs local) that was detected or
+chosen in the earlier steps.
+
+**Step 4 — Verify the CLI works:**
+
+```bash
+godaddy --version
+```
+
+If the CLI was installed as a local dev dependency and is not on `PATH`,
+run it via `pnpm exec godaddy --version` (and prefix all subsequent
+`godaddy` commands with `pnpm exec`).
 
 Discover available API domains and endpoints:
 
