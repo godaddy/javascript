@@ -5,7 +5,9 @@ description: >
   credentials. Covers the /v2/oauth2/token endpoint, environments
   (ote, prod), required headers, scopes, and monetary value formats.
   Always collect client ID, client secret, store ID, and environment
-  from the user before making API calls. For API discovery and schema
+  from the user before making API calls. Ensures @godaddy/react (FE
+  checkout components) and @godaddy/cli (API discovery) are installed
+  and up to date before proceeding. For API discovery and schema
   introspection use @godaddy/cli (godaddy api list, godaddy api
   describe, godaddy api search) to find endpoints and required scopes.
   For checkout session creation use the Checkout API.
@@ -18,6 +20,97 @@ sources:
 # GoDaddy Commerce API — Authentication & Discovery
 
 ## Setup
+
+### Ensure @godaddy/react is installed and up to date
+
+The `@godaddy/react` package provides the React checkout components,
+hooks, and utilities used throughout this skill. Before proceeding,
+verify it is installed and running the latest version so you have the
+most recent component APIs and bug fixes.
+
+**Step 1 — Check for an existing installation:**
+
+```bash
+# Check if installed in the current project
+pnpm ls @godaddy/react 2>/dev/null
+
+# Check global install (less common for a component library)
+npm ls -g @godaddy/react --depth=0 2>/dev/null
+```
+
+If the package is found, skip to **Step 3** (update to latest).
+
+**Step 2 — Install (if not found):**
+
+Ask the user whether they want `@godaddy/react` installed as a
+**production dependency** (most common for frontend apps), a
+**dev dependency**, or **globally**. Explain the trade-offs:
+
+| Option              | Command                                | When to choose                                                   |
+|---------------------|----------------------------------------|------------------------------------------------------------------|
+| Dependency          | `pnpm add @godaddy/react@latest`       | App ships checkout UI — components are needed at runtime          |
+| Dev dependency      | `pnpm add -D @godaddy/react@latest`    | Only used during development/build (e.g., design system tooling) |
+| Global              | `npm install -g @godaddy/react@latest` | Quick prototyping outside a project                               |
+
+Wait for the user's preference before running the install command.
+
+**Step 3 — Update to the latest version (if already installed):**
+
+Capture the currently installed version **before** updating so you can
+detect whether the package actually changed:
+
+```bash
+# Record the current version
+OLD_VERSION=$(pnpm ls @godaddy/react --depth=0 2>/dev/null | grep @godaddy/react || echo "none")
+
+# Production or dev dependency update
+pnpm up @godaddy/react@latest
+
+# Global update
+npm install -g @godaddy/react@latest
+```
+
+Use the same install location (project vs global) that was detected or
+chosen in the earlier steps.
+
+**Step 4 — Verify:**
+
+```bash
+pnpm ls @godaddy/react
+```
+
+Confirm the listed version matches the latest release on npm. The
+package also ships `@godaddy/localizations` as a dependency — it will
+be installed automatically.
+
+**Step 5 — Re-read this skill if the package was updated:**
+
+The `@godaddy/react` package ships its skill files in the `skills/`
+directory. When the package version changes, the skill instructions
+may have been updated (new components, changed APIs, revised patterns).
+
+If the version changed after **Step 3** (i.e. the new version differs
+from `OLD_VERSION`), **you must re-read this skill file before
+continuing** so you are operating on the latest instructions:
+
+```
+# Installed as a project dependency (most common)
+node_modules/@godaddy/react/skills/commerce-api/SKILL.md
+
+# Installed globally (npm root -g to find prefix)
+$(npm root -g)/@godaddy/react/skills/commerce-api/SKILL.md
+```
+
+After re-reading, restart the Setup flow from the top — the new
+version may have added prerequisites, changed credential requirements,
+or introduced new sections.
+
+> **Why this matters:** Skill files are versioned with the package. If
+> you skip re-reading after an update, you may follow stale instructions
+> that reference deprecated APIs, missing components, or outdated
+> patterns. Always treat a version bump as a signal to reload.
+
+### Collect credentials
 
 Connecting to the GoDaddy Commerce Platform requires three pieces of
 information from the user. **Always ask for these before making any API
