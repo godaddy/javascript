@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.41
+
+### Patch Changes
+
+- 6f9b610: Update commerce api skill to check cli version before API discovery
+
 ## 1.0.40
 
 ### Patch Changes
