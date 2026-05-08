@@ -13,7 +13,7 @@ import { type Theme, useTheme } from '@/hooks/use-theme';
 import { useVariables } from '@/hooks/use-variables';
 import type { TrackingProperties } from '@/tracking/event-properties';
 import { TrackingProvider } from '@/tracking/tracking-provider';
-import type { CheckoutSession } from '@/types';
+import { PaymentMethodType, type CheckoutSession } from '@/types';
 import { CheckoutFormContainer } from './form/checkout-form-container';
 import type { Target } from './target/target';
 
@@ -280,38 +280,61 @@ export function Checkout(props: CheckoutProps) {
       }
 
       // Billing address validation - only required if not using shipping address OR pickup
-      const requireBillingAddress =
-        !data.paymentUseShippingAddress ||
-        data.deliveryMethod === DeliveryMethods.PICKUP;
+      // BUT skip for free orders (paymentMethod === 'offline')
+      const isFreeOrder = data.paymentMethod === PaymentMethodType.OFFLINE;
+      const isPickup = data.deliveryMethod === DeliveryMethods.PICKUP;
+      const isFreePickup = isFreeOrder && isPickup;
 
-      if (requireBillingAddress) {
-        // Basic billing fields required for all countries
-        const billingFields = [
+      // For free pickup orders, only require first/last name (no address)
+      if (isFreePickup) {
+        const nameFields = [
           { key: 'billingFirstName', message: t.validation.enterFirstName },
           { key: 'billingLastName', message: t.validation.enterLastName },
-          { key: 'billingAddressLine1', message: t.validation.enterAddress },
-          { key: 'billingAdminArea2', message: t.validation.enterCity },
-          {
-            key: 'billingPostalCode',
-            message: t.validation.enterZipPostalCode,
-          },
-          { key: 'billingCountryCode', message: t.validation.enterCountry },
         ];
 
-        if (hasRegionData(String(data.billingCountryCode))) {
-          billingFields.push({
-            key: 'billingAdminArea1',
-            message: t.validation.selectState,
-          });
-        }
-
-        for (const { key, message } of billingFields) {
+        for (const { key, message } of nameFields) {
           if (!data[key as keyof typeof data]) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message,
               path: [key],
             });
+          }
+        }
+      } else {
+        // Full billing address validation - required if not using shipping address OR pickup
+        const requireBillingAddress =
+          !data.paymentUseShippingAddress || isPickup;
+
+        if (requireBillingAddress) {
+          // Basic billing fields required for all countries
+          const billingFields = [
+            { key: 'billingFirstName', message: t.validation.enterFirstName },
+            { key: 'billingLastName', message: t.validation.enterLastName },
+            { key: 'billingAddressLine1', message: t.validation.enterAddress },
+            { key: 'billingAdminArea2', message: t.validation.enterCity },
+            {
+              key: 'billingPostalCode',
+              message: t.validation.enterZipPostalCode,
+            },
+            { key: 'billingCountryCode', message: t.validation.enterCountry },
+          ];
+
+          if (hasRegionData(String(data.billingCountryCode))) {
+            billingFields.push({
+              key: 'billingAdminArea1',
+              message: t.validation.selectState,
+            });
+          }
+
+          for (const { key, message } of billingFields) {
+            if (!data[key as keyof typeof data]) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message,
+                path: [key],
+              });
+            }
           }
         }
       }

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { FieldPath, UseFormReturn, UseFormTrigger } from 'react-hook-form';
 import { FormProvider } from 'react-hook-form';
+import { PaymentMethodType } from '@/types';
 import type { CheckoutFormData } from '../checkout';
 import { DeliveryMethods } from '../delivery/delivery-method';
 
@@ -50,18 +51,28 @@ export function CustomFormProvider<
         else {
           const values = currentMethods.getValues();
           const deliveryMethod = values.deliveryMethod as unknown as string;
+          const paymentMethod = values.paymentMethod as unknown as string;
           const paymentUseShippingAddress =
             values.paymentUseShippingAddress as unknown as boolean;
           const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
           const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-          const requireBillingAddress = !paymentUseShippingAddress || isPickup;
+          const isFreeOrder = paymentMethod === PaymentMethodType.OFFLINE;
+          const isFreePickup = isFreeOrder && isPickup;
 
           // Get all field names and filter based on conditions
           const allFieldNames = Object.keys(values);
           let fieldNames = [...allFieldNames] as Array<FieldPath<TFormValues>>;
 
-          /* If using shipping address for billing (and not pickup), filter out billing-related field validations */
-          if (!requireBillingAddress) {
+          /* For free pickup orders, only validate billingFirstName and billingLastName */
+          if (isFreePickup) {
+            fieldNames = fieldNames.filter(
+              fieldName =>
+                !fieldName.startsWith('billing') ||
+                fieldName === 'billingFirstName' ||
+                fieldName === 'billingLastName'
+            );
+          } else if (paymentUseShippingAddress && !isPickup) {
+            /* If using shipping address for billing (and not pickup), filter out billing-related field validations */
             fieldNames = fieldNames.filter(
               fieldName => !fieldName.startsWith('billing')
             );
@@ -76,7 +87,7 @@ export function CustomFormProvider<
 
           // Trigger validation only on the filtered fields if any condition is true,
           // otherwise trigger on all fields
-          if (paymentUseShippingAddress || isPickup) {
+          if (paymentUseShippingAddress || isPickup || isFreeOrder) {
             result = await methods.trigger(fieldNames, triggerOptions);
           } else {
             result = await methods.trigger(undefined, triggerOptions);
