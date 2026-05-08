@@ -52,7 +52,13 @@ import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import type { Address } from '@/types';
 
-export function AddressForm({ sectionKey }: { sectionKey: string }) {
+interface AddressFormProps {
+  sectionKey: string;
+  /** When true, only show first name and last name fields (used for free pickup orders) */
+  onlyNames?: boolean;
+}
+
+export function AddressForm({ sectionKey, onlyNames = false }: AddressFormProps) {
   const form = useFormContext();
   const { session } = useCheckoutContext();
   const { t } = useGoDaddyContext();
@@ -303,126 +309,131 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
 
   return (
     <fieldset className='space-y-2' disabled={isConfirmingCheckout}>
-      <FormField
-        control={form.control}
-        name={`${sectionKey}CountryCode`}
-        render={({ field, fieldState }) => (
-          <FormItem className='flex flex-col'>
-            <FormLabel className='sr-only'>{t.shipping.country}</FormLabel>
-            <Popover
-              open={isCountrySelectOpen}
-              onOpenChange={setCountrySelectOpen}
-            >
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    ref={countryTriggerRef}
-                    variant='outline'
-                    className={cn(
-                      'rounded-md shadow-none justify-between px-3 font-normal hover:bg-muted bg-card active:ring h-12',
-                      !field.value && 'text-muted-foreground'
-                    )}
-                    hasError={!!fieldState.error}
-                    disabled={isConfirmingCheckout}
-                    aria-required={requiredFields?.[`${sectionKey}CountryCode`]}
-                    tabIndex={0}
-                  >
-                    {field.value
-                      ? countries.find(country => country.value === field.value)
-                          ?.label
-                      : t.shipping.selectCountry}
-                    <ChevronsUpDown className='opacity-50' />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent
-                className='p-0 rounded-md'
-                style={{
-                  width: triggerWidth ? `${triggerWidth + 2}px` : '100%',
-                }}
+      {!onlyNames && (
+        <FormField
+          control={form.control}
+          name={`${sectionKey}CountryCode`}
+          render={({ field, fieldState }) => (
+            <FormItem className='flex flex-col'>
+              <FormLabel className='sr-only'>{t.shipping.country}</FormLabel>
+              <Popover
+                open={isCountrySelectOpen}
+                onOpenChange={setCountrySelectOpen}
               >
-                <Command>
-                  <CommandInput
-                    placeholder={t.shipping.searchCountry}
-                    className='h-12'
-                    disabled={isConfirmingCheckout}
-                  />
-                  <CommandList>
-                    <CommandEmpty>{t.shipping.noCountryFound}</CommandEmpty>
-                    <CommandGroup>
-                      {countries.map(country => (
-                        <CommandItem
-                          value={country.label}
-                          key={country.value}
-                          onSelect={() => {
-                            // Get current country before setting the new one
-                            const previousCountry = form.getValues(
-                              `${sectionKey}CountryCode`
-                            );
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      ref={countryTriggerRef}
+                      variant='outline'
+                      className={cn(
+                        'rounded-md shadow-none justify-between px-3 font-normal hover:bg-muted bg-card active:ring h-12',
+                        !field.value && 'text-muted-foreground'
+                      )}
+                      hasError={!!fieldState.error}
+                      disabled={isConfirmingCheckout}
+                      aria-required={
+                        requiredFields?.[`${sectionKey}CountryCode`]
+                      }
+                      tabIndex={0}
+                    >
+                      {field.value
+                        ? countries.find(
+                            country => country.value === field.value
+                          )?.label
+                        : t.shipping.selectCountry}
+                      <ChevronsUpDown className='opacity-50' />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent
+                  className='p-0 rounded-md'
+                  style={{
+                    width: triggerWidth ? `${triggerWidth + 2}px` : '100%',
+                  }}
+                >
+                  <Command>
+                    <CommandInput
+                      placeholder={t.shipping.searchCountry}
+                      className='h-12'
+                      disabled={isConfirmingCheckout}
+                    />
+                    <CommandList>
+                      <CommandEmpty>{t.shipping.noCountryFound}</CommandEmpty>
+                      <CommandGroup>
+                        {countries.map(country => (
+                          <CommandItem
+                            value={country.label}
+                            key={country.value}
+                            onSelect={() => {
+                              // Get current country before setting the new one
+                              const previousCountry = form.getValues(
+                                `${sectionKey}CountryCode`
+                              );
 
-                            // Set the new country value
-                            form.setValue(
-                              `${sectionKey}CountryCode`,
-                              country.value,
-                              {
-                                shouldValidate: true,
+                              // Set the new country value
+                              form.setValue(
+                                `${sectionKey}CountryCode`,
+                                country.value,
+                                {
+                                  shouldValidate: true,
+                                }
+                              );
+
+                              if (previousCountry !== country.value) {
+                                form.setValue(`${sectionKey}AddressLine1`, '', {
+                                  shouldDirty: true,
+                                  shouldValidate: false,
+                                });
+                                form.setValue(`${sectionKey}AdminArea1`, '', {
+                                  shouldDirty: true,
+                                  shouldValidate: false,
+                                });
+                                form.setValue(`${sectionKey}AdminArea2`, '', {
+                                  shouldDirty: true,
+                                  shouldValidate: false,
+                                });
+                                form.setValue(`${sectionKey}PostalCode`, '', {
+                                  shouldDirty: true,
+                                  shouldValidate: false,
+                                });
                               }
-                            );
 
-                            if (previousCountry !== country.value) {
-                              form.setValue(`${sectionKey}AddressLine1`, '', {
-                                shouldDirty: true,
-                                shouldValidate: false,
+                              // Track country selection event
+                              track({
+                                eventId: eventIds.changeCountry,
+                                type: TrackingEventType.CLICK,
+                                properties: {
+                                  sectionKey,
+                                  countryCode: country.value,
+                                  countryName: country.label,
+                                },
                               });
-                              form.setValue(`${sectionKey}AdminArea1`, '', {
-                                shouldDirty: true,
-                                shouldValidate: false,
-                              });
-                              form.setValue(`${sectionKey}AdminArea2`, '', {
-                                shouldDirty: true,
-                                shouldValidate: false,
-                              });
-                              form.setValue(`${sectionKey}PostalCode`, '', {
-                                shouldDirty: true,
-                                shouldValidate: false,
-                              });
-                            }
 
-                            // Track country selection event
-                            track({
-                              eventId: eventIds.changeCountry,
-                              type: TrackingEventType.CLICK,
-                              properties: {
-                                sectionKey,
-                                countryCode: country.value,
-                                countryName: country.label,
-                              },
-                            });
-
-                            setCountrySelectOpen(false);
-                          }}
-                          disabled={isConfirmingCheckout}
-                        >
-                          {country.label}
-                          <Check
-                            className={cn(
-                              'ml-auto',
-                              country.value === field.value
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+                              setCountrySelectOpen(false);
+                            }}
+                            disabled={isConfirmingCheckout}
+                          >
+                            {country.label}
+                            <Check
+                              className={cn(
+                                'ml-auto',
+                                country.value === field.value
+                                  ? 'opacity-100'
+                                  : 'opacity-0'
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
         <FormField
@@ -431,7 +442,8 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
           render={({ field, fieldState }) => (
             <FormItem className='space-y-1'>
               <FormLabel className='sr-only'>
-                {t.shipping.firstName} ({t.general.optional})
+                {t.shipping.firstName}{' '}
+                {!onlyNames && `(${t.general.optional})`}
               </FormLabel>
               <FormControl>
                 <Input
@@ -467,188 +479,203 @@ export function AddressForm({ sectionKey }: { sectionKey: string }) {
         />
       </div>
 
-      <FormField
-        control={form.control}
-        name={`${sectionKey}AddressLine1`}
-        render={({ field, fieldState }) => (
-          <FormItem>
-            <FormLabel className='sr-only'>{t.shipping.address1}</FormLabel>
-            <FormControl>
-              {countryValue === 'US' && session?.enableAddressAutocomplete ? (
-                <AutoComplete
-                  data={addressMatchesQuery.data || []}
-                  value={field.value}
-                  onChange={field.onChange}
-                  onSelect={selectedAddress => {
-                    handleUpdateAddress(selectedAddress as Address);
-                  }}
-                  onOpenChange={setIsAutocompleteOpen}
-                  isLoading={
-                    addressMatchesQuery?.isLoading ||
-                    addressMatchesQuery?.isFetching
-                  }
-                  hasError={!!fieldState.error}
-                  aria-required={requiredFields?.[`${sectionKey}AddressLine1`]}
-                  disabled={isConfirmingCheckout}
-                />
-              ) : (
-                <Input
-                  placeholder={t.shipping.address1}
-                  hasError={!!fieldState.error}
-                  aria-required={requiredFields?.[`${sectionKey}AddressLine1`]}
-                  {...field}
-                  disabled={isConfirmingCheckout}
-                  autoComplete='off'
-                />
-              )}
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {!onlyNames && (
+        <>
+          <FormField
+            control={form.control}
+            name={`${sectionKey}AddressLine1`}
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel className='sr-only'>{t.shipping.address1}</FormLabel>
+                <FormControl>
+                  {countryValue === 'US' &&
+                  session?.enableAddressAutocomplete ? (
+                    <AutoComplete
+                      data={addressMatchesQuery.data || []}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onSelect={selectedAddress => {
+                        handleUpdateAddress(selectedAddress as Address);
+                      }}
+                      onOpenChange={setIsAutocompleteOpen}
+                      isLoading={
+                        addressMatchesQuery?.isLoading ||
+                        addressMatchesQuery?.isFetching
+                      }
+                      hasError={!!fieldState.error}
+                      aria-required={
+                        requiredFields?.[`${sectionKey}AddressLine1`]
+                      }
+                      disabled={isConfirmingCheckout}
+                    />
+                  ) : (
+                    <Input
+                      placeholder={t.shipping.address1}
+                      hasError={!!fieldState.error}
+                      aria-required={
+                        requiredFields?.[`${sectionKey}AddressLine1`]
+                      }
+                      {...field}
+                      disabled={isConfirmingCheckout}
+                      autoComplete='off'
+                    />
+                  )}
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      <FormField
-        control={form.control}
-        name={`${sectionKey}AddressLine2`}
-        render={({ field, fieldState }) => (
-          <FormItem className='space-y-1'>
-            <FormLabel className='sr-only'>{t.shipping.address2}</FormLabel>
-            <FormControl>
-              <Input
-                placeholder={t.shipping.address2}
-                hasError={!!fieldState.error}
-                aria-required={requiredFields?.[`${sectionKey}AddressLine2`]}
-                {...field}
-                disabled={isConfirmingCheckout}
-                autoComplete='off'
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <div className='grid grid-cols-1 sm:grid-cols-3 gap-1'>
-        <FormField
-          control={form.control}
-          name={`${sectionKey}AdminArea2`}
-          render={({ field, fieldState }) => (
-            <FormItem className='space-y-1'>
-              <FormLabel className='sr-only'>{t.shipping.city}</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder={t.shipping.city}
-                  hasError={!!fieldState.error}
-                  aria-required={requiredFields?.[`${sectionKey}AdminArea2`]}
-                  {...field}
-                  disabled={isConfirmingCheckout}
-                  autoComplete='off'
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name={`${sectionKey}AdminArea1`}
-          render={({ field, fieldState }) => (
-            <FormItem className='space-y-1'>
-              <FormLabel className='sr-only'>{t.shipping.region}</FormLabel>
-              <FormControl>
-                {hasRegionData(countryValue) ? (
-                  <Select
-                    value={field.value}
-                    onValueChange={value => {
-                      field.onChange(value);
-                      form.setValue(`${sectionKey}AdminArea1`, value, {
-                        shouldValidate: true,
-                      });
-
-                      form.setValue(`${sectionKey}PostalCode`, '', {
-                        shouldDirty: true,
-                        shouldValidate: false,
-                      });
-
-                      // Track region selection event
-                      track({
-                        eventId: eventIds.changeRegion,
-                        type: TrackingEventType.CLICK,
-                        properties: {
-                          sectionKey,
-                          countryCode: countryValue,
-                          regionCode: value,
-                          regionName: getRegions(countryValue)?.find(
-                            r => r.code === value
-                          )?.label,
-                        },
-                      });
-                    }}
-                    disabled={isConfirmingCheckout}
-                  >
-                    <FormControl>
-                      <SelectTrigger
-                        hasError={!!fieldState.error}
-                        disabled={isConfirmingCheckout}
-                        aria-required={
-                          requiredFields?.[`${sectionKey}AdminArea1`]
-                        }
-                        tabIndex={0}
-                      >
-                        <SelectValue placeholder={t.shipping.region} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {getRegions(countryValue)?.map(region => (
-                        <SelectItem
-                          key={region.code}
-                          value={region.code}
-                          disabled={isConfirmingCheckout}
-                        >
-                          {region.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
+          <FormField
+            control={form.control}
+            name={`${sectionKey}AddressLine2`}
+            render={({ field, fieldState }) => (
+              <FormItem className='space-y-1'>
+                <FormLabel className='sr-only'>{t.shipping.address2}</FormLabel>
+                <FormControl>
                   <Input
-                    placeholder={t.shipping.region}
-                    {...field}
+                    placeholder={t.shipping.address2}
                     hasError={!!fieldState.error}
-                    aria-required={requiredFields?.[`${sectionKey}AdminArea1`]}
+                    aria-required={requiredFields?.[`${sectionKey}AddressLine2`]}
+                    {...field}
                     disabled={isConfirmingCheckout}
                     autoComplete='off'
                   />
-                )}
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name={`${sectionKey}PostalCode`}
-          render={({ field, fieldState }) => (
-            <FormItem className='space-y-1'>
-              <FormLabel className='sr-only'>{t.shipping.postalCode}</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder={t.shipping.postalCode}
-                  hasError={!!fieldState.error}
-                  aria-required={requiredFields?.[`${sectionKey}PostalCode`]}
-                  {...field}
-                  disabled={isConfirmingCheckout}
-                  autoComplete='off'
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+          <div className='grid grid-cols-1 sm:grid-cols-3 gap-1'>
+            <FormField
+              control={form.control}
+              name={`${sectionKey}AdminArea2`}
+              render={({ field, fieldState }) => (
+                <FormItem className='space-y-1'>
+                  <FormLabel className='sr-only'>{t.shipping.city}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t.shipping.city}
+                      hasError={!!fieldState.error}
+                      aria-required={requiredFields?.[`${sectionKey}AdminArea2`]}
+                      {...field}
+                      disabled={isConfirmingCheckout}
+                      autoComplete='off'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={`${sectionKey}AdminArea1`}
+              render={({ field, fieldState }) => (
+                <FormItem className='space-y-1'>
+                  <FormLabel className='sr-only'>{t.shipping.region}</FormLabel>
+                  <FormControl>
+                    {hasRegionData(countryValue) ? (
+                      <Select
+                        value={field.value}
+                        onValueChange={value => {
+                          field.onChange(value);
+                          form.setValue(`${sectionKey}AdminArea1`, value, {
+                            shouldValidate: true,
+                          });
 
-      <PhoneInput sectionKey={sectionKey} disabled={isConfirmingCheckout} />
+                          form.setValue(`${sectionKey}PostalCode`, '', {
+                            shouldDirty: true,
+                            shouldValidate: false,
+                          });
+
+                          // Track region selection event
+                          track({
+                            eventId: eventIds.changeRegion,
+                            type: TrackingEventType.CLICK,
+                            properties: {
+                              sectionKey,
+                              countryCode: countryValue,
+                              regionCode: value,
+                              regionName: getRegions(countryValue)?.find(
+                                r => r.code === value
+                              )?.label,
+                            },
+                          });
+                        }}
+                        disabled={isConfirmingCheckout}
+                      >
+                        <FormControl>
+                          <SelectTrigger
+                            hasError={!!fieldState.error}
+                            disabled={isConfirmingCheckout}
+                            aria-required={
+                              requiredFields?.[`${sectionKey}AdminArea1`]
+                            }
+                            tabIndex={0}
+                          >
+                            <SelectValue placeholder={t.shipping.region} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {getRegions(countryValue)?.map(region => (
+                            <SelectItem
+                              key={region.code}
+                              value={region.code}
+                              disabled={isConfirmingCheckout}
+                            >
+                              {region.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        placeholder={t.shipping.region}
+                        {...field}
+                        hasError={!!fieldState.error}
+                        aria-required={
+                          requiredFields?.[`${sectionKey}AdminArea1`]
+                        }
+                        disabled={isConfirmingCheckout}
+                        autoComplete='off'
+                      />
+                    )}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name={`${sectionKey}PostalCode`}
+              render={({ field, fieldState }) => (
+                <FormItem className='space-y-1'>
+                  <FormLabel className='sr-only'>
+                    {t.shipping.postalCode}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t.shipping.postalCode}
+                      hasError={!!fieldState.error}
+                      aria-required={
+                        requiredFields?.[`${sectionKey}PostalCode`]
+                      }
+                      {...field}
+                      disabled={isConfirmingCheckout}
+                      autoComplete='off'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <PhoneInput sectionKey={sectionKey} disabled={isConfirmingCheckout} />
+        </>
+      )}
     </fieldset>
   );
 }
