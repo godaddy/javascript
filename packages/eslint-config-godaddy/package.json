@@ -27,7 +27,7 @@
     "eslint": "^10"
   },
   "dependencies": {
-    "@eslint/js": "^10.0.0",
+    "@eslint/js": "^10.0.1",
     "eslint-plugin-jsdoc": "^50.6.9",
     "eslint-plugin-json": "^4.0.1",
     "eslint-plugin-mocha": "^10.5.0",
