@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.42
+
+### Patch Changes
+
+- 798d6d6: Fix "Complete your free order" button not working for free pickup orders. Now only requires billing first and last name instead of full billing address.
+
 ## 1.0.41
 
 ### Patch Changes
