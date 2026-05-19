@@ -15,6 +15,16 @@ export function createActionMiddleware(options?: VerificationOptions) {
     async ({ next, request }) => {
       const url = new URL(request.url);
 
+      // Read raw body as text from cloned request
+      // This preserves the original request stream for downstream handlers
+      let rawBody: string | undefined;
+
+      if (request.body) {
+        // Clone the request to read body without consuming original
+        const clonedRequest = request.clone();
+        rawBody = await clonedRequest.text();
+      }
+
       const verifiableRequest: VerifiableRequest = {
         method: request.method,
         url: request.url,
@@ -22,7 +32,8 @@ export function createActionMiddleware(options?: VerificationOptions) {
         query: Object.fromEntries(url.searchParams),
         // biome-ignore lint/suspicious/noExplicitAny: Headers type compatibility issue
         headers: Object.fromEntries(request.headers as any),
-        body: request.body ? await request.json() : undefined,
+        // Pass raw body string directly for signature verification
+        body: rawBody,
       };
 
       const result = await verifyAction(verifiableRequest, options);
@@ -34,6 +45,7 @@ export function createActionMiddleware(options?: VerificationOptions) {
         });
       }
 
+      // Original request is passed to next(), allowing downstream to call .json()
       return next();
     },
   );
@@ -50,6 +62,16 @@ export function createWebhookMiddleware(options?: WebhookVerificationOptions) {
     async ({ next, request }) => {
       const url = new URL(request.url);
 
+      // Read raw body as text from cloned request
+      // This preserves the original request stream for downstream handlers
+      let rawBody: string | undefined;
+
+      if (request.body) {
+        // Clone the request to read body without consuming original
+        const clonedRequest = request.clone();
+        rawBody = await clonedRequest.text();
+      }
+
       const verifiableRequest: VerifiableRequest = {
         method: request.method,
         url: request.url,
@@ -57,7 +79,8 @@ export function createWebhookMiddleware(options?: WebhookVerificationOptions) {
         query: Object.fromEntries(url.searchParams),
         // biome-ignore lint/suspicious/noExplicitAny: Headers type compatibility issue
         headers: Object.fromEntries(request.headers as any),
-        body: request.body ? await request.json() : undefined,
+        // Pass raw body string directly for signature verification
+        body: rawBody,
       };
 
       const result = verifyWebhookSubscription(verifiableRequest, options);
@@ -69,6 +92,7 @@ export function createWebhookMiddleware(options?: WebhookVerificationOptions) {
         });
       }
 
+      // Original request is passed to next(), allowing downstream to call .json()
       return next();
     },
   );
