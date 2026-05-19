@@ -8,6 +8,30 @@ import { verifyAction } from '../utils/verification';
 import { verifyWebhookSubscription } from '../utils/webhook';
 
 /**
+ * Creates a 400 Response for invalid JSON in request body
+ */
+function createInvalidJsonResponse(): Response {
+  return new Response(
+    JSON.stringify({
+      name: 'INVALID_REQUEST_BODY',
+      message: 'The request body contains invalid JSON',
+      correlationId: crypto.randomUUID(),
+      details: [
+        {
+          issue: 'INVALID_JSON',
+          description: 'The request body could not be parsed as JSON',
+          location: 'body',
+        },
+      ],
+    }),
+    {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    },
+  );
+}
+
+/**
  * Creates a middleware for TanStack Start that verifies signed action requests
  */
 export function createActionMiddleware(options?: VerificationOptions) {
@@ -18,11 +42,22 @@ export function createActionMiddleware(options?: VerificationOptions) {
       // Read raw body as text from cloned request
       // This preserves the original request stream for downstream handlers
       let rawBody: string | undefined;
+      let parsedBody: unknown;
 
       if (request.body) {
         // Clone the request to read body without consuming original
         const clonedRequest = request.clone();
         rawBody = await clonedRequest.text();
+
+        // Parse the raw body for downstream use
+        if (rawBody) {
+          try {
+            parsedBody = JSON.parse(rawBody);
+          } catch (error) {
+            // Return 400 for invalid JSON
+            throw createInvalidJsonResponse();
+          }
+        }
       }
 
       const verifiableRequest: VerifiableRequest = {
@@ -45,8 +80,8 @@ export function createActionMiddleware(options?: VerificationOptions) {
         });
       }
 
-      // Original request is passed to next(), allowing downstream to call .json()
-      return next();
+      // Pass parsed body to next middleware via context
+      return next({ context: { body: parsedBody } });
     },
   );
 
@@ -65,11 +100,22 @@ export function createWebhookMiddleware(options?: WebhookVerificationOptions) {
       // Read raw body as text from cloned request
       // This preserves the original request stream for downstream handlers
       let rawBody: string | undefined;
+      let parsedBody: unknown;
 
       if (request.body) {
         // Clone the request to read body without consuming original
         const clonedRequest = request.clone();
         rawBody = await clonedRequest.text();
+
+        // Parse the raw body for downstream use
+        if (rawBody) {
+          try {
+            parsedBody = JSON.parse(rawBody);
+          } catch (error) {
+            // Return 400 for invalid JSON
+            throw createInvalidJsonResponse();
+          }
+        }
       }
 
       const verifiableRequest: VerifiableRequest = {
@@ -92,8 +138,8 @@ export function createWebhookMiddleware(options?: WebhookVerificationOptions) {
         });
       }
 
-      // Original request is passed to next(), allowing downstream to call .json()
-      return next();
+      // Pass parsed body to next middleware via context
+      return next({ context: { body: parsedBody } });
     },
   );
 
