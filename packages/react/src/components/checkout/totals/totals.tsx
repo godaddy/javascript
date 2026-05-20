@@ -1,4 +1,5 @@
 import { DiscountStandalone } from '@/components/checkout/discount/discount-standalone';
+import { Target } from '@/components/checkout/target/target';
 import { TotalLineItemSkeleton } from '@/components/checkout/totals/totals-skeleton';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -22,19 +23,21 @@ export interface DraftOrderTotalsProps {
   inputInMinorUnits?: boolean;
 }
 
-function TotalLineItem({
-  title,
-  description,
-  value,
-  currencyCode = 'USD',
-  inputInMinorUnits = false,
-}: {
+export interface TotalLineItemProps {
   title: string;
   description?: string;
   value: number;
   currencyCode?: string;
   inputInMinorUnits?: boolean;
-}) {
+}
+
+export function TotalLineItem({
+  title,
+  description,
+  value,
+  currencyCode = 'USD',
+  inputInMinorUnits = false,
+}: TotalLineItemProps) {
   const formatCurrency = useFormatCurrency();
 
   return (
@@ -82,6 +85,7 @@ export function DraftOrderTotals({
   return (
     <div className='grid gap-4'>
       <div className='space-y-2'>
+        <Target id='checkout.summary.totals.subtotal.before' />
         <TotalLineItem
           currencyCode={currencyCode}
           title={t.totals.subtotal}
@@ -93,6 +97,7 @@ export function DraftOrderTotals({
           value={subtotal}
           inputInMinorUnits={inputInMinorUnits}
         />
+        <Target id='checkout.summary.totals.discount.before' />
         {discount > 0 ? (
           isDiscountLoading ? (
             <TotalLineItemSkeleton title={t.totals.discount} />
@@ -105,6 +110,7 @@ export function DraftOrderTotals({
             />
           )
         ) : null}
+        <Target id='checkout.summary.totals.shipping.before' />
         {enableShipping &&
           (isShippingLoading ? (
             <TotalLineItemSkeleton title={t.totals.shipping} />
@@ -116,6 +122,7 @@ export function DraftOrderTotals({
               inputInMinorUnits={inputInMinorUnits}
             />
           ))}
+        <Target id='checkout.summary.totals.tip.before' />
         {tip ? (
           <TotalLineItem
             currencyCode={currencyCode}
@@ -124,6 +131,7 @@ export function DraftOrderTotals({
             inputInMinorUnits={inputInMinorUnits}
           />
         ) : null}
+        <Target id='checkout.summary.totals.taxes.before' />
         {enableTaxes &&
           (isTaxLoading ? (
             <TotalLineItemSkeleton title={t.totals.estimatedTaxes} />
@@ -135,6 +143,7 @@ export function DraftOrderTotals({
               inputInMinorUnits={inputInMinorUnits}
             />
           ))}
+        <Target id='checkout.summary.totals.after' />
       </div>
 
       {enableDiscounts ? (
@@ -149,6 +158,7 @@ export function DraftOrderTotals({
         </div>
       ) : null}
 
+      <Target id='checkout.summary.totals.total-due.before' />
       <div className='border-t border-border pt-4'>
         <div className='flex justify-between items-end'>
           <span className='text-sm'>{t.totals.totalDue}</span>
@@ -166,6 +176,7 @@ export function DraftOrderTotals({
           </div>
         </div>
       </div>
+      <Target id='checkout.summary.totals.total-due.after' />
     </div>
   );
 }
