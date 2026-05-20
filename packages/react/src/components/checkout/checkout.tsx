@@ -13,7 +13,7 @@ import { type Theme, useTheme } from '@/hooks/use-theme';
 import { useVariables } from '@/hooks/use-variables';
 import type { TrackingProperties } from '@/tracking/event-properties';
 import { TrackingProvider } from '@/tracking/tracking-provider';
-import { PaymentMethodType, type CheckoutSession } from '@/types';
+import { type CheckoutSession, PaymentMethodType } from '@/types';
 import { CheckoutFormContainer } from './form/checkout-form-container';
 import type { Target } from './target/target';
 
@@ -258,6 +258,9 @@ export function Checkout(props: CheckoutProps) {
       ? baseCheckoutSchema.extend(checkoutFormSchema)
       : baseCheckoutSchema;
 
+    const enableBillingAddressCollection =
+      session?.enableBillingAddressCollection !== false;
+
     return extendedSchema.superRefine((data, ctx) => {
       if (data.billingPhone) {
         if (!checkIsValidPhone(String(data?.billingPhone))) {
@@ -285,8 +288,12 @@ export function Checkout(props: CheckoutProps) {
       const isPickup = data.deliveryMethod === DeliveryMethods.PICKUP;
       const isFreePickup = isFreeOrder && isPickup;
 
-      // For free pickup orders, only require first/last name (no address)
-      if (isFreePickup) {
+      const requireBillingNamesOnly =
+        (!enableBillingAddressCollection &&
+          (!data.paymentUseShippingAddress || isPickup)) ||
+        isFreePickup;
+
+      if (requireBillingNamesOnly) {
         const nameFields = [
           { key: 'billingFirstName', message: t.validation.enterFirstName },
           { key: 'billingLastName', message: t.validation.enterLastName },
@@ -301,40 +308,41 @@ export function Checkout(props: CheckoutProps) {
             });
           }
         }
-      } else {
-        // Full billing address validation - required if not using shipping address OR pickup
-        const requireBillingAddress =
-          !data.paymentUseShippingAddress || isPickup;
+      }
 
-        if (requireBillingAddress) {
-          // Basic billing fields required for all countries
-          const billingFields = [
-            { key: 'billingFirstName', message: t.validation.enterFirstName },
-            { key: 'billingLastName', message: t.validation.enterLastName },
-            { key: 'billingAddressLine1', message: t.validation.enterAddress },
-            { key: 'billingAdminArea2', message: t.validation.enterCity },
-            {
-              key: 'billingPostalCode',
-              message: t.validation.enterZipPostalCode,
-            },
-            { key: 'billingCountryCode', message: t.validation.enterCountry },
-          ];
+      const requireBillingAddress =
+        enableBillingAddressCollection &&
+        !isFreePickup &&
+        (!data.paymentUseShippingAddress || isPickup);
 
-          if (hasRegionData(String(data.billingCountryCode))) {
-            billingFields.push({
-              key: 'billingAdminArea1',
-              message: t.validation.selectState,
+      if (requireBillingAddress) {
+        // Basic billing fields required for all countries
+        const billingFields = [
+          { key: 'billingFirstName', message: t.validation.enterFirstName },
+          { key: 'billingLastName', message: t.validation.enterLastName },
+          { key: 'billingAddressLine1', message: t.validation.enterAddress },
+          { key: 'billingAdminArea2', message: t.validation.enterCity },
+          {
+            key: 'billingPostalCode',
+            message: t.validation.enterZipPostalCode,
+          },
+          { key: 'billingCountryCode', message: t.validation.enterCountry },
+        ];
+
+        if (hasRegionData(String(data.billingCountryCode))) {
+          billingFields.push({
+            key: 'billingAdminArea1',
+            message: t.validation.selectState,
+          });
+        }
+
+        for (const { key, message } of billingFields) {
+          if (!data[key as keyof typeof data]) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message,
+              path: [key],
             });
-          }
-
-          for (const { key, message } of billingFields) {
-            if (!data[key as keyof typeof data]) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message,
-                path: [key],
-              });
-            }
           }
         }
       }
@@ -375,7 +383,7 @@ export function Checkout(props: CheckoutProps) {
         }
       }
     });
-  }, [checkoutFormSchema, t]);
+  }, [checkoutFormSchema, session?.enableBillingAddressCollection, t]);
 
   const requiredFields = React.useMemo(() => {
     return getRequiredFieldsFromSchema(formSchema);
