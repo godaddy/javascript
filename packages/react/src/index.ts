@@ -14,6 +14,8 @@ export { useIsPaymentDisabled } from './components/checkout/payment/utils/use-is
 export {
   DraftOrderTotals,
   type DraftOrderTotalsProps,
+  TotalLineItem,
+  type TotalLineItemProps,
 } from './components/checkout/totals/totals';
 export * from './components/storefront';
 export * from './godaddy-provider';

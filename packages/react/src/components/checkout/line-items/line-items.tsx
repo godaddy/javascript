@@ -1,6 +1,7 @@
 // import { Badge } from "@/components/ui/badge";
 
 import { Image } from 'lucide-react';
+import { Target } from '@/components/checkout/target/target';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { Button } from '@/components/ui/button.tsx';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -76,6 +77,7 @@ export function DraftOrderLineItems({
 
   return (
     <div className='space-y-4 mb-4'>
+      <Target id='checkout.summary.line-items.before' />
       {items.map(item => (
         <div key={item.id} className='flex items-start space-x-4'>
           {item.image ? (
@@ -170,6 +172,7 @@ export function DraftOrderLineItems({
           </div>
         </div>
       ))}
+      <Target id='checkout.summary.line-items.after' />
     </div>
   );
 }
