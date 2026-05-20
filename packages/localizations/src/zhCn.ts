@@ -90,6 +90,10 @@ export const zhCn = {
   payment: {
     title: '付款',
     description: '所有付款均经过安全加密。',
+    billingInformation: {
+      title: '账单信息',
+      description: '请输入您的账单信息。',
+    },
     billingAddress: {
       title: '账单地址',
       description: '请输入您的账单地址。',

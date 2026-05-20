@@ -94,6 +94,10 @@ export const ptBr = {
   payment: {
     title: 'Pagamento',
     description: 'Todos os pagamentos são seguros e criptografados.',
+    billingInformation: {
+      title: 'Informações de cobrança',
+      description: 'Insira suas informações de cobrança.',
+    },
     billingAddress: {
       title: 'Endereço de Cobrança',
       description: 'Digite seu endereço de cobrança.',

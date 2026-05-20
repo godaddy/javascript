@@ -19,11 +19,22 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
   const deliveryMethod = form.watch('deliveryMethod');
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
+  const shouldShowBillingNamesOnly =
+    paymentMethod === PaymentMethodType.CREDIT_CARD &&
+    session?.enableBillingAddressCollection === false &&
+    !useShippingAddress;
+
   const isBillingAddressRequired =
     !session?.enableShipping ||
+    shouldShowBillingNamesOnly ||
     (session?.enableBillingAddressCollection &&
       (!useShippingAddress || isPickup) &&
       paymentMethod === PaymentMethodType.CREDIT_CARD);
+
+  const billingCopy =
+    shouldShowBillingNamesOnly && t.payment.billingInformation
+      ? t.payment.billingInformation
+      : t.payment.billingAddress;
 
   const getPaymentMethodDescription = useCallback((): string | undefined => {
     if (paymentMethod === 'card') {
@@ -42,17 +53,19 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
       {children}
       {session?.enableShipping &&
         isShipping &&
-        paymentMethod === PaymentMethodType.CREDIT_CARD &&
-        session?.enableBillingAddressCollection && (
+        paymentMethod === PaymentMethodType.CREDIT_CARD && (
           <PaymentAddressToggle className='pt-4' />
         )}
       {isBillingAddressRequired ? (
         <CheckoutSection className='pt-5'>
           <CheckoutSectionHeader
-            title={t.payment.billingAddress.title}
-            description={t.payment.billingAddress.description}
+            title={billingCopy.title}
+            description={billingCopy.description}
           />
-          <AddressForm sectionKey='billing' />
+          <AddressForm
+            sectionKey='billing'
+            onlyNames={shouldShowBillingNamesOnly}
+          />
         </CheckoutSection>
       ) : null}
     </>

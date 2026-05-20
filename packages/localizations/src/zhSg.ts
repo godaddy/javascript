@@ -90,6 +90,10 @@ export const zhSg = {
   payment: {
     title: '付款',
     description: '所有付款都是安全且加密的。',
+    billingInformation: {
+      title: '账单信息',
+      description: '请输入您的账单信息。',
+    },
     billingAddress: {
       title: '账单地址',
       description: '输入您的账单地址。',

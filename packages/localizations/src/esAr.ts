@@ -94,6 +94,10 @@ export const esAr = {
   payment: {
     title: 'Pago',
     description: 'Todos los pagos son seguros y encriptados.',
+    billingInformation: {
+      title: 'Información de facturación',
+      description: 'Ingrese su información de facturación.',
+    },
     billingAddress: {
       title: 'Dirección de Facturación',
       description: 'Ingresá tu dirección de facturación.',
