@@ -49,20 +49,12 @@ function createMockRequest(
   return new Request('https://example.com/api/test?foo=bar', requestInit);
 }
 
-function createInvalidJsonRequest(): Request {
-  return new Request('https://example.com/api/test', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: '{invalid json',
-  });
-}
-
 describe('createActionMiddleware', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should parse body and pass it in context on success', async () => {
+  it('should call next without arguments on success', async () => {
     const body = { action: 'test', data: { key: 'value' } };
     const request = createMockRequest(body);
     const next = vi.fn().mockResolvedValue('next-result');
@@ -72,20 +64,8 @@ describe('createActionMiddleware', () => {
     createActionMiddleware();
     const result = await capturedServerFn({ next, request });
 
-    expect(next).toHaveBeenCalledWith({ context: { body } });
+    expect(next).toHaveBeenCalledWith();
     expect(result).toBe('next-result');
-  });
-
-  it('should pass undefined body in context when request has no body', async () => {
-    const request = createMockRequest();
-    const next = vi.fn().mockResolvedValue('next-result');
-
-    mockVerifyAction.mockResolvedValue({ success: true });
-
-    createActionMiddleware();
-    await capturedServerFn({ next, request });
-
-    expect(next).toHaveBeenCalledWith({ context: { body: undefined } });
   });
 
   it('should read body as text from cloned request (not json)', async () => {
@@ -186,39 +166,6 @@ describe('createActionMiddleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('should throw a 400 Response with InvalidBodyError when body is invalid JSON', async () => {
-    const request = createInvalidJsonRequest();
-    const next = vi.fn();
-
-    createActionMiddleware();
-
-    try {
-      await capturedServerFn({ next, request });
-      expect.unreachable('Should have thrown');
-    } catch (thrown) {
-      expect(thrown).toBeInstanceOf(Response);
-      const response = thrown as Response;
-      expect(response.status).toBe(400);
-      expect(response.headers.get('Content-Type')).toBe('application/json');
-      const responseBody = await response.json();
-      expect(responseBody.name).toBe('INVALID_REQUEST_BODY');
-      expect(responseBody.message).toBe(
-        'The request body contains invalid JSON',
-      );
-      expect(responseBody.correlationId).toBeDefined();
-      expect(responseBody.details).toEqual([
-        {
-          issue: 'INVALID_JSON',
-          description: 'The request body could not be parsed as JSON',
-          location: 'body',
-        },
-      ]);
-    }
-
-    expect(next).not.toHaveBeenCalled();
-    expect(mockVerifyAction).not.toHaveBeenCalled();
-  });
-
   it('should preserve exact raw body string including whitespace', async () => {
     // Test that formatting/whitespace is preserved exactly
     const rawBodyString = '{\n  "action": "test",\n  "data": {\n    "key": "value"\n  }\n}';
@@ -241,13 +188,6 @@ describe('createActionMiddleware', () => {
       }),
       undefined,
     );
-
-    // But parsed body (without whitespace) is passed to next
-    expect(next).toHaveBeenCalledWith({
-      context: {
-        body: { action: 'test', data: { key: 'value' } },
-      },
-    });
   });
 
   it('should preserve unicode and special characters in raw body', async () => {
@@ -279,7 +219,7 @@ describe('createWebhookMiddleware', () => {
     vi.clearAllMocks();
   });
 
-  it('should parse body and pass it in context on success', async () => {
+  it('should call next without arguments on success', async () => {
     const body = { event: 'order.created', payload: { id: '123' } };
     const request = createMockRequest(body);
     const next = vi.fn().mockResolvedValue('next-result');
@@ -289,20 +229,8 @@ describe('createWebhookMiddleware', () => {
     createWebhookMiddleware();
     const result = await capturedServerFn({ next, request });
 
-    expect(next).toHaveBeenCalledWith({ context: { body } });
+    expect(next).toHaveBeenCalledWith();
     expect(result).toBe('next-result');
-  });
-
-  it('should pass undefined body in context when request has no body', async () => {
-    const request = createMockRequest();
-    const next = vi.fn().mockResolvedValue('next-result');
-
-    mockVerifyWebhookSubscription.mockReturnValue({ success: true });
-
-    createWebhookMiddleware();
-    await capturedServerFn({ next, request });
-
-    expect(next).toHaveBeenCalledWith({ context: { body: undefined } });
   });
 
   it('should read body as text from cloned request (not json)', async () => {
@@ -406,39 +334,6 @@ describe('createWebhookMiddleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('should throw a 400 Response with InvalidBodyError when body is invalid JSON', async () => {
-    const request = createInvalidJsonRequest();
-    const next = vi.fn();
-
-    createWebhookMiddleware();
-
-    try {
-      await capturedServerFn({ next, request });
-      expect.unreachable('Should have thrown');
-    } catch (thrown) {
-      expect(thrown).toBeInstanceOf(Response);
-      const response = thrown as Response;
-      expect(response.status).toBe(400);
-      expect(response.headers.get('Content-Type')).toBe('application/json');
-      const responseBody = await response.json();
-      expect(responseBody.name).toBe('INVALID_REQUEST_BODY');
-      expect(responseBody.message).toBe(
-        'The request body contains invalid JSON',
-      );
-      expect(responseBody.correlationId).toBeDefined();
-      expect(responseBody.details).toEqual([
-        {
-          issue: 'INVALID_JSON',
-          description: 'The request body could not be parsed as JSON',
-          location: 'body',
-        },
-      ]);
-    }
-
-    expect(next).not.toHaveBeenCalled();
-    expect(mockVerifyWebhookSubscription).not.toHaveBeenCalled();
-  });
-
   it('should preserve exact raw body string including whitespace', async () => {
     // Test that formatting/whitespace is preserved exactly
     const rawBodyString = '{\n  "event": "order.created",\n  "payload": {\n    "id": "123"\n  }\n}';
@@ -461,13 +356,6 @@ describe('createWebhookMiddleware', () => {
       }),
       undefined,
     );
-
-    // But parsed body (without whitespace) is passed to next
-    expect(next).toHaveBeenCalledWith({
-      context: {
-        body: { event: 'order.created', payload: { id: '123' } },
-      },
-    });
   });
 
   it('should preserve unicode and special characters in raw body', async () => {
