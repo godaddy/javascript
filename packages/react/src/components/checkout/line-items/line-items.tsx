@@ -135,23 +135,26 @@ export function DraftOrderLineItems({
                   ) : null}
                 </span>
                 <span className='text-xs text-muted-foreground'>
-                  {t.general.quantity}: {item.quantity} &middot;{' '}
+                  {t.general.quantity}: {item.quantity}
                   {onRemoveFromCart ? (
-                    <Button
-                      className='text-xs p-0 h-auto text-inherit underline'
-                      variant='link'
-                      onClick={() =>
-                        item.id ? onRemoveFromCart(item.id) : null
-                      }
-                      disabled={isRemovingFromCart}
-                      aria-label='Remove item'
-                    >
-                      {isRemovingFromCart && removingItemId === item.id ? (
-                        <span>{t.storefront.removing}</span>
-                      ) : (
-                        <span>{t.storefront.remove}</span>
-                      )}
-                    </Button>
+                    <>
+                      &middot;{' '}
+                      <Button
+                        className='text-xs p-0 h-auto text-inherit underline'
+                        variant='link'
+                        onClick={() =>
+                          item.id ? onRemoveFromCart(item.id) : null
+                        }
+                        disabled={isRemovingFromCart}
+                        aria-label='Remove item'
+                      >
+                        {isRemovingFromCart && removingItemId === item.id ? (
+                          <span>{t.storefront.removing}</span>
+                        ) : (
+                          <span>{t.storefront.remove}</span>
+                        )}
+                      </Button>
+                    </>
                   ) : null}
                 </span>
               </div>
