@@ -252,10 +252,21 @@ export function PaymentForm(
     });
   }, [session, pazeSupported, applePaySupported, googlePaySupported]);
 
+  const shouldShowBillingNamesOnly =
+    paymentMethod !== PaymentMethodType.CREDIT_CARD &&
+    session?.enableBillingAddressCollection === false &&
+    !useShippingAddress;
+
   const isBillingAddressRequired =
-    session?.enableBillingAddressCollection &&
-    (!useShippingAddress || isPickup) &&
-    paymentMethod !== PaymentMethodType.CREDIT_CARD;
+    shouldShowBillingNamesOnly ||
+    (session?.enableBillingAddressCollection &&
+      (!useShippingAddress || isPickup) &&
+      paymentMethod !== PaymentMethodType.CREDIT_CARD);
+
+  const billingCopy =
+    shouldShowBillingNamesOnly && t.payment.billingInformation
+      ? t.payment.billingInformation
+      : t.payment.billingAddress;
 
   const filteredPaymentMethods = React.useMemo(() => {
     const sortedKeys = Object.keys(PAYMENT_METHOD_ICONS)
@@ -476,10 +487,13 @@ export function PaymentForm(
       {isBillingAddressRequired ? (
         <CheckoutSection className={isPickup ? 'pt-5' : ''}>
           <CheckoutSectionHeader
-            title={t.payment.billingAddress.title}
-            description={t.payment.billingAddress.description}
+            title={billingCopy.title}
+            description={billingCopy.description}
           />
-          <AddressForm sectionKey='billing' />
+          <AddressForm
+            sectionKey='billing'
+            onlyNames={shouldShowBillingNamesOnly}
+          />
         </CheckoutSection>
       ) : null}
 

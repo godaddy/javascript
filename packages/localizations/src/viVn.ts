@@ -94,6 +94,10 @@ export const viVn = {
   payment: {
     title: 'Thanh toán',
     description: 'Tất cả thanh toán đều được bảo mật và mã hóa.',
+    billingInformation: {
+      title: 'Thông tin thanh toán',
+      description: 'Nhập thông tin thanh toán của bạn.',
+    },
     billingAddress: {
       title: 'Địa chỉ thanh toán',
       description: 'Nhập địa chỉ thanh toán của bạn.',

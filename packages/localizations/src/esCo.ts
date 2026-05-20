@@ -94,6 +94,10 @@ export const esCo = {
   payment: {
     title: 'Pago',
     description: 'Todos los pagos son seguros y encriptados.',
+    billingInformation: {
+      title: 'Información de facturación',
+      description: 'Ingrese su información de facturación.',
+    },
     billingAddress: {
       title: 'Dirección de facturación',
       description: 'Ingresa tu dirección de facturación.',

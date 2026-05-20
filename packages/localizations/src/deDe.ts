@@ -94,6 +94,10 @@ export const deDe = {
   payment: {
     title: 'Zahlung',
     description: 'Alle Zahlungen sind sicher und verschlüsselt.',
+    billingInformation: {
+      title: 'Rechnungsinformationen',
+      description: 'Geben Sie Ihre Rechnungsinformationen ein.',
+    },
     billingAddress: {
       title: 'Rechnungsadresse',
       description: 'Geben Sie Ihre Rechnungsadresse ein.',

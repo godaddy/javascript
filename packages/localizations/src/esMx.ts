@@ -94,6 +94,10 @@ export const esMx = {
   payment: {
     title: 'Pago',
     description: 'Todos los pagos son seguros y cifrados.',
+    billingInformation: {
+      title: 'Información de facturación',
+      description: 'Ingrese su información de facturación.',
+    },
     billingAddress: {
       title: 'Dirección de Facturación',
       description: 'Ingrese su dirección de facturación.',
