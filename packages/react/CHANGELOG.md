@@ -1,5 +1,79 @@
 # @godaddy/react
 
+## 1.0.42
+
+### Patch Changes
+
+- 798d6d6: Fix "Complete your free order" button not working for free pickup orders. Now only requires billing first and last name instead of full billing address.
+
+## 1.0.41
+
+### Patch Changes
+
+- 6f9b610: Update commerce api skill to check cli version before API discovery
+
+## 1.0.40
+
+### Patch Changes
+
+- f43f2dd: Add gopay appId override experimental rule
+
+## 1.0.39
+
+### Patch Changes
+
+- a53681a: This PR adds payment authorization integration to the MercadoPago checkout button component, implementing preference ID generation for brick initialization
+
+## 1.0.38
+
+### Patch Changes
+
+- 93b26ea: Add standard google pay and apple pay payment methods using GDP
+
+## 1.0.37
+
+### Patch Changes
+
+- 2f604ef: Update skill to suggest correct godaddy/cli URL and fix example CLI calls
+
+## 1.0.36
+
+### Patch Changes
+
+- 815fa6c: Fix pickup tax recalculation to always use the pickup location address when billing address fields are updated.
+
+## 1.0.35
+
+### Patch Changes
+
+- 8d3f2c2: Update commerce api skill to utilize godaddy cli as api source
+
+## 1.0.34
+
+### Patch Changes
+
+- 57d6115: Add commerce api skill
+
+## 1.0.33
+
+### Patch Changes
+
+- 353dc8b: Add support for enAu localizations
+- Updated dependencies [353dc8b]
+  - @godaddy/localizations@1.0.9
+
+## 1.0.32
+
+### Patch Changes
+
+- ed3cbef: Fix bug with large leadTimes and add pickupSlotInterval to uncouple leadTime from time slot generation
+
+## 1.0.31
+
+### Patch Changes
+
+- b3c0dad: Fix MercadoPago amount conversion from minor units to major units. The SDK expects amounts in major units (e.g., 90.00 BRL) but we were sending minor units (e.g., 9000 cents).
+
 ## 1.0.30
 
 ### Patch Changes

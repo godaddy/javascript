@@ -3,12 +3,14 @@ import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadMercadoPago } from '@/components/checkout/payment/utils/use-load-mercadopago';
+import { formatCurrency } from '@/components/checkout/utils/format-currency';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -38,11 +40,20 @@ export function MercadoPagoCheckoutButton() {
   const form = useFormContext();
   const { isMercadoPagoLoaded } = useLoadMercadoPago();
   const confirmCheckout = useConfirmCheckout();
+  const authorizeCheckout = useAuthorizeCheckout();
 
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isBrickReady, setIsBrickReady] = useState(!!brickController);
+  const [isBrickReady, setIsBrickReady] = useState(false);
   const elementId = 'mercadopago-brick-container';
+
+  const getPreferenceId = async () => {
+    const response = await authorizeCheckout.mutateAsync({
+      paymentToken: '',
+      paymentType: PaymentMethodType.MERCADOPAGO,
+      paymentProvider: PaymentProvider.MERCADOPAGO,
+    });
+    return response?.transactionRefNum;
+  };
 
   const handleSubmit = useCallback(
     async ({ formData }: any) => {
@@ -88,15 +99,22 @@ export function MercadoPagoCheckoutButton() {
 
     if (canInitialize) {
       if (brickController) {
-        // Brick already exists, just mark as ready
+        // Brick already exists, onReady callback will mark as ready
         setIsBrickReady(true);
       } else if (brickCreationPromise) {
-        // Brick creation in progress, wait for it
-        brickCreationPromise.then(() => setIsBrickReady(true));
+        // Brick creation in progress, onReady/onError callbacks will handle state
       } else {
         // Create new brick
         const renderBrick = async () => {
-          const total = totals?.total?.value || 0;
+          // Convert from minor units (cents) to major units
+          const total = parseFloat(
+            formatCurrency({
+              amount: totals?.total?.value || 0,
+              currencyCode: totals?.total?.currencyCode || 'USD',
+              inputInMinorUnits: true,
+              returnRaw: true,
+            })
+          );
 
           try {
             const container = document.getElementById(elementId);
@@ -107,9 +125,12 @@ export function MercadoPagoCheckoutButton() {
             const { bricksBuilderInstance: bricksBuilder } =
               getMercadoPagoInstance(mercadoPagoConfig.publicKey);
 
+            const mercadoPagoPreferenceId = await getPreferenceId();
+
             brickController = await bricksBuilder.create('payment', elementId, {
               initialization: {
                 amount: total,
+                preferenceId: mercadoPagoPreferenceId,
                 payer: { email: 'dummy@testuser.com' },
               },
               customization: {
@@ -126,7 +147,7 @@ export function MercadoPagoCheckoutButton() {
               },
               callbacks: {
                 onReady: () => {
-                  setIsLoading(false);
+                  setIsBrickReady(true);
                   const brickContainer = document.getElementById(elementId);
                   const formElement = brickContainer?.querySelector('form');
                   if (formElement) {
@@ -138,15 +159,17 @@ export function MercadoPagoCheckoutButton() {
                   }
                 },
                 onError: () => {
-                  setError(t.errors.errorProcessingPayment);
-                  setIsLoading(false);
+                  // Only treat as initialization failure if the brick never became ready.
+                  // Card validation errors are handled by the brick's own UI.
+                  if (!brickController) {
+                    setError(t.errors.failedToInitializePayment);
+                    setIsBrickReady(false);
+                  }
                 },
               },
             });
-
-            setIsBrickReady(true);
           } catch (_err) {
-            setError(t.errors.errorProcessingPayment);
+            setError(t.errors.failedToInitializePayment);
             setIsBrickReady(false);
             brickCreationPromise = null;
           }
@@ -175,7 +198,7 @@ export function MercadoPagoCheckoutButton() {
     isMercadoPagoLoaded,
     mercadoPagoConfig?.publicKey,
     elementId,
-    t.errors.errorProcessingPayment,
+    t.errors.failedToInitializePayment,
   ]);
 
   const handleClick = async () => {
@@ -206,9 +229,18 @@ export function MercadoPagoCheckoutButton() {
           size='lg'
           type='button'
           onClick={handleClick}
-          disabled={isPaymentDisabled || isLoading || !isBrickReady}
+          disabled={
+            isPaymentDisabled || authorizeCheckout.isPending || !isBrickReady
+          }
         >
-          {t.payment.payNow}
+          {authorizeCheckout.isPending && !error ? (
+            <>
+              <LoaderCircle className='h-5 w-5 animate-spin' />
+              {t.payment.payNow}
+            </>
+          ) : (
+            t.payment.payNow
+          )}
         </Button>
       ) : (
         <Button

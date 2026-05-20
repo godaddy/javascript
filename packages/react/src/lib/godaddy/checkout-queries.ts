@@ -62,6 +62,10 @@ export const GetCheckoutSessionQuery = graphql(`
                 enabled
                   minimumOrderTotal
               }
+              gopay_override {
+                enabled
+                goPayAppId
+              }
             }
             shipping {
               originAddress {
@@ -135,6 +139,7 @@ export const GetCheckoutSessionQuery = graphql(`
               operatingHours {
                 pickupWindowInDays
                 leadTime
+                pickupSlotInterval
                 timeZone
                 hours {
                   monday {
@@ -178,6 +183,7 @@ export const GetCheckoutSessionQuery = graphql(`
             defaultOperatingHours {
               pickupWindowInDays
               leadTime
+              pickupSlotInterval
               timeZone
               hours {
                 monday {

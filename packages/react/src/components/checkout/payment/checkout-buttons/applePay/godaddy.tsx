@@ -21,7 +21,7 @@ import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import { PaymentMethodType } from '@/types';
 
-export function GoDaddyGooglePayCheckoutButton() {
+export function GoDaddyApplePayCheckoutButton() {
   const { session, setCheckoutErrors, isConfirmingCheckout } =
     useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
@@ -44,11 +44,11 @@ export function GoDaddyGooglePayCheckoutButton() {
   const isDisabled = isConfirmingCheckout || isPaymentDisabled;
 
   // Use a ref so the SDK's stale onClick closure always calls the latest handler
-  const handleGooglePayClickRef = useRef<() => Promise<void>>(
+  const handleApplePayClickRef = useRef<() => Promise<void>>(
     async () => undefined
   );
 
-  const handleGooglePayClick = useCallback(async () => {
+  const handleApplePayClick = useCallback(async () => {
     if (!poyntStandardRequest || isDisabled) return;
 
     const valid = await form.trigger();
@@ -62,19 +62,19 @@ export function GoDaddyGooglePayCheckoutButton() {
 
     setCheckoutErrors(undefined);
 
-    collect?.current?.startGooglePaySession(poyntStandardRequest);
+    collect?.current?.startApplePaySession(poyntStandardRequest);
 
     track({
-      eventId: eventIds.googlePayClick,
+      eventId: eventIds.applePayClick,
       type: TrackingEventType.CLICK,
       properties: {
-        paymentType: PaymentMethodType.GOOGLE_PAY,
+        paymentType: PaymentMethodType.APPLE_PAY,
       },
     });
   }, [poyntStandardRequest, setCheckoutErrors, form, isDisabled]);
 
   // Keep ref in sync so the SDK's stale onClick closure always calls the latest handler
-  handleGooglePayClickRef.current = handleGooglePayClick;
+  handleApplePayClickRef.current = handleApplePayClick;
 
   // Initialize the TokenizeJs instance when the component mounts
   useEffect(() => {
@@ -130,11 +130,11 @@ export function GoDaddyGooglePayCheckoutButton() {
       return;
 
     collect.current?.supportWalletPayments().then(supports => {
-      if (!hasMounted.current && supports.googlePay) {
+      if (!hasMounted.current && supports.applePay) {
         hasMounted.current = true;
 
-        collect?.current?.mount('google-pay-element', document, {
-          paymentMethods: ['google_pay'],
+        collect?.current?.mount('apple-pay-element', document, {
+          paymentMethods: ['apple_pay'],
           buttonsContainerOptions: {
             className: 'gap-1 !flex-col sm:!flex-row place-items-center',
           },
@@ -144,14 +144,14 @@ export function GoDaddyGooglePayCheckoutButton() {
             height: '50px',
             width: '100%',
             justifyContent: 'flex-start',
-            onClick: () => handleGooglePayClickRef.current(),
+            onClick: () => handleApplePayClickRef.current(),
           },
         });
 
         setIsCollectLoading(false);
 
         track({
-          eventId: eventIds.googlePayImpression,
+          eventId: eventIds.applePayImpression,
           type: TrackingEventType.IMPRESSION,
           properties: {
             provider: 'poynt',
@@ -253,7 +253,7 @@ export function GoDaddyGooglePayCheckoutButton() {
   return (
     <>
       <div
-        id='google-pay-element'
+        id='apple-pay-element'
         className={isDisabled ? 'opacity-50 pointer-events-none' : undefined}
       />
       {isCollectLoading ? (

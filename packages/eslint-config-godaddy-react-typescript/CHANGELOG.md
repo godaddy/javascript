@@ -1,5 +1,16 @@
 # eslint-config-godaddy-react-typescript
 
+## 6.0.0
+
+### Major Changes
+
+- 0fabf67: Upgrade to ESLint 10
+
+### Patch Changes
+
+- Updated dependencies [0fabf67]
+  - eslint-config-godaddy-react@11.0.0
+
 ## 5.0.0
 
 ### Major Changes

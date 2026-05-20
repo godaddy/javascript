@@ -1,5 +1,11 @@
 # eslint-config-godaddy
 
+## 9.0.0
+
+### Major Changes
+
+- 0fabf67: Upgrade to ESLint 10
+
 ## 8.0.2
 
 ### Patch Changes
