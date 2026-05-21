@@ -223,6 +223,8 @@ export interface CheckoutProps {
   targets?: Partial<Record<Target, () => ReactNode>>;
   checkoutFormSchema?: CheckoutFormSchema;
   defaultValues?: Pick<CheckoutFormData, 'contactEmail'>;
+  isLoading?: boolean;
+  loadingFallback?: ReactNode;
 }
 
 export function Checkout(props: CheckoutProps) {

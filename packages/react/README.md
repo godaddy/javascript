@@ -184,6 +184,23 @@ All fields are optional strings. Pass any subset to override the defaults.
 | `secondaryBackground` | Secondary background |
 | `secondaryForeground` | Text on secondary backgrounds |
 
+### Loading State
+
+The `<Checkout />` component manages its own loading state internally — it shows a skeleton while it fetches its JWT and draft order, then reveals the form. If you need to coordinate with your own preload work (user profile, theme, feature flags, etc.), the following props let you keep the skeleton up while your data loads.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `isLoading` | `boolean` | When `true`, the checkout keeps showing its loading state even after its own internal data has finished loading. Internal queries still run in the background, so the checkout is warm and ready to render the moment you flip this back to `false`. Mount the component early and reveal late — you avoid both the layout flicker of a late-mount and the wasted time of gating the mount entirely. |
+| `loadingFallback` | `ReactNode` | Optional override for the loading UI. Defaults to the built-in `<CheckoutSkeleton />`. Rendered whenever `isLoading` is `true` or the checkout is loading its own internal data. |
+
+```tsx
+<Checkout
+  session={session}
+  isLoading={isLoadingUserProfile}
+  loadingFallback={<MyCustomSkeleton />}
+/>
+```
+
 ## AI Agent Skills
 
 This package ships a [TanStack Intent](https://tanstack.com/intent/latest) skill that teaches AI coding agents how to authenticate with the GoDaddy Commerce Platform using OAuth2 client credentials and create checkout sessions. For API discovery and testing, the skill directs agents to use [`@godaddy/cli`](https://www.npmjs.com/package/@godaddy/cli).

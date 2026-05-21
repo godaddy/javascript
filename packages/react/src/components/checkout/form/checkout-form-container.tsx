@@ -59,8 +59,12 @@ export function CheckoutFormContainer({
     }
   }
 
-  if (draftOrderQuery.isLoading || isLoadingJWT) {
-    return <CheckoutSkeleton direction={props.direction} />;
+  if (props.isLoading || draftOrderQuery.isLoading || isLoadingJWT) {
+    return (
+      props.loadingFallback ?? (
+        <CheckoutSkeleton direction={props.direction} />
+      )
+    );
   }
 
   return (
