@@ -7,14 +7,19 @@ import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 
 export function ACHCheckoutButton() {
-  const { collect, isLoadingNonce } = usePoyntACHCollect();
+  const { collect, isLoadingNonce, setIsLoadingNonce } = usePoyntACHCollect();
   const { isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { t } = useGoDaddyContext();
 
+  const isDisabled =
+    isLoadingNonce || isConfirmingCheckout || isPaymentDisabled;
+
   const handleSubmit = useCallback(async () => {
+    if (isDisabled || !collect) return;
+
     const valid = await form.trigger();
     if (!valid) {
       const firstError = Object.keys(form.formState.errors)[0];
@@ -24,8 +29,9 @@ export function ACHCheckoutButton() {
       return;
     }
 
-    collect?.getNonce({});
-  }, [form, collect]);
+    setIsLoadingNonce(true);
+    collect.getNonce({});
+  }, [collect, form, isDisabled, setIsLoadingNonce]);
 
   if (!collect) return null;
 
@@ -36,7 +42,7 @@ export function ACHCheckoutButton() {
       type='button'
       onClick={handleSubmit}
       ref={buttonRef}
-      disabled={isLoadingNonce || isConfirmingCheckout || isPaymentDisabled}
+      disabled={isDisabled}
     >
       {t.payment.payNow}
     </Button>

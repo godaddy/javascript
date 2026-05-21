@@ -81,6 +81,11 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   ccavenue: <CcavenueIcon className='h-5 w-5' />,
 };
 
+const INLINE_BILLING_PAYMENT_METHODS: PaymentMethodValue[] = [
+  PaymentMethodType.CREDIT_CARD,
+  PaymentMethodType.ACH,
+];
+
 export function PaymentForm(
   props: DraftOrderTotalsProps & { items: Product[] }
 ) {
@@ -99,6 +104,11 @@ export function PaymentForm(
   const useShippingAddress = form.watch('paymentUseShippingAddress');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
+  const isPaymentMethodWithInlineBilling = paymentMethod
+    ? INLINE_BILLING_PAYMENT_METHODS.includes(
+        paymentMethod as PaymentMethodValue
+      )
+    : false;
   const methodConfig = useGetSelectedPaymentMethod(
     paymentMethod as PaymentMethodValue
   );
@@ -264,15 +274,15 @@ export function PaymentForm(
   }, [session, pazeSupported, applePaySupported, googlePaySupported]);
 
   const shouldShowBillingNamesOnly =
-    paymentMethod !== PaymentMethodType.CREDIT_CARD &&
+    !isPaymentMethodWithInlineBilling &&
     session?.enableBillingAddressCollection === false &&
-    !useShippingAddress;
+    (!useShippingAddress || isPickup);
 
   const isBillingAddressRequired =
     shouldShowBillingNamesOnly ||
     (session?.enableBillingAddressCollection &&
       (!useShippingAddress || isPickup) &&
-      paymentMethod !== PaymentMethodType.CREDIT_CARD);
+      !isPaymentMethodWithInlineBilling);
 
   const billingCopy =
     shouldShowBillingNamesOnly && t.payment.billingInformation
@@ -492,7 +502,7 @@ export function PaymentForm(
 
       {isShipping &&
       session?.enableShipping &&
-      paymentMethod !== PaymentMethodType.CREDIT_CARD ? (
+      !isPaymentMethodWithInlineBilling ? (
         <PaymentAddressToggle />
       ) : null}
       {isBillingAddressRequired ? (

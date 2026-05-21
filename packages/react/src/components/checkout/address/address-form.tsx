@@ -58,7 +58,10 @@ interface AddressFormProps {
   onlyNames?: boolean;
 }
 
-export function AddressForm({ sectionKey, onlyNames = false }: AddressFormProps) {
+export function AddressForm({
+  sectionKey,
+  onlyNames = false,
+}: AddressFormProps) {
   const form = useFormContext();
   const { session } = useCheckoutContext();
   const { t } = useGoDaddyContext();
@@ -442,8 +445,7 @@ export function AddressForm({ sectionKey, onlyNames = false }: AddressFormProps)
           render={({ field, fieldState }) => (
             <FormItem className='space-y-1'>
               <FormLabel className='sr-only'>
-                {t.shipping.firstName}{' '}
-                {!onlyNames && `(${t.general.optional})`}
+                {t.shipping.firstName} {!onlyNames && `(${t.general.optional})`}
               </FormLabel>
               <FormControl>
                 <Input
@@ -536,7 +538,9 @@ export function AddressForm({ sectionKey, onlyNames = false }: AddressFormProps)
                   <Input
                     placeholder={t.shipping.address2}
                     hasError={!!fieldState.error}
-                    aria-required={requiredFields?.[`${sectionKey}AddressLine2`]}
+                    aria-required={
+                      requiredFields?.[`${sectionKey}AddressLine2`]
+                    }
                     {...field}
                     disabled={isConfirmingCheckout}
                     autoComplete='off'
@@ -558,7 +562,9 @@ export function AddressForm({ sectionKey, onlyNames = false }: AddressFormProps)
                     <Input
                       placeholder={t.shipping.city}
                       hasError={!!fieldState.error}
-                      aria-required={requiredFields?.[`${sectionKey}AdminArea2`]}
+                      aria-required={
+                        requiredFields?.[`${sectionKey}AdminArea2`]
+                      }
                       {...field}
                       disabled={isConfirmingCheckout}
                       autoComplete='off'

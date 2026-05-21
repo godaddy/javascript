@@ -22,7 +22,7 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
   const shouldShowBillingNamesOnly =
     paymentMethod === PaymentMethodType.CREDIT_CARD &&
     session?.enableBillingAddressCollection === false &&
-    !useShippingAddress;
+    (!useShippingAddress || isPickup);
 
   const isBillingAddressRequired =
     !session?.enableShipping ||

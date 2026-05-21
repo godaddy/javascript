@@ -1,9 +1,15 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { AddressForm } from '@/components/checkout/address';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { CheckoutSection } from '@/components/checkout/checkout-section';
+import { CheckoutSectionHeader } from '@/components/checkout/checkout-section-header';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import type {
   TokenizeJs,
   TokenizeJsEvent,
 } from '@/components/checkout/payment/types';
+import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import { usePoyntACHCollect } from '@/components/checkout/payment/utils/poynt-ach-provider';
 import {
   PaymentProvider,
@@ -21,6 +27,32 @@ export function GoDaddyACHForm() {
   const { isPoyntLoaded } = useLoadPoyntCollect();
   const { godaddyPaymentsConfig, setCheckoutErrors } = useCheckoutContext();
   const [error, setError] = useState('');
+
+  const form = useFormContext();
+  const paymentMethod = form.watch('paymentMethod');
+  const useShippingAddress = form.watch('paymentUseShippingAddress');
+  const deliveryMethod = form.watch('deliveryMethod');
+  const isShipping = deliveryMethod === DeliveryMethods.SHIP;
+  const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
+
+  const shouldShowBillingNamesOnly =
+    paymentMethod === PaymentMethodType.ACH &&
+    session?.enableBillingAddressCollection === false &&
+    (!useShippingAddress || isPickup);
+
+  const isBillingAddressRequired =
+    !session?.enableShipping ||
+    shouldShowBillingNamesOnly ||
+    (session?.enableBillingAddressCollection &&
+      (!useShippingAddress || isPickup) &&
+      paymentMethod === PaymentMethodType.ACH);
+
+  const billingCopy =
+    shouldShowBillingNamesOnly && t.payment.billingInformation
+      ? t.payment.billingInformation
+      : t.payment.billingAddress;
+
+  const description = t.payment.descriptions?.ach;
 
   const confirmCheckout = useConfirmCheckout();
 
@@ -211,9 +243,27 @@ export function GoDaddyACHForm() {
 
   return (
     <>
+      {description ? <div className='pb-4'>{description}</div> : null}
       <div id={elementId} />
       {error ? (
         <p className='text-[0.8rem] font-medium text-destructive'>{error}</p>
+      ) : null}
+      {session?.enableShipping &&
+      isShipping &&
+      paymentMethod === PaymentMethodType.ACH ? (
+        <PaymentAddressToggle className='pt-4' />
+      ) : null}
+      {isBillingAddressRequired ? (
+        <CheckoutSection className='pt-5'>
+          <CheckoutSectionHeader
+            title={billingCopy.title}
+            description={billingCopy.description}
+          />
+          <AddressForm
+            sectionKey='billing'
+            onlyNames={shouldShowBillingNamesOnly}
+          />
+        </CheckoutSection>
       ) : null}
     </>
   );

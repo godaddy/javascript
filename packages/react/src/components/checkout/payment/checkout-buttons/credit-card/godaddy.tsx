@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 
 export function CreditCardCheckoutButton() {
-  const { collect, isLoadingNonce } = usePoyntCollect();
+  const { collect, isLoadingNonce, setIsLoadingNonce } = usePoyntCollect();
   const { isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
@@ -16,7 +16,12 @@ export function CreditCardCheckoutButton() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { t } = useGoDaddyContext();
 
+  const isDisabled =
+    isLoadingNonce || isConfirmingCheckout || isPaymentDisabled;
+
   const handleSubmit = useCallback(async () => {
+    if (isDisabled || !collect) return;
+
     const valid = await form.trigger();
     if (!valid) {
       const firstError = Object.keys(form.formState.errors)[0];
@@ -26,8 +31,9 @@ export function CreditCardCheckoutButton() {
       return;
     }
 
-    collect?.getNonce(poyntCardRequest);
-  }, [poyntCardRequest, form, collect]);
+    setIsLoadingNonce(true);
+    collect.getNonce(poyntCardRequest);
+  }, [collect, form, isDisabled, poyntCardRequest, setIsLoadingNonce]);
 
   if (!collect) return null;
 
@@ -38,7 +44,7 @@ export function CreditCardCheckoutButton() {
       type='button'
       onClick={handleSubmit}
       ref={buttonRef}
-      disabled={isLoadingNonce || isConfirmingCheckout || isPaymentDisabled}
+      disabled={isDisabled}
     >
       {t.payment.payNow}
     </Button>
