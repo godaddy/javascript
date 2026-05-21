@@ -94,6 +94,10 @@ export const esEs = {
   payment: {
     title: 'Pago',
     description: 'Todos los pagos son seguros y están encriptados.',
+    billingInformation: {
+      title: 'Información de facturación',
+      description: 'Introduce tu información de facturación.',
+    },
     billingAddress: {
       title: 'Dirección de facturación',
       description: 'Introduce tu dirección de facturación.',

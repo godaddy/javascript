@@ -94,6 +94,10 @@ export const trTr = {
   payment: {
     title: 'Ödeme',
     description: 'Tüm ödemeler güvenli ve şifrelidir.',
+    billingInformation: {
+      title: 'Fatura bilgileri',
+      description: 'Fatura bilgilerinizi girin.',
+    },
     billingAddress: {
       title: 'Fatura Adresi',
       description: 'Fatura adresinizi girin.',

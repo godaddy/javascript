@@ -94,6 +94,10 @@ export const itIt = {
   payment: {
     title: 'Pagamento',
     description: 'Tutti i pagamenti sono sicuri e crittografati.',
+    billingInformation: {
+      title: 'Informazioni di fatturazione',
+      description: 'Inserisci le informazioni di fatturazione.',
+    },
     billingAddress: {
       title: 'Indirizzo di Fatturazione',
       description: 'Inserisci il tuo indirizzo di fatturazione.',

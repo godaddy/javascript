@@ -94,6 +94,10 @@ export const enIe = {
   payment: {
     title: 'Payment',
     description: 'All payments are secure and encrypted.',
+    billingInformation: {
+      title: 'Billing Information',
+      description: 'Enter your billing information.',
+    },
     billingAddress: {
       title: 'Billing Address',
       description: 'Enter your billing address.',

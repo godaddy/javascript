@@ -95,6 +95,10 @@ export const qaPs = {
   payment: {
     title: '[Þâÿmëñţ Îñförmâţîöñ]',
     description: '[Âll þâÿmëñţš ârë šëçürë ând ëñçrÿþţëd för ÿöür šâfëţÿ.]',
+    billingInformation: {
+      title: '[Bîllîñg Îñförmâţîöñ]',
+      description: '[Ëñţër ÿöür bîllîñg îñförmâţîöñ dëţâîlš.]',
+    },
     billingAddress: {
       title: '[Bîllîñg Âddrëšš Îñförmâţîöñ]',
       description: '[Ëñţër ÿöür bîllîñg âddrëšš dëţâîlš.]',

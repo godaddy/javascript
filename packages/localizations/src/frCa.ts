@@ -94,6 +94,10 @@ export const frCa = {
   payment: {
     title: 'Paiement',
     description: 'Tous les paiements sont sécurisés et chiffrés.',
+    billingInformation: {
+      title: 'Informations de facturation',
+      description: 'Saisissez vos informations de facturation.',
+    },
     billingAddress: {
       title: 'Adresse de facturation',
       description: 'Entrez votre adresse de facturation.',

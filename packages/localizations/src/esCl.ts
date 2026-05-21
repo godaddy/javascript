@@ -94,6 +94,10 @@ export const esCl = {
   payment: {
     title: 'Pago',
     description: 'Todos los pagos son seguros y encriptados.',
+    billingInformation: {
+      title: 'Información de facturación',
+      description: 'Ingrese su información de facturación.',
+    },
     billingAddress: {
       title: 'Dirección de Facturación',
       description: 'Ingresa tu dirección de facturación.',

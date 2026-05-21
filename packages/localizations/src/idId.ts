@@ -94,6 +94,10 @@ export const idId = {
   payment: {
     title: 'Pembayaran',
     description: 'Semua pembayaran aman dan terenkripsi.',
+    billingInformation: {
+      title: 'Informasi penagihan',
+      description: 'Masukkan informasi penagihan Anda.',
+    },
     billingAddress: {
       title: 'Alamat Penagihan',
       description: 'Masukkan alamat penagihan Anda.',
