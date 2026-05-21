@@ -18,6 +18,9 @@ export interface DraftOrderTotalsProps {
   tip?: number;
   taxes?: number;
   isTaxLoading?: boolean;
+  fees?: number;
+  isFeeLoading?: boolean;
+  enableFees?: boolean | null;
   enableTaxes?: boolean | null;
   enableDiscounts?: boolean | null;
   enableShipping?: boolean | null;
@@ -69,11 +72,14 @@ export function DraftOrderTotals({
   total = 0,
   tip = 0,
   taxes = 0,
+  fees = 0,
   enableDiscounts = false,
   enableTaxes = false,
+  enableFees = false,
   isTaxLoading = false,
   isShippingLoading = false,
   isDiscountLoading = false,
+  isFeeLoading = false,
   enableShipping = true,
   inputInMinorUnits = false,
 }: DraftOrderTotalsProps) {
@@ -146,6 +152,18 @@ export function DraftOrderTotals({
               currencyCode={currencyCode}
               title={t.totals.estimatedTaxes}
               value={taxes || 0}
+              inputInMinorUnits={inputInMinorUnits}
+            />
+          ))}
+        <Target id='checkout.summary.totals.fees.before' />
+        {enableFees &&
+          (isFeeLoading ? (
+            <TotalLineItemSkeleton title={t.totals.fees} />
+          ) : (
+            <TotalLineItem
+              currencyCode={currencyCode}
+              title={t.totals.fees}
+              value={fees || 0}
               inputInMinorUnits={inputInMinorUnits}
             />
           ))}

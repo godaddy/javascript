@@ -168,6 +168,7 @@ export const ptBr = {
     shipping: 'Envio',
     tip: 'Gorjeta',
     estimatedTaxes: 'Impostos estimados',
+    fees: 'Taxas',
     totalDue: 'Total a Pagar',
     orderSummary: 'Resumo do Pedido',
     itemCount: 'itens',

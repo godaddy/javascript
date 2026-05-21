@@ -168,6 +168,7 @@ export const idId = {
     shipping: 'Pengiriman',
     tip: 'Tip',
     estimatedTaxes: 'Perkiraan pajak',
+    fees: 'Biaya',
     totalDue: 'Total Pembayaran',
     orderSummary: 'Ringkasan Pesanan',
     itemCount: 'item',

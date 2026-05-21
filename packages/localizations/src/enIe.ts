@@ -168,6 +168,7 @@ export const enIe = {
     shipping: 'Shipping',
     tip: 'Tip',
     estimatedTaxes: 'Estimated VAT',
+    fees: 'Fees',
     totalDue: 'Total Due',
     orderSummary: 'Order Summary',
     itemCount: 'items',

@@ -169,6 +169,7 @@ export const itIt = {
     shipping: 'Spedizione',
     tip: 'Mancia',
     estimatedTaxes: 'Tasse stimate',
+    fees: 'Commissioni',
     totalDue: 'Totale Dovuto',
     orderSummary: 'Riepilogo Ordine',
     itemCount: 'articoli',

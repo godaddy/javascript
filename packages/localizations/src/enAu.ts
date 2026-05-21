@@ -168,6 +168,7 @@ export const enAu = {
     shipping: 'Shipping',
     tip: 'Tip',
     estimatedTaxes: 'Estimated GST',
+    fees: 'Fees',
     totalDue: 'Total Due',
     orderSummary: 'Order Summary',
     itemCount: 'items',

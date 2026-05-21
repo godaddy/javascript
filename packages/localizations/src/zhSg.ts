@@ -163,6 +163,7 @@ export const zhSg = {
     shipping: '运费',
     tip: '小费',
     estimatedTaxes: '预估税费',
+    fees: '费用',
     totalDue: '应付总额',
     orderSummary: '订单摘要',
     itemCount: '件商品',

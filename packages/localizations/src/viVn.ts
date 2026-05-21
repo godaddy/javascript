@@ -168,6 +168,7 @@ export const viVn = {
     shipping: 'Vận chuyển',
     tip: 'Tip',
     estimatedTaxes: 'Thuế ước tính',
+    fees: 'Phí',
     totalDue: 'Tổng cộng',
     orderSummary: 'Tóm tắt đơn hàng',
     itemCount: 'sản phẩm',

@@ -169,6 +169,7 @@ export const qaPs = {
     shipping: '[Šhîþþîñg Çöšţš]',
     tip: '[Ţîþ Âmöüñţ]',
     estimatedTaxes: '[Ëšţîmâţëd ţâxëš çâlçülâţîöñ]',
+    fees: '[Fëëš Çhârgëd]',
     totalDue: '[Tötâl Âmöüñţ Düë]',
     orderSummary: '[Ördër Šümmârÿ Dëţâîlš]',
     itemCount: '[îţëmš îñ çârţ]',

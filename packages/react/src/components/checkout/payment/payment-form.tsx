@@ -554,7 +554,9 @@ export function PaymentForm(
             currencyCode={props.currencyCode}
             tip={props.tip}
             taxes={props.taxes}
+            fees={props.fees}
             isTaxLoading={props.isTaxLoading}
+            isFeeLoading={props.isFeeLoading}
             isShippingLoading={props.isShippingLoading}
             subtotal={props.subtotal}
             discount={props.discount}
@@ -564,7 +566,8 @@ export function PaymentForm(
             total={props.total}
             enableShipping={props.enableShipping}
             enableDiscounts={session?.enablePromotionCodes}
-            enableTaxes={session?.enableTaxCollection}
+            enableTaxes={props.enableTaxes ?? session?.enableTaxCollection}
+            enableFees={props.enableFees ?? session?.enableSurcharge}
           />
         </div>
       </div>

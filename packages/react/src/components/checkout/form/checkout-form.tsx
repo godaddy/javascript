@@ -24,10 +24,7 @@ import {
   type Product,
 } from '@/components/checkout/line-items/line-items';
 import { NotesForm } from '@/components/checkout/notes/notes-form';
-import {
-  useDraftOrder,
-  useDraftOrderTotals,
-} from '@/components/checkout/order/use-draft-order';
+import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
 import { PaymentForm } from '@/components/checkout/payment/payment-form';
 import {
   ConditionalExpressProviders,
@@ -103,21 +100,21 @@ export function CheckoutForm({
       mutationKey: ['update-draft-order-taxes', { id: session?.id }],
     }) > 0;
 
+  const isUpdatingFees =
+    useIsMutating({
+      mutationKey: ['update-draft-order-fees', { id: session?.id }],
+    }) > 0;
+
   const draftOrderTotalsQuery = useDraftOrderTotals();
-  const draftOrder = useDraftOrder();
 
   const { data: totals, isLoading: totalsLoading } = draftOrderTotalsQuery;
-  const { data: order } = draftOrder;
 
   // Order summary calculations - keep all values in minor units
   const subtotal = totals?.subTotal?.value || 0;
   const orderDiscount = totals?.discountTotal?.value || 0;
-  const shipping =
-    order?.shippingLines?.reduce(
-      (sum, line) => sum + (line?.amount?.value || 0),
-      0
-    ) || 0;
+  const shipping = totals?.shippingTotal?.value || 0;
   const taxTotal = totals?.taxTotal?.value || 0;
+  const feeTotal = totals?.feeTotal?.value || 0;
   const orderTotal = totals?.total?.value || 0;
   const tipTotal = tipAmount || 0;
   const currencyCode = totals?.total?.currencyCode || 'USD';
@@ -125,6 +122,14 @@ export function CheckoutForm({
 
   const isFree = orderTotal <= 0;
   const showExpressButtons = subtotal > 0;
+
+  // Show shipping/taxes/fees lines if collection is enabled OR if there's
+  // a preset amount on the order. This way merchants who disable collection
+  // but pre-apply a value still see it reflected in the summary.
+  const showShippingLine =
+    (isShipping && !!session?.enableShipping) || shipping > 0;
+  const showTaxesLine = !!session?.enableTaxCollection || taxTotal > 0;
+  const showFeesLine = feeTotal > 0;
 
   useEffect(() => {
     if (!totalsLoading && isFree) {
@@ -394,7 +399,9 @@ export function CheckoutForm({
                               currencyCode={currencyCode}
                               tip={tipTotal}
                               taxes={taxTotal}
+                              fees={feeTotal}
                               isTaxLoading={isUpdatingTaxes}
+                              isFeeLoading={isUpdatingFees}
                               isShippingLoading={isUpdatingShipping}
                               isDiscountLoading={isDiscountApplying}
                               subtotal={subtotal}
@@ -403,9 +410,9 @@ export function CheckoutForm({
                               totalSavings={totalSavings}
                               itemCount={itemCount}
                               total={orderTotal}
-                              enableShipping={
-                                isShipping && session?.enableShipping
-                              }
+                              enableShipping={showShippingLine}
+                              enableTaxes={showTaxesLine}
+                              enableFees={showFeesLine}
                             />
                           </ConditionalPaymentProviders>
                         ) : (
@@ -460,7 +467,9 @@ export function CheckoutForm({
                           currencyCode={currencyCode}
                           tip={tipTotal}
                           taxes={taxTotal}
+                          fees={feeTotal}
                           isTaxLoading={isUpdatingTaxes}
+                          isFeeLoading={isUpdatingFees}
                           isShippingLoading={isUpdatingShipping}
                           subtotal={subtotal}
                           discount={orderDiscount}
@@ -470,8 +479,9 @@ export function CheckoutForm({
                           itemCount={itemCount}
                           total={orderTotal}
                           enableDiscounts={session?.enablePromotionCodes}
-                          enableTaxes={session?.enableTaxCollection}
-                          enableShipping={isShipping && session?.enableShipping}
+                          enableTaxes={showTaxesLine}
+                          enableFees={showFeesLine}
+                          enableShipping={showShippingLine}
                         />
                       </div>
                     </AccordionContent>
@@ -491,7 +501,9 @@ export function CheckoutForm({
                   currencyCode={currencyCode}
                   tip={tipTotal}
                   taxes={taxTotal}
+                  fees={feeTotal}
                   isTaxLoading={isUpdatingTaxes}
+                  isFeeLoading={isUpdatingFees}
                   isShippingLoading={isUpdatingShipping}
                   subtotal={subtotal}
                   discount={orderDiscount}
@@ -501,8 +513,9 @@ export function CheckoutForm({
                   itemCount={itemCount}
                   total={orderTotal}
                   enableDiscounts={session?.enablePromotionCodes}
-                  enableTaxes={session?.enableTaxCollection}
-                  enableShipping={isShipping && session?.enableShipping}
+                  enableTaxes={showTaxesLine}
+                  enableFees={showFeesLine}
+                  enableShipping={showShippingLine}
                 />
               </div>
               <Target id='checkout.summary.after' />

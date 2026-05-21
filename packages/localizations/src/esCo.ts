@@ -169,6 +169,7 @@ export const esCo = {
     shipping: 'Envío',
     tip: 'Propina',
     estimatedTaxes: 'Impuestos estimados',
+    fees: 'Cargos',
     totalDue: 'Total a pagar',
     orderSummary: 'Resumen del pedido',
     itemCount: 'artículos',
