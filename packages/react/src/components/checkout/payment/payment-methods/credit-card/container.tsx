@@ -18,18 +18,24 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
   const useShippingAddress = form.watch('paymentUseShippingAddress');
   const deliveryMethod = form.watch('deliveryMethod');
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-  const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
+
+  // Billing is separate from shipping when:
+  // - shipping is disabled at the session level, or
+  // - the order has no shipping fulfillment (e.g. PICKUP, PURCHASE / all-NONE items), or
+  // - the user opted out of "use shipping address as billing".
+  const billingIsSeparateFromShipping =
+    !session?.enableShipping || !isShipping || !useShippingAddress;
+
   const shouldShowBillingNamesOnly =
     paymentMethod === PaymentMethodType.CREDIT_CARD &&
     session?.enableBillingAddressCollection === false &&
-    (!useShippingAddress || isPickup);
+    billingIsSeparateFromShipping;
 
   const isBillingAddressRequired =
-    !session?.enableShipping ||
-    shouldShowBillingNamesOnly ||
-    (session?.enableBillingAddressCollection &&
-      (!useShippingAddress || isPickup) &&
-      paymentMethod === PaymentMethodType.CREDIT_CARD);
+    paymentMethod === PaymentMethodType.CREDIT_CARD &&
+    billingIsSeparateFromShipping &&
+    (shouldShowBillingNamesOnly ||
+      session?.enableBillingAddressCollection !== false);
 
   const billingCopy =
     shouldShowBillingNamesOnly && t.payment.billingInformation

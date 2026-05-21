@@ -71,8 +71,11 @@ export function CustomFormProvider<
                 fieldName === 'billingFirstName' ||
                 fieldName === 'billingLastName'
             );
-          } else if (paymentUseShippingAddress && !isPickup) {
-            /* If using shipping address for billing (and not pickup), filter out billing-related field validations */
+          } else if (paymentUseShippingAddress && isShipping) {
+            /* If using shipping address for billing, filter out billing-related field validations.
+             * We require isShipping (not just !isPickup) so that PURCHASE / all-NONE
+             * fulfillment orders, or sessions with enableShipping: false, still validate
+             * billing fields — there's no shipping address to copy from in those cases. */
             fieldNames = fieldNames.filter(
               fieldName => !fieldName.startsWith('billing')
             );

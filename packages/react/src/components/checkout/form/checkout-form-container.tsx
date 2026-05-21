@@ -61,9 +61,7 @@ export function CheckoutFormContainer({
 
   if (props.isLoading || draftOrderQuery.isLoading || isLoadingJWT) {
     return (
-      props.loadingFallback ?? (
-        <CheckoutSkeleton direction={props.direction} />
-      )
+      props.loadingFallback ?? <CheckoutSkeleton direction={props.direction} />
     );
   }
 

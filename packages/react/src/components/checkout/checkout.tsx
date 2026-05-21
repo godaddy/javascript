@@ -262,6 +262,7 @@ export function Checkout(props: CheckoutProps) {
 
     const enableBillingAddressCollection =
       session?.enableBillingAddressCollection !== false;
+    const enableShipping = session?.enableShipping !== false;
 
     return extendedSchema.superRefine((data, ctx) => {
       if (data.billingPhone) {
@@ -288,11 +289,17 @@ export function Checkout(props: CheckoutProps) {
       // BUT skip for free orders (paymentMethod === 'offline')
       const isFreeOrder = data.paymentMethod === PaymentMethodType.OFFLINE;
       const isPickup = data.deliveryMethod === DeliveryMethods.PICKUP;
+      const isShipping = data.deliveryMethod === DeliveryMethods.SHIP;
       const isFreePickup = isFreeOrder && isPickup;
 
+      // Billing is separate from shipping when shipping is disabled, the order
+      // has no shipping fulfillment (PICKUP, PURCHASE / all-NONE items), or the
+      // user opted out of "use shipping address as billing".
+      const billingIsSeparateFromShipping =
+        !enableShipping || !isShipping || !data.paymentUseShippingAddress;
+
       const requireBillingNamesOnly =
-        (!enableBillingAddressCollection &&
-          (!data.paymentUseShippingAddress || isPickup)) ||
+        (!enableBillingAddressCollection && billingIsSeparateFromShipping) ||
         isFreePickup;
 
       if (requireBillingNamesOnly) {
@@ -315,7 +322,7 @@ export function Checkout(props: CheckoutProps) {
       const requireBillingAddress =
         enableBillingAddressCollection &&
         !isFreePickup &&
-        (!data.paymentUseShippingAddress || isPickup);
+        billingIsSeparateFromShipping;
 
       if (requireBillingAddress) {
         // Basic billing fields required for all countries
@@ -385,7 +392,12 @@ export function Checkout(props: CheckoutProps) {
         }
       }
     });
-  }, [checkoutFormSchema, session?.enableBillingAddressCollection, t]);
+  }, [
+    checkoutFormSchema,
+    session?.enableBillingAddressCollection,
+    session?.enableShipping,
+    t,
+  ]);
 
   const requiredFields = React.useMemo(() => {
     return getRequiredFieldsFromSchema(formSchema);

@@ -272,16 +272,23 @@ export function PaymentForm(
     });
   }, [session, pazeSupported, applePaySupported, googlePaySupported]);
 
+  // Billing is separate from shipping when:
+  // - shipping is disabled at the session level, or
+  // - the order has no shipping fulfillment (e.g. PICKUP, PURCHASE / all-NONE items), or
+  // - the user opted out of "use shipping address as billing".
+  const billingIsSeparateFromShipping =
+    !session?.enableShipping || !isShipping || !useShippingAddress;
+
   const shouldShowBillingNamesOnly =
     !isPaymentMethodWithInlineBilling &&
     session?.enableBillingAddressCollection === false &&
-    (!useShippingAddress || isPickup);
+    billingIsSeparateFromShipping;
 
   const isBillingAddressRequired =
-    shouldShowBillingNamesOnly ||
-    (session?.enableBillingAddressCollection &&
-      (!useShippingAddress || isPickup) &&
-      !isPaymentMethodWithInlineBilling);
+    !isPaymentMethodWithInlineBilling &&
+    billingIsSeparateFromShipping &&
+    (shouldShowBillingNamesOnly ||
+      session?.enableBillingAddressCollection !== false);
 
   const billingCopy =
     shouldShowBillingNamesOnly && t.payment.billingInformation
