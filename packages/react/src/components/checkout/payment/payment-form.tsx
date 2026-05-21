@@ -567,7 +567,7 @@ export function PaymentForm(
             enableShipping={props.enableShipping}
             enableDiscounts={session?.enablePromotionCodes}
             enableTaxes={props.enableTaxes ?? session?.enableTaxCollection}
-            enableFees={props.enableFees ?? session?.enableSurcharge}
+            enableFees={props.enableFees}
           />
         </div>
       </div>
