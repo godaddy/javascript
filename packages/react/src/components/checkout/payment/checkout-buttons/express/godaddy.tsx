@@ -85,6 +85,7 @@ export function ExpressCheckoutButton() {
   const updateTaxes = useUpdateTaxes();
 
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
+  const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
 
   const confirmCheckout = useConfirmCheckout();
   const collect = useRef<TokenizeJs | null>(null);
@@ -439,10 +440,7 @@ export function ExpressCheckoutButton() {
           businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
           storeId: session?.storeId,
           channelId: session?.channelId,
-          applicationId: getApplicationId(
-            session,
-            godaddyPaymentsConfig?.appId
-          ),
+          applicationId,
         },
         {
           country: countryCode,
@@ -512,6 +510,7 @@ export function ExpressCheckoutButton() {
     session?.businessId,
     session?.storeId,
     session?.channelId,
+    applicationId,
     session?.enablePromotionCodes,
     session?.enableShippingAddressCollection,
     session?.storeName,

@@ -237,7 +237,7 @@ function CustomTipInput({
   const [localValue, setLocalValue] = useState<string | null>(null);
   const isFocused = useRef(false);
 
-  // Debounce the local value so the form syncs after 3s of inactivity,
+  // Debounce the local value so the form syncs after 1.5s of inactivity,
   // even if the user hasn't blurred the input yet. This keeps the order
   // summary / totals up-to-date while the input stays focused.
   const [debouncedLocal] = useDebouncedValue(localValue, { wait: 1500 });
@@ -283,7 +283,7 @@ function CustomTipInput({
 
   // When the debounced value settles and the input is still focused,
   // sync to form state and format the display — the same effect as blur
-  // but triggered by 3s of inactivity. This keeps the order summary
+  // but triggered by 1.5s of inactivity. This keeps the order summary
   // up-to-date and gives the user visual confirmation of their amount.
   useEffect(() => {
     if (!isFocused.current || debouncedLocal === null) return;

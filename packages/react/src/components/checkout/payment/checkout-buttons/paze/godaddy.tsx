@@ -36,6 +36,7 @@ export function PazeCheckoutButton() {
 
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
+  const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
 
   const confirmCheckout = useConfirmCheckout();
   const collect = useRef<TokenizeJs | null>(null);
@@ -90,10 +91,7 @@ export function PazeCheckoutButton() {
           businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
           storeId: session?.storeId,
           channelId: session?.channelId,
-          applicationId: getApplicationId(
-            session,
-            godaddyPaymentsConfig?.appId
-          ),
+          applicationId,
         },
         {
           country: countryCode,
@@ -112,6 +110,7 @@ export function PazeCheckoutButton() {
     session?.businessId,
     session?.storeId,
     session?.channelId,
+    applicationId,
     isPoyntLoaded,
     isCollectLoading,
   ]);

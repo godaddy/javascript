@@ -26,6 +26,7 @@ export function GoDaddyCreditCardForm() {
   const confirmCheckout = useConfirmCheckout();
 
   const elementId = `gdpay-card-element-${useId()}`;
+  const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
 
   const options = {
     iFrame: {
@@ -202,7 +203,7 @@ export function GoDaddyCreditCardForm() {
       businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
       storeId: session?.storeId,
       channelId: session?.channelId,
-      applicationId: getApplicationId(session, godaddyPaymentsConfig?.appId),
+      applicationId,
     });
 
     collect?.current?.on('ready', () => {
@@ -255,6 +256,8 @@ export function GoDaddyCreditCardForm() {
     session?.businessId,
     session?.storeId,
     session?.channelId,
+    applicationId,
+    elementId,
   ]);
 
   return (

@@ -9,6 +9,7 @@ import type {
   TokenizeJs,
   TokenizeJsEvent,
 } from '@/components/checkout/payment/types';
+import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import { usePoyntACHCollect } from '@/components/checkout/payment/utils/poynt-ach-provider';
 import {
@@ -57,6 +58,7 @@ export function GoDaddyACHForm() {
   const confirmCheckout = useConfirmCheckout();
 
   const elementId = `gdpay-ach-element-${useId()}`;
+  const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
 
   const fontFamily =
     '"GD Sherpa", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"';
@@ -186,7 +188,7 @@ export function GoDaddyACHForm() {
       businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
       storeId: session?.storeId,
       channelId: session?.channelId,
-      applicationId: godaddyPaymentsConfig?.appId,
+      applicationId,
     });
 
     collect?.current?.on('ready', () => {
@@ -239,6 +241,8 @@ export function GoDaddyACHForm() {
     session?.businessId,
     session?.storeId,
     session?.channelId,
+    applicationId,
+    elementId,
   ]);
 
   return (

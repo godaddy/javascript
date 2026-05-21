@@ -125,6 +125,7 @@ export function PaymentForm(
 
   const currencyCode = props.currencyCode || 'USD';
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
+  const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
 
   // Helper function to get translated payment method labels
   const getPaymentMethodLabel = useCallback(
@@ -206,10 +207,7 @@ export function PaymentForm(
           businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
           storeId: session?.storeId,
           channelId: session?.channelId,
-          applicationId: getApplicationId(
-            session,
-            godaddyPaymentsConfig?.appId
-          ),
+          applicationId,
         },
         {
           country: countryCode,
@@ -233,6 +231,7 @@ export function PaymentForm(
     session?.businessId,
     session?.storeId,
     session?.channelId,
+    applicationId,
     isPoyntLoaded,
   ]);
 
