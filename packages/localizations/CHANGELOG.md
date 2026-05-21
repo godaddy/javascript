@@ -1,5 +1,11 @@
 # @godaddy/localizations
 
+## 1.0.10
+
+### Patch Changes
+
+- 4f67ee8: Add additional targets and extend billing flows with localization updates
+
 ## 1.0.9
 
 ### Patch Changes
