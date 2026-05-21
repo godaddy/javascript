@@ -213,6 +213,7 @@ export function GoDaddyACHForm() {
           if (err instanceof GraphQLErrorWithCodes) {
             setCheckoutErrors(err.codes);
           }
+          setIsLoadingNonce(false);
         }
       } else {
         setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
@@ -228,6 +229,8 @@ export function GoDaddyACHForm() {
     collect?.current?.on('validated', event => {
       if (event?.data?.validated) {
         setError('');
+      } else {
+        setIsLoadingNonce(false);
       }
     });
   }, [

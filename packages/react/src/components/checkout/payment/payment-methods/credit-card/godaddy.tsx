@@ -228,6 +228,7 @@ export function GoDaddyCreditCardForm() {
           if (err instanceof GraphQLErrorWithCodes) {
             setCheckoutErrors(err.codes);
           }
+          setIsLoadingNonce(false);
         }
       } else {
         setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
@@ -243,6 +244,8 @@ export function GoDaddyCreditCardForm() {
     collect?.current?.on('validated', event => {
       if (event?.data?.validated) {
         setError('');
+      } else {
+        setIsLoadingNonce(false);
       }
     });
   }, [

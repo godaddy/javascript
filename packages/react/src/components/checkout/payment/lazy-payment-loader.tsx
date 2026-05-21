@@ -1,6 +1,7 @@
 'use client';
 
 import { type ComponentType, lazy, Suspense } from 'react';
+import { useCheckoutContext } from '@/components/checkout/checkout';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   type AvailablePaymentProviders,
@@ -339,6 +340,24 @@ export function LazyPaymentMethodRenderer({
   provider,
   isExpress,
 }: LazyPaymentMethodRendererProps) {
+  const { godaddyPaymentsConfig, session } = useCheckoutContext();
+
+  if (provider === PaymentProvider.GODADDY) {
+    const hasGoDaddyAppId = !!godaddyPaymentsConfig?.appId?.trim();
+
+    if (method === PaymentMethodType.CREDIT_CARD && !hasGoDaddyAppId) {
+      return null;
+    }
+
+    if (
+      method === PaymentMethodType.ACH &&
+      (!hasGoDaddyAppId ||
+        session?.paymentMethods?.ach?.processor !== PaymentProvider.GODADDY)
+    ) {
+      return null;
+    }
+  }
+
   const methodRegistry =
     lazyPaymentComponentRegistry[
       method as keyof typeof lazyPaymentComponentRegistry

@@ -5,6 +5,7 @@ import { useCheckoutContext } from '@/components/checkout/checkout';
 import {
   convertMajorToMinorUnits,
   currencyConfigs,
+  type FormatCurrencyOptions,
   useFormatCurrency,
 } from '@/components/checkout/utils/format-currency';
 import { Button } from '@/components/ui/button';
@@ -181,12 +182,7 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
 interface CustomTipInputProps {
   currencyCode?: string;
   total: number;
-  formatCurrency: (options: {
-    amount: number;
-    currencyCode: string;
-    inputInMinorUnits?: boolean;
-    returnRaw?: boolean;
-  }) => string;
+  formatCurrency: (options: FormatCurrencyOptions) => string;
 }
 
 /**
@@ -292,7 +288,7 @@ function CustomTipInput({
     // Clear local state so the display derives from the formatted form
     // value (e.g. "10.5" → "10.50"), same as the blur handler.
     setLocalValue(null);
-  }, [debouncedLocal]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [debouncedLocal, code, form]);
 
   const symbolEl = (
     <span
@@ -370,9 +366,10 @@ function CustomTipInput({
                       properties: {
                         tipAmount: tipAmount,
                         totalBeforeTip: total,
-                        tipPercentage: Number(
-                          ((tipAmount / total) * 100).toFixed(2)
-                        ),
+                        tipPercentage:
+                          total > 0
+                            ? Number(((tipAmount / total) * 100).toFixed(2))
+                            : 0,
                         currencyCode,
                       },
                     });
