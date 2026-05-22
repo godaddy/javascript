@@ -303,6 +303,11 @@ export const DraftOrderQuery = graphql(`
                   status
                   tags
                   type
+                  metafields {
+                      key
+                      type
+                      value
+                  }
                   details {
                       productAssetUrl
                       selectedAddons {

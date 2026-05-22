@@ -168,14 +168,36 @@ export function mapOrderToFormValues({
 }
 
 /**
+ * Reads the `lineItemOrder` metafield from a line item and returns it as a
+ * number. Returns Infinity when the metafield is missing or unparseable so
+ * those items sort to the end while preserving their relative order via a
+ * stable sort.
+ */
+function getLineItemOrder(
+  lineItem: NonNullable<DraftOrder['lineItems']>[number]
+): number {
+  const metafield = lineItem?.metafields?.find(m => m?.key === 'lineItemOrder');
+  if (!metafield?.value) return Number.POSITIVE_INFINITY;
+
+  // Value is stored as a string; for JSON-typed numeric values we still want
+  // to parse the underlying number.
+  const parsed = Number(metafield.value);
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+}
+
+/**
  * Maps order line items and SKUs to displayable items
  */
 export function mapSkusToItemsDisplay(
   orderItems?: DraftOrder['lineItems'],
   skusMap: Record<string, SKUProduct> = {}
 ): Product[] {
+  const sortedOrderItems = orderItems
+    ? [...orderItems].sort((a, b) => getLineItemOrder(a) - getLineItemOrder(b))
+    : orderItems;
+
   return (
-    orderItems?.map(orderItem => {
+    sortedOrderItems?.map(orderItem => {
       const sku = orderItem?.details?.sku;
       const skuDetails = sku ? skusMap[sku] : undefined;
 
