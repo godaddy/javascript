@@ -220,7 +220,9 @@ export interface CheckoutProps {
   showStoreHours?: boolean;
   enableTracking?: boolean;
   trackingProperties?: TrackingProperties;
-  targets?: Partial<Record<Target, () => ReactNode>>;
+  targets?: Partial<
+    Record<Target, (session?: CheckoutSession | null) => ReactNode>
+  >;
   checkoutFormSchema?: CheckoutFormSchema;
   defaultValues?: Pick<CheckoutFormData, 'contactEmail'>;
   isLoading?: boolean;
