@@ -411,7 +411,7 @@ export function Checkout(props: CheckoutProps) {
     return getRequiredFieldsFromSchema(formSchema);
   }, [formSchema]);
 
-  if (!isLoadingJWT && !session) {
+  if (!props.isLoading && !isLoadingJWT && !session) {
     return (
       <div className='flex items-center justify-center min-h-[50vh] p-4'>
         <div className='max-w-md w-full'>
