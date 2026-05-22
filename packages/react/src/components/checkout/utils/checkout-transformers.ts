@@ -217,10 +217,7 @@ export function mapSkusToItemsDisplay(
           // (orderItem.totals?.taxTotal?.value ?? 0) - // do we need taxTotal here?
           (orderItem.totals?.discountTotal?.value ?? 0),
         notes: orderItem.notes
-          ?.filter(
-            note =>
-              note.authorType !== 'CUSTOMER' && note.content?.trim() !== ''
-          )
+          ?.filter(note => !!note.content && note.content.trim() !== '')
           .map(note => ({
             id: note.id,
             content: note.content,
