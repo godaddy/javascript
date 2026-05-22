@@ -447,7 +447,7 @@ export function CheckoutForm({
                         </span>
                         <span className='font-bold text-lg pr-2 self-center'>
                           {formatCurrency({
-                            amount: totals?.total?.value || 0,
+                            amount: orderTotal + tipTotal,
                             currencyCode,
                             inputInMinorUnits: true,
                           })}

@@ -235,6 +235,8 @@ export function PaymentForm(
     isPoyntLoaded,
   ]);
 
+  const hasGoDaddyAppId = !!applicationId?.trim();
+
   const availablePaymentMethods = React.useMemo(() => {
     if (!session?.paymentMethods) return [];
     return Object.keys(session.paymentMethods).filter(key => {
@@ -245,6 +247,23 @@ export function PaymentForm(
         method &&
         Array.isArray(method.checkoutTypes) &&
         method.checkoutTypes.includes(CheckoutType.STANDARD);
+
+      // GoDaddy CC/ACH require a resolvable application id (default config or
+      // gopay_override). Without it, LazyPaymentMethodRenderer returns null
+      // and the tab would render an empty form/button area.
+      if (
+        key === PaymentMethodType.CREDIT_CARD &&
+        method?.processor === PaymentProvider.GODADDY
+      ) {
+        return baseCheck && hasGoDaddyAppId;
+      }
+
+      if (
+        key === PaymentMethodType.ACH &&
+        method?.processor === PaymentProvider.GODADDY
+      ) {
+        return baseCheck && hasGoDaddyAppId;
+      }
 
       // Special handling for GoDaddy wallet payments — only show when device supports them
       if (
@@ -270,7 +289,13 @@ export function PaymentForm(
 
       return baseCheck;
     });
-  }, [session, pazeSupported, applePaySupported, googlePaySupported]);
+  }, [
+    session,
+    hasGoDaddyAppId,
+    pazeSupported,
+    applePaySupported,
+    googlePaySupported,
+  ]);
 
   // Billing is separate from shipping when there is no shipping address to
   // copy from. `mapOrderToFormValues` canonicalizes deliveryMethod against

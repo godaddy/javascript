@@ -8,9 +8,9 @@
  * table internal so it can be extended without semver impact.
  */
 export {
-  formatCurrency,
   convertMajorToMinorUnits,
-  useFormatCurrency,
-  useConvertMajorToMinorUnits,
   type FormatCurrencyOptions,
+  formatCurrency,
+  useConvertMajorToMinorUnits,
+  useFormatCurrency,
 } from '@/components/checkout/utils/format-currency';
