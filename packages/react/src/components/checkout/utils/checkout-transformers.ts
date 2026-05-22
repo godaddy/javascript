@@ -153,7 +153,10 @@ export function mapOrderToFormValues({
     paymentYear: '',
 
     // Notes
-    notes: order?.notes?.[0]?.content || '',
+    notes:
+      order?.notes?.find(
+        note => note.authorType === 'CUSTOMER' && note.content?.trim() !== ''
+      )?.content || '',
     pickupDate: '',
     pickupTime: '',
 
