@@ -43,31 +43,56 @@ export function mapOrderToFormValues({
   order,
   defaultValues,
   defaultCountryCode,
+  enableShipping,
+  enableLocalPickup,
 }: {
   order?: DraftOrder | null;
   defaultValues?: Pick<CheckoutFormData, 'contactEmail'>;
   defaultCountryCode?: string | null;
+  /**
+   * Session-level capability flags. When provided, the derived
+   * `deliveryMethod` will fall back to `PURCHASE` for any item-level
+   * fulfillment mode that the session has disabled. This avoids the
+   * contradictory state where line items declare SHIP/PICKUP but the
+   * session disables those flows (so `DeliveryMethodForm` is not even
+   * rendered to correct the value). Pass `undefined` to skip the gate.
+   */
+  enableShipping?: boolean | null;
+  enableLocalPickup?: boolean | null;
 }): CheckoutFormData {
   const orderShippingAddress = order?.shipping?.address;
   const orderBillingAddress = order?.billing?.address;
   const paymentShouldUseShippingAddress = Boolean(
     orderShippingAddress?.addressLine1 === orderBillingAddress?.addressLine1
   );
-  const isPickup = order?.lineItems?.some(
-    lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP
-  );
-
-  const isShipping = order?.lineItems?.some(
-    lineItem => lineItem.fulfillmentMode === DeliveryMethods.SHIP
-  );
-
-  const isMixedFulfillment = isPickup && isShipping;
+  // Purchase mode = the session has neither shipping nor pickup enabled, so
+  // this checkout is payment-only regardless of what fulfillment modes the
+  // line items declare. Costs are assumed to be hardcoded on the order.
+  const isPurchaseMode =
+    enableShipping === false && enableLocalPickup === false;
 
   let deliveryMethod = DeliveryMethods.PURCHASE;
-  if (!isMixedFulfillment && isPickup) {
-    deliveryMethod = DeliveryMethods.PICKUP;
-  } else if (!isMixedFulfillment && isShipping) {
-    deliveryMethod = DeliveryMethods.SHIP;
+
+  if (!isPurchaseMode) {
+    const hasPickupItem = order?.lineItems?.some(
+      lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP
+    );
+    const hasShipItem = order?.lineItems?.some(
+      lineItem => lineItem.fulfillmentMode === DeliveryMethods.SHIP
+    );
+
+    // Only treat item-level fulfillment as actionable if the session allows
+    // that flow. When a flag is undefined we treat it as enabled so existing
+    // callers retain their previous behavior.
+    const isPickup = hasPickupItem && enableLocalPickup !== false;
+    const isShipping = hasShipItem && enableShipping !== false;
+    const isMixedFulfillment = isPickup && isShipping;
+
+    if (!isMixedFulfillment && isPickup) {
+      deliveryMethod = DeliveryMethods.PICKUP;
+    } else if (!isMixedFulfillment && isShipping) {
+      deliveryMethod = DeliveryMethods.SHIP;
+    }
   }
 
   return {

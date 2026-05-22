@@ -292,11 +292,13 @@ export function Checkout(props: CheckoutProps) {
       const isShipping = data.deliveryMethod === DeliveryMethods.SHIP;
       const isFreePickup = isFreeOrder && isPickup;
 
-      // Billing is separate from shipping when shipping is disabled, the order
-      // has no shipping fulfillment (PICKUP, PURCHASE / all-NONE items), or the
-      // user opted out of "use shipping address as billing".
+      // Billing is separate from shipping when there is no shipping address
+      // to copy from. `mapOrderToFormValues` canonicalizes deliveryMethod
+      // against session capabilities, so `!isShipping` already covers both
+      // session.enableShipping=false and orders with no SHIP fulfillment.
+      // The remaining case is the user opting out of "use shipping for billing".
       const billingIsSeparateFromShipping =
-        !enableShipping || !isShipping || !data.paymentUseShippingAddress;
+        !isShipping || !data.paymentUseShippingAddress;
 
       const requireBillingNamesOnly =
         (!enableBillingAddressCollection && billingIsSeparateFromShipping) ||
@@ -357,8 +359,12 @@ export function Checkout(props: CheckoutProps) {
       }
 
       // Shipping address validation - only required if delivery method is SHIP
+      // AND shipping is enabled at the session level. This guards against the
+      // contradictory case where line items declare SHIP fulfillment but the
+      // session has enableShipping: false (the shipping form is not rendered
+      // in that case, so requiring the fields would block the user).
       const requireShippingAddress =
-        data.deliveryMethod === DeliveryMethods.SHIP;
+        data.deliveryMethod === DeliveryMethods.SHIP && enableShipping;
 
       if (requireShippingAddress) {
         // Basic shipping fields required for all countries

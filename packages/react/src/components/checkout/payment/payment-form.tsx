@@ -272,12 +272,13 @@ export function PaymentForm(
     });
   }, [session, pazeSupported, applePaySupported, googlePaySupported]);
 
-  // Billing is separate from shipping when:
-  // - shipping is disabled at the session level, or
-  // - the order has no shipping fulfillment (e.g. PICKUP, PURCHASE / all-NONE items), or
-  // - the user opted out of "use shipping address as billing".
-  const billingIsSeparateFromShipping =
-    !session?.enableShipping || !isShipping || !useShippingAddress;
+  // Billing is separate from shipping when there is no shipping address to
+  // copy from. `mapOrderToFormValues` canonicalizes deliveryMethod against
+  // session capabilities, so `!isShipping` already covers:
+  //   - session.enableShipping = false
+  //   - line items have no SHIP fulfillment (PICKUP / PURCHASE / all-NONE)
+  // The remaining case is the user opting out of "use shipping for billing".
+  const billingIsSeparateFromShipping = !isShipping || !useShippingAddress;
 
   const shouldShowBillingNamesOnly =
     !isPaymentMethodWithInlineBilling &&

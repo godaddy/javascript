@@ -575,6 +575,8 @@ export function ExpressCheckoutButton() {
         mapOrderToFormValues({
           order: draftOrder,
           defaultCountryCode: session?.shipping?.originAddress?.countryCode,
+          enableShipping: session?.enableShipping,
+          enableLocalPickup: session?.enableLocalPickup,
         })
       );
 

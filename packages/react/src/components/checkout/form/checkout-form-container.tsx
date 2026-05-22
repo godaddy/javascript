@@ -46,9 +46,17 @@ export function CheckoutFormContainer({
         order,
         defaultValues: props.defaultValues,
         defaultCountryCode: session?.shipping?.originAddress?.countryCode,
+        enableShipping: session?.enableShipping,
+        enableLocalPickup: session?.enableLocalPickup,
       }),
     }),
-    [order, props.defaultValues, session?.shipping?.originAddress?.countryCode]
+    [
+      order,
+      props.defaultValues,
+      session?.shipping?.originAddress?.countryCode,
+      session?.enableShipping,
+      session?.enableLocalPickup,
+    ]
   );
 
   if (!isConfirmingCheckout && !draftOrderQuery.isLoading && !order) {
