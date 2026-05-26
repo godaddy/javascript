@@ -126,6 +126,7 @@ export function PaymentForm(
   const currencyCode = props.currencyCode || 'USD';
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
   const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
+  const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
 
   // Helper function to get translated payment method labels
   const getPaymentMethodLabel = useCallback(
@@ -195,8 +196,8 @@ export function PaymentForm(
   useLayoutEffect(() => {
     if (
       !collect.current &&
-      godaddyPaymentsConfig &&
-      (godaddyPaymentsConfig?.businessId || session?.businessId) &&
+      !!applicationId?.trim() &&
+      businessId &&
       isPoyntLoaded &&
       countryCode &&
       currencyCode &&
@@ -204,7 +205,7 @@ export function PaymentForm(
     ) {
       collect.current = new (window as any).TokenizeJs(
         {
-          businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+          businessId,
           storeId: session?.storeId,
           channelId: session?.channelId,
           applicationId,
@@ -223,7 +224,8 @@ export function PaymentForm(
       });
     }
   }, [
-    godaddyPaymentsConfig,
+    applicationId,
+    businessId,
     countryCode,
     currencyCode,
     hasGoDaddyWalletPayment,
@@ -231,7 +233,6 @@ export function PaymentForm(
     session?.businessId,
     session?.storeId,
     session?.channelId,
-    applicationId,
     isPoyntLoaded,
   ]);
 
@@ -563,7 +564,7 @@ export function PaymentForm(
                 </span>
                 <span className='font-bold text-lg pr-2 self-center'>
                   {formatCurrency({
-                    amount: props.total || 0,
+                    amount: (props.total || 0) + (props.tip || 0),
                     currencyCode: props.currencyCode || 'USD',
                     inputInMinorUnits: true,
                   })}

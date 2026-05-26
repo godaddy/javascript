@@ -27,6 +27,7 @@ export function GoDaddyCreditCardForm() {
 
   const elementId = `gdpay-card-element-${useId()}`;
   const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
+  const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
 
   const options = {
     iFrame: {
@@ -193,14 +194,14 @@ export function GoDaddyCreditCardForm() {
   useLayoutEffect(() => {
     if (
       !isPoyntLoaded ||
-      !godaddyPaymentsConfig ||
+      !applicationId?.trim() ||
       collect.current ||
-      (!godaddyPaymentsConfig?.businessId && !session?.businessId)
+      !businessId
     )
       return;
 
     collect.current = new (window as any).TokenizeJs({
-      businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+      businessId,
       storeId: session?.storeId,
       channelId: session?.channelId,
       applicationId,
@@ -250,7 +251,7 @@ export function GoDaddyCreditCardForm() {
     });
   }, [
     isPoyntLoaded,
-    godaddyPaymentsConfig,
+    businessId,
     confirmCheckout.mutateAsync,
     setCollect,
     setCheckoutErrors,

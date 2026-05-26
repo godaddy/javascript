@@ -65,6 +65,7 @@ export function GoDaddyACHForm() {
 
   const elementId = `gdpay-ach-element-${useId()}`;
   const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
+  const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
 
   const fontFamily =
     '"GD Sherpa", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"';
@@ -184,14 +185,14 @@ export function GoDaddyACHForm() {
   useLayoutEffect(() => {
     if (
       !isPoyntLoaded ||
-      !godaddyPaymentsConfig ||
+      !applicationId?.trim() ||
       collect.current ||
-      (!godaddyPaymentsConfig?.businessId && !session?.businessId)
+      !businessId
     )
       return;
 
     collect.current = new (window as any).TokenizeJs({
-      businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+      businessId,
       storeId: session?.storeId,
       channelId: session?.channelId,
       applicationId,
@@ -241,7 +242,7 @@ export function GoDaddyACHForm() {
     });
   }, [
     isPoyntLoaded,
-    godaddyPaymentsConfig,
+    businessId,
     confirmCheckout.mutateAsync,
     setCollect,
     setCheckoutErrors,

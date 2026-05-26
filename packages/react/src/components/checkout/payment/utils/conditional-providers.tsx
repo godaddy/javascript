@@ -41,14 +41,18 @@ export function ConditionalPaymentProviders({
   // Resolve the GoDaddy application id the same way the lazy renderer does,
   // so provider wrapping, availability gating, and form rendering all agree
   // (e.g. when only `experimental_rules.gopay_override` supplies an app id).
-  const hasGoDaddyAppId = !!getApplicationId(
+  const goDaddyApplicationId = getApplicationId(
     session,
     godaddyPaymentsConfig?.appId
-  )?.trim();
+  );
+  const goDaddyBusinessId =
+    godaddyPaymentsConfig?.businessId || session?.businessId;
+  const hasGoDaddyConfig =
+    !!goDaddyApplicationId?.trim() && !!goDaddyBusinessId;
 
   // Only wrap with PoyntACHCollectProvider if GoDaddy ACH is configured
   if (
-    hasGoDaddyAppId &&
+    hasGoDaddyConfig &&
     session?.paymentMethods?.ach?.processor === 'godaddy'
   ) {
     wrappedChildren = (
@@ -57,7 +61,7 @@ export function ConditionalPaymentProviders({
   }
 
   // Only wrap with PoyntCollectProvider (GoDaddy Payments) if configured
-  if (hasGoDaddyAppId) {
+  if (hasGoDaddyConfig) {
     wrappedChildren = (
       <PoyntCollectProvider>{wrappedChildren}</PoyntCollectProvider>
     );

@@ -67,7 +67,7 @@ export type StripeConfig = {
 
 export type GodaddyPaymentsConfig = {
   businessId?: string;
-  appId: string;
+  appId?: string;
 };
 
 export type SquareConfig = {

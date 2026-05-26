@@ -240,11 +240,12 @@ function CustomTipInput({
 
   /**
    * Sanitize input: allow only digits and (for currencies with decimals)
-   * a single decimal point with at most `precision` fractional digits.
+   * a single decimal separator with at most `precision` fractional digits.
+   * Commas are normalized to decimal points so entries like "10,50" do not
+   * become "1050".
    */
   const sanitize = (raw: string): string => {
-    // Strip everything except digits and '.'
-    let cleaned = raw.replace(/[^\d.]/g, '');
+    let cleaned = raw.replace(/,/g, '.').replace(/[^\d.]/g, '');
 
     // For zero-precision currencies (JPY, KRW, etc.), strip any decimal
     if (precision === 0) {
