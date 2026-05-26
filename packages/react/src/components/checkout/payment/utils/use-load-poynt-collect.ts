@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { useGetPoyntCollectCdn } from '@/components/checkout/payment/utils/use-poynt-collect-cdn';
 
 let isPoyntLoaded = false;
@@ -8,10 +9,11 @@ const listeners = new Set<(loaded: boolean) => void>();
 
 // load collect.js globally so it can be used for card component and Apple/G Pay buttons
 export function useLoadPoyntCollect() {
-  const { godaddyPaymentsConfig } = useCheckoutContext();
-  const { session } = useCheckoutContext();
+  const { godaddyPaymentsConfig, session } = useCheckoutContext();
   const collectCDN = useGetPoyntCollectCdn();
   const [loaded, setLoaded] = useState(isPoyntLoaded);
+  const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
+  const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
 
   useEffect(() => {
     // Register this component to be notified when Poynt loads
@@ -32,9 +34,9 @@ export function useLoadPoyntCollect() {
     if (
       isPoyntCDNLoaded ||
       isPoyntLoaded ||
-      !godaddyPaymentsConfig ||
+      !applicationId?.trim() ||
       !collectCDN ||
-      (!session?.businessId && !godaddyPaymentsConfig?.businessId)
+      !businessId
     ) {
       return;
     }
@@ -50,7 +52,7 @@ export function useLoadPoyntCollect() {
     };
 
     document?.body?.appendChild(script);
-  }, [godaddyPaymentsConfig, collectCDN, session?.businessId]);
+  }, [applicationId, businessId, collectCDN]);
 
   return { isPoyntLoaded: loaded };
 }

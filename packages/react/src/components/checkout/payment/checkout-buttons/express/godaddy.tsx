@@ -85,6 +85,8 @@ export function ExpressCheckoutButton() {
   const updateTaxes = useUpdateTaxes();
 
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
+  const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
+  const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
 
   const confirmCheckout = useConfirmCheckout();
   const collect = useRef<TokenizeJs | null>(null);
@@ -404,12 +406,12 @@ export function ExpressCheckoutButton() {
   useEffect(() => {
     if (
       !isPoyntLoaded ||
-      !godaddyPaymentsConfig ||
+      !applicationId?.trim() ||
+      !businessId ||
       !isCollectLoading ||
       !draftOrder ||
       hasMounted.current ||
-      couponFetchStatus !== 'done' ||
-      (!godaddyPaymentsConfig?.businessId && !session?.businessId)
+      couponFetchStatus !== 'done'
     )
       return;
 
@@ -436,13 +438,10 @@ export function ExpressCheckoutButton() {
 
       collect.current = new (window as any).TokenizeJs(
         {
-          businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+          businessId,
           storeId: session?.storeId,
           channelId: session?.channelId,
-          applicationId: getApplicationId(
-            session,
-            godaddyPaymentsConfig?.appId
-          ),
+          applicationId,
         },
         {
           country: countryCode,
@@ -503,13 +502,13 @@ export function ExpressCheckoutButton() {
     }
   }, [
     isPoyntLoaded,
-    godaddyPaymentsConfig,
+    applicationId,
+    businessId,
     isCollectLoading,
     draftOrder,
     couponFetchStatus,
     countryCode,
     currencyCode,
-    session?.businessId,
     session?.storeId,
     session?.channelId,
     session?.enablePromotionCodes,
@@ -576,6 +575,8 @@ export function ExpressCheckoutButton() {
         mapOrderToFormValues({
           order: draftOrder,
           defaultCountryCode: session?.shipping?.originAddress?.countryCode,
+          enableShipping: session?.enableShipping,
+          enableLocalPickup: session?.enableLocalPickup,
         })
       );
 

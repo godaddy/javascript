@@ -27,6 +27,17 @@ export type Target =
   | 'checkout.form.submit.before'
   | 'checkout.form.submit.after'
   | 'checkout.summary.before'
+  | 'checkout.summary.line-items.before'
+  | 'checkout.summary.line-items.after'
+  | 'checkout.summary.totals.subtotal.before'
+  | 'checkout.summary.totals.discount.before'
+  | 'checkout.summary.totals.shipping.before'
+  | 'checkout.summary.totals.tip.before'
+  | 'checkout.summary.totals.taxes.before'
+  | 'checkout.summary.totals.fees.before'
+  | 'checkout.summary.totals.total-due.before'
+  | 'checkout.summary.totals.total-due.after'
+  | 'checkout.summary.totals.after'
   | 'checkout.summary.after';
 
 export function Target({ id }: { id: Target }) {
@@ -35,9 +46,13 @@ export function Target({ id }: { id: Target }) {
 
   const target = targets?.[id];
 
+  if (!target && !debug) {
+    return null;
+  }
+
   let content: React.ReactNode = null;
   if (target) {
-    content = target?.(session);
+    content = target(session);
   } else if (debug) {
     content = <span className='text-xs text-blue-500'>{id}</span>;
   }

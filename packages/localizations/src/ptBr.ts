@@ -94,6 +94,10 @@ export const ptBr = {
   payment: {
     title: 'Pagamento',
     description: 'Todos os pagamentos são seguros e criptografados.',
+    billingInformation: {
+      title: 'Informações de cobrança',
+      description: 'Insira suas informações de cobrança.',
+    },
     billingAddress: {
       title: 'Endereço de Cobrança',
       description: 'Digite seu endereço de cobrança.',
@@ -106,6 +110,7 @@ export const ptBr = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagamentos offline',
+      ach: 'Conta Bancária',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Pagar com CCAvenue',
     },
@@ -116,6 +121,7 @@ export const ptBr = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago:
         'Use o formulário do MercadoPago abaixo para concluir sua compra com segurança.',
       ccavenue: '',
@@ -162,6 +168,7 @@ export const ptBr = {
     shipping: 'Envio',
     tip: 'Gorjeta',
     estimatedTaxes: 'Impostos estimados',
+    fees: 'Taxas',
     totalDue: 'Total a Pagar',
     orderSummary: 'Resumo do Pedido',
     itemCount: 'itens',
@@ -340,6 +347,7 @@ export const ptBr = {
     MISSING_SHIPPING_INFO: 'Falha ao aplicar endereço ou método de entrega',
     DEPENDENCY_ERROR:
       'Não conseguimos processar seu pedido no momento. Aguarde um momento e tente novamente',
+    AUTHORIZATION_FAILED: 'Falha ao autorizar pagamento',
   },
   storefront: {
     product: 'Produto',

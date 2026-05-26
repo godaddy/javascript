@@ -94,6 +94,10 @@ export const enAu = {
   payment: {
     title: 'Payment',
     description: 'All payments are secure and encrypted.',
+    billingInformation: {
+      title: 'Billing Information',
+      description: 'Enter your billing information.',
+    },
     billingAddress: {
       title: 'Billing Address',
       description: 'Enter your billing address.',
@@ -106,6 +110,7 @@ export const enAu = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Offline payments',
+      ach: 'Bank Account',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Pay with CCAvenue',
     },
@@ -116,6 +121,7 @@ export const enAu = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago:
         'Use the MercadoPago form below to complete your purchase securely.',
       ccavenue: '',
@@ -162,6 +168,7 @@ export const enAu = {
     shipping: 'Shipping',
     tip: 'Tip',
     estimatedTaxes: 'Estimated GST',
+    fees: 'Fees',
     totalDue: 'Total Due',
     orderSummary: 'Order Summary',
     itemCount: 'items',
@@ -335,6 +342,7 @@ export const enAu = {
     MISSING_SHIPPING_INFO: 'Shipping address or method failed to apply',
     DEPENDENCY_ERROR:
       "We're unable to process your order right now. Please wait a moment and try again",
+    AUTHORIZATION_FAILED: 'Failed to authorise payment',
   },
   storefront: {
     product: 'Product',

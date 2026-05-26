@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import type {
   TokenizeJs,
@@ -24,6 +24,10 @@ export function GoDaddyCreditCardForm() {
   const [error, setError] = useState('');
 
   const confirmCheckout = useConfirmCheckout();
+
+  const elementId = `gdpay-card-element-${useId()}`;
+  const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
+  const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
 
   const options = {
     iFrame: {
@@ -190,24 +194,24 @@ export function GoDaddyCreditCardForm() {
   useLayoutEffect(() => {
     if (
       !isPoyntLoaded ||
-      !godaddyPaymentsConfig ||
+      !applicationId?.trim() ||
       collect.current ||
-      (!godaddyPaymentsConfig?.businessId && !session?.businessId)
+      !businessId
     )
       return;
 
     collect.current = new (window as any).TokenizeJs({
-      businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+      businessId,
       storeId: session?.storeId,
       channelId: session?.channelId,
-      applicationId: getApplicationId(session, godaddyPaymentsConfig?.appId),
+      applicationId,
     });
 
     collect?.current?.on('ready', () => {
       setCollect(collect.current);
     });
 
-    collect?.current?.mount('gdpay-card-element', document, options);
+    collect?.current?.mount(elementId, document, options);
 
     collect?.current?.on('nonce', async (event: TokenizeJsEvent) => {
       const nonce = event?.data?.nonce;
@@ -225,6 +229,7 @@ export function GoDaddyCreditCardForm() {
           if (err instanceof GraphQLErrorWithCodes) {
             setCheckoutErrors(err.codes);
           }
+          setIsLoadingNonce(false);
         }
       } else {
         setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
@@ -240,11 +245,13 @@ export function GoDaddyCreditCardForm() {
     collect?.current?.on('validated', event => {
       if (event?.data?.validated) {
         setError('');
+      } else {
+        setIsLoadingNonce(false);
       }
     });
   }, [
     isPoyntLoaded,
-    godaddyPaymentsConfig,
+    businessId,
     confirmCheckout.mutateAsync,
     setCollect,
     setCheckoutErrors,
@@ -253,11 +260,13 @@ export function GoDaddyCreditCardForm() {
     session?.businessId,
     session?.storeId,
     session?.channelId,
+    applicationId,
+    elementId,
   ]);
 
   return (
     <>
-      <div id='gdpay-card-element' />
+      <div id={elementId} />
       {error ? (
         <p className='text-[0.8rem] font-medium text-destructive'>{error}</p>
       ) : null}

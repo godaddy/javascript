@@ -95,6 +95,10 @@ export const qaPs = {
   payment: {
     title: '[Þâÿmëñţ Îñförmâţîöñ]',
     description: '[Âll þâÿmëñţš ârë šëçürë ând ëñçrÿþţëd för ÿöür šâfëţÿ.]',
+    billingInformation: {
+      title: '[Bîllîñg Îñförmâţîöñ]',
+      description: '[Ëñţër ÿöür bîllîñg îñförmâţîöñ dëţâîlš.]',
+    },
     billingAddress: {
       title: '[Bîllîñg Âddrëšš Îñförmâţîöñ]',
       description: '[Ëñţër ÿöür bîllîñg âddrëšš dëţâîlš.]',
@@ -107,6 +111,7 @@ export const qaPs = {
       googlePay: '[Göögië Þâÿ Þâÿmëñţ]',
       paze: '[Þâžë Þâÿmëñţ Šërvîçë]',
       offline: '[Öfflîñë þâÿmëñţ mëţhödš]',
+      ach: '[Bâñk Âççöüñţ Þâÿmëñţ]',
       mercadopago: 'Mercado Pago',
       ccavenue: '[Þâÿ ïñ ÇÇÂvëñûë]',
     },
@@ -117,6 +122,7 @@ export const qaPs = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago:
         '[Üšë ţhë MërçâðöÞâgö förm këlöw ţö çömþlëţë ÿöür þürçhâšë šëçürëlÿ.]',
       ccavenue: '',
@@ -163,6 +169,7 @@ export const qaPs = {
     shipping: '[Šhîþþîñg Çöšţš]',
     tip: '[Ţîþ Âmöüñţ]',
     estimatedTaxes: '[Ëšţîmâţëd ţâxëš çâlçülâţîöñ]',
+    fees: '[Fëëš Çhârgëd]',
     totalDue: '[Tötâl Âmöüñţ Düë]',
     orderSummary: '[Ördër Šümmârÿ Dëţâîlš]',
     itemCount: '[îţëmš îñ çârţ]',
@@ -344,6 +351,7 @@ export const qaPs = {
     MISSING_SHIPPING_INFO: '[Šĥîţţîñg âddrëšš ör mëţĥöd fâîlëd ţö âţţļÿ]',
     DEPENDENCY_ERROR:
       'موږ اوس ستاسو امر پروسس نشو کولی. مهرباني وکړئ یو شېبه انتظار وکړئ او بیا هڅه وکړئ',
+    AUTHORIZATION_FAILED: '[Fâîlëd ţö âüţhörîžë þâÿmëñţ]',
   },
   storefront: {
     product: '[Product]',

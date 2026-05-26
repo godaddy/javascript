@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.43
+
+### Patch Changes
+
+- 4f67ee8: Add additional targets and extend billing flows with localization updates
+- Updated dependencies [4f67ee8]
+  - @godaddy/localizations@1.0.10
+
 ## 1.0.42
 
 ### Patch Changes

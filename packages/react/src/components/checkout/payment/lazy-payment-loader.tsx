@@ -1,6 +1,8 @@
 'use client';
 
 import { type ComponentType, lazy, Suspense } from 'react';
+import { useCheckoutContext } from '@/components/checkout/checkout';
+import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   type AvailablePaymentProviders,
@@ -70,6 +72,24 @@ const LazyComponents = {
       default: module.PayPalCreditCardCheckoutButton,
     }))
   ),
+  // ACH Form
+  GoDaddyACHForm: lazy(() =>
+    import('@/components/checkout/payment/payment-methods/ach/godaddy').then(
+      module => ({
+        default: module.GoDaddyACHForm,
+      })
+    )
+  ),
+
+  // ACH Buttons
+  ACHCheckoutButton: lazy(() =>
+    import('@/components/checkout/payment/checkout-buttons/ach/godaddy').then(
+      module => ({
+        default: module.ACHCheckoutButton,
+      })
+    )
+  ),
+
   MercadoPagoCheckoutButton: lazy(() =>
     import(
       '@/components/checkout/payment/checkout-buttons/mercadopago/mercadopago'
@@ -202,6 +222,12 @@ type PaymentComponentRegistry = {
       button: PaymentComponentKey;
     };
   };
+  [PaymentMethodType.ACH]?: {
+    [PaymentProvider.GODADDY]: {
+      form: PaymentComponentKey;
+      button: PaymentComponentKey;
+    };
+  };
   [PaymentMethodType.MERCADOPAGO]?: {
     [PaymentProvider.MERCADOPAGO]: {
       button: PaymentComponentKey;
@@ -271,6 +297,12 @@ export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
       button: 'MercadoPagoCheckoutButton',
     },
   },
+  [PaymentMethodType.ACH]: {
+    [PaymentProvider.GODADDY]: {
+      form: 'GoDaddyACHForm',
+      button: 'ACHCheckoutButton',
+    },
+  },
   [PaymentMethodType.CCAVENUE]: {
     [PaymentProvider.CCAVENUE]: {
       button: 'CCAvenueCheckoutButton',
@@ -309,6 +341,27 @@ export function LazyPaymentMethodRenderer({
   provider,
   isExpress,
 }: LazyPaymentMethodRendererProps) {
+  const { godaddyPaymentsConfig, session } = useCheckoutContext();
+
+  if (provider === PaymentProvider.GODADDY) {
+    const hasGoDaddyAppId = !!getApplicationId(
+      session,
+      godaddyPaymentsConfig?.appId
+    )?.trim();
+
+    if (method === PaymentMethodType.CREDIT_CARD && !hasGoDaddyAppId) {
+      return null;
+    }
+
+    if (
+      method === PaymentMethodType.ACH &&
+      (!hasGoDaddyAppId ||
+        session?.paymentMethods?.ach?.processor !== PaymentProvider.GODADDY)
+    ) {
+      return null;
+    }
+  }
+
   const methodRegistry =
     lazyPaymentComponentRegistry[
       method as keyof typeof lazyPaymentComponentRegistry

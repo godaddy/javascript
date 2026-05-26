@@ -1,4 +1,10 @@
-import { Circle, CreditCard, LoaderCircle, Wallet } from 'lucide-react';
+import {
+  Circle,
+  CreditCard,
+  Landmark,
+  LoaderCircle,
+  Wallet,
+} from 'lucide-react';
 import React, {
   useCallback,
   useEffect,
@@ -65,6 +71,7 @@ import {
 // UI config for payment methods (labels will be resolved from translations)
 const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   card: <CreditCard className='h-5 w-5' />,
+  ach: <Landmark className='h-5 w-5' />,
   paypal: <PayPalIcon className='h-5 w-5' />,
   applePay: <ApplePayIcon className='h-5 w-5' />,
   googlePay: <GooglePayIcon className='h-5 w-10' />,
@@ -73,6 +80,11 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   offline: <Wallet className='h-5 w-5' />,
   ccavenue: <CcavenueIcon className='h-5 w-5' />,
 };
+
+const INLINE_BILLING_PAYMENT_METHODS: PaymentMethodValue[] = [
+  PaymentMethodType.CREDIT_CARD,
+  PaymentMethodType.ACH,
+];
 
 export function PaymentForm(
   props: DraftOrderTotalsProps & { items: Product[] }
@@ -92,6 +104,11 @@ export function PaymentForm(
   const useShippingAddress = form.watch('paymentUseShippingAddress');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
+  const isPaymentMethodWithInlineBilling = paymentMethod
+    ? INLINE_BILLING_PAYMENT_METHODS.includes(
+        paymentMethod as PaymentMethodValue
+      )
+    : false;
   const methodConfig = useGetSelectedPaymentMethod(
     paymentMethod as PaymentMethodValue
   );
@@ -108,6 +125,8 @@ export function PaymentForm(
 
   const currencyCode = props.currencyCode || 'USD';
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
+  const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
+  const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
 
   // Helper function to get translated payment method labels
   const getPaymentMethodLabel = useCallback(
@@ -115,6 +134,8 @@ export function PaymentForm(
       switch (key) {
         case PaymentMethodType.CREDIT_CARD:
           return t.payment.methods.creditCard;
+        case PaymentMethodType.ACH:
+          return t.payment.methods.ach;
         case PaymentMethodType.PAYPAL:
           return t.payment.methods.paypal;
         case PaymentMethodType.APPLE_PAY:
@@ -142,6 +163,8 @@ export function PaymentForm(
       switch (key) {
         case PaymentMethodType.CREDIT_CARD:
           return t.payment.descriptions?.creditCard;
+        case PaymentMethodType.ACH:
+          return t.payment.descriptions?.ach;
         case PaymentMethodType.PAYPAL:
           return t.payment.descriptions?.paypal;
         case PaymentMethodType.APPLE_PAY:
@@ -173,8 +196,8 @@ export function PaymentForm(
   useLayoutEffect(() => {
     if (
       !collect.current &&
-      godaddyPaymentsConfig &&
-      (godaddyPaymentsConfig?.businessId || session?.businessId) &&
+      !!applicationId?.trim() &&
+      businessId &&
       isPoyntLoaded &&
       countryCode &&
       currencyCode &&
@@ -182,13 +205,10 @@ export function PaymentForm(
     ) {
       collect.current = new (window as any).TokenizeJs(
         {
-          businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+          businessId,
           storeId: session?.storeId,
           channelId: session?.channelId,
-          applicationId: getApplicationId(
-            session,
-            godaddyPaymentsConfig?.appId
-          ),
+          applicationId,
         },
         {
           country: countryCode,
@@ -204,7 +224,8 @@ export function PaymentForm(
       });
     }
   }, [
-    godaddyPaymentsConfig,
+    applicationId,
+    businessId,
     countryCode,
     currencyCode,
     hasGoDaddyWalletPayment,
@@ -214,6 +235,8 @@ export function PaymentForm(
     session?.channelId,
     isPoyntLoaded,
   ]);
+
+  const hasGoDaddyAppId = !!applicationId?.trim();
 
   const availablePaymentMethods = React.useMemo(() => {
     if (!session?.paymentMethods) return [];
@@ -225,6 +248,23 @@ export function PaymentForm(
         method &&
         Array.isArray(method.checkoutTypes) &&
         method.checkoutTypes.includes(CheckoutType.STANDARD);
+
+      // GoDaddy CC/ACH require a resolvable application id (default config or
+      // gopay_override). Without it, LazyPaymentMethodRenderer returns null
+      // and the tab would render an empty form/button area.
+      if (
+        key === PaymentMethodType.CREDIT_CARD &&
+        method?.processor === PaymentProvider.GODADDY
+      ) {
+        return baseCheck && hasGoDaddyAppId;
+      }
+
+      if (
+        key === PaymentMethodType.ACH &&
+        method?.processor === PaymentProvider.GODADDY
+      ) {
+        return baseCheck && hasGoDaddyAppId;
+      }
 
       // Special handling for GoDaddy wallet payments — only show when device supports them
       if (
@@ -250,12 +290,37 @@ export function PaymentForm(
 
       return baseCheck;
     });
-  }, [session, pazeSupported, applePaySupported, googlePaySupported]);
+  }, [
+    session,
+    hasGoDaddyAppId,
+    pazeSupported,
+    applePaySupported,
+    googlePaySupported,
+  ]);
+
+  // Billing is separate from shipping when there is no shipping address to
+  // copy from. `mapOrderToFormValues` canonicalizes deliveryMethod against
+  // session capabilities, so `!isShipping` already covers:
+  //   - session.enableShipping = false
+  //   - line items have no SHIP fulfillment (PICKUP / PURCHASE / all-NONE)
+  // The remaining case is the user opting out of "use shipping for billing".
+  const billingIsSeparateFromShipping = !isShipping || !useShippingAddress;
+
+  const shouldShowBillingNamesOnly =
+    !isPaymentMethodWithInlineBilling &&
+    session?.enableBillingAddressCollection === false &&
+    billingIsSeparateFromShipping;
 
   const isBillingAddressRequired =
-    session?.enableBillingAddressCollection &&
-    (!useShippingAddress || isPickup) &&
-    paymentMethod !== PaymentMethodType.CREDIT_CARD;
+    !isPaymentMethodWithInlineBilling &&
+    billingIsSeparateFromShipping &&
+    (shouldShowBillingNamesOnly ||
+      session?.enableBillingAddressCollection !== false);
+
+  const billingCopy =
+    shouldShowBillingNamesOnly && t.payment.billingInformation
+      ? t.payment.billingInformation
+      : t.payment.billingAddress;
 
   const filteredPaymentMethods = React.useMemo(() => {
     const sortedKeys = Object.keys(PAYMENT_METHOD_ICONS)
@@ -470,16 +535,19 @@ export function PaymentForm(
 
       {isShipping &&
       session?.enableShipping &&
-      paymentMethod !== PaymentMethodType.CREDIT_CARD ? (
+      !isPaymentMethodWithInlineBilling ? (
         <PaymentAddressToggle />
       ) : null}
       {isBillingAddressRequired ? (
         <CheckoutSection className={isPickup ? 'pt-5' : ''}>
           <CheckoutSectionHeader
-            title={t.payment.billingAddress.title}
-            description={t.payment.billingAddress.description}
+            title={billingCopy.title}
+            description={billingCopy.description}
           />
-          <AddressForm sectionKey='billing' />
+          <AddressForm
+            sectionKey='billing'
+            onlyNames={shouldShowBillingNamesOnly}
+          />
         </CheckoutSection>
       ) : null}
 
@@ -496,7 +564,7 @@ export function PaymentForm(
                 </span>
                 <span className='font-bold text-lg pr-2 self-center'>
                   {formatCurrency({
-                    amount: props.total || 0,
+                    amount: (props.total || 0) + (props.tip || 0),
                     currencyCode: props.currencyCode || 'USD',
                     inputInMinorUnits: true,
                   })}
@@ -520,7 +588,9 @@ export function PaymentForm(
             currencyCode={props.currencyCode}
             tip={props.tip}
             taxes={props.taxes}
+            fees={props.fees}
             isTaxLoading={props.isTaxLoading}
+            isFeeLoading={props.isFeeLoading}
             isShippingLoading={props.isShippingLoading}
             subtotal={props.subtotal}
             discount={props.discount}
@@ -530,7 +600,8 @@ export function PaymentForm(
             total={props.total}
             enableShipping={props.enableShipping}
             enableDiscounts={session?.enablePromotionCodes}
-            enableTaxes={session?.enableTaxCollection}
+            enableTaxes={props.enableTaxes ?? session?.enableTaxCollection}
+            enableFees={props.enableFees}
           />
         </div>
       </div>

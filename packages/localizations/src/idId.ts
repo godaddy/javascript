@@ -94,6 +94,10 @@ export const idId = {
   payment: {
     title: 'Pembayaran',
     description: 'Semua pembayaran aman dan terenkripsi.',
+    billingInformation: {
+      title: 'Informasi penagihan',
+      description: 'Masukkan informasi penagihan Anda.',
+    },
     billingAddress: {
       title: 'Alamat Penagihan',
       description: 'Masukkan alamat penagihan Anda.',
@@ -106,6 +110,7 @@ export const idId = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pembayaran offline',
+      ach: 'Rekening Bank',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Bayar dengan CCAvenue',
     },
@@ -116,6 +121,7 @@ export const idId = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago:
         'Gunakan formulir MercadoPago di bawah untuk menyelesaikan pembelian Anda dengan aman.',
       ccavenue: '',
@@ -162,6 +168,7 @@ export const idId = {
     shipping: 'Pengiriman',
     tip: 'Tip',
     estimatedTaxes: 'Perkiraan pajak',
+    fees: 'Biaya',
     totalDue: 'Total Pembayaran',
     orderSummary: 'Ringkasan Pesanan',
     itemCount: 'item',
@@ -334,6 +341,7 @@ export const idId = {
     MISSING_SHIPPING_INFO: 'Alamat atau metode pengiriman gagal diterapkan',
     DEPENDENCY_ERROR:
       'Kami tidak dapat memproses pesanan Anda saat ini. Silakan tunggu sebentar dan coba lagi',
+    AUTHORIZATION_FAILED: 'Gagal mengotorisasi pembayaran',
   },
   storefront: {
     product: 'Produk',
