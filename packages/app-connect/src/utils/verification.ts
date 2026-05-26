@@ -102,7 +102,10 @@ export function canonicalizeRequest(req: VerifiableRequest): string {
     canonicalString += '\n';
 
     // Add the body to the canonical string
-    // Use original body exactly as received to match Go middleware
+    // Use raw body string if available (TanStack), otherwise stringify parsed body (Express)
+    // IMPORTANT: For signature verification to work, we need the exact bytes that were signed.
+    // TanStack middleware provides the raw body string directly for accurate verification.
+    // Express middleware provides parsed object from express.json(), which we re-stringify.
     const bodyContent =
       typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     canonicalString += bodyContent;
@@ -450,7 +453,7 @@ export function verifyWebhookSubscription(
     }
 
     return ok();
-  } catch (err) {
+  } catch (_err) {
     return error(new InvalidWebhookSignatureError().toJSON());
   }
 }

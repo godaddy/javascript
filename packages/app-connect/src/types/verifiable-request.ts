@@ -18,6 +18,11 @@ export interface VerifiableRequest {
   /** The request headers as a record */
   headers: Record<string, string | string[] | undefined>;
 
-  /** The request body, if any */
+  /**
+   * The request body, if any.
+   * - For Express middleware: pre-parsed object from express.json()
+   * - For TanStack middleware: raw string from request.text()
+   * - For Next.js: caller-provided (typically pre-parsed with request.json())
+   */
   body?: unknown;
 }
