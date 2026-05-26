@@ -36,6 +36,8 @@ export function PazeCheckoutButton() {
 
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
+  const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
+  const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
 
   const confirmCheckout = useConfirmCheckout();
   const collect = useRef<TokenizeJs | null>(null);
@@ -79,21 +81,18 @@ export function PazeCheckoutButton() {
   useEffect(() => {
     if (
       !collect.current &&
-      godaddyPaymentsConfig &&
-      (godaddyPaymentsConfig?.businessId || session?.businessId) &&
+      !!applicationId?.trim() &&
+      businessId &&
       isCollectLoading &&
       isPoyntLoaded &&
       !hasMounted.current
     ) {
       collect.current = new (window as any).TokenizeJs(
         {
-          businessId: godaddyPaymentsConfig?.businessId || session?.businessId,
+          businessId,
           storeId: session?.storeId,
           channelId: session?.channelId,
-          applicationId: getApplicationId(
-            session,
-            godaddyPaymentsConfig?.appId
-          ),
+          applicationId,
         },
         {
           country: countryCode,
@@ -106,10 +105,11 @@ export function PazeCheckoutButton() {
       );
     }
   }, [
-    godaddyPaymentsConfig,
+    applicationId,
+    businessId,
     countryCode,
     currencyCode,
-    session?.businessId,
+    session?.storeName,
     session?.storeId,
     session?.channelId,
     isPoyntLoaded,
@@ -120,8 +120,8 @@ export function PazeCheckoutButton() {
   useEffect(() => {
     if (
       !isPoyntLoaded ||
-      !godaddyPaymentsConfig ||
-      (!godaddyPaymentsConfig?.businessId && !session?.businessId) ||
+      !applicationId?.trim() ||
+      !businessId ||
       !isCollectLoading ||
       !collect.current ||
       hasMounted.current
@@ -158,12 +158,7 @@ export function PazeCheckoutButton() {
         });
       }
     });
-  }, [
-    isPoyntLoaded,
-    godaddyPaymentsConfig,
-    isCollectLoading,
-    session?.businessId,
-  ]);
+  }, [isPoyntLoaded, applicationId, businessId, isCollectLoading]);
 
   // Set up event listeners for TokenizeJs
   useEffect(() => {

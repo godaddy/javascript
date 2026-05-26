@@ -110,6 +110,7 @@ export const enIe = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Offline payments',
+      ach: 'Bank Account',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Pay with CCAvenue',
     },
@@ -120,6 +121,7 @@ export const enIe = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago:
         'Use the MercadoPago form below to complete your purchase securely.',
       ccavenue: '',
@@ -166,6 +168,7 @@ export const enIe = {
     shipping: 'Shipping',
     tip: 'Tip',
     estimatedTaxes: 'Estimated VAT',
+    fees: 'Fees',
     totalDue: 'Total Due',
     orderSummary: 'Order Summary',
     itemCount: 'items',
@@ -339,6 +342,7 @@ export const enIe = {
     MISSING_SHIPPING_INFO: 'Shipping address or method failed to apply',
     DEPENDENCY_ERROR:
       "We're unable to process your order right now. Please wait a moment and try again",
+    AUTHORIZATION_FAILED: 'Failed to authorise payment',
   },
   storefront: {
     product: 'Product',

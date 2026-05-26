@@ -53,9 +53,21 @@ export interface FormatCurrencyOptions {
    */
   inputInMinorUnits?: boolean;
   /**
-   * Return raw numeric value without currency symbol.
-   * - true → returns "10.00" instead of "$10.00"
-   * - false → returns full currency string (default)
+   * Return a machine-parseable major-unit string instead of a localized
+   * currency string.
+   *
+   * - `true`  → always uses `en-US` formatting (`.` decimal separator, no
+   *             thousands grouping, no currency symbol) so the result is
+   *             safe to pass to `Number.parseFloat`. The `locale` option
+   *             is intentionally ignored in this mode — using a localized
+   *             separator (e.g. `"10,50"` for `fr-FR`) would silently
+   *             corrupt the value when parsed back to a number.
+   *             Example: `{ amount: 1050, currencyCode: 'USD', returnRaw: true }` → `"10.50"`
+   * - `false` → returns the full localized currency string (default).
+   *             Example: `{ amount: 1050, currencyCode: 'USD' }` → `"$10.50"`
+   *
+   * Use `returnRaw: true` when feeding the value into a payment SDK or a
+   * numeric input. For human-readable display, leave it `false`.
    */
   returnRaw?: boolean;
 }
@@ -65,7 +77,8 @@ export interface FormatCurrencyOptions {
  *
  * - When `inputInMinorUnits = true` (default): converts from minor units (cents) and returns formatted string like "$123.45"
  * - When `inputInMinorUnits = false`: formats major units (dollars) directly and returns formatted string like "$123.45"
- * - When `returnRaw = true`: returns numeric value without currency symbol like "123.45"
+ * - When `returnRaw = true`: returns a parseable major-unit string in en-US
+ *   format (e.g. "123.45"), regardless of `locale`. See {@link FormatCurrencyOptions.returnRaw}.
  */
 export function formatCurrency({
   amount,
@@ -114,9 +127,12 @@ export function formatCurrency({
  * - 0 decimals (JPY, KRW, VND, etc.): multiply by 1
  * - 3 decimals (KWD, BHD, JOD, OMR): multiply by 1000
  *
+ * Returns 0 for NaN, negative, null-ish, or otherwise unparseable input
+ * so callers don't need to guard individually.
+ *
  * @param amount - The amount in major units (e.g., "10.50" or 10.50)
  * @param currencyCode - ISO 4217 currency code (e.g., 'USD', 'JPY', 'KWD')
- * @returns The amount in minor units (e.g., 1050 for USD, 10 for JPY, 10500 for KWD)
+ * @returns The amount in minor units (e.g., 1050 for USD, 10 for JPY, 10500 for KWD), or 0 for invalid input
  */
 export function convertMajorToMinorUnits(
   amount: number | string,
@@ -124,6 +140,7 @@ export function convertMajorToMinorUnits(
 ): number {
   const config = currencyConfigs[currencyCode] || { precision: 2 };
   const numAmount = typeof amount === 'string' ? Number(amount) : amount;
+  if (!Number.isFinite(numAmount) || numAmount < 0) return 0;
   return Math.round(numAmount * Math.pow(10, config.precision));
 }
 

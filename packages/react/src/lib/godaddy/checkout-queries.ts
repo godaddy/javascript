@@ -113,6 +113,10 @@ export const GetCheckoutSessionQuery = graphql(`
                 processor
                 checkoutTypes
               }
+              ach {
+                processor
+                checkoutTypes
+              }
               mercadopago {
                 processor
                 checkoutTypes
@@ -227,7 +231,27 @@ export const GetCheckoutSessionQuery = graphql(`
                     status
                 }
                 totals {
+                    taxTotal {
+                        currencyCode
+                        value
+                    }
+                    shippingTotal {
+                        currencyCode
+                        value
+                    }
+                    feeTotal {
+                        currencyCode
+                        value
+                    }
                     subTotal {
+                        currencyCode
+                        value
+                    }
+                    discountTotal {
+                        currencyCode
+                        value
+                    }
+                    total {
                         currencyCode
                         value
                     }
@@ -299,6 +323,11 @@ export const DraftOrderQuery = graphql(`
                   status
                   tags
                   type
+                  metafields {
+                      key
+                      type
+                      value
+                  }
                   details {
                       productAssetUrl
                       selectedAddons {

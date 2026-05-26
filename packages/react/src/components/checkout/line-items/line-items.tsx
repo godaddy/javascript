@@ -125,14 +125,6 @@ export function DraftOrderLineItems({
                       ))}
                     </span>
                   ))}
-                  {item.notes?.length ? (
-                    <>
-                      <span className='font-bold'>{t.lineItems.note}</span>
-                      {item.notes?.map(note => (
-                        <span key={`note-${note.id}`}>{note.content}</span>
-                      ))}
-                    </>
-                  ) : null}
                 </span>
                 <span className='text-xs text-muted-foreground'>
                   {t.general.quantity}: {item.quantity}
@@ -157,8 +149,16 @@ export function DraftOrderLineItems({
                     </>
                   ) : null}
                 </span>
+                {item.notes?.length ? (
+                  <span className='text-xs grid'>
+                    <span className='font-bold'>{t.lineItems.note}</span>
+                    {item.notes?.map(note => (
+                      <span key={`note-${note.id}`}>{note.content}</span>
+                    ))}
+                  </span>
+                ) : null}
               </div>
-              {item.originalPrice && item.quantity ? (
+              {item.originalPrice != null && item.quantity ? (
                 <div className='text-right flex items-start gap-2'>
                   <div className='pt-0.5'>
                     <span className='text-sm'>

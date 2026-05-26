@@ -112,6 +112,7 @@ export const deDe = {
       offline: 'Offline-Zahlungen',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Mit CCAvenue bezahlen',
+      ach: 'Bankkonto',
     },
     descriptions: {
       creditCard: '',
@@ -122,6 +123,7 @@ export const deDe = {
       offline: '',
       mercadopago:
         'Verwende das MercadoPago-Formular unten, um deinen Kauf sicher abzuschließen.',
+      ach: '',
       ccavenue: '',
     },
     noMethodsAvailable: 'Keine Zahlungsmethoden verfügbar',
@@ -166,6 +168,7 @@ export const deDe = {
     shipping: 'Versand',
     tip: 'Trinkgeld',
     estimatedTaxes: 'Geschätzte Steuern',
+    fees: 'Gebühren',
     totalDue: 'Gesamtbetrag',
     orderSummary: 'Bestellübersicht',
     itemCount: 'Artikel',
@@ -363,6 +366,7 @@ export const deDe = {
       'Lieferadresse oder -methode konnte nicht angewendet werden',
     DEPENDENCY_ERROR:
       'Wir können Ihre Bestellung derzeit nicht bearbeiten. Bitte warten Sie einen Moment und versuchen Sie es erneut',
+    AUTHORIZATION_FAILED: 'Zahlungsautorisierung fehlgeschlagen',
   },
   storefront: {
     product: 'Produkt',

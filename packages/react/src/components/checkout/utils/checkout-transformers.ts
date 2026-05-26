@@ -43,31 +43,56 @@ export function mapOrderToFormValues({
   order,
   defaultValues,
   defaultCountryCode,
+  enableShipping,
+  enableLocalPickup,
 }: {
   order?: DraftOrder | null;
   defaultValues?: Pick<CheckoutFormData, 'contactEmail'>;
   defaultCountryCode?: string | null;
+  /**
+   * Session-level capability flags. When provided, the derived
+   * `deliveryMethod` will fall back to `PURCHASE` for any item-level
+   * fulfillment mode that the session has disabled. This avoids the
+   * contradictory state where line items declare SHIP/PICKUP but the
+   * session disables those flows (so `DeliveryMethodForm` is not even
+   * rendered to correct the value). Pass `undefined` to skip the gate.
+   */
+  enableShipping?: boolean | null;
+  enableLocalPickup?: boolean | null;
 }): CheckoutFormData {
   const orderShippingAddress = order?.shipping?.address;
   const orderBillingAddress = order?.billing?.address;
   const paymentShouldUseShippingAddress = Boolean(
     orderShippingAddress?.addressLine1 === orderBillingAddress?.addressLine1
   );
-  const isPickup = order?.lineItems?.some(
-    lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP
-  );
-
-  const isShipping = order?.lineItems?.some(
-    lineItem => lineItem.fulfillmentMode === DeliveryMethods.SHIP
-  );
-
-  const isMixedFulfillment = isPickup && isShipping;
+  // Purchase mode = the session has neither shipping nor pickup enabled, so
+  // this checkout is payment-only regardless of what fulfillment modes the
+  // line items declare. Costs are assumed to be hardcoded on the order.
+  const isPurchaseMode =
+    enableShipping === false && enableLocalPickup === false;
 
   let deliveryMethod = DeliveryMethods.PURCHASE;
-  if (!isMixedFulfillment && isPickup) {
-    deliveryMethod = DeliveryMethods.PICKUP;
-  } else if (!isMixedFulfillment && isShipping) {
-    deliveryMethod = DeliveryMethods.SHIP;
+
+  if (!isPurchaseMode) {
+    const hasPickupItem = order?.lineItems?.some(
+      lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP
+    );
+    const hasShipItem = order?.lineItems?.some(
+      lineItem => lineItem.fulfillmentMode === DeliveryMethods.SHIP
+    );
+
+    // Only treat item-level fulfillment as actionable if the session allows
+    // that flow. When a flag is undefined we treat it as enabled so existing
+    // callers retain their previous behavior.
+    const isPickup = hasPickupItem && enableLocalPickup !== false;
+    const isShipping = hasShipItem && enableShipping !== false;
+    const isMixedFulfillment = isPickup && isShipping;
+
+    if (!isMixedFulfillment && isPickup) {
+      deliveryMethod = DeliveryMethods.PICKUP;
+    } else if (!isMixedFulfillment && isShipping) {
+      deliveryMethod = DeliveryMethods.SHIP;
+    }
   }
 
   return {
@@ -128,7 +153,10 @@ export function mapOrderToFormValues({
     paymentYear: '',
 
     // Notes
-    notes: order?.notes?.[0]?.content || '',
+    notes:
+      order?.notes?.find(
+        note => note.authorType === 'CUSTOMER' && note.content?.trim() !== ''
+      )?.content || '',
     pickupDate: '',
     pickupTime: '',
 
@@ -143,14 +171,36 @@ export function mapOrderToFormValues({
 }
 
 /**
+ * Reads the `lineItemOrder` metafield from a line item and returns it as a
+ * number. Returns Infinity when the metafield is missing or unparseable so
+ * those items sort to the end while preserving their relative order via a
+ * stable sort.
+ */
+function getLineItemOrder(
+  lineItem: NonNullable<DraftOrder['lineItems']>[number]
+): number {
+  const metafield = lineItem?.metafields?.find(m => m?.key === 'lineItemOrder');
+  if (!metafield?.value) return Number.POSITIVE_INFINITY;
+
+  // Value is stored as a string; for JSON-typed numeric values we still want
+  // to parse the underlying number.
+  const parsed = Number(metafield.value);
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+}
+
+/**
  * Maps order line items and SKUs to displayable items
  */
 export function mapSkusToItemsDisplay(
   orderItems?: DraftOrder['lineItems'],
   skusMap: Record<string, SKUProduct> = {}
 ): Product[] {
+  const sortedOrderItems = orderItems
+    ? [...orderItems].sort((a, b) => getLineItemOrder(a) - getLineItemOrder(b))
+    : orderItems;
+
   return (
-    orderItems?.map(orderItem => {
+    sortedOrderItems?.map(orderItem => {
       const sku = orderItem?.details?.sku;
       const skuDetails = sku ? skusMap[sku] : undefined;
 
@@ -167,10 +217,7 @@ export function mapSkusToItemsDisplay(
           // (orderItem.totals?.taxTotal?.value ?? 0) - // do we need taxTotal here?
           (orderItem.totals?.discountTotal?.value ?? 0),
         notes: orderItem.notes
-          ?.filter(
-            note =>
-              note.authorType !== 'CUSTOMER' && note.content?.trim() !== ''
-          )
+          ?.filter(note => !!note.content && note.content.trim() !== '')
           .map(note => ({
             id: note.id,
             content: note.content,

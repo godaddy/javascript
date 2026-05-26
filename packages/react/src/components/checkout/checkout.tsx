@@ -67,7 +67,7 @@ export type StripeConfig = {
 
 export type GodaddyPaymentsConfig = {
   businessId?: string;
-  appId: string;
+  appId?: string;
 };
 
 export type SquareConfig = {
@@ -220,9 +220,13 @@ export interface CheckoutProps {
   showStoreHours?: boolean;
   enableTracking?: boolean;
   trackingProperties?: TrackingProperties;
-  targets?: Partial<Record<Target, () => ReactNode>>;
+  targets?: Partial<
+    Record<Target, (session?: CheckoutSession | null) => ReactNode>
+  >;
   checkoutFormSchema?: CheckoutFormSchema;
   defaultValues?: Pick<CheckoutFormData, 'contactEmail'>;
+  isLoading?: boolean;
+  loadingFallback?: ReactNode;
 }
 
 export function Checkout(props: CheckoutProps) {
@@ -260,6 +264,7 @@ export function Checkout(props: CheckoutProps) {
 
     const enableBillingAddressCollection =
       session?.enableBillingAddressCollection !== false;
+    const enableShipping = session?.enableShipping !== false;
 
     return extendedSchema.superRefine((data, ctx) => {
       if (data.billingPhone) {
@@ -286,11 +291,19 @@ export function Checkout(props: CheckoutProps) {
       // BUT skip for free orders (paymentMethod === 'offline')
       const isFreeOrder = data.paymentMethod === PaymentMethodType.OFFLINE;
       const isPickup = data.deliveryMethod === DeliveryMethods.PICKUP;
+      const isShipping = data.deliveryMethod === DeliveryMethods.SHIP;
       const isFreePickup = isFreeOrder && isPickup;
 
+      // Billing is separate from shipping when there is no shipping address
+      // to copy from. `mapOrderToFormValues` canonicalizes deliveryMethod
+      // against session capabilities, so `!isShipping` already covers both
+      // session.enableShipping=false and orders with no SHIP fulfillment.
+      // The remaining case is the user opting out of "use shipping for billing".
+      const billingIsSeparateFromShipping =
+        !isShipping || !data.paymentUseShippingAddress;
+
       const requireBillingNamesOnly =
-        (!enableBillingAddressCollection &&
-          (!data.paymentUseShippingAddress || isPickup)) ||
+        (!enableBillingAddressCollection && billingIsSeparateFromShipping) ||
         isFreePickup;
 
       if (requireBillingNamesOnly) {
@@ -313,7 +326,7 @@ export function Checkout(props: CheckoutProps) {
       const requireBillingAddress =
         enableBillingAddressCollection &&
         !isFreePickup &&
-        (!data.paymentUseShippingAddress || isPickup);
+        billingIsSeparateFromShipping;
 
       if (requireBillingAddress) {
         // Basic billing fields required for all countries
@@ -348,8 +361,12 @@ export function Checkout(props: CheckoutProps) {
       }
 
       // Shipping address validation - only required if delivery method is SHIP
+      // AND shipping is enabled at the session level. This guards against the
+      // contradictory case where line items declare SHIP fulfillment but the
+      // session has enableShipping: false (the shipping form is not rendered
+      // in that case, so requiring the fields would block the user).
       const requireShippingAddress =
-        data.deliveryMethod === DeliveryMethods.SHIP;
+        data.deliveryMethod === DeliveryMethods.SHIP && enableShipping;
 
       if (requireShippingAddress) {
         // Basic shipping fields required for all countries
@@ -383,13 +400,18 @@ export function Checkout(props: CheckoutProps) {
         }
       }
     });
-  }, [checkoutFormSchema, session?.enableBillingAddressCollection, t]);
+  }, [
+    checkoutFormSchema,
+    session?.enableBillingAddressCollection,
+    session?.enableShipping,
+    t,
+  ]);
 
   const requiredFields = React.useMemo(() => {
     return getRequiredFieldsFromSchema(formSchema);
   }, [formSchema]);
 
-  if (!isLoadingJWT && !session) {
+  if (!props.isLoading && !isLoadingJWT && !session) {
     return (
       <div className='flex items-center justify-center min-h-[50vh] p-4'>
         <div className='max-w-md w-full'>

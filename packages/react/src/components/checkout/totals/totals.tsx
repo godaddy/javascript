@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { DiscountStandalone } from '@/components/checkout/discount/discount-standalone';
 import { Target } from '@/components/checkout/target/target';
 import { TotalLineItemSkeleton } from '@/components/checkout/totals/totals-skeleton';
@@ -17,6 +18,9 @@ export interface DraftOrderTotalsProps {
   tip?: number;
   taxes?: number;
   isTaxLoading?: boolean;
+  fees?: number;
+  isFeeLoading?: boolean;
+  enableFees?: boolean | null;
   enableTaxes?: boolean | null;
   enableDiscounts?: boolean | null;
   enableShipping?: boolean | null;
@@ -68,11 +72,14 @@ export function DraftOrderTotals({
   total = 0,
   tip = 0,
   taxes = 0,
+  fees = 0,
   enableDiscounts = false,
   enableTaxes = false,
+  enableFees = false,
   isTaxLoading = false,
   isShippingLoading = false,
   isDiscountLoading = false,
+  isFeeLoading = false,
   enableShipping = true,
   inputInMinorUnits = false,
 }: DraftOrderTotalsProps) {
@@ -81,6 +88,11 @@ export function DraftOrderTotals({
   const handleDiscountsChange = (discounts: string[]) => {
     // Discount changes are handled by the DiscountStandalone component
   };
+
+  // Calculates the total plus tips and surcharge
+  const calculatedTotal = useMemo(() => {
+    return total + tip;
+  }, [total, tip]);
 
   return (
     <div className='grid gap-4'>
@@ -143,6 +155,18 @@ export function DraftOrderTotals({
               inputInMinorUnits={inputInMinorUnits}
             />
           ))}
+        <Target id='checkout.summary.totals.fees.before' />
+        {enableFees &&
+          (isFeeLoading ? (
+            <TotalLineItemSkeleton title={t.totals.fees} />
+          ) : (
+            <TotalLineItem
+              currencyCode={currencyCode}
+              title={t.totals.fees}
+              value={fees || 0}
+              inputInMinorUnits={inputInMinorUnits}
+            />
+          ))}
         <Target id='checkout.summary.totals.after' />
       </div>
 
@@ -168,7 +192,7 @@ export function DraftOrderTotals({
             </span>
             <span className='font-bold text-lg'>
               {formatCurrency({
-                amount: total,
+                amount: calculatedTotal,
                 currencyCode,
                 inputInMinorUnits,
               })}

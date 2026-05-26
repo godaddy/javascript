@@ -19,4 +19,11 @@ export {
 } from './components/checkout/totals/totals';
 export * from './components/storefront';
 export * from './godaddy-provider';
+export {
+  convertMajorToMinorUnits,
+  type FormatCurrencyOptions,
+  formatCurrency,
+  useConvertMajorToMinorUnits,
+  useFormatCurrency,
+} from './lib/format-currency';
 export * from './types';

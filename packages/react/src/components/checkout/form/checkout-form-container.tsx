@@ -46,9 +46,17 @@ export function CheckoutFormContainer({
         order,
         defaultValues: props.defaultValues,
         defaultCountryCode: session?.shipping?.originAddress?.countryCode,
+        enableShipping: session?.enableShipping,
+        enableLocalPickup: session?.enableLocalPickup,
       }),
     }),
-    [order, props.defaultValues, session?.shipping?.originAddress?.countryCode]
+    [
+      order,
+      props.defaultValues,
+      session?.shipping?.originAddress?.countryCode,
+      session?.enableShipping,
+      session?.enableLocalPickup,
+    ]
   );
 
   if (!isConfirmingCheckout && !draftOrderQuery.isLoading && !order) {
@@ -59,8 +67,10 @@ export function CheckoutFormContainer({
     }
   }
 
-  if (draftOrderQuery.isLoading || isLoadingJWT) {
-    return <CheckoutSkeleton direction={props.direction} />;
+  if (props.isLoading || draftOrderQuery.isLoading || isLoadingJWT) {
+    return (
+      props.loadingFallback ?? <CheckoutSkeleton direction={props.direction} />
+    );
   }
 
   return (

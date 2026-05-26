@@ -111,6 +111,7 @@ export const itIt = {
       googlePay: 'Google Pay',
       paze: 'Paze',
       offline: 'Pagamenti offline',
+      ach: 'Conto Bancario',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Paga con CCAvenue',
     },
@@ -121,6 +122,7 @@ export const itIt = {
       googlePay: '',
       paze: '',
       offline: '',
+      ach: '',
       mercadopago:
         'Usa il modulo MercadoPago qui sotto per completare l’acquisto in modo sicuro.',
       ccavenue: '',
@@ -167,6 +169,7 @@ export const itIt = {
     shipping: 'Spedizione',
     tip: 'Mancia',
     estimatedTaxes: 'Tasse stimate',
+    fees: 'Commissioni',
     totalDue: 'Totale Dovuto',
     orderSummary: 'Riepilogo Ordine',
     itemCount: 'articoli',
@@ -362,6 +365,7 @@ export const itIt = {
       "Impossibile applicare l'indirizzo o il metodo di spedizione",
     DEPENDENCY_ERROR:
       'Non riusciamo a elaborare il tuo ordine in questo momento. Aspetta un momento e riprova',
+    AUTHORIZATION_FAILED: "Errore nell'autorizzazione del pagamento",
   },
   storefront: {
     product: 'Prodotto',

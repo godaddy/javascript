@@ -3199,6 +3199,15 @@ const introspection = {
         name: 'CheckoutSessionPaymentMethods',
         fields: [
           {
+            name: 'ach',
+            type: {
+              kind: 'OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfig',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
             name: 'applePay',
             type: {
               kind: 'OBJECT',
@@ -3286,6 +3295,13 @@ const introspection = {
         kind: 'INPUT_OBJECT',
         name: 'CheckoutSessionPaymentMethodsInput',
         inputFields: [
+          {
+            name: 'ach',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutSessionPaymentMethodConfigInput',
+            },
+          },
           {
             name: 'applePay',
             type: {
