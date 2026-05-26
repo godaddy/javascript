@@ -231,7 +231,27 @@ export const GetCheckoutSessionQuery = graphql(`
                     status
                 }
                 totals {
+                    taxTotal {
+                        currencyCode
+                        value
+                    }
+                    shippingTotal {
+                        currencyCode
+                        value
+                    }
+                    feeTotal {
+                        currencyCode
+                        value
+                    }
                     subTotal {
+                        currencyCode
+                        value
+                    }
+                    discountTotal {
+                        currencyCode
+                        value
+                    }
+                    total {
                         currencyCode
                         value
                     }
