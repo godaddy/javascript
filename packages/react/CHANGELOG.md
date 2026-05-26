@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.44
+
+### Patch Changes
+
+- 2e05ef7: Add ACH Payment Support
+- Updated dependencies [2e05ef7]
+  - @godaddy/localizations@1.0.11
+
 ## 1.0.43
 
 ### Patch Changes

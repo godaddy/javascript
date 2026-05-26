@@ -1,5 +1,11 @@
 # @godaddy/localizations
 
+## 1.0.11
+
+### Patch Changes
+
+- 2e05ef7: Add ACH Payment Support
+
 ## 1.0.10
 
 ### Patch Changes
