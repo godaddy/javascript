@@ -1,5 +1,11 @@
 # @godaddy/app-connect
 
+## 1.0.2
+
+### Patch Changes
+
+- 02d2de5: Verification middlewares for tanstack now pass raw text of request body through to verification function.
+
 ## 1.0.1
 
 ### Patch Changes
