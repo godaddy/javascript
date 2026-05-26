@@ -1,5 +1,13 @@
 # nextjs
 
+## 0.1.42
+
+### Patch Changes
+
+- Updated dependencies [2e05ef7]
+  - @godaddy/localizations@1.0.11
+  - @godaddy/react@1.0.44
+
 ## 0.1.41
 
 ### Patch Changes
