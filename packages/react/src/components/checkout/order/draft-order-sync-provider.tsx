@@ -149,6 +149,14 @@ export function DraftOrderSyncProvider({
               defaultValue: currentValue,
             });
           }
+        } catch (error) {
+          pendingPatchRef.current = pendingPatchRef.current
+            ? mergeDraftOrderPatch(patch, pendingPatchRef.current)
+            : patch;
+          for (const fieldName of fieldNames) {
+            pendingFieldNamesRef.current.add(fieldName);
+          }
+          throw error;
         } finally {
           inFlightRef.current = false;
         }

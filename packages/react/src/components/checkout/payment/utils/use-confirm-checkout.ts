@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -10,6 +10,7 @@ import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
 import { getShippingFulfillmentSyncKey } from '@/components/checkout/shipping/utils/should-apply-shipping-method';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { eventIds } from '@/tracking/events';
@@ -76,6 +77,7 @@ export function useConfirmCheckout() {
   const { apiHost } = useGoDaddyContext();
   const form = useFormContext();
   const { data: order } = useDraftOrder();
+  const queryClient = useQueryClient();
   const flushCheckoutSync = useFlushCheckoutSync();
   const isPendingRef = useRef(false);
 
@@ -98,9 +100,22 @@ export function useConfirmCheckout() {
       const isPickup = deliveryMethod === DeliveryMethods.PICKUP && !isExpress;
       const isShipping = deliveryMethod === DeliveryMethods.SHIP && !isExpress;
 
-      const hasShippingLines = (order?.shippingLines?.length ?? 0) > 0;
+      const latestDraftOrderSession = session?.id
+        ? queryClient.getQueryData<
+            | {
+                checkoutSession?: {
+                  draftOrder?: typeof order | null;
+                } | null;
+              }
+            | undefined
+          >(checkoutQueryKeys.draftOrder(session.id))
+        : undefined;
+      const latestOrder =
+        latestDraftOrderSession?.checkoutSession?.draftOrder ?? order;
+
+      const hasShippingLines = (latestOrder?.shippingLines?.length ?? 0) > 0;
       const hasLineItemsMissingShippingFulfillment = Boolean(
-        getShippingFulfillmentSyncKey(order?.lineItems)
+        getShippingFulfillmentSyncKey(latestOrder?.lineItems)
       );
 
       if (
