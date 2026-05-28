@@ -12,6 +12,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,6 +27,7 @@ export function GoDaddyApplePayCheckoutButton() {
     useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const { isPoyntLoaded } = useLoadPoyntCollect();
   const { godaddyPaymentsConfig } = useCheckoutContext();
   const { t } = useGoDaddyContext();
@@ -62,6 +64,8 @@ export function GoDaddyApplePayCheckoutButton() {
       return;
     }
 
+    await flushCheckoutSync();
+
     setCheckoutErrors(undefined);
 
     collect?.current?.startApplePaySession(poyntStandardRequest);
@@ -73,7 +77,13 @@ export function GoDaddyApplePayCheckoutButton() {
         paymentType: PaymentMethodType.APPLE_PAY,
       },
     });
-  }, [poyntStandardRequest, setCheckoutErrors, form, isDisabled]);
+  }, [
+    poyntStandardRequest,
+    flushCheckoutSync,
+    setCheckoutErrors,
+    form,
+    isDisabled,
+  ]);
 
   // Keep ref in sync so the SDK's stale onClick closure always calls the latest handler
   handleApplePayClickRef.current = handleApplePayClick;

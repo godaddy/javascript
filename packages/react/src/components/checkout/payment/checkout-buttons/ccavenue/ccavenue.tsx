@@ -6,6 +6,7 @@ import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ export function CCAvenueCheckoutButton() {
     useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const authorizeCheckout = useAuthorizeCheckout();
 
   const deliveryMethod = form.watch('deliveryMethod');
@@ -48,6 +50,8 @@ export function CCAvenueCheckoutButton() {
       }
       return;
     }
+
+    await flushCheckoutSync();
 
     if (!ccavenueConfig?.accessCodeId) {
       setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
@@ -96,6 +100,7 @@ export function CCAvenueCheckoutButton() {
     }
   }, [
     form,
+    flushCheckoutSync,
     isShipping,
     isShippingMethodsLoading,
     hasShippingMethods,

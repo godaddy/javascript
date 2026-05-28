@@ -721,7 +721,28 @@ export function ExpressCheckoutButton() {
             shippingLines,
           });
 
-          if (adjustments?.totalDiscountAmount?.value) {
+          if (!adjustments) {
+            track({
+              eventId: eventIds.discountError,
+              type: TrackingEventType.EVENT,
+              properties: {
+                success: false,
+                errorType: 'price_adjustments_null',
+                couponCode,
+                errorCodes: 'invalid_coupon_code',
+              },
+            });
+
+            e.updateWith({
+              error: {
+                code: 'invalid_coupon_code',
+                message: 'Unable to apply coupon. Please try another code.',
+              },
+            });
+            return;
+          }
+
+          if (adjustments.totalDiscountAmount?.value) {
             // Update refs with applied coupon
             appliedCouponCodeRef.current = couponCode;
             calculatedAdjustmentsRef.current = adjustments;

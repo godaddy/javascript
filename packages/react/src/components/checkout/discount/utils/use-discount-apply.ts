@@ -5,6 +5,10 @@ import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
+import {
+  checkoutMutationKeys,
+  checkoutQueryKeys,
+} from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
 import { applyDiscount } from '@/lib/godaddy/godaddy';
@@ -19,9 +23,7 @@ export function useDiscountApply() {
   const { data: draftOrder } = useDraftOrder();
 
   return useMutation({
-    mutationKey: session?.id
-      ? ['apply-discount', session.id]
-      : ['apply-discount'],
+    mutationKey: checkoutMutationKeys.applyDiscount(session?.id),
     mutationFn: async ({
       discountCodes,
     }: {
@@ -32,7 +34,7 @@ export function useDiscountApply() {
         : await applyDiscount(discountCodes, session, apiHost);
       return data;
     },
-    onSuccess: (data, { discountCodes }) => {
+    onSuccess: async (data, { discountCodes }) => {
       if (!session) return;
 
       const discountTotal =
@@ -42,7 +44,7 @@ export function useDiscountApply() {
 
       if (discountTotal) {
         queryClient.setQueryData(
-          ['draft-order', session.id],
+          checkoutQueryKeys.draftOrder(session.id),
           (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
             if (!old) return old;
             return {
@@ -107,7 +109,7 @@ export function useDiscountApply() {
       if (!discountCodes?.length) {
         // If no discount codes, we need to remove any existing discounts from the cache
         queryClient.setQueryData(
-          ['draft-order', session.id],
+          checkoutQueryKeys.draftOrder(session.id),
           (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
             if (!old) return old;
             return {
@@ -151,7 +153,7 @@ export function useDiscountApply() {
           )?.address;
 
           if (locationAddress) {
-            updateTaxes.mutate(locationAddress);
+            await updateTaxes.mutateAsync(locationAddress);
           }
         } else {
           // Only update taxes if we have the required location data
@@ -160,12 +162,12 @@ export function useDiscountApply() {
             draftOrder?.shipping?.address?.countryCode;
 
           if (hasRequiredLocationData) {
-            updateTaxes.mutate(undefined);
+            await updateTaxes.mutateAsync(undefined);
           }
         }
       } else {
         queryClient.invalidateQueries({
-          queryKey: ['draft-order', session.id],
+          queryKey: checkoutQueryKeys.draftOrder(session.id),
         });
       }
     },

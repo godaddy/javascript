@@ -17,6 +17,7 @@ export {
   TotalLineItem,
   type TotalLineItemProps,
 } from './components/checkout/totals/totals';
+export { checkoutQueryKeys } from './components/checkout/utils/query-keys';
 export * from './components/storefront';
 export * from './godaddy-provider';
 export {

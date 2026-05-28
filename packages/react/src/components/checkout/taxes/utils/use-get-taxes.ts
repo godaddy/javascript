@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { checkoutMutationKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getDraftOrderTaxes } from '@/lib/godaddy/godaddy';
 import type { GetCheckoutSessionTaxesInput } from '@/types';
@@ -9,9 +10,7 @@ export function useGetTaxes() {
   const { apiHost } = useGoDaddyContext();
 
   return useMutation({
-    mutationKey: session?.id
-      ? ['get-taxes-without-order', session.id]
-      : ['get-taxes-without-order'],
+    mutationKey: checkoutMutationKeys.getTaxes(session?.id),
     mutationFn: async ({
       destination,
       lines,

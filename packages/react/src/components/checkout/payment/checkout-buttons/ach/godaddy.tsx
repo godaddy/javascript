@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { usePoyntACHCollect } from '@/components/checkout/payment/utils/poynt-ach-provider';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -11,6 +12,7 @@ export function ACHCheckoutButton() {
   const { isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { t } = useGoDaddyContext();
 
@@ -29,9 +31,11 @@ export function ACHCheckoutButton() {
       return;
     }
 
+    await flushCheckoutSync();
+
     setIsLoadingNonce(true);
     collect.getNonce({});
-  }, [collect, form, isDisabled, setIsLoadingNonce]);
+  }, [collect, flushCheckoutSync, form, isDisabled, setIsLoadingNonce]);
 
   if (!collect) return null;
 

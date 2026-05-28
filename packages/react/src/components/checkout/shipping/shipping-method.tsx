@@ -20,9 +20,11 @@ import {
 import { useApplyShippingMethod } from '@/components/checkout/shipping/utils/use-apply-shipping-method';
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoDaddyContext } from '@/godaddy-provider';
+import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import type { ShippingMethod } from '@/types';
@@ -202,7 +204,7 @@ export function ShippingMethodForm() {
               if (!isFulfillmentSync || !session?.id) return;
 
               queryClient.invalidateQueries({
-                queryKey: ['draft-order', session.id],
+                queryKey: checkoutQueryKeys.draftOrder(session.id),
               });
             },
             onError: () => {
@@ -210,12 +212,10 @@ export function ShippingMethodForm() {
 
               setCheckoutErrors(['SHIPPING_METHOD_APPLICATION_FAILED']);
               queryClient.invalidateQueries({
-                queryKey: ['draft-order', session.id],
+                queryKey: checkoutQueryKeys.draftOrder(session.id),
               });
             },
           });
-        } else if (session?.enableTaxCollection) {
-          updateTaxes.mutate(undefined);
         }
 
         lastProcessedStateRef.current = {
@@ -280,6 +280,7 @@ export function ShippingMethodForm() {
 
   const currentMethod = form.watch('shippingMethod');
   const selectedValue = currentMethod || undefined;
+  const isShippingMethodDisabled = isPaymentDisabled || isConfirmingCheckout;
 
   const handleValueChange = (value: string) => {
     const previousValue = form.getValues('shippingMethod');
@@ -317,9 +318,17 @@ export function ShippingMethodForm() {
       {shippingMethods.length === 1 ? (
         <Label
           htmlFor={shippingMethods[0].displayName || 'shipping-method-0'}
-          className='font-medium'
+          className={cn(
+            'font-medium',
+            isShippingMethodDisabled && 'cursor-not-allowed opacity-60'
+          )}
         >
-          <div className='flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 rounded-md'>
+          <div
+            className={cn(
+              'flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 rounded-md',
+              isShippingMethodDisabled && 'pointer-events-none'
+            )}
+          >
             <div className='flex items-center space-x-4'>
               <div className='inline-flex flex-col'>
                 {shippingMethods[0].displayName}
@@ -346,7 +355,7 @@ export function ShippingMethodForm() {
         </Label>
       ) : (
         <RadioGroup
-          disabled={isPaymentDisabled}
+          disabled={isShippingMethodDisabled}
           value={selectedValue}
           onValueChange={handleValueChange}
         >
@@ -355,13 +364,24 @@ export function ShippingMethodForm() {
             const isSelected = method.serviceCode === currentMethod;
 
             return (
-              <Label key={methodId} htmlFor={methodId} className='font-medium'>
+              <Label
+                key={methodId}
+                htmlFor={methodId}
+                className={cn(
+                  'font-medium',
+                  isShippingMethodDisabled && 'cursor-not-allowed opacity-60'
+                )}
+              >
                 <div
-                  className={`flex items-center min-h-12 justify-between space-x-2 bg-card border border-border p-2 px-4 hover:bg-muted ${
-                    index === 0 ? 'rounded-t-md' : ''
-                  } ${index === shippingMethods.length - 1 ? 'rounded-b-md' : ''} ${index !== 0 ? 'border-t-0' : ''} ${
-                    isSelected ? 'bg-muted' : ''
-                  }`}
+                  className={cn(
+                    'flex items-center min-h-12 justify-between space-x-2 bg-card border border-border p-2 px-4',
+                    !isShippingMethodDisabled && 'hover:bg-muted',
+                    isShippingMethodDisabled && 'pointer-events-none',
+                    index === 0 && 'rounded-t-md',
+                    index === shippingMethods.length - 1 && 'rounded-b-md',
+                    index !== 0 && 'border-t-0',
+                    isSelected && 'bg-muted'
+                  )}
                 >
                   <div className='flex items-center space-x-4'>
                     <RadioGroupItem value={methodId} id={methodId} />

@@ -155,12 +155,16 @@ export function AddressForm({
     deps: [contact],
     enabled: shouldVerifyName,
     fieldNames: [`${sectionKey}FirstName`, `${sectionKey}LastName`],
+    preserveFormData: !onlyNames,
     mapToInput: data => {
+      const fields = {
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        ...(onlyNames ? { address: null } : {}),
+      };
+
       return mapAddressFieldsToInput(
-        {
-          firstName: data.firstName.trim(),
-          lastName: data.lastName.trim(),
-        },
+        fields,
         sectionKey as 'shipping' | 'billing',
         useShippingAddress
       );
@@ -290,7 +294,7 @@ export function AddressForm({
     key: 'address',
     data: address,
     deps: [address, shouldUpdateAddress],
-    enabled: shouldUpdateAddress,
+    enabled: !onlyNames && shouldUpdateAddress,
     fieldNames: [
       `${sectionKey}AddressLine1`,
       `${sectionKey}AddressLine2`,

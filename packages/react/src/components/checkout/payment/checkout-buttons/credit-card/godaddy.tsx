@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { usePoyntCollect } from '@/components/checkout/payment/utils/poynt-provider';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -13,6 +14,7 @@ export function CreditCardCheckoutButton() {
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const { poyntCardRequest } = useBuildPaymentRequest();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { t } = useGoDaddyContext();
 
@@ -31,9 +33,18 @@ export function CreditCardCheckoutButton() {
       return;
     }
 
+    await flushCheckoutSync();
+
     setIsLoadingNonce(true);
     collect.getNonce(poyntCardRequest);
-  }, [collect, form, isDisabled, poyntCardRequest, setIsLoadingNonce]);
+  }, [
+    collect,
+    flushCheckoutSync,
+    form,
+    isDisabled,
+    poyntCardRequest,
+    setIsLoadingNonce,
+  ]);
 
   if (!collect) return null;
 

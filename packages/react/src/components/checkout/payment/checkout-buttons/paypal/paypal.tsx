@@ -12,6 +12,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -23,6 +24,7 @@ function PayPalButtonsWrapper() {
   const form = useFormContext();
   const { payPalRequest } = useBuildPaymentRequest();
   const confirmCheckout = useConfirmCheckout();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const [isPaypalDisabled, setIsPaypalDisabled] = useState<boolean>(false);
   const deliveryMethod = form.watch('deliveryMethod');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
@@ -44,6 +46,8 @@ function PayPalButtonsWrapper() {
       }
       return actions.reject();
     }
+
+    await flushCheckoutSync();
 
     // Return true to continue flow, false to stop it
     return actions.resolve();

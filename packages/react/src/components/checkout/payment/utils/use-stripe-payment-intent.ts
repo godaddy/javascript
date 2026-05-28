@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import { checkoutMutationKeys } from '@/components/checkout/utils/query-keys';
 
 const stripePromiseCache: Record<string, Promise<Stripe | null>> = {};
 
@@ -44,11 +45,11 @@ export function useStripePaymentIntent({
   }, [stripeConfig?.publishableKey]);
 
   const isCreatingPaymentIntent = useIsMutating({
-    mutationKey: ['stripe-payment-intent', { sessionId: session?.id }],
+    mutationKey: checkoutMutationKeys.stripePaymentIntent(session?.id),
   });
 
   const paymentIntentMutation = useMutation({
-    mutationKey: ['stripe-payment-intent', { sessionId: session?.id }],
+    mutationKey: checkoutMutationKeys.stripePaymentIntent(session?.id),
     mutationFn: async ({
       amount: paymentAmount,
       currency: paymentCurrency,

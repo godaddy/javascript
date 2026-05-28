@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { checkoutMutationKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getDraftOrderShippingMethods } from '@/lib/godaddy/godaddy';
 import type { GetCheckoutSessionShippingRatesInput } from '@/types';
@@ -9,9 +10,7 @@ export function useGetShippingMethodByAddress() {
   const { apiHost } = useGoDaddyContext();
 
   return useMutation({
-    mutationKey: session?.id
-      ? ['get-shipping-method-by-address', session.id]
-      : ['get-shipping-method-by-address'],
+    mutationKey: checkoutMutationKeys.getShippingMethodByAddress(session?.id),
     mutationFn: async (
       destination: GetCheckoutSessionShippingRatesInput['destination']
     ) => {

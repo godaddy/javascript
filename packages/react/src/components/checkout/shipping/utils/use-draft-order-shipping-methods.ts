@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderShippingAddress } from '@/components/checkout/order/use-draft-order';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getDraftOrderShippingMethods } from '@/lib/godaddy/godaddy';
 
@@ -47,17 +48,16 @@ export function useDraftOrderShippingMethods() {
   ]);
 
   return useQuery({
-    queryKey: session?.id
-      ? [
-          'draft-order-shipping-methods',
-          session.id,
-          shippingAddress?.addressLine1,
-          shippingAddress?.adminArea1,
-          shippingAddress?.adminArea2,
-          shippingAddress?.postalCode,
-          shippingAddress?.countryCode,
-        ]
-      : ['draft-order-shipping-methods'],
+    queryKey: [
+      ...checkoutQueryKeys.draftOrderShippingMethods(session?.id),
+      {
+        addressLine1: shippingAddress?.addressLine1,
+        adminArea1: shippingAddress?.adminArea1,
+        adminArea2: shippingAddress?.adminArea2,
+        postalCode: shippingAddress?.postalCode,
+        countryCode: shippingAddress?.countryCode,
+      },
+    ],
     queryFn: () =>
       jwt
         ? getDraftOrderShippingMethods(

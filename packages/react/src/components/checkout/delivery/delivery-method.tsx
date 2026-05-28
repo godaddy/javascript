@@ -10,6 +10,7 @@ import { FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoDaddyContext } from '@/godaddy-provider';
+import { cn } from '@/lib/utils';
 import { TrackingEventType, track } from '@/tracking/track';
 
 export enum DeliveryMethods {
@@ -58,6 +59,7 @@ export function DeliveryMethodForm() {
   const form = useFormContext();
   const { session, isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
+  const isDisabled = isConfirmingCheckout || isPaymentDisabled;
 
   const handleDeliveryMethodChange = (value: DeliveryMethods) => {
     form.setValue('deliveryMethod', value);
@@ -132,20 +134,27 @@ export function DeliveryMethodForm() {
                   value={field.value}
                   onValueChange={handleDeliveryMethodChange}
                   required
-                  disabled={isConfirmingCheckout || isPaymentDisabled}
+                  disabled={isDisabled}
                 >
                   {availableMethods.map((method, index) => (
                     <Label
                       key={method.id}
                       htmlFor={method.id}
-                      className='font-medium'
+                      className={cn(
+                        'font-medium',
+                        isDisabled && 'cursor-not-allowed opacity-60'
+                      )}
                     >
                       <div
-                        className={`flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 hover:bg-muted 
-											${index === 0 ? 'rounded-t-md' : 'border-t-0'} 
-											${index === availableMethods.length - 1 ? 'rounded-b-md' : ''} 
-											${method.id === field.value ? 'bg-muted' : ''}
-											`}
+                        className={cn(
+                          'flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4',
+                          !isDisabled && 'hover:bg-muted',
+                          isDisabled && 'pointer-events-none',
+                          index === 0 ? 'rounded-t-md' : 'border-t-0',
+                          index === availableMethods.length - 1 &&
+                            'rounded-b-md',
+                          method.id === field.value && 'bg-muted'
+                        )}
                       >
                         <div className='flex items-center space-x-4'>
                           <FormControl>

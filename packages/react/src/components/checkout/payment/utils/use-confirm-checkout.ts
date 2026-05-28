@@ -7,6 +7,7 @@ import {
 } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
 import { getShippingFulfillmentSyncKey } from '@/components/checkout/shipping/utils/should-apply-shipping-method';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -75,6 +76,7 @@ export function useConfirmCheckout() {
   const { apiHost } = useGoDaddyContext();
   const form = useFormContext();
   const { data: order } = useDraftOrder();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const isPendingRef = useRef(false);
 
   return useMutation({
@@ -89,6 +91,8 @@ export function useConfirmCheckout() {
       isPendingRef.current = true;
 
       const { isExpress, ...confirmCheckoutInput } = input;
+
+      await flushCheckoutSync();
 
       const deliveryMethod = form.getValues('deliveryMethod');
       const isPickup = deliveryMethod === DeliveryMethods.PICKUP && !isExpress;
