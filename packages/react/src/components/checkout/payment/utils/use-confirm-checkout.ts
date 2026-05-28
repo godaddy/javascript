@@ -6,6 +6,7 @@ import {
   useCheckoutContext,
 } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
@@ -72,6 +73,7 @@ export function useConfirmCheckout() {
     useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
   const form = useFormContext();
+  const { data: order } = useDraftOrder();
   const isPendingRef = useRef(false);
 
   return useMutation({
@@ -87,9 +89,20 @@ export function useConfirmCheckout() {
 
       const { isExpress, ...confirmCheckoutInput } = input;
 
-      const isPickup =
-        form.getValues('deliveryMethod') === DeliveryMethods.PICKUP &&
-        !isExpress;
+      const deliveryMethod = form.getValues('deliveryMethod');
+      const isPickup = deliveryMethod === DeliveryMethods.PICKUP && !isExpress;
+      const isShipping = deliveryMethod === DeliveryMethods.SHIP && !isExpress;
+
+      const hasShippingLines = (order?.shippingLines?.length ?? 0) > 0;
+      const hasNonShipLineItems = order?.lineItems?.some(
+        lineItem => lineItem.fulfillmentMode !== DeliveryMethods.SHIP
+      );
+
+      if (isShipping && (!hasShippingLines || hasNonShipLineItems)) {
+        setCheckoutErrors(['SHIPPING_METHOD_APPLICATION_FAILED']);
+        isPendingRef.current = false;
+        return;
+      }
 
       const pickUpData = isPickup
         ? buildPickupPayload({
