@@ -100,8 +100,7 @@ export function useConfirmCheckout() {
 
       if (isShipping && (!hasShippingLines || hasNonShipLineItems)) {
         setCheckoutErrors(['SHIPPING_METHOD_APPLICATION_FAILED']);
-        isPendingRef.current = false;
-        return;
+        throw new Error('SHIPPING_METHOD_APPLICATION_FAILED');
       }
 
       const pickUpData = isPickup
