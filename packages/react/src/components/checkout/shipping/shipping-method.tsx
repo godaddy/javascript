@@ -50,7 +50,8 @@ export function ShippingMethodForm() {
   const formatCurrency = useFormatCurrency();
   const form = useFormContext();
   const { t } = useGoDaddyContext();
-  const { session, isConfirmingCheckout } = useCheckoutContext();
+  const { session, isConfirmingCheckout, setCheckoutErrors } =
+    useCheckoutContext();
   const updateTaxes = useUpdateTaxes();
   const queryClient = useQueryClient();
   const isPaymentDisabled = useIsPaymentDisabled();
@@ -89,14 +90,14 @@ export function ShippingMethodForm() {
     hadShippingMethods: boolean;
     wasPickup: boolean;
     clearedShippingMethod: boolean;
-    inFlightFulfillmentKey: string | null;
+    blockedFulfillmentKey: string | null;
   }>({
     serviceCode: null,
     cost: null,
     hadShippingMethods: false,
     wasPickup: false,
     clearedShippingMethod: false,
-    inFlightFulfillmentKey: null,
+    blockedFulfillmentKey: null,
   });
 
   useEffect(() => {
@@ -114,11 +115,11 @@ export function ShippingMethodForm() {
 
     if (
       !hasLineItemsMissingShippingFulfillment &&
-      lastState.inFlightFulfillmentKey
+      lastState.blockedFulfillmentKey
     ) {
       lastProcessedStateRef.current = {
         ...lastState,
-        inFlightFulfillmentKey: null,
+        blockedFulfillmentKey: null,
       };
     }
 
@@ -140,7 +141,7 @@ export function ShippingMethodForm() {
           hadShippingMethods: false,
           wasPickup: isPickup,
           clearedShippingMethod: true,
-          inFlightFulfillmentKey: null,
+          blockedFulfillmentKey: null,
         };
       }
       return;
@@ -192,7 +193,7 @@ export function ShippingMethodForm() {
           if (isFulfillmentSync) {
             lastProcessedStateRef.current = {
               ...lastProcessedStateRef.current,
-              inFlightFulfillmentKey: fulfillmentSyncKey,
+              blockedFulfillmentKey: fulfillmentSyncKey,
             };
           }
 
@@ -205,12 +206,12 @@ export function ShippingMethodForm() {
               });
             },
             onError: () => {
-              if (!isFulfillmentSync) return;
+              if (!isFulfillmentSync || !session?.id) return;
 
-              lastProcessedStateRef.current = {
-                ...lastProcessedStateRef.current,
-                inFlightFulfillmentKey: null,
-              };
+              setCheckoutErrors(['SHIPPING_METHOD_APPLICATION_FAILED']);
+              queryClient.invalidateQueries({
+                queryKey: ['draft-order', session.id],
+              });
             },
           });
         } else if (session?.enableTaxCollection) {
@@ -223,8 +224,8 @@ export function ShippingMethodForm() {
           hadShippingMethods: true,
           wasPickup: false,
           clearedShippingMethod: false,
-          inFlightFulfillmentKey: needsMutation
-            ? lastProcessedStateRef.current.inFlightFulfillmentKey
+          blockedFulfillmentKey: needsMutation
+            ? lastProcessedStateRef.current.blockedFulfillmentKey
             : null,
         };
       }
@@ -238,6 +239,7 @@ export function ShippingMethodForm() {
     form,
     applyShippingMethod,
     updateTaxes.mutate,
+    setCheckoutErrors,
     session?.enableTaxCollection,
     queryClient,
     session?.id,

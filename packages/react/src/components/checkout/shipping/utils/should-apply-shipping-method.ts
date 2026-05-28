@@ -4,7 +4,7 @@ import type { DraftOrder, ShippingLines, ShippingMethod } from '@/types';
 type LastProcessedShippingState = {
   serviceCode: string | null;
   cost: number | null;
-  inFlightFulfillmentKey: string | null;
+  blockedFulfillmentKey: string | null;
 };
 
 export function getShippingFulfillmentSyncKey(
@@ -40,20 +40,20 @@ export function shouldApplyShippingMethod({
   const currentServiceCode = shippingLine?.requestedService || null;
   const currentCost = shippingLine?.amount?.value ?? null;
   const hasLineItemsMissingShippingFulfillment = Boolean(fulfillmentSyncKey);
-  const isFulfillmentSyncInFlight =
+  const isFulfillmentSyncBlocked =
     Boolean(fulfillmentSyncKey) &&
-    fulfillmentSyncKey === lastState.inFlightFulfillmentKey;
+    fulfillmentSyncKey === lastState.blockedFulfillmentKey;
 
   const alreadyProcessed =
     methodToApply.serviceCode === lastState.serviceCode &&
     methodCost === lastState.cost &&
-    (!hasLineItemsMissingShippingFulfillment || isFulfillmentSyncInFlight);
+    (!hasLineItemsMissingShippingFulfillment || isFulfillmentSyncBlocked);
 
   if (alreadyProcessed) {
     return {
       alreadyProcessed,
       needsMutation: false,
-      isFulfillmentSyncInFlight,
+      isFulfillmentSyncBlocked,
       methodCost,
     };
   }
@@ -63,8 +63,8 @@ export function shouldApplyShippingMethod({
     needsMutation:
       methodToApply.serviceCode !== currentServiceCode ||
       methodCost !== currentCost ||
-      (hasLineItemsMissingShippingFulfillment && !isFulfillmentSyncInFlight),
-    isFulfillmentSyncInFlight,
+      (hasLineItemsMissingShippingFulfillment && !isFulfillmentSyncBlocked),
+    isFulfillmentSyncBlocked,
     methodCost,
   };
 }

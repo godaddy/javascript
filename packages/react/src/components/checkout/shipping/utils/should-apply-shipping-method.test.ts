@@ -23,7 +23,7 @@ const shippingLine = {
 const processedState = {
   serviceCode: 'ground',
   cost: 100,
-  inFlightFulfillmentKey: null,
+  blockedFulfillmentKey: null,
 };
 
 describe('getShippingFulfillmentSyncKey', () => {
@@ -78,23 +78,23 @@ describe('shouldApplyShippingMethod', () => {
     expect(result.alreadyProcessed).toBe(false);
   });
 
-  it('does not repeatedly apply while the same fulfillment sync is in flight', () => {
+  it('does not repeatedly apply while the same fulfillment sync key is blocked', () => {
     const result = shouldApplyShippingMethod({
       methodToApply: shippingMethod,
       shippingLine,
       fulfillmentSyncKey: 'line-item-1:NONE',
       lastState: {
         ...processedState,
-        inFlightFulfillmentKey: 'line-item-1:NONE',
+        blockedFulfillmentKey: 'line-item-1:NONE',
       },
     });
 
     expect(result.needsMutation).toBe(false);
     expect(result.alreadyProcessed).toBe(true);
-    expect(result.isFulfillmentSyncInFlight).toBe(true);
+    expect(result.isFulfillmentSyncBlocked).toBe(true);
   });
 
-  it('allows retrying after the in-flight fulfillment key is cleared', () => {
+  it('allows retrying after the blocked fulfillment key changes', () => {
     const result = shouldApplyShippingMethod({
       methodToApply: shippingMethod,
       shippingLine,
@@ -113,13 +113,13 @@ describe('shouldApplyShippingMethod', () => {
       fulfillmentSyncKey: 'line-item-2:NONE',
       lastState: {
         ...processedState,
-        inFlightFulfillmentKey: 'line-item-1:NONE',
+        blockedFulfillmentKey: 'line-item-1:NONE',
       },
     });
 
     expect(result.needsMutation).toBe(true);
     expect(result.alreadyProcessed).toBe(false);
-    expect(result.isFulfillmentSyncInFlight).toBe(false);
+    expect(result.isFulfillmentSyncBlocked).toBe(false);
   });
 
   it('does not apply when shipping line and method match and line items are fulfilled', () => {
@@ -160,7 +160,7 @@ describe('shouldApplyShippingMethod', () => {
       lastState: {
         serviceCode: 'express',
         cost: 100,
-        inFlightFulfillmentKey: null,
+        blockedFulfillmentKey: null,
       },
     });
 
@@ -181,7 +181,7 @@ describe('shouldApplyShippingMethod', () => {
       lastState: {
         serviceCode: 'ground',
         cost: 200,
-        inFlightFulfillmentKey: null,
+        blockedFulfillmentKey: null,
       },
     });
 
@@ -197,7 +197,7 @@ describe('shouldApplyShippingMethod', () => {
       lastState: {
         serviceCode: null,
         cost: null,
-        inFlightFulfillmentKey: null,
+        blockedFulfillmentKey: null,
       },
     });
 
@@ -213,7 +213,7 @@ describe('shouldApplyShippingMethod', () => {
       lastState: {
         serviceCode: null,
         cost: null,
-        inFlightFulfillmentKey: null,
+        blockedFulfillmentKey: null,
       },
     });
 
