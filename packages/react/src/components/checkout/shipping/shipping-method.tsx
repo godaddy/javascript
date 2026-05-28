@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
@@ -12,6 +13,10 @@ import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { ShippingMethodSkeleton } from '@/components/checkout/shipping/shipping-method-skeleton';
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
+import {
+  getShippingFulfillmentSyncKey,
+  shouldApplyShippingMethod,
+} from '@/components/checkout/shipping/utils/should-apply-shipping-method';
 import { useApplyShippingMethod } from '@/components/checkout/shipping/utils/use-apply-shipping-method';
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
@@ -47,6 +52,7 @@ export function ShippingMethodForm() {
   const { t } = useGoDaddyContext();
   const { session, isConfirmingCheckout } = useCheckoutContext();
   const updateTaxes = useUpdateTaxes();
+  const queryClient = useQueryClient();
   const isPaymentDisabled = useIsPaymentDisabled();
 
   const { data: shippingMethodsData, isLoading: isShippingMethodsLoading } =
@@ -63,13 +69,8 @@ export function ShippingMethodForm() {
       lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP
     )
   );
-  const hasLineItemsMissingShippingFulfillment = Boolean(
-    order?.lineItems?.some(
-      lineItem =>
-        !lineItem.fulfillmentMode ||
-        lineItem.fulfillmentMode === DeliveryMethods.NONE
-    )
-  );
+  const fulfillmentSyncKey = getShippingFulfillmentSyncKey(order?.lineItems);
+  const hasLineItemsMissingShippingFulfillment = Boolean(fulfillmentSyncKey);
 
   const orderSubTotal = totals?.subTotal?.value || 0;
 
@@ -88,14 +89,14 @@ export function ShippingMethodForm() {
     hadShippingMethods: boolean;
     wasPickup: boolean;
     clearedShippingMethod: boolean;
-    syncingFulfillmentKey: string | null;
+    inFlightFulfillmentKey: string | null;
   }>({
     serviceCode: null,
     cost: null,
     hadShippingMethods: false,
     wasPickup: false,
     clearedShippingMethod: false,
-    syncingFulfillmentKey: null,
+    inFlightFulfillmentKey: null,
   });
 
   useEffect(() => {
@@ -108,14 +109,18 @@ export function ShippingMethodForm() {
       return;
 
     const hasShippingMethods = (shippingMethods?.length ?? 0) > 0;
-    const fulfillmentSyncKey = hasLineItemsMissingShippingFulfillment
-      ? order?.lineItems
-          ?.map(lineItem => `${lineItem.id}:${lineItem.fulfillmentMode ?? ''}`)
-          .join('|') || null
-      : null;
     const currentServiceCode = shippingLines?.requestedService || null;
-    const currentCost = shippingLines?.amount?.value ?? null;
     const lastState = lastProcessedStateRef.current;
+
+    if (
+      !hasLineItemsMissingShippingFulfillment &&
+      lastState.inFlightFulfillmentKey
+    ) {
+      lastProcessedStateRef.current = {
+        ...lastState,
+        inFlightFulfillmentKey: null,
+      };
+    }
 
     // Case 1: No shipping methods available - clear shipping and set fulfillment to SHIP
     if (!hasShippingMethods && hasShippingAddress) {
@@ -135,7 +140,7 @@ export function ShippingMethodForm() {
           hadShippingMethods: false,
           wasPickup: isPickup,
           clearedShippingMethod: true,
-          syncingFulfillmentKey: null,
+          inFlightFulfillmentKey: null,
         };
       }
       return;
@@ -161,36 +166,53 @@ export function ShippingMethodForm() {
         : null;
 
       const methodToApply = matchedMethod || firstMethod;
-      const methodCost = methodToApply.cost?.value ?? null;
-
       // Check if we've already processed this exact state. If cart contents
       // changed after a shipping method was selected, shippingLines can still
       // match the selected rate while new line items are NONE. In that case we
       // must re-apply the method so checkout-api recalculates shipping and sets
       // line item fulfillmentMode to SHIP.
-      const isAlreadySyncingFulfillment =
-        Boolean(fulfillmentSyncKey) &&
-        fulfillmentSyncKey === lastState.syncingFulfillmentKey;
-      const alreadyProcessed =
-        methodToApply.serviceCode === lastState.serviceCode &&
-        methodCost === lastState.cost &&
-        (!hasLineItemsMissingShippingFulfillment ||
-          isAlreadySyncingFulfillment);
+      const { alreadyProcessed, needsMutation, methodCost } =
+        shouldApplyShippingMethod({
+          methodToApply,
+          shippingLine: shippingLines,
+          lastState,
+          fulfillmentSyncKey,
+        });
 
       if (!alreadyProcessed) {
         form.setValue('shippingMethod', methodToApply.serviceCode, {
           shouldDirty: false,
         });
 
-        // Only mutate if the method or cost actually changed on the order
-        const needsMutation =
-          methodToApply.serviceCode !== currentServiceCode ||
-          methodCost !== currentCost ||
-          (hasLineItemsMissingShippingFulfillment &&
-            !isAlreadySyncingFulfillment);
-
         if (needsMutation) {
-          applyShippingMethod.mutate(buildShippingPayload(methodToApply));
+          const isFulfillmentSync = Boolean(
+            hasLineItemsMissingShippingFulfillment && fulfillmentSyncKey
+          );
+
+          if (isFulfillmentSync) {
+            lastProcessedStateRef.current = {
+              ...lastProcessedStateRef.current,
+              inFlightFulfillmentKey: fulfillmentSyncKey,
+            };
+          }
+
+          applyShippingMethod.mutate(buildShippingPayload(methodToApply), {
+            onSuccess: () => {
+              if (!isFulfillmentSync || !session?.id) return;
+
+              queryClient.invalidateQueries({
+                queryKey: ['draft-order', session.id],
+              });
+            },
+            onError: () => {
+              if (!isFulfillmentSync) return;
+
+              lastProcessedStateRef.current = {
+                ...lastProcessedStateRef.current,
+                inFlightFulfillmentKey: null,
+              };
+            },
+          });
         } else if (session?.enableTaxCollection) {
           updateTaxes.mutate(undefined);
         }
@@ -201,7 +223,9 @@ export function ShippingMethodForm() {
           hadShippingMethods: true,
           wasPickup: false,
           clearedShippingMethod: false,
-          syncingFulfillmentKey: needsMutation ? fulfillmentSyncKey : null,
+          inFlightFulfillmentKey: needsMutation
+            ? lastProcessedStateRef.current.inFlightFulfillmentKey
+            : null,
         };
       }
     }
@@ -215,6 +239,8 @@ export function ShippingMethodForm() {
     applyShippingMethod,
     updateTaxes.mutate,
     session?.enableTaxCollection,
+    queryClient,
+    session?.id,
     isPickup,
     isDraftOrderLoading,
     hasLineItemsMissingShippingFulfillment,
