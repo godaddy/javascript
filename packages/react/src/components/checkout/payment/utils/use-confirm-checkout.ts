@@ -8,6 +8,7 @@ import {
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
+import { getShippingFulfillmentSyncKey } from '@/components/checkout/shipping/utils/should-apply-shipping-method';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { eventIds } from '@/tracking/events';
@@ -94,11 +95,14 @@ export function useConfirmCheckout() {
       const isShipping = deliveryMethod === DeliveryMethods.SHIP && !isExpress;
 
       const hasShippingLines = (order?.shippingLines?.length ?? 0) > 0;
-      const hasNonShipLineItems = order?.lineItems?.some(
-        lineItem => lineItem.fulfillmentMode !== DeliveryMethods.SHIP
+      const hasLineItemsMissingShippingFulfillment = Boolean(
+        getShippingFulfillmentSyncKey(order?.lineItems)
       );
 
-      if (isShipping && (!hasShippingLines || hasNonShipLineItems)) {
+      if (
+        isShipping &&
+        (!hasShippingLines || hasLineItemsMissingShippingFulfillment)
+      ) {
         setCheckoutErrors(['SHIPPING_METHOD_APPLICATION_FAILED']);
         throw new Error('SHIPPING_METHOD_APPLICATION_FAILED');
       }
