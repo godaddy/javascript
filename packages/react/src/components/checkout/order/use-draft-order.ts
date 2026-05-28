@@ -16,6 +16,8 @@ import type {
  * @param key Optional custom key to differentiate queries
  * @returns Query result with draft order data
  */
+export type { DraftOrderSession };
+
 export function useDraftOrder<TData = DraftOrder>(
   select?: (data: DraftOrderSession) => TData,
   key = 'draft-order'

@@ -114,7 +114,7 @@ export function useApplyShippingMethod() {
       } else if (session?.enableTaxCollection) {
         await updateTaxes.mutateAsync(undefined);
       } else {
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({
           queryKey: checkoutQueryKeys.draftOrder(session.id),
         });
       }

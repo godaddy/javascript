@@ -200,13 +200,6 @@ export function ShippingMethodForm() {
           }
 
           applyShippingMethod.mutate(buildShippingPayload(methodToApply), {
-            onSuccess: () => {
-              if (!isFulfillmentSync || !session?.id) return;
-
-              queryClient.invalidateQueries({
-                queryKey: checkoutQueryKeys.draftOrder(session.id),
-              });
-            },
             onError: () => {
               if (!isFulfillmentSync || !session?.id) return;
 

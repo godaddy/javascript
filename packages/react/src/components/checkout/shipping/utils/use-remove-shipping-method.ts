@@ -114,6 +114,10 @@ export function useRemoveShippingMethod() {
         await applyDiscount.mutateAsync({
           discountCodes,
         });
+      } else {
+        await queryClient.invalidateQueries({
+          queryKey: checkoutQueryKeys.draftOrder(session.id),
+        });
       }
     },
   });

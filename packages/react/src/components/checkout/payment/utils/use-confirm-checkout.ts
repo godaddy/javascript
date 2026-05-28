@@ -6,7 +6,10 @@ import {
   useCheckoutContext,
 } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
-import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
+import {
+  type DraftOrderSession,
+  useDraftOrder,
+} from '@/components/checkout/order/use-draft-order';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
 import { getShippingFulfillmentSyncKey } from '@/components/checkout/shipping/utils/should-apply-shipping-method';
@@ -101,14 +104,9 @@ export function useConfirmCheckout() {
       const isShipping = deliveryMethod === DeliveryMethods.SHIP && !isExpress;
 
       const latestDraftOrderSession = session?.id
-        ? queryClient.getQueryData<
-            | {
-                checkoutSession?: {
-                  draftOrder?: typeof order | null;
-                } | null;
-              }
-            | undefined
-          >(checkoutQueryKeys.draftOrder(session.id))
+        ? await queryClient.fetchQuery<DraftOrderSession>({
+            queryKey: checkoutQueryKeys.draftOrder(session.id),
+          })
         : undefined;
       const latestOrder =
         latestDraftOrderSession?.checkoutSession?.draftOrder ?? order;
