@@ -63,6 +63,13 @@ export function ShippingMethodForm() {
       lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP
     )
   );
+  const hasLineItemsMissingShippingFulfillment = Boolean(
+    order?.lineItems?.some(
+      lineItem =>
+        !lineItem.fulfillmentMode ||
+        lineItem.fulfillmentMode === DeliveryMethods.NONE
+    )
+  );
 
   const orderSubTotal = totals?.subTotal?.value || 0;
 
@@ -81,19 +88,31 @@ export function ShippingMethodForm() {
     hadShippingMethods: boolean;
     wasPickup: boolean;
     clearedShippingMethod: boolean;
+    syncingFulfillmentKey: string | null;
   }>({
     serviceCode: null,
     cost: null,
     hadShippingMethods: false,
     wasPickup: false,
     clearedShippingMethod: false,
+    syncingFulfillmentKey: null,
   });
 
   useEffect(() => {
-    if (isShippingMethodsLoading || isDraftOrderLoading || isConfirmingCheckout)
+    if (
+      isShippingMethodsLoading ||
+      isDraftOrderLoading ||
+      isConfirmingCheckout ||
+      applyShippingMethod.isPending
+    )
       return;
 
     const hasShippingMethods = (shippingMethods?.length ?? 0) > 0;
+    const fulfillmentSyncKey = hasLineItemsMissingShippingFulfillment
+      ? order?.lineItems
+          ?.map(lineItem => `${lineItem.id}:${lineItem.fulfillmentMode ?? ''}`)
+          .join('|') || null
+      : null;
     const currentServiceCode = shippingLines?.requestedService || null;
     const currentCost = shippingLines?.amount?.value ?? null;
     const lastState = lastProcessedStateRef.current;
@@ -116,6 +135,7 @@ export function ShippingMethodForm() {
           hadShippingMethods: false,
           wasPickup: isPickup,
           clearedShippingMethod: true,
+          syncingFulfillmentKey: null,
         };
       }
       return;
@@ -143,10 +163,19 @@ export function ShippingMethodForm() {
       const methodToApply = matchedMethod || firstMethod;
       const methodCost = methodToApply.cost?.value ?? null;
 
-      // Check if we've already processed this exact state
+      // Check if we've already processed this exact state. If cart contents
+      // changed after a shipping method was selected, shippingLines can still
+      // match the selected rate while new line items are NONE. In that case we
+      // must re-apply the method so checkout-api recalculates shipping and sets
+      // line item fulfillmentMode to SHIP.
+      const isAlreadySyncingFulfillment =
+        Boolean(fulfillmentSyncKey) &&
+        fulfillmentSyncKey === lastState.syncingFulfillmentKey;
       const alreadyProcessed =
         methodToApply.serviceCode === lastState.serviceCode &&
-        methodCost === lastState.cost;
+        methodCost === lastState.cost &&
+        (!hasLineItemsMissingShippingFulfillment ||
+          isAlreadySyncingFulfillment);
 
       if (!alreadyProcessed) {
         form.setValue('shippingMethod', methodToApply.serviceCode, {
@@ -156,7 +185,9 @@ export function ShippingMethodForm() {
         // Only mutate if the method or cost actually changed on the order
         const needsMutation =
           methodToApply.serviceCode !== currentServiceCode ||
-          methodCost !== currentCost;
+          methodCost !== currentCost ||
+          (hasLineItemsMissingShippingFulfillment &&
+            !isAlreadySyncingFulfillment);
 
         if (needsMutation) {
           applyShippingMethod.mutate(buildShippingPayload(methodToApply));
@@ -170,6 +201,7 @@ export function ShippingMethodForm() {
           hadShippingMethods: true,
           wasPickup: false,
           clearedShippingMethod: false,
+          syncingFulfillmentKey: needsMutation ? fulfillmentSyncKey : null,
         };
       }
     }
@@ -185,6 +217,9 @@ export function ShippingMethodForm() {
     session?.enableTaxCollection,
     isPickup,
     isDraftOrderLoading,
+    hasLineItemsMissingShippingFulfillment,
+    applyShippingMethod.isPending,
+    order?.lineItems,
   ]);
 
   if (isShippingMethodsLoading || isShippingAddressLoading) {
