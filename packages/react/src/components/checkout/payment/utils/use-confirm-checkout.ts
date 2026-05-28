@@ -104,9 +104,14 @@ export function useConfirmCheckout() {
       const isShipping = deliveryMethod === DeliveryMethods.SHIP && !isExpress;
 
       const latestDraftOrderSession = session?.id
-        ? await queryClient.fetchQuery<DraftOrderSession>({
-            queryKey: checkoutQueryKeys.draftOrder(session.id),
-          })
+        ? await queryClient
+            .fetchQuery<DraftOrderSession>({
+              queryKey: checkoutQueryKeys.draftOrder(session.id),
+            })
+            .catch(error => {
+              setCheckoutErrors(['DRAFT_ORDER_UPDATE_FAILED']);
+              throw error;
+            })
         : undefined;
       const latestOrder =
         latestDraftOrderSession?.checkoutSession?.draftOrder ?? order;
