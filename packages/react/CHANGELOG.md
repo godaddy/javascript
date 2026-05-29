@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.45
+
+### Patch Changes
+
+- 9417a3c: Re-apply shipping methods when checkout line items change after shipping has already been selected.
+
 ## 1.0.44
 
 ### Patch Changes
