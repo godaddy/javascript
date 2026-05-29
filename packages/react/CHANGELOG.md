@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.46
+
+### Patch Changes
+
+- 9a03ad9: Return the missing shipping info error when checkout is blocked by absent shipping lines or fulfillment.
+
 ## 1.0.45
 
 ### Patch Changes
