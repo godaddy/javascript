@@ -120,13 +120,14 @@ export function AddressForm({
     () => ({ firstName, lastName }),
     [firstName, lastName]
   );
-
-  const [debouncedFullName] = useDebouncedValue(
-    Object.values(contact).join(''),
-    {
-      wait: 1000,
-    }
+  const serializedContact = React.useMemo(
+    () => JSON.stringify(contact),
+    [contact]
   );
+
+  const [debouncedContact] = useDebouncedValue(serializedContact, {
+    wait: 1000,
+  });
 
   const [debouncedAddressValue] = useDebouncedValue(addressValue, {
     wait: 200,
@@ -145,22 +146,24 @@ export function AddressForm({
   }, [draftOrder, sectionKey, firstName, lastName]);
 
   const shouldVerifyName =
+    onlyNames &&
     nameHasChanged && // Only sync if values differ from order
-    debouncedFullName !== '' &&
-    debouncedFullName === Object.values(contact).join('');
+    !!firstName?.trim() &&
+    !!lastName?.trim() &&
+    debouncedContact === serializedContact;
 
   useDraftOrderFieldSync({
     key: 'name',
     data: contact,
-    deps: [contact],
+    deps: [contact, serializedContact, debouncedContact],
     enabled: shouldVerifyName,
     fieldNames: [`${sectionKey}FirstName`, `${sectionKey}LastName`],
-    preserveFormData: !onlyNames,
+    preserveFormData: false,
     mapToInput: data => {
       const fields = {
         firstName: data.firstName.trim(),
         lastName: data.lastName.trim(),
-        ...(onlyNames ? { address: null } : {}),
+        address: null,
       };
 
       return mapAddressFieldsToInput(
@@ -196,8 +199,20 @@ export function AddressForm({
     ]
   );
 
-  const [debouncedFullAddress] = useDebouncedValue(
-    Object.values(address).join(''),
+  const sectionContactAndAddress = React.useMemo(
+    () => ({
+      ...contact,
+      address,
+    }),
+    [contact, address]
+  );
+  const serializedSectionContactAndAddress = React.useMemo(
+    () => JSON.stringify(sectionContactAndAddress),
+    [sectionContactAndAddress]
+  );
+
+  const [debouncedSectionContactAndAddress] = useDebouncedValue(
+    serializedSectionContactAndAddress,
     { wait: 1000 }
   );
 
@@ -282,20 +297,28 @@ export function AddressForm({
   }
 
   const shouldUpdateAddress = Boolean(
-    addressHasChanged && // Only sync if values differ from order
-      !!debouncedFullAddress &&
+    (addressHasChanged || nameHasChanged) && // Only sync if values differ from order
+      !!firstName?.trim() &&
+      !!lastName?.trim() &&
       isAddressComplete(address) &&
-      debouncedFullAddress === Object.values(address).join('') &&
-      debouncedFullAddress.trim() !== '' &&
+      debouncedSectionContactAndAddress ===
+        serializedSectionContactAndAddress &&
       !isAutocompleteOpen
   );
 
   useDraftOrderFieldSync({
     key: 'address',
-    data: address,
-    deps: [address, shouldUpdateAddress],
+    data: sectionContactAndAddress,
+    deps: [
+      sectionContactAndAddress,
+      shouldUpdateAddress,
+      serializedSectionContactAndAddress,
+      debouncedSectionContactAndAddress,
+    ],
     enabled: !onlyNames && shouldUpdateAddress,
     fieldNames: [
+      `${sectionKey}FirstName`,
+      `${sectionKey}LastName`,
       `${sectionKey}AddressLine1`,
       `${sectionKey}AddressLine2`,
       `${sectionKey}AdminArea2`,
@@ -306,7 +329,9 @@ export function AddressForm({
     mapToInput: data => {
       return mapAddressFieldsToInput(
         {
-          address: data,
+          firstName: data.firstName.trim(),
+          lastName: data.lastName.trim(),
+          address: data.address,
         },
         sectionKey as 'shipping' | 'billing',
         useShippingAddress
@@ -448,9 +473,7 @@ export function AddressForm({
           name={`${sectionKey}FirstName`}
           render={({ field, fieldState }) => (
             <FormItem className='space-y-1'>
-              <FormLabel className='sr-only'>
-                {t.shipping.firstName} {!onlyNames && `(${t.general.optional})`}
-              </FormLabel>
+              <FormLabel className='sr-only'>{t.shipping.firstName}</FormLabel>
               <FormControl>
                 <Input
                   placeholder={t.shipping.firstName}
@@ -589,15 +612,21 @@ export function AddressForm({
                       <Select
                         value={field.value}
                         onValueChange={value => {
+                          const previousRegion = form.getValues(
+                            `${sectionKey}AdminArea1`
+                          );
+
                           field.onChange(value);
                           form.setValue(`${sectionKey}AdminArea1`, value, {
                             shouldValidate: true,
                           });
 
-                          form.setValue(`${sectionKey}PostalCode`, '', {
-                            shouldDirty: true,
-                            shouldValidate: false,
-                          });
+                          if (previousRegion && previousRegion !== value) {
+                            form.setValue(`${sectionKey}PostalCode`, '', {
+                              shouldDirty: true,
+                              shouldValidate: false,
+                            });
+                          }
 
                           // Track region selection event
                           track({

@@ -98,7 +98,7 @@ export function GoDaddyGooglePayCheckoutButton() {
       isPoyntLoaded &&
       !hasMounted.current
     ) {
-      collect.current = new (window as any).TokenizeJs(
+      collect.current = new window.TokenizeJs(
         {
           businessId,
           storeId: session?.storeId,

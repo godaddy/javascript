@@ -191,7 +191,7 @@ export function GoDaddyACHForm() {
     )
       return;
 
-    collect.current = new (window as any).TokenizeJs({
+    collect.current = new window.TokenizeJs({
       businessId,
       storeId: session?.storeId,
       channelId: session?.channelId,

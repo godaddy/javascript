@@ -10,7 +10,7 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 
 export function CreditCardCheckoutButton() {
   const { collect, isLoadingNonce, setIsLoadingNonce } = usePoyntCollect();
-  const { isConfirmingCheckout } = useCheckoutContext();
+  const { isConfirmingCheckout, setCheckoutErrors } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const { poyntCardRequest } = useBuildPaymentRequest();
@@ -33,16 +33,23 @@ export function CreditCardCheckoutButton() {
       return;
     }
 
-    await flushCheckoutSync();
+    try {
+      await flushCheckoutSync();
 
-    setIsLoadingNonce(true);
-    collect.getNonce(poyntCardRequest);
+      setCheckoutErrors(undefined);
+      setIsLoadingNonce(true);
+      collect.getNonce(poyntCardRequest);
+    } catch (_error) {
+      setIsLoadingNonce(false);
+      setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
+    }
   }, [
     collect,
     flushCheckoutSync,
     form,
     isDisabled,
     poyntCardRequest,
+    setCheckoutErrors,
     setIsLoadingNonce,
   ]);
 
@@ -57,7 +64,7 @@ export function CreditCardCheckoutButton() {
       ref={buttonRef}
       disabled={isDisabled}
     >
-      {t.payment.payNow}
+      {isLoadingNonce ? t.payment.processingPayment : t.payment.payNow}
     </Button>
   );
 }

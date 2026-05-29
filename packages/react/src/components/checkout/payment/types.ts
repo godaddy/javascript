@@ -15,6 +15,13 @@ export type TokenizeJsEvent = {
 
 export type TokenizeJsOptions = Record<string, object | string | boolean>;
 
+export interface TokenizeJsConfig {
+  businessId: string;
+  storeId?: string | null;
+  channelId?: string | null;
+  applicationId: string;
+}
+
 export type WalletErrorCode =
   | 'invalid_shipping_address'
   | 'invalid_billing_address'
@@ -114,8 +121,14 @@ export type ShippingMethods =
     }[]
   | undefined;
 
+declare global {
+  interface Window {
+    TokenizeJs: typeof TokenizeJs;
+  }
+}
+
 export declare class TokenizeJs {
-  constructor(businessId: string, appId: string, options?: TokenizeJsOptions);
+  constructor(config: TokenizeJsConfig, options?: TokenizeJsOptions);
   mount(
     elementId: string,
     document: Document,

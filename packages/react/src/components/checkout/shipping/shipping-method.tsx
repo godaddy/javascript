@@ -54,7 +54,6 @@ export function ShippingMethodForm() {
   const { t } = useGoDaddyContext();
   const { session, isConfirmingCheckout, setCheckoutErrors } =
     useCheckoutContext();
-  const updateTaxes = useUpdateTaxes();
   const queryClient = useQueryClient();
   const isPaymentDisabled = useIsPaymentDisabled();
 
@@ -231,16 +230,14 @@ export function ShippingMethodForm() {
     isShippingMethodsLoading,
     form,
     applyShippingMethod,
-    updateTaxes.mutate,
     setCheckoutErrors,
-    session?.enableTaxCollection,
     queryClient,
     session?.id,
     isPickup,
     isDraftOrderLoading,
     hasLineItemsMissingShippingFulfillment,
+    fulfillmentSyncKey,
     applyShippingMethod.isPending,
-    order?.lineItems,
   ]);
 
   if (isShippingMethodsLoading || isShippingAddressLoading) {
@@ -276,6 +273,13 @@ export function ShippingMethodForm() {
   const isShippingMethodDisabled = isPaymentDisabled || isConfirmingCheckout;
 
   const handleValueChange = (value: string) => {
+    if (
+      isShippingMethodDisabled ||
+      form.getValues('shippingMethod') === value
+    ) {
+      return;
+    }
+
     const previousValue = form.getValues('shippingMethod');
     form.setValue('shippingMethod', value);
 
@@ -368,7 +372,8 @@ export function ShippingMethodForm() {
                 <div
                   className={cn(
                     'flex items-center min-h-12 justify-between space-x-2 bg-card border border-border p-2 px-4',
-                    !isShippingMethodDisabled && 'hover:bg-muted',
+                    !isShippingMethodDisabled &&
+                      'hover:bg-muted cursor-pointer',
                     isShippingMethodDisabled && 'pointer-events-none',
                     index === 0 && 'rounded-t-md',
                     index === shippingMethods.length - 1 && 'rounded-b-md',
@@ -377,7 +382,19 @@ export function ShippingMethodForm() {
                   )}
                 >
                   <div className='flex items-center space-x-4'>
-                    <RadioGroupItem value={methodId} id={methodId} />
+                    <RadioGroupItem
+                      value={methodId}
+                      id={methodId}
+                      aria-label={`${method.displayName || methodId} ${
+                        method?.cost?.value === 0
+                          ? t.general.free
+                          : formatCurrency({
+                              amount: method?.cost?.value || 0,
+                              currencyCode: method?.cost?.currencyCode || 'USD',
+                              inputInMinorUnits: true,
+                            })
+                      }`}
+                    />
                     <div className='inline-flex flex-col'>
                       {method.displayName}
                       <p className='text-xs text-muted-foreground'>
