@@ -103,8 +103,8 @@ export function useConfirmCheckout() {
         isShipping &&
         (!hasShippingLines || hasLineItemsMissingShippingFulfillment)
       ) {
-        setCheckoutErrors(['SHIPPING_METHOD_APPLICATION_FAILED']);
-        throw new Error('SHIPPING_METHOD_APPLICATION_FAILED');
+        setCheckoutErrors(['MISSING_SHIPPING_INFO']);
+        throw new Error('MISSING_SHIPPING_INFO');
       }
 
       const pickUpData = isPickup
