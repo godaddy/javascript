@@ -50,8 +50,7 @@ export function ShippingMethodForm() {
   const formatCurrency = useFormatCurrency();
   const form = useFormContext();
   const { t } = useGoDaddyContext();
-  const { session, isConfirmingCheckout, setCheckoutErrors } =
-    useCheckoutContext();
+  const { session, isConfirmingCheckout } = useCheckoutContext();
   const updateTaxes = useUpdateTaxes();
   const queryClient = useQueryClient();
   const isPaymentDisabled = useIsPaymentDisabled();
@@ -205,14 +204,6 @@ export function ShippingMethodForm() {
                 queryKey: ['draft-order', session.id],
               });
             },
-            onError: () => {
-              if (!isFulfillmentSync || !session?.id) return;
-
-              setCheckoutErrors(['SHIPPING_METHOD_APPLICATION_FAILED']);
-              queryClient.invalidateQueries({
-                queryKey: ['draft-order', session.id],
-              });
-            },
           });
         } else if (session?.enableTaxCollection) {
           updateTaxes.mutate(undefined);
@@ -239,7 +230,6 @@ export function ShippingMethodForm() {
     form,
     applyShippingMethod,
     updateTaxes.mutate,
-    setCheckoutErrors,
     session?.enableTaxCollection,
     queryClient,
     session?.id,
