@@ -298,7 +298,7 @@ export function AddressForm({
     fieldNames: [
       `${sectionKey}AddressLine1`,
       `${sectionKey}AddressLine2`,
-      `${sectionKey}City`,
+      `${sectionKey}AdminArea2`,
       `${sectionKey}AdminArea1`,
       `${sectionKey}PostalCode`,
       `${sectionKey}CountryCode`,
