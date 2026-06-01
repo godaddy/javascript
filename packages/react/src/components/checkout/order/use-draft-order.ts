@@ -37,6 +37,7 @@ export function useDraftOrder<TData = DraftOrder>(
     enabled: !!session?.id,
     select: select ?? (data => data.checkoutSession?.draftOrder as TData),
     retry: 3,
+    refetchOnWindowFocus: true,
   });
 }
 
