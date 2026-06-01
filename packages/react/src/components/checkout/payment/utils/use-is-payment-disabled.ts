@@ -1,8 +1,5 @@
-import { useIsFetching, useIsMutating } from '@tanstack/react-query';
+import { useIsCheckoutBusy } from '@/components/checkout/utils/use-is-checkout-busy';
 
 export function useIsPaymentDisabled(): boolean {
-  const isMutating = useIsMutating();
-  const isFetching = useIsFetching();
-
-  return isMutating > 0 || isFetching > 0;
+  return useIsCheckoutBusy();
 }

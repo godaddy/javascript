@@ -291,7 +291,10 @@ export function AddressForm({
 
     for (const [key, value] of Object.entries(fieldMap)) {
       if (value) {
-        form.setValue(`${sectionKey}${key}`, value, { shouldValidate: true });
+        form.setValue(`${sectionKey}${key}`, value, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
       }
     }
   }
@@ -407,6 +410,7 @@ export function AddressForm({
                                 `${sectionKey}CountryCode`,
                                 country.value,
                                 {
+                                  shouldDirty: true,
                                   shouldValidate: true,
                                 }
                               );
@@ -618,6 +622,7 @@ export function AddressForm({
 
                           field.onChange(value);
                           form.setValue(`${sectionKey}AdminArea1`, value, {
+                            shouldDirty: true,
                             shouldValidate: true,
                           });
 

@@ -64,9 +64,12 @@ export function DeliveryMethodForm() {
   const handleDeliveryMethodChange = (value: DeliveryMethods) => {
     if (isDisabled || form.getValues('deliveryMethod') === value) return;
 
-    form.setValue('deliveryMethod', value);
+    form.setValue('deliveryMethod', value, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
     if (value === DeliveryMethods.PICKUP) {
-      form.setValue('shippingMethod', undefined);
+      form.setValue('shippingMethod', undefined, { shouldDirty: true });
     }
     track({
       eventId: 'change_delivery_method.click',

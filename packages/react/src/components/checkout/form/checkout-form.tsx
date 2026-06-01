@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIsMutating } from '@tanstack/react-query';
+import isEqual from 'fast-deep-equal';
 import React, { useEffect, useRef } from 'react';
+import type { DefaultValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import { AddressForm } from '@/components/checkout/address';
@@ -38,6 +40,7 @@ import { TipsForm } from '@/components/checkout/tips/tips-form';
 import { DraftOrderTotals } from '@/components/checkout/totals/totals';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { checkoutMutationKeys } from '@/components/checkout/utils/query-keys';
+import { useIsCheckoutBusy } from '@/components/checkout/utils/use-is-checkout-busy';
 import {
   Accordion,
   AccordionContent,
@@ -75,13 +78,19 @@ export function CheckoutForm({
   const { session, isCheckoutDisabled, isConfirmingCheckout } =
     useCheckoutContext();
 
+  const formValues = (defaultValues ?? {}) as DefaultValues<CheckoutFormData>;
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues ?? {},
+    defaultValues: formValues,
     reValidateMode: 'onBlur',
     mode: 'onBlur',
     disabled: isConfirmingCheckout,
   });
+  const lastAppliedFormValuesRef = useRef(formValues);
+  // Subscribe to dirtyFields so reset(..., { keepDirtyValues: true }) can
+  // reliably preserve customer edits while applying server-refetched values to
+  // pristine fields.
+  const dirtyFields = form.formState.dirtyFields;
 
   const deliveryMethod = form.watch('deliveryMethod');
   const tipAmount = form.watch('tipAmount');
@@ -106,6 +115,19 @@ export function CheckoutForm({
     useIsMutating({
       mutationKey: checkoutMutationKeys.updateDraftOrderFees(session?.id),
     }) > 0;
+
+  const isCheckoutBusy = useIsCheckoutBusy();
+
+  React.useEffect(() => {
+    if (isCheckoutBusy) return;
+    if (isEqual(formValues, lastAppliedFormValuesRef.current)) return;
+
+    form.reset(formValues as CheckoutFormData, {
+      keepDirtyValues: true,
+      keepErrors: true,
+    });
+    lastAppliedFormValuesRef.current = formValues;
+  }, [dirtyFields, form, formValues, isCheckoutBusy]);
 
   const draftOrderTotalsQuery = useDraftOrderTotals();
 

@@ -160,9 +160,12 @@ export function ShippingMethodForm() {
     if (hasShippingMethods) {
       const firstMethod = shippingMethods[0];
       const currentFormMethod = form.getValues('shippingMethod');
-      const existingMethod = currentServiceCode || currentFormMethod;
+      const existingMethod = currentFormMethod || currentServiceCode;
 
-      // Try to find the existing method in available methods
+      // Try to find the existing method in available methods. Prefer the
+      // current form selection so an in-flight explicit user click is not
+      // overwritten by the stale draft-order shipping line while the mutation
+      // and refetch settle.
       const matchedMethod = existingMethod
         ? shippingMethods.find(m => m.serviceCode === existingMethod)
         : null;
@@ -284,11 +287,28 @@ export function ShippingMethodForm() {
     }
 
     const previousValue = form.getValues('shippingMethod');
-    form.setValue('shippingMethod', value);
+    const previousProcessedState = lastProcessedStateRef.current;
+    form.setValue('shippingMethod', value, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
 
     const method = shippingMethods?.find(m => m.serviceCode === value);
 
     if (method) {
+      // The mutation success path already recalculates taxes. Optimistically
+      // record the selected method as processed so the post-mutation draft-order
+      // refetch does not look like a new unprocessed shipping state and trigger
+      // a second tax recalculation for the same click.
+      lastProcessedStateRef.current = {
+        serviceCode: method.serviceCode || value,
+        cost: method.cost?.value ?? null,
+        hadShippingMethods: true,
+        wasPickup: false,
+        clearedShippingMethod: false,
+        blockedFulfillmentKey: null,
+      };
+
       // Track shipping method selection
       track({
         eventId: eventIds.selectShippingMethod,
@@ -306,6 +326,7 @@ export function ShippingMethodForm() {
         .mutateAsync(buildShippingPayload(method))
         .catch(() => {
           form.setValue('shippingMethod', previousValue);
+          lastProcessedStateRef.current = previousProcessedState;
         });
     }
   };
