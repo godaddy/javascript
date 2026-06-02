@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
+import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 
 export enum DeliveryMethods {
@@ -72,7 +73,7 @@ export function DeliveryMethodForm() {
       form.setValue('shippingMethod', undefined, { shouldDirty: true });
     }
     track({
-      eventId: 'change_delivery_method.click',
+      eventId: eventIds.changeDeliveryMethod,
       type: TrackingEventType.CLICK,
       properties: {
         deliveryMethod: value,

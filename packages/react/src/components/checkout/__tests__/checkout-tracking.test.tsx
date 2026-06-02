@@ -51,6 +51,7 @@ function offlinePaymentMethods() {
   return {
     card: null as never,
     offline: {
+      type: PaymentMethodType.OFFLINE,
       processor: PaymentProvider.OFFLINE,
       checkoutTypes: [CheckoutType.STANDARD],
     },
