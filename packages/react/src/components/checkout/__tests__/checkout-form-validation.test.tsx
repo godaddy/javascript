@@ -266,7 +266,6 @@ describe('Checkout form validation', () => {
           ...stripeOnlyPaymentMethods(),
           card: null as never,
           offline: {
-            type: PaymentMethodType.OFFLINE,
             processor: PaymentProvider.OFFLINE,
             checkoutTypes: ['standard'],
           },

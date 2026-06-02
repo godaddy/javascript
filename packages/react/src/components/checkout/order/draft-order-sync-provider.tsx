@@ -78,7 +78,7 @@ export function DraftOrderSyncProvider({
   children: React.ReactNode;
 }) {
   const updateDraftOrder = useUpdateOrder();
-  const { session } = useCheckoutContext();
+  const { session, isConfirmingCheckout } = useCheckoutContext();
   const form = useFormContext<CheckoutFormData>();
   const pendingPatchRef = React.useRef<DraftOrderPatch | null>(null);
   const pendingFieldNamesRef = React.useRef<Set<string>>(new Set());
@@ -175,6 +175,8 @@ export function DraftOrderSyncProvider({
 
   const enqueueDraftOrderPatch = React.useCallback(
     (patch: DraftOrderPatch, options: EnqueueDraftOrderPatchOptions = {}) => {
+      if (isConfirmingCheckout) return;
+
       pendingPatchRef.current = mergeDraftOrderPatch(
         pendingPatchRef.current,
         patch
@@ -204,7 +206,7 @@ export function DraftOrderSyncProvider({
         drainQueueSafely();
       }, options.debounceMs ?? 750);
     },
-    [clearTimer, drainQueue]
+    [clearTimer, drainQueue, isConfirmingCheckout]
   );
 
   const flushDraftOrderSync = React.useCallback(async () => {
@@ -220,6 +222,14 @@ export function DraftOrderSyncProvider({
       resolveIdleWaiters();
     });
   }, [clearTimer, drainQueue, resolveIdleWaiters]);
+
+  React.useEffect(() => {
+    if (!isConfirmingCheckout) return;
+
+    clearTimer();
+    pendingPatchRef.current = null;
+    pendingFieldNamesRef.current = new Set();
+  }, [clearTimer, isConfirmingCheckout]);
 
   React.useEffect(() => clearTimer, [clearTimer]);
 

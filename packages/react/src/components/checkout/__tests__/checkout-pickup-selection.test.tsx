@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import { addDays } from 'date-fns';
 import { describe, expect, it } from 'vitest';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import {
   buildCheckoutSession,
   buildDraftOrder,
@@ -296,6 +297,53 @@ describe('Checkout pickup location and time selection', () => {
       getOperations('CalculateCheckoutSessionTaxes').at(-1)?.input
     ).toMatchObject({
       destination: expect.objectContaining({ postalCode: '30143' }),
+    });
+  });
+
+  it('preserves the default pickup location across refetches before confirming', async () => {
+    const location = buildPickupLocation({
+      id: 'default-location',
+      isDefault: true,
+      operatingHours: {
+        timeZone: 'America/New_York',
+        leadTime: 60,
+        pickupWindowInDays: 0,
+      },
+    });
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      shippingLines: [],
+    });
+    const session = buildCheckoutSession({
+      draftOrder,
+      locations: [location],
+      defaultOperatingHours: location.operatingHours,
+      paymentMethods: offlinePaymentMethods(),
+    });
+
+    const { user, queryClient } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionFulfillmentLocation');
+
+    const refetchedDraftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      shippingLines: [],
+      billing: { firstName: 'Server' },
+    });
+
+    queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+      checkoutSession: { ...session, draftOrder: refetchedDraftOrder },
+    });
+    await flushPromises();
+    clearOperations();
+
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+    await waitForOperation('ConfirmCheckoutSession');
+
+    expect(getLastConfirmInput()).toMatchObject({
+      fulfillmentLocationId: 'default-location',
     });
   });
 

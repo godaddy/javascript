@@ -152,7 +152,6 @@ export function mapOrderToFormValues({
     shippingPostalCode: orderShippingAddress?.postalCode ?? '',
     shippingCountryCode:
       orderShippingAddress?.countryCode || defaultCountryCode || 'US',
-    shippingValid: true,
 
     // Billing address
     billingFirstName: order?.billing?.firstName ?? '',
@@ -171,7 +170,6 @@ export function mapOrderToFormValues({
     billingPostalCode: orderBillingAddress?.postalCode ?? '',
     billingCountryCode:
       orderBillingAddress?.countryCode || defaultCountryCode || 'US',
-    billingValid: true,
 
     // Contact information
     contactEmail: order?.shipping?.email || defaultValues?.contactEmail || '',

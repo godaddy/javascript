@@ -151,9 +151,6 @@ export const baseCheckoutSchema = z.object({
   shippingPostalCode: z.string().max(60),
   shippingCountryCode: z.string().max(2),
   shippingMethod: z.string().optional(),
-  shippingValid: z.literal(true, {
-    errorMap: () => ({ message: 'Invalid shipping address' }),
-  }),
   billingFirstName: z.string().max(60),
   billingLastName: z.string().max(60),
   billingPhone: z.string().max(15, 'Phone number too long').optional(),
@@ -174,9 +171,6 @@ export const baseCheckoutSchema = z.object({
   billingAdminArea1: z.string().max(100).describe('State or province'),
   billingPostalCode: z.string().max(60),
   billingCountryCode: z.string().max(2),
-  billingValid: z.literal(true, {
-    errorMap: () => ({ message: 'Invalid billing address' }),
-  }),
   paymentCardNumber: z.string().optional(),
   paymentCardNumberDisplay: z.string().optional(),
   paymentCardType: z.string().optional(),

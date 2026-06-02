@@ -81,10 +81,13 @@ function SyncConsumer() {
 function SyncHarness({
   session,
   draftOrder,
+  isConfirmingCheckout = false,
 }: {
   session: CheckoutSession | null;
   draftOrder: DraftOrder;
+  isConfirmingCheckout?: boolean;
 }) {
+  const [confirming, setConfirming] = React.useState(isConfirmingCheckout);
   const form = useForm<CheckoutFormData>({
     defaultValues: {
       shippingFirstName: 'Initial',
@@ -98,14 +101,17 @@ function SyncHarness({
         value={{
           session,
           jwt: undefined,
-          isConfirmingCheckout: false,
-          setIsConfirmingCheckout: () => undefined,
+          isConfirmingCheckout: confirming,
+          setIsConfirmingCheckout: setConfirming,
           checkoutErrors: undefined,
           setCheckoutErrors: () => undefined,
         }}
       >
         <DraftOrderSyncProvider>
           <SyncConsumer />
+          <button type='button' onClick={() => setConfirming(true)}>
+            start-confirming
+          </button>
         </DraftOrderSyncProvider>
       </checkoutContext.Provider>
     </FormProvider>
@@ -116,10 +122,12 @@ function renderSyncHarness({
   session: providedSession,
   draftOrder: providedDraftOrder,
   updateDraftOrderDelayMs = 0,
+  isConfirmingCheckout = false,
 }: {
   session?: CheckoutSession | null;
   draftOrder?: DraftOrder;
   updateDraftOrderDelayMs?: number;
+  isConfirmingCheckout?: boolean;
 } = {}) {
   const draftOrder = providedDraftOrder ?? buildDraftOrder();
   const session =
@@ -149,7 +157,11 @@ function renderSyncHarness({
       storeId={session?.storeId ?? undefined}
       channelId={session?.channelId ?? undefined}
     >
-      <SyncHarness session={session} draftOrder={draftOrder} />
+      <SyncHarness
+        session={session}
+        draftOrder={draftOrder}
+        isConfirmingCheckout={isConfirmingCheckout}
+      />
     </GoDaddyProvider>
   );
 
@@ -235,6 +247,25 @@ describe('DraftOrderSyncProvider integration', () => {
     expect(getLastUpdateInput()).toMatchObject({
       billing: { firstName: 'Immediate' },
     });
+  });
+
+  it('ignores newly queued patches after checkout confirmation starts', async () => {
+    const { user } = renderSyncHarness({ isConfirmingCheckout: true });
+
+    await user.click(screen.getByRole('button', { name: 'enqueue-a' }));
+    await advance(100);
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+  });
+
+  it('drops debounced queued patches when checkout confirmation starts', async () => {
+    const { user } = renderSyncHarness();
+
+    await user.click(screen.getByRole('button', { name: 'enqueue-a' }));
+    await user.click(screen.getByRole('button', { name: 'start-confirming' }));
+    await advance(100);
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
   });
 
   it('drops queued patches when the checkout session is missing', async () => {

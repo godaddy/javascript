@@ -65,6 +65,56 @@ interface CheckoutFormProps extends Omit<CheckoutProps, 'session'> {
   items: Product[];
 }
 
+const ORDER_BACKED_FORM_FIELDS = [
+  'contactEmail',
+  'deliveryMethod',
+  'paymentUseShippingAddress',
+  'shippingFirstName',
+  'shippingLastName',
+  'shippingPhone',
+  'shippingAddressLine1',
+  'shippingAddressLine2',
+  'shippingAddressLine3',
+  'shippingAdminArea4',
+  'shippingAdminArea3',
+  'shippingAdminArea2',
+  'shippingAdminArea1',
+  'shippingPostalCode',
+  'shippingCountryCode',
+  'billingFirstName',
+  'billingLastName',
+  'billingPhone',
+  'billingAddressLine1',
+  'billingAddressLine2',
+  'billingAddressLine3',
+  'billingAdminArea4',
+  'billingAdminArea3',
+  'billingAdminArea2',
+  'billingAdminArea1',
+  'billingPostalCode',
+  'billingCountryCode',
+  'notes',
+  'shippingMethod',
+] satisfies Array<keyof CheckoutFormData>;
+
+function mergeOrderBackedFormValues(
+  currentValues: CheckoutFormData,
+  orderValues: Partial<CheckoutFormData>
+): CheckoutFormData {
+  let nextValues = { ...currentValues };
+
+  for (const key of ORDER_BACKED_FORM_FIELDS) {
+    if (Object.hasOwn(orderValues, key)) {
+      nextValues = {
+        ...nextValues,
+        [key]: orderValues[key],
+      };
+    }
+  }
+
+  return nextValues;
+}
+
 export function CheckoutForm({
   schema,
   defaultValues,
@@ -120,10 +170,22 @@ export function CheckoutForm({
     if (isCheckoutBusy) return;
     if (isEqual(formValues, lastAppliedFormValuesRef.current)) return;
 
-    form.reset(formValues as CheckoutFormData, {
-      keepDirtyValues: true,
-      keepErrors: true,
-    });
+    const currentValues = form.getValues();
+
+    // A DraftOrder refetch should hydrate only fields that are actually backed
+    // by the draft order. Client-only state such as pickup scheduling,
+    // selected payment method, tips, and payment SDK state must remain intact
+    // without marking system-defaulted values dirty.
+    form.reset(
+      mergeOrderBackedFormValues(
+        currentValues,
+        formValues as Partial<CheckoutFormData>
+      ),
+      {
+        keepDirtyValues: true,
+        keepErrors: true,
+      }
+    );
     lastAppliedFormValuesRef.current = formValues;
   }, [dirtyFields, form, formValues, isCheckoutBusy]);
 

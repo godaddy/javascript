@@ -398,8 +398,8 @@ export function LocalPickupForm({
                   field.onChange(value);
                   setSelectedLocationId(value);
                   setSelectedDate(undefined);
-                  form.setValue('pickupDate', '');
-                  form.setValue('pickupTime', '');
+                  form.setValue('pickupDate', '', { shouldDirty: true });
+                  form.setValue('pickupTime', '', { shouldDirty: true });
 
                   const location = session?.locations?.find(
                     loc => loc.id === value
@@ -419,7 +419,8 @@ export function LocalPickupForm({
                     'pickupTimezone',
                     location?.operatingHours?.timeZone ??
                       session.defaultOperatingHours?.timeZone ??
-                      ''
+                      '',
+                    { shouldDirty: true }
                   );
 
                   applyFulfillmentLocation.mutate({
@@ -521,7 +522,7 @@ export function LocalPickupForm({
                       } else {
                         field.onChange('');
                         setSelectedDate(undefined);
-                        form.setValue('pickupTime', '');
+                        form.setValue('pickupTime', '', { shouldDirty: true });
                       }
                       setIsCalendarOpen(false);
                     }}

@@ -181,8 +181,11 @@ describe('Checkout address behavior', () => {
     const suggestedAddress = {
       addressLine1: '456 Shipping Ln',
       addressLine2: 'Suite 7',
+      addressLine3: '',
       adminArea1: 'GA',
+      adminArea2: '',
       adminArea3: 'Atlanta',
+      adminArea4: '',
       countryCode: 'US',
       postalCode: '30301',
     };

@@ -220,7 +220,6 @@ describe('Checkout layout, targets, appearance, and loading states', () => {
             shippingTotal: { value: 0, currencyCode: 'USD' },
             taxTotal: { value: 200, currencyCode: 'USD' },
             feeTotal: { value: 50, currencyCode: 'USD' },
-            tipTotal: { value: 300, currencyCode: 'USD' },
             total: { value: 2950, currencyCode: 'USD' },
           },
         },
@@ -264,7 +263,7 @@ describe('Checkout layout, targets, appearance, and loading states', () => {
 
   it('uses the session appearance theme over props appearance theme', async () => {
     renderCheckoutWithProps(
-      { appearance: { theme: 'default' } },
+      { appearance: { theme: 'base' } },
       { sessionOverrides: { appearance: { theme: 'purple' } } }
     );
     await waitForCheckoutReady();
