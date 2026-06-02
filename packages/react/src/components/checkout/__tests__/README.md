@@ -107,6 +107,25 @@ reference the named export it provides.
   either an exact id or a suffix (the production `track` fn prepends
   `godaddy.checkout.` — both forms work).
 
+## Test design guidelines
+
+- Keep integration tests focused on the smallest behavior needed for the
+  feature under test. Prefer separate tests for rendering state, validation,
+  transitions, confirmation payloads, and tracking instead of one broad test
+  that clicks through the entire checkout flow.
+- Avoid extra submit/confirm clicks when the assertion only needs to verify
+  that UI rendered or switched state. Payment button clicks trigger React Hook
+  Form validation, draft-order sync, query updates, and checkout confirming
+  state; exercising those side effects unnecessarily can produce unrelated
+  `act(...)` warnings and make tests harder to reason about.
+- Seed fixtures into the intended initial state when possible. For example, if
+  a test only needs a valid names-only billing form, put those names in the
+  draft-order fixture instead of typing them and triggering debounced sync.
+- Assert the tracking source that actually owns the behavior. Payment lifecycle
+  events come from the confirm-checkout path; parent form submit handling is
+  intentionally minimal and should not be used as a proxy for payment button
+  behavior.
+
 ## Gotchas
 
 - **Fake timers are on by default** (`vi.useFakeTimers({ shouldAdvanceTime: true })`).
