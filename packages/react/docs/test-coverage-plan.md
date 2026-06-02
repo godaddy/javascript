@@ -288,23 +288,24 @@ For each task, mock `@/tracking/track` (use the helper from T-005) and assert pa
 
 ## Phase 8 — Order summary / totals
 
-- [ ] **T-801** Extend `__tests__/checkout-totals-summary.test.tsx`:
+- [x] **T-801** Extend `__tests__/checkout-totals-summary.test.tsx`:
   - Loading skeletons: with a slow `applyDiscount` mutation, `TotalLineItemSkeleton` renders for the discount row and is replaced once the mutation settles (`vi.useFakeTimers()` + manual `advanceTimersByTime`).
   - Same for shipping / tax / fee rows.
   - `feeTotal > 0` (use T-004 `setFeeTotal`) renders the fees line.
   - `itemCount === 0` falls back to `t.totals.noItems`.
-- [ ] **T-802** `LineItems` removal flow: clicking the trash/remove icon calls the configured `onRemoveFromCart` callback with the right line item; line item disappears from the rendered list. *(If `onRemoveFromCart` is owned by host app and not wired in checkout itself, mark `[N/A]` with note.)*
+- [x] **T-802** `LineItems` removal flow: clicking the trash/remove icon calls the configured `onRemoveFromCart` callback with the right line item; line item disappears from the rendered list. *(Covered with a co-located host-owned state test for `DraftOrderLineItems`.)*
 
 ---
 
 ## Phase 9 — Tips edge cases
 
-- [ ] **T-901** Extend `__tests__/checkout-tips.test.tsx`:
+- [!] **T-901** Extend `__tests__/checkout-tips.test.tsx`:
   - Apply a coupon while a percentage tip is selected: `tipAmount` (minor units) does **not** change as a function of the new total — the snapshot at click-time stays put. Pin this contract so a future re-calc behavior change is intentional.
   - Custom tip while still focused: type a value, advance fake timers ~1.5s with **no blur**, assert sync still fires.
   - Negative custom tip → coerced to 0.
   - `NaN` input → coerced to 0.
   - 3-decimal currency tip (KWD): typed `1.234` major units → `1234` minor units.
+  - [!] Current behavior: focused debounce triggers a React maximum update-depth error under jsdom, and `-5` sanitizes to `5` rather than coercing to `0`; passing tests cover the stable snapshot, `NaN`, and KWD conversion behavior.
 
 ---
 
