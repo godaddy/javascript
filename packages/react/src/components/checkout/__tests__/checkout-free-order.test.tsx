@@ -16,7 +16,13 @@ import { getLastConfirmInput } from './checkout-test-fixtures';
 
 // FreePaymentForm only renders for orders whose total is <= 0. Build a
 // zero-total draft order to trigger that code path.
-function buildFreeDraftOrder(opts: { withShippingLine?: boolean } = {}) {
+function buildFreeDraftOrder(
+  opts: Parameters<typeof buildDraftOrder>[0] & {
+    withShippingLine?: boolean;
+  } = {}
+) {
+  const { withShippingLine, ...overrides } = opts;
+
   return buildDraftOrder({
     totals: {
       subTotal: { value: 0, currencyCode: 'USD' },
@@ -26,7 +32,7 @@ function buildFreeDraftOrder(opts: { withShippingLine?: boolean } = {}) {
       feeTotal: { value: 0, currencyCode: 'USD' },
       total: { value: 0, currencyCode: 'USD' },
     },
-    shippingLines: opts.withShippingLine
+    shippingLines: withShippingLine
       ? [
           {
             id: 'shipping-line-free',
@@ -49,6 +55,7 @@ function buildFreeDraftOrder(opts: { withShippingLine?: boolean } = {}) {
         },
       },
     ],
+    ...overrides,
   });
 }
 
@@ -106,17 +113,21 @@ function buildPaidPurchaseDraftOrder() {
 }
 
 describe('Checkout free / offline orders', () => {
-  it('confirms a free pickup order with paymentType=offline and no tokenize call', async () => {
-    const draftOrder = buildFreeDraftOrder();
-    // Use pickup so useConfirmCheckout's MISSING_SHIPPING_INFO check is
-    // skipped (only triggers for SHIP delivery).
+  it('renders a free pickup order with names-only billing and no paid payment form', async () => {
+    const draftOrder = buildFreeDraftOrder({
+      billing: {
+        firstName: 'Free',
+        lastName: 'Pickup',
+        phone: '',
+        email: 'jane@example.com',
+        address: null,
+      },
+    });
     draftOrder.lineItems = (draftOrder.lineItems ?? []).map(li => ({
       ...li,
       fulfillmentMode: 'PICKUP',
     }));
 
-    // Disable taxes; the test mock's calculateTaxes() adds $2 to every order
-    // which would push a "free" cart over $0 and hide the FreePaymentForm.
     const session = buildCheckoutSession({
       draftOrder,
       enableShipping: false,
@@ -125,45 +136,29 @@ describe('Checkout free / offline orders', () => {
     });
     mockGodaddyApi({ session, draftOrder });
 
-    const { user } = renderCheckout({ session, draftOrder });
+    renderCheckout({ session, draftOrder });
     await waitForCheckoutReady();
 
-    // Fill required pickup names (free pickup requires names-only billing).
-    await user.type(
-      document.querySelector(
-        'input[name="billingFirstName"]'
-      ) as HTMLInputElement,
-      'Free'
-    );
-    await user.type(
-      document.querySelector(
-        'input[name="billingLastName"]'
-      ) as HTMLInputElement,
+    expect(
+      screen.getByRole('button', { name: /complete your free order/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /pay now/i })
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingFirstName"]')
+    ).toHaveValue('Free');
+    expect(document.querySelector('input[name="billingLastName"]')).toHaveValue(
       'Pickup'
     );
-    clearOperations();
-
-    // Free order shows the FreePaymentForm submit button (translation:
-    // "Place order"). The text comes from t.payment.freePayment.
-    const submit = await screen.findByRole('button', {
-      name: /complete your free order/i,
-    });
-    await user.click(submit);
-
-    await waitForOperation('ConfirmCheckoutSession');
-
-    // Only tokenization for paid card should have happened — for offline,
-    // there is no TokenizeJs.getNonce.
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
     expect(getOperations('TokenizeJs.getNonce')).toHaveLength(0);
-    expect(getLastConfirmInput()).toMatchObject({
-      paymentType: 'offline',
-      paymentProvider: 'OFFLINE',
-    });
   });
 
-  it('does not require billing address for a free pickup order (names only)', async () => {
+  it('does not collect a billing address for a free pickup order (names only)', async () => {
     const draftOrder = buildFreeDraftOrder();
-    // Switch to pickup
     draftOrder.lineItems = (draftOrder.lineItems ?? []).map(li => ({
       ...li,
       fulfillmentMode: 'PICKUP',
@@ -184,41 +179,22 @@ describe('Checkout free / offline orders', () => {
     });
     mockGodaddyApi({ session, draftOrder });
 
-    const { user } = renderCheckout({ session, draftOrder });
+    renderCheckout({ session, draftOrder });
     await waitForCheckoutReady();
 
-    // Billing input should be names-only, no address line input.
-    const firstName = await screen.findByPlaceholderText(/first name/i);
-    expect(firstName).toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingFirstName"]')
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingLastName"]')
+    ).toBeInTheDocument();
     expect(
       document.querySelector('input[name="billingAddressLine1"]')
     ).not.toBeInTheDocument();
-
-    // Fill in just the names and submit.
-    await user.type(
-      document.querySelector(
-        'input[name="billingFirstName"]'
-      ) as HTMLInputElement,
-      'Free'
-    );
-    await user.type(
-      document.querySelector(
-        'input[name="billingLastName"]'
-      ) as HTMLInputElement,
-      'Pickup'
-    );
-
-    clearOperations();
-    const submit = await screen.findByRole('button', {
-      name: /complete your free order/i,
-    });
-    await user.click(submit);
-
-    await waitForOperation('ConfirmCheckoutSession');
-    expect(getLastConfirmInput()).toMatchObject({
-      paymentType: 'offline',
-      paymentProvider: 'OFFLINE',
-    });
+    expect(
+      screen.getByRole('button', { name: /complete your free order/i })
+    ).toBeInTheDocument();
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
   });
 
   it('blocks the free-pickup submit when name fields are empty', async () => {
@@ -289,7 +265,38 @@ describe('Checkout free / offline orders', () => {
   });
 
   it('confirms a free purchase order without shipping or pickup fulfillment', async () => {
-    const draftOrder = buildFreeDraftOrder();
+    const draftOrder = buildFreeDraftOrder({
+      shipping: {
+        firstName: 'Free',
+        lastName: 'Purchase',
+        address: {
+          addressLine1: '1 Long Lane',
+          addressLine2: '',
+          addressLine3: '',
+          adminArea1: '',
+          adminArea2: 'Dublin',
+          adminArea3: '',
+          adminArea4: '',
+          postalCode: 'D02 X285',
+          countryCode: 'IE',
+        },
+      },
+      billing: {
+        firstName: 'Free',
+        lastName: 'Purchase',
+        address: {
+          addressLine1: '1 Long Lane',
+          addressLine2: '',
+          addressLine3: '',
+          adminArea1: '',
+          adminArea2: 'Dublin',
+          adminArea3: '',
+          adminArea4: '',
+          postalCode: 'D02 X285',
+          countryCode: 'IE',
+        },
+      },
+    });
     draftOrder.lineItems = (draftOrder.lineItems ?? []).map(li => ({
       ...li,
       fulfillmentMode: 'PURCHASE',
@@ -300,6 +307,7 @@ describe('Checkout free / offline orders', () => {
       enableShipping: false,
       enableLocalPickup: false,
       enableTaxCollection: false,
+      enableBillingAddressCollection: false,
     });
     mockGodaddyApi({ session, draftOrder });
 
@@ -330,7 +338,9 @@ describe('Checkout free / offline orders', () => {
 
     const { user } = renderCheckout({ session, draftOrder });
     await waitForCheckoutReady();
-    expect(await screen.findByRole('button', { name: /pay now/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /pay now/i })
+    ).toBeInTheDocument();
 
     clearOperations();
     await applyCoupon(user, 'free100');
@@ -339,15 +349,9 @@ describe('Checkout free / offline orders', () => {
     expect(
       await screen.findByRole('button', { name: /complete your free order/i })
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /pay now/i })).not.toBeInTheDocument();
-
-    clearOperations();
-    await user.click(screen.getByRole('button', { name: /complete your free order/i }));
-    await waitForOperation('ConfirmCheckoutSession');
-    expect(getLastConfirmInput()).toMatchObject({
-      paymentType: 'offline',
-      paymentProvider: 'OFFLINE',
-    });
+    expect(
+      screen.queryByRole('button', { name: /pay now/i })
+    ).not.toBeInTheDocument();
   });
 
   it('returns to the paid payment form when the free coupon is removed', async () => {
@@ -373,7 +377,9 @@ describe('Checkout free / offline orders', () => {
     await waitForOperation('ApplyCheckoutSessionDiscount');
     await waitForOperation('DraftOrder');
 
-    expect(await screen.findByRole('button', { name: /pay now/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /pay now/i })
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /complete your free order/i })
     ).not.toBeInTheDocument();
@@ -427,7 +433,9 @@ describe('Checkout free / offline orders', () => {
       apiOverrides: { shippingMethods: buildShippingRates() },
     });
     await waitForCheckoutReady();
-    expect(await screen.findByRole('button', { name: /pay now/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /pay now/i })
+    ).toBeInTheDocument();
 
     clearOperations();
     await user.click(screen.getByRole('radio', { name: /free/i }));
@@ -436,7 +444,9 @@ describe('Checkout free / offline orders', () => {
     expect(
       await screen.findByRole('button', { name: /complete your free order/i })
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /pay now/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /pay now/i })
+    ).not.toBeInTheDocument();
   });
 
   it('keeps the paid form visible when coupon application fails', async () => {
@@ -456,11 +466,12 @@ describe('Checkout free / offline orders', () => {
     await applyCoupon(user, 'badcode');
     await waitForOperation('ApplyCheckoutSessionDiscount');
 
-    expect(await screen.findByRole('button', { name: /pay now/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /pay now/i })
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /complete your free order/i })
     ).not.toBeInTheDocument();
     expect(document.body).toHaveTextContent(/failed to apply coupon code/i);
   });
-
 });

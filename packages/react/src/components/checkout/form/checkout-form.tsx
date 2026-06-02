@@ -15,10 +15,8 @@ import {
 import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { CheckoutSectionHeader } from '@/components/checkout/checkout-section-header';
 import { ContactForm } from '@/components/checkout/contact/contact-form';
-import {
-  DeliveryMethodForm,
-  DeliveryMethods,
-} from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethodForm } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { ExpressCheckoutButtons } from '@/components/checkout/express-checkout/express-checkout-buttons';
 import { CheckoutErrorList } from '@/components/checkout/form/checkout-error-list';
 import {
@@ -267,20 +265,7 @@ export function CheckoutForm({
     }
   }, [deliveryMethod, isShipping, form]);
 
-  const onSubmit = async (data: CheckoutFormData) => {
-    // Track checkout form submission
-    track({
-      eventId: eventIds.submitCheckoutForm,
-      type: TrackingEventType.CLICK,
-      properties: {
-        success: true,
-        deliveryMethod: data.deliveryMethod,
-        hasShippingAddress: !!data.shippingAddressLine1,
-        hasBillingAddress: !!data.billingAddressLine1,
-        total: orderTotal,
-      },
-    });
-  };
+  const onSubmit = () => undefined;
 
   const onInvalid = (errors: typeof form.formState.errors) => {
     // console.log({ formValues: form.getValues() });

@@ -1,6 +1,6 @@
-import { screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
 import { enUs } from '@godaddy/localizations';
+import { act, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import {
   clearOperations,
   createMockJwt,
@@ -96,12 +96,14 @@ describe('Checkout JWT/session acquisition', () => {
       accessToken: jwtWithoutExp,
     });
 
-    await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+    });
     expect(getOperations('RefreshCheckoutToken')).toHaveLength(0);
   });
 
   it('prefers the stored JWT over a URL token when storage matches the current session', async () => {
-    const storedJwt = createMockJwt({ source: 'storage' });
+    const storedJwt = createMockJwtWithoutExp({ source: 'storage' });
     const exchangedJwt = createMockJwt({ source: 'url' });
     setCheckoutUrl({
       pathname: '/checkout/checkout-session-1',

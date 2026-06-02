@@ -49,7 +49,9 @@ describe('DraftOrderLineItems', () => {
     expect(screen.getByText('Removable Product')).toBeInTheDocument();
     expect(screen.getByText('Kept Product')).toBeInTheDocument();
 
-    await user.click(screen.getAllByRole('button', { name: /remove item/i })[0]);
+    await user.click(
+      screen.getAllByRole('button', { name: /remove item/i })[0]
+    );
 
     expect(onRemove).toHaveBeenCalledWith('line-item-1');
     await waitFor(() => {

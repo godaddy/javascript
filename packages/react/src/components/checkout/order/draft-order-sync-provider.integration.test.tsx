@@ -4,16 +4,17 @@ import React from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  checkoutContext,
   type CheckoutFormData,
+  checkoutContext,
 } from '@/components/checkout/checkout';
 import {
-  DraftOrderSyncProvider,
   type DraftOrderPatch,
+  DraftOrderSyncProvider,
   useDraftOrderSyncQueue,
 } from '@/components/checkout/order/draft-order-sync-provider';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { GoDaddyProvider } from '@/godaddy-provider';
+import type { CheckoutSession, DraftOrder } from '@/types';
 import {
   buildCheckoutSession,
   buildDraftOrder,
@@ -25,7 +26,6 @@ import {
   waitForOperation,
 } from '../__tests__/checkout-test-env';
 import { getLastUpdateInput } from '../__tests__/checkout-test-fixtures';
-import type { CheckoutSession, DraftOrder } from '@/types';
 
 function SyncConsumer() {
   const { enqueueDraftOrderPatch, flushDraftOrderSync } =
@@ -199,11 +199,11 @@ describe('DraftOrderSyncProvider integration', () => {
     await advance(100);
     await waitForOperation('UpdateCheckoutSessionDraftOrder', 2);
 
-    expect(getOperations('UpdateCheckoutSessionDraftOrder')[1].input).toMatchObject(
-      {
-        shipping: { firstName: 'Alpha', lastName: 'Beta' },
-      }
-    );
+    expect(
+      getOperations('UpdateCheckoutSessionDraftOrder')[1].input
+    ).toMatchObject({
+      shipping: { firstName: 'Alpha', lastName: 'Beta' },
+    });
   });
 
   it('flushDraftOrderSync clears debounce work and waits for the mutation to settle', async () => {

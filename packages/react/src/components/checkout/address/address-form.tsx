@@ -58,6 +58,18 @@ interface AddressFormProps {
   onlyNames?: boolean;
 }
 
+export function mapAutocompleteAddressFields(selectedAddress?: Address) {
+  if (!selectedAddress) return {};
+
+  return {
+    AddressLine1: selectedAddress.addressLine1,
+    AddressLine2: selectedAddress.addressLine2,
+    AdminArea2: selectedAddress.adminArea3,
+    AdminArea1: selectedAddress.adminArea1,
+    PostalCode: selectedAddress.postalCode,
+  } satisfies Record<string, string | null>;
+}
+
 export function AddressForm({
   sectionKey,
   onlyNames = false,
@@ -281,16 +293,10 @@ export function AddressForm({
   function handleUpdateAddress(selectedAddress?: Address) {
     if (!selectedAddress) return;
 
-    const fieldMap: Record<string, string | null> = {
-      AddressLine1: selectedAddress.addressLine1,
-      AddressLine2: selectedAddress.addressLine2,
-      AdminArea2: selectedAddress.adminArea3,
-      AdminArea1: selectedAddress.adminArea1,
-      PostalCode: selectedAddress.postalCode,
-    };
-
-    for (const [key, value] of Object.entries(fieldMap)) {
-      if (value) {
+    for (const [key, value] of Object.entries(
+      mapAutocompleteAddressFields(selectedAddress)
+    )) {
+      if (value && form.getValues(`${sectionKey}${key}`) !== value) {
         form.setValue(`${sectionKey}${key}`, value, {
           shouldDirty: true,
           shouldValidate: true,

@@ -56,7 +56,7 @@ export function NotesForm() {
     key: 'notes',
     data: notes,
     deps: [notes, notesHasChanged],
-    enabled: notesHasChanged && (notes?.trim() || '') !== '',
+    enabled: notesHasChanged,
     fieldNames: ['notes'],
     preserveFormData: false,
     mapToInput: notesValue => ({

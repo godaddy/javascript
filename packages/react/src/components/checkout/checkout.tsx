@@ -5,7 +5,7 @@ import React, { type ReactNode } from 'react';
 import { z } from 'zod';
 import { hasRegionData } from '@/components/checkout/address';
 import { checkIsValidPhone } from '@/components/checkout/address/utils/check-is-valid-phone';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { getRequiredFieldsFromSchema } from '@/components/checkout/form/utils/get-required-fields-from-schema';
 import { type GoDaddyVariables, useGoDaddyContext } from '@/godaddy-provider';
 import { useCheckoutSession } from '@/hooks/use-checkout-session';

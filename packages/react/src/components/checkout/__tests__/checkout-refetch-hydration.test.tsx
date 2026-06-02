@@ -1,4 +1,5 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
+import { useFormContext } from 'react-hook-form';
 import { describe, expect, it } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import {
@@ -11,6 +12,40 @@ import {
   typeIntoNamedField,
   waitForCheckoutReady,
 } from './checkout-test-env';
+
+function BillingToggleProbe() {
+  const form = useFormContext();
+  const useShipping = form.watch('paymentUseShippingAddress');
+
+  return (
+    <div>
+      <button
+        type='button'
+        onClick={() => {
+          form.setValue('paymentUseShippingAddress', false, {
+            shouldDirty: true,
+          });
+        }}
+      >
+        Toggle billing off
+      </button>
+      <button
+        type='button'
+        onClick={() => {
+          form.reset(
+            { ...form.getValues(), paymentUseShippingAddress: true },
+            { keepDirtyValues: true }
+          );
+        }}
+      >
+        Simulate refetch hydration
+      </button>
+      <div data-testid='payment-use-shipping-address'>
+        {String(useShipping)}
+      </div>
+    </div>
+  );
+}
 
 describe('Checkout refetch hydration', () => {
   it('hydrates pristine fields from draft-order refetch without clobbering dirty fields', async () => {
@@ -33,10 +68,12 @@ describe('Checkout refetch hydration', () => {
         address: buildShippingAddress({ addressLine1: '999 Server St' }),
       },
     });
-    queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
-      checkoutSession: { draftOrder: updated },
+    await act(async () => {
+      queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+        checkoutSession: { draftOrder: updated },
+      });
+      await flushPromises();
     });
-    await flushPromises();
 
     await waitFor(() => {
       expect(getNamedInput('shippingFirstName')).toHaveValue('Dirty');
@@ -56,18 +93,20 @@ describe('Checkout refetch hydration', () => {
     await typeIntoNamedField(user, 'shippingAddressLine1', 'First Edit');
     await advanceCheckoutDebounce(1000);
     await typeIntoNamedField(user, 'shippingAddressLine1', 'Newer Edit');
-    queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
-      checkoutSession: {
-        draftOrder: buildDraftOrder({
-          shipping: {
-            address: buildShippingAddress({
-              addressLine1: 'Server During Busy',
-            }),
-          },
-        }),
-      },
+    await act(async () => {
+      queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+        checkoutSession: {
+          draftOrder: buildDraftOrder({
+            shipping: {
+              address: buildShippingAddress({
+                addressLine1: 'Server During Busy',
+              }),
+            },
+          }),
+        },
+      });
+      await flushPromises();
     });
-    await flushPromises();
 
     expect(getNamedInput('shippingAddressLine1')).toHaveValue('Newer Edit');
   });
@@ -77,10 +116,12 @@ describe('Checkout refetch hydration', () => {
     await waitForCheckoutReady();
 
     await typeIntoNamedField(user, 'shippingFirstName', 'Unsaved');
-    queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
-      checkoutSession: { draftOrder: null },
+    await act(async () => {
+      queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+        checkoutSession: { draftOrder: null },
+      });
+      await flushPromises();
     });
-    await flushPromises();
 
     await waitFor(() => {
       expect(getNamedInput('shippingFirstName')).toHaveValue('Unsaved');
@@ -88,31 +129,54 @@ describe('Checkout refetch hydration', () => {
   });
 
   it('preserves a user-toggled-off billing address switch across refetch', async () => {
-    const { user, queryClient, session } = renderCheckout();
-    await waitForCheckoutReady();
-
-    const checkbox = screen.getByRole('checkbox', {
-      name: /same as shipping|use shipping/i,
-    });
-    expect(checkbox).toBeChecked();
-
-    await user.click(checkbox);
-    expect(checkbox).not.toBeChecked();
-
-    queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
-      checkoutSession: {
-        draftOrder: buildDraftOrder({
-          shipping: {
-            firstName: 'Server',
-            address: buildShippingAddress({ addressLine1: '999 Server St' }),
-          },
-        }),
+    const { user } = renderCheckout({
+      sessionOverrides: {
+        enableLocalPickup: false,
+        enableBillingAddressCollection: false,
+      },
+      draftOrderOverrides: {
+        shipping: {
+          firstName: 'Ship',
+          lastName: 'Buyer',
+          address: buildShippingAddress({
+            adminArea1: '',
+            countryCode: 'IE',
+          }),
+        },
+        billing: {
+          firstName: 'Ship',
+          lastName: 'Buyer',
+          address: buildShippingAddress({
+            adminArea1: '',
+            countryCode: 'IE',
+          }),
+        },
+      },
+      checkoutProps: {
+        targets: {
+          'checkout.form.payment.after': BillingToggleProbe,
+        },
       },
     });
-    await flushPromises();
+    await waitForCheckoutReady();
 
-    await waitFor(() => {
-      expect(checkbox).not.toBeChecked();
-    });
+    expect(
+      screen.getByTestId('payment-use-shipping-address')
+    ).toHaveTextContent('true');
+
+    await user.click(
+      screen.getByRole('button', { name: /toggle billing off/i })
+    );
+    expect(
+      screen.getByTestId('payment-use-shipping-address')
+    ).toHaveTextContent('false');
+
+    await user.click(
+      screen.getByRole('button', { name: /simulate refetch hydration/i })
+    );
+
+    expect(
+      screen.getByTestId('payment-use-shipping-address')
+    ).toHaveTextContent('false');
   });
 });

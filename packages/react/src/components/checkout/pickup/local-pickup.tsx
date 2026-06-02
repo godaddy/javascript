@@ -428,7 +428,7 @@ export function LocalPickupForm({
                   });
                   findAndSetNextAvailableDate(value);
                 }}
-                value={field.value}
+                value={field.value ?? ''}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -578,7 +578,7 @@ export function LocalPickupForm({
                       },
                     });
                   }}
-                  value={field.value}
+                  value={field.value ?? ''}
                 >
                   <FormControl>
                     <SelectTrigger>

@@ -1,13 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { DraftOrder, SKUProduct } from '@/types';
-
-vi.mock('@/components/checkout/delivery/delivery-method', () => ({
-  DeliveryMethods: {
-    PICKUP: 'PICKUP',
-    PURCHASE: 'PURCHASE',
-    SHIP: 'SHIP',
-  },
-}));
 
 const DeliveryMethods = {
   PICKUP: 'PICKUP',

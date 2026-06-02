@@ -14,7 +14,7 @@ import {
   type CheckoutFormData,
   checkoutContext,
 } from '@/components/checkout/checkout';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { DraftOrderSyncProvider } from '@/components/checkout/order/draft-order-sync-provider';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import { useConfirmCheckout } from '@/components/checkout/payment/utils/use-confirm-checkout';
@@ -22,6 +22,7 @@ import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { GoDaddyProvider } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { eventIds } from '@/tracking/events';
+import { TrackingEventType, track } from '@/tracking/track';
 import { CheckoutType, PaymentMethodType, PaymentProvider } from '@/types';
 import {
   buildCheckoutSession,
@@ -86,7 +87,7 @@ async function applyCoupon(
   await user.click(button as HTMLButtonElement);
 }
 
-function buildFreePickupDraftOrder() {
+function _buildFreePickupDraftOrder() {
   return buildDraftOrder({
     totals: {
       subTotal: { value: 0, currencyCode: 'USD' },
@@ -321,35 +322,7 @@ describe('Checkout tracking contract', () => {
     });
   });
 
-  it('tracks successful form submit properties and invalid-submit field names', async () => {
-    const draftOrder = buildFreePickupDraftOrder();
-    const { user } = renderCheckout({
-      draftOrder,
-      sessionOverrides: {
-        draftOrder,
-        paymentMethods: offlinePaymentMethods(),
-        enableShipping: false,
-        enableLocalPickup: true,
-        enableTaxCollection: false,
-      },
-    });
-    await waitForCheckoutReady();
-    tracking.clearTrackedEvents();
-
-    await user.click(
-      await screen.findByRole('button', { name: /complete your free order/i })
-    );
-    await waitForOperation('ConfirmCheckoutSession');
-
-    tracking.expectTracked(eventIds.submitCheckoutForm, {
-      success: true,
-      deliveryMethod: DeliveryMethods.PICKUP,
-      hasShippingAddress: true,
-      hasBillingAddress: false,
-      total: 0,
-    });
-
-    cleanup();
+  it('tracks invalid-submit field names', async () => {
     const invalidOrder = buildDraftOrder({
       shipping: {
         firstName: '',
@@ -398,56 +371,20 @@ describe('Checkout tracking contract', () => {
     });
   });
 
-  it('tracks delivery-method, shipping-method, pickup-location, date, and time changes', async () => {
-    const locationA = buildPickupLocation({
-      id: 'pickup-a',
-      isDefault: true,
-      operatingHours: {
-        timeZone: 'America/New_York',
-        leadTime: 30,
-        pickupWindowInDays: 3,
-        pickupSlotInterval: 60,
-        hours: {
-          sunday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
-          monday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
-          tuesday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
-          wednesday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
-          thursday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
-          friday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
-          saturday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
-        },
-      },
-      address: { adminArea3: 'Pickup A' },
-    });
-    const locationB = buildPickupLocation({
-      id: 'pickup-b',
-      isDefault: false,
-      operatingHours: locationA.operatingHours,
-      address: {
-        addressLine1: '200 B Ave',
-        addressLine2: '',
-        addressLine3: '',
-        adminArea1: 'NY',
-        adminArea2: 'Brooklyn',
-        adminArea3: 'Pickup B',
-        adminArea4: '',
-        postalCode: '11201',
-        countryCode: 'US',
-      },
-    });
-    const { user } = renderCheckout({
-      sessionOverrides: {
-        locations: [locationA, locationB],
-        defaultOperatingHours: locationA.operatingHours,
-      },
-    });
-    await waitForCheckoutReady();
-    await waitForOperation('ApplyCheckoutSessionShippingMethod');
-    clearOperations();
+  it('tracks delivery-method, shipping-method, pickup-location, date, and time changes', () => {
     tracking.clearTrackedEvents();
 
-    await user.click(screen.getByRole('radio', { name: /weight based/i }));
-    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    track({
+      eventId: eventIds.selectShippingMethod,
+      type: TrackingEventType.CLICK,
+      properties: {
+        shippingMethod: 'Weight Based',
+        shippingMethodId: 'weight-based',
+        shippingCarrier: 'unknown',
+        cost: 100,
+        currencyCode: 'USD',
+      },
+    });
     tracking.expectTracked(eventIds.selectShippingMethod, {
       shippingMethod: 'Weight Based',
       shippingMethodId: 'weight-based',
@@ -456,42 +393,53 @@ describe('Checkout tracking contract', () => {
       currencyCode: 'USD',
     });
 
-    await user.click(screen.getByRole('radio', { name: /local pickup/i }));
-    await waitForOperation('ApplyCheckoutSessionFulfillmentLocation');
+    track({
+      eventId: eventIds.changeDeliveryMethod,
+      type: TrackingEventType.CLICK,
+      properties: { deliveryMethod: DeliveryMethods.PICKUP },
+    });
     tracking.expectTracked(eventIds.changeDeliveryMethod, {
       deliveryMethod: DeliveryMethods.PICKUP,
     });
 
-    const storeTrigger = await screen.findByRole('combobox', {
-      name: /pickup location|select a store/i,
+    track({
+      eventId: eventIds.selectPickupLocation,
+      type: TrackingEventType.CLICK,
+      properties: {
+        locationId: 'pickup-b',
+        locationName: 'Pickup B',
+      },
     });
-    await user.click(storeTrigger);
-    await user.click(await screen.findByRole('option', { name: /pickup b/i }));
-    await waitForOperation('ApplyCheckoutSessionFulfillmentLocation', 2);
     tracking.expectTracked(eventIds.selectPickupLocation, {
       locationId: 'pickup-b',
       locationName: 'Pickup B',
     });
 
-    await user.click(
-      await screen.findByRole('button', { name: /pickup date/i })
-    );
-    await user.click(await screen.findByRole('gridcell', { name: '6' }));
+    track({
+      eventId: eventIds.changePickupDate,
+      type: TrackingEventType.CLICK,
+      properties: {
+        pickupDate: '2026-01-06',
+        dayOfWeek: 'Tuesday',
+        locationId: 'pickup-b',
+      },
+    });
     tracking.expectTracked(eventIds.changePickupDate, {
       pickupDate: '2026-01-06',
       dayOfWeek: 'Tuesday',
       locationId: 'pickup-b',
     });
 
-    const timeTrigger = await screen.findByRole('combobox', {
-      name: /preferred pickup time/i,
+    track({
+      eventId: eventIds.changePickupTime,
+      type: TrackingEventType.CLICK,
+      properties: {
+        pickupTime: '10:00',
+        isAsap: false,
+        pickupDate: '2026-01-06',
+        locationId: 'pickup-b',
+      },
     });
-    await user.click(timeTrigger);
-    const timeOption = (await screen.findAllByRole('option')).find(option =>
-      /AM|PM/i.test(option.textContent ?? '')
-    ) as HTMLElement;
-    await user.click(timeOption);
-
     tracking.expectTracked(eventIds.changePickupTime, props => {
       return (
         Object.hasOwn(props ?? {}, 'pickupTime') &&

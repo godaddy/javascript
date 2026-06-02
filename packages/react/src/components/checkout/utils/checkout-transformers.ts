@@ -5,7 +5,7 @@ import {
   parsePhoneNumber,
 } from 'react-phone-number-input';
 import type { CheckoutFormData } from '@/components/checkout/checkout';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import type { Product } from '@/components/checkout/line-items';
 import type { DraftOrder, SKUProduct } from '@/types';
 

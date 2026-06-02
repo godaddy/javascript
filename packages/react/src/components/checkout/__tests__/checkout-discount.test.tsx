@@ -1,6 +1,6 @@
+import { enUs } from '@godaddy/localizations';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { enUs } from '@godaddy/localizations';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import {
   clearOperations,

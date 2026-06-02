@@ -1,21 +1,21 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import {
   advanceCheckoutDebounce,
   buildShippingAddress,
   clearOperations,
+  fillShippingAddress,
   flushPromises,
   getCurrentDraftOrder,
   getNamedInput,
-  fillShippingAddress,
   getOperations,
   renderCheckout,
   typeIntoNamedField,
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
-import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { getLastUpdateInput } from './checkout-test-fixtures';
 
 describe('Checkout draft-order field sync', () => {

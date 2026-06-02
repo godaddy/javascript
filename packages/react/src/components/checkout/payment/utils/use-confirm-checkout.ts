@@ -5,7 +5,7 @@ import {
   redirectToSuccessUrl,
   useCheckoutContext,
 } from '@/components/checkout/checkout';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import {
   type DraftOrderSession,
   useDraftOrder,

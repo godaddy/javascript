@@ -264,7 +264,9 @@ describe('Checkout totals and order summary UI', () => {
     });
     await waitForCheckoutReady();
 
-    expect(screen.getAllByText(/fallback product name/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/fallback product name/i).length
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText(/large/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/gift wrap/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/red paper/i).length).toBeGreaterThan(0);
@@ -287,7 +289,9 @@ describe('Checkout totals and order summary UI', () => {
     await waitForCheckoutReady();
 
     await waitFor(() => {
-      expect(screen.getAllByText(/order fallback item/i).length).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText(/order fallback item/i).length
+      ).toBeGreaterThan(0);
     });
   });
 });

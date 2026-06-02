@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import {
   useDraftOrder,
   useDraftOrderShipping,
@@ -275,7 +275,7 @@ export function ShippingMethodForm() {
   }
 
   const currentMethod = form.watch('shippingMethod');
-  const selectedValue = currentMethod || undefined;
+  const selectedValue = currentMethod || '';
   const isShippingMethodDisabled = isPaymentDisabled || isConfirmingCheckout;
 
   const handleValueChange = (value: string) => {

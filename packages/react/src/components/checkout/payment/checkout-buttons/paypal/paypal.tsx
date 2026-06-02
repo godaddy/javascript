@@ -6,7 +6,7 @@ import {
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
 import {
   PaymentProvider,

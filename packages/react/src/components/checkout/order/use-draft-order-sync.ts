@@ -98,7 +98,9 @@ export function useDraftOrderFieldSync<T>({
     // Don't sync if input is effectively empty (only contains context/customerId)
     const hasActualContent = Object.entries(input).some(
       ([inputKey, value]) =>
-        inputKey !== 'context' && inputKey !== 'customerId' && value != null
+        inputKey !== 'context' &&
+        inputKey !== 'customerId' &&
+        value !== undefined
     );
 
     if (!hasActualContent) return;

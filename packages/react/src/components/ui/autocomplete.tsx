@@ -39,11 +39,11 @@ const AutoCompleteItem = React.forwardRef<
       id={id}
       key={key}
       ref={ref}
-      role='menuitem'
       tabIndex={0}
       className={cn(active && 'bg-muted', 'py-1 px-2 rounded')}
-      aria-selected={active}
       {...rest}
+      role='option'
+      aria-selected={active}
     >
       {children}
     </div>

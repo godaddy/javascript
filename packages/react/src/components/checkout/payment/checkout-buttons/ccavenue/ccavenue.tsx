@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';

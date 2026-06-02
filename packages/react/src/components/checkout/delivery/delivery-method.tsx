@@ -13,25 +13,9 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
+import { DeliveryMethods } from './delivery-methods';
 
-export enum DeliveryMethods {
-  NONE = 'NONE',
-  PICKUP = 'PICKUP',
-  SHIP = 'SHIP',
-  CURBSIDE = 'CURBSIDE',
-  DELIVERY = 'DELIVERY',
-  DRIVE_THRU = 'DRIVE_THRU',
-  FOR_HERE = 'FOR_HERE',
-  TO_GO = 'TO_GO',
-  DIGITAL = 'DIGITAL',
-  PURCHASE = 'PURCHASE',
-  GENERAL_CONTAINER = 'GENERAL_CONTAINER',
-  QUICK_STAY = 'QUICK_STAY',
-  REGULAR_STAY = 'REGULAR_STAY',
-  NON_LODGING_NRR = 'NON_LODGING_NRR',
-  NON_LODGING_SALE = 'NON_LODGING_SALE',
-  GIFT_CARD = 'GIFT_CARD',
-}
+export { DeliveryMethods };
 
 export interface DeliveryMethod {
   id: CheckoutFormData['deliveryMethod'];
