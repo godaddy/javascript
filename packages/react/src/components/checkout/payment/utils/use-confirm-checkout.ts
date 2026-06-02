@@ -134,8 +134,9 @@ export function useConfirmCheckout() {
             pickupDate: form.getValues('pickupDate'),
             pickupTime: form.getValues('pickupTime'),
             pickupLocationId: form.getValues('pickupLocationId'),
-            leadTime: form.getValues('pickupLeadTime') || 0,
-            timezone: form.getValues('pickupTimezone') || 'UTC',
+            leadTime: form.getValues('pickupLeadTime') ?? 0,
+            timezone: form.getValues('pickupTimezone'),
+            defaultTimezone: session?.defaultOperatingHours?.timeZone,
           })
         : {};
 

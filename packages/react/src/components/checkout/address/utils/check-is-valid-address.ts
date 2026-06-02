@@ -1,10 +1,12 @@
 import type { Address } from '@/types';
 
-const convertCountryCode = (
-  country?: string | null
-): string | null | undefined => {
-  if (country === 'USA') return 'US';
-  return country;
+const normalize = (value?: string | null): string =>
+  value?.trim().toLowerCase() ?? '';
+
+const convertCountryCode = (country?: string | null): string => {
+  const normalizedCountry = country?.trim().toUpperCase();
+  if (normalizedCountry === 'USA') return 'US';
+  return normalizedCountry ?? '';
 };
 
 export function checkIsValidAddress(
@@ -12,15 +14,14 @@ export function checkIsValidAddress(
   verifiedAddress?: Address
 ) {
   return (
-    address.addressLine1?.toLowerCase() ===
-      verifiedAddress?.addressLine1?.toLowerCase() &&
-    address.adminArea1?.toLowerCase() ===
-      verifiedAddress?.adminArea1?.toLowerCase() &&
-    address.adminArea2?.toLowerCase() ===
-      verifiedAddress?.adminArea3?.toLowerCase() &&
-    address.postalCode?.toLowerCase() ===
-      verifiedAddress?.postalCode?.toLowerCase() &&
-    address.countryCode?.toLowerCase() ===
-      convertCountryCode(verifiedAddress?.countryCode)?.toLowerCase()
+    normalize(address.addressLine1) ===
+      normalize(verifiedAddress?.addressLine1) &&
+    normalize(address.addressLine2) ===
+      normalize(verifiedAddress?.addressLine2) &&
+    normalize(address.adminArea1) === normalize(verifiedAddress?.adminArea1) &&
+    normalize(address.adminArea2) === normalize(verifiedAddress?.adminArea3) &&
+    normalize(address.postalCode) === normalize(verifiedAddress?.postalCode) &&
+    convertCountryCode(address.countryCode) ===
+      convertCountryCode(verifiedAddress?.countryCode)
   );
 }

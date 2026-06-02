@@ -101,14 +101,14 @@ Co-locate as `*.test.ts` next to source. No React Testing Library needed.
   - `convertCSSVariablesToCamelCase` skips `undefined` values.
   - `convertCamelCaseToKebabCase` round-trips with `convertCSSVariablesToCamelCase`.
 
-- [ ] **T-104** `address/utils/format-address.test.ts`
+- [x] **T-104** `address/utils/format-address.test.ts`
   - `formatSingleLineAddress`:
     - Standard US address renders comma-separated, no duplicates.
     - Missing `addressLine2` is omitted (no double comma).
     - Country name appended via region table; unknown country falls back to country code.
     - Admin area de-duplication when city == admin area.
 
-- [ ] **T-105** `address/utils/check-is-valid-address.test.ts`
+- [x] **T-105** `address/utils/check-is-valid-address.test.ts`
   - Form vs verified address comparison:
     - Identical addresses → `true`.
     - `USA` ↔ `US` country code normalized.
@@ -116,7 +116,7 @@ Co-locate as `*.test.ts` next to source. No React Testing Library needed.
     - Postal code case-insensitive trim (UK postcodes have spaces).
     - Difference in `addressLine2` → `false`.
 
-- [ ] **T-106** `address/utils/is-address-complete.test.ts`
+- [x] **T-106** `address/utils/is-address-complete.test.ts`
   - Returns `true` only when all required fields are non-empty.
   - Country with no region data does not require `state`.
   - Empty postal code → `false` for countries that require it.
@@ -127,9 +127,9 @@ Co-locate as `*.test.ts` next to source. No React Testing Library needed.
   - Free PURCHASE (no shipping/no pickup) → billing required, submits with full billing.
   - Then **delete** the original `payment/free-payment-form.test.ts` (it tests copy-pasted logic, not the source).
 
-- [ ] **T-108** `pickup/utils/build-pickup-payload.test.ts` already exists. Audit and add: ASAP vs scheduled times, missing `pickupLeadTime` defaulting, timezone fallback to `defaultOperatingHours.timeZone`. *(Skip if these are already covered.)*
+- [x] **T-108** `pickup/utils/build-pickup-payload.test.ts` already exists. Audit and add: ASAP vs scheduled times, missing `pickupLeadTime` defaulting, timezone fallback to `defaultOperatingHours.timeZone`. *(Skip if these are already covered.)*
 
-- [ ] **T-109** `form/utils/get-required-fields-from-schema.test.ts`
+- [x] **T-109** `form/utils/get-required-fields-from-schema.test.ts`
   - Plain `ZodObject` with optional + required fields.
   - `ZodEffects` wrapper (e.g., from `.superRefine(...)`) unwraps correctly.
   - `ZodDefault` wrapper unwraps correctly.

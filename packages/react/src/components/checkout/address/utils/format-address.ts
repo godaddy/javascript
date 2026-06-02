@@ -1,4 +1,9 @@
 import type { Address } from '@/types';
+import { countryTuples } from '../country-region-data';
+
+const countryNamesByCode = new Map(
+  countryTuples.map(([label, value]) => [value, label])
+);
 
 export function formatSingleLineAddress(address?: Address): string {
   if (!address) return '';
@@ -15,6 +20,10 @@ export function formatSingleLineAddress(address?: Address): string {
     countryCode,
   } = address;
 
+  const country = countryCode
+    ? (countryNamesByCode.get(countryCode) ?? countryCode)
+    : undefined;
+
   const parts = [
     addressLine1,
     addressLine2,
@@ -24,13 +33,14 @@ export function formatSingleLineAddress(address?: Address): string {
     adminArea2,
     adminArea1,
     postalCode,
-    countryCode,
+    country,
   ];
 
   const seen = new Set<string>();
   const formattedParts = parts.filter((part): part is string => {
-    if (!part || seen.has(part)) return false;
-    seen.add(part);
+    const trimmedPart = part?.trim();
+    if (!trimmedPart || seen.has(trimmedPart)) return false;
+    seen.add(trimmedPart);
     return true;
   });
 

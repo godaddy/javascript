@@ -1,7 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildPickupPayload } from './build-pickup-payload';
 
 describe('buildPickupPayload', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   describe('date + time (scheduled pickup)', () => {
     it('should produce the correct ISO string in the store timezone', () => {
       const result = buildPickupPayload({
@@ -111,8 +114,20 @@ describe('buildPickupPayload', () => {
 
       // 1:00 PM + 30 min = 1:30 PM EDT
       expect(result.fulfillmentStartAt).toBe('2026-03-26T13:30:00-04:00');
+      expect(result.fulfillmentEndAt).toBe('2026-03-26T13:30:00-04:00');
+    });
 
-      vi.useRealTimers();
+    it('should default missing lead time to the current time', () => {
+      const fakeNow = new Date('2026-03-26T17:00:00.000Z'); // 1 PM EDT
+      vi.useFakeTimers({ now: fakeNow });
+
+      const result = buildPickupPayload({
+        pickupTime: 'ASAP',
+        pickupLocationId: 'loc-8',
+        timezone: 'America/New_York',
+      });
+
+      expect(result.fulfillmentStartAt).toBe('2026-03-26T13:00:00-04:00');
     });
   });
 
@@ -127,8 +142,6 @@ describe('buildPickupPayload', () => {
       });
 
       expect(result.fulfillmentStartAt).toBe('2026-03-26T16:00:00-04:00');
-
-      vi.useRealTimers();
     });
   });
 
@@ -142,6 +155,18 @@ describe('buildPickupPayload', () => {
       });
 
       expect(result.fulfillmentStartAt).toBe('2026-03-26T13:00:00Z');
+    });
+
+    it('should use the provided default timezone when selected location timezone is empty', () => {
+      const result = buildPickupPayload({
+        pickupDate: '2026-03-26',
+        pickupTime: '13:00',
+        pickupLocationId: 'loc-10',
+        timezone: '',
+        defaultTimezone: 'America/New_York',
+      });
+
+      expect(result.fulfillmentStartAt).toBe('2026-03-26T13:00:00-04:00');
     });
   });
 
