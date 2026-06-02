@@ -349,28 +349,28 @@ For each task, mock `@/tracking/track` (use the helper from T-005) and assert pa
 
 ## Phase 13 — Session / auth edge cases
 
-- [ ] **T-1301** Extend `__tests__/checkout-session-auth.test.tsx`:
-  - JWT with `exp` undefined: refresh scheduler does not crash; if the source treats it as "never expires", assert that no refresh is scheduled. Otherwise pin whatever the current behavior is and add a `// TODO` comment for follow-up.
-  - URL token wins over storage token when both are present (or document the actual priority).
+- [x] **T-1301** Extended `__tests__/checkout-session-auth.test.tsx`:
+  - JWT with `exp` undefined is treated as not refreshable: scheduler does not crash and no refresh fires after advancing timers.
+  - Documented/pinned actual priority: a same-session stored JWT wins over a URL hash token; TODO added in test for product follow-up if URL priority is desired.
 
 ---
 
 ## Phase 14 — Discounts polish
 
-- [ ] **T-1401** Extend `__tests__/checkout-discount.test.tsx`:
+- [x] **T-1401** Extended `__tests__/checkout-discount.test.tsx`:
   - Line-item-level discount code already on the order is rendered as a removable tag.
   - Shipping-line-level discount code already on the order is rendered as a removable tag.
   - Generic (non-`GraphQLErrorWithCodes`) error renders `t.discounts.failedToApply`.
-  - Empty input + click Apply → `t.discounts.enterCodeValidation` shown; no API call.
+  - Empty input actual behavior is pinned: Apply is disabled for trimmed-empty codes, so no validation message renders and no API call fires; TODO added in test for product follow-up.
   - Enter-key submission on an empty input does NOT fire (already-implemented gate).
 
 ---
 
 ## Phase 15 — Redirects polish
 
-- [ ] **T-1501** Extend `__tests__/checkout-redirects.test.tsx`:
-  - No `returnUrl` and no draft order: the form continues rendering the confirming/error fallback rather than navigating.
-  - Replace any `await new Promise(r => setTimeout(r, 1000))` with `vi.useFakeTimers()` + `vi.advanceTimersByTime(1000)` for determinism.
+- [x] **T-1501** Extended `__tests__/checkout-redirects.test.tsx`:
+  - No `returnUrl` and no draft order: the form continues rendering rather than navigating.
+  - Redirect assertions use fake timers (`vi.advanceTimersByTimeAsync`) instead of real timeout sleeps.
 
 ---
 
