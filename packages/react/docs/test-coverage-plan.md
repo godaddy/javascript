@@ -235,25 +235,26 @@ Co-locate as `*.test.ts` next to source. No React Testing Library needed.
 
 For each task, mock `@/tracking/track` (use the helper from T-005) and assert payloads. Use **literal** `eventIds.*` and matching property objects, not ad-hoc strings.
 
-- [ ] **T-601** `__tests__/checkout-tracking.test.tsx` (new): Impressions
+- [!] **T-601** `__tests__/checkout-tracking.test.tsx` (new): Impressions
   - `eventIds.checkoutStart` fires once on first non-loading render.
   - `eventIds.expressCheckoutImpression` fires when express section becomes visible (and not when gated off).
-- [ ] **T-602** Form submit:
+  - [!] Current implementation also tracks `expressCheckoutImpression` with `availableMethods: ''` when the section is gated off; test documents the current event contract without changing production behavior.
+- [x] **T-602** Form submit:
   - `eventIds.submitCheckoutForm` properties include `success`, `deliveryMethod`, `hasShippingAddress`, `hasBillingAddress`, `total`.
   - `eventIds.formValidationError` fires on invalid submit with the failing field names.
-- [ ] **T-603** Delivery / shipping / pickup:
+- [x] **T-603** Delivery / shipping / pickup:
   - `eventIds.changeDeliveryMethod`
   - `eventIds.selectShippingMethod`
   - `eventIds.selectPickupLocation`
   - `eventIds.changePickupDate`, `eventIds.changePickupTime`
-- [ ] **T-604** Discount:
+- [x] **T-604** Discount:
   - `eventIds.applyCoupon` on apply.
   - `eventIds.removeDiscount` on remove.
   - `eventIds.discountError` on apply failure.
-- [ ] **T-605** Errors / billing toggle:
+- [x] **T-605** Errors / billing toggle:
   - `eventIds.formError` already covered in T-203; add an integration assertion here too.
   - `eventIds.toggleSameAsBillingAddress` on the `PaymentAddressToggle` checkbox change with `useShippingAddress: true|false`.
-- [ ] **T-606** Confirm-checkout lifecycle:
+- [x] **T-606** Confirm-checkout lifecycle:
   - `eventIds.paymentStart`, `eventIds.checkoutComplete` on success.
   - `eventIds.checkoutError` on failure.
   - Wallet-specific complete events (Apple Pay / Google Pay / Paze) — assert the correct one fires when that method is used. (Use the inert mocks; no real SDK invocation needed.)
