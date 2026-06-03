@@ -248,11 +248,19 @@ describe('Checkout pickup location and time selection', () => {
       'saturday',
     ] as const;
     const tomorrowName = dayNames[tomorrow.getDay()];
+    const closedDay = { enabled: false, openTime: null, closeTime: null };
     const location = scheduledLocation({
       id: 'no-slots-loc',
       operatingHours: {
         pickupWindowInDays: 2,
         hours: {
+          sunday: closedDay,
+          monday: closedDay,
+          tuesday: closedDay,
+          wednesday: closedDay,
+          thursday: closedDay,
+          friday: closedDay,
+          saturday: closedDay,
           [tomorrowName]: {
             enabled: true,
             openTime: '17:00',
@@ -270,13 +278,6 @@ describe('Checkout pickup location and time selection', () => {
     await waitForCheckoutReady();
     await user.click(screen.getByRole('radio', { name: /local pickup/i }));
     await waitForOperation('ApplyCheckoutSessionFulfillmentLocation');
-
-    await user.click(
-      screen.getByRole('button', { name: /january|pickup date/i })
-    );
-    await user.click(
-      await screen.findByRole('gridcell', { name: String(tomorrow.getDate()) })
-    );
 
     await waitFor(() => {
       expect(document.body).toHaveTextContent(/no available time slots/i);
