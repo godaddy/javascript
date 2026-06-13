@@ -67,6 +67,23 @@ export const GetCheckoutSessionQuery = graphql(`
                 goPayAppId
               }
             }
+            enabledStoreApplications {
+              id
+              name
+              release {
+                id
+                version
+                uiExtensions {
+                  id
+                  name
+                  handle
+                  source
+                  cdnUrl
+                  type
+                  target
+                }
+              }
+            }
             shipping {
               originAddress {
                 addressLine1

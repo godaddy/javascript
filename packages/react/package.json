@@ -12,6 +12,11 @@
     "./package.json": "./package.json",
     "./styles.css": "./dist/index.css",
     "./styles-tailwind.css": "./dist/index-tailwind.css",
+    "./ui-extensions": {
+      "types": "./dist/ui-extensions/index.d.ts",
+      "import": "./dist/ui-extensions/index.js",
+      "default": "./dist/ui-extensions/index.js"
+    },
     "./server": {
       "types": "./dist/server.d.ts",
       "import": "./dist/server.js",
@@ -27,6 +32,9 @@
     "*": {
       "server": [
         "./dist/server.d.ts"
+      ],
+      "ui-extensions": [
+        "./dist/ui-extensions/index.d.ts"
       ],
       "*": [
         "./dist/index.d.ts"

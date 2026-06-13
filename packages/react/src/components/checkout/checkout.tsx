@@ -15,7 +15,7 @@ import type { TrackingProperties } from '@/tracking/event-properties';
 import { TrackingProvider } from '@/tracking/tracking-provider';
 import { type CheckoutSession, PaymentMethodType } from '@/types';
 import { CheckoutFormContainer } from './form/checkout-form-container';
-import type { Target } from './target/target';
+import type { Target } from './target/types';
 
 // Utility function for redirecting to success URL after checkout
 export function redirectToSuccessUrl(successUrl?: string): void {
@@ -253,7 +253,6 @@ export function Checkout(props: CheckoutProps) {
   const { t } = useGoDaddyContext();
 
   const { session, jwt, isLoading: isLoadingJWT } = useCheckoutSession(props);
-
   useTheme(session?.appearance?.theme);
   useVariables(session?.appearance?.variables || props?.appearance?.variables);
 
