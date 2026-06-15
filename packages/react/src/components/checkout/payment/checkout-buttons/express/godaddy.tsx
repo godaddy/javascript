@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
   useDraftOrder,
   useDraftOrderTotals,
 } from '@/components/checkout/order/use-draft-order';
-import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import type {
   Address,
   ShippingMethods,
@@ -19,16 +17,13 @@ import {
   type PoyntExpressRequest,
   useBuildPaymentRequest,
 } from '@/components/checkout/payment/utils/use-build-payment-request';
-import {
-  PaymentProvider,
-  useConfirmCheckout,
-} from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useConfirmExpressCheckout } from '@/components/checkout/payment/utils/use-confirm-express-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
-import { mapOrderToFormValues } from '@/components/checkout/utils/checkout-transformers';
 import {
   useConvertMajorToMinorUnits,
   useFormatCurrency,
@@ -78,17 +73,15 @@ export function ExpressCheckoutButton() {
     taxes: { currencyCode: currencyCode, value: 0 },
     shipping: { currencyCode: currencyCode, value: 0 },
   });
-  const form = useFormContext();
   const getShippingMethodsByAddress = useGetShippingMethodByAddress();
   const getTaxes = useGetTaxes();
   const getPriceAdjustments = useGetPriceAdjustments();
-  const updateTaxes = useUpdateTaxes();
 
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
   const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
   const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
 
-  const confirmCheckout = useConfirmCheckout();
+  const confirmCheckout = useConfirmExpressCheckout();
   const collect = useRef<TokenizeJs | null>(null);
   const hasMounted = useRef(false);
   const handleExpressPayClickRef = useRef<
@@ -570,23 +563,6 @@ export function ExpressCheckoutButton() {
         taxes: { currencyCode: currencyCode, value: 0 },
         shipping: { currencyCode: currencyCode, value: 0 },
       });
-
-      form.reset(
-        mapOrderToFormValues({
-          order: draftOrder,
-          defaultCountryCode: session?.shipping?.originAddress?.countryCode,
-          enableShipping: session?.enableShipping,
-          enableLocalPickup: session?.enableLocalPickup,
-        })
-      );
-
-      if (session?.enableTaxCollection && draftOrder?.shipping?.address) {
-        try {
-          updateTaxes.mutate(undefined);
-        } catch (_error) {
-          // Silently handle tax clearing errors on wallet close
-        }
-      }
     });
 
     collect.current.on('coupon_code_change', async e => {
@@ -1482,10 +1458,8 @@ export function ExpressCheckoutButton() {
     convertAddressToShippingLines,
     getPriceAdjustments.mutateAsync,
     t,
-    form,
     draftOrder,
     session,
-    updateTaxes.mutate,
     walletSource,
     setCheckoutErrors,
   ]);
