@@ -4,7 +4,11 @@ import {
   redirectToSuccessUrl,
   useCheckoutContext,
 } from '@/components/checkout/checkout';
-import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import {
+  CheckoutConfirmationBlockedError,
+  isCheckoutConfirmationBlockedError,
+  PaymentProvider,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
@@ -35,36 +39,65 @@ export function useConfirmExpressCheckout() {
         isExpress?: boolean;
       }
     ) => {
-      if (!session || !input?.paymentType) return;
-      if (isConfirmingCheckout || isPaymentDisabled) return;
-      if (isPendingRef.current) return;
+      if (!session) {
+        throw new Error('Express checkout session is unavailable');
+      }
+      if (!input?.paymentType) {
+        throw new Error('Express checkout payment type is unavailable');
+      }
+      if (isConfirmingCheckout) {
+        throw new CheckoutConfirmationBlockedError(
+          'Checkout confirmation is already in progress'
+        );
+      }
+      if (isPaymentDisabled) {
+        throw new CheckoutConfirmationBlockedError(
+          'Checkout is currently busy'
+        );
+      }
+      if (isPendingRef.current) {
+        throw new CheckoutConfirmationBlockedError(
+          'Express checkout confirmation is already in progress'
+        );
+      }
 
       isPendingRef.current = true;
-      const { isExpress: _isExpress, ...confirmCheckoutInput } = input;
 
-      setCheckoutErrors(undefined);
-      setIsConfirmingCheckout(true);
+      try {
+        const { isExpress: _isExpress, ...confirmCheckoutInput } = input;
 
-      track({
-        eventId: eventIds.paymentStart,
-        type: TrackingEventType.EVENT,
-        properties: {
-          paymentType: input.paymentType,
-          provider: input.paymentProvider,
-          draftOrderId: session?.draftOrder?.id || 'unknown',
-        },
-      });
+        setCheckoutErrors(undefined);
+        setIsConfirmingCheckout(true);
 
-      const data = jwt
-        ? await confirmCheckout(
-            confirmCheckoutInput,
-            { accessToken: jwt, sessionId: session?.id || '' },
-            apiHost
-          )
-        : await confirmCheckout(confirmCheckoutInput, session, apiHost);
-      return data;
+        track({
+          eventId: eventIds.paymentStart,
+          type: TrackingEventType.EVENT,
+          properties: {
+            paymentType: input.paymentType,
+            provider: input.paymentProvider,
+            draftOrderId: session?.draftOrder?.id || 'unknown',
+          },
+        });
+
+        const data = jwt
+          ? await confirmCheckout(
+              confirmCheckoutInput,
+              { accessToken: jwt, sessionId: session?.id || '' },
+              apiHost
+            )
+          : await confirmCheckout(confirmCheckoutInput, session, apiHost);
+
+        if (!data) {
+          throw new Error('Express checkout confirmation failed');
+        }
+
+        return data;
+      } finally {
+        isPendingRef.current = false;
+      }
     },
-    onSuccess: (_data, input) => {
+    onSuccess: (data, input) => {
+      if (!data) return;
       let completedEventId: TrackingEventId | null = null;
       switch (input.paymentType) {
         case 'apple_pay':
@@ -107,13 +140,15 @@ export function useConfirmExpressCheckout() {
 
       redirectToSuccessUrl(session?.successUrl);
     },
-    onError: (error, data) => {
+    onError: (error: unknown, data) => {
+      if (isCheckoutConfirmationBlockedError(error)) return;
+
       track({
         eventId: eventIds.checkoutError,
         type: TrackingEventType.EVENT,
         properties: {
-          errorCodes: error?.name || 'unknown',
-          errorType: error?.message,
+          errorCodes: error instanceof Error ? error.name : 'unknown',
+          errorType: error instanceof Error ? error.message : undefined,
           paymentType: data?.paymentType,
           provider: data?.paymentProvider || 'unknown',
           draftOrderId: session?.draftOrder?.id || 'unknown',
@@ -121,9 +156,6 @@ export function useConfirmExpressCheckout() {
       });
 
       setIsConfirmingCheckout(false);
-    },
-    onSettled: () => {
-      isPendingRef.current = false;
     },
   });
 }

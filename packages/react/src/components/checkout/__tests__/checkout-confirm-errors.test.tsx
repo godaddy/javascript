@@ -1,9 +1,11 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { describe, expect, it } from 'vitest';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import {
+  isCheckoutConfirmationBlockedError,
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
@@ -117,6 +119,10 @@ function ConfirmSeamButton({
             isExpress,
           })
           .catch(err => {
+            if (isCheckoutConfirmationBlockedError(err)) {
+              return;
+            }
+
             if (err instanceof GraphQLErrorWithCodes) {
               setCheckoutErrors(err.codes);
             } else if ((err as Error)?.message === 'MISSING_SHIPPING_INFO') {
@@ -129,6 +135,41 @@ function ConfirmSeamButton({
     >
       {label}
     </button>
+  );
+}
+
+function DuplicateConfirmSeamButton() {
+  const confirmCheckout = useConfirmCheckout();
+  const form = useFormContext();
+  const [secondResult, setSecondResult] = useState('idle');
+
+  return (
+    <>
+      <button
+        type='button'
+        onClick={() => {
+          form.setValue('deliveryMethod', DeliveryMethods.SHIP);
+          const input = {
+            paymentToken: '',
+            paymentType: 'offline',
+            paymentProvider: PaymentProvider.OFFLINE,
+          };
+
+          void confirmCheckout.mutateAsync(input).catch(() => undefined);
+          void confirmCheckout
+            .mutateAsync(input)
+            .then(() => setSecondResult('resolved'))
+            .catch(err => {
+              setSecondResult(
+                isCheckoutConfirmationBlockedError(err) ? 'blocked' : 'rejected'
+              );
+            });
+        }}
+      >
+        Duplicate confirm seam
+      </button>
+      <div data-testid='second-confirm-result'>{secondResult}</div>
+    </>
   );
 }
 
@@ -287,7 +328,7 @@ describe('Checkout confirm errors', () => {
     expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
   });
 
-  it('ignores a rapid second confirm click while the first confirm is in flight', async () => {
+  it('rejects a duplicate confirm while the first confirm is in flight without treating it as success', async () => {
     const draftOrder = buildDraftOrder({
       shippingLines: [
         {
@@ -305,20 +346,28 @@ describe('Checkout confirm errors', () => {
     });
     mockGodaddyApi({ session, draftOrder, delayMs: 100 });
 
-    renderCheckoutWithConfirmSeam({
+    renderCheckout({
       session,
       draftOrder,
       apiOverrides: { delayMs: 100 },
+      checkoutProps: {
+        targets: {
+          'checkout.form.payment.after': () => <DuplicateConfirmSeamButton />,
+        },
+      },
     });
     await waitForCheckoutReady();
     clearOperations();
 
-    const confirm = await screen.findByRole('button', {
-      name: /confirm seam/i,
-    });
-    fireEvent.click(confirm);
-    fireEvent.click(confirm);
+    fireEvent.click(
+      await screen.findByRole('button', { name: /duplicate confirm seam/i })
+    );
 
+    await waitFor(() => {
+      expect(screen.getByTestId('second-confirm-result')).toHaveTextContent(
+        'blocked'
+      );
+    });
     await waitForOperation('ConfirmCheckoutSession');
     expect(getOperations('ConfirmCheckoutSession')).toHaveLength(1);
   });

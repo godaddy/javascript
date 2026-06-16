@@ -84,7 +84,7 @@ describe('useConfirmExpressCheckout', () => {
     expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
   });
 
-  it('does not confirm while checkout is already confirming', async () => {
+  it('rejects without confirming while checkout is already confirming', async () => {
     const session = buildCheckoutSession();
     const draftOrder = buildDraftOrder();
     mockGodaddyApi({ session, draftOrder });
@@ -110,12 +110,14 @@ describe('useConfirmExpressCheckout', () => {
       wrapper: Wrapper,
     });
 
-    await result.current.mutateAsync({
-      paymentToken: 'wallet-nonce',
-      paymentType: PaymentMethodType.CREDIT_CARD,
-      paymentProvider: PaymentProvider.POYNT,
-      isExpress: true,
-    });
+    await expect(
+      result.current.mutateAsync({
+        paymentToken: 'wallet-nonce',
+        paymentType: PaymentMethodType.CREDIT_CARD,
+        paymentProvider: PaymentProvider.POYNT,
+        isExpress: true,
+      })
+    ).rejects.toThrow('Checkout confirmation is already in progress');
 
     expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
   });

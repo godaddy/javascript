@@ -17,7 +17,10 @@ import {
   type PoyntExpressRequest,
   useBuildPaymentRequest,
 } from '@/components/checkout/payment/utils/use-build-payment-request';
-import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import {
+  isCheckoutConfirmationBlockedError,
+  PaymentProvider,
+} from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useConfirmExpressCheckout } from '@/components/checkout/payment/utils/use-confirm-express-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
@@ -975,6 +978,10 @@ export function ExpressCheckoutButton() {
 
           event.complete();
         } catch (err: unknown) {
+          if (isCheckoutConfirmationBlockedError(err)) {
+            return;
+          }
+
           if (err instanceof GraphQLErrorWithCodes) {
             const walletError: WalletError = {
               code: 'invalid_payment_data',
