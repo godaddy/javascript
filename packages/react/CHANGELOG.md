@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.47
+
+### Patch Changes
+
+- 3595d0f: Add currency code from sku for product card
+
 ## 1.0.46
 
 ### Patch Changes

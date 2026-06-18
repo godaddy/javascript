@@ -108,6 +108,10 @@ export function ProductCard({
   const priceMax = product?.priceRange?.max || priceMin;
   const compareAtMin = product?.compareAtPriceRange?.min;
   const isOnSale = compareAtMin && compareAtMin > priceMin;
+  const currencyCode =
+    product?.skus?.edges?.find(
+      edge => edge?.node?.prices?.edges?.[0]?.node?.value?.currencyCode
+    )?.node?.prices?.edges?.[0]?.node?.value?.currencyCode || 'USD';
   const hasOptions = false;
   const isPriceRange = priceMin !== priceMax;
 
@@ -225,12 +229,11 @@ export function ProductCard({
         </p>
         <div className='flex items-center justify-between pt-2 mt-auto'>
           <span className='text-md font-semibold text-foreground'>
-            {/* TODO: Use dynamic currency from store/product when available instead of hardcoded USD */}
             {isPriceRange
-              ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', inputInMinorUnits: true })}`
+              ? `${formatCurrency({ amount: priceMin, currencyCode, inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode, inputInMinorUnits: true })}`
               : formatCurrency({
                   amount: priceMin,
-                  currencyCode: 'USD',
+                  currencyCode,
                   inputInMinorUnits: true,
                 })}
           </span>

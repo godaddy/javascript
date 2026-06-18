@@ -54,6 +54,15 @@ export const SkuGroupsQuery = graphql(`
                                 id
                                 label
                                 name
+                                prices(first: 1) {
+                                    edges {
+                                        node {
+                                            value {
+                                                currencyCode
+                                            }
+                                        }
+                                    }
+                                }
                                 inventoryCounts {
                                     edges {
                                         node {
@@ -133,6 +142,15 @@ export const SkuGroupQuery = graphql(`
                         id
                         label
                         name
+                        prices(first: 1) {
+                            edges {
+                                node {
+                                    value {
+                                        currencyCode
+                                    }
+                                }
+                            }
+                        }
                         inventoryCounts {
                             edges {
                                 node {

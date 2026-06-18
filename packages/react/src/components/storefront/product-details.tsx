@@ -349,6 +349,14 @@ export function ProductDetails({
   const compareAtMax = selectedSku
     ? compareAtMin
     : product?.compareAtPriceRange?.max;
+  const currencyCode =
+    skuPrice?.value?.currencyCode ||
+    product?.skus?.edges?.find(
+      edge => edge?.node?.prices?.edges?.[0]?.node?.value?.currencyCode
+    )?.node?.prices?.edges?.[0]?.node?.value?.currencyCode ||
+    'USD';
+  const compareAtCurrencyCode =
+    skuPrice?.compareAtValue?.currencyCode || currencyCode;
   const isOnSale = compareAtMin && compareAtMin > priceMin;
   const isPriceRange = priceMin !== priceMax;
   const isCompareAtPriceRange =
@@ -540,20 +548,20 @@ export function ProductDetails({
           <div className='flex items-baseline gap-3 mb-4'>
             <span className='text-2xl font-bold text-foreground'>
               {isPriceRange
-                ? `${formatCurrency({ amount: priceMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode: 'USD', inputInMinorUnits: true })}`
+                ? `${formatCurrency({ amount: priceMin, currencyCode, inputInMinorUnits: true })} - ${formatCurrency({ amount: priceMax, currencyCode, inputInMinorUnits: true })}`
                 : formatCurrency({
                     amount: priceMin,
-                    currencyCode: 'USD',
+                    currencyCode,
                     inputInMinorUnits: true,
                   })}
             </span>
             {isOnSale && compareAtMin && (
               <span className='text-lg text-muted-foreground line-through'>
                 {isCompareAtPriceRange
-                  ? `${formatCurrency({ amount: compareAtMin, currencyCode: 'USD', inputInMinorUnits: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: 'USD', inputInMinorUnits: true })}`
+                  ? `${formatCurrency({ amount: compareAtMin, currencyCode: compareAtCurrencyCode, inputInMinorUnits: true })} - ${formatCurrency({ amount: compareAtMax!, currencyCode: compareAtCurrencyCode, inputInMinorUnits: true })}`
                   : formatCurrency({
                       amount: compareAtMin,
-                      currencyCode: 'USD',
+                      currencyCode: compareAtCurrencyCode,
                       inputInMinorUnits: true,
                     })}
               </span>
