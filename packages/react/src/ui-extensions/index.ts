@@ -2,12 +2,12 @@ export * from './hooks';
 export { Target } from './target';
 export type {
   EnabledStoreUiExtensionApp,
-  EnabledStoreUiExtensionAppsData,
+  EnabledStoreUiExtensionsData,
   EnabledUiExtensionApp,
   TargetProps,
   UiExtension,
   UiExtensionAppRelease,
-  UseEnabledStoreUiExtensionAppsOptions,
+  UseEnabledStoreUiExtensionsOptions,
 } from './types';
 export { withReleaseUiExtensions } from './types';
 export { groupAppsByUiExtensionTarget } from './utils';

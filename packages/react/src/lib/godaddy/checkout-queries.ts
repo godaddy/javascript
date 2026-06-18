@@ -278,6 +278,20 @@ export const GetCheckoutSessionQuery = graphql(`
     }
 `);
 
+export const GetEnabledStoreUiExtensionsQuery = graphql(`
+  query GetEnabledStoreUiExtensions($storeId: String!, $target: String!) {
+    enabledStoreUiExtensions(storeId: $storeId, target: $target) {
+      id
+      name
+      handle
+      source
+      cdnUrl
+      type
+      target
+    }
+  }
+`);
+
 export const AddressMatchesQuery = graphql(`
     query CheckoutSessionWithAddressMatches($query: String!) {
       checkoutSession {

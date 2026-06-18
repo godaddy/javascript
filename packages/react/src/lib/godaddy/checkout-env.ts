@@ -9106,6 +9106,45 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "enabledStoreUiExtensions",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "ApplicationUiExtension"
+                  }
+                }
+              }
+            },
+            "args": [
+              {
+                "name": "storeId",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              },
+              {
+                "name": "target",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                  }
+                }
+              }
+            ],
+            "isDeprecated": false
+          },
+          {
             "name": "validateCheckoutToken",
             "type": {
               "kind": "OBJECT",

@@ -1,1 +1,1 @@
-export { useEnabledStoreUiExtensionApps } from './use-enabled-store-ui-extension-apps';
+export { useEnabledStoreUiExtensions } from './use-enabled-store-ui-extensions';

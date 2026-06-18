@@ -1,28 +1,29 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useEnabledStoreUiExtensionApps } from './hooks';
+import { useEnabledStoreUiExtensions } from './hooks';
 import type { TargetProps } from './types';
-import { groupAppsByUiExtensionTarget } from './utils';
 
-export function Target({ id, apps, token, storeId }: TargetProps) {
-  const shouldQuery = !apps && Boolean(token && storeId);
-  const { data, error, isLoading } = useEnabledStoreUiExtensionApps({
+export function Target({ id, apps, storeId }: TargetProps) {
+  const { data, error, isLoading } = useEnabledStoreUiExtensions({
     target: id,
-    token: token || '',
-    storeId: storeId || '',
-    enabled: shouldQuery,
+    storeId,
+    enabled: !apps,
   });
 
-  const queriedApps = useMemo(
-    () => groupAppsByUiExtensionTarget(data?.enabledApplications)[id],
-    [data?.enabledApplications, id]
+  const providedExtensions = useMemo(
+    () =>
+      apps?.flatMap(app =>
+        app.uiExtensions.filter(extension => extension.target === id)
+      ),
+    [apps, id]
   );
-  const targetApps = apps || queriedApps;
 
-  if (targetApps?.length) {
+  const targetExtensions = providedExtensions || data || [];
+
+  if (targetExtensions.length) {
     return (
-      <pre>{JSON.stringify({ enabledApplications: targetApps }, null, 2)}</pre>
+      <pre>{JSON.stringify({ uiExtensions: targetExtensions }, null, 2)}</pre>
     );
   }
 
@@ -32,7 +33,7 @@ export function Target({ id, apps, token, storeId }: TargetProps) {
     return <pre>{JSON.stringify({ error: message }, null, 2)}</pre>;
   }
 
-  if (!shouldQuery || isLoading || !data) {
+  if (isLoading) {
     return null;
   }
 

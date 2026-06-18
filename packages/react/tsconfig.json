@@ -36,11 +36,6 @@
             "name": "orders-api",
             "schema": "./src/lib/godaddy/orders-storefront.graphql",
             "tadaOutputLocation": "./src/lib/godaddy/orders-storefront-env.ts"
-          },
-          {
-            "name": "app-registry-api",
-            "schema": "./src/lib/godaddy/app-registry.graphql",
-            "tadaOutputLocation": "./src/lib/godaddy/app-registry-env.ts"
           }
         ]
       }

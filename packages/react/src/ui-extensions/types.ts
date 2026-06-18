@@ -1,5 +1,5 @@
 import type { ResultOf } from 'gql.tada';
-import { GetEnabledApplicationsQuery } from '@/lib/godaddy/app-registry-queries';
+import { GetEnabledStoreUiExtensionsQuery } from '@/lib/godaddy/checkout-queries';
 
 export type UiExtensionTargetId = string;
 
@@ -31,16 +31,14 @@ export interface EnabledStoreUiExtensionApp extends EnabledUiExtensionApp {
 
 export interface TargetProps {
   id: UiExtensionTargetId;
-  apps?: EnabledStoreUiExtensionApp[];
-  token?: string;
   storeId?: string;
   orderId?: string;
+  apps?: EnabledStoreUiExtensionApp[];
 }
 
-export interface UseEnabledStoreUiExtensionAppsOptions {
+export interface UseEnabledStoreUiExtensionsOptions {
   target: UiExtensionTargetId;
-  token: string;
-  storeId: string;
+  storeId?: string;
   enabled?: boolean;
 }
 
@@ -48,8 +46,8 @@ export interface UseCheckoutUiExtensionAppsOptions {
   targets: UiExtensionTargetId[];
 }
 
-export type EnabledStoreUiExtensionAppsData = ResultOf<
-  typeof GetEnabledApplicationsQuery
+export type EnabledStoreUiExtensionsData = ResultOf<
+  typeof GetEnabledStoreUiExtensionsQuery
 >;
 
 export function withReleaseUiExtensions(
