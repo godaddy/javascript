@@ -397,6 +397,15 @@ const introspection = {
         "name": "ApplicationUiExtension",
         "fields": [
           {
+            "name": "applicationId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "cdnUrl",
             "type": {
               "kind": "SCALAR",
