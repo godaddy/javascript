@@ -5,6 +5,7 @@ export type UiExtensionTargetId = string;
 
 export interface UiExtension {
   id: string;
+  releaseId?: string | null;
   name?: string | null;
   handle?: string | null;
   source?: string | null;

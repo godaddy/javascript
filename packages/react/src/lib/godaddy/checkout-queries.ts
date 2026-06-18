@@ -75,6 +75,7 @@ export const GetCheckoutSessionQuery = graphql(`
                 version
                 uiExtensions {
                   id
+                  releaseId
                   name
                   handle
                   source
@@ -282,6 +283,7 @@ export const GetEnabledStoreUiExtensionsQuery = graphql(`
   query GetEnabledStoreUiExtensions($storeId: String!, $target: String!) {
     enabledStoreUiExtensions(storeId: $storeId, target: $target) {
       id
+      releaseId
       name
       handle
       source

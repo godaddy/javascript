@@ -436,6 +436,15 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "releaseId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "source",
             "type": {
               "kind": "SCALAR",
