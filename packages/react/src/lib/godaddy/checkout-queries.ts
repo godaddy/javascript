@@ -79,7 +79,6 @@ export const GetCheckoutSessionQuery = graphql(`
                   releaseId
                   name
                   handle
-                  source
                   cdnUrl
                   type
                   target
@@ -288,7 +287,6 @@ export const GetEnabledStoreUiExtensionsQuery = graphql(`
       releaseId
       name
       handle
-      source
       cdnUrl
       type
       target

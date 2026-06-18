@@ -9,7 +9,6 @@ export interface UiExtension {
   releaseId?: string | null;
   name?: string | null;
   handle?: string | null;
-  source?: string | null;
   cdnUrl?: string | null;
   type: string;
   target?: string | null;
