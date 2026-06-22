@@ -3327,6 +3327,52 @@ const introspection = {
       },
       {
         "kind": "OBJECT",
+        "name": "CheckoutSessionOfflinePaymentMethodOptions",
+        "fields": [
+          {
+            "name": "instructions",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "title",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionOfflinePaymentMethodOptionsInput",
+        "inputFields": [
+          {
+            "name": "instructions",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
+            "name": "title",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
+        ],
+        "isOneOf": false
+      },
+      {
+        "kind": "OBJECT",
         "name": "CheckoutSessionOperatingHoursMap",
         "fields": [
           {
@@ -3396,6 +3442,15 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "options",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionOfflinePaymentMethodOptions"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "processor",
             "type": {
               "kind": "NON_NULL",
@@ -3428,6 +3483,13 @@ const introspection = {
                   }
                 }
               }
+            }
+          },
+          {
+            "name": "options",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionOfflinePaymentMethodOptionsInput"
             }
           },
           {
