@@ -98,7 +98,7 @@ export function findFirstAvailablePickupDate(
 ): Date | undefined {
   if (storeHours.pickupWindowInDays === 0) {
     // ASAP-only mode — always today
-    return toZonedTime(now ?? new Date(), storeHours.timeZone);
+    return now ?? new Date();
   }
 
   const leadTimeMinutes = storeHours.leadTime || FALLBACK_LEAD_TIME;
@@ -124,7 +124,7 @@ export function findFirstAvailablePickupDate(
       });
 
       if (dayCloseTime > earliestPickup) {
-        return zonedDate;
+        return dateToCheck;
       }
     }
 

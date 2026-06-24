@@ -133,9 +133,11 @@ export function LocalPickupForm({
 
       if (locationHours.pickupWindowInDays === 0) {
         const today = new Date();
-        const zonedToday = toZonedTime(today, locationHours.timeZone);
-        setSelectedDate(zonedToday);
-        form.setValue('pickupDate', format(zonedToday, 'yyyy-MM-dd'));
+        setSelectedDate(today);
+        form.setValue(
+          'pickupDate',
+          formatTz(today, 'yyyy-MM-dd', { timeZone: locationHours.timeZone })
+        );
         form.setValue('pickupTime', 'ASAP');
         return;
       }
@@ -144,7 +146,10 @@ export function LocalPickupForm({
       if (date) {
         setSelectedDate(date);
         if (form.getValues('pickupDate') === '') {
-          form.setValue('pickupDate', format(date, 'yyyy-MM-dd'));
+          form.setValue(
+            'pickupDate',
+            formatTz(date, 'yyyy-MM-dd', { timeZone: locationHours.timeZone })
+          );
         }
       }
     },
@@ -208,9 +213,19 @@ export function LocalPickupForm({
   const storeHours = getStoreHours(selectedLocationId);
   const locationTimeZone = storeHours?.timeZone;
   const today = new Date();
-  const maxDate = storeHours?.pickupWindowInDays
-    ? addDays(today, storeHours.pickupWindowInDays - 1)
+  // Earliest selectable date: respects lead time so days that close before
+  // (now + leadTime) cannot be picked even if they are "today".
+  const minBookableDate = storeHours
+    ? findFirstAvailablePickupDate(storeHours)
     : undefined;
+  // The pickup advance window is calculated from the first available date
+  // (i.e. current_time + prep_time), not from today.
+  const maxDate =
+    storeHours?.pickupWindowInDays && minBookableDate
+      ? addDays(minBookableDate, storeHours.pickupWindowInDays - 1)
+      : storeHours?.pickupWindowInDays
+        ? addDays(today, storeHours.pickupWindowInDays - 1)
+        : undefined;
 
   const isDateBookable = useCallback(
     (date: Date) => {
@@ -297,7 +312,12 @@ export function LocalPickupForm({
           format(nextDate, 'yyyy-MM-dd') !== format(selectedDate, 'yyyy-MM-dd')
         ) {
           setSelectedDate(nextDate);
-          form.setValue('pickupDate', format(nextDate, 'yyyy-MM-dd'));
+          form.setValue(
+            'pickupDate',
+            formatTz(nextDate, 'yyyy-MM-dd', {
+              timeZone: locationTimeZone,
+            })
+          );
           return; // re-run effect with the new date
         }
       }
@@ -526,17 +546,23 @@ export function LocalPickupForm({
                       setIsCalendarOpen(false);
                     }}
                     disabled={date => {
-                      const todayStart = new Date(
-                        today.getFullYear(),
-                        today.getMonth(),
-                        today.getDate()
-                      );
                       const dateToCheck = new Date(
                         date.getFullYear(),
                         date.getMonth(),
                         date.getDate()
                       );
-                      if (dateToCheck < todayStart) return true;
+                      const minDate = minBookableDate
+                        ? new Date(
+                            minBookableDate.getFullYear(),
+                            minBookableDate.getMonth(),
+                            minBookableDate.getDate()
+                          )
+                        : new Date(
+                            today.getFullYear(),
+                            today.getMonth(),
+                            today.getDate()
+                          );
+                      if (dateToCheck < minDate) return true;
                       if (!isDateBookable(date)) return true;
                       if (maxDate) {
                         return date > maxDate;
