@@ -49,7 +49,12 @@ export function Target({ id }: { id: CheckoutTarget }) {
     >
       {content}
       {uiExtensionApps?.length ? (
-        <UiExtensionTarget apps={uiExtensionApps} id={id} />
+        <UiExtensionTarget
+          apps={uiExtensionApps}
+          id={id}
+          orderId={session?.draftOrder?.id ?? undefined}
+          storeId={session?.storeId}
+        />
       ) : null}
     </div>
   );

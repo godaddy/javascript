@@ -2,9 +2,21 @@
 
 import { useMemo } from 'react';
 import { useEnabledStoreUiExtensions } from './hooks';
+import { buildUiExtensionContext, UiExtensionRuntimeHost } from './runtime';
 import type { TargetProps } from './types';
 
-export function Target({ id, apps, storeId }: TargetProps) {
+export function Target({
+  id,
+  apps,
+  storeId,
+  orderId,
+  runtime = 'dom-bundle',
+  initialProps,
+  locale,
+  currencyCode,
+  theme,
+  onExtensionError,
+}: TargetProps) {
   const { data, error, isLoading } = useEnabledStoreUiExtensions({
     target: id,
     storeId,
@@ -20,8 +32,36 @@ export function Target({ id, apps, storeId }: TargetProps) {
   );
 
   const targetExtensions = providedExtensions || data || [];
+  const context = useMemo(
+    () =>
+      buildUiExtensionContext({
+        id,
+        storeId,
+        orderId,
+        locale,
+        currencyCode,
+        theme,
+      }),
+    [id, storeId, orderId, locale, currencyCode, theme]
+  );
 
   if (targetExtensions.length) {
+    if (runtime === 'dom-bundle') {
+      return (
+        <>
+          {targetExtensions.map(extension => (
+            <UiExtensionRuntimeHost
+              context={context}
+              extension={extension}
+              initialProps={initialProps}
+              key={extension.id}
+              onError={onExtensionError}
+            />
+          ))}
+        </>
+      );
+    }
+
     return (
       <pre>{JSON.stringify({ uiExtensions: targetExtensions }, null, 2)}</pre>
     );

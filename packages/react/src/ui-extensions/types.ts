@@ -1,5 +1,11 @@
 import type { ResultOf } from 'gql.tada';
 import { GetEnabledStoreUiExtensionsQuery } from '@/lib/godaddy/checkout-queries';
+import type {
+  UiExtensionContext,
+  UiExtensionInitialProps,
+  UiExtensionRuntimeError,
+  UiExtensionRuntimeType,
+} from './runtime/types';
 
 export type UiExtensionTargetId = string;
 
@@ -35,6 +41,12 @@ export interface TargetProps {
   storeId?: string;
   orderId?: string;
   apps?: EnabledStoreUiExtensionApp[];
+  runtime?: Extract<UiExtensionRuntimeType, 'debug' | 'dom-bundle'>;
+  initialProps?: UiExtensionInitialProps;
+  locale?: string;
+  currencyCode?: string;
+  theme?: UiExtensionContext['theme'];
+  onExtensionError?(error: UiExtensionRuntimeError): void;
 }
 
 export interface UseEnabledStoreUiExtensionsOptions {

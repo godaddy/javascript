@@ -66,9 +66,32 @@ describe('Target', () => {
       storeId: 'store-123',
       enabled: false,
     });
-    expect(output).toContain('uiExtensions');
+    expect(output).toContain('data-gd-ui-extension-container="true"');
     expect(output).toContain('extension-1');
     expect(output).not.toContain('extension-2');
+  });
+
+  it('renders provided apps as debug JSON when requested', () => {
+    const matchingExtension: UiExtension = {
+      id: 'extension-1',
+      type: 'CHECKOUT',
+      target: 'some.target',
+    };
+    const apps: EnabledStoreUiExtensionApp[] = [
+      {
+        id: 'app-1',
+        name: 'app-1',
+        release: null,
+        uiExtensions: [matchingExtension],
+      },
+    ];
+
+    const output = renderToStaticMarkup(
+      <Target apps={apps} id='some.target' runtime='debug' storeId='store-123' />
+    );
+
+    expect(output).toContain('uiExtensions');
+    expect(output).toContain('extension-1');
   });
 
   it('renders public API response extensions', () => {
@@ -84,7 +107,7 @@ describe('Target', () => {
       <Target id='some.target' storeId='store-123' />
     );
 
-    expect(output).toContain('uiExtensions');
+    expect(output).toContain('data-gd-ui-extension-container="true"');
     expect(output).toContain('extension-1');
   });
 
