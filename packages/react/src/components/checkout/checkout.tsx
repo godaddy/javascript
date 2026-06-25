@@ -48,7 +48,8 @@ export type LayoutSection =
   | 'payment'
   | 'pickup'
   | 'tips'
-  | 'delivery';
+  | 'delivery'
+  | 'notes';
 
 export const LayoutSections = {
   EXPRESS_CHECKOUT: 'express-checkout',
@@ -58,6 +59,7 @@ export const LayoutSections = {
   PICKUP: 'pickup',
   DELIVERY: 'delivery',
   TIPS: 'tips',
+  NOTES: 'notes',
 } as const;
 
 export type StripeConfig = {

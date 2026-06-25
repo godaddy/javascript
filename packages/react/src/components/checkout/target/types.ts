@@ -14,6 +14,8 @@ export const checkoutTargetIds = [
   'checkout.form.delivery.after',
   'checkout.form.tips.before',
   'checkout.form.tips.after',
+  'checkout.form.notes.before',
+  'checkout.form.notes.after',
   'checkout.form.shipping.before',
   'checkout.form.shipping.after',
   'checkout.form.payment.before',

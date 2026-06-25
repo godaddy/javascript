@@ -6,6 +6,7 @@ import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useApplyFulfillmentLocation } from '@/components/checkout/delivery/utils/use-apply-fulfillment-location';
 import { NotesForm } from '@/components/checkout/notes/notes-form';
+import { Target } from '@/components/checkout/target/target';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -610,7 +611,13 @@ export function LocalPickupForm({
           </div>
         )}
 
-      {session?.enableNotesCollection ? <NotesForm /> : null}
+      {session?.enableNotesCollection ? (
+        <>
+          <Target id='checkout.form.notes.before' />
+          <NotesForm />
+          <Target id='checkout.form.notes.after' />
+        </>
+      ) : null}
 
       {selectedLocationId && displayHours && showStoreHours && (
         <Collapsible
