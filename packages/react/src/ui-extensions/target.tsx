@@ -1,10 +1,38 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { useEnabledStoreUiExtensions } from './hooks';
 import { buildUiExtensionContext, UiExtensionRuntimeHost } from './runtime';
-import type { TargetProps } from './types';
+import type { TargetProps, UiExtension } from './types';
+
+function getInitialPropKeys(initialProps?: Record<string, unknown>) {
+  return initialProps ? Object.keys(initialProps).sort() : [];
+}
+
+function getDebugLogSignature({
+  context,
+  id,
+  initialPropKeys,
+  targetExtensions,
+}: {
+  context: unknown;
+  id: string;
+  initialPropKeys: string[];
+  targetExtensions: UiExtension[];
+}) {
+  return JSON.stringify({
+    target: id,
+    extensionKeys: targetExtensions.map(extension => [
+      extension.id,
+      extension.applicationId,
+      extension.releaseId,
+      extension.target,
+    ]),
+    context,
+    initialPropKeys,
+  });
+}
 
 export function Target({
   id,
@@ -19,6 +47,7 @@ export function Target({
   onExtensionError,
 }: TargetProps) {
   const { debug } = useGoDaddyContext();
+  const lastDebugLogSignatureRef = useRef<string | undefined>(undefined);
   const { data, error, isLoading } = useEnabledStoreUiExtensions({
     target: id,
     storeId,
@@ -50,12 +79,26 @@ export function Target({
   useEffect(() => {
     if (!debug || !targetExtensions.length) return;
 
+    const initialPropKeys = getInitialPropKeys(initialProps);
+    const signature = getDebugLogSignature({
+      context,
+      id,
+      initialPropKeys,
+      targetExtensions,
+    });
+
+    if (lastDebugLogSignatureRef.current === signature) {
+      return;
+    }
+
+    lastDebugLogSignatureRef.current = signature;
+
     // biome-ignore lint/suspicious/noConsole: debug mode intentionally exposes extension metadata to developers
-    console.debug('[GoDaddy UI Extensions]', {
+    console.info('[GoDaddy UI Extensions]', {
       target: id,
       uiExtensions: targetExtensions,
       context,
-      initialPropKeys: initialProps ? Object.keys(initialProps) : [],
+      initialPropKeys,
     });
   }, [debug, id, targetExtensions, context, initialProps]);
 

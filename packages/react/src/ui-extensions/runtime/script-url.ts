@@ -9,6 +9,16 @@ function encodePathSegment(value: string) {
   return encodeURIComponent(value);
 }
 
+function trimTrailingSlashes(value: string) {
+  let end = value.length;
+
+  while (end > 0 && value[end - 1] === '/') {
+    end -= 1;
+  }
+
+  return value.slice(0, end);
+}
+
 export function getUiExtensionScriptUrl(
   extension: UiExtension
 ): BuildUiExtensionScriptUrlResult {
@@ -31,7 +41,7 @@ export function getUiExtensionScriptUrl(
   }
 
   try {
-    const baseUrl = cdnUrl.replace(/\/+$/, '');
+    const baseUrl = trimTrailingSlashes(cdnUrl);
     const url = [
       baseUrl,
       'apps',

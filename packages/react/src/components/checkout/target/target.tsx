@@ -47,6 +47,9 @@ export function Target({ id }: { id: CheckoutTarget }) {
         'm-0'
       )}
     >
+      {debug && target ? (
+        <span className='text-xs text-blue-500'>{id}</span>
+      ) : null}
       {content}
       {uiExtensionApps?.length ? (
         <UiExtensionTarget
