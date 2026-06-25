@@ -112,4 +112,60 @@ describe('DomBundleUiExtensionRuntime', () => {
     });
     expect(unmount).toHaveBeenCalled();
   });
+
+  it('does not mount when unmounted before the script loads', async () => {
+    const runtime = new DomBundleUiExtensionRuntime();
+    const mount = vi.fn();
+    const errors: UiExtensionRuntimeError[] = [];
+    const mountPromise = runtime.mount({
+      extension: createExtension(),
+      context: { target: 'checkout.test-target' },
+      container: document.createElement('div'),
+      onError: error => errors.push(error),
+    });
+
+    const script = await getLastScript();
+    await runtime.unmount();
+    window.GoDaddyUiExtensions?.register({ mount });
+    script.dispatchEvent(new Event('load'));
+    await mountPromise;
+
+    expect(errors).toEqual([]);
+    expect(mount).not.toHaveBeenCalled();
+  });
+
+  it('applies queued updates after mount finishes', async () => {
+    const runtime = new DomBundleUiExtensionRuntime();
+    const update = vi.fn();
+    const mountPromise = runtime.mount({
+      extension: createExtension(),
+      context: { target: 'checkout.test-target' },
+      initialProps: { orderId: 'initial-order' },
+      container: document.createElement('div'),
+      onError: () => undefined,
+    });
+
+    const script = await getLastScript();
+    await runtime.update({
+      context: { target: 'checkout.test-target', orderId: 'updated-order' },
+      initialProps: { orderId: 'updated-order' },
+    });
+    window.GoDaddyUiExtensions?.register({
+      mount: vi.fn(),
+      update,
+    });
+    script.dispatchEvent(new Event('load'));
+    await mountPromise;
+
+    expect(update).toHaveBeenCalledWith({
+      context: { target: 'checkout.test-target', orderId: 'updated-order' },
+      initialProps: { orderId: 'updated-order' },
+      extension: {
+        id: 'extension-1',
+        applicationId: 'app-1',
+        releaseId: 'release-1',
+        target: 'checkout.test-target',
+      },
+    });
+  });
 });

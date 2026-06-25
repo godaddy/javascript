@@ -41,7 +41,7 @@ export interface TargetProps {
   storeId?: string;
   orderId?: string;
   apps?: EnabledStoreUiExtensionApp[];
-  runtime?: Extract<UiExtensionRuntimeType, 'debug' | 'dom-bundle'>;
+  runtime?: Extract<UiExtensionRuntimeType, 'dom-bundle'>;
   initialProps?: UiExtensionInitialProps;
   locale?: string;
   currencyCode?: string;

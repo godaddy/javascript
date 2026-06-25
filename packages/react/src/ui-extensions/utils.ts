@@ -11,16 +11,20 @@ export function groupAppsByUiExtensionTarget(
 
   for (const enabledApp of apps || []) {
     const app = withReleaseUiExtensions(enabledApp);
+    const uiExtensionsByTarget = new Map<string, typeof app.uiExtensions>();
 
     for (const extension of app.uiExtensions) {
       if (!extension.target) continue;
 
-      const uiExtensions = app.uiExtensions.filter(
-        uiExtension => uiExtension.target === extension.target
-      );
+      uiExtensionsByTarget.set(extension.target, [
+        ...(uiExtensionsByTarget.get(extension.target) || []),
+        extension,
+      ]);
+    }
 
-      grouped[extension.target] ??= [];
-      grouped[extension.target].push({
+    for (const [target, uiExtensions] of uiExtensionsByTarget) {
+      grouped[target] ??= [];
+      grouped[target].push({
         ...app,
         release: app.release
           ? {

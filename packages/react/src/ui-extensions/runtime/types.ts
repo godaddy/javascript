@@ -1,6 +1,6 @@
 import type { UiExtension } from '../types';
 
-export type UiExtensionRuntimeType = 'debug' | 'dom-bundle' | 'worker-sdk';
+export type UiExtensionRuntimeType = 'dom-bundle' | 'worker-sdk';
 
 export type UiExtensionInitialProps = Record<string, unknown>;
 
@@ -51,7 +51,10 @@ export type UiExtensionRuntimeErrorCode =
   | 'mount_timeout'
   | 'mount_failed'
   | 'update_failed'
-  | 'unmount_failed';
+  | 'unmount_failed'
+  | 'protocol_error'
+  | 'render_tree_invalid'
+  | 'action_rejected';
 
 export interface UiExtensionRuntimeError {
   code: UiExtensionRuntimeErrorCode;
@@ -64,12 +67,37 @@ export interface UiExtensionRuntimeError {
   cause?: unknown;
 }
 
+export interface UiExtensionCapabilities {
+  apiAccess?: boolean;
+  stateManagement?: boolean;
+  blockProgression?: boolean;
+  checkoutData?: Array<'cart' | 'totals' | 'shipping' | 'customer'>;
+}
+
+export interface UiExtensionComponentNode {
+  id?: string;
+  type: string;
+  props?: Record<string, unknown>;
+  children?: Array<UiExtensionComponentNode | string>;
+}
+
+export type UiExtensionComponentTree = UiExtensionComponentNode;
+
+export interface UiExtensionActionRequest {
+  action: string;
+  input?: unknown;
+}
+
 export interface UiExtensionRuntimeMountInput {
   extension: UiExtension;
   context: UiExtensionContext;
   initialProps?: UiExtensionInitialProps;
+  capabilities?: UiExtensionCapabilities;
   container?: HTMLElement;
+  onRender?(tree: UiExtensionComponentTree): void;
+  onResize?(size: { height?: number; width?: number }): void;
   onError(error: UiExtensionRuntimeError): void;
+  onActionRequest?(request: UiExtensionActionRequest): Promise<unknown>;
 }
 
 export interface UiExtensionRuntimeUpdateInput {

@@ -1,13 +1,24 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { useEnabledStoreUiExtensions } from './hooks';
 import { Target } from './target';
-import type { EnabledStoreUiExtensionApp, UiExtension } from './types';
+import type {
+  EnabledStoreUiExtensionApp,
+  EnabledUiExtensionApp,
+  UiExtension,
+} from './types';
+import { groupAppsByUiExtensionTarget } from './utils';
+
+vi.mock('@/godaddy-provider', () => ({
+  useGoDaddyContext: vi.fn(),
+}));
 
 vi.mock('./hooks', () => ({
   useEnabledStoreUiExtensions: vi.fn(),
 }));
 
+const mockUseGoDaddyContext = vi.mocked(useGoDaddyContext);
 const mockUseEnabledStoreUiExtensions = vi.mocked(useEnabledStoreUiExtensions);
 
 function mockHookResult(overrides = {}) {
@@ -22,6 +33,10 @@ function mockHookResult(overrides = {}) {
 describe('Target', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseGoDaddyContext.mockReturnValue({
+      debug: false,
+      t: {} as ReturnType<typeof useGoDaddyContext>['t'],
+    });
     mockHookResult();
   });
 
@@ -71,7 +86,11 @@ describe('Target', () => {
     expect(output).not.toContain('extension-2');
   });
 
-  it('renders provided apps as debug JSON when requested', () => {
+  it('does not render debug JSON when GoDaddyProvider debug is enabled', () => {
+    mockUseGoDaddyContext.mockReturnValue({
+      debug: true,
+      t: {} as ReturnType<typeof useGoDaddyContext>['t'],
+    });
     const matchingExtension: UiExtension = {
       id: 'extension-1',
       type: 'CHECKOUT',
@@ -87,11 +106,12 @@ describe('Target', () => {
     ];
 
     const output = renderToStaticMarkup(
-      <Target apps={apps} id='some.target' runtime='debug' storeId='store-123' />
+      <Target apps={apps} id='some.target' storeId='store-123' />
     );
 
-    expect(output).toContain('uiExtensions');
+    expect(output).toContain('data-gd-ui-extension-container="true"');
     expect(output).toContain('extension-1');
+    expect(output).not.toContain('uiExtensions');
   });
 
   it('renders public API response extensions', () => {
@@ -119,5 +139,37 @@ describe('Target', () => {
     );
 
     expect(output).toContain('Failed to load extensions');
+  });
+});
+
+describe('groupAppsByUiExtensionTarget', () => {
+  it('groups each app once per target', () => {
+    const apps: EnabledUiExtensionApp[] = [
+      {
+        id: 'app-1',
+        name: 'App 1',
+        release: {
+          id: 'release-1',
+          version: '1.0.0',
+          uiExtensions: [
+            {
+              id: 'extension-1',
+              type: 'CHECKOUT',
+              target: 'some.target',
+            },
+            {
+              id: 'extension-2',
+              type: 'CHECKOUT',
+              target: 'some.target',
+            },
+          ],
+        },
+      },
+    ];
+
+    const grouped = groupAppsByUiExtensionTarget(apps);
+
+    expect(grouped['some.target']).toHaveLength(1);
+    expect(grouped['some.target']?.[0]?.uiExtensions).toHaveLength(2);
   });
 });

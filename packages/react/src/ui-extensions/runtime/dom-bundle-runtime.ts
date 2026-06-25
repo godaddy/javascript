@@ -9,7 +9,7 @@ import type {
   UiExtensionRuntimeUpdateInput,
 } from './types';
 
-const DEFAULT_TIMEOUT_MS = 3000;
+const DEFAULT_TIMEOUT_MS = 5000;
 
 let scriptLoadQueue = Promise.resolve();
 
@@ -172,7 +172,11 @@ function loadRegisteredContract(
 export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
   private contract: DomExtensionContract | undefined;
   private extension: UiExtension | undefined;
+  private hasMounted = false;
+  private isDisposed = false;
+  private isMounting = false;
   private metadata: UiExtensionMetadata | undefined;
+  private pendingUpdate: UiExtensionRuntimeUpdateInput | undefined;
   private timeoutMs: number;
 
   constructor(options: { timeoutMs?: number } = {}) {
@@ -181,6 +185,8 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
 
   async mount(input: UiExtensionRuntimeMountInput) {
     const { container, context, extension, initialProps, onError } = input;
+    this.clearRuntimeState();
+    this.isDisposed = false;
     this.extension = extension;
 
     if (!container) {
@@ -207,7 +213,14 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
         extension,
         this.timeoutMs
       );
+
+      if (this.isDisposed) {
+        this.clearRuntimeState();
+        return;
+      }
+
       this.contract = contract;
+      this.isMounting = true;
 
       await withTimeout(
         Promise.resolve(
@@ -225,7 +238,31 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
             message: 'UI extension mount timed out.',
           })
       );
+
+      this.isMounting = false;
+      this.hasMounted = true;
+
+      if (this.isDisposed) {
+        await this.unmount();
+        return;
+      }
+
+      const pendingUpdate = this.pendingUpdate;
+      if (
+        pendingUpdate &&
+        (pendingUpdate.context !== context ||
+          pendingUpdate.initialProps !== initialProps)
+      ) {
+        await this.update(pendingUpdate);
+      }
     } catch (cause) {
+      this.isMounting = false;
+
+      if (this.isDisposed) {
+        this.clearRuntimeState();
+        return;
+      }
+
       onError(
         isRuntimeError(cause)
           ? cause
@@ -238,18 +275,34 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
     }
   }
 
-  async update({ context, initialProps }: UiExtensionRuntimeUpdateInput) {
-    if (!this.contract?.update || !this.extension || !this.metadata) {
+  async update(input: UiExtensionRuntimeUpdateInput) {
+    this.pendingUpdate = input;
+
+    if (
+      this.isDisposed ||
+      !this.contract?.update ||
+      !this.extension ||
+      !this.metadata ||
+      !this.hasMounted
+    ) {
       return;
     }
 
     try {
-      await Promise.resolve(
-        this.contract.update({
-          context,
-          initialProps,
-          extension: this.metadata,
-        })
+      await withTimeout(
+        Promise.resolve(
+          this.contract.update({
+            context: input.context,
+            initialProps: input.initialProps,
+            extension: this.metadata,
+          })
+        ),
+        this.timeoutMs,
+        () =>
+          createRuntimeError(this.extension as UiExtension, {
+            code: 'update_failed',
+            message: 'UI extension update timed out.',
+          })
       );
     } catch (cause) {
       throw createRuntimeError(this.extension, {
@@ -261,12 +314,32 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
   }
 
   async unmount() {
+    this.isDisposed = true;
+
+    if (this.isMounting && !this.hasMounted) {
+      return;
+    }
+
+    if (!this.hasMounted) {
+      this.clearRuntimeState();
+      return;
+    }
+
     if (!this.contract?.unmount || !this.extension) {
+      this.clearRuntimeState();
       return;
     }
 
     try {
-      await Promise.resolve(this.contract.unmount());
+      await withTimeout(
+        Promise.resolve(this.contract.unmount()),
+        this.timeoutMs,
+        () =>
+          createRuntimeError(this.extension as UiExtension, {
+            code: 'unmount_failed',
+            message: 'UI extension unmount timed out.',
+          })
+      );
     } catch (cause) {
       throw createRuntimeError(this.extension, {
         code: 'unmount_failed',
@@ -274,10 +347,17 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
         cause,
       });
     } finally {
-      this.contract = undefined;
-      this.extension = undefined;
-      this.metadata = undefined;
+      this.clearRuntimeState();
     }
+  }
+
+  private clearRuntimeState() {
+    this.contract = undefined;
+    this.extension = undefined;
+    this.hasMounted = false;
+    this.isMounting = false;
+    this.metadata = undefined;
+    this.pendingUpdate = undefined;
   }
 }
 

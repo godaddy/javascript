@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useGoDaddyContext } from '@/godaddy-provider';
 import { useEnabledStoreUiExtensions } from './hooks';
 import { buildUiExtensionContext, UiExtensionRuntimeHost } from './runtime';
 import type { TargetProps } from './types';
@@ -17,6 +18,7 @@ export function Target({
   theme,
   onExtensionError,
 }: TargetProps) {
+  const { debug } = useGoDaddyContext();
   const { data, error, isLoading } = useEnabledStoreUiExtensions({
     target: id,
     storeId,
@@ -45,25 +47,32 @@ export function Target({
     [id, storeId, orderId, locale, currencyCode, theme]
   );
 
-  if (targetExtensions.length) {
-    if (runtime === 'dom-bundle') {
-      return (
-        <>
-          {targetExtensions.map(extension => (
-            <UiExtensionRuntimeHost
-              context={context}
-              extension={extension}
-              initialProps={initialProps}
-              key={extension.id}
-              onError={onExtensionError}
-            />
-          ))}
-        </>
-      );
-    }
+  useEffect(() => {
+    if (!debug || !targetExtensions.length) return;
 
+    // biome-ignore lint/suspicious/noConsole: debug mode intentionally exposes extension metadata to developers
+    console.debug('[GoDaddy UI Extensions]', {
+      target: id,
+      uiExtensions: targetExtensions,
+      context,
+      initialPropKeys: initialProps ? Object.keys(initialProps) : [],
+    });
+  }, [debug, id, targetExtensions, context, initialProps]);
+
+  if (targetExtensions.length) {
     return (
-      <pre>{JSON.stringify({ uiExtensions: targetExtensions }, null, 2)}</pre>
+      <>
+        {targetExtensions.map(extension => (
+          <UiExtensionRuntimeHost
+            context={context}
+            extension={extension}
+            initialProps={initialProps}
+            key={extension.id}
+            onError={onExtensionError}
+            runtimeType={runtime}
+          />
+        ))}
+      </>
     );
   }
 
