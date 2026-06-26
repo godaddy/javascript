@@ -12,6 +12,7 @@ import {
   getNamedInput,
   getOperations,
   renderCheckout,
+  setApiError,
   typeIntoNamedField,
   waitForCheckoutReady,
   waitForOperation,
@@ -72,6 +73,57 @@ describe('Checkout draft-order field sync', () => {
           countryCode: 'US',
         }),
       },
+    });
+  });
+
+  it('syncs shipping name-only edits without sending address or recalculating taxes', async () => {
+    const { user } = renderCheckout();
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    clearOperations();
+
+    await typeIntoNamedField(user, 'shippingFirstName', 'Janet');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Janet', lastName: 'Buyer' },
+      billing: { firstName: 'Janet', lastName: 'Buyer' },
+    });
+    expect(getLastUpdateInput()?.shipping).not.toHaveProperty('address');
+    expect(getLastUpdateInput()?.billing).not.toHaveProperty('address');
+    expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
+    expect(getOperations('DraftOrderShippingRates')).toHaveLength(0);
+  });
+
+  it('still sends address and recalculates taxes when only an address field changes', async () => {
+    const { user } = renderCheckout();
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    clearOperations();
+
+    setApiError('getDraftOrderShippingMethods', 'rates failed');
+
+    await typeIntoNamedField(user, 'shippingPostalCode', '94016');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    await waitForOperation('CalculateCheckoutSessionTaxes');
+    await waitForOperation('DraftOrderShippingRates', 1, 6000);
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: {
+        firstName: 'Jane',
+        lastName: 'Buyer',
+        address: expect.objectContaining({ postalCode: '94016' }),
+      },
+    });
+    expect(
+      getOperations('CalculateCheckoutSessionTaxes').length
+    ).toBeGreaterThan(0);
+    expect(
+      getOperations('DraftOrderShippingRates').at(-1)?.input
+    ).toMatchObject({
+      destination: expect.objectContaining({ postalCode: '94016' }),
     });
   });
 

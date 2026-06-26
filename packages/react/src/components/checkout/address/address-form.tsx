@@ -282,6 +282,34 @@ export function AddressForm({
     return orderAddress.addressLine1 !== (addressLine1 || '');
   }, [orderAddress, addressLine1]);
 
+  const shouldUpdateNameOnly = Boolean(
+    nameHasChanged &&
+      !addressHasChanged &&
+      !!firstName?.trim() &&
+      !!lastName?.trim() &&
+      debouncedContact === serializedContact
+  );
+
+  useDraftOrderFieldSync({
+    key: 'name',
+    data: contact,
+    deps: [contact, serializedContact, debouncedContact, addressHasChanged],
+    enabled: !onlyNames && shouldUpdateNameOnly,
+    fieldNames: [`${sectionKey}FirstName`, `${sectionKey}LastName`],
+    mapToInput: data => {
+      const fields = {
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+      };
+
+      return mapAddressFieldsToInput(
+        fields,
+        sectionKey as 'shipping' | 'billing',
+        useShippingAddress
+      );
+    },
+  });
+
   const addressMatchesQuery = useAddressMatches(debouncedAddressValue, {
     enabled:
       !!session?.enableAddressAutocomplete &&
@@ -306,7 +334,7 @@ export function AddressForm({
   }
 
   const shouldUpdateAddress = Boolean(
-    (addressHasChanged || nameHasChanged) && // Only sync if values differ from order
+    addressHasChanged && // Only sync if address values differ from order
       !!firstName?.trim() &&
       !!lastName?.trim() &&
       isAddressComplete(address) &&

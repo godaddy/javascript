@@ -336,6 +336,157 @@ const introspection = {
         ],
       },
       {
+        kind: 'OBJECT',
+        name: 'ApplicationRelease',
+        fields: [
+          {
+            name: 'id',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'uiExtensions',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'LIST',
+                ofType: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'OBJECT',
+                    name: 'ApplicationUiExtension',
+                  },
+                },
+              },
+            },
+            args: [
+              {
+                name: 'target',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'String',
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
+            name: 'version',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'ApplicationUiExtension',
+        fields: [
+          {
+            name: 'applicationId',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'cdnUrl',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'handle',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'id',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'releaseId',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'source',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'target',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'type',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
         kind: 'INPUT_OBJECT',
         name: 'ApplyShippingMethodInput',
         inputFields: [
@@ -1747,6 +1898,39 @@ const introspection = {
               },
             },
             args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'enabledStoreApplications',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'LIST',
+                ofType: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'OBJECT',
+                    name: 'EnabledApplication',
+                  },
+                },
+              },
+            },
+            args: [
+              {
+                name: 'uiExtensionTargets',
+                type: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'StringListFilter',
+                },
+              },
+              {
+                name: 'uiExtensionTypes',
+                type: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'StringListFilter',
+                },
+              },
+            ],
             isDeprecated: false,
           },
           {
@@ -5941,6 +6125,84 @@ const introspection = {
         interfaces: [],
       },
       {
+        kind: 'OBJECT',
+        name: 'EnabledApplication',
+        fields: [
+          {
+            name: 'id',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'ID',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'label',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'release',
+            type: {
+              kind: 'OBJECT',
+              name: 'ApplicationRelease',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'uiExtensions',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'LIST',
+                ofType: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'OBJECT',
+                    name: 'ApplicationUiExtension',
+                  },
+                },
+              },
+            },
+            args: [
+              {
+                name: 'target',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'String',
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
         kind: 'INPUT_OBJECT',
         name: 'ExchangeCheckoutTokenInput',
         inputFields: [
@@ -8924,6 +9186,45 @@ const introspection = {
             isDeprecated: false,
           },
           {
+            name: 'enabledStoreUiExtensions',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'LIST',
+                ofType: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'OBJECT',
+                    name: 'ApplicationUiExtension',
+                  },
+                },
+              },
+            },
+            args: [
+              {
+                name: 'storeId',
+                type: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'SCALAR',
+                    name: 'String',
+                  },
+                },
+              },
+              {
+                name: 'target',
+                type: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'SCALAR',
+                    name: 'String',
+                  },
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
             name: 'validateCheckoutToken',
             type: {
               kind: 'OBJECT',
@@ -10054,6 +10355,33 @@ const introspection = {
       {
         kind: 'SCALAR',
         name: 'String',
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'StringListFilter',
+        inputFields: [
+          {
+            name: 'has',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'hasAny',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'SCALAR',
+                  name: 'String',
+                },
+              },
+            },
+          },
+        ],
+        isOneOf: false,
       },
       {
         kind: 'INPUT_OBJECT',
