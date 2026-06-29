@@ -200,7 +200,7 @@ export function GoDaddyCreditCardForm() {
     )
       return;
 
-    collect.current = new (window as any).TokenizeJs({
+    collect.current = new window.TokenizeJs({
       businessId,
       storeId: session?.storeId,
       channelId: session?.channelId,
@@ -232,13 +232,15 @@ export function GoDaddyCreditCardForm() {
           setIsLoadingNonce(false);
         }
       } else {
-        setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
+        setError(t.errors.failedToInitializePayment);
         setIsLoadingNonce(false);
       }
     });
 
     collect?.current?.on('error', (event: TokenizeJsEvent) => {
-      setError(event?.data?.error?.message || t.errors.errorProcessingPayment);
+      setError(
+        event?.data?.error?.message || t.errors.failedToInitializePayment
+      );
       setIsLoadingNonce(false);
     });
 
@@ -256,8 +258,8 @@ export function GoDaddyCreditCardForm() {
     setCollect,
     setCheckoutErrors,
     t,
+    t.errors.failedToInitializePayment,
     setIsLoadingNonce,
-    session?.businessId,
     session?.storeId,
     session?.channelId,
     applicationId,

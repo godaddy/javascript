@@ -1,10 +1,11 @@
+import isEqual from 'fast-deep-equal';
 import {
   type Country,
   getCountryCallingCode,
   parsePhoneNumber,
 } from 'react-phone-number-input';
 import type { CheckoutFormData } from '@/components/checkout/checkout';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import type { Product } from '@/components/checkout/line-items';
 import type { DraftOrder, SKUProduct } from '@/types';
 
@@ -36,6 +37,39 @@ function processPhoneNumber(
   }
 }
 
+type DraftOrderAddress = NonNullable<
+  NonNullable<DraftOrder['shipping']>['address']
+>;
+
+function normalizeAddressForComparison(address?: DraftOrderAddress | null) {
+  return {
+    addressLine1: address?.addressLine1 || '',
+    addressLine2: address?.addressLine2 || '',
+    addressLine3: address?.addressLine3 || '',
+    adminArea1: address?.adminArea1 || '',
+    adminArea2: address?.adminArea2 || '',
+    adminArea3: address?.adminArea3 || '',
+    adminArea4: address?.adminArea4 || '',
+    postalCode: address?.postalCode || '',
+    countryCode: address?.countryCode || '',
+  };
+}
+
+function normalizeContactForComparison(
+  contact?: DraftOrder['shipping'] | DraftOrder['billing'] | null,
+  countryCode?: string | null
+) {
+  return {
+    firstName: contact?.firstName || '',
+    lastName: contact?.lastName || '',
+    phone: processPhoneNumber(
+      contact?.phone || '',
+      contact?.address?.countryCode || countryCode || 'US'
+    ),
+    address: normalizeAddressForComparison(contact?.address),
+  };
+}
+
 /**
  * Maps order data to form default values
  */
@@ -63,7 +97,12 @@ export function mapOrderToFormValues({
   const orderShippingAddress = order?.shipping?.address;
   const orderBillingAddress = order?.billing?.address;
   const paymentShouldUseShippingAddress = Boolean(
-    orderShippingAddress?.addressLine1 === orderBillingAddress?.addressLine1
+    orderShippingAddress?.addressLine1 &&
+      orderBillingAddress?.addressLine1 &&
+      isEqual(
+        normalizeContactForComparison(order?.shipping, defaultCountryCode),
+        normalizeContactForComparison(order?.billing, defaultCountryCode)
+      )
   );
   // Purchase mode = the session has neither shipping nor pickup enabled, so
   // this checkout is payment-only regardless of what fulfillment modes the
@@ -113,7 +152,6 @@ export function mapOrderToFormValues({
     shippingPostalCode: orderShippingAddress?.postalCode ?? '',
     shippingCountryCode:
       orderShippingAddress?.countryCode || defaultCountryCode || 'US',
-    shippingValid: true,
 
     // Billing address
     billingFirstName: order?.billing?.firstName ?? '',
@@ -132,7 +170,6 @@ export function mapOrderToFormValues({
     billingPostalCode: orderBillingAddress?.postalCode ?? '',
     billingCountryCode:
       orderBillingAddress?.countryCode || defaultCountryCode || 'US',
-    billingValid: true,
 
     // Contact information
     contactEmail: order?.shipping?.email || defaultValues?.contactEmail || '',
@@ -166,7 +203,7 @@ export function mapOrderToFormValues({
     paymentMethod: '',
 
     // shippingMethod
-    shippingMethod: order?.shippingLines?.[0]?.name ?? '',
+    shippingMethod: order?.shippingLines?.[0]?.requestedService ?? '',
   };
 }
 

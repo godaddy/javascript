@@ -1,4 +1,4 @@
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import type { DraftOrder, ShippingLines, ShippingMethod } from '@/types';
 
 type LastProcessedShippingState = {

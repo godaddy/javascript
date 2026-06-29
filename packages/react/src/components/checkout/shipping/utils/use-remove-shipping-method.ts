@@ -3,6 +3,10 @@ import type { ResultOf } from 'gql.tada';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDiscountApply } from '@/components/checkout/discount';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
+import {
+  checkoutMutationKeys,
+  checkoutQueryKeys,
+} from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
 import { removeShippingMethod } from '@/lib/godaddy/godaddy';
@@ -16,9 +20,7 @@ export function useRemoveShippingMethod() {
   const applyDiscount = useDiscountApply();
 
   return useMutation({
-    mutationKey: session?.id
-      ? ['remove-shipping-method', session.id]
-      : ['remove-shipping-method'],
+    mutationKey: checkoutMutationKeys.removeShippingMethod(session?.id),
     mutationFn: async (
       input: RemoveAppliedCheckoutSessionShippingMethodInput['input']
     ) => {
@@ -38,7 +40,7 @@ export function useRemoveShippingMethod() {
       // Update the cached draft-order query (includes totals)
       if (shippingTotal) {
         queryClient.setQueryData(
-          ['draft-order', session.id],
+          checkoutQueryKeys.draftOrder(session.id),
           (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
             if (!old) return old;
             return {
@@ -111,6 +113,10 @@ export function useRemoveShippingMethod() {
         /* should re-apply discounts if they were previously applied */
         await applyDiscount.mutateAsync({
           discountCodes,
+        });
+      } else {
+        await queryClient.invalidateQueries({
+          queryKey: checkoutQueryKeys.draftOrder(session.id),
         });
       }
     },

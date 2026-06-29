@@ -1,1 +1,25 @@
-// Vitest setup file
+import { vi } from 'vitest';
+
+vi.mock('@/lib/godaddy/godaddy', () => ({
+  createCheckoutSession: vi.fn(),
+  exchangeCheckoutToken: vi.fn(),
+  refreshCheckoutToken: vi.fn(),
+  getCheckoutSession: vi.fn(),
+  getAddressMatches: vi.fn(),
+  getDraftOrder: vi.fn(),
+  getDraftOrderTaxes: vi.fn(),
+  verifyAddress: vi.fn(),
+  updateDraftOrder: vi.fn(),
+  getProductsFromOrderSkus: vi.fn(),
+  updateDraftOrderTaxes: vi.fn(),
+  applyDiscount: vi.fn(),
+  applyShippingMethod: vi.fn(),
+  removeShippingMethod: vi.fn(),
+  confirmCheckout: vi.fn(),
+  authorizeCheckoutSession: vi.fn(),
+  getDraftOrderShippingMethods: vi.fn(),
+  applyDeliveryMethod: vi.fn(),
+  applyFulfillmentLocation: vi.fn(),
+  getPriceAdjustments: vi.fn(),
+  getDraftOrderPriceAdjustments: vi.fn(),
+}));

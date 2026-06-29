@@ -1,6 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ResultOf } from 'gql.tada';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import {
+  checkoutMutationKeys,
+  checkoutQueryKeys,
+} from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
 import { updateDraftOrderTaxes } from '@/lib/godaddy/godaddy';
@@ -11,9 +15,7 @@ export function useUpdateTaxes() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: session?.id
-      ? ['update-draft-order-taxes', session.id]
-      : ['update-draft-order-taxes'],
+    mutationKey: checkoutMutationKeys.updateDraftOrderTaxes(session?.id),
     mutationFn: async (destination?: {
       addressLine1?: string | null;
       addressLine2?: string | null;
@@ -42,7 +44,7 @@ export function useUpdateTaxes() {
       // Update the cached draft-order query (includes totals)
       if (taxesTotal) {
         queryClient.setQueryData(
-          ['draft-order', session.id],
+          checkoutQueryKeys.draftOrder(session.id),
           (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
             if (!old) return old;
             return {
@@ -67,7 +69,7 @@ export function useUpdateTaxes() {
     onSettled: () => {
       if (!session) return;
       queryClient.invalidateQueries({
-        queryKey: ['draft-order', session.id],
+        queryKey: checkoutQueryKeys.draftOrder(session.id),
       });
     },
   });

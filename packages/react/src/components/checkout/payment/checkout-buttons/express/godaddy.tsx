@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
   useDraftOrder,
   useDraftOrderTotals,
 } from '@/components/checkout/order/use-draft-order';
-import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import type {
   Address,
   ShippingMethods,
@@ -20,15 +18,15 @@ import {
   useBuildPaymentRequest,
 } from '@/components/checkout/payment/utils/use-build-payment-request';
 import {
+  isCheckoutConfirmationBlockedError,
   PaymentProvider,
-  useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useConfirmExpressCheckout } from '@/components/checkout/payment/utils/use-confirm-express-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
-import { mapOrderToFormValues } from '@/components/checkout/utils/checkout-transformers';
 import {
   useConvertMajorToMinorUnits,
   useFormatCurrency,
@@ -78,17 +76,15 @@ export function ExpressCheckoutButton() {
     taxes: { currencyCode: currencyCode, value: 0 },
     shipping: { currencyCode: currencyCode, value: 0 },
   });
-  const form = useFormContext();
   const getShippingMethodsByAddress = useGetShippingMethodByAddress();
   const getTaxes = useGetTaxes();
   const getPriceAdjustments = useGetPriceAdjustments();
-  const updateTaxes = useUpdateTaxes();
 
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
   const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
   const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
 
-  const confirmCheckout = useConfirmCheckout();
+  const confirmCheckout = useConfirmExpressCheckout();
   const collect = useRef<TokenizeJs | null>(null);
   const hasMounted = useRef(false);
   const handleExpressPayClickRef = useRef<
@@ -436,7 +432,7 @@ export function ExpressCheckoutButton() {
         };
       }
 
-      collect.current = new (window as any).TokenizeJs(
+      collect.current = new window.TokenizeJs(
         {
           businessId,
           storeId: session?.storeId,
@@ -570,23 +566,6 @@ export function ExpressCheckoutButton() {
         taxes: { currencyCode: currencyCode, value: 0 },
         shipping: { currencyCode: currencyCode, value: 0 },
       });
-
-      form.reset(
-        mapOrderToFormValues({
-          order: draftOrder,
-          defaultCountryCode: session?.shipping?.originAddress?.countryCode,
-          enableShipping: session?.enableShipping,
-          enableLocalPickup: session?.enableLocalPickup,
-        })
-      );
-
-      if (session?.enableTaxCollection && draftOrder?.shipping?.address) {
-        try {
-          updateTaxes.mutate(undefined);
-        } catch (_error) {
-          // Silently handle tax clearing errors on wallet close
-        }
-      }
     });
 
     collect.current.on('coupon_code_change', async e => {
@@ -721,7 +700,28 @@ export function ExpressCheckoutButton() {
             shippingLines,
           });
 
-          if (adjustments?.totalDiscountAmount?.value) {
+          if (!adjustments) {
+            track({
+              eventId: eventIds.discountError,
+              type: TrackingEventType.EVENT,
+              properties: {
+                success: false,
+                errorType: 'price_adjustments_null',
+                couponCode,
+                errorCodes: 'invalid_coupon_code',
+              },
+            });
+
+            e.updateWith({
+              error: {
+                code: 'invalid_coupon_code',
+                message: 'Unable to apply coupon. Please try another code.',
+              },
+            });
+            return;
+          }
+
+          if (adjustments.totalDiscountAmount?.value) {
             // Update refs with applied coupon
             appliedCouponCodeRef.current = couponCode;
             calculatedAdjustmentsRef.current = adjustments;
@@ -978,6 +978,10 @@ export function ExpressCheckoutButton() {
 
           event.complete();
         } catch (err: unknown) {
+          if (isCheckoutConfirmationBlockedError(err)) {
+            return;
+          }
+
           if (err instanceof GraphQLErrorWithCodes) {
             const walletError: WalletError = {
               code: 'invalid_payment_data',
@@ -1461,10 +1465,8 @@ export function ExpressCheckoutButton() {
     convertAddressToShippingLines,
     getPriceAdjustments.mutateAsync,
     t,
-    form,
     draftOrder,
     session,
-    updateTaxes.mutate,
     walletSource,
     setCheckoutErrors,
   ]);

@@ -1,5 +1,6 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getDraftOrder } from '@/lib/godaddy/godaddy';
 import type {
@@ -15,6 +16,8 @@ import type {
  * @param key Optional custom key to differentiate queries
  * @returns Query result with draft order data
  */
+export type { DraftOrderSession };
+
 export function useDraftOrder<TData = DraftOrder>(
   select?: (data: DraftOrderSession) => TData,
   key = 'draft-order'
@@ -23,7 +26,10 @@ export function useDraftOrder<TData = DraftOrder>(
   const { apiHost } = useGoDaddyContext();
 
   return useQuery<DraftOrderSession, Error, TData>({
-    queryKey: session?.id ? [key, session.id] : [key],
+    queryKey:
+      key === 'draft-order'
+        ? checkoutQueryKeys.draftOrder(session?.id)
+        : [key, { sessionId: session?.id }],
     queryFn: () =>
       jwt
         ? getDraftOrder({ accessToken: jwt }, apiHost)
@@ -31,6 +37,7 @@ export function useDraftOrder<TData = DraftOrder>(
     enabled: !!session?.id,
     select: select ?? (data => data.checkoutSession?.draftOrder as TData),
     retry: 3,
+    refetchOnWindowFocus: true,
   });
 }
 

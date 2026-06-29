@@ -1,6 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
+import {
+  checkoutMutationKeys,
+  checkoutQueryKeys,
+} from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { applyFulfillmentLocation } from '@/lib/godaddy/godaddy';
 import type { ApplyCheckoutSessionFulfillmentLocationInput } from '@/types';
@@ -12,9 +16,7 @@ export function useApplyFulfillmentLocation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: session?.id
-      ? ['apply-fulfillment-location', session.id]
-      : ['apply-fulfillment-location'],
+    mutationKey: checkoutMutationKeys.applyFulfillmentLocation(session?.id),
     mutationFn: async ({
       fulfillmentLocationId,
     }: {
@@ -46,22 +48,22 @@ export function useApplyFulfillmentLocation() {
           );
       return data;
     },
-    onSuccess: (_data, { locationAddress }) => {
+    onSuccess: async (_data, { locationAddress }) => {
       if (!session) return;
 
       if (session?.enableTaxCollection && locationAddress) {
-        updateTaxes.mutate(locationAddress);
+        await updateTaxes.mutateAsync(locationAddress);
       } else {
         queryClient.invalidateQueries({
-          queryKey: ['draft-order', session.id],
+          queryKey: checkoutQueryKeys.draftOrder(session.id),
         });
       }
     },
-    onError: (_error, { locationAddress }) => {
+    onError: async (_error, { locationAddress }) => {
       // Graceful degradation: still calculate taxes with pickup location address
       // even if fulfillment location API fails
       if (session?.enableTaxCollection && locationAddress) {
-        updateTaxes.mutate(locationAddress);
+        await updateTaxes.mutateAsync(locationAddress);
       }
     },
   });

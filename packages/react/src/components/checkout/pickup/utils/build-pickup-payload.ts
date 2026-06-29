@@ -6,6 +6,7 @@ type FormFields = {
   pickupLocationId?: string | null;
   leadTime?: number;
   timezone: string | null;
+  defaultTimezone?: string | null;
 };
 
 type PickupPayload = {
@@ -34,8 +35,9 @@ export function buildPickupPayload({
   pickupLocationId,
   leadTime = 0,
   timezone = 'UTC',
+  defaultTimezone,
 }: FormFields): PickupPayload {
-  const tz = timezone ?? 'UTC';
+  const tz = timezone || defaultTimezone || 'UTC';
   let date: Date;
 
   if (pickupTime === 'ASAP') {

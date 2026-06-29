@@ -1,5 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import {
+  checkoutMutationKeys,
+  checkoutQueryKeys,
+} from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { applyDeliveryMethod } from '@/lib/godaddy/godaddy';
 import type { ApplyCheckoutSessionDeliveryMethodInput } from '@/types';
@@ -10,9 +14,7 @@ export function useApplyDeliveryMethod() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: session?.id
-      ? ['apply-delivery-method', session.id]
-      : ['apply-delivery-method'],
+    mutationKey: checkoutMutationKeys.applyDeliveryMethod(session?.id),
     mutationFn: async (
       mode: ApplyCheckoutSessionDeliveryMethodInput['input']['mode']
     ) => {
@@ -25,7 +27,7 @@ export function useApplyDeliveryMethod() {
     onSuccess: () => {
       if (!session) return;
       queryClient.invalidateQueries({
-        queryKey: ['draft-order', session.id],
+        queryKey: checkoutQueryKeys.draftOrder(session.id),
       });
     },
   });

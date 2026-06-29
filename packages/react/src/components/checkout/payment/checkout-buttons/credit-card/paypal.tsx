@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { usePayPalProvider } from '@/components/checkout/payment/utils/paypal-provider';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -13,6 +14,7 @@ export function PayPalCreditCardCheckoutButton() {
   const { isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const { cardFieldsRef, isCardFieldsReady } = usePayPalProvider();
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -30,6 +32,8 @@ export function PayPalCreditCardCheckoutButton() {
         return;
       }
 
+      await flushCheckoutSync();
+
       // Check if PayPal card fields are ready
       if (!cardFieldsRef.current || !cardFieldsRef.current.isEligible()) {
         return;
@@ -42,7 +46,7 @@ export function PayPalCreditCardCheckoutButton() {
     } finally {
       setIsProcessing(false);
     }
-  }, [form, cardFieldsRef]);
+  }, [cardFieldsRef, flushCheckoutSync, form]);
 
   if (!isCardFieldsReady || !cardFieldsRef.current) {
     return null;

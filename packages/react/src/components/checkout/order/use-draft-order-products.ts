@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getProductsFromOrderSkus } from '@/lib/godaddy/godaddy';
 import type { SKUProduct } from '@/types';
@@ -14,9 +15,7 @@ export function useDraftOrderProducts() {
   const { apiHost } = useGoDaddyContext();
 
   return useQuery({
-    queryKey: session?.id
-      ? ['draft-order-products', session.id]
-      : ['draft-order-products'],
+    queryKey: checkoutQueryKeys.draftOrderProducts(session?.id),
     queryFn: () =>
       jwt
         ? getProductsFromOrderSkus({ accessToken: jwt }, apiHost)

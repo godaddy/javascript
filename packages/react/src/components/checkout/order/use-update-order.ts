@@ -1,8 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
+import {
+  checkoutMutationKeys,
+  checkoutQueryKeys,
+} from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { updateDraftOrder } from '@/lib/godaddy/godaddy';
 import type { UpdateDraftOrderInput } from '@/types';
@@ -15,7 +19,8 @@ export function useUpdateOrder() {
   const form = useFormContext();
 
   return useMutation({
-    mutationKey: ['update-draft-order'],
+    mutationKey: checkoutMutationKeys.updateDraftOrder(session?.id),
+    scope: session?.id ? { id: `update-draft-order:${session.id}` } : undefined,
     mutationFn: async ({
       input,
     }: {
@@ -26,7 +31,7 @@ export function useUpdateOrder() {
         : await updateDraftOrder(input, session, apiHost);
       return data;
     },
-    onSuccess: (_data, { input }) => {
+    onSuccess: async (_data, { input }) => {
       if (!session) return;
 
       /* Refetch taxes and shipping methods on address changes */
@@ -46,19 +51,19 @@ export function useUpdateOrder() {
             )?.address;
 
             // Always send pickup location address for pickup orders
-            updateTaxes.mutate(pickupLocationAddress);
+            await updateTaxes.mutateAsync(pickupLocationAddress);
           } else {
             // For shipping, let backend use the saved shipping address
-            updateTaxes.mutate(undefined);
+            await updateTaxes.mutateAsync(undefined);
           }
         } else {
           queryClient.invalidateQueries({
-            queryKey: ['draft-order', session.id],
+            queryKey: checkoutQueryKeys.draftOrder(session.id),
           });
         }
       } else {
         queryClient.invalidateQueries({
-          queryKey: ['draft-order', session.id],
+          queryKey: checkoutQueryKeys.draftOrder(session.id),
         });
       }
     },

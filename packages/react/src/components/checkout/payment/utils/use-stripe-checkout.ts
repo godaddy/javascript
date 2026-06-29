@@ -7,6 +7,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useConfirmExpressCheckout } from '@/components/checkout/payment/utils/use-confirm-express-checkout';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import type {
   CalculatedAdjustments,
@@ -39,6 +40,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
   const stripe = useStripe();
   const elements = useElements();
   const confirmCheckout = useConfirmCheckout();
+  const confirmExpressCheckout = useConfirmExpressCheckout();
   const { setCheckoutErrors } = useCheckoutContext();
   const { stripePaymentExpressRequest } = useBuildPaymentRequest();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -183,7 +185,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                   ]
                 : undefined;
 
-              await confirmCheckout.mutateAsync({
+              await confirmExpressCheckout.mutateAsync({
                 paymentToken: paymentMethod.id,
                 paymentType,
                 paymentProvider: PaymentProvider.STRIPE,
@@ -223,7 +225,14 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
         setIsProcessingPayment(false);
       }
     },
-    [mode, stripe, elements, confirmCheckout.mutateAsync, setCheckoutErrors]
+    [
+      mode,
+      stripe,
+      elements,
+      confirmCheckout.mutateAsync,
+      confirmExpressCheckout.mutateAsync,
+      setCheckoutErrors,
+    ]
   );
 
   return {

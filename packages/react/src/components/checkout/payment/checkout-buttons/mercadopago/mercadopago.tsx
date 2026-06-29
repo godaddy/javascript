@@ -8,6 +8,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadMercadoPago } from '@/components/checkout/payment/utils/use-load-mercadopago';
 import { formatCurrency } from '@/components/checkout/utils/format-currency';
@@ -38,6 +39,7 @@ export function MercadoPagoCheckoutButton() {
   const isPaymentDisabled = useIsPaymentDisabled();
   const { data: totals } = useDraftOrderTotals();
   const form = useFormContext();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const { isMercadoPagoLoaded } = useLoadMercadoPago();
   const confirmCheckout = useConfirmCheckout();
   const authorizeCheckout = useAuthorizeCheckout();
@@ -69,6 +71,8 @@ export function MercadoPagoCheckoutButton() {
         return;
       }
 
+      await flushCheckoutSync();
+
       try {
         const paymentToken = formData?.token;
 
@@ -91,7 +95,13 @@ export function MercadoPagoCheckoutButton() {
         isSubmitting = false;
       }
     },
-    [confirmCheckout, form, setCheckoutErrors, t.errors.errorProcessingPayment]
+    [
+      confirmCheckout,
+      flushCheckoutSync,
+      form,
+      setCheckoutErrors,
+      t.errors.errorProcessingPayment,
+    ]
   );
 
   useLayoutEffect(() => {
@@ -210,6 +220,8 @@ export function MercadoPagoCheckoutButton() {
       }
       return;
     }
+
+    await flushCheckoutSync();
 
     if (brickController) {
       const { formData } = await brickController.getFormData();

@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import {
   useDraftOrder,
   useDraftOrderShipping,
@@ -20,9 +20,11 @@ import {
 import { useApplyShippingMethod } from '@/components/checkout/shipping/utils/use-apply-shipping-method';
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoDaddyContext } from '@/godaddy-provider';
+import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import type { ShippingMethod } from '@/types';
@@ -158,9 +160,12 @@ export function ShippingMethodForm() {
     if (hasShippingMethods) {
       const firstMethod = shippingMethods[0];
       const currentFormMethod = form.getValues('shippingMethod');
-      const existingMethod = currentServiceCode || currentFormMethod;
+      const existingMethod = currentFormMethod || currentServiceCode;
 
-      // Try to find the existing method in available methods
+      // Try to find the existing method in available methods. Prefer the
+      // current form selection so an in-flight explicit user click is not
+      // overwritten by the stale draft-order shipping line while the mutation
+      // and refetch settle.
       const matchedMethod = existingMethod
         ? shippingMethods.find(m => m.serviceCode === existingMethod)
         : null;
@@ -201,7 +206,7 @@ export function ShippingMethodForm() {
               if (!isFulfillmentSync || !session?.id) return;
 
               queryClient.invalidateQueries({
-                queryKey: ['draft-order', session.id],
+                queryKey: checkoutQueryKeys.draftOrder(session.id),
               });
             },
           });
@@ -236,6 +241,7 @@ export function ShippingMethodForm() {
     isPickup,
     isDraftOrderLoading,
     hasLineItemsMissingShippingFulfillment,
+    fulfillmentSyncKey,
     applyShippingMethod.isPending,
     order?.lineItems,
   ]);
@@ -269,15 +275,40 @@ export function ShippingMethodForm() {
   }
 
   const currentMethod = form.watch('shippingMethod');
-  const selectedValue = currentMethod || undefined;
+  const selectedValue = currentMethod || '';
+  const isShippingMethodDisabled = isPaymentDisabled || isConfirmingCheckout;
 
   const handleValueChange = (value: string) => {
+    if (
+      isShippingMethodDisabled ||
+      form.getValues('shippingMethod') === value
+    ) {
+      return;
+    }
+
     const previousValue = form.getValues('shippingMethod');
-    form.setValue('shippingMethod', value);
+    const previousProcessedState = lastProcessedStateRef.current;
+    form.setValue('shippingMethod', value, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
 
     const method = shippingMethods?.find(m => m.serviceCode === value);
 
     if (method) {
+      // The mutation success path already recalculates taxes. Optimistically
+      // record the selected method as processed so the post-mutation draft-order
+      // refetch does not look like a new unprocessed shipping state and trigger
+      // a second tax recalculation for the same click.
+      lastProcessedStateRef.current = {
+        serviceCode: method.serviceCode || value,
+        cost: method.cost?.value ?? null,
+        hadShippingMethods: true,
+        wasPickup: false,
+        clearedShippingMethod: false,
+        blockedFulfillmentKey: null,
+      };
+
       // Track shipping method selection
       track({
         eventId: eventIds.selectShippingMethod,
@@ -295,6 +326,7 @@ export function ShippingMethodForm() {
         .mutateAsync(buildShippingPayload(method))
         .catch(() => {
           form.setValue('shippingMethod', previousValue);
+          lastProcessedStateRef.current = previousProcessedState;
         });
     }
   };
@@ -307,9 +339,17 @@ export function ShippingMethodForm() {
       {shippingMethods.length === 1 ? (
         <Label
           htmlFor={shippingMethods[0].displayName || 'shipping-method-0'}
-          className='font-medium'
+          className={cn(
+            'font-medium',
+            isShippingMethodDisabled && 'cursor-not-allowed opacity-60'
+          )}
         >
-          <div className='flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 rounded-md'>
+          <div
+            className={cn(
+              'flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 rounded-md',
+              isShippingMethodDisabled && 'pointer-events-none'
+            )}
+          >
             <div className='flex items-center space-x-4'>
               <div className='inline-flex flex-col'>
                 {shippingMethods[0].displayName}
@@ -336,7 +376,7 @@ export function ShippingMethodForm() {
         </Label>
       ) : (
         <RadioGroup
-          disabled={isPaymentDisabled}
+          disabled={isShippingMethodDisabled}
           value={selectedValue}
           onValueChange={handleValueChange}
         >
@@ -345,16 +385,40 @@ export function ShippingMethodForm() {
             const isSelected = method.serviceCode === currentMethod;
 
             return (
-              <Label key={methodId} htmlFor={methodId} className='font-medium'>
+              <Label
+                key={methodId}
+                htmlFor={methodId}
+                className={cn(
+                  'font-medium',
+                  isShippingMethodDisabled && 'cursor-not-allowed opacity-60'
+                )}
+              >
                 <div
-                  className={`flex items-center min-h-12 justify-between space-x-2 bg-card border border-border p-2 px-4 hover:bg-muted ${
-                    index === 0 ? 'rounded-t-md' : ''
-                  } ${index === shippingMethods.length - 1 ? 'rounded-b-md' : ''} ${index !== 0 ? 'border-t-0' : ''} ${
-                    isSelected ? 'bg-muted' : ''
-                  }`}
+                  className={cn(
+                    'flex items-center min-h-12 justify-between space-x-2 bg-card border border-border p-2 px-4',
+                    !isShippingMethodDisabled &&
+                      'hover:bg-muted cursor-pointer',
+                    isShippingMethodDisabled && 'pointer-events-none',
+                    index === 0 && 'rounded-t-md',
+                    index === shippingMethods.length - 1 && 'rounded-b-md',
+                    index !== 0 && 'border-t-0',
+                    isSelected && 'bg-muted'
+                  )}
                 >
                   <div className='flex items-center space-x-4'>
-                    <RadioGroupItem value={methodId} id={methodId} />
+                    <RadioGroupItem
+                      value={methodId}
+                      id={methodId}
+                      aria-label={`${method.displayName || methodId} ${
+                        method?.cost?.value === 0
+                          ? t.general.free
+                          : formatCurrency({
+                              amount: method?.cost?.value || 0,
+                              currencyCode: method?.cost?.currencyCode || 'USD',
+                              inputInMinorUnits: true,
+                            })
+                      }`}
+                    />
                     <div className='inline-flex flex-col'>
                       {method.displayName}
                       <p className='text-xs text-muted-foreground'>

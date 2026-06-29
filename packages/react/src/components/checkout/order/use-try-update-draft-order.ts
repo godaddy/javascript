@@ -1,26 +1,22 @@
 import { useCallback } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useUpdateOrder } from '@/components/checkout/order/use-update-order';
+import { useDraftOrderSyncQueue } from '@/components/checkout/order/draft-order-sync-provider';
 import type { UpdateDraftOrderInput } from '@/types';
 
 export function useTryUpdateDraftOrder() {
-  const updateDraftOrder = useUpdateOrder();
+  const { enqueueDraftOrderPatch } = useDraftOrderSyncQueue();
   const { session } = useCheckoutContext();
 
   return useCallback(
     (input: Omit<UpdateDraftOrderInput['input'], 'context'>) => {
       if (!session) return;
-      const { channelId, storeId, draftOrder, customerId } = session;
+      const { channelId, storeId, draftOrder } = session;
       if (!channelId || !storeId || !draftOrder?.id) return;
 
-      updateDraftOrder.mutate({
-        input: {
-          ...input,
-          context: { channelId, storeId },
-          ...(customerId ? { customerId } : {}),
-        },
+      enqueueDraftOrderPatch(input, {
+        immediate: true,
       });
     },
-    [session, updateDraftOrder]
+    [enqueueDraftOrderPatch, session]
   );
 }

@@ -85,6 +85,25 @@ function getSlotInterval(hours: OperatingHours): number {
     : DEFAULT_SLOT_INTERVAL;
 }
 
+function toLocalCalendarDate(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function isLocalCalendarDate(date: Date): boolean {
+  return (
+    date.getHours() === 0 &&
+    date.getMinutes() === 0 &&
+    date.getSeconds() === 0 &&
+    date.getMilliseconds() === 0
+  );
+}
+
+function toStoreSelectedDate(selectedDate: Date, timeZone: string): Date {
+  return isLocalCalendarDate(selectedDate)
+    ? selectedDate
+    : toZonedTime(selectedDate, timeZone);
+}
+
 /**
  * Find the first date within the pickup window that has at least one
  * bookable time slot, accounting for lead time.
@@ -98,7 +117,9 @@ export function findFirstAvailablePickupDate(
 ): Date | undefined {
   if (storeHours.pickupWindowInDays === 0) {
     // ASAP-only mode — always today
-    return toZonedTime(now ?? new Date(), storeHours.timeZone);
+    return toLocalCalendarDate(
+      toZonedTime(now ?? new Date(), storeHours.timeZone)
+    );
   }
 
   const leadTimeMinutes = storeHours.leadTime || FALLBACK_LEAD_TIME;
@@ -124,7 +145,7 @@ export function findFirstAvailablePickupDate(
       });
 
       if (dayCloseTime > earliestPickup) {
-        return zonedDate;
+        return toLocalCalendarDate(zonedDate);
       }
     }
 
@@ -158,7 +179,7 @@ export function generatePickupTimeSlots({
 
   if (storeHours.pickupWindowInDays === 0) return [];
 
-  const zonedSelected = toZonedTime(selectedDate, tz);
+  const zonedSelected = toStoreSelectedDate(selectedDate, tz);
   const dayOfWeek = zonedSelected.getDay();
   const dayProperty = dayToProperty[dayOfWeek as keyof typeof dayToProperty];
   const hoursForDay = storeHours.hours[dayProperty];
@@ -257,4 +278,44 @@ export function generatePickupTimeSlots({
   }
 
   return slots;
+}
+
+export function isPickupDateAvailable({
+  selectedDate,
+  storeHours,
+  now: nowInput,
+}: {
+  selectedDate: Date;
+  storeHours: OperatingHours;
+  now?: Date;
+}): boolean {
+  if (storeHours.pickupWindowInDays === 0) return true;
+
+  const timedSlots = generatePickupTimeSlots({
+    selectedDate,
+    storeHours,
+    now: nowInput,
+  });
+  if (timedSlots.length > 0) return true;
+
+  const tz = storeHours.timeZone;
+  const selected = toStoreSelectedDate(selectedDate, tz);
+  const now = toZonedTime(nowInput ?? new Date(), tz);
+  const isToday = format(selected, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+  if (!isToday) return false;
+
+  const dayOfWeek = selected.getDay();
+  const dayProperty = dayToProperty[dayOfWeek as keyof typeof dayToProperty];
+  const hoursForDay = storeHours.hours[dayProperty];
+  if (!hoursForDay?.enabled || !hoursForDay.closeTime) return false;
+
+  const [closeTimeHours, closeTimeMins] = hoursForDay.closeTime
+    .split(':')
+    .map(Number);
+
+  return isAsapAvailable(
+    now.getHours() * 60 + now.getMinutes(),
+    storeHours.leadTime || FALLBACK_LEAD_TIME,
+    closeTimeHours * 60 + closeTimeMins
+  );
 }
