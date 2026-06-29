@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.48
+
+### Patch Changes
+
+- a5c1051: Refactor checkout draft order synchronization to flush pending order updates before confirmation, avoid duplicate mutations, and improve sync failure handling.
+
 ## 1.0.47
 
 ### Patch Changes
