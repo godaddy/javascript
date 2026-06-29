@@ -6,6 +6,7 @@ import {
   formatLeadTimeDisplay,
   generatePickupTimeSlots,
   isAsapAvailable,
+  isPickupDateAvailable,
   type OperatingHours,
 } from './generate-pickup-time-slots';
 
@@ -725,6 +726,46 @@ describe('generatePickupTimeSlots', () => {
       expect(slotValues(slots)[0]).toBe('10:00');
     });
 
+    it('does not double-zone calendar dates selected from the date picker', () => {
+      const selectedTuesday = new Date(2024, 2, 26);
+      const hours = makeHours({
+        leadTime: 30,
+        pickupWindowInDays: 3,
+        timeZone: 'Pacific/Honolulu',
+        hours: {
+          ...standardWeek,
+          monday: disabledDay,
+          tuesday: enabledDay,
+        },
+      });
+
+      const slots = generatePickupTimeSlots({
+        selectedDate: selectedTuesday,
+        storeHours: hours,
+        now: new Date('2024-03-25T10:00:00Z'),
+      });
+
+      expect(slots.length).toBeGreaterThan(0);
+      expect(slotValues(slots)[0]).toBe('10:00');
+    });
+
+    it('does not double-zone the first available pickup date before generating slots', () => {
+      const hours = makeNYCHours({ leadTime: 1440, pickupWindowInDays: 3 });
+      const date = findFirstAvailablePickupDate(hours, MON_10AM_NYC);
+
+      expect(date).toBeDefined();
+      expect(date!.getDay()).toBe(2);
+
+      const slots = generatePickupTimeSlots({
+        selectedDate: date!,
+        storeHours: hours,
+        now: MON_10AM_NYC,
+      });
+
+      expect(slots.length).toBeGreaterThan(0);
+      expect(slotValues(slots)[0]).toBe('10:00');
+    });
+
     it('generates zero slots when current time is past close in store timezone', () => {
       // UTC 20:00 Mon = Mon 4pm NYC (EDT) — past 3pm close, same day in both timezones
       const pastCloseNYC = new Date('2024-03-25T20:00:00Z');
@@ -783,6 +824,37 @@ describe('generatePickupTimeSlots', () => {
       expect(slots.length).toBeGreaterThan(0);
       expect(slotValues(slots)[0]).toBe('11:00');
     });
+  });
+});
+
+// ── isPickupDateAvailable ────────────────────────────────────────────────
+
+describe('isPickupDateAvailable', () => {
+  it('returns false for an enabled date that has no slots because it is inside the lead-time window', () => {
+    const slots = generatePickupTimeSlots({
+      selectedDate: TUE,
+      storeHours: makeHours({ leadTime: 7200, pickupWindowInDays: 4 }),
+      now: MON_10AM,
+    });
+
+    expect(slots).toEqual([]);
+    expect(
+      isPickupDateAvailable({
+        selectedDate: TUE,
+        storeHours: makeHours({ leadTime: 7200, pickupWindowInDays: 4 }),
+        now: MON_10AM,
+      })
+    ).toBe(false);
+  });
+
+  it('returns true for the first date that has slots after lead time', () => {
+    expect(
+      isPickupDateAvailable({
+        selectedDate: addDays(MON_10AM, 5),
+        storeHours: makeHours({ leadTime: 7200, pickupWindowInDays: 6 }),
+        now: MON_10AM,
+      })
+    ).toBe(true);
   });
 });
 

@@ -43,6 +43,7 @@ import {
   formatLeadTimeDisplay,
   generatePickupTimeSlots,
   isAsapAvailable,
+  isPickupDateAvailable,
 } from './utils/generate-pickup-time-slots';
 
 // Map day of week to the corresponding property in hours
@@ -134,8 +135,13 @@ export function LocalPickupForm({
       if (locationHours.pickupWindowInDays === 0) {
         const today = new Date();
         const zonedToday = toZonedTime(today, locationHours.timeZone);
-        setSelectedDate(zonedToday);
-        form.setValue('pickupDate', format(zonedToday, 'yyyy-MM-dd'));
+        const calendarToday = new Date(
+          zonedToday.getFullYear(),
+          zonedToday.getMonth(),
+          zonedToday.getDate()
+        );
+        setSelectedDate(calendarToday);
+        form.setValue('pickupDate', format(calendarToday, 'yyyy-MM-dd'));
         form.setValue('pickupTime', 'ASAP');
         return;
       }
@@ -216,10 +222,7 @@ export function LocalPickupForm({
     (date: Date) => {
       const hours = getStoreHours(selectedLocationId);
       if (!hours) return false;
-      const dayOfWeek = date.getDay();
-      const dayProperty =
-        dayToProperty[dayOfWeek as keyof typeof dayToProperty];
-      return hours.hours[dayProperty]?.enabled === true;
+      return isPickupDateAvailable({ selectedDate: date, storeHours: hours });
     },
     [selectedLocationId, getStoreHours]
   );
