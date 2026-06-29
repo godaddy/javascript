@@ -2,6 +2,7 @@
 
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useStripeCheckout } from '@/components/checkout/payment/utils/use-stripe-checkout';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ export function StripeCreditCardCheckoutButton() {
   const form = useFormContext();
   const { isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const { handleSubmit } = useStripeCheckout({ mode: 'card' });
 
   const handleStripeCheckout = async () => {
@@ -23,6 +25,7 @@ export function StripeCreditCardCheckoutButton() {
         form.setFocus(firstError);
       }
     } else {
+      await flushCheckoutSync();
       await handleSubmit();
     }
   };

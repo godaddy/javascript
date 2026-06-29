@@ -5,7 +5,7 @@ import React, { type ReactNode } from 'react';
 import { z } from 'zod';
 import { hasRegionData } from '@/components/checkout/address';
 import { checkIsValidPhone } from '@/components/checkout/address/utils/check-is-valid-phone';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { getRequiredFieldsFromSchema } from '@/components/checkout/form/utils/get-required-fields-from-schema';
 import { type GoDaddyVariables, useGoDaddyContext } from '@/godaddy-provider';
 import { useCheckoutSession } from '@/hooks/use-checkout-session';
@@ -151,9 +151,6 @@ export const baseCheckoutSchema = z.object({
   shippingPostalCode: z.string().max(60),
   shippingCountryCode: z.string().max(2),
   shippingMethod: z.string().optional(),
-  shippingValid: z.literal(true, {
-    errorMap: () => ({ message: 'Invalid shipping address' }),
-  }),
   billingFirstName: z.string().max(60),
   billingLastName: z.string().max(60),
   billingPhone: z.string().max(15, 'Phone number too long').optional(),
@@ -174,9 +171,6 @@ export const baseCheckoutSchema = z.object({
   billingAdminArea1: z.string().max(100).describe('State or province'),
   billingPostalCode: z.string().max(60),
   billingCountryCode: z.string().max(2),
-  billingValid: z.literal(true, {
-    errorMap: () => ({ message: 'Invalid billing address' }),
-  }),
   paymentCardNumber: z.string().optional(),
   paymentCardNumberDisplay: z.string().optional(),
   paymentCardType: z.string().optional(),

@@ -1,9 +1,13 @@
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { useIsMutating, useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { useCheckoutContext } from '@/components/checkout/checkout';
+import { type UseFormReturn, useFormContext } from 'react-hook-form';
+import {
+  type CheckoutFormData,
+  useCheckoutContext,
+} from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import { checkoutMutationKeys } from '@/components/checkout/utils/query-keys';
 
 const stripePromiseCache: Record<string, Promise<Stripe | null>> = {};
 
@@ -24,7 +28,8 @@ export function useStripePaymentIntent({
   enableClientSecret = false,
 }: UseStripePaymentIntentOptions = {}) {
   const { session, stripeConfig } = useCheckoutContext();
-  const form = useFormContext();
+  const form =
+    useFormContext<CheckoutFormData>() as UseFormReturn<CheckoutFormData> | null;
 
   const draftOrderTotalsQuery = useDraftOrderTotals();
   const { data: totals, isLoading: isLoadingTotals } = draftOrderTotalsQuery;
@@ -44,11 +49,11 @@ export function useStripePaymentIntent({
   }, [stripeConfig?.publishableKey]);
 
   const isCreatingPaymentIntent = useIsMutating({
-    mutationKey: ['stripe-payment-intent', { sessionId: session?.id }],
+    mutationKey: checkoutMutationKeys.stripePaymentIntent(session?.id),
   });
 
   const paymentIntentMutation = useMutation({
-    mutationKey: ['stripe-payment-intent', { sessionId: session?.id }],
+    mutationKey: checkoutMutationKeys.stripePaymentIntent(session?.id),
     mutationFn: async ({
       amount: paymentAmount,
       currency: paymentCurrency,
@@ -80,16 +85,16 @@ export function useStripePaymentIntent({
     onMutate: () => {
       setClientSecret(null);
       setIntentId(null);
-      form.setValue('stripePaymentIntent', null);
-      form.setValue('stripePaymentIntentId', null);
+      form?.setValue('stripePaymentIntent', undefined);
+      form?.setValue('stripePaymentIntentId', undefined);
       setError(null);
     },
     onSuccess: ({ clientSecret: responseClientSecret, id: responseId }) => {
       setClientSecret(responseClientSecret);
       setIntentId(responseId);
+      form?.setValue('stripePaymentIntent', responseClientSecret);
+      form?.setValue('stripePaymentIntentId', responseId);
       setError(null);
-      form.setValue('stripePaymentIntent', responseClientSecret);
-      form.setValue('stripePaymentIntentId', responseId);
     },
     onError: () => {
       setError('Failed to initialize payment.');
@@ -103,8 +108,8 @@ export function useStripePaymentIntent({
     isCreatingPaymentIntent;
 
   const initializePaymentIntent = useCallback(() => {
-    const existingClientSecret = form.getValues('stripePaymentIntent');
-    const existingIntentId = form.getValues('stripePaymentIntentId');
+    const existingClientSecret = form?.getValues('stripePaymentIntent');
+    const existingIntentId = form?.getValues('stripePaymentIntentId');
 
     if (existingClientSecret && existingIntentId) {
       setClientSecret(existingClientSecret);
@@ -129,7 +134,7 @@ export function useStripePaymentIntent({
     updateIntent,
     intentId,
     isLoading,
-    form.getValues,
+    form,
     paymentIntentMutation.mutate,
     enableClientSecret,
   ]);

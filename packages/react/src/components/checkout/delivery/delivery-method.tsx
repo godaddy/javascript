@@ -1,5 +1,5 @@
 import { Store, Truck } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   type CheckoutFormData,
@@ -10,26 +10,12 @@ import { FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoDaddyContext } from '@/godaddy-provider';
+import { cn } from '@/lib/utils';
+import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
+import { DeliveryMethods } from './delivery-methods';
 
-export enum DeliveryMethods {
-  NONE = 'NONE',
-  PICKUP = 'PICKUP',
-  SHIP = 'SHIP',
-  CURBSIDE = 'CURBSIDE',
-  DELIVERY = 'DELIVERY',
-  DRIVE_THRU = 'DRIVE_THRU',
-  FOR_HERE = 'FOR_HERE',
-  TO_GO = 'TO_GO',
-  DIGITAL = 'DIGITAL',
-  PURCHASE = 'PURCHASE',
-  GENERAL_CONTAINER = 'GENERAL_CONTAINER',
-  QUICK_STAY = 'QUICK_STAY',
-  REGULAR_STAY = 'REGULAR_STAY',
-  NON_LODGING_NRR = 'NON_LODGING_NRR',
-  NON_LODGING_SALE = 'NON_LODGING_SALE',
-  GIFT_CARD = 'GIFT_CARD',
-}
+export { DeliveryMethods };
 
 export interface DeliveryMethod {
   id: CheckoutFormData['deliveryMethod'];
@@ -58,14 +44,20 @@ export function DeliveryMethodForm() {
   const form = useFormContext();
   const { session, isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
+  const isDisabled = isConfirmingCheckout || isPaymentDisabled;
 
   const handleDeliveryMethodChange = (value: DeliveryMethods) => {
-    form.setValue('deliveryMethod', value);
+    if (isDisabled || form.getValues('deliveryMethod') === value) return;
+
+    form.setValue('deliveryMethod', value, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
     if (value === DeliveryMethods.PICKUP) {
-      form.setValue('shippingMethod', undefined);
+      form.setValue('shippingMethod', undefined, { shouldDirty: true });
     }
     track({
-      eventId: 'change_delivery_method.click',
+      eventId: eventIds.changeDeliveryMethod,
       type: TrackingEventType.CLICK,
       properties: {
         deliveryMethod: value,
@@ -73,10 +65,35 @@ export function DeliveryMethodForm() {
     });
   };
 
-  const availableMethods = [
-    ...(session?.enableShipping ? [DELIVERY_METHODS[0]] : []),
-    ...(session?.enableLocalPickup ? [DELIVERY_METHODS[1]] : []),
-  ];
+  const getDeliveryMethodLabel = (methodId: DeliveryMethods) => {
+    switch (methodId) {
+      case DeliveryMethods.SHIP:
+        return t.delivery.shipping;
+      case DeliveryMethods.PICKUP:
+        return t.delivery.localPickup;
+      default:
+        return methodId;
+    }
+  };
+
+  const getDeliveryMethodDescription = (methodId: DeliveryMethods) => {
+    switch (methodId) {
+      case DeliveryMethods.SHIP:
+        return t.delivery.shipToAddress;
+      case DeliveryMethods.PICKUP:
+        return t.delivery.pickupFromStore;
+      default:
+        return undefined;
+    }
+  };
+
+  const availableMethods = useMemo(
+    () => [
+      ...(session?.enableShipping ? [DELIVERY_METHODS[0]] : []),
+      ...(session?.enableLocalPickup ? [DELIVERY_METHODS[1]] : []),
+    ],
+    [session?.enableShipping, session?.enableLocalPickup]
+  );
 
   // Set default delivery method when component loads
   useEffect(() => {
@@ -108,14 +125,12 @@ export function DeliveryMethodForm() {
           <div className='flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 rounded-md'>
             <div className='flex items-center space-x-4'>
               <div className='inline-flex flex-col'>
-                {availableMethods[0].id === DeliveryMethods.SHIP
-                  ? t.delivery.shipping
-                  : t.delivery.localPickup}
-                <p className='text-xs text-muted-foreground'>
-                  {availableMethods[0].id === DeliveryMethods.SHIP
-                    ? t.delivery.shipToAddress
-                    : t.delivery.pickupFromStore}
-                </p>
+                {getDeliveryMethodLabel(availableMethods[0].id)}
+                {getDeliveryMethodDescription(availableMethods[0].id) ? (
+                  <p className='text-xs text-muted-foreground'>
+                    {getDeliveryMethodDescription(availableMethods[0].id)}
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className='flex items-center'>{availableMethods[0].icon}</div>
@@ -132,34 +147,43 @@ export function DeliveryMethodForm() {
                   value={field.value}
                   onValueChange={handleDeliveryMethodChange}
                   required
-                  disabled={isConfirmingCheckout || isPaymentDisabled}
+                  disabled={isDisabled}
                 >
                   {availableMethods.map((method, index) => (
                     <Label
                       key={method.id}
                       htmlFor={method.id}
-                      className='font-medium'
+                      className={cn(
+                        'font-medium',
+                        isDisabled && 'cursor-not-allowed opacity-60'
+                      )}
                     >
                       <div
-                        className={`flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4 hover:bg-muted 
-											${index === 0 ? 'rounded-t-md' : 'border-t-0'} 
-											${index === availableMethods.length - 1 ? 'rounded-b-md' : ''} 
-											${method.id === field.value ? 'bg-muted' : ''}
-											`}
+                        className={cn(
+                          'flex items-center justify-between space-x-2 bg-card border border-border p-2 px-4',
+                          !isDisabled && 'hover:bg-muted cursor-pointer',
+                          isDisabled && 'pointer-events-none',
+                          index === 0 ? 'rounded-t-md' : 'border-t-0',
+                          index === availableMethods.length - 1 &&
+                            'rounded-b-md',
+                          method.id === field.value && 'bg-muted'
+                        )}
                       >
                         <div className='flex items-center space-x-4'>
                           <FormControl>
-                            <RadioGroupItem value={method.id} id={method.id} />
+                            <RadioGroupItem
+                              value={method.id}
+                              id={method.id}
+                              aria-label={getDeliveryMethodLabel(method.id)}
+                            />
                           </FormControl>
                           <div className='inline-flex flex-col'>
-                            {method.id === DeliveryMethods.SHIP
-                              ? t.delivery.shipping
-                              : t.delivery.localPickup}
-                            <p className='text-xs text-muted-foreground'>
-                              {method.id === DeliveryMethods.SHIP
-                                ? t.delivery.shipToAddress
-                                : t.delivery.pickupFromStore}
-                            </p>
+                            {getDeliveryMethodLabel(method.id)}
+                            {getDeliveryMethodDescription(method.id) ? (
+                              <p className='text-xs text-muted-foreground'>
+                                {getDeliveryMethodDescription(method.id)}
+                              </p>
+                            ) : null}
                           </div>
                         </div>
                         <div className='flex items-center'>{method.icon}</div>

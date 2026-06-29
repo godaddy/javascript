@@ -336,6 +336,157 @@ const introspection = {
         ],
       },
       {
+        kind: 'OBJECT',
+        name: 'ApplicationRelease',
+        fields: [
+          {
+            name: 'id',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'uiExtensions',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'LIST',
+                ofType: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'OBJECT',
+                    name: 'ApplicationUiExtension',
+                  },
+                },
+              },
+            },
+            args: [
+              {
+                name: 'target',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'String',
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
+            name: 'version',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'ApplicationUiExtension',
+        fields: [
+          {
+            name: 'applicationId',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'cdnUrl',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'handle',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'id',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'releaseId',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'source',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'target',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'type',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
         kind: 'INPUT_OBJECT',
         name: 'ApplyShippingMethodInput',
         inputFields: [
@@ -1750,6 +1901,39 @@ const introspection = {
             isDeprecated: false,
           },
           {
+            name: 'enabledStoreApplications',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'LIST',
+                ofType: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'OBJECT',
+                    name: 'EnabledApplication',
+                  },
+                },
+              },
+            },
+            args: [
+              {
+                name: 'uiExtensionTargets',
+                type: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'StringListFilter',
+                },
+              },
+              {
+                name: 'uiExtensionTypes',
+                type: {
+                  kind: 'INPUT_OBJECT',
+                  name: 'StringListFilter',
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
             name: 'environment',
             type: {
               kind: 'ENUM',
@@ -2931,8 +3115,49 @@ const introspection = {
       },
       {
         kind: 'INPUT_OBJECT',
+        name: 'CheckoutSessionLineItemDataInput',
+        inputFields: [
+          {
+            name: 'assetUrl',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+          },
+          {
+            name: 'priceData',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'INPUT_OBJECT',
+                name: 'CheckoutSessionLineItemPriceDataInput',
+              },
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
         name: 'CheckoutSessionLineItemInput',
         inputFields: [
+          {
+            name: 'lineItemData',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutSessionLineItemDataInput',
+            },
+          },
           {
             name: 'quantity',
             type: {
@@ -2946,10 +3171,34 @@ const introspection = {
           {
             name: 'skuId',
             type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'CheckoutSessionLineItemPriceDataInput',
+        inputFields: [
+          {
+            name: 'currencyCode',
+            type: {
               kind: 'NON_NULL',
               ofType: {
                 kind: 'SCALAR',
                 name: 'String',
+              },
+            },
+          },
+          {
+            name: 'unitAmount',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'Int',
               },
             },
           },
@@ -3078,6 +3327,52 @@ const introspection = {
       },
       {
         kind: 'OBJECT',
+        name: 'CheckoutSessionOfflinePaymentMethodOptions',
+        fields: [
+          {
+            name: 'instructions',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'title',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'CheckoutSessionOfflinePaymentMethodOptionsInput',
+        inputFields: [
+          {
+            name: 'instructions',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'title',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+        ],
+        isOneOf: false,
+      },
+      {
+        kind: 'OBJECT',
         name: 'CheckoutSessionOperatingHoursMap',
         fields: [
           {
@@ -3147,6 +3442,15 @@ const introspection = {
             isDeprecated: false,
           },
           {
+            name: 'options',
+            type: {
+              kind: 'OBJECT',
+              name: 'CheckoutSessionOfflinePaymentMethodOptions',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
             name: 'processor',
             type: {
               kind: 'NON_NULL',
@@ -3179,6 +3483,13 @@ const introspection = {
                   },
                 },
               },
+            },
+          },
+          {
+            name: 'options',
+            type: {
+              kind: 'INPUT_OBJECT',
+              name: 'CheckoutSessionOfflinePaymentMethodOptionsInput',
             },
           },
           {
@@ -5808,6 +6119,84 @@ const introspection = {
               name: 'MoneyValue',
             },
             args: [],
+            isDeprecated: false,
+          },
+        ],
+        interfaces: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'EnabledApplication',
+        fields: [
+          {
+            name: 'id',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'ID',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'label',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'name',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'SCALAR',
+                name: 'String',
+              },
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'release',
+            type: {
+              kind: 'OBJECT',
+              name: 'ApplicationRelease',
+            },
+            args: [],
+            isDeprecated: false,
+          },
+          {
+            name: 'uiExtensions',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'LIST',
+                ofType: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'OBJECT',
+                    name: 'ApplicationUiExtension',
+                  },
+                },
+              },
+            },
+            args: [
+              {
+                name: 'target',
+                type: {
+                  kind: 'SCALAR',
+                  name: 'String',
+                },
+              },
+            ],
             isDeprecated: false,
           },
         ],
@@ -8797,6 +9186,45 @@ const introspection = {
             isDeprecated: false,
           },
           {
+            name: 'enabledStoreUiExtensions',
+            type: {
+              kind: 'NON_NULL',
+              ofType: {
+                kind: 'LIST',
+                ofType: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'OBJECT',
+                    name: 'ApplicationUiExtension',
+                  },
+                },
+              },
+            },
+            args: [
+              {
+                name: 'storeId',
+                type: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'SCALAR',
+                    name: 'String',
+                  },
+                },
+              },
+              {
+                name: 'target',
+                type: {
+                  kind: 'NON_NULL',
+                  ofType: {
+                    kind: 'SCALAR',
+                    name: 'String',
+                  },
+                },
+              },
+            ],
+            isDeprecated: false,
+          },
+          {
             name: 'validateCheckoutToken',
             type: {
               kind: 'OBJECT',
@@ -9927,6 +10355,33 @@ const introspection = {
       {
         kind: 'SCALAR',
         name: 'String',
+      },
+      {
+        kind: 'INPUT_OBJECT',
+        name: 'StringListFilter',
+        inputFields: [
+          {
+            name: 'has',
+            type: {
+              kind: 'SCALAR',
+              name: 'String',
+            },
+          },
+          {
+            name: 'hasAny',
+            type: {
+              kind: 'LIST',
+              ofType: {
+                kind: 'NON_NULL',
+                ofType: {
+                  kind: 'SCALAR',
+                  name: 'String',
+                },
+              },
+            },
+          },
+        ],
+        isOneOf: false,
       },
       {
         kind: 'INPUT_OBJECT',

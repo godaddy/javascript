@@ -36,7 +36,8 @@ export function PaymentAddressToggle({ className }: { className?: string }) {
                 tabIndex={0}
                 onCheckedChange={value => {
                   form.setValue('paymentUseShippingAddress', value, {
-                    shouldDirty: false,
+                    shouldDirty: true,
+                    shouldValidate: true,
                   });
 
                   // Track billing address toggle

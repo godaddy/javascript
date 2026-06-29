@@ -17,7 +17,7 @@ import { AddressForm } from '@/components/checkout/address';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { CheckoutSectionHeader } from '@/components/checkout/checkout-section-header';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-method';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import {
   DraftOrderLineItems,
   type Product,
@@ -62,6 +62,7 @@ import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import {
+  type AvailablePaymentProviders,
   CheckoutType,
   PaymentMethodType,
   type PaymentMethodValue,
@@ -203,7 +204,7 @@ export function PaymentForm(
       currencyCode &&
       hasGoDaddyWalletPayment
     ) {
-      collect.current = new (window as any).TokenizeJs(
+      collect.current = new window.TokenizeJs(
         {
           businessId,
           storeId: session?.storeId,
@@ -343,25 +344,22 @@ export function PaymentForm(
   }, [availablePaymentMethods, getPaymentMethodLabel]);
 
   // Only render the form for the selected payment method
-  const getPaymentMethodForm = () => {
-    if (!methodConfig) return null;
-
-    const hasForm = hasPaymentMethodForm(paymentMethod, methodConfig.processor);
+  const getPaymentMethodForm = (
+    method: PaymentMethodValue,
+    provider: AvailablePaymentProviders
+  ) => {
+    const hasForm = hasPaymentMethodForm(method, provider);
 
     if (!hasForm) return null;
 
     return (
-      <PaymentMethodRenderer
-        type='form'
-        method={paymentMethod}
-        provider={methodConfig.processor}
-      />
+      <PaymentMethodRenderer type='form' method={method} provider={provider} />
     );
   };
 
   // Get description for payment method if it exists
-  const getPaymentMethodDescriptionContent = () => {
-    const description = getPaymentMethodDescription(paymentMethod);
+  const getPaymentMethodDescriptionContent = (method: PaymentMethodValue) => {
+    const description = getPaymentMethodDescription(method);
     if (!description) return null;
 
     return <div>{description}</div>;
@@ -434,9 +432,18 @@ export function PaymentForm(
   };
 
   const isSingleMethod = filteredPaymentMethods?.length === 1;
-  const methodForm = getPaymentMethodForm();
-  const methodDescription = getPaymentMethodDescriptionContent();
-  const hasFormOrDescription = methodForm || methodDescription;
+  const selectedMethodDescription = paymentMethod
+    ? getPaymentMethodDescriptionContent(paymentMethod as PaymentMethodValue)
+    : null;
+  const selectedMethodForm =
+    paymentMethod && methodConfig
+      ? getPaymentMethodForm(
+          paymentMethod as PaymentMethodValue,
+          methodConfig.processor
+        )
+      : null;
+  const selectedMethodHasContent =
+    selectedMethodForm || selectedMethodDescription;
 
   if (filteredPaymentMethods.length === 0) {
     return <p className='text-sm'>{t.payment.noMethodsAvailable}</p>;
@@ -444,7 +451,7 @@ export function PaymentForm(
 
   return (
     <div className='space-y-4'>
-      {!isSingleMethod || hasFormOrDescription ? (
+      {!isSingleMethod || selectedMethodHasContent ? (
         <FormField
           control={form.control}
           name='paymentMethod'
@@ -461,6 +468,21 @@ export function PaymentForm(
                 >
                   {filteredPaymentMethods.map(
                     ([key, { label, icon }], index, array) => {
+                      const itemMethodConfig =
+                        session?.paymentMethods?.[key as PaymentMethodValue];
+                      const itemMethodForm = itemMethodConfig
+                        ? getPaymentMethodForm(
+                            key as PaymentMethodValue,
+                            itemMethodConfig.processor as AvailablePaymentProviders
+                          )
+                        : null;
+                      const itemMethodDescription =
+                        getPaymentMethodDescriptionContent(
+                          key as PaymentMethodValue
+                        );
+                      const itemHasContent =
+                        itemMethodForm || itemMethodDescription;
+
                       return (
                         <AccordionItem
                           key={key}
@@ -512,14 +534,14 @@ export function PaymentForm(
                             </div>
                           </AccordionTrigger>
 
-                          {hasFormOrDescription ? (
+                          {itemHasContent ? (
                             <AccordionContent
                               className={cn(
                                 'px-4 pt-2 pb-4',
                                 isSingleMethod ? 'pl-4' : 'pl-10'
                               )}
                             >
-                              {methodForm || methodDescription}
+                              {itemMethodForm || itemMethodDescription}
                             </AccordionContent>
                           ) : null}
                         </AccordionItem>

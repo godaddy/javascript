@@ -43,6 +43,7 @@ import {
   formatLeadTimeDisplay,
   generatePickupTimeSlots,
   isAsapAvailable,
+  isPickupDateAvailable,
 } from './utils/generate-pickup-time-slots';
 
 // Map day of week to the corresponding property in hours
@@ -134,8 +135,13 @@ export function LocalPickupForm({
       if (locationHours.pickupWindowInDays === 0) {
         const today = new Date();
         const zonedToday = toZonedTime(today, locationHours.timeZone);
-        setSelectedDate(zonedToday);
-        form.setValue('pickupDate', format(zonedToday, 'yyyy-MM-dd'));
+        const calendarToday = new Date(
+          zonedToday.getFullYear(),
+          zonedToday.getMonth(),
+          zonedToday.getDate()
+        );
+        setSelectedDate(calendarToday);
+        form.setValue('pickupDate', format(calendarToday, 'yyyy-MM-dd'));
         form.setValue('pickupTime', 'ASAP');
         return;
       }
@@ -216,10 +222,7 @@ export function LocalPickupForm({
     (date: Date) => {
       const hours = getStoreHours(selectedLocationId);
       if (!hours) return false;
-      const dayOfWeek = date.getDay();
-      const dayProperty =
-        dayToProperty[dayOfWeek as keyof typeof dayToProperty];
-      return hours.hours[dayProperty]?.enabled === true;
+      return isPickupDateAvailable({ selectedDate: date, storeHours: hours });
     },
     [selectedLocationId, getStoreHours]
   );
@@ -398,8 +401,8 @@ export function LocalPickupForm({
                   field.onChange(value);
                   setSelectedLocationId(value);
                   setSelectedDate(undefined);
-                  form.setValue('pickupDate', '');
-                  form.setValue('pickupTime', '');
+                  form.setValue('pickupDate', '', { shouldDirty: true });
+                  form.setValue('pickupTime', '', { shouldDirty: true });
 
                   const location = session?.locations?.find(
                     loc => loc.id === value
@@ -419,7 +422,8 @@ export function LocalPickupForm({
                     'pickupTimezone',
                     location?.operatingHours?.timeZone ??
                       session.defaultOperatingHours?.timeZone ??
-                      ''
+                      '',
+                    { shouldDirty: true }
                   );
 
                   applyFulfillmentLocation.mutate({
@@ -428,7 +432,7 @@ export function LocalPickupForm({
                   });
                   findAndSetNextAvailableDate(value);
                 }}
-                value={field.value}
+                value={field.value ?? ''}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -521,7 +525,7 @@ export function LocalPickupForm({
                       } else {
                         field.onChange('');
                         setSelectedDate(undefined);
-                        form.setValue('pickupTime', '');
+                        form.setValue('pickupTime', '', { shouldDirty: true });
                       }
                       setIsCalendarOpen(false);
                     }}
@@ -578,7 +582,7 @@ export function LocalPickupForm({
                       },
                     });
                   }}
-                  value={field.value}
+                  value={field.value ?? ''}
                 >
                   <FormControl>
                     <SelectTrigger>

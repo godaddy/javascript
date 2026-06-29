@@ -7,6 +7,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -20,6 +21,7 @@ export function SquareCreditCardCheckoutButton() {
   const confirmCheckout = useConfirmCheckout();
   const { setCheckoutErrors, isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const form = useFormContext();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isSquareDisabled, setIsSquareDisabled] = useState<boolean>(false);
@@ -37,6 +39,8 @@ export function SquareCreditCardCheckoutButton() {
       }
       return;
     }
+
+    await flushCheckoutSync();
 
     try {
       setIsSquareDisabled(true);
@@ -58,6 +62,7 @@ export function SquareCreditCardCheckoutButton() {
     }
   }, [
     form,
+    flushCheckoutSync,
     card,
     confirmCheckout.mutateAsync,
     squarePaymentRequest,

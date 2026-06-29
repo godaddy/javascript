@@ -58,6 +58,18 @@ interface AddressFormProps {
   onlyNames?: boolean;
 }
 
+export function mapAutocompleteAddressFields(selectedAddress?: Address) {
+  if (!selectedAddress) return {};
+
+  return {
+    AddressLine1: selectedAddress.addressLine1,
+    AddressLine2: selectedAddress.addressLine2,
+    AdminArea2: selectedAddress.adminArea3,
+    AdminArea1: selectedAddress.adminArea1,
+    PostalCode: selectedAddress.postalCode,
+  } satisfies Record<string, string | null>;
+}
+
 export function AddressForm({
   sectionKey,
   onlyNames = false,
@@ -120,13 +132,14 @@ export function AddressForm({
     () => ({ firstName, lastName }),
     [firstName, lastName]
   );
-
-  const [debouncedFullName] = useDebouncedValue(
-    Object.values(contact).join(''),
-    {
-      wait: 1000,
-    }
+  const serializedContact = React.useMemo(
+    () => JSON.stringify(contact),
+    [contact]
   );
+
+  const [debouncedContact] = useDebouncedValue(serializedContact, {
+    wait: 1000,
+  });
 
   const [debouncedAddressValue] = useDebouncedValue(addressValue, {
     wait: 200,
@@ -145,22 +158,28 @@ export function AddressForm({
   }, [draftOrder, sectionKey, firstName, lastName]);
 
   const shouldVerifyName =
+    onlyNames &&
     nameHasChanged && // Only sync if values differ from order
-    debouncedFullName !== '' &&
-    debouncedFullName === Object.values(contact).join('');
+    !!firstName?.trim() &&
+    !!lastName?.trim() &&
+    debouncedContact === serializedContact;
 
   useDraftOrderFieldSync({
     key: 'name',
     data: contact,
-    deps: [contact],
+    deps: [contact, serializedContact, debouncedContact],
     enabled: shouldVerifyName,
     fieldNames: [`${sectionKey}FirstName`, `${sectionKey}LastName`],
+    preserveFormData: false,
     mapToInput: data => {
+      const fields = {
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        address: null,
+      };
+
       return mapAddressFieldsToInput(
-        {
-          firstName: data.firstName.trim(),
-          lastName: data.lastName.trim(),
-        },
+        fields,
         sectionKey as 'shipping' | 'billing',
         useShippingAddress
       );
@@ -192,8 +211,20 @@ export function AddressForm({
     ]
   );
 
-  const [debouncedFullAddress] = useDebouncedValue(
-    Object.values(address).join(''),
+  const sectionContactAndAddress = React.useMemo(
+    () => ({
+      ...contact,
+      address,
+    }),
+    [contact, address]
+  );
+  const serializedSectionContactAndAddress = React.useMemo(
+    () => JSON.stringify(sectionContactAndAddress),
+    [sectionContactAndAddress]
+  );
+
+  const [debouncedSectionContactAndAddress] = useDebouncedValue(
+    serializedSectionContactAndAddress,
     { wait: 1000 }
   );
 
@@ -251,6 +282,34 @@ export function AddressForm({
     return orderAddress.addressLine1 !== (addressLine1 || '');
   }, [orderAddress, addressLine1]);
 
+  const shouldUpdateNameOnly = Boolean(
+    nameHasChanged &&
+      !addressHasChanged &&
+      !!firstName?.trim() &&
+      !!lastName?.trim() &&
+      debouncedContact === serializedContact
+  );
+
+  useDraftOrderFieldSync({
+    key: 'name',
+    data: contact,
+    deps: [contact, serializedContact, debouncedContact, addressHasChanged],
+    enabled: !onlyNames && shouldUpdateNameOnly,
+    fieldNames: [`${sectionKey}FirstName`, `${sectionKey}LastName`],
+    mapToInput: data => {
+      const fields = {
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+      };
+
+      return mapAddressFieldsToInput(
+        fields,
+        sectionKey as 'shipping' | 'billing',
+        useShippingAddress
+      );
+    },
+  });
+
   const addressMatchesQuery = useAddressMatches(debouncedAddressValue, {
     enabled:
       !!session?.enableAddressAutocomplete &&
@@ -262,39 +321,44 @@ export function AddressForm({
   function handleUpdateAddress(selectedAddress?: Address) {
     if (!selectedAddress) return;
 
-    const fieldMap: Record<string, string | null> = {
-      AddressLine1: selectedAddress.addressLine1,
-      AddressLine2: selectedAddress.addressLine2,
-      AdminArea2: selectedAddress.adminArea3,
-      AdminArea1: selectedAddress.adminArea1,
-      PostalCode: selectedAddress.postalCode,
-    };
-
-    for (const [key, value] of Object.entries(fieldMap)) {
-      if (value) {
-        form.setValue(`${sectionKey}${key}`, value, { shouldValidate: true });
+    for (const [key, value] of Object.entries(
+      mapAutocompleteAddressFields(selectedAddress)
+    )) {
+      if (value && form.getValues(`${sectionKey}${key}`) !== value) {
+        form.setValue(`${sectionKey}${key}`, value, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
       }
     }
   }
 
   const shouldUpdateAddress = Boolean(
-    addressHasChanged && // Only sync if values differ from order
-      !!debouncedFullAddress &&
+    addressHasChanged && // Only sync if address values differ from order
+      !!firstName?.trim() &&
+      !!lastName?.trim() &&
       isAddressComplete(address) &&
-      debouncedFullAddress === Object.values(address).join('') &&
-      debouncedFullAddress.trim() !== '' &&
+      debouncedSectionContactAndAddress ===
+        serializedSectionContactAndAddress &&
       !isAutocompleteOpen
   );
 
   useDraftOrderFieldSync({
     key: 'address',
-    data: address,
-    deps: [address, shouldUpdateAddress],
-    enabled: shouldUpdateAddress,
+    data: sectionContactAndAddress,
+    deps: [
+      sectionContactAndAddress,
+      shouldUpdateAddress,
+      serializedSectionContactAndAddress,
+      debouncedSectionContactAndAddress,
+    ],
+    enabled: !onlyNames && shouldUpdateAddress,
     fieldNames: [
+      `${sectionKey}FirstName`,
+      `${sectionKey}LastName`,
       `${sectionKey}AddressLine1`,
       `${sectionKey}AddressLine2`,
-      `${sectionKey}City`,
+      `${sectionKey}AdminArea2`,
       `${sectionKey}AdminArea1`,
       `${sectionKey}PostalCode`,
       `${sectionKey}CountryCode`,
@@ -302,7 +366,9 @@ export function AddressForm({
     mapToInput: data => {
       return mapAddressFieldsToInput(
         {
-          address: data,
+          firstName: data.firstName.trim(),
+          lastName: data.lastName.trim(),
+          address: data.address,
         },
         sectionKey as 'shipping' | 'billing',
         useShippingAddress
@@ -378,6 +444,7 @@ export function AddressForm({
                                 `${sectionKey}CountryCode`,
                                 country.value,
                                 {
+                                  shouldDirty: true,
                                   shouldValidate: true,
                                 }
                               );
@@ -444,9 +511,7 @@ export function AddressForm({
           name={`${sectionKey}FirstName`}
           render={({ field, fieldState }) => (
             <FormItem className='space-y-1'>
-              <FormLabel className='sr-only'>
-                {t.shipping.firstName} {!onlyNames && `(${t.general.optional})`}
-              </FormLabel>
+              <FormLabel className='sr-only'>{t.shipping.firstName}</FormLabel>
               <FormControl>
                 <Input
                   placeholder={t.shipping.firstName}
@@ -585,15 +650,22 @@ export function AddressForm({
                       <Select
                         value={field.value}
                         onValueChange={value => {
+                          const previousRegion = form.getValues(
+                            `${sectionKey}AdminArea1`
+                          );
+
                           field.onChange(value);
                           form.setValue(`${sectionKey}AdminArea1`, value, {
+                            shouldDirty: true,
                             shouldValidate: true,
                           });
 
-                          form.setValue(`${sectionKey}PostalCode`, '', {
-                            shouldDirty: true,
-                            shouldValidate: false,
-                          });
+                          if (previousRegion && previousRegion !== value) {
+                            form.setValue(`${sectionKey}PostalCode`, '', {
+                              shouldDirty: true,
+                              shouldValidate: false,
+                            });
+                          }
 
                           // Track region selection event
                           track({

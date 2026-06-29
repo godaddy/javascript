@@ -23,9 +23,7 @@ function unwrap(schema: ZodTypeAny): ZodTypeAny {
 /**
  * Extract required/optional flags from a Zod schema
  */
-export function getRequiredFieldsFromSchema<
-  T extends ZodObject<any> | ZodEffects<any>,
->(schema: T) {
+export function getRequiredFieldsFromSchema<T extends ZodTypeAny>(schema: T) {
   const unwrapped = unwrap(schema);
 
   if (!(unwrapped instanceof ZodObject)) {

@@ -4,6 +4,10 @@ import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDiscountApply } from '@/components/checkout/discount';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
+import {
+  checkoutMutationKeys,
+  checkoutQueryKeys,
+} from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
 import { applyShippingMethod } from '@/lib/godaddy/godaddy';
@@ -18,9 +22,7 @@ export function useApplyShippingMethod() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: session?.id
-      ? ['apply-shipping-method', session.id]
-      : ['apply-shipping-method'],
+    mutationKey: checkoutMutationKeys.applyShippingMethod(session?.id),
     mutationFn: async (
       shippingMethods: ApplyCheckoutSessionShippingMethodInput['input']
     ) => {
@@ -45,7 +47,7 @@ export function useApplyShippingMethod() {
       // Update the cached draft-order query (includes totals)
       if (shippingTotal) {
         queryClient.setQueryData(
-          ['draft-order', session.id],
+          checkoutQueryKeys.draftOrder(session.id),
           (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
             if (!old) return old;
 
@@ -110,10 +112,10 @@ export function useApplyShippingMethod() {
           discountCodes,
         });
       } else if (session?.enableTaxCollection) {
-        updateTaxes.mutate(undefined);
+        await updateTaxes.mutateAsync(undefined);
       } else {
-        queryClient.invalidateQueries({
-          queryKey: ['draft-order', session.id],
+        await queryClient.invalidateQueries({
+          queryKey: checkoutQueryKeys.draftOrder(session.id),
         });
       }
     },

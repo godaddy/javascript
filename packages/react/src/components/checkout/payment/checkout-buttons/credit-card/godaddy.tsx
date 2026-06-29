@@ -3,16 +3,18 @@ import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { usePoyntCollect } from '@/components/checkout/payment/utils/poynt-provider';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 
 export function CreditCardCheckoutButton() {
   const { collect, isLoadingNonce, setIsLoadingNonce } = usePoyntCollect();
-  const { isConfirmingCheckout } = useCheckoutContext();
+  const { isConfirmingCheckout, setCheckoutErrors } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const { poyntCardRequest } = useBuildPaymentRequest();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { t } = useGoDaddyContext();
 
@@ -31,9 +33,25 @@ export function CreditCardCheckoutButton() {
       return;
     }
 
-    setIsLoadingNonce(true);
-    collect.getNonce(poyntCardRequest);
-  }, [collect, form, isDisabled, poyntCardRequest, setIsLoadingNonce]);
+    try {
+      await flushCheckoutSync();
+
+      setCheckoutErrors(undefined);
+      setIsLoadingNonce(true);
+      collect.getNonce(poyntCardRequest);
+    } catch (_error) {
+      setIsLoadingNonce(false);
+      setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
+    }
+  }, [
+    collect,
+    flushCheckoutSync,
+    form,
+    isDisabled,
+    poyntCardRequest,
+    setCheckoutErrors,
+    setIsLoadingNonce,
+  ]);
 
   if (!collect) return null;
 
@@ -46,7 +64,7 @@ export function CreditCardCheckoutButton() {
       ref={buttonRef}
       disabled={isDisabled}
     >
-      {t.payment.payNow}
+      {isLoadingNonce ? t.payment.processingPayment : t.payment.payNow}
     </Button>
   );
 }
