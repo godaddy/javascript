@@ -257,6 +257,7 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
       }
     } catch (cause) {
       this.isMounting = false;
+      await this.cleanupFailedMount();
 
       if (this.isDisposed) {
         this.clearRuntimeState();
@@ -272,6 +273,7 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
               cause,
             })
       );
+      this.clearRuntimeState();
     }
   }
 
@@ -348,6 +350,26 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
       });
     } finally {
       this.clearRuntimeState();
+    }
+  }
+
+  private async cleanupFailedMount() {
+    if (!this.contract?.unmount || !this.extension) {
+      return;
+    }
+
+    try {
+      await withTimeout(
+        Promise.resolve(this.contract.unmount()),
+        this.timeoutMs,
+        () =>
+          createRuntimeError(this.extension as UiExtension, {
+            code: 'unmount_failed',
+            message: 'UI extension cleanup timed out after mount failure.',
+          })
+      );
+    } catch {
+      // Ignore cleanup failures so the original mount error is reported.
     }
   }
 

@@ -131,14 +131,14 @@ describe('Target', () => {
     expect(output).toContain('extension-1');
   });
 
-  it('renders hook errors', () => {
+  it('does not render hook errors to shoppers', () => {
     mockHookResult({ error: new Error('Failed to load extensions') });
 
     const output = renderToStaticMarkup(
       <Target id='some.target' storeId='store-123' />
     );
 
-    expect(output).toContain('Failed to load extensions');
+    expect(output).not.toContain('Failed to load extensions');
   });
 });
 

@@ -482,7 +482,11 @@ export function CheckoutForm({
                             </div>
                           )}
                           {session?.enableNotesCollection ? (
-                            <NotesForm />
+                            <>
+                              <Target id='checkout.form.notes.before' />
+                              <NotesForm />
+                              <Target id='checkout.form.notes.after' />
+                            </>
                           ) : null}
                         </div>
                         <Target id='checkout.form.shipping.after' />

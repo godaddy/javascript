@@ -10,6 +10,14 @@ function getInitialPropKeys(initialProps?: Record<string, unknown>) {
   return initialProps ? Object.keys(initialProps).sort() : [];
 }
 
+function getDiscoveryErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function getDiscoveryErrorSignature(id: string, error: unknown) {
+  return JSON.stringify({ target: id, error: getDiscoveryErrorMessage(error) });
+}
+
 function getDebugLogSignature({
   context,
   id,
@@ -48,6 +56,7 @@ export function Target({
 }: TargetProps) {
   const { debug } = useGoDaddyContext();
   const lastDebugLogSignatureRef = useRef<string | undefined>(undefined);
+  const lastDiscoveryErrorSignatureRef = useRef<string | undefined>(undefined);
   const { data, error, isLoading } = useEnabledStoreUiExtensions({
     target: id,
     storeId,
@@ -75,6 +84,26 @@ export function Target({
       }),
     [id, storeId, orderId, locale, currencyCode, theme]
   );
+
+  useEffect(() => {
+    if (!error) return;
+
+    const signature = getDiscoveryErrorSignature(id, error);
+    if (lastDiscoveryErrorSignatureRef.current === signature) {
+      return;
+    }
+
+    lastDiscoveryErrorSignatureRef.current = signature;
+
+    onExtensionError?.({
+      code: 'load_failed',
+      message: `Failed to discover UI extensions: ${getDiscoveryErrorMessage(error)}`,
+      runtimeType: 'dom-bundle',
+      extensionId: id,
+      target: id,
+      cause: error,
+    });
+  }, [error, id, onExtensionError]);
 
   useEffect(() => {
     if (!debug || !targetExtensions.length) return;
@@ -120,9 +149,7 @@ export function Target({
   }
 
   if (error) {
-    const message = error instanceof Error ? error.message : String(error);
-
-    return <pre>{JSON.stringify({ error: message }, null, 2)}</pre>;
+    return null;
   }
 
   if (isLoading) {

@@ -113,6 +113,32 @@ describe('DomBundleUiExtensionRuntime', () => {
     expect(unmount).toHaveBeenCalled();
   });
 
+  it('calls unmount when mount fails after invoking the contract', async () => {
+    const runtime = new DomBundleUiExtensionRuntime();
+    const unmount = vi.fn();
+    const errors: UiExtensionRuntimeError[] = [];
+    const mountPromise = runtime.mount({
+      extension: createExtension(),
+      context: { target: 'checkout.test-target' },
+      container: document.createElement('div'),
+      onError: error => errors.push(error),
+    });
+
+    const script = await getLastScript();
+    window.GoDaddyUiExtensions?.register({
+      mount() {
+        throw new Error('mount failed');
+      },
+      unmount,
+    });
+    script.dispatchEvent(new Event('load'));
+    await mountPromise;
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.code).toBe('mount_failed');
+    expect(unmount).toHaveBeenCalled();
+  });
+
   it('does not mount when unmounted before the script loads', async () => {
     const runtime = new DomBundleUiExtensionRuntime();
     const mount = vi.fn();
