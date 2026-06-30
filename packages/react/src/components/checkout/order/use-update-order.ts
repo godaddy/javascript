@@ -52,6 +52,11 @@ export function useUpdateOrder() {
 
             // Always send pickup location address for pickup orders
             await updateTaxes.mutateAsync(pickupLocationAddress);
+          } else if (
+            deliveryMethod === DeliveryMethods.PURCHASE &&
+            input.billing?.address
+          ) {
+            await updateTaxes.mutateAsync(input.billing.address);
           } else {
             // For shipping, let backend use the saved shipping address
             await updateTaxes.mutateAsync(undefined);
