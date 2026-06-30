@@ -67,6 +67,24 @@ export const GetCheckoutSessionQuery = graphql(`
                 goPayAppId
               }
             }
+            enabledStoreApplications {
+              id
+              name
+              release {
+                id
+                version
+                uiExtensions {
+                  id
+                  applicationId
+                  releaseId
+                  name
+                  handle
+                  cdnUrl
+                  type
+                  target
+                }
+              }
+            }
             shipping {
               originAddress {
                 addressLine1
@@ -259,6 +277,21 @@ export const GetCheckoutSessionQuery = graphql(`
             }
         }
     }
+`);
+
+export const GetEnabledStoreUiExtensionsQuery = graphql(`
+  query GetEnabledStoreUiExtensions($storeId: String!, $target: String!) {
+    enabledStoreUiExtensions(storeId: $storeId, target: $target) {
+      id
+      applicationId
+      releaseId
+      name
+      handle
+      cdnUrl
+      type
+      target
+    }
+  }
 `);
 
 export const AddressMatchesQuery = graphql(`

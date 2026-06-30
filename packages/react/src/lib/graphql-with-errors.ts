@@ -1,5 +1,9 @@
-import type { DocumentNode } from 'graphql';
-import { ClientError, request, type Variables } from 'graphql-request';
+import {
+  ClientError,
+  type RequestDocument,
+  request,
+  type Variables,
+} from 'graphql-request';
 
 // Define the shape of GraphQL errors explicitly
 export class GraphQLErrorWithCodes<
@@ -32,7 +36,7 @@ export class GraphQLErrorWithCodes<
 
 export async function graphqlRequestWithErrors<T = any>(
   endpoint: string,
-  query: DocumentNode,
+  query: RequestDocument,
   variables?: Variables,
   headers?: HeadersInit
 ): Promise<T> {

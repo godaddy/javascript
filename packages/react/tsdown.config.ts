@@ -5,7 +5,7 @@ import { defineConfig } from 'tsdown';
 const execAsync = promisify(exec);
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/server.ts'],
+  entry: ['src/index.ts', 'src/server.ts', 'src/ui-extensions/index.ts'],
   plugins: [],
   tsconfig: './tsconfig.json',
   dts: true,

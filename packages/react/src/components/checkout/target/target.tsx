@@ -1,59 +1,41 @@
 'use client';
 
+import { type ReactNode, useMemo } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import type { Target as CheckoutTarget } from '@/components/checkout/target/types';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
+import type { CheckoutSession } from '@/types';
+import { Target as UiExtensionTarget } from '@/ui-extensions/target';
+import type { EnabledUiExtensionApp } from '@/ui-extensions/types';
+import { groupAppsByUiExtensionTarget } from '@/ui-extensions/utils';
 
-export type Target =
-  | 'checkout.before'
-  | 'checkout.after'
-  | 'checkout.form.before'
-  | 'checkout.form.after'
-  | 'checkout.form.contact.before'
-  | 'checkout.form.contact.after'
-  | 'checkout.form.express-checkout.before'
-  | 'checkout.form.express-checkout.after'
-  | 'checkout.form.pickup.before'
-  | 'checkout.form.pickup.after'
-  | 'checkout.form.pickup.form.before'
-  | 'checkout.form.delivery.before'
-  | 'checkout.form.delivery.after'
-  | 'checkout.form.tips.before'
-  | 'checkout.form.tips.after'
-  | 'checkout.form.shipping.before'
-  | 'checkout.form.shipping.after'
-  | 'checkout.form.payment.before'
-  | 'checkout.form.payment.after'
-  | 'checkout.form.submit.before'
-  | 'checkout.form.submit.after'
-  | 'checkout.summary.before'
-  | 'checkout.summary.line-items.before'
-  | 'checkout.summary.line-items.after'
-  | 'checkout.summary.totals.subtotal.before'
-  | 'checkout.summary.totals.discount.before'
-  | 'checkout.summary.totals.shipping.before'
-  | 'checkout.summary.totals.tip.before'
-  | 'checkout.summary.totals.taxes.before'
-  | 'checkout.summary.totals.fees.before'
-  | 'checkout.summary.totals.total-due.before'
-  | 'checkout.summary.totals.total-due.after'
-  | 'checkout.summary.totals.after'
-  | 'checkout.summary.after';
-
-export function Target({ id }: { id: Target }) {
+export function Target({ id }: { id: CheckoutTarget }) {
   const { debug } = useGoDaddyContext();
   const { targets, session } = useCheckoutContext();
 
   const target = targets?.[id];
+  const enabledStoreApplications = (
+    session as
+      | (CheckoutSession & {
+          enabledStoreApplications?: EnabledUiExtensionApp[] | null;
+        })
+      | null
+      | undefined
+  )?.enabledStoreApplications;
+  const uiExtensionApps = useMemo(
+    () => groupAppsByUiExtensionTarget(enabledStoreApplications)[id],
+    [enabledStoreApplications, id]
+  );
 
-  if (!target && !debug) {
+  if (!target && !uiExtensionApps?.length && !debug) {
     return null;
   }
 
-  let content: React.ReactNode = null;
+  let content: ReactNode = null;
   if (target) {
     content = target(session);
-  } else if (debug) {
+  } else if (debug && !uiExtensionApps?.length) {
     content = <span className='text-xs text-blue-500'>{id}</span>;
   }
 
@@ -65,7 +47,18 @@ export function Target({ id }: { id: Target }) {
         'm-0'
       )}
     >
+      {debug && target ? (
+        <span className='text-xs text-blue-500'>{id}</span>
+      ) : null}
       {content}
+      {uiExtensionApps?.length ? (
+        <UiExtensionTarget
+          apps={uiExtensionApps}
+          id={id}
+          orderId={session?.draftOrder?.id ?? undefined}
+          storeId={session?.storeId}
+        />
+      ) : null}
     </div>
   );
 }

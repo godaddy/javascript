@@ -96,13 +96,6 @@ export interface GoDaddyProviderProps {
   localization?: typeof enUs;
   appearance?: GoDaddyAppearance;
   debug?: boolean;
-  /**
-   * API host for checkout GraphQL requests.
-   * Defaults to production (https://checkout.commerce.api.godaddy.com).
-   *
-   * Internal devs can set to:
-   * - "http://localhost:3000" for local development
-   */
   apiHost?: string;
   clientId?: string;
   storeId?: string;

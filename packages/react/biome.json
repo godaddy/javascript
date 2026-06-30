@@ -5,7 +5,8 @@
     "includes": [
       "**/*",
       "!!**/src/globals.css",
-      "!!**/src/globals-tailwind.css"
+      "!!**/src/globals-tailwind.css",
+      "!!**/src/lib/godaddy/*-env.ts"
     ]
   },
   "linter": {

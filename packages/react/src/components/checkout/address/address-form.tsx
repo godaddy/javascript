@@ -335,12 +335,26 @@ export function AddressForm({
 
   const shouldUpdateAddress = Boolean(
     addressHasChanged && // Only sync if address values differ from order
-      !!firstName?.trim() &&
-      !!lastName?.trim() &&
       isAddressComplete(address) &&
       debouncedSectionContactAndAddress ===
         serializedSectionContactAndAddress &&
       !isAutocompleteOpen
+  );
+
+  const hasCompleteName = Boolean(firstName?.trim() && lastName?.trim());
+  const addressSyncFieldNames = React.useMemo(
+    () => [
+      ...(hasCompleteName
+        ? [`${sectionKey}FirstName`, `${sectionKey}LastName`]
+        : []),
+      `${sectionKey}AddressLine1`,
+      `${sectionKey}AddressLine2`,
+      `${sectionKey}AdminArea2`,
+      `${sectionKey}AdminArea1`,
+      `${sectionKey}PostalCode`,
+      `${sectionKey}CountryCode`,
+    ],
+    [hasCompleteName, sectionKey]
   );
 
   useDraftOrderFieldSync({
@@ -353,23 +367,20 @@ export function AddressForm({
       debouncedSectionContactAndAddress,
     ],
     enabled: !onlyNames && shouldUpdateAddress,
-    fieldNames: [
-      `${sectionKey}FirstName`,
-      `${sectionKey}LastName`,
-      `${sectionKey}AddressLine1`,
-      `${sectionKey}AddressLine2`,
-      `${sectionKey}AdminArea2`,
-      `${sectionKey}AdminArea1`,
-      `${sectionKey}PostalCode`,
-      `${sectionKey}CountryCode`,
-    ],
+    fieldNames: addressSyncFieldNames,
     mapToInput: data => {
+      const fields = {
+        ...(hasCompleteName
+          ? {
+              firstName: data.firstName.trim(),
+              lastName: data.lastName.trim(),
+            }
+          : {}),
+        address: data.address,
+      };
+
       return mapAddressFieldsToInput(
-        {
-          firstName: data.firstName.trim(),
-          lastName: data.lastName.trim(),
-          address: data.address,
-        },
+        fields,
         sectionKey as 'shipping' | 'billing',
         useShippingAddress
       );

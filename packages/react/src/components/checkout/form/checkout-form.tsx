@@ -206,6 +206,12 @@ export function CheckoutForm({
 
   const isFree = orderTotal <= 0;
   const showExpressButtons = subtotal > 0;
+  const enableDelivery = Boolean(
+    session?.enableShipping || session?.enableLocalPickup
+  );
+  const enableStandaloneNotes = Boolean(
+    session?.enableNotesCollection && !enableDelivery
+  );
 
   // Show shipping/taxes/fees lines if collection is enabled OR if there's
   // a preset amount on the order. This way merchants who disable collection
@@ -255,8 +261,8 @@ export function CheckoutForm({
   const totalSavings = Math.abs(orderDiscount + lineItemDiscounts);
 
   const [gridTemplateAreas, sectionLength] = React.useMemo(() => {
-    const { enableTips, paymentMethods, enableShipping, enableLocalPickup } =
-      session || {};
+    const { enableTips, paymentMethods } = session || {};
+
     if (!props?.layout) {
       const enableExpressCheckout = Object.values(paymentMethods ?? {}).some(
         method =>
@@ -265,18 +271,31 @@ export function CheckoutForm({
           method.checkoutTypes.includes(CheckoutType.EXPRESS)
       );
 
-      const enableDelivery = enableShipping || enableLocalPickup;
-      const defaultTemplate = ` ${enableExpressCheckout ? "'express-checkout'" : ''} 'contact' ${enableDelivery ? "'delivery'" : ''} '${deliveryMethodToGridArea[deliveryMethod]}' ${enableTips ? "'tips'" : ''} 'payment'`;
-      // Return consistent tuple type: [string, number]
-      let totalSections = 2;
-      enableTips && totalSections++;
-      enableDelivery && totalSections++;
-      enableExpressCheckout && totalSections++;
-      return [defaultTemplate, totalSections];
+      const deliveryArea = enableDelivery
+        ? deliveryMethodToGridArea[deliveryMethod]
+        : undefined;
+      const defaultAreas = [
+        enableExpressCheckout ? 'express-checkout' : undefined,
+        'contact',
+        enableDelivery ? 'delivery' : undefined,
+        deliveryArea,
+        enableTips ? 'tips' : undefined,
+        enableStandaloneNotes ? 'notes' : undefined,
+        'payment',
+      ].filter(Boolean);
+      const defaultTemplate = defaultAreas
+        .map(section => `'${section}'`)
+        .join(' ');
+
+      return [defaultTemplate, defaultAreas.length];
     }
 
     // Filter out sections that shouldn't be shown based on delivery method
     const filteredLayout = props.layout.filter(section => {
+      if (section === 'notes') {
+        return enableStandaloneNotes;
+      }
+
       if (section !== 'shipping' && section !== 'pickup') {
         return true;
       }
@@ -304,6 +323,9 @@ export function CheckoutForm({
       if (!enableTips && section === 'tips') {
         return false;
       }
+      if (!enableStandaloneNotes && section === 'notes') {
+        return false;
+      }
       return !filteredLayout.includes(section);
     });
 
@@ -311,7 +333,13 @@ export function CheckoutForm({
     const completeLayout = [...filteredLayout, ...missingLayoutSections];
 
     return [`'${completeLayout.join("' '")}'`, completeLayout.length];
-  }, [props?.layout, deliveryMethod, session]);
+  }, [
+    props?.layout,
+    deliveryMethod,
+    session,
+    enableDelivery,
+    enableStandaloneNotes,
+  ]);
 
   React.useEffect(() => {
     if (deliveryMethod) {
@@ -454,10 +482,22 @@ export function CheckoutForm({
                             </div>
                           )}
                           {session?.enableNotesCollection ? (
-                            <NotesForm />
+                            <>
+                              <Target id='checkout.form.notes.before' />
+                              <NotesForm />
+                              <Target id='checkout.form.notes.after' />
+                            </>
                           ) : null}
                         </div>
                         <Target id='checkout.form.shipping.after' />
+                      </CheckoutSection>
+                    ) : null}
+                    {enableStandaloneNotes ? (
+                      <CheckoutSection style={{ gridArea: 'notes' }}>
+                        <Target id='checkout.form.notes.before' />
+                        <CheckoutSectionHeader title={t.general.notes} />
+                        <NotesForm />
+                        <Target id='checkout.form.notes.after' />
                       </CheckoutSection>
                     ) : null}
                     <CheckoutSection style={{ gridArea: 'payment' }}>

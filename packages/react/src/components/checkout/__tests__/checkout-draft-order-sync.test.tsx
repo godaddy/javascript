@@ -127,6 +127,107 @@ describe('Checkout draft-order field sync', () => {
     });
   });
 
+  it('syncs a complete shipping address without requiring first or last name', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        shipping: {
+          firstName: '',
+          lastName: '',
+          address: buildShippingAddress({
+            addressLine1: '',
+            addressLine2: '',
+            adminArea1: 'GA',
+            adminArea2: '',
+            postalCode: '',
+            countryCode: 'US',
+          }),
+        },
+        billing: {
+          firstName: '',
+          lastName: '',
+          address: null,
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await typeIntoNamedField(user, 'shippingAddressLine1', '456 Shipping Ln');
+    await typeIntoNamedField(user, 'shippingAdminArea2', 'Jasper');
+    await typeIntoNamedField(user, 'shippingPostalCode', '30143');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: {
+        address: expect.objectContaining({
+          addressLine1: '456 Shipping Ln',
+          adminArea2: 'Jasper',
+          postalCode: '30143',
+          countryCode: 'US',
+        }),
+      },
+      billing: {
+        address: expect.objectContaining({
+          addressLine1: '456 Shipping Ln',
+          adminArea2: 'Jasper',
+          postalCode: '30143',
+          countryCode: 'US',
+        }),
+      },
+    });
+    expect(getLastUpdateInput()?.shipping).not.toHaveProperty('firstName');
+    expect(getLastUpdateInput()?.shipping).not.toHaveProperty('lastName');
+    expect(getLastUpdateInput()?.billing).not.toHaveProperty('firstName');
+    expect(getLastUpdateInput()?.billing).not.toHaveProperty('lastName');
+  });
+
+  it('syncs a complete billing address without requiring first or last name', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        billing: {
+          firstName: '',
+          lastName: '',
+          address: buildShippingAddress({
+            addressLine1: '',
+            addressLine2: '',
+            adminArea1: 'GA',
+            adminArea2: '',
+            postalCode: '',
+            countryCode: 'US',
+          }),
+        },
+        lineItems: [{ fulfillmentMode: DeliveryMethods.PURCHASE }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableBillingAddressCollection: true,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await typeIntoNamedField(user, 'billingAddressLine1', '789 Billing Rd');
+    await typeIntoNamedField(user, 'billingAdminArea2', 'Atlanta');
+    await typeIntoNamedField(user, 'billingPostalCode', '30301');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      billing: {
+        address: expect.objectContaining({
+          addressLine1: '789 Billing Rd',
+          adminArea2: 'Atlanta',
+          postalCode: '30301',
+          countryCode: 'US',
+        }),
+      },
+    });
+    expect(getLastUpdateInput()?.billing).not.toHaveProperty('firstName');
+    expect(getLastUpdateInput()?.billing).not.toHaveProperty('lastName');
+  });
+
   it('serializes slow field-by-field edits without concurrent update mutations', async () => {
     const { user } = renderCheckout({
       apiOverrides: { updateDraftOrderDelayMs: 200 },

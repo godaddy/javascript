@@ -28,3 +28,4 @@ export {
   useFormatCurrency,
 } from './lib/format-currency';
 export * from './types';
+export * from './ui-extensions';

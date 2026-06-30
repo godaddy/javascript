@@ -63,6 +63,7 @@ import {
   DraftOrderSkusQuery,
   DraftOrderTaxesQuery,
   GetCheckoutSessionQuery,
+  GetEnabledStoreUiExtensionsQuery,
 } from './checkout-queries.ts';
 
 function getHostByEnvironment(apiHost?: string): string {
@@ -187,6 +188,23 @@ export async function getCheckoutSession(
     }
   );
   return response.checkoutSession;
+}
+
+export async function getEnabledStoreUiExtensions(
+  input: {
+    storeId: string;
+    target: string;
+  },
+  apiHost?: string
+) {
+  const GODADDY_HOST = getHostByEnvironment(apiHost);
+  const response = await graphqlRequestWithErrors<
+    ResultOf<typeof GetEnabledStoreUiExtensionsQuery>
+  >(GODADDY_HOST, GetEnabledStoreUiExtensionsQuery, input, {
+    'x-store-id': input.storeId,
+  });
+
+  return response.enabledStoreUiExtensions;
 }
 
 export async function getAddressMatches(

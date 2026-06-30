@@ -54,6 +54,41 @@ describe('Checkout billing behavior', () => {
     });
   });
 
+  it('calculates purchase-mode taxes from the collected billing address', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        billing: { address: buildBillingAddress({ addressLine1: '' }) },
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableBillingAddressCollection: true,
+        enableTaxCollection: true,
+      },
+    });
+    await waitForCheckoutReady();
+
+    await typeIntoNamedField(user, 'billingFirstName', 'Bill');
+    await typeIntoNamedField(user, 'billingLastName', 'Buyer');
+    await typeIntoNamedField(user, 'billingAddressLine1', '789 Billing Rd');
+    await typeIntoNamedField(user, 'billingAdminArea2', 'Atlanta');
+    await typeIntoNamedField(user, 'billingPostalCode', '30301');
+    await advanceCheckoutDebounce();
+    await waitForOperation('CalculateCheckoutSessionTaxes');
+
+    expect(
+      getOperations('CalculateCheckoutSessionTaxes').at(-1)?.input
+    ).toMatchObject({
+      destination: expect.objectContaining({
+        addressLine1: '789 Billing Rd',
+        adminArea2: 'Atlanta',
+        postalCode: '30301',
+        countryCode: 'US',
+      }),
+    });
+  });
+
   it('copies explicit shipping patches to billing while same-as-shipping is checked, then stops after unchecked', async () => {
     const draftOrder = buildDraftOrder();
     const session = buildCheckoutSession({ draftOrder });

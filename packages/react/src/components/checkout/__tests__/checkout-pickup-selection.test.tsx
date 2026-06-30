@@ -301,6 +301,67 @@ describe('Checkout pickup location and time selection', () => {
     });
   });
 
+  it('reapplies the selected pickup location when refetched line items need pickup fulfillment sync', async () => {
+    const location = buildPickupLocation({
+      id: 'default-location',
+      isDefault: true,
+      address: {
+        addressLine1: '599 Stegall Dr',
+        addressLine2: '',
+        addressLine3: '',
+        adminArea1: 'GA',
+        adminArea2: 'Jasper',
+        adminArea3: 'Jasper Store',
+        adminArea4: '',
+        postalCode: '30143',
+        countryCode: 'US',
+      },
+    });
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ id: 'line-1', fulfillmentMode: 'PICKUP' }],
+      shippingLines: [],
+    });
+    const session = buildCheckoutSession({
+      draftOrder,
+      locations: [location],
+      defaultOperatingHours: location.operatingHours,
+      paymentMethods: offlinePaymentMethods(),
+    });
+
+    const { queryClient } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionFulfillmentLocation');
+    clearOperations();
+
+    const refetchedDraftOrder = buildDraftOrder({
+      lineItems: [
+        { id: 'line-1', fulfillmentMode: 'PICKUP' },
+        { id: 'line-2', fulfillmentMode: 'NONE' },
+      ],
+      shippingLines: [],
+    });
+
+    queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+      checkoutSession: { ...session, draftOrder: refetchedDraftOrder },
+    });
+    await flushPromises();
+
+    await waitForOperation('ApplyCheckoutSessionFulfillmentLocation');
+    await waitForOperation('CalculateCheckoutSessionTaxes');
+
+    expect(
+      getOperations('ApplyCheckoutSessionFulfillmentLocation')
+    ).toHaveLength(1);
+    expect(
+      getOperations('ApplyCheckoutSessionFulfillmentLocation').at(-1)?.input
+    ).toMatchObject({ fulfillmentLocationId: 'default-location' });
+    expect(
+      getOperations('CalculateCheckoutSessionTaxes').at(-1)?.input
+    ).toMatchObject({
+      destination: expect.objectContaining({ postalCode: '30143' }),
+    });
+  });
+
   it('preserves the default pickup location across refetches before confirming', async () => {
     const location = buildPickupLocation({
       id: 'default-location',

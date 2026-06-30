@@ -4,8 +4,11 @@ import { CalendarIcon, ChevronDown, Clock, MapPin, Store } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { useApplyFulfillmentLocation } from '@/components/checkout/delivery/utils/use-apply-fulfillment-location';
 import { NotesForm } from '@/components/checkout/notes/notes-form';
+import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
+import { Target } from '@/components/checkout/target/target';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -36,7 +39,7 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
-import type { CheckoutSessionLocation, StoreHours } from '@/types';
+import type { CheckoutSessionLocation, DraftOrder, StoreHours } from '@/types';
 import {
   FALLBACK_LEAD_TIME,
   findFirstAvailablePickupDate,
@@ -68,6 +71,24 @@ function parseISODate(dateStr: string): Date | undefined {
   return new Date(year, month - 1, day);
 }
 
+function getPickupFulfillmentSyncKey(
+  lineItems?: DraftOrder['lineItems']
+): string | null {
+  const hasLineItemsMissingPickupFulfillment = lineItems?.some(
+    lineItem =>
+      !lineItem.fulfillmentMode ||
+      lineItem.fulfillmentMode === DeliveryMethods.NONE
+  );
+
+  if (!hasLineItemsMissingPickupFulfillment) return null;
+
+  return (
+    lineItems
+      ?.map(lineItem => `${lineItem.id}:${lineItem.fulfillmentMode ?? ''}`)
+      .join('|') || null
+  );
+}
+
 /**
  * Pretty print a plain "HH:mm" or already-formatted string.
  * No time-zone conversion – we keep exactly what the merchant supplied.
@@ -97,7 +118,9 @@ export function LocalPickupForm({
   const form = useFormContext();
   const { session } = useCheckoutContext();
   const { t } = useGoDaddyContext();
+  const { data: draftOrder } = useDraftOrder();
   const applyFulfillmentLocation = useApplyFulfillmentLocation();
+  const blockedFulfillmentSyncKeyRef = React.useRef<string | null>(null);
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
@@ -226,6 +249,41 @@ export function LocalPickupForm({
     },
     [selectedLocationId, getStoreHours]
   );
+
+  useEffect(() => {
+    const fulfillmentSyncKey = getPickupFulfillmentSyncKey(
+      draftOrder?.lineItems
+    );
+
+    if (!fulfillmentSyncKey) {
+      blockedFulfillmentSyncKeyRef.current = null;
+      return;
+    }
+
+    if (fulfillmentSyncKey === blockedFulfillmentSyncKeyRef.current) {
+      return;
+    }
+
+    const pickupLocationId = form.getValues('pickupLocationId');
+    if (!pickupLocationId) return;
+
+    const location = session?.locations?.find(
+      loc => loc.id === pickupLocationId
+    );
+    if (!location?.address) return;
+
+    blockedFulfillmentSyncKeyRef.current = fulfillmentSyncKey;
+    setSelectedLocationId(pickupLocationId);
+    applyFulfillmentLocation.mutate({
+      fulfillmentLocationId: pickupLocationId,
+      locationAddress: location.address,
+    });
+  }, [
+    applyFulfillmentLocation,
+    draftOrder?.lineItems,
+    form,
+    session?.locations,
+  ]);
 
   // Generate time slots for the selected date
   useEffect(() => {
@@ -614,7 +672,13 @@ export function LocalPickupForm({
           </div>
         )}
 
-      {session?.enableNotesCollection ? <NotesForm /> : null}
+      {session?.enableNotesCollection ? (
+        <>
+          <Target id='checkout.form.notes.before' />
+          <NotesForm />
+          <Target id='checkout.form.notes.after' />
+        </>
+      ) : null}
 
       {selectedLocationId && displayHours && showStoreHours && (
         <Collapsible
