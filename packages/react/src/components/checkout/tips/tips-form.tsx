@@ -104,17 +104,19 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
           <Button
             key={percentage}
             type='button'
-            variant={tipPercentage === percentage ? 'default' : 'outline'}
+            variant='outline'
             className={cn(
-              'h-16 flex flex-col items-center justify-center',
+              'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted',
               tipPercentage === percentage
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-card hover:bg-muted active:ring'
+                ? 'border-muted-foreground'
+                : 'bg-card active:ring'
             )}
             onClick={() => handlePercentageSelect(percentage)}
             aria-checked={tipPercentage === percentage ? 'true' : 'false'}
           >
-            <span className='text-lg'>{percentage}%</span>
+            <span className='text-lg leading-tight font-bold'>
+              {percentage}%
+            </span>
             <span className='text-sm'>
               {formatCurrency({
                 amount: calculateTipAmount(percentage),
@@ -133,10 +135,10 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
       >
         <Button
           type='button'
-          variant={tipPercentage === 0 ? 'default' : 'outline'}
+          variant='outline'
           className={cn(
-            'h-12 font-normal',
-            tipPercentage !== 0 && 'hover:bg-muted'
+            'h-12 font-normal hover:bg-muted',
+            tipPercentage === 0 && 'border-muted-foreground'
           )}
           onClick={handleNoTip}
           aria-checked={tipPercentage === 0 ? 'true' : 'false'}
@@ -145,8 +147,11 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
         </Button>
         <Button
           type='button'
-          variant={showCustomTip ? 'default' : 'outline'}
-          className={cn('h-12 font-normal', !showCustomTip && 'hover:bg-muted')}
+          variant='outline'
+          className={cn(
+            'h-12 font-normal hover:bg-muted',
+            showCustomTip && 'border-muted-foreground'
+          )}
           onClick={handleCustomTip}
           aria-checked={showCustomTip ? 'true' : 'false'}
         >
@@ -154,13 +159,13 @@ export function TipsForm({ total, currencyCode }: TipsFormProps) {
         </Button>
       </div>
 
-      {showCustomTip && (
+      {showCustomTip ? (
         <CustomTipInput
           currencyCode={currencyCode}
           total={total}
           formatCurrency={formatCurrency}
         />
-      )}
+      ) : null}
     </fieldset>
   );
 }
@@ -278,6 +283,10 @@ function CustomTipInput({
     });
   };
 
+  // Ref to avoid `form` (unstable reference) in the dependency array.
+  const formRef = useRef(form);
+  formRef.current = form;
+
   // When the debounced value settles and the input is still focused,
   // sync to form state and format the display — the same effect as blur
   // but triggered by 1.5s of inactivity. This keeps the order summary
@@ -285,11 +294,11 @@ function CustomTipInput({
   useEffect(() => {
     if (!isFocused.current || debouncedLocal === null) return;
     const tipAmount = convertMajorToMinorUnits(debouncedLocal ?? '', code);
-    form.setValue('tipAmount', tipAmount);
+    formRef.current.setValue('tipAmount', tipAmount);
     // Clear local state so the display derives from the formatted form
     // value (e.g. "10.5" → "10.50"), same as the blur handler.
     setLocalValue(null);
-  }, [debouncedLocal, code, form]);
+  }, [debouncedLocal, code]);
 
   const symbolEl = (
     <span

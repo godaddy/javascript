@@ -7804,6 +7804,13 @@ const introspection = {
               name: 'MoneyInput',
             },
           },
+          {
+            name: 'tipAmount',
+            type: {
+              kind: 'SCALAR',
+              name: 'Int',
+            },
+          },
         ],
         isOneOf: false,
       },
