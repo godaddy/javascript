@@ -186,7 +186,7 @@ export const baseCheckoutSchema = z.object({
   pickupLeadTime: z.number().nullish(),
   pickupTimezone: z.string().nullish(),
   tipAmount: z.number().optional(),
-  tipPercentage: z.number().optional(),
+  tipPercentage: z.number().nullish(),
   paymentMethod: z.string().min(1, 'Select a payment method'),
   stripePaymentIntent: z.string().optional(),
   stripePaymentIntentId: z.string().optional(),
