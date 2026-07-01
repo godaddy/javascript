@@ -169,6 +169,12 @@ export function useConfirmCheckout() {
               defaultTimezone: session?.defaultOperatingHours?.timeZone,
             })
           : {};
+        const tipAmount = form.getValues('tipAmount');
+        const payload = {
+          ...confirmCheckoutInput,
+          ...pickUpData,
+          tipAmount,
+        }
 
         // keep for debugging
         // console.log({
@@ -195,18 +201,12 @@ export function useConfirmCheckout() {
 
         const data = jwt
           ? await confirmCheckout(
-              {
-                ...confirmCheckoutInput,
-                ...(isPickup ? pickUpData : {}),
-              },
+              payload,
               { accessToken: jwt, sessionId: session?.id || '' },
               apiHost
             )
           : await confirmCheckout(
-              {
-                ...confirmCheckoutInput,
-                ...(isPickup ? pickUpData : {}),
-              },
+              payload,
               session,
               apiHost
             );
