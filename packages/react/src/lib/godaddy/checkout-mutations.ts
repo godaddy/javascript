@@ -392,10 +392,10 @@ export const ApplyCheckoutSessionDiscountMutation = graphql(`
 
 export const ConfirmCheckoutSessionMutation = graphql(`
   mutation ConfirmCheckoutSession($input: MutationConfirmCheckoutSessionInput!, $sessionId: String!)  {
-        confirmCheckoutSession(input: $input, sessionId: $sessionId) {
-          status
-        }
+    confirmCheckoutSession(input: $input, sessionId: $sessionId) {
+      status
     }
+  }
 `);
 
 export const ApplyCheckoutSessionShippingMethodMutation = graphql(`
