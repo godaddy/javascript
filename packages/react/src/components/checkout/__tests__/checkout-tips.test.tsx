@@ -8,6 +8,7 @@ import {
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
+import { getLastConfirmInput } from './checkout-test-fixtures';
 
 vi.mock('@/tracking/track', async importOriginal => {
   const actual = await importOriginal<typeof import('@/tracking/track')>();
@@ -344,6 +345,121 @@ describe('Checkout tips', () => {
     await waitFor(() => {
       expect(fifteen).toHaveAttribute('aria-checked', 'true');
       expect(screen.queryByPlaceholderText('0')).not.toBeInTheDocument();
+    });
+  });
+
+  it('includes tipAmount in the ConfirmCheckoutSession mutation payload', async () => {
+    const { user } = renderCheckout({
+      sessionOverrides: {
+        enableTips: true,
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableTaxCollection: false,
+        paymentMethods: {
+          card: {
+            processor: 'godaddy',
+            checkoutTypes: ['standard'],
+          },
+        },
+      },
+      draftOrderOverrides: {
+        totals: {
+          subTotal: { value: 2500, currencyCode: 'USD' },
+          discountTotal: { value: 0, currencyCode: 'USD' },
+          shippingTotal: { value: 0, currencyCode: 'USD' },
+          taxTotal: { value: 0, currencyCode: 'USD' },
+          feeTotal: { value: 0, currencyCode: 'USD' },
+          total: { value: 2500, currencyCode: 'USD' },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await waitFor(() => {
+      expect(screen.getAllByText('$5.00').length).toBeGreaterThan(0);
+    });
+
+    await user.click(await screen.findByRole('button', { name: /pay now/i }));
+    await waitForOperation('ConfirmCheckoutSession');
+
+    expect(getLastConfirmInput()).toMatchObject({
+      tipAmount: 500,
+    });
+  });
+
+  it('includes a custom tipAmount when entering a custom tip before confirming', async () => {
+    const { user } = renderCheckout({
+      sessionOverrides: {
+        enableTips: true,
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableTaxCollection: false,
+        paymentMethods: {
+          card: {
+            processor: 'godaddy',
+            checkoutTypes: ['standard'],
+          },
+        },
+      },
+      draftOrderOverrides: {
+        totals: {
+          subTotal: { value: 2500, currencyCode: 'USD' },
+          discountTotal: { value: 0, currencyCode: 'USD' },
+          shippingTotal: { value: 0, currencyCode: 'USD' },
+          taxTotal: { value: 0, currencyCode: 'USD' },
+          feeTotal: { value: 0, currencyCode: 'USD' },
+          total: { value: 2500, currencyCode: 'USD' },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(
+      await screen.findByRole('button', { name: /custom amount/i })
+    );
+    const input = await screen.findByPlaceholderText('0.00');
+    await user.click(input);
+    await user.type(input, '7.50');
+    await user.tab();
+
+    await waitFor(() => {
+      expect(screen.getAllByText('$7.50').length).toBeGreaterThan(0);
+    });
+
+    await user.click(await screen.findByRole('button', { name: /pay now/i }));
+    await waitForOperation('ConfirmCheckoutSession');
+
+    expect(getLastConfirmInput()).toMatchObject({
+      tipAmount: 750,
+    });
+  });
+
+  it('sends tipAmount as 0 when no tip is selected', async () => {
+    const { user } = renderCheckout({
+      sessionOverrides: {
+        enableTips: true,
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableTaxCollection: false,
+        paymentMethods: {
+          card: {
+            processor: 'godaddy',
+            checkoutTypes: ['standard'],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(await screen.findByRole('button', { name: /pay now/i }));
+    await waitForOperation('ConfirmCheckoutSession');
+
+    expect(getLastConfirmInput()).toMatchObject({
+      tipAmount: 0,
     });
   });
 });
