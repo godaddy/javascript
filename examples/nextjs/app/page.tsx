@@ -21,6 +21,7 @@ export default async function Home() {
       enableTaxCollection: true,
       enableNotesCollection: true,
       enablePromotionCodes: true,
+      enableTips: true,
       shipping: {
         fulfillmentLocationId: 'default-location',
         originAddress: {
