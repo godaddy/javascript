@@ -451,6 +451,7 @@ export function buildPickupLocation(
       timeZone: 'America/New_York',
       leadTime: 30,
       pickupWindowInDays: 0,
+      pickupMode: null,
       pickupSlotInterval: 30,
       hours: {
         sunday: { enabled: true, openTime: '09:00', closeTime: '17:00' },

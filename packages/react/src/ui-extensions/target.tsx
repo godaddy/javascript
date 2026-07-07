@@ -54,7 +54,7 @@ export function Target({
   theme,
   onExtensionError,
 }: TargetProps) {
-  const { debug } = useGoDaddyContext();
+  const { apiHost, debug } = useGoDaddyContext();
   const lastDebugLogSignatureRef = useRef<string | undefined>(undefined);
   const lastDiscoveryErrorSignatureRef = useRef<string | undefined>(undefined);
   const { data, error, isLoading } = useEnabledStoreUiExtensions({
@@ -136,6 +136,7 @@ export function Target({
       <>
         {targetExtensions.map(extension => (
           <UiExtensionRuntimeHost
+            apiHost={apiHost}
             context={context}
             extension={extension}
             initialProps={initialProps}

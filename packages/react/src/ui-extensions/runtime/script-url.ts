@@ -9,28 +9,28 @@ function encodePathSegment(value: string) {
   return encodeURIComponent(value);
 }
 
-function trimTrailingSlashes(value: string) {
-  let end = value.length;
+export function getUiExtensionCdnBaseUrl(apiHost?: string) {
+  const host = (apiHost || 'api.godaddy.com')
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/$/, '');
 
-  while (end > 0 && value[end - 1] === '/') {
-    end -= 1;
-  }
-
-  return value.slice(0, end);
+  return `https://${host.replace(/^api\./i, 'cdn.ui-extensions.commerce.')}`;
 }
 
 export function getUiExtensionScriptUrl(
-  extension: UiExtension
+  extension: UiExtension,
+  apiHost?: string
 ): BuildUiExtensionScriptUrlResult {
-  const { applicationId, cdnUrl, id, releaseId, target } = extension;
+  const { applicationId, id, releaseId, target } = extension;
 
-  if (!cdnUrl || !target || !applicationId || !releaseId) {
+  if (!target || !applicationId || !releaseId) {
     return {
       success: false,
       error: {
         code: 'missing_required_field',
         message:
-          'UI extension requires cdnUrl, target, applicationId, and releaseId to load.',
+          'UI extension requires target, applicationId, and releaseId to load.',
         runtimeType: 'dom-bundle',
         extensionId: id,
         applicationId,
@@ -41,7 +41,7 @@ export function getUiExtensionScriptUrl(
   }
 
   try {
-    const baseUrl = trimTrailingSlashes(cdnUrl);
+    const baseUrl = getUiExtensionCdnBaseUrl(apiHost);
     const url = [
       baseUrl,
       'apps',

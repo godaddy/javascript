@@ -79,7 +79,6 @@ export const GetCheckoutSessionQuery = graphql(`
                   releaseId
                   name
                   handle
-                  cdnUrl
                   type
                   target
                 }
@@ -156,6 +155,7 @@ export const GetCheckoutSessionQuery = graphql(`
               }
               operatingHours {
                 pickupWindowInDays
+                pickupMode
                 leadTime
                 pickupSlotInterval
                 timeZone
@@ -200,6 +200,7 @@ export const GetCheckoutSessionQuery = graphql(`
             }
             defaultOperatingHours {
               pickupWindowInDays
+              pickupMode
               leadTime
               pickupSlotInterval
               timeZone
@@ -287,7 +288,6 @@ export const GetEnabledStoreUiExtensionsQuery = graphql(`
       releaseId
       name
       handle
-      cdnUrl
       type
       target
     }

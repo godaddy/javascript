@@ -1,4 +1,5 @@
 import { format as formatTz, fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { PICKUP_MODES, type PickupMode } from './generate-pickup-time-slots';
 
 type FormFields = {
   pickupDate?: string | Date | null;
@@ -7,6 +8,7 @@ type FormFields = {
   leadTime?: number;
   timezone: string | null;
   defaultTimezone?: string | null;
+  pickupMode?: PickupMode | null;
 };
 
 type PickupPayload = {
@@ -36,11 +38,16 @@ export function buildPickupPayload({
   leadTime = 0,
   timezone = 'UTC',
   defaultTimezone,
+  pickupMode,
 }: FormFields): PickupPayload {
   const tz = timezone || defaultTimezone || 'UTC';
   let date: Date;
 
-  if (pickupTime === 'ASAP') {
+  if (pickupMode === PICKUP_MODES.DATE_ONLY && pickupDate) {
+    const dateStr = toDateString(pickupDate);
+    const utcDate = fromZonedTime(`${dateStr}T00:00:00`, tz);
+    date = toZonedTime(utcDate, tz);
+  } else if (pickupTime === 'ASAP') {
     const now = new Date();
     now.setMinutes(now.getMinutes() + leadTime);
     date = toZonedTime(now, tz);

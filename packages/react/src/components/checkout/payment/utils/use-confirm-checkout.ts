@@ -12,6 +12,7 @@ import {
 } from '@/components/checkout/order/use-draft-order';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
+import { getPickupMode } from '@/components/checkout/pickup/utils/generate-pickup-time-slots';
 import { getShippingFulfillmentSyncKey } from '@/components/checkout/shipping/utils/should-apply-shipping-method';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -159,14 +160,23 @@ export function useConfirmCheckout() {
           throw new Error('MISSING_SHIPPING_INFO');
         }
 
+        const pickupLocationId = form.getValues('pickupLocationId');
+        const pickupStoreHours = pickupLocationId
+          ? (session?.locations?.find(
+              location => location.id === pickupLocationId
+            )?.operatingHours ?? session?.defaultOperatingHours)
+          : session?.defaultOperatingHours;
         const pickUpData = isPickup
           ? buildPickupPayload({
               pickupDate: form.getValues('pickupDate'),
               pickupTime: form.getValues('pickupTime'),
-              pickupLocationId: form.getValues('pickupLocationId'),
+              pickupLocationId,
               leadTime: form.getValues('pickupLeadTime') ?? 0,
               timezone: form.getValues('pickupTimezone'),
               defaultTimezone: session?.defaultOperatingHours?.timeZone,
+              pickupMode: pickupStoreHours
+                ? getPickupMode(pickupStoreHours)
+                : undefined,
             })
           : {};
 

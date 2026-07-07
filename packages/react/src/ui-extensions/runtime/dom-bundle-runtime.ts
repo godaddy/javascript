@@ -184,7 +184,8 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
   }
 
   async mount(input: UiExtensionRuntimeMountInput) {
-    const { container, context, extension, initialProps, onError } = input;
+    const { apiHost, container, context, extension, initialProps, onError } =
+      input;
     this.clearRuntimeState();
     this.isDisposed = false;
     this.extension = extension;
@@ -201,7 +202,7 @@ export class DomBundleUiExtensionRuntime implements UiExtensionRuntime {
 
     this.metadata = getExtensionMetadata(extension);
 
-    const scriptUrlResult = getUiExtensionScriptUrl(extension);
+    const scriptUrlResult = getUiExtensionScriptUrl(extension, apiHost);
     if (!scriptUrlResult.success) {
       onError(scriptUrlResult.error);
       return;

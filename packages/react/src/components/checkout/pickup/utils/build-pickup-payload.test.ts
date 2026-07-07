@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildPickupPayload } from './build-pickup-payload';
+import { PICKUP_MODES } from './generate-pickup-time-slots';
 
 describe('buildPickupPayload', () => {
   afterEach(() => {
@@ -87,8 +88,8 @@ describe('buildPickupPayload', () => {
     });
   });
 
-  describe('date only (no time)', () => {
-    it('should default to midnight in the store timezone', () => {
+  describe('date only', () => {
+    it('should default to midnight in the store timezone for the legacy no-time fallback', () => {
       const result = buildPickupPayload({
         pickupDate: '2026-04-10',
         pickupTime: null,
@@ -97,6 +98,46 @@ describe('buildPickupPayload', () => {
       });
 
       expect(result.fulfillmentStartAt).toBe('2026-04-10T00:00:00-04:00');
+    });
+
+    it('should use midnight in the store timezone for explicit date-only pickup even if a stale time exists', () => {
+      const result = buildPickupPayload({
+        pickupDate: '2026-04-10',
+        pickupTime: '13:00',
+        pickupLocationId: 'loc-7',
+        timezone: 'America/New_York',
+        pickupMode: PICKUP_MODES.DATE_ONLY,
+      });
+
+      expect(result.fulfillmentStartAt).toBe('2026-04-10T00:00:00-04:00');
+      expect(result.fulfillmentEndAt).toBe('2026-04-10T00:00:00-04:00');
+    });
+
+    it('should handle explicit date-only pickup in a timezone far from the browser timezone', () => {
+      const result = buildPickupPayload({
+        pickupDate: '2026-04-10',
+        pickupTime: null,
+        pickupLocationId: 'loc-7',
+        timezone: 'Asia/Kolkata',
+        pickupMode: PICKUP_MODES.DATE_ONLY,
+      });
+
+      expect(result.fulfillmentStartAt).toBe('2026-04-10T00:00:00+05:30');
+      expect(result.fulfillmentEndAt).toBe('2026-04-10T00:00:00+05:30');
+    });
+
+    it('should use the default timezone for explicit date-only pickup when selected location timezone is empty', () => {
+      const result = buildPickupPayload({
+        pickupDate: '2026-04-10',
+        pickupTime: null,
+        pickupLocationId: 'loc-7',
+        timezone: '',
+        defaultTimezone: 'America/Los_Angeles',
+        pickupMode: PICKUP_MODES.DATE_ONLY,
+      });
+
+      expect(result.fulfillmentStartAt).toBe('2026-04-10T00:00:00-07:00');
+      expect(result.fulfillmentEndAt).toBe('2026-04-10T00:00:00-07:00');
     });
   });
 

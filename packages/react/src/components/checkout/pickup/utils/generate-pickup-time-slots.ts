@@ -4,6 +4,14 @@ import { toZonedTime } from 'date-fns-tz';
 export const DEFAULT_SLOT_INTERVAL = 30;
 export const FALLBACK_LEAD_TIME = 30;
 
+export const PICKUP_MODES = {
+  ASAP: 'asap',
+  DATE_ONLY: 'dateOnly',
+  DATE_AND_TIME: 'dateAndTime',
+} as const;
+
+export type PickupMode = (typeof PICKUP_MODES)[keyof typeof PICKUP_MODES];
+
 export const dayToProperty = {
   0: 'sunday',
   1: 'monday',
@@ -33,6 +41,7 @@ export type WeekHours = {
 export type OperatingHours = {
   leadTime: number;
   pickupWindowInDays: number;
+  pickupMode?: PickupMode | null;
   timeZone: string;
   hours: WeekHours;
   /**
@@ -50,6 +59,15 @@ export type TimeSlot = {
   label: string;
   value: string;
 };
+
+export function getPickupMode(storeHours: OperatingHours): PickupMode {
+  return (
+    storeHours.pickupMode ??
+    (storeHours.pickupWindowInDays === 0
+      ? PICKUP_MODES.ASAP
+      : PICKUP_MODES.DATE_AND_TIME)
+  );
+}
 
 /**
  * Format a lead time in minutes for display.
@@ -115,8 +133,8 @@ export function findFirstAvailablePickupDate(
   storeHours: OperatingHours,
   now?: Date
 ): Date | undefined {
-  if (storeHours.pickupWindowInDays === 0) {
-    // ASAP-only mode — always today
+  const pickupMode = getPickupMode(storeHours);
+  if (pickupMode === PICKUP_MODES.ASAP) {
     return toLocalCalendarDate(
       toZonedTime(now ?? new Date(), storeHours.timeZone)
     );
@@ -131,6 +149,19 @@ export function findFirstAvailablePickupDate(
 
   for (let i = 0; i < maxDays; i++) {
     const zonedDate = toZonedTime(dateToCheck, storeHours.timeZone);
+    const calendarDate = toLocalCalendarDate(zonedDate);
+
+    if (
+      pickupMode === PICKUP_MODES.DATE_ONLY &&
+      isDateOnlyPickupDateAvailable({
+        selectedDate: calendarDate,
+        storeHours,
+        now,
+      })
+    ) {
+      return calendarDate;
+    }
+
     const dayOfWeek = zonedDate.getDay();
     const dayProperty = dayToProperty[dayOfWeek as keyof typeof dayToProperty];
     const dayHours = storeHours.hours[dayProperty];
@@ -145,7 +176,7 @@ export function findFirstAvailablePickupDate(
       });
 
       if (dayCloseTime > earliestPickup) {
-        return toLocalCalendarDate(zonedDate);
+        return calendarDate;
       }
     }
 
@@ -177,7 +208,7 @@ export function generatePickupTimeSlots({
   const leadTimeMinutes = storeHours.leadTime || FALLBACK_LEAD_TIME;
   const pickupSlotInterval = getSlotInterval(storeHours);
 
-  if (storeHours.pickupWindowInDays === 0) return [];
+  if (getPickupMode(storeHours) !== PICKUP_MODES.DATE_AND_TIME) return [];
 
   const zonedSelected = toStoreSelectedDate(selectedDate, tz);
   const dayOfWeek = zonedSelected.getDay();
@@ -280,6 +311,45 @@ export function generatePickupTimeSlots({
   return slots;
 }
 
+export function isDateOnlyPickupDateAvailable({
+  selectedDate,
+  storeHours,
+  now: nowInput,
+}: {
+  selectedDate: Date;
+  storeHours: OperatingHours;
+  now?: Date;
+}): boolean {
+  const tz = storeHours.timeZone;
+  const selected = toStoreSelectedDate(selectedDate, tz);
+  const dayOfWeek = selected.getDay();
+  const dayProperty = dayToProperty[dayOfWeek as keyof typeof dayToProperty];
+  const hoursForDay = storeHours.hours[dayProperty];
+
+  if (
+    !hoursForDay?.enabled ||
+    !hoursForDay.openTime ||
+    !hoursForDay.closeTime
+  ) {
+    return false;
+  }
+
+  const now = toZonedTime(nowInput ?? new Date(), tz);
+  const leadTimeMinutes = storeHours.leadTime || FALLBACK_LEAD_TIME;
+  const earliestPickup = new Date(now.getTime() + leadTimeMinutes * 60000);
+  const [closeTimeHours, closeTimeMins] = hoursForDay.closeTime
+    .split(':')
+    .map(Number);
+  const closeDateTime = set(new Date(selected), {
+    hours: closeTimeHours,
+    minutes: closeTimeMins,
+    seconds: 0,
+    milliseconds: 0,
+  });
+
+  return closeDateTime > earliestPickup;
+}
+
 export function isPickupDateAvailable({
   selectedDate,
   storeHours,
@@ -289,7 +359,15 @@ export function isPickupDateAvailable({
   storeHours: OperatingHours;
   now?: Date;
 }): boolean {
-  if (storeHours.pickupWindowInDays === 0) return true;
+  const pickupMode = getPickupMode(storeHours);
+  if (pickupMode === PICKUP_MODES.ASAP) return true;
+  if (pickupMode === PICKUP_MODES.DATE_ONLY) {
+    return isDateOnlyPickupDateAvailable({
+      selectedDate,
+      storeHours,
+      now: nowInput,
+    });
+  }
 
   const timedSlots = generatePickupTimeSlots({
     selectedDate,

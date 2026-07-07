@@ -447,6 +447,64 @@ describe('Checkout pickup location and time selection', () => {
     });
   });
 
+  it('supports date-only pickup mode without showing time slots or warnings', async () => {
+    const location = scheduledLocation({
+      id: 'date-only-loc',
+      isDefault: true,
+      operatingHours: {
+        timeZone: 'America/New_York',
+        leadTime: 30,
+        pickupWindowInDays: 3,
+        pickupMode: 'dateOnly',
+        pickupSlotInterval: 60,
+        hours: {
+          sunday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
+          monday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
+          tuesday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
+          thursday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
+          friday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
+          saturday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
+        },
+      },
+    });
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+    });
+    const session = buildCheckoutSession({
+      draftOrder,
+      locations: [location],
+      defaultOperatingHours: location.operatingHours,
+      paymentMethods: offlinePaymentMethods(),
+    });
+
+    const { user } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+
+    await user.click(screen.getByRole('radio', { name: /local pickup/i }));
+    await waitForOperation('ApplyCheckoutSessionFulfillmentLocation');
+
+    expect(await screen.findByText(/pickup date/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/preferred pickup time/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no available time slots/i)
+    ).not.toBeInTheDocument();
+    clearOperations();
+
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+    await waitForOperation('ConfirmCheckoutSession');
+
+    expect(getLastConfirmInput()).toMatchObject({
+      fulfillmentLocationId: 'date-only-loc',
+      fulfillmentStartAt: '2026-01-05T00:00:00-05:00',
+      fulfillmentEndAt: '2026-01-05T00:00:00-05:00',
+    });
+  });
+
   it('falls back to default operating-hours timezone when the pickup location has none', async () => {
     const location = buildPickupLocation({
       id: 'fallback-tz-loc',

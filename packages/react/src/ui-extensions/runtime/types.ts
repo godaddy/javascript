@@ -93,6 +93,7 @@ export interface UiExtensionRuntimeMountInput {
   context: UiExtensionContext;
   initialProps?: UiExtensionInitialProps;
   capabilities?: UiExtensionCapabilities;
+  apiHost?: string;
   container?: HTMLElement;
   onRender?(tree: UiExtensionComponentTree): void;
   onResize?(size: { height?: number; width?: number }): void;

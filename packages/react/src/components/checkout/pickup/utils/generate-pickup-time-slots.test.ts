@@ -5,9 +5,12 @@ import {
   findFirstAvailablePickupDate,
   formatLeadTimeDisplay,
   generatePickupTimeSlots,
+  getPickupMode,
   isAsapAvailable,
+  isDateOnlyPickupDateAvailable,
   isPickupDateAvailable,
   type OperatingHours,
+  PICKUP_MODES,
 } from './generate-pickup-time-slots';
 
 // ── helpers ──────────────────────────────────────────────────────────────
@@ -109,9 +112,22 @@ describe('findFirstAvailablePickupDate', () => {
     expect(date!.getUTCDate()).toBe(27); // Wednesday
   });
 
-  it('returns today for pickupWindowInDays 0 (ASAP-only)', () => {
+  it('returns today for legacy pickupWindowInDays 0 (ASAP-only)', () => {
     const date = findFirstAvailablePickupDate(
       makeHours({ leadTime: 99999, pickupWindowInDays: 0 }),
+      MON_10AM
+    );
+    expect(date).toBeDefined();
+    expect(date!.getUTCDate()).toBe(25);
+  });
+
+  it('honors explicit ASAP mode even when pickupWindowInDays is greater than zero', () => {
+    const date = findFirstAvailablePickupDate(
+      makeHours({
+        leadTime: 99999,
+        pickupMode: PICKUP_MODES.ASAP,
+        pickupWindowInDays: 7,
+      }),
       MON_10AM
     );
     expect(date).toBeDefined();
@@ -188,15 +204,62 @@ describe('findFirstAvailablePickupDate', () => {
   });
 });
 
+// ── pickup modes ─────────────────────────────────────────────────────────
+
+describe('pickup modes', () => {
+  it('derives legacy modes from pickupWindowInDays when pickupMode is omitted', () => {
+    expect(getPickupMode(makeHours({ pickupWindowInDays: 0 }))).toBe(
+      PICKUP_MODES.ASAP
+    );
+    expect(getPickupMode(makeHours({ pickupWindowInDays: 7 }))).toBe(
+      PICKUP_MODES.DATE_AND_TIME
+    );
+  });
+
+  it('uses explicit pickupMode over pickupWindowInDays', () => {
+    expect(
+      getPickupMode(
+        makeHours({ pickupMode: PICKUP_MODES.DATE_ONLY, pickupWindowInDays: 0 })
+      )
+    ).toBe(PICKUP_MODES.DATE_ONLY);
+    expect(
+      getPickupMode(
+        makeHours({ pickupMode: PICKUP_MODES.ASAP, pickupWindowInDays: 7 })
+      )
+    ).toBe(PICKUP_MODES.ASAP);
+  });
+});
+
 // ── generatePickupTimeSlots ──────────────────────────────────────────────
 
 describe('generatePickupTimeSlots', () => {
   // ── basic / edge cases ───────────────────────────────────────────────
 
-  it('returns empty when pickupWindowInDays is 0', () => {
+  it('returns empty for legacy pickupWindowInDays 0 ASAP-only mode', () => {
     const slots = generatePickupTimeSlots({
       selectedDate: TUE,
       storeHours: makeHours({ pickupWindowInDays: 0 }),
+      now: MON_10AM,
+    });
+    expect(slots).toEqual([]);
+  });
+
+  it('returns empty for explicit ASAP mode even when pickupWindowInDays is greater than zero', () => {
+    const slots = generatePickupTimeSlots({
+      selectedDate: TUE,
+      storeHours: makeHours({
+        pickupMode: PICKUP_MODES.ASAP,
+        pickupWindowInDays: 7,
+      }),
+      now: MON_10AM,
+    });
+    expect(slots).toEqual([]);
+  });
+
+  it('returns empty for date-only mode even when a day has timed slot capacity', () => {
+    const slots = generatePickupTimeSlots({
+      selectedDate: TUE,
+      storeHours: makeHours({ pickupMode: PICKUP_MODES.DATE_ONLY }),
       now: MON_10AM,
     });
     expect(slots).toEqual([]);
@@ -803,6 +866,43 @@ describe('generatePickupTimeSlots', () => {
     });
 
     // US West Coast: UTC-7 (PDT in March 2024)
+    it('date-only availability respects store timezone near UTC day rollover', () => {
+      // UTC Tue 03:00 = Mon 11pm in New York. With 30-minute lead time, Monday is no longer bookable.
+      const lateNightUTC = new Date('2024-03-26T03:00:00Z');
+      const date = findFirstAvailablePickupDate(
+        makeNYCHours({
+          pickupMode: PICKUP_MODES.DATE_ONLY,
+          pickupWindowInDays: 2,
+        }),
+        lateNightUTC
+      );
+
+      expect(date).toBeDefined();
+      expect(date!.getDay()).toBe(2);
+    });
+
+    it('date-only availability uses selected calendar date without double-zoning', () => {
+      const selectedTuesday = new Date(2024, 2, 26);
+      const hours = makeHours({
+        pickupMode: PICKUP_MODES.DATE_ONLY,
+        pickupWindowInDays: 3,
+        timeZone: 'Pacific/Honolulu',
+        hours: {
+          ...standardWeek,
+          monday: disabledDay,
+          tuesday: enabledDay,
+        },
+      });
+
+      expect(
+        isDateOnlyPickupDateAvailable({
+          selectedDate: selectedTuesday,
+          storeHours: hours,
+          now: new Date('2024-03-25T10:00:00Z'),
+        })
+      ).toBe(true);
+    });
+
     it('works with America/Los_Angeles timezone', () => {
       // UTC 17:00 Mon = 10:00 AM PDT
       const monMorningLA = new Date('2024-03-25T17:00:00Z');
@@ -830,6 +930,63 @@ describe('generatePickupTimeSlots', () => {
 // ── isPickupDateAvailable ────────────────────────────────────────────────
 
 describe('isPickupDateAvailable', () => {
+  it('returns true for legacy pickupWindowInDays 0 ASAP-only mode', () => {
+    expect(
+      isPickupDateAvailable({
+        selectedDate: TUE,
+        storeHours: makeHours({ pickupWindowInDays: 0, leadTime: 99999 }),
+        now: MON_10AM,
+      })
+    ).toBe(true);
+  });
+
+  it('returns true for explicit ASAP mode even when pickupWindowInDays is greater than zero', () => {
+    expect(
+      isPickupDateAvailable({
+        selectedDate: TUE,
+        storeHours: makeHours({
+          pickupMode: PICKUP_MODES.ASAP,
+          pickupWindowInDays: 7,
+          leadTime: 99999,
+        }),
+        now: MON_10AM,
+      })
+    ).toBe(true);
+  });
+
+  it('returns true for date-only mode when the selected day is open after lead time', () => {
+    expect(
+      isPickupDateAvailable({
+        selectedDate: TUE,
+        storeHours: makeHours({ pickupMode: PICKUP_MODES.DATE_ONLY }),
+        now: MON_10AM,
+      })
+    ).toBe(true);
+  });
+
+  it('returns false for date-only mode when lead time pushes past close', () => {
+    expect(
+      isPickupDateAvailable({
+        selectedDate: MON_10AM,
+        storeHours: makeHours({
+          pickupMode: PICKUP_MODES.DATE_ONLY,
+          leadTime: 360,
+        }),
+        now: MON_10AM,
+      })
+    ).toBe(false);
+  });
+
+  it('returns false for date-only mode when selected day is disabled', () => {
+    expect(
+      isPickupDateAvailable({
+        selectedDate: new Date('2024-03-24T10:00:00Z'),
+        storeHours: makeHours({ pickupMode: PICKUP_MODES.DATE_ONLY }),
+        now: MON_10AM,
+      })
+    ).toBe(false);
+  });
+
   it('returns false for an enabled date that has no slots because it is inside the lead-time window', () => {
     const slots = generatePickupTimeSlots({
       selectedDate: TUE,

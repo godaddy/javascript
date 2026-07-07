@@ -13,6 +13,7 @@ import type {
 
 export interface UiExtensionRuntimeHostProps {
   extension: UiExtension;
+  apiHost?: string;
   context: UiExtensionContext;
   initialProps?: UiExtensionInitialProps;
   runtimeType?: Extract<UiExtensionRuntimeType, 'dom-bundle'>;
@@ -95,6 +96,7 @@ class UiExtensionErrorBoundary extends Component<UiExtensionErrorBoundaryProps> 
 }
 
 function UiExtensionRuntimeHostContainer({
+  apiHost,
   context,
   extension,
   initialProps,
@@ -116,6 +118,7 @@ function UiExtensionRuntimeHostContainer({
 
     void runtime.mount({
       extension,
+      apiHost,
       context,
       initialProps,
       container: containerRef.current || undefined,
@@ -135,7 +138,7 @@ function UiExtensionRuntimeHostContainer({
         );
       });
     };
-  }, [extensionKey, runtimeType]);
+  }, [apiHost, extensionKey, runtimeType]);
 
   useEffect(() => {
     void Promise.resolve(

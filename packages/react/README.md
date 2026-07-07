@@ -89,7 +89,7 @@ The checkout session automatically requests the following OAuth2 scope:
 
 ### Operating Hours
 
-The `operatingHours` field configures local pickup scheduling — time zones, lead times, pickup windows, and slot intervals.
+The `operatingHours` field configures local pickup scheduling — time zones, lead times, pickup windows, pickup mode, and slot intervals.
 
 ```typescript
 operatingHours: {
@@ -97,6 +97,7 @@ operatingHours: {
     timeZone: 'America/New_York',
     leadTime: 60,
     pickupWindowInDays: 7,
+    pickupMode: 'dateAndTime',
     pickupSlotInterval: 30,
     hours: {
       monday: { enabled: true, openTime: '09:00', closeTime: '17:00' },
@@ -117,16 +118,22 @@ operatingHours: {
 |-------|------|----------|-------------|
 | `timeZone` | string | Yes | IANA timezone for the store (e.g. `America/New_York`). All slot times are displayed in this timezone. |
 | `leadTime` | number | Yes | Minimum advance notice in minutes before a pickup can be scheduled. Controls the earliest available slot (now + leadTime). |
-| `pickupWindowInDays` | number | Yes | Number of days ahead customers can schedule pickup. Set to `0` for ASAP-only mode (no date/time picker). |
-| `pickupSlotInterval` | number | No | Minutes between selectable time slots (e.g. `30` → 10:00, 10:30, 11:00…). Defaults to 30 if omitted. Separate from `leadTime` — the interval controls slot spacing, while leadTime controls advance notice. |
+| `pickupWindowInDays` | number | Yes | Number of days ahead customers can schedule pickup. For backwards compatibility, `0` means ASAP-only mode when `pickupMode` is omitted. |
+| `pickupMode` | `'asap' \| 'dateOnly' \| 'dateAndTime'` | No | Controls the pickup selection UI. If omitted, the legacy behavior is preserved: `pickupWindowInDays: 0` resolves to `asap`; otherwise it resolves to `dateAndTime`. |
+| `pickupSlotInterval` | number | No | Minutes between selectable time slots (e.g. `30` → 10:00, 10:30, 11:00…). Defaults to 30 if omitted. Used by `dateAndTime` mode. Separate from `leadTime` — the interval controls slot spacing, while leadTime controls advance notice. |
 | `hours` | object | Yes | Per-day operating hours. Each day has `enabled` (boolean), `openTime` (HH:mm or null), and `closeTime` (HH:mm or null). |
 
 #### Behavior Notes
 
-- **ASAP option** — Shown for today only, when the store can fulfill an order (now + leadTime) before closing time.
+- **Pickup modes**:
+  - `asap` — No date/time selectors. Checkout sets pickup to ASAP using `now + leadTime` in the store timezone.
+  - `dateOnly` — Shows a date selector only. No time selector is shown, and missing time slots do not produce a warning.
+  - `dateAndTime` — Shows a date selector and selectable time slots. This is the default for scheduled pickup.
+- **Backwards compatibility** — If `pickupMode` is omitted, `pickupWindowInDays: 0` remains ASAP-only. If `pickupWindowInDays` is greater than `0`, checkout uses `dateAndTime`.
+- **ASAP option in scheduled pickup** — In `dateAndTime` mode, an ASAP option is shown for today only when the store can fulfill an order (now + leadTime) before closing time.
 - **Lead time vs slot interval** — A store with `leadTime: 1440` (24 hours) and `pickupSlotInterval: 15` shows 15-minute slots starting tomorrow, not 24-hour gaps.
 - **Timezone handling** — All date/time logic uses the store's `timeZone`, not the customer's browser timezone. A store in Phoenix shows Phoenix hours regardless of where the customer is browsing from.
-- **No available slots** — When leadTime exceeds the entire pickup window, or no days are enabled, a "No available time slots" banner is shown.
+- **No available slots** — In `dateAndTime` mode, when leadTime exceeds the entire pickup window, no days are enabled, or no selectable slots exist, a "No available time slots" banner is shown.
 
 ### Appearance
 

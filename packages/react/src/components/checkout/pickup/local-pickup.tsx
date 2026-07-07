@@ -45,8 +45,10 @@ import {
   findFirstAvailablePickupDate,
   formatLeadTimeDisplay,
   generatePickupTimeSlots,
+  getPickupMode,
   isAsapAvailable,
   isPickupDateAvailable,
+  PICKUP_MODES,
 } from './utils/generate-pickup-time-slots';
 
 // Map day of week to the corresponding property in hours
@@ -155,7 +157,9 @@ export function LocalPickupForm({
         locationHours.leadTime || FALLBACK_LEAD_TIME
       );
 
-      if (locationHours.pickupWindowInDays === 0) {
+      const pickupMode = getPickupMode(locationHours);
+
+      if (pickupMode === PICKUP_MODES.ASAP) {
         const today = new Date();
         const zonedToday = toZonedTime(today, locationHours.timeZone);
         const calendarToday = new Date(
@@ -292,7 +296,10 @@ export function LocalPickupForm({
       return;
     }
     const locationHours = getStoreHours(selectedLocationId);
-    if (!locationHours || locationHours.pickupWindowInDays === 0) {
+    if (
+      !locationHours ||
+      getPickupMode(locationHours) !== PICKUP_MODES.DATE_AND_TIME
+    ) {
       setAvailableTimeSlots([]);
       return;
     }
@@ -427,6 +434,9 @@ export function LocalPickupForm({
     () => (selectedLocationId ? getStoreHours(selectedLocationId) : undefined),
     [selectedLocationId, getStoreHours]
   );
+  const pickupMode = storeHours ? getPickupMode(storeHours) : undefined;
+  const showsDatePicker = pickupMode !== PICKUP_MODES.ASAP;
+  const showsTimePicker = pickupMode === PICKUP_MODES.DATE_AND_TIME;
 
   return (
     <div className='space-y-4'>
@@ -522,7 +532,7 @@ export function LocalPickupForm({
         )}
       />
 
-      {storeHours?.pickupWindowInDays !== 0 && (
+      {showsDatePicker && (
         <FormField
           control={form.control}
           name='pickupDate'
@@ -615,62 +625,58 @@ export function LocalPickupForm({
         />
       )}
 
-      {storeHours?.pickupWindowInDays !== 0 &&
-        selectedDate &&
-        availableTimeSlots.length > 0 && (
-          <FormField
-            control={form.control}
-            name='pickupTime'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t.pickup.time}</FormLabel>
-                <Select
-                  onValueChange={value => {
-                    field.onChange(value);
+      {showsTimePicker && selectedDate && availableTimeSlots.length > 0 && (
+        <FormField
+          control={form.control}
+          name='pickupTime'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t.pickup.time}</FormLabel>
+              <Select
+                onValueChange={value => {
+                  field.onChange(value);
 
-                    // Track pickup time selection
-                    track({
-                      eventId: eventIds.changePickupTime,
-                      type: TrackingEventType.CLICK,
-                      properties: {
-                        pickupTime: value,
-                        isAsap: value === 'ASAP',
-                        pickupDate: form.getValues('pickupDate'),
-                        locationId: selectedLocationId,
-                      },
-                    });
-                  }}
-                  value={field.value ?? ''}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.pickup.selectTime} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {availableTimeSlots.map(slot => (
-                      <SelectItem key={slot.value} value={slot.value}>
-                        <div className='flex items-center'>
-                          <Clock className='mr-2 h-4 w-4' />
-                          <span>{slot.label}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+                  // Track pickup time selection
+                  track({
+                    eventId: eventIds.changePickupTime,
+                    type: TrackingEventType.CLICK,
+                    properties: {
+                      pickupTime: value,
+                      isAsap: value === 'ASAP',
+                      pickupDate: form.getValues('pickupDate'),
+                      locationId: selectedLocationId,
+                    },
+                  });
+                }}
+                value={field.value ?? ''}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.pickup.selectTime} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {availableTimeSlots.map(slot => (
+                    <SelectItem key={slot.value} value={slot.value}>
+                      <div className='flex items-center'>
+                        <Clock className='mr-2 h-4 w-4' />
+                        <span>{slot.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
-      {storeHours?.pickupWindowInDays !== 0 &&
-        selectedDate &&
-        availableTimeSlots.length === 0 && (
-          <div className='rounded-md bg-yellow-50 p-4'>
-            <p className='text-sm text-yellow-700'>{t.pickup.noTimeSlots}</p>
-          </div>
-        )}
+      {showsTimePicker && selectedDate && availableTimeSlots.length === 0 && (
+        <div className='rounded-md bg-yellow-50 p-4'>
+          <p className='text-sm text-yellow-700'>{t.pickup.noTimeSlots}</p>
+        </div>
+      )}
 
       {session?.enableNotesCollection ? (
         <>

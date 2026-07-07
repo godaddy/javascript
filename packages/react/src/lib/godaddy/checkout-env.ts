@@ -3839,6 +3839,15 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "pickupMode",
+            "type": {
+              "kind": "ENUM",
+              "name": "PickupMode"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "pickupSlotInterval",
             "type": {
               "kind": "SCALAR",
@@ -3896,6 +3905,13 @@ const introspection = {
                 "kind": "SCALAR",
                 "name": "Int"
               }
+            }
+          },
+          {
+            "name": "pickupMode",
+            "type": {
+              "kind": "ENUM",
+              "name": "PickupMode"
             }
           },
           {
@@ -9085,6 +9101,24 @@ const introspection = {
           }
         ],
         "interfaces": []
+      },
+      {
+        "kind": "ENUM",
+        "name": "PickupMode",
+        "enumValues": [
+          {
+            "name": "asap",
+            "isDeprecated": false
+          },
+          {
+            "name": "dateAndTime",
+            "isDeprecated": false
+          },
+          {
+            "name": "dateOnly",
+            "isDeprecated": false
+          }
+        ]
       },
       {
         "kind": "INPUT_OBJECT",

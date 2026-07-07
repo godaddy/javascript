@@ -8,7 +8,7 @@ function createExtension(overrides: Partial<UiExtension> = {}): UiExtension {
     id: 'extension-1',
     applicationId: 'app-1',
     releaseId: 'release-1',
-    cdnUrl: 'https://cdn.example.com',
+    cdnUrl: 'https://malicious.example.com',
     type: 'checkout',
     target: 'checkout.test-target',
     ...overrides,
@@ -42,6 +42,9 @@ describe('DomBundleUiExtensionRuntime', () => {
     });
 
     const script = await getLastScript();
+    expect(script.src).toBe(
+      'https://cdn.ui-extensions.commerce.godaddy.com/apps/targets/checkout.test-target/app-1/release-1/index.js'
+    );
     window.GoDaddyUiExtensions?.register({
       mount({ container: mountContainer, initialProps }) {
         mountContainer.textContent = String(initialProps?.orderId);
