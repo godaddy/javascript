@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.50
+
+### Patch Changes
+
+- 5a0ed65: Add pickup date only mode
+  Infer ui extension cdn urls from apiHost
+- 5c6df26: fix: prevent delivery method flipping on address change
+
 ## 1.0.49
 
 ### Patch Changes
