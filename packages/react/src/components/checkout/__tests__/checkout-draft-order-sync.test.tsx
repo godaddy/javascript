@@ -4,6 +4,7 @@ import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import {
   advanceCheckoutDebounce,
+  buildDraftOrder,
   buildShippingAddress,
   clearOperations,
   fillShippingAddress,
@@ -17,7 +18,26 @@ import {
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
-import { getLastUpdateInput } from './checkout-test-fixtures';
+import {
+  getLastConfirmInput,
+  getLastUpdateInput,
+} from './checkout-test-fixtures';
+
+function offlinePaymentMethods() {
+  return {
+    card: null as never,
+    offline: {
+      processor: 'offline',
+      checkoutTypes: ['standard'],
+    },
+  };
+}
+
+async function waitForDeliveryMethodEnabled(name: RegExp) {
+  await waitFor(() => {
+    expect(screen.getByRole('radio', { name })).not.toBeDisabled();
+  });
+}
 
 describe('Checkout draft-order field sync', () => {
   it('syncs contact email to both shipping and billing', async () => {
@@ -94,6 +114,247 @@ describe('Checkout draft-order field sync', () => {
     expect(getLastUpdateInput()?.billing).not.toHaveProperty('address');
     expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
     expect(getOperations('DraftOrderShippingRates')).toHaveLength(0);
+  });
+
+  it('keeps pickup selected when a draft-order refetch still looks like shipping', async () => {
+    const { user, queryClient, session } = renderCheckout({
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: DeliveryMethods.SHIP }],
+      },
+    });
+    await waitForCheckoutReady();
+    await waitForDeliveryMethodEnabled(/local pickup/i);
+
+    await user.click(screen.getByRole('radio', { name: /local pickup/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByRole('radio', { name: /local pickup/i })
+      ).toBeChecked();
+    });
+
+    queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+      checkoutSession: {
+        ...session,
+        draftOrder: buildDraftOrder({
+          lineItems: [{ fulfillmentMode: DeliveryMethods.SHIP }],
+        }),
+      },
+    });
+    await flushPromises();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('radio', { name: /local pickup/i })
+      ).toBeChecked();
+      expect(
+        screen.getByRole('radio', { name: /shipping/i })
+      ).not.toBeChecked();
+    });
+  });
+
+  it('keeps shipping selected when a stale pickup refetch arrives during delivery-method switching', async () => {
+    const stalePickupOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: DeliveryMethods.PICKUP }],
+      shippingLines: [],
+    });
+    const { user, queryClient, session } = renderCheckout({
+      draftOrder: stalePickupOrder,
+    });
+    await waitForCheckoutReady();
+    await waitForDeliveryMethodEnabled(/shipping/i);
+
+    await user.click(screen.getByRole('radio', { name: /shipping/i }));
+    queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+      checkoutSession: {
+        ...session,
+        draftOrder: stalePickupOrder,
+      },
+    });
+    await flushPromises();
+
+    await waitFor(() => {
+      expect(screen.getByRole('radio', { name: /shipping/i })).toBeChecked();
+      expect(
+        screen.getByRole('radio', { name: /local pickup/i })
+      ).not.toBeChecked();
+    });
+  });
+
+  it('defaults to pickup when shipping is disabled and the order-derived method is shipping', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: DeliveryMethods.SHIP }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: true,
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      screen.queryByRole('radio', { name: /shipping/i })
+    ).not.toBeInTheDocument();
+    expect(document.body).toHaveTextContent(/local pickup/i);
+  });
+
+  it('defaults to shipping when pickup is disabled and the order-derived method is pickup', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: DeliveryMethods.PICKUP }],
+      },
+      sessionOverrides: {
+        enableShipping: true,
+        enableLocalPickup: false,
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      screen.queryByRole('radio', { name: /local pickup/i })
+    ).not.toBeInTheDocument();
+    expect(document.body).toHaveTextContent(/shipping/i);
+  });
+
+  it('keeps an explicit delivery selection across mixed-fulfillment refetches', async () => {
+    const mixedOrder = buildDraftOrder({
+      lineItems: [
+        { id: 'ship-item', fulfillmentMode: DeliveryMethods.SHIP },
+        { id: 'pickup-item', fulfillmentMode: DeliveryMethods.PICKUP },
+      ],
+    });
+    const { user, queryClient, session } = renderCheckout({
+      draftOrder: mixedOrder,
+    });
+    await waitForCheckoutReady();
+    await waitForDeliveryMethodEnabled(/local pickup/i);
+
+    await user.click(screen.getByRole('radio', { name: /local pickup/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByRole('radio', { name: /local pickup/i })
+      ).toBeChecked();
+    });
+
+    queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+      checkoutSession: {
+        ...session,
+        draftOrder: mixedOrder,
+      },
+    });
+    await flushPromises();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('radio', { name: /local pickup/i })
+      ).toBeChecked();
+      expect(
+        screen.getByRole('radio', { name: /shipping/i })
+      ).not.toBeChecked();
+    });
+  });
+
+  it('keeps shipping selected when a shipping address sync refetches a prior pickup order', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: DeliveryMethods.PICKUP }],
+        shippingLines: [],
+        shipping: {
+          address: buildShippingAddress({
+            addressLine1: '',
+            addressLine2: '',
+            adminArea1: 'GA',
+            adminArea2: '',
+            postalCode: '',
+            countryCode: 'US',
+          }),
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionFulfillmentLocation');
+    await waitForOperation('CalculateCheckoutSessionTaxes');
+    await waitForOperation('DraftOrder');
+    await flushPromises();
+    clearOperations();
+
+    expect(screen.getByRole('radio', { name: /local pickup/i })).toBeChecked();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('radio', { name: /shipping/i })
+      ).not.toBeDisabled();
+    });
+    await user.click(screen.getByRole('radio', { name: /shipping/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('radio', { name: /shipping/i })).toBeChecked();
+    });
+
+    await typeIntoNamedField(user, 'shippingAddressLine1', '456 Shipping Ln');
+    await typeIntoNamedField(user, 'shippingAdminArea2', 'Jasper');
+    await typeIntoNamedField(user, 'shippingPostalCode', '30143');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    await flushPromises();
+
+    await waitFor(() => {
+      expect(screen.getByRole('radio', { name: /shipping/i })).toBeChecked();
+      expect(
+        screen.getByRole('radio', { name: /local pickup/i })
+      ).not.toBeChecked();
+    });
+  });
+
+  it('confirms as shipping after pickup-to-shipping address sync refetches', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: DeliveryMethods.PICKUP }],
+        shippingLines: [],
+        shipping: {
+          firstName: '',
+          lastName: '',
+          address: buildShippingAddress({
+            addressLine1: '',
+            addressLine2: '',
+            adminArea1: 'GA',
+            adminArea2: '',
+            postalCode: '',
+            countryCode: 'US',
+          }),
+        },
+      },
+      sessionOverrides: {
+        paymentMethods: offlinePaymentMethods(),
+      },
+    });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionFulfillmentLocation');
+    await waitForDeliveryMethodEnabled(/shipping/i);
+    clearOperations();
+
+    await user.click(screen.getByRole('radio', { name: /shipping/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('radio', { name: /shipping/i })).toBeChecked();
+    });
+
+    await typeIntoNamedField(user, 'shippingFirstName', 'Ship');
+    await typeIntoNamedField(user, 'shippingLastName', 'Buyer');
+    await typeIntoNamedField(user, 'shippingAddressLine1', '456 Shipping Ln');
+    await typeIntoNamedField(user, 'shippingAdminArea2', 'Jasper');
+    await typeIntoNamedField(user, 'shippingPostalCode', '30143');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    await flushPromises();
+
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+    await waitForOperation('ConfirmCheckoutSession');
+
+    expect(getLastConfirmInput()).not.toHaveProperty('fulfillmentLocationId');
+    expect(getLastConfirmInput()).not.toHaveProperty('fulfillmentStartAt');
+    expect(getLastConfirmInput()).not.toHaveProperty('fulfillmentEndAt');
   });
 
   it('still sends address and recalculates taxes when only an address field changes', async () => {

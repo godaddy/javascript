@@ -67,7 +67,6 @@ interface CheckoutFormProps extends Omit<CheckoutProps, 'session'> {
 
 const ORDER_BACKED_FORM_FIELDS = [
   'contactEmail',
-  'deliveryMethod',
   'paymentUseShippingAddress',
   'shippingFirstName',
   'shippingLastName',
