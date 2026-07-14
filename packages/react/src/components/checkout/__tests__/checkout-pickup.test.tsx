@@ -11,8 +11,11 @@ import {
 
 describe('Checkout pickup behavior', () => {
   it('shows customer name fields in the pickup section', async () => {
-    renderCheckout();
+    const { user } = renderCheckout();
     await waitForCheckoutReady();
+
+    await user.click(screen.getByRole('radio', { name: /local pickup/i }));
+    await waitForOperation('ApplyCheckoutSessionFulfillmentLocation');
 
     expect(
       document.querySelector('input[name="billingFirstName"]')
