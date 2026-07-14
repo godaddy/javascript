@@ -56,15 +56,15 @@ export function CustomFormProvider<
             values.paymentUseShippingAddress as unknown as boolean;
           const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
           const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-          const isFreeOrder = paymentMethod === PaymentMethodType.OFFLINE;
-          const isFreePickup = isFreeOrder && isPickup;
+          const isOfflinePayment = paymentMethod === PaymentMethodType.OFFLINE;
+          const isOfflinePickup = isOfflinePayment && isPickup;
 
           // Get all field names and filter based on conditions
           const allFieldNames = Object.keys(values);
           let fieldNames = [...allFieldNames] as Array<FieldPath<TFormValues>>;
 
-          /* For free pickup orders, only validate billingFirstName and billingLastName */
-          if (isFreePickup) {
+          /* Offline pickup only validates billing name fields among billing inputs */
+          if (isOfflinePickup) {
             fieldNames = fieldNames.filter(
               fieldName =>
                 !fieldName.startsWith('billing') ||
@@ -90,7 +90,7 @@ export function CustomFormProvider<
 
           // Trigger validation only on the filtered fields if any condition is true,
           // otherwise trigger on all fields
-          if (paymentUseShippingAddress || isPickup || isFreeOrder) {
+          if (paymentUseShippingAddress || isPickup || isOfflinePayment) {
             result = await methods.trigger(fieldNames, triggerOptions);
           } else {
             result = await methods.trigger(undefined, triggerOptions);

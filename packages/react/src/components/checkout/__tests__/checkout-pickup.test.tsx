@@ -10,6 +10,18 @@ import {
 } from './checkout-test-env';
 
 describe('Checkout pickup behavior', () => {
+  it('shows customer name fields in the pickup section', async () => {
+    renderCheckout();
+    await waitForCheckoutReady();
+
+    expect(
+      document.querySelector('input[name="billingFirstName"]')
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingLastName"]')
+    ).toBeInTheDocument();
+  });
+
   it('switches from shipping to pickup and calculates taxes with pickup location', async () => {
     const { user } = renderCheckout();
     await waitForCheckoutReady();

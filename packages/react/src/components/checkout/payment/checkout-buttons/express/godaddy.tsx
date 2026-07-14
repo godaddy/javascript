@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import type { CheckoutFormData } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
   useDraftOrder,
@@ -27,6 +29,7 @@ import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-loa
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
+import { validatePickupPrerequisites } from '@/components/checkout/utils/use-validate-pickup-prerequisites';
 import {
   useConvertMajorToMinorUnits,
   useFormatCurrency,
@@ -45,6 +48,7 @@ import type { CalculatedAdjustments, CalculatedTaxes } from '@/types';
 export function ExpressCheckoutButton() {
   const formatCurrency = useFormatCurrency();
   const convertMajorToMinorUnits = useConvertMajorToMinorUnits();
+  const form = useFormContext<CheckoutFormData>();
   const { session, setCheckoutErrors, isConfirmingCheckout } =
     useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
@@ -186,6 +190,11 @@ export function ExpressCheckoutButton() {
         return;
       }
 
+      const pickupValid = await validatePickupPrerequisites(form, session);
+      if (!pickupValid) {
+        return;
+      }
+
       // Read from refs to get current values (avoid stale closure)
       const currentCouponCode = appliedCouponCodeRef.current;
       const currentAdjustments = calculatedAdjustmentsRef.current;
@@ -296,6 +305,8 @@ export function ExpressCheckoutButton() {
       totals,
       formatCurrency,
       isDisabled,
+      form,
+      session,
     ]
   );
 

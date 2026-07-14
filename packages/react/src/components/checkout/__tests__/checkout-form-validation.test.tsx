@@ -163,6 +163,43 @@ describe('Checkout form validation', () => {
     expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
   });
 
+  it('requires pickup customer names for paid pickup with offline payment', async () => {
+    const draftOrder = makePaidPickupOrder({
+      billing: {
+        firstName: '',
+        lastName: '',
+        address: buildShippingAddress({ addressLine1: '' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      sessionOverrides: {
+        draftOrder,
+        paymentMethods: {
+          ...stripeOnlyPaymentMethods(),
+          card: null as never,
+          offline: {
+            type: PaymentMethodType.OFFLINE,
+            processor: PaymentProvider.OFFLINE,
+            checkoutTypes: ['standard'],
+          },
+        },
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(await clickSubmitButton(/complete your order/i));
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(enUs.validation.enterFirstName);
+    });
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+  });
+
   it('pins current paid pickup card behavior when the billing address line is empty', async () => {
     const draftOrder = makePaidPickupOrder();
     const { user } = renderCheckout({

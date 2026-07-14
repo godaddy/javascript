@@ -53,7 +53,7 @@ async function submitFreeOrder(
 }
 
 describe('Checkout FreePaymentForm integration', () => {
-  it('renders names-only billing for a free pickup order without a billing address', async () => {
+  it('renders pickup customer names in the pickup section for a free pickup order', async () => {
     const draftOrder = buildFreeDraftOrder({
       lineItems: [{ fulfillmentMode: 'PICKUP' }],
       billing: {
@@ -83,6 +83,9 @@ describe('Checkout FreePaymentForm integration', () => {
     expect(document.querySelector('input[name="billingLastName"]')).toHaveValue(
       'Pickup'
     );
+    expect(
+      document.querySelectorAll('input[name="billingFirstName"]')
+    ).toHaveLength(1);
     expect(
       document.querySelector('input[name="billingAddressLine1"]')
     ).not.toBeInTheDocument();

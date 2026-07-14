@@ -9,7 +9,9 @@ import type {
   StripeExpressCheckoutElementShippingRateChangeEvent,
 } from '@stripe/stripe-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import type { CheckoutFormData } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
   useDraftOrder,
@@ -21,6 +23,7 @@ import { useStripePaymentIntent } from '@/components/checkout/payment/utils/use-
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
+import { validatePickupPrerequisites } from '@/components/checkout/utils/use-validate-pickup-prerequisites';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -42,6 +45,7 @@ interface StripePartialAddress {
 
 export function StripeExpressCheckoutForm() {
   const { t } = useGoDaddyContext();
+  const form = useFormContext<CheckoutFormData>();
   const { session, setCheckoutErrors, isConfirmingCheckout } =
     useCheckoutContext();
   const elements = useElements();
@@ -369,9 +373,15 @@ export function StripeExpressCheckoutForm() {
 
   // Handle click event - configure initial details
   const handleClick = useCallback(
-    (event: StripeExpressCheckoutElementClickEvent) => {
+    async (event: StripeExpressCheckoutElementClickEvent) => {
       // Reject if payment is disabled
       if (isDisabled) {
+        event.reject();
+        return;
+      }
+
+      const pickupValid = await validatePickupPrerequisites(form, session);
+      if (!pickupValid) {
         event.reject();
         return;
       }
@@ -404,7 +414,7 @@ export function StripeExpressCheckoutForm() {
         lineItems: buildLineItems({ discountAmount }),
       });
     },
-    [buildLineItems, setCheckoutErrors, isDisabled]
+    [buildLineItems, setCheckoutErrors, isDisabled, form, session]
   );
 
   // Handle shipping address change
