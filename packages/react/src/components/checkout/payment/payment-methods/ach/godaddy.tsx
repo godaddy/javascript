@@ -34,6 +34,7 @@ export function GoDaddyACHForm() {
   const useShippingAddress = form.watch('paymentUseShippingAddress');
   const deliveryMethod = form.watch('deliveryMethod');
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
+  const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
 
   // Billing is separate from shipping when there is no shipping address to
   // copy from. `mapOrderToFormValues` canonicalizes deliveryMethod against
@@ -276,6 +277,7 @@ export function GoDaddyACHForm() {
           <AddressForm
             sectionKey='billing'
             onlyNames={shouldShowBillingNamesOnly}
+            hideNames={isPickup && isBillingAddressRequired}
           />
         </CheckoutSection>
       ) : null}

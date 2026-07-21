@@ -25,6 +25,32 @@ describe('Checkout pickup behavior', () => {
     ).toBeInTheDocument();
   });
 
+  it('keeps a single set of name fields for paid pickup with credit-card billing', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableBillingAddressCollection: true,
+      },
+    });
+    await waitForCheckoutReady();
+
+    // Names live in Pickup only; CreditCardContainer/ACH billing forms hide
+    // duplicate name inputs while still collecting the billing address.
+    expect(
+      document.querySelectorAll('input[name="billingFirstName"]')
+    ).toHaveLength(1);
+    expect(
+      document.querySelectorAll('input[name="billingLastName"]')
+    ).toHaveLength(1);
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toBeInTheDocument();
+  });
+
   it('switches from shipping to pickup and calculates taxes with pickup location', async () => {
     const { user } = renderCheckout();
     await waitForCheckoutReady();

@@ -1,5 +1,9 @@
 import { useCallback } from 'react';
-import { useFormContext, type FieldPath, type UseFormReturn } from 'react-hook-form';
+import {
+  type FieldPath,
+  type UseFormReturn,
+  useFormContext,
+} from 'react-hook-form';
 import type { CheckoutFormData } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import type { CheckoutSession } from '@/types';
@@ -25,8 +29,7 @@ export function getPickupPrerequisiteFields(
   const location = session?.locations?.find(
     loc => loc.id === values.pickupLocationId
   );
-  const storeHours =
-    location?.operatingHours ?? session?.defaultOperatingHours;
+  const storeHours = location?.operatingHours ?? session?.defaultOperatingHours;
 
   if (storeHours?.pickupWindowInDays !== 0) {
     fields.push('pickupDate', 'pickupTime');

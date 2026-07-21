@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useCheckoutContext } from '@/components/checkout/checkout';
 import type { CheckoutFormData } from '@/components/checkout/checkout';
+import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
   useDraftOrder,
@@ -29,11 +29,12 @@ import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-loa
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
-import { validatePickupPrerequisites } from '@/components/checkout/utils/use-validate-pickup-prerequisites';
 import {
   useConvertMajorToMinorUnits,
   useFormatCurrency,
 } from '@/components/checkout/utils/format-currency';
+import { useSyncPickupBillingNames } from '@/components/checkout/utils/use-sync-pickup-billing-names';
+import { validatePickupPrerequisites } from '@/components/checkout/utils/use-validate-pickup-prerequisites';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -53,6 +54,7 @@ export function ExpressCheckoutButton() {
     useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const { isPoyntLoaded } = useLoadPoyntCollect();
+  const syncPickupBillingNames = useSyncPickupBillingNames();
 
   const isDisabled = isConfirmingCheckout || isPaymentDisabled;
   const { godaddyPaymentsConfig } = useCheckoutContext();
@@ -195,6 +197,10 @@ export function ExpressCheckoutButton() {
         return;
       }
 
+      // Persist pickup names before the wallet opens (AddressForm debounce may
+      // not have enqueued a draft-order patch yet).
+      await syncPickupBillingNames();
+
       // Read from refs to get current values (avoid stale closure)
       const currentCouponCode = appliedCouponCodeRef.current;
       const currentAdjustments = calculatedAdjustmentsRef.current;
@@ -307,6 +313,7 @@ export function ExpressCheckoutButton() {
       isDisabled,
       form,
       session,
+      syncPickupBillingNames,
     ]
   );
 

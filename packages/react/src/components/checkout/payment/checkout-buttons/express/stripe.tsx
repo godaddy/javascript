@@ -10,8 +10,8 @@ import type {
 } from '@stripe/stripe-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useCheckoutContext } from '@/components/checkout/checkout';
 import type { CheckoutFormData } from '@/components/checkout/checkout';
+import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
   useDraftOrder,
@@ -23,6 +23,7 @@ import { useStripePaymentIntent } from '@/components/checkout/payment/utils/use-
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
+import { useSyncPickupBillingNames } from '@/components/checkout/utils/use-sync-pickup-billing-names';
 import { validatePickupPrerequisites } from '@/components/checkout/utils/use-validate-pickup-prerequisites';
 
 import { Skeleton } from '@/components/ui/skeleton';
@@ -50,6 +51,7 @@ export function StripeExpressCheckoutForm() {
     useCheckoutContext();
   const elements = useElements();
   const isPaymentDisabled = useIsPaymentDisabled();
+  const syncPickupBillingNames = useSyncPickupBillingNames();
   const { handleSubmit } = useStripeCheckout({
     mode: 'express',
   });
@@ -386,6 +388,10 @@ export function StripeExpressCheckoutForm() {
         return;
       }
 
+      // Persist pickup names before the wallet opens (AddressForm debounce may
+      // not have enqueued a draft-order patch yet).
+      await syncPickupBillingNames();
+
       // Track click
       if (event.expressPaymentType === 'apple_pay') {
         track({
@@ -414,7 +420,14 @@ export function StripeExpressCheckoutForm() {
         lineItems: buildLineItems({ discountAmount }),
       });
     },
-    [buildLineItems, setCheckoutErrors, isDisabled, form, session]
+    [
+      buildLineItems,
+      setCheckoutErrors,
+      isDisabled,
+      form,
+      session,
+      syncPickupBillingNames,
+    ]
   );
 
   // Handle shipping address change

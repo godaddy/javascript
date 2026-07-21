@@ -2,7 +2,7 @@ import { enUs } from '@godaddy/localizations';
 import { screen, waitFor } from '@testing-library/react';
 import { useFormContext } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
-import { PaymentMethodType, PaymentProvider } from '@/types';
+import { PaymentProvider } from '@/types';
 import {
   buildDraftOrder,
   buildLineItem,
@@ -42,7 +42,6 @@ function _offlinePaymentMethods() {
     mercadopago: null,
     ccavenue: null,
     offline: {
-      type: PaymentMethodType.OFFLINE,
       processor: PaymentProvider.OFFLINE,
       checkoutTypes: ['standard'],
     },
@@ -52,7 +51,6 @@ function _offlinePaymentMethods() {
 function stripeOnlyPaymentMethods() {
   return {
     card: {
-      type: PaymentMethodType.CREDIT_CARD,
       processor: PaymentProvider.STRIPE,
       checkoutTypes: ['standard'],
     },
@@ -179,7 +177,6 @@ describe('Checkout form validation', () => {
           ...stripeOnlyPaymentMethods(),
           card: null as never,
           offline: {
-            type: PaymentMethodType.OFFLINE,
             processor: PaymentProvider.OFFLINE,
             checkoutTypes: ['standard'],
           },

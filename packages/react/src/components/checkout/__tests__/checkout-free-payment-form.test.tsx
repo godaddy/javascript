@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
   advanceCheckoutDebounce,
@@ -6,12 +6,17 @@ import {
   buildDraftOrder,
   buildShippingRates,
   clearOperations,
+  getOperationOrder,
   getOperations,
   renderCheckout,
+  typeIntoNamedField,
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
-import { getLastConfirmInput } from './checkout-test-fixtures';
+import {
+  getLastConfirmInput,
+  getLastUpdateInput,
+} from './checkout-test-fixtures';
 
 function buildFreeDraftOrder(
   overrides: Parameters<typeof buildDraftOrder>[0] = {}
@@ -181,5 +186,52 @@ describe('Checkout FreePaymentForm integration', () => {
     expect(
       document.querySelector('input[name="shippingAddressLine1"]')
     ).not.toBeInTheDocument();
+  });
+
+  it('persists pickup billing names before free-order confirmation without waiting for debounce', async () => {
+    const draftOrder = buildFreeDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      billing: {
+        firstName: '',
+        lastName: '',
+        phone: '',
+        email: 'jane@example.com',
+        address: null,
+      },
+    });
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableShipping: false,
+      enableLocalPickup: true,
+      enableTaxCollection: false,
+    });
+
+    const { user } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+
+    await typeIntoNamedField(user, 'billingFirstName', 'Immediate');
+    await typeIntoNamedField(user, 'billingLastName', 'Pickup');
+
+    // Intentionally do NOT advance AddressForm debounce — confirm must still
+    // queue and flush the current form names before ConfirmCheckoutSession.
+    clearOperations();
+    await user.click(
+      await screen.findByRole('button', { name: /complete your free order/i })
+    );
+    await waitForOperation('ConfirmCheckoutSession');
+
+    const [updateIdx, confirmIdx] = getOperationOrder([
+      'UpdateCheckoutSessionDraftOrder',
+      'ConfirmCheckoutSession',
+    ]);
+    expect(updateIdx).toBeGreaterThanOrEqual(0);
+    expect(confirmIdx).toBeGreaterThan(updateIdx);
+    expect(getLastUpdateInput()).toMatchObject({
+      billing: {
+        firstName: 'Immediate',
+        lastName: 'Pickup',
+      },
+    });
+    expect(getLastUpdateInput()?.billing).not.toHaveProperty('address');
   });
 });
