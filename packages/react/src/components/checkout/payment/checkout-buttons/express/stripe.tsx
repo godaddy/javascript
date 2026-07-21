@@ -88,6 +88,7 @@ export function StripeExpressCheckoutForm() {
   // Use refs for values needed in event handlers to avoid stale closures
   const appliedCouponCodeRef = useRef<string | null>(null);
   const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
+  const pickupBillingNamesSyncRef = useRef<Promise<void> | null>(null);
 
   // Extract discount codes from draft order for comparison (stable string)
   const draftOrderDiscountCodes = useMemo(() => {
@@ -388,7 +389,7 @@ export function StripeExpressCheckoutForm() {
         return;
       }
 
-      await syncPickupBillingNames();
+      pickupBillingNamesSyncRef.current = syncPickupBillingNames();
 
       // Track click
       if (event.expressPaymentType === 'apple_pay') {
@@ -586,6 +587,9 @@ export function StripeExpressCheckoutForm() {
   const handleConfirm = useCallback(
     async (event: StripeExpressCheckoutElementConfirmEvent) => {
       try {
+        await (pickupBillingNamesSyncRef.current ?? syncPickupBillingNames());
+        pickupBillingNamesSyncRef.current = null;
+
         // Find the selected shipping method from our stored shipping methods
         const selectedShippingMethod = shippingMethods?.find(
           method =>
@@ -636,6 +640,7 @@ export function StripeExpressCheckoutForm() {
     },
     [
       handleSubmit,
+      syncPickupBillingNames,
       t.errors.errorProcessingPayment,
       shippingMethods,
       selectedShippingRate,
@@ -647,6 +652,7 @@ export function StripeExpressCheckoutForm() {
   // Handle cancel event
   const handleCancel = useCallback(() => {
     // Reset state when payment sheet is dismissed
+    pickupBillingNamesSyncRef.current = null;
     setCalculatedTaxes(null);
     setShippingMethods(null);
     setSelectedShippingRate(null);

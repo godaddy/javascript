@@ -317,7 +317,8 @@ export function Checkout(props: CheckoutProps) {
 
       const requireBillingNamesOnly =
         !isPickup &&
-        (!enableBillingAddressCollection && billingIsSeparateFromShipping);
+        !enableBillingAddressCollection &&
+        billingIsSeparateFromShipping;
 
       if (requireBillingNamesOnly) {
         for (const { key, message } of billingNameFields) {
