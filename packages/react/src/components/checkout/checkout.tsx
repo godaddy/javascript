@@ -223,6 +223,15 @@ export interface CheckoutProps {
   defaultValues?: Pick<CheckoutFormData, 'contactEmail'>;
   isLoading?: boolean;
   loadingFallback?: ReactNode;
+  /**
+   * Overrides for the notes-collection field (rendered when the session has
+   * `enableNotesCollection`). Each falls back to localization when omitted;
+   * pass an empty `placeholder` to render no placeholder.
+   */
+  notes?: {
+    label?: string;
+    placeholder?: string;
+  };
 }
 
 export function Checkout(props: CheckoutProps) {

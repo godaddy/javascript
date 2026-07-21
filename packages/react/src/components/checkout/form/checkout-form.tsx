@@ -483,7 +483,10 @@ export function CheckoutForm({
                           {session?.enableNotesCollection ? (
                             <>
                               <Target id='checkout.form.notes.before' />
-                              <NotesForm />
+                              <NotesForm
+                                label={props.notes?.label}
+                                placeholder={props.notes?.placeholder}
+                              />
                               <Target id='checkout.form.notes.after' />
                             </>
                           ) : null}
@@ -494,8 +497,13 @@ export function CheckoutForm({
                     {enableStandaloneNotes ? (
                       <CheckoutSection style={{ gridArea: 'notes' }}>
                         <Target id='checkout.form.notes.before' />
-                        <CheckoutSectionHeader title={t.general.notes} />
-                        <NotesForm />
+                        <CheckoutSectionHeader
+                          title={props.notes?.label ?? t.general.notes}
+                        />
+                        <NotesForm
+                          label={props.notes?.label}
+                          placeholder={props.notes?.placeholder}
+                        />
                         <Target id='checkout.form.notes.after' />
                       </CheckoutSection>
                     ) : null}

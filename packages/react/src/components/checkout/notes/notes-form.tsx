@@ -17,7 +17,17 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 
-export function NotesForm() {
+export interface NotesFormProps {
+  /** Overrides the visually-hidden field label; falls back to `t.general.notes`. */
+  label?: string;
+  /**
+   * Overrides the textarea placeholder; falls back to
+   * `t.shipping.notesPlaceholder`. Pass an empty string for no placeholder.
+   */
+  placeholder?: string;
+}
+
+export function NotesForm({ label, placeholder }: NotesFormProps = {}) {
   const form = useFormContext();
   const { t } = useGoDaddyContext();
   const { isConfirmingCheckout, requiredFields } = useCheckoutContext();
@@ -78,9 +88,9 @@ export function NotesForm() {
         name='notes'
         render={({ field, fieldState }) => (
           <FormItem>
-            <FormLabel className='sr-only'>{t.general.notes}</FormLabel>
+            <FormLabel className='sr-only'>{label ?? t.general.notes}</FormLabel>
             <Textarea
-              placeholder={t.shipping.notesPlaceholder}
+              placeholder={placeholder ?? t.shipping.notesPlaceholder}
               {...field}
               hasError={!!fieldState.error}
               aria-required={requiredFields?.notes}

@@ -75,6 +75,63 @@ describe('Checkout notes UI', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('uses the custom notes label and placeholder from the notes prop (standalone)', async () => {
+    renderCheckout({
+      sessionOverrides: {
+        enableNotesCollection: true,
+        enableShipping: false,
+        enableLocalPickup: false,
+      },
+      checkoutProps: {
+        notes: { label: 'Gift message', placeholder: 'Say something nice' },
+      },
+    });
+    await waitForCheckoutReady();
+
+    const notes = document.querySelector(
+      'textarea[name="notes"]'
+    ) as HTMLTextAreaElement;
+    expect(notes).toBeInTheDocument();
+    expect(notes).toHaveAttribute('placeholder', 'Say something nice');
+    expect(
+      screen.getByRole('heading', { name: 'Gift message' })
+    ).toBeInTheDocument();
+  });
+
+  it('renders no placeholder when notes.placeholder is an empty string', async () => {
+    renderCheckout({
+      sessionOverrides: {
+        enableNotesCollection: true,
+        enableShipping: false,
+        enableLocalPickup: false,
+      },
+      checkoutProps: { notes: { placeholder: '' } },
+    });
+    await waitForCheckoutReady();
+
+    const notes = document.querySelector(
+      'textarea[name="notes"]'
+    ) as HTMLTextAreaElement;
+    expect(notes).toHaveAttribute('placeholder', '');
+  });
+
+  it('falls back to localized notes label and placeholder without an override', async () => {
+    renderCheckout({
+      sessionOverrides: {
+        enableNotesCollection: true,
+        enableShipping: false,
+        enableLocalPickup: false,
+      },
+    });
+    await waitForCheckoutReady();
+
+    const notes = document.querySelector(
+      'textarea[name="notes"]'
+    ) as HTMLTextAreaElement;
+    expect(notes).toHaveAttribute('placeholder', 'Notes or special instructions');
+    expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+  });
+
   it('renders notes in both shipping and pickup flows', async () => {
     const { user } = renderCheckout();
     await waitForCheckoutReady();
