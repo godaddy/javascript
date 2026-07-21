@@ -37,9 +37,6 @@ export function useFlushCheckoutSync() {
   return React.useCallback(
     async (options: FlushCheckoutSyncOptions = {}) => {
       try {
-        // Pickup names live in AddressForm onlyNames, which debounces before
-        // enqueue. Flush only drains already-queued patches — so queue the
-        // current form names here before draining (standard + confirm paths).
         const pickupNamesPatch = getPickupBillingNamesPatch(form, draftOrder);
         if (pickupNamesPatch) {
           enqueueDraftOrderPatch(pickupNamesPatch, {

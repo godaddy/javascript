@@ -212,8 +212,6 @@ describe('Checkout FreePaymentForm integration', () => {
     await typeIntoNamedField(user, 'billingFirstName', 'Immediate');
     await typeIntoNamedField(user, 'billingLastName', 'Pickup');
 
-    // Intentionally do NOT advance AddressForm debounce — confirm must still
-    // queue and flush the current form names before ConfirmCheckoutSession.
     clearOperations();
     await user.click(
       await screen.findByRole('button', { name: /complete your free order/i })

@@ -312,8 +312,6 @@ describe('Checkout address behavior', () => {
         lastName: 'Buyer',
       },
     });
-    // Paid pickup collects a billing address in Payment; names-only sync must
-    // omit address so an existing billing.address is not cleared to null.
     expect(getLastUpdateInput()?.billing).not.toHaveProperty('address');
   });
 

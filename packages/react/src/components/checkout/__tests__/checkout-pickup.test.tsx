@@ -38,8 +38,6 @@ describe('Checkout pickup behavior', () => {
     });
     await waitForCheckoutReady();
 
-    // Names live in Pickup only; CreditCardContainer/ACH billing forms hide
-    // duplicate name inputs while still collecting the billing address.
     expect(
       document.querySelectorAll('input[name="billingFirstName"]')
     ).toHaveLength(1);

@@ -388,8 +388,6 @@ export function StripeExpressCheckoutForm() {
         return;
       }
 
-      // Persist pickup names before the wallet opens (AddressForm debounce may
-      // not have enqueued a draft-order patch yet).
       await syncPickupBillingNames();
 
       // Track click
