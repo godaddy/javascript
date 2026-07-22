@@ -45,6 +45,7 @@ export function GoDaddyACHForm() {
   const billingIsSeparateFromShipping = !isShipping || !useShippingAddress;
 
   const shouldShowBillingNamesOnly =
+    !isPickup &&
     paymentMethod === PaymentMethodType.ACH &&
     session?.enableBillingAddressCollection === false &&
     billingIsSeparateFromShipping;

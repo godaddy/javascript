@@ -29,6 +29,7 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
   const billingIsSeparateFromShipping = !isShipping || !useShippingAddress;
 
   const shouldShowBillingNamesOnly =
+    !isPickup &&
     paymentMethod === PaymentMethodType.CREDIT_CARD &&
     session?.enableBillingAddressCollection === false &&
     billingIsSeparateFromShipping;

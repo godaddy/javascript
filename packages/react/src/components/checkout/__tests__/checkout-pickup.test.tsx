@@ -49,6 +49,30 @@ describe('Checkout pickup behavior', () => {
     ).toBeInTheDocument();
   });
 
+  it('keeps a single set of name fields for paid pickup when billing address collection is disabled', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableBillingAddressCollection: false,
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      document.querySelectorAll('input[name="billingFirstName"]')
+    ).toHaveLength(1);
+    expect(
+      document.querySelectorAll('input[name="billingLastName"]')
+    ).toHaveLength(1);
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
+  });
+
   it('switches from shipping to pickup and calculates taxes with pickup location', async () => {
     const { user } = renderCheckout();
     await waitForCheckoutReady();
