@@ -100,6 +100,9 @@ export function ExpressCheckoutButton() {
   // Use refs to store current coupon state to avoid stale closures in event handlers
   const appliedCouponCodeRef = useRef<string | null>(null);
   const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
+  const pickupBillingNamesSyncRef = useRef<Promise<void> | null>(null);
+  const syncPickupBillingNamesRef = useRef(syncPickupBillingNames);
+  syncPickupBillingNamesRef.current = syncPickupBillingNames;
 
   const calculateGodaddyExpressTaxes = useCallback(
     async ({
@@ -197,7 +200,7 @@ export function ExpressCheckoutButton() {
         return;
       }
 
-      await syncPickupBillingNames();
+      pickupBillingNamesSyncRef.current = syncPickupBillingNames();
 
       // Read from refs to get current values (avoid stale closure)
       const currentCouponCode = appliedCouponCodeRef.current;
@@ -990,6 +993,10 @@ export function ExpressCheckoutButton() {
         };
 
         try {
+          await (pickupBillingNamesSyncRef.current ??
+            syncPickupBillingNamesRef.current());
+          pickupBillingNamesSyncRef.current = null;
+
           await confirmCheckout.mutateAsync(checkoutBody);
 
           event.complete();
