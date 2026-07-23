@@ -563,9 +563,8 @@ describe('Checkout draft-order field sync', () => {
     await waitForOperation('UpdateCheckoutSessionDraftOrder');
 
     expect(getLastUpdateInput()).toMatchObject({
-      billing: { firstName: 'Only', lastName: 'Names' },
+      billing: { firstName: 'Only', lastName: 'Names', address: null },
     });
-    expect(getLastUpdateInput()?.billing).not.toHaveProperty('address');
     expect(getLastUpdateInput()?.billing).not.toMatchObject({
       addressLine1: expect.anything(),
       postalCode: expect.anything(),

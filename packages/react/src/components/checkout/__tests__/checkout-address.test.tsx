@@ -263,20 +263,20 @@ describe('Checkout address behavior', () => {
     });
   });
 
-  it('syncs only billing names in onlyNames mode without clearing billing address', async () => {
+  it('syncs only billing names in onlyNames mode without stale address fields', async () => {
     const draftOrder = buildDraftOrder({
       totals: {
-        subTotal: { value: 2500, currencyCode: 'USD' },
+        subTotal: { value: 0, currencyCode: 'USD' },
         discountTotal: { value: 0, currencyCode: 'USD' },
         shippingTotal: { value: 0, currencyCode: 'USD' },
         taxTotal: { value: 0, currencyCode: 'USD' },
         feeTotal: { value: 0, currencyCode: 'USD' },
-        total: { value: 2500, currencyCode: 'USD' },
+        total: { value: 0, currencyCode: 'USD' },
       },
       lineItems: [
         {
           fulfillmentMode: 'PICKUP',
-          unitAmount: { value: 2500, currencyCode: 'USD' },
+          unitAmount: { value: 0, currencyCode: 'USD' },
         },
       ],
       billing: {
@@ -284,9 +284,7 @@ describe('Checkout address behavior', () => {
         lastName: '',
         phone: '',
         email: 'jane@example.com',
-        address: buildBillingAddress({
-          addressLine1: 'Paid Pickup Billing St',
-        }),
+        address: buildBillingAddress({ addressLine1: 'Stale Billing St' }),
       },
     });
     const { user } = renderCheckout({
@@ -312,7 +310,9 @@ describe('Checkout address behavior', () => {
         lastName: 'Buyer',
       },
     });
-    expect(getLastUpdateInput()?.billing).not.toHaveProperty('address');
+    expect(getLastUpdateInput()?.billing ?? {}).not.toMatchObject({
+      address: expect.objectContaining({ addressLine1: 'Stale Billing St' }),
+    });
   });
 
   it('does not sync the address until country, state, city, and postal-code are valid', async () => {

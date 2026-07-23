@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
   advanceCheckoutDebounce,
@@ -6,17 +6,12 @@ import {
   buildDraftOrder,
   buildShippingRates,
   clearOperations,
-  getOperationOrder,
   getOperations,
   renderCheckout,
-  typeIntoNamedField,
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
-import {
-  getLastConfirmInput,
-  getLastUpdateInput,
-} from './checkout-test-fixtures';
+import { getLastConfirmInput } from './checkout-test-fixtures';
 
 function buildFreeDraftOrder(
   overrides: Parameters<typeof buildDraftOrder>[0] = {}
@@ -58,7 +53,7 @@ async function submitFreeOrder(
 }
 
 describe('Checkout FreePaymentForm integration', () => {
-  it('renders pickup customer names in the pickup section for a free pickup order', async () => {
+  it('renders names-only billing for a free pickup order without a billing address', async () => {
     const draftOrder = buildFreeDraftOrder({
       lineItems: [{ fulfillmentMode: 'PICKUP' }],
       billing: {
@@ -88,9 +83,6 @@ describe('Checkout FreePaymentForm integration', () => {
     expect(document.querySelector('input[name="billingLastName"]')).toHaveValue(
       'Pickup'
     );
-    expect(
-      document.querySelectorAll('input[name="billingFirstName"]')
-    ).toHaveLength(1);
     expect(
       document.querySelector('input[name="billingAddressLine1"]')
     ).not.toBeInTheDocument();
@@ -186,50 +178,5 @@ describe('Checkout FreePaymentForm integration', () => {
     expect(
       document.querySelector('input[name="shippingAddressLine1"]')
     ).not.toBeInTheDocument();
-  });
-
-  it('persists pickup billing names before free-order confirmation without waiting for debounce', async () => {
-    const draftOrder = buildFreeDraftOrder({
-      lineItems: [{ fulfillmentMode: 'PICKUP' }],
-      billing: {
-        firstName: '',
-        lastName: '',
-        phone: '',
-        email: 'jane@example.com',
-        address: null,
-      },
-    });
-    const session = buildCheckoutSession({
-      draftOrder,
-      enableShipping: false,
-      enableLocalPickup: true,
-      enableTaxCollection: false,
-    });
-
-    const { user } = renderCheckout({ session, draftOrder });
-    await waitForCheckoutReady();
-
-    await typeIntoNamedField(user, 'billingFirstName', 'Immediate');
-    await typeIntoNamedField(user, 'billingLastName', 'Pickup');
-
-    clearOperations();
-    await user.click(
-      await screen.findByRole('button', { name: /complete your free order/i })
-    );
-    await waitForOperation('ConfirmCheckoutSession');
-
-    const [updateIdx, confirmIdx] = getOperationOrder([
-      'UpdateCheckoutSessionDraftOrder',
-      'ConfirmCheckoutSession',
-    ]);
-    expect(updateIdx).toBeGreaterThanOrEqual(0);
-    expect(confirmIdx).toBeGreaterThan(updateIdx);
-    expect(getLastUpdateInput()).toMatchObject({
-      billing: {
-        firstName: 'Immediate',
-        lastName: 'Pickup',
-      },
-    });
-    expect(getLastUpdateInput()?.billing).not.toHaveProperty('address');
   });
 });

@@ -9,8 +9,6 @@ import type {
   StripeExpressCheckoutElementShippingRateChangeEvent,
 } from '@stripe/stripe-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import type { CheckoutFormData } from '@/components/checkout/checkout';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
@@ -23,8 +21,6 @@ import { useStripePaymentIntent } from '@/components/checkout/payment/utils/use-
 import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
-import { useSyncPickupBillingNames } from '@/components/checkout/utils/use-sync-pickup-billing-names';
-import { validatePickupPrerequisites } from '@/components/checkout/utils/use-validate-pickup-prerequisites';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -46,12 +42,10 @@ interface StripePartialAddress {
 
 export function StripeExpressCheckoutForm() {
   const { t } = useGoDaddyContext();
-  const form = useFormContext<CheckoutFormData>();
   const { session, setCheckoutErrors, isConfirmingCheckout } =
     useCheckoutContext();
   const elements = useElements();
   const isPaymentDisabled = useIsPaymentDisabled();
-  const syncPickupBillingNames = useSyncPickupBillingNames();
   const { handleSubmit } = useStripeCheckout({
     mode: 'express',
   });
@@ -88,7 +82,6 @@ export function StripeExpressCheckoutForm() {
   // Use refs for values needed in event handlers to avoid stale closures
   const appliedCouponCodeRef = useRef<string | null>(null);
   const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
-  const pickupBillingNamesSyncRef = useRef<Promise<void> | null>(null);
 
   // Extract discount codes from draft order for comparison (stable string)
   const draftOrderDiscountCodes = useMemo(() => {
@@ -376,20 +369,12 @@ export function StripeExpressCheckoutForm() {
 
   // Handle click event - configure initial details
   const handleClick = useCallback(
-    async (event: StripeExpressCheckoutElementClickEvent) => {
+    (event: StripeExpressCheckoutElementClickEvent) => {
       // Reject if payment is disabled
       if (isDisabled) {
         event.reject();
         return;
       }
-
-      const pickupValid = await validatePickupPrerequisites(form, session);
-      if (!pickupValid) {
-        event.reject();
-        return;
-      }
-
-      pickupBillingNamesSyncRef.current = syncPickupBillingNames();
 
       // Track click
       if (event.expressPaymentType === 'apple_pay') {
@@ -419,14 +404,7 @@ export function StripeExpressCheckoutForm() {
         lineItems: buildLineItems({ discountAmount }),
       });
     },
-    [
-      buildLineItems,
-      setCheckoutErrors,
-      isDisabled,
-      form,
-      session,
-      syncPickupBillingNames,
-    ]
+    [buildLineItems, setCheckoutErrors, isDisabled]
   );
 
   // Handle shipping address change
@@ -587,9 +565,6 @@ export function StripeExpressCheckoutForm() {
   const handleConfirm = useCallback(
     async (event: StripeExpressCheckoutElementConfirmEvent) => {
       try {
-        await (pickupBillingNamesSyncRef.current ?? syncPickupBillingNames());
-        pickupBillingNamesSyncRef.current = null;
-
         // Find the selected shipping method from our stored shipping methods
         const selectedShippingMethod = shippingMethods?.find(
           method =>
@@ -640,7 +615,6 @@ export function StripeExpressCheckoutForm() {
     },
     [
       handleSubmit,
-      syncPickupBillingNames,
       t.errors.errorProcessingPayment,
       shippingMethods,
       selectedShippingRate,
@@ -652,7 +626,6 @@ export function StripeExpressCheckoutForm() {
   // Handle cancel event
   const handleCancel = useCallback(() => {
     // Reset state when payment sheet is dismissed
-    pickupBillingNamesSyncRef.current = null;
     setCalculatedTaxes(null);
     setShippingMethods(null);
     setSelectedShippingRate(null);

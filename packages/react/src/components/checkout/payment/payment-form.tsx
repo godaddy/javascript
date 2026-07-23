@@ -308,7 +308,6 @@ export function PaymentForm(
   const billingIsSeparateFromShipping = !isShipping || !useShippingAddress;
 
   const shouldShowBillingNamesOnly =
-    !isPickup &&
     !isPaymentMethodWithInlineBilling &&
     session?.enableBillingAddressCollection === false &&
     billingIsSeparateFromShipping;
@@ -570,7 +569,6 @@ export function PaymentForm(
           <AddressForm
             sectionKey='billing'
             onlyNames={shouldShowBillingNamesOnly}
-            hideNames={isPickup && isBillingAddressRequired}
           />
         </CheckoutSection>
       ) : null}

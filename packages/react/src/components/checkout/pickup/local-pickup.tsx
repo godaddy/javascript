@@ -3,7 +3,6 @@ import { format as formatTz, toZonedTime } from 'date-fns-tz';
 import { CalendarIcon, ChevronDown, Clock, MapPin, Store } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { AddressForm } from '@/components/checkout/address/address-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { useApplyFulfillmentLocation } from '@/components/checkout/delivery/utils/use-apply-fulfillment-location';
@@ -441,8 +440,6 @@ export function LocalPickupForm({
 
   return (
     <div className='space-y-4'>
-      <AddressForm sectionKey='billing' onlyNames />
-
       <FormField
         control={form.control}
         name='pickupLocationId'
