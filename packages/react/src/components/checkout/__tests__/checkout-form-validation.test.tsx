@@ -2,7 +2,7 @@ import { enUs } from '@godaddy/localizations';
 import { screen, waitFor } from '@testing-library/react';
 import { useFormContext } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
-import { PaymentMethodType, PaymentProvider } from '@/types';
+import { PaymentProvider } from '@/types';
 import {
   buildDraftOrder,
   buildLineItem,
@@ -42,7 +42,6 @@ function _offlinePaymentMethods() {
     mercadopago: null,
     ccavenue: null,
     offline: {
-      type: PaymentMethodType.OFFLINE,
       processor: PaymentProvider.OFFLINE,
       checkoutTypes: ['standard'],
     },
@@ -52,7 +51,6 @@ function _offlinePaymentMethods() {
 function stripeOnlyPaymentMethods() {
   return {
     card: {
-      type: PaymentMethodType.CREDIT_CARD,
       processor: PaymentProvider.STRIPE,
       checkoutTypes: ['standard'],
     },
@@ -160,6 +158,42 @@ describe('Checkout form validation', () => {
       expect(document.body).toHaveTextContent(enUs.validation.enterFirstName);
     });
     expect(document.body).not.toHaveTextContent(enUs.validation.enterAddress);
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+  });
+
+  it('requires pickup customer names for paid pickup with offline payment', async () => {
+    const draftOrder = makePaidPickupOrder({
+      billing: {
+        firstName: '',
+        lastName: '',
+        address: buildShippingAddress({ addressLine1: '' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      sessionOverrides: {
+        draftOrder,
+        paymentMethods: {
+          ...stripeOnlyPaymentMethods(),
+          card: null as never,
+          offline: {
+            processor: PaymentProvider.OFFLINE,
+            checkoutTypes: ['standard'],
+          },
+        },
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(await clickSubmitButton(/complete your order/i));
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(enUs.validation.enterFirstName);
+    });
     expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
   });
 

@@ -282,12 +282,12 @@ export function Checkout(props: CheckoutProps) {
         }
       }
 
-      // Billing address validation - only required if not using shipping address OR pickup
-      // BUT skip for free orders (paymentMethod === 'offline')
-      const isFreeOrder = data.paymentMethod === PaymentMethodType.OFFLINE;
+      // Billing address validation - only required when billing is separate from shipping.
+      // Offline pickup (pay in store / $0 order) only requires customer names.
+      const isOfflinePayment = data.paymentMethod === PaymentMethodType.OFFLINE;
       const isPickup = data.deliveryMethod === DeliveryMethods.PICKUP;
       const isShipping = data.deliveryMethod === DeliveryMethods.SHIP;
-      const isFreePickup = isFreeOrder && isPickup;
+      const isOfflinePickup = isOfflinePayment && isPickup;
 
       // Billing is separate from shipping when there is no shipping address
       // to copy from. `mapOrderToFormValues` canonicalizes deliveryMethod
@@ -297,18 +297,32 @@ export function Checkout(props: CheckoutProps) {
       const billingIsSeparateFromShipping =
         !isShipping || !data.paymentUseShippingAddress;
 
+      const billingNameFields = [
+        { key: 'billingFirstName', message: t.validation.enterFirstName },
+        { key: 'billingLastName', message: t.validation.enterLastName },
+      ];
+
+      // Pickup orders always require customer name (collected in Pickup section).
+      if (isPickup) {
+        for (const { key, message } of billingNameFields) {
+          if (!String(data[key as keyof typeof data] ?? '').trim()) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message,
+              path: [key],
+            });
+          }
+        }
+      }
+
       const requireBillingNamesOnly =
-        (!enableBillingAddressCollection && billingIsSeparateFromShipping) ||
-        isFreePickup;
+        !isPickup &&
+        !enableBillingAddressCollection &&
+        billingIsSeparateFromShipping;
 
       if (requireBillingNamesOnly) {
-        const nameFields = [
-          { key: 'billingFirstName', message: t.validation.enterFirstName },
-          { key: 'billingLastName', message: t.validation.enterLastName },
-        ];
-
-        for (const { key, message } of nameFields) {
-          if (!data[key as keyof typeof data]) {
+        for (const { key, message } of billingNameFields) {
+          if (!String(data[key as keyof typeof data] ?? '').trim()) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message,
@@ -320,7 +334,7 @@ export function Checkout(props: CheckoutProps) {
 
       const requireBillingAddress =
         enableBillingAddressCollection &&
-        !isFreePickup &&
+        !isOfflinePickup &&
         billingIsSeparateFromShipping;
 
       if (requireBillingAddress) {
