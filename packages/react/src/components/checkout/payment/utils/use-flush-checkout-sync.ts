@@ -1,17 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
-import { useFormContext } from 'react-hook-form';
-import {
-  type CheckoutFormData,
-  useCheckoutContext,
-} from '@/components/checkout/checkout';
+import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderSyncQueue } from '@/components/checkout/order/draft-order-sync-provider';
-import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import {
   checkoutMutationKeys,
   checkoutQueryKeys,
 } from '@/components/checkout/utils/query-keys';
-import { getPickupBillingNamesPatch } from '@/components/checkout/utils/sync-pickup-billing-names';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 50;
@@ -28,22 +22,12 @@ function delay(ms: number) {
 
 export function useFlushCheckoutSync() {
   const queryClient = useQueryClient();
-  const form = useFormContext<CheckoutFormData>();
   const { session, setCheckoutErrors } = useCheckoutContext();
-  const { data: draftOrder } = useDraftOrder();
-  const { enqueueDraftOrderPatch, flushDraftOrderSync } =
-    useDraftOrderSyncQueue();
+  const { flushDraftOrderSync } = useDraftOrderSyncQueue();
 
   return React.useCallback(
     async (options: FlushCheckoutSyncOptions = {}) => {
       try {
-        const pickupNamesPatch = getPickupBillingNamesPatch(form, draftOrder);
-        if (pickupNamesPatch) {
-          enqueueDraftOrderPatch(pickupNamesPatch, {
-            fieldNames: ['billingFirstName', 'billingLastName'],
-          });
-        }
-
         await flushDraftOrderSync();
 
         const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -104,14 +88,6 @@ export function useFlushCheckoutSync() {
         throw error;
       }
     },
-    [
-      draftOrder,
-      enqueueDraftOrderPatch,
-      flushDraftOrderSync,
-      form,
-      queryClient,
-      session,
-      setCheckoutErrors,
-    ]
+    [flushDraftOrderSync, queryClient, session, setCheckoutErrors]
   );
 }

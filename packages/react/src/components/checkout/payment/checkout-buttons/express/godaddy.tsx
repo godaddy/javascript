@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import type { CheckoutFormData } from '@/components/checkout/checkout';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
@@ -33,8 +31,6 @@ import {
   useConvertMajorToMinorUnits,
   useFormatCurrency,
 } from '@/components/checkout/utils/format-currency';
-import { useSyncPickupBillingNames } from '@/components/checkout/utils/use-sync-pickup-billing-names';
-import { validatePickupPrerequisites } from '@/components/checkout/utils/use-validate-pickup-prerequisites';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -49,12 +45,10 @@ import type { CalculatedAdjustments, CalculatedTaxes } from '@/types';
 export function ExpressCheckoutButton() {
   const formatCurrency = useFormatCurrency();
   const convertMajorToMinorUnits = useConvertMajorToMinorUnits();
-  const form = useFormContext<CheckoutFormData>();
   const { session, setCheckoutErrors, isConfirmingCheckout } =
     useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const { isPoyntLoaded } = useLoadPoyntCollect();
-  const syncPickupBillingNames = useSyncPickupBillingNames();
 
   const isDisabled = isConfirmingCheckout || isPaymentDisabled;
   const { godaddyPaymentsConfig } = useCheckoutContext();
@@ -100,9 +94,6 @@ export function ExpressCheckoutButton() {
   // Use refs to store current coupon state to avoid stale closures in event handlers
   const appliedCouponCodeRef = useRef<string | null>(null);
   const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
-  const pickupBillingNamesSyncRef = useRef<Promise<void> | null>(null);
-  const syncPickupBillingNamesRef = useRef(syncPickupBillingNames);
-  syncPickupBillingNamesRef.current = syncPickupBillingNames;
 
   const calculateGodaddyExpressTaxes = useCallback(
     async ({
@@ -194,13 +185,6 @@ export function ExpressCheckoutButton() {
       if (isDisabled) {
         return;
       }
-
-      const pickupValid = await validatePickupPrerequisites(form, session);
-      if (!pickupValid) {
-        return;
-      }
-
-      pickupBillingNamesSyncRef.current = syncPickupBillingNames();
 
       // Read from refs to get current values (avoid stale closure)
       const currentCouponCode = appliedCouponCodeRef.current;
@@ -312,9 +296,6 @@ export function ExpressCheckoutButton() {
       totals,
       formatCurrency,
       isDisabled,
-      form,
-      session,
-      syncPickupBillingNames,
     ]
   );
 
@@ -993,10 +974,6 @@ export function ExpressCheckoutButton() {
         };
 
         try {
-          await (pickupBillingNamesSyncRef.current ??
-            syncPickupBillingNamesRef.current());
-          pickupBillingNamesSyncRef.current = null;
-
           await confirmCheckout.mutateAsync(checkoutBody);
 
           event.complete();

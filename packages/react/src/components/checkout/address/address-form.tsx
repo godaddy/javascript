@@ -54,10 +54,8 @@ import type { Address } from '@/types';
 
 interface AddressFormProps {
   sectionKey: string;
-  /** When true, only show first name and last name fields (used for pickup orders) */
+  /** When true, only show first name and last name fields (used for free pickup orders) */
   onlyNames?: boolean;
-  /** When true, hide first/last name fields (names collected elsewhere, e.g. pickup section) */
-  hideNames?: boolean;
 }
 
 export function mapAutocompleteAddressFields(selectedAddress?: Address) {
@@ -75,10 +73,7 @@ export function mapAutocompleteAddressFields(selectedAddress?: Address) {
 export function AddressForm({
   sectionKey,
   onlyNames = false,
-  hideNames = false,
 }: AddressFormProps) {
-  const showNames = onlyNames || !hideNames;
-  const showAddressFields = !onlyNames;
   const form = useFormContext();
   const { session } = useCheckoutContext();
   const { t } = useGoDaddyContext();
@@ -169,8 +164,6 @@ export function AddressForm({
     !!lastName?.trim() &&
     debouncedContact === serializedContact;
 
-  // Names-only sync must omit `address`. Sending `address: null` clears any
-  // billing address already collected for paid pickup (Payment section).
   useDraftOrderFieldSync({
     key: 'name',
     data: contact,
@@ -182,6 +175,7 @@ export function AddressForm({
       const fields = {
         firstName: data.firstName.trim(),
         lastName: data.lastName.trim(),
+        address: null,
       };
 
       return mapAddressFieldsToInput(
@@ -395,7 +389,7 @@ export function AddressForm({
 
   return (
     <fieldset className='space-y-2' disabled={isConfirmingCheckout}>
-      {showAddressFields && (
+      {!onlyNames && (
         <FormField
           control={form.control}
           name={`${sectionKey}CountryCode`}
@@ -522,52 +516,48 @@ export function AddressForm({
         />
       )}
 
-      {showNames ? (
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
-          <FormField
-            control={form.control}
-            name={`${sectionKey}FirstName`}
-            render={({ field, fieldState }) => (
-              <FormItem className='space-y-1'>
-                <FormLabel className='sr-only'>
-                  {t.shipping.firstName}
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={t.shipping.firstName}
-                    hasError={!!fieldState.error}
-                    aria-required={requiredFields?.[`${sectionKey}FirstName`]}
-                    {...field}
-                    disabled={isConfirmingCheckout}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={`${sectionKey}LastName`}
-            render={({ field, fieldState }) => (
-              <FormItem className='space-y-1'>
-                <FormLabel className='sr-only'>{t.shipping.lastName}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={t.shipping.lastName}
-                    hasError={!!fieldState.error}
-                    aria-required={requiredFields?.[`${sectionKey}LastName`]}
-                    {...field}
-                    disabled={isConfirmingCheckout}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      ) : null}
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+        <FormField
+          control={form.control}
+          name={`${sectionKey}FirstName`}
+          render={({ field, fieldState }) => (
+            <FormItem className='space-y-1'>
+              <FormLabel className='sr-only'>{t.shipping.firstName}</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={t.shipping.firstName}
+                  hasError={!!fieldState.error}
+                  aria-required={requiredFields?.[`${sectionKey}FirstName`]}
+                  {...field}
+                  disabled={isConfirmingCheckout}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name={`${sectionKey}LastName`}
+          render={({ field, fieldState }) => (
+            <FormItem className='space-y-1'>
+              <FormLabel className='sr-only'>{t.shipping.lastName}</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={t.shipping.lastName}
+                  hasError={!!fieldState.error}
+                  aria-required={requiredFields?.[`${sectionKey}LastName`]}
+                  {...field}
+                  disabled={isConfirmingCheckout}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
-      {showAddressFields ? (
+      {!onlyNames && (
         <>
           <FormField
             control={form.control}
@@ -774,7 +764,7 @@ export function AddressForm({
 
           <PhoneInput sectionKey={sectionKey} disabled={isConfirmingCheckout} />
         </>
-      ) : null}
+      )}
     </fieldset>
   );
 }

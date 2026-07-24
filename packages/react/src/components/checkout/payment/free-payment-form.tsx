@@ -1,7 +1,9 @@
 import { LoaderCircle } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import { AddressForm } from '@/components/checkout/address/address-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import {
   PaymentProvider,
   useConfirmCheckout,
@@ -19,6 +21,9 @@ export function FreePaymentForm() {
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const confirmCheckout = useConfirmCheckout();
+
+  const deliveryMethod = form.watch('deliveryMethod');
+  const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
 
   const handleSubmit = React.useCallback(async () => {
     const valid = await form.trigger();
@@ -43,20 +48,16 @@ export function FreePaymentForm() {
     }
   }, [form, confirmCheckout.mutateAsync, setCheckoutErrors]);
 
-  if (isConfirmingCheckout) {
-    return (
-      <Button
-        type='button'
-        className='w-full flex items-center justify-center gap-2 px-8 h-10'
-        disabled
-      >
-        <LoaderCircle className='h-5 w-5 animate-spin' />
-        {t.payment.completingOrder}
-      </Button>
-    );
-  }
-
-  return (
+  const submitButton = isConfirmingCheckout ? (
+    <Button
+      type='button'
+      className='w-full flex items-center justify-center gap-2 px-8 h-10'
+      disabled
+    >
+      <LoaderCircle className='h-5 w-5 animate-spin' />
+      {t.payment.completingOrder}
+    </Button>
+  ) : (
     <Button
       className={cn('w-full')}
       size='lg'
@@ -67,4 +68,16 @@ export function FreePaymentForm() {
       <span>{t.payment.freePayment}</span>
     </Button>
   );
+
+  // For pickup orders, show name fields
+  if (isPickup) {
+    return (
+      <div className='space-y-4'>
+        <AddressForm sectionKey='billing' onlyNames />
+        {submitButton}
+      </div>
+    );
+  }
+
+  return submitButton;
 }
