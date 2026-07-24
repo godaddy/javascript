@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.52
+
+### Patch Changes
+
+- d3f929e: Restore pickup customer name collection to the existing billing fields and remove unsupported pickup handling from Stripe and GoDaddy express checkout.
+
 ## 1.0.51
 
 ### Patch Changes
