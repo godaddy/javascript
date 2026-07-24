@@ -1,5 +1,17 @@
 # @godaddy/react
 
+## 1.0.52
+
+### Patch Changes
+
+- d3f929e: Restore pickup customer name collection to the existing billing fields and remove unsupported pickup handling from Stripe and GoDaddy express checkout.
+
+## 1.0.51
+
+### Patch Changes
+
+- ec3ab92: Require customer first and last name for in-person pickup orders. Names are collected in the Pickup section, synced to order billing, and validated for card, offline, free, and express checkout paths.
+
 ## 1.0.50
 
 ### Patch Changes
