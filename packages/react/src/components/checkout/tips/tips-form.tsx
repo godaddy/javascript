@@ -98,8 +98,10 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
   };
 
   const handleCustomTip = () => {
+    const currentTipAmount = form.getValues('tipAmount') || 0;
+
     setShowCustomTip(true);
-    form.setValue('tipAmount', 0);
+    form.setValue('tipAmount', currentTipAmount);
     form.setValue('tipPercentage', null);
 
     // Track custom tip selection
@@ -127,8 +129,10 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
   if (threshold) {
     if (threshold.amounts) {
       tipAmounts = threshold.amounts;
+      tipPercentages = undefined;
     } else if (threshold.percentages) {
       tipPercentages = threshold.percentages;
+      tipAmounts = undefined;
     }
   }
 
