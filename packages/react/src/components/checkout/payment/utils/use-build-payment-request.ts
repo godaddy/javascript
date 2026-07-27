@@ -208,7 +208,7 @@ export function useBuildPaymentRequest(): {
       0
     ) || 0;
   const discountMinorUnits = totals?.discountTotal?.value || 0;
-  const tipAmount = form.getValues('tipAmount') || 0;
+  const tipAmount = form.watch('tipAmount') || 0;
   const totalMinorUnits = totals?.total?.value || 0;
   const totalWithTipMinorUnits = totalMinorUnits + tipAmount;
 
@@ -531,7 +531,7 @@ export function useBuildPaymentRequest(): {
             quantity: (lineItem?.quantity || 1).toString(),
           }))
           .concat(
-            session?.enableTips
+            session?.enableTips && tipAmount
               ? [
                   {
                     name: 'Tip',
@@ -697,7 +697,7 @@ export function useBuildPaymentRequest(): {
           returnRaw: true,
         }),
       },
-      ...(session?.enableTips
+      ...(session?.enableTips && tipAmount
         ? [
             {
               label: 'Tip',

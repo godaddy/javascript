@@ -121,10 +121,8 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
 
   const threshold = options?.thresholds?.find(
     thres =>
-      thres?.minSubtotal !== null &&
-      thres?.maxSubtotal !== null &&
-      subtotal >= thres.minSubtotal &&
-      subtotal <= thres.maxSubtotal
+      (thres?.minSubtotal == null || subtotal >= thres.minSubtotal) &&
+      (thres?.maxSubtotal == null || subtotal <= thres.maxSubtotal)
   );
   if (threshold) {
     if (threshold.amounts) {

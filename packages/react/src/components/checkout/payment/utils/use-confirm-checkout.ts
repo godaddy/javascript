@@ -179,7 +179,9 @@ export function useConfirmCheckout() {
                 : undefined,
             })
           : {};
-        const tipAmount = form.getValues('tipAmount');
+        const tipAmount = session.enableTips
+          ? form.getValues('tipAmount')
+          : undefined;
         const payload = {
           ...confirmCheckoutInput,
           ...pickUpData,

@@ -169,7 +169,7 @@ An array of threshold objects that override the default tips when the order subt
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `minSubtotal` | number | No | Minimum order subtotal (inclusive) in the smallest currency unit for this threshold to apply. |
-| `maxSubtotal` | number | No | Maximum order subtotal (exclusive) in the smallest currency unit for this threshold to apply. |
+| `maxSubtotal` | number | No | Maximum order subtotal (inclusive) in the smallest currency unit for this threshold to apply. |
 | `amounts` | number[] | No | Fixed tip amounts in the smallest currency unit (e.g. cents). |
 | `percentages` | number[] | No | Tip percentage options (integers between 0 and 100). |
 
