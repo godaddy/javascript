@@ -138,7 +138,9 @@ operatingHours: {
 
 ### Tips
 
-The `tips` field configures preset tip options shown to the customer when `enableTips` is `true`. Tips supports a `default` preset and optional `thresholds` that activate based on the order subtotal. Only one of `amounts` or `percentages` should be provided — not both.
+The `tips` field configures preset tip options shown to the customer when `enableTips` is `true`. Tips supports a `default` preset and optional `thresholds` that activate based on the order subtotal.
+
+Every option list — `default` and each threshold — must supply **exactly one** of `amounts` or `percentages`, with **exactly three** values. The API rejects sessions that provide both, neither, or a different number of values. Three values is also what the tip selector is laid out for.
 
 ```typescript
 tips: {
@@ -148,8 +150,13 @@ tips: {
   thresholds: [
     {
       minSubtotal: 0,
-      maxSubtotal: 1000,
+      maxSubtotal: 999,
       amounts: [100, 200, 500],
+    },
+    {
+      minSubtotal: 1000,
+      maxSubtotal: 4999,
+      amounts: [200, 400, 700],
     },
   ],
 }
@@ -159,8 +166,8 @@ tips: {
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `amounts` | number[] | No | Fixed tip amounts in the smallest currency unit (e.g. cents). |
-| `percentages` | number[] | No | Tip percentage options (integers between 0 and 100). |
+| `amounts` | number[] | Conditional | Fixed tip amounts in the smallest currency unit (e.g. cents). Exactly three values. Mutually exclusive with `percentages`. |
+| `percentages` | number[] | Conditional | Tip percentage options (integers between 0 and 100). Exactly three values. Mutually exclusive with `amounts`. |
 
 #### `tips.thresholds`
 
@@ -168,10 +175,19 @@ An array of threshold objects that override the default tips when the order subt
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `minSubtotal` | number | No | Minimum order subtotal (inclusive) in the smallest currency unit for this threshold to apply. |
-| `maxSubtotal` | number | No | Maximum order subtotal (inclusive) in the smallest currency unit for this threshold to apply. |
-| `amounts` | number[] | No | Fixed tip amounts in the smallest currency unit (e.g. cents). |
-| `percentages` | number[] | No | Tip percentage options (integers between 0 and 100). |
+| `minSubtotal` | number | Yes | Minimum order subtotal (inclusive) in the smallest currency unit for this threshold to apply. Required by the API — omitting it fails with `INVALID_TIP_THRESHOLD`. |
+| `maxSubtotal` | number | Yes | Maximum order subtotal (inclusive) in the smallest currency unit for this threshold to apply. Required by the API — omitting it fails with `INVALID_TIP_THRESHOLD`. |
+| `amounts` | number[] | Conditional | Fixed tip amounts in the smallest currency unit (e.g. cents). Exactly three values. Mutually exclusive with `percentages`. |
+| `percentages` | number[] | Conditional | Tip percentage options (integers between 0 and 100). Exactly three values. Mutually exclusive with `amounts`. |
+
+#### Behavior Notes
+
+- **Threshold matching** — Checkout uses the **first** threshold whose range contains the order subtotal. Both bounds are inclusive, so a subtotal equal to `minSubtotal` or `maxSubtotal` matches.
+- **Overlaps are not validated** — The API checks neither overlap nor full coverage of the subtotal range. Adjacent thresholds that share a boundary (e.g. `0–1000` and `1000–2000`) are accepted and resolve silently to whichever comes first in the array. Make ranges contiguous but non-overlapping (e.g. `0–999` then `1000–1999`) so the applied threshold is unambiguous.
+- **Gaps fall back to `default`** — A subtotal outside every threshold range uses `tips.default`.
+- **No `tips` configured** — When `enableTips` is `true` but `tips` is omitted, checkout shows `15%`, `18%`, and `20%`.
+- **Both lists on one threshold** — Should a threshold reach checkout with both `amounts` and `percentages` (the API rejects this), `amounts` wins and the percentages are ignored.
+- **Customer overrides** — The presets are suggestions. The tip selector also offers "No tip" and "Custom amount", so the confirmed `tipAmount` need not match any preset.
 
 ### Appearance
 
