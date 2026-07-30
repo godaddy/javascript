@@ -199,7 +199,7 @@ export function CheckoutForm({
   const taxTotal = totals?.taxTotal?.value || 0;
   const feeTotal = totals?.feeTotal?.value || 0;
   const orderTotal = totals?.total?.value || 0;
-  const tipTotal = tipAmount || 0;
+  const tipTotal = session?.enableTips ? tipAmount || 0 : 0;
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
