@@ -4211,15 +4211,21 @@ const introspection = {
           {
             "name": "maxSubtotal",
             "type": {
-              "kind": "SCALAR",
-              "name": "Int"
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
             }
           },
           {
             "name": "minSubtotal",
             "type": {
-              "kind": "SCALAR",
-              "name": "Int"
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
             }
           },
           {
@@ -7960,6 +7966,19 @@ const introspection = {
         "name": "MutationAuthorizeCheckoutSessionInput",
         "inputFields": [
           {
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TransactionFeeInput"
+                }
+              }
+            }
+          },
+          {
             "name": "paymentProvider",
             "type": {
               "kind": "NON_NULL",
@@ -7984,6 +8003,13 @@ const introspection = {
                 "kind": "SCALAR",
                 "name": "String"
               }
+            }
+          },
+          {
+            "name": "tipAmount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
             }
           }
         ],

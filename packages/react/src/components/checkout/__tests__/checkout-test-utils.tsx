@@ -38,6 +38,7 @@ export type OperationName =
   | 'ApplyCheckoutSessionDiscount'
   | 'ApplyCheckoutSessionFulfillmentLocation'
   | 'ConfirmCheckoutSession'
+  | 'AuthorizeCheckoutSession'
   | 'TokenizeJs.getNonce'
   | 'ExchangeCheckoutToken'
   | 'RefreshCheckoutToken'
@@ -70,6 +71,7 @@ export type MockGodaddyApiErrorKey =
   | 'applyDiscount'
   | 'applyFulfillmentLocation'
   | 'confirmCheckout'
+  | 'authorizeCheckoutSession'
   | 'getDraftOrderShippingMethods'
   | 'getProductsFromOrderSkus';
 
@@ -923,6 +925,17 @@ export function mockGodaddyApi(options: MockGodaddyApiOptions) {
     return {
       confirmCheckoutSession: {
         status: 'COMPLETED',
+      },
+    };
+  });
+
+  mockedGodaddyApi.authorizeCheckoutSession.mockImplementation(async input => {
+    record('AuthorizeCheckoutSession', input);
+    await maybeDelay();
+    maybeThrow('authorizeCheckoutSession');
+    return {
+      authorizeCheckoutSession: {
+        transactionRefNum: 'transaction-ref-1',
       },
     };
   });

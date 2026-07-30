@@ -1,20 +1,18 @@
 import { Elements, useElements } from '@stripe/react-stripe-js';
 import { useEffect } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
 import { useStripePaymentIntent } from '@/components/checkout/payment/utils/use-stripe-payment-intent';
 
-function StripeElementsUpdater() {
+function StripeElementsUpdater({ amount = 0 }: { amount?: number }) {
   const elements = useElements();
-  const { data: totals, isLoading: totalsLoading } = useDraftOrderTotals();
 
   useEffect(() => {
-    if (!totalsLoading && elements && (totals?.total?.value || 0) > 0) {
+    if (elements && amount > 0) {
       elements.update({
-        amount: totals?.total?.value || 0,
+        amount,
       });
     }
-  }, [elements, totalsLoading, totals?.total?.value]);
+  }, [elements, amount]);
 
   return null; // This component only updates Elements
 }
@@ -22,12 +20,12 @@ function StripeElementsUpdater() {
 export function StripeProvider({ children }: { children: React.ReactNode }) {
   const { stripeConfig } = useCheckoutContext();
 
+  const { stripePromise, currency, clientSecret, isLoading, amount } =
+    useStripePaymentIntent();
+
   if (!stripeConfig?.publishableKey?.trim()) {
     return <>{children}</>;
   }
-
-  const { stripePromise, currency, clientSecret, isLoading, amount } =
-    useStripePaymentIntent();
 
   if (isLoading || !stripePromise || amount <= 0) {
     return null;
@@ -46,7 +44,7 @@ export function StripeProvider({ children }: { children: React.ReactNode }) {
           payment_method_types: ['card'],
         }}
       >
-        <StripeElementsUpdater />
+        <StripeElementsUpdater amount={amount} />
         {children}
       </Elements>
     );
