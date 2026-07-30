@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRef } from 'react';
+import { useFormContext } from 'react-hook-form';
 import {
   redirectToSuccessUrl,
   useCheckoutContext,
@@ -30,6 +31,8 @@ export function useConfirmExpressCheckout() {
   } = useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
   const isPaymentDisabled = useIsPaymentDisabled();
+  // Express buttons can render outside a form provider, so this may be null.
+  const form = useFormContext();
   const isPendingRef = useRef(false);
 
   return useMutation({
@@ -66,6 +69,18 @@ export function useConfirmExpressCheckout() {
       try {
         const { isExpress: _isExpress, ...confirmCheckoutInput } = input;
 
+        // The wallet sheet and the Stripe Elements amount are tip-inclusive, so
+        // capture the same tip the customer authorized. Callers may pass their
+        // own tipAmount; otherwise fall back to the tips section's form value.
+        const payload = {
+          ...confirmCheckoutInput,
+          tipAmount: session.enableTips
+            ? (confirmCheckoutInput.tipAmount ??
+              form?.getValues('tipAmount') ??
+              0)
+            : undefined,
+        };
+
         setCheckoutErrors(undefined);
         setIsConfirmingCheckout(true);
 
@@ -81,11 +96,11 @@ export function useConfirmExpressCheckout() {
 
         const data = jwt
           ? await confirmCheckout(
-              confirmCheckoutInput,
+              payload,
               { accessToken: jwt, sessionId: session?.id || '' },
               apiHost
             )
-          : await confirmCheckout(confirmCheckoutInput, session, apiHost);
+          : await confirmCheckout(payload, session, apiHost);
 
         if (!data) {
           throw new Error('Express checkout confirmation failed');

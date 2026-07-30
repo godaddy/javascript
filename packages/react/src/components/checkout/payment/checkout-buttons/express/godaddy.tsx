@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
@@ -68,6 +69,10 @@ export function ExpressCheckoutButton() {
   const { data: totals } = useDraftOrderTotals();
   const { data: draftOrder } = useDraftOrder();
   const currencyCode = totals?.total?.currencyCode || 'USD';
+  const form = useFormContext();
+  // The tip is charged at confirmation, so every total we recompute for the
+  // wallet sheet has to stay tip-inclusive.
+  const tipMinorUnits = session?.enableTips ? form?.watch('tipAmount') || 0 : 0;
 
   const [godaddyTotals, setGoDaddyTotals] = useState<{
     taxes: { currencyCode: string; value: number };
@@ -219,7 +224,8 @@ export function ExpressCheckoutButton() {
 
         // Calculate the correct total in minor units
         const totalInMinorUnits =
-          (totals?.subTotal?.value || 0) -
+          (totals?.subTotal?.value || 0) +
+          tipMinorUnits -
           (currentAdjustments?.totalDiscountAmount?.value || 0);
 
         const totalAmount = formatCurrency({
@@ -296,6 +302,7 @@ export function ExpressCheckoutButton() {
       totals,
       formatCurrency,
       isDisabled,
+      tipMinorUnits,
     ]
   );
 
@@ -656,6 +663,7 @@ export function ExpressCheckoutButton() {
         // Calculate the total in minor units then format with proper currency precision
         const totalInMinorUnits =
           (totals?.subTotal?.value || 0) +
+          tipMinorUnits +
           godaddyTotals.shipping.value +
           updatedTaxValue;
 
@@ -803,6 +811,7 @@ export function ExpressCheckoutButton() {
             // Calculate the total in minor units then format with proper currency precision
             const totalInMinorUnits =
               (totals?.subTotal?.value || 0) +
+              tipMinorUnits +
               godaddyTotals.shipping.value +
               updatedTaxValue -
               adjustmentValue;
@@ -1469,6 +1478,7 @@ export function ExpressCheckoutButton() {
     session,
     walletSource,
     setCheckoutErrors,
+    tipMinorUnits,
   ]);
 
   return (

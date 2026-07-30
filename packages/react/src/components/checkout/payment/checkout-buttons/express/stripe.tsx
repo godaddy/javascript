@@ -9,6 +9,7 @@ import type {
   StripeExpressCheckoutElementShippingRateChangeEvent,
 } from '@stripe/stripe-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
@@ -62,6 +63,11 @@ export function StripeExpressCheckoutForm() {
 
   // Currency configuration
   const currencyCode = totals?.total?.currencyCode || 'USD';
+
+  const form = useFormContext();
+  // The tip is charged at confirmation and is already part of the Elements
+  // amount, so keep it in every total and line item list we recompute here.
+  const tipMinorUnits = session?.enableTips ? form?.watch('tipAmount') || 0 : 0;
 
   // State for tracking calculated values during express checkout flow
   const [calculatedTaxes, setCalculatedTaxes] =
@@ -273,6 +279,14 @@ export function StripeExpressCheckoutForm() {
         amount: subtotal,
       });
 
+      // Add tip if present
+      if (tipMinorUnits > 0) {
+        items.push({
+          name: t.totals.tip,
+          amount: tipMinorUnits,
+        });
+      }
+
       // Add shipping if present
       if (shippingAmount > 0) {
         items.push({
@@ -299,7 +313,7 @@ export function StripeExpressCheckoutForm() {
 
       return items;
     },
-    [totals?.subTotal?.value, t.totals]
+    [totals?.subTotal?.value, t.totals, tipMinorUnits]
   );
 
   // Recalculate adjustments when shipping changes
@@ -461,7 +475,11 @@ export function StripeExpressCheckoutForm() {
         // Calculate new total and update Elements amount before resolving
         // This ensures Stripe's lineItems validation passes
         const newTotal =
-          subtotal + defaultRate.amount + taxAmount - discountAmount;
+          subtotal +
+          tipMinorUnits +
+          defaultRate.amount +
+          taxAmount -
+          discountAmount;
         elements?.update({ amount: newTotal });
 
         event.resolve({
@@ -487,6 +505,7 @@ export function StripeExpressCheckoutForm() {
       elements,
       totals?.subTotal?.value,
       t.apiErrors,
+      tipMinorUnits,
     ]
   );
 
@@ -535,7 +554,11 @@ export function StripeExpressCheckoutForm() {
         // Calculate new total and update Elements amount before resolving
         // This ensures Stripe's lineItems validation passes
         const newTotal =
-          subtotal + selectedRate.amount + taxAmount - discountAmount;
+          subtotal +
+          tipMinorUnits +
+          selectedRate.amount +
+          taxAmount -
+          discountAmount;
         elements?.update({ amount: newTotal });
 
         event.resolve({
@@ -558,6 +581,7 @@ export function StripeExpressCheckoutForm() {
       calculatedTaxes,
       elements,
       totals?.subTotal?.value,
+      tipMinorUnits,
     ]
   );
 

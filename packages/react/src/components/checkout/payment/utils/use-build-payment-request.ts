@@ -645,6 +645,21 @@ export function useBuildPaymentRequest(): {
           }),
         };
       }),
+      // Keep the tip in the line items so the wallet sheet itemizes it and the
+      // totals recomputed from these line items stay tip-inclusive.
+      ...(session?.enableTips && tipAmount
+        ? [
+            {
+              label: 'Tip',
+              amount: formatCurrency({
+                amount: tipAmount,
+                currencyCode,
+                inputInMinorUnits: true,
+                returnRaw: true,
+              }),
+            },
+          ]
+        : []),
     ],
   };
 

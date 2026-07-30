@@ -479,6 +479,13 @@ describe('useBuildPaymentRequest', () => {
     // Poynt Express total includes tip
     expect(requests.poyntExpressRequest.total.amount).toBe('25.00');
 
+    // Poynt Express includes tip line item so recomputed wallet totals keep it
+    expect(requests.poyntExpressRequest.lineItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'Tip', amount: '5.00' }),
+      ])
+    );
+
     // Poynt Standard includes tip line item
     expect(requests.poyntStandardRequest.lineItems).toEqual(
       expect.arrayContaining([
@@ -577,6 +584,9 @@ describe('useBuildPaymentRequest', () => {
       expect.arrayContaining([expect.objectContaining({ name: 'Tip' })])
     );
     expect(requests.poyntStandardRequest.lineItems).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+    );
+    expect(requests.poyntExpressRequest.lineItems).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
     );
   });
