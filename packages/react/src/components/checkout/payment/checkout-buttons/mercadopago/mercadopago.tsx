@@ -1,5 +1,5 @@
 import { LoaderCircle } from 'lucide-react';
-import React, { useCallback, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
@@ -22,6 +22,7 @@ let mpInstance: any = null;
 let bricksBuilderInstance: any = null;
 let brickController: any = null;
 let brickCreationPromise: Promise<any> | null = null;
+let brickAmount: number | null = null;
 let isSubmitting = false;
 
 function getMercadoPagoInstance(publicKey: string) {
@@ -30,6 +31,18 @@ function getMercadoPagoInstance(publicKey: string) {
     bricksBuilderInstance = mpInstance.bricks();
   }
   return { mpInstance, bricksBuilderInstance };
+}
+
+function unmountBrick() {
+  if (!brickController) return;
+
+  try {
+    brickController.unmount();
+  } catch (_e) {
+    // Ignore unmount errors
+  }
+  brickController = null;
+  brickAmount = null;
 }
 
 export function MercadoPagoCheckoutButton() {
@@ -50,7 +63,24 @@ export function MercadoPagoCheckoutButton() {
 
   const [error, setError] = useState('');
   const [isBrickReady, setIsBrickReady] = useState(false);
+  const [brickRevision, setBrickRevision] = useState(0);
   const elementId = 'mercadopago-brick-container';
+
+  const tipAmount = form.watch('tipAmount');
+  const rawAmount = parseFloat(
+    formatCurrency({
+      amount:
+        (totals?.total?.value || 0) +
+        (session?.enableTips ? tipAmount || 0 : 0),
+      currencyCode: totals?.total?.currencyCode || 'USD',
+      inputInMinorUnits: true,
+      returnRaw: true,
+    })
+  );
+  const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
+
+  const amountRef = useRef(amount);
+  amountRef.current = amount;
 
   const getPreferenceId = async () => {
     const response = await authorizeCheckout.mutateAsync({
@@ -112,25 +142,18 @@ export function MercadoPagoCheckoutButton() {
     const canInitialize = isMercadoPagoLoaded && mercadoPagoConfig?.publicKey;
 
     if (canInitialize) {
-      if (brickController) {
-        // Brick already exists, onReady callback will mark as ready
-        setIsBrickReady(true);
-      } else if (brickCreationPromise) {
+      if (brickCreationPromise) {
         // Brick creation in progress, onReady/onError callbacks will handle state
+      } else if (brickController && brickAmount === amount) {
+        // Brick already exists for this amount, onReady callback will mark as ready
+        setIsBrickReady(true);
       } else {
+        setIsBrickReady(false);
+        unmountBrick();
+
         // Create new brick
         const renderBrick = async () => {
-          const tipAmount = form.getValues('tipAmount') || 0;
-          const total = parseFloat(
-            formatCurrency({
-              amount:
-                (totals?.total?.value || 0) +
-                (session?.enableTips ? tipAmount : 0),
-              currencyCode: totals?.total?.currencyCode || 'USD',
-              inputInMinorUnits: true,
-              returnRaw: true,
-            })
-          );
+          const total = amount;
 
           try {
             const container = document.getElementById(elementId);
@@ -143,47 +166,55 @@ export function MercadoPagoCheckoutButton() {
 
             const mercadoPagoPreferenceId = await getPreferenceId();
 
-            brickController = await bricksBuilder.create('payment', elementId, {
-              initialization: {
-                amount: total,
-                preferenceId: mercadoPagoPreferenceId,
-                payer: { email: 'dummy@testuser.com' },
-              },
-              customization: {
-                visual: {
-                  hideFormTitle: true,
-                  hidePaymentButton: true,
-                  style: { theme: 'default' },
+            const controller = await bricksBuilder.create(
+              'payment',
+              elementId,
+              {
+                initialization: {
+                  amount: total,
+                  preferenceId: mercadoPagoPreferenceId,
+                  payer: { email: 'dummy@testuser.com' },
                 },
-                paymentMethods: {
-                  creditCard: 'all',
-                  debitCard: 'all',
-                  maxInstallments: 1,
+                customization: {
+                  visual: {
+                    hideFormTitle: true,
+                    hidePaymentButton: true,
+                    style: { theme: 'default' },
+                  },
+                  paymentMethods: {
+                    creditCard: 'all',
+                    debitCard: 'all',
+                    maxInstallments: 1,
+                  },
                 },
-              },
-              callbacks: {
-                onReady: () => {
-                  setIsBrickReady(true);
-                  const brickContainer = document.getElementById(elementId);
-                  const formElement = brickContainer?.querySelector('form');
-                  if (formElement) {
-                    formElement.style.padding = '0';
-                    const childDiv = formElement.querySelector(':scope > div');
-                    if (childDiv instanceof HTMLElement) {
-                      childDiv.style.margin = '0';
+                callbacks: {
+                  onReady: () => {
+                    setIsBrickReady(true);
+                    const brickContainer = document.getElementById(elementId);
+                    const formElement = brickContainer?.querySelector('form');
+                    if (formElement) {
+                      formElement.style.padding = '0';
+                      const childDiv =
+                        formElement.querySelector(':scope > div');
+                      if (childDiv instanceof HTMLElement) {
+                        childDiv.style.margin = '0';
+                      }
                     }
-                  }
+                  },
+                  onError: () => {
+                    // Only treat as initialization failure if the brick never became ready.
+                    // Card validation errors are handled by the brick's own UI.
+                    if (!brickController) {
+                      setError(t.errors.failedToInitializePayment);
+                      setIsBrickReady(false);
+                    }
+                  },
                 },
-                onError: () => {
-                  // Only treat as initialization failure if the brick never became ready.
-                  // Card validation errors are handled by the brick's own UI.
-                  if (!brickController) {
-                    setError(t.errors.failedToInitializePayment);
-                    setIsBrickReady(false);
-                  }
-                },
-              },
-            });
+              }
+            );
+
+            brickController = controller;
+            brickAmount = total;
           } catch (_err) {
             setError(t.errors.failedToInitializePayment);
             setIsBrickReady(false);
@@ -194,6 +225,9 @@ export function MercadoPagoCheckoutButton() {
         brickCreationPromise = renderBrick();
         brickCreationPromise.finally(() => {
           brickCreationPromise = null;
+          if (brickController && brickAmount !== amountRef.current) {
+            setBrickRevision(revision => revision + 1);
+          }
         });
       }
     }
@@ -202,18 +236,15 @@ export function MercadoPagoCheckoutButton() {
       // Don't unmount if submitting (parent replaces component with loading button)
       // or if creation is in progress (React Strict Mode double-invocation)
       if (brickController && !brickCreationPromise && !isSubmitting) {
-        try {
-          brickController.unmount();
-        } catch (_e) {
-          // Ignore unmount errors
-        }
-        brickController = null;
+        unmountBrick();
       }
     };
   }, [
     isMercadoPagoLoaded,
     mercadoPagoConfig?.publicKey,
     elementId,
+    amount,
+    brickRevision,
     t.errors.failedToInitializePayment,
   ]);
 
@@ -229,9 +260,11 @@ export function MercadoPagoCheckoutButton() {
 
     await flushCheckoutSync();
 
-    if (brickController) {
+    if (brickController && brickAmount === amountRef.current) {
       const { formData } = await brickController.getFormData();
       await handleSubmit({ formData });
+    } else {
+      setIsBrickReady(false);
     }
   };
 
