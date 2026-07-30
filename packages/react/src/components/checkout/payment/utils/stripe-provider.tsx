@@ -52,7 +52,11 @@ export function StripeProvider({ children }: { children: React.ReactNode }) {
 
   if (stripePromise && clientSecret) {
     return (
-      <Elements stripe={stripePromise} options={{ clientSecret }}>
+      <Elements
+        key={clientSecret}
+        stripe={stripePromise}
+        options={{ clientSecret }}
+      >
         {children}
       </Elements>
     );

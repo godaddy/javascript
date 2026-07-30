@@ -38,11 +38,19 @@ export function useStripePaymentIntent({
   const amount = session?.enableTips ? total + tipAmount : total;
   const currency = totals?.total?.currencyCode?.toLowerCase() || 'usd';
 
+  const existingClientSecret = form?.watch('stripePaymentIntent');
+  const existingIntentId = form?.watch('stripePaymentIntentId');
+
   const [stripePromise, setStripePromise] =
     useState<Promise<Stripe | null> | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [intentId, setIntentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const syncedIntentRef = useRef<{
+    clientSecret: string;
+    amount: number;
+  } | null>(null);
 
   useEffect(() => {
     if (stripeConfig?.publishableKey?.trim()) {
@@ -85,13 +93,21 @@ export function useStripePaymentIntent({
       return res.json();
     },
     onMutate: () => {
+      syncedIntentRef.current = null;
       setClientSecret(null);
       setIntentId(null);
       form?.setValue('stripePaymentIntent', undefined);
       form?.setValue('stripePaymentIntentId', undefined);
       setError(null);
     },
-    onSuccess: ({ clientSecret: responseClientSecret, id: responseId }) => {
+    onSuccess: (
+      { clientSecret: responseClientSecret, id: responseId },
+      variables
+    ) => {
+      syncedIntentRef.current = {
+        clientSecret: responseClientSecret,
+        amount: variables.amount,
+      };
       setClientSecret(responseClientSecret);
       setIntentId(responseId);
       form?.setValue('stripePaymentIntent', responseClientSecret);
@@ -110,14 +126,23 @@ export function useStripePaymentIntent({
     isCreatingPaymentIntent;
 
   const initializePaymentIntent = useCallback(() => {
-    const existingClientSecret = form?.getValues('stripePaymentIntent');
-    const existingIntentId = form?.getValues('stripePaymentIntentId');
-
     if (existingClientSecret && existingIntentId) {
-      setClientSecret(existingClientSecret);
-      setIntentId(existingIntentId);
-      setError(null);
-      return;
+      // An intent we haven't seen yet: adopt it for the current amount.
+      if (syncedIntentRef.current?.clientSecret !== existingClientSecret) {
+        syncedIntentRef.current = {
+          clientSecret: existingClientSecret,
+          amount,
+        };
+        setClientSecret(existingClientSecret);
+        setIntentId(existingIntentId);
+        setError(null);
+        return;
+      }
+
+      // The intent already covers this amount.
+      if (syncedIntentRef.current.amount === amount) {
+        return;
+      }
     }
 
     if (isLoading || !enableClientSecret) {
@@ -128,7 +153,7 @@ export function useStripePaymentIntent({
       amount,
       currency,
       updateIntent,
-      intentId,
+      intentId: existingIntentId ?? intentId,
     });
   }, [
     amount,
@@ -136,7 +161,8 @@ export function useStripePaymentIntent({
     updateIntent,
     intentId,
     isLoading,
-    form,
+    existingClientSecret,
+    existingIntentId,
     paymentIntentMutation.mutate,
     enableClientSecret,
   ]);
@@ -144,11 +170,18 @@ export function useStripePaymentIntent({
   const amountRef = useRef<null | number>(null);
 
   useEffect(() => {
-    if (amountRef.current !== amount && !isLoading) {
+    if (isLoading) {
+      return;
+    }
+
+    const isIntentStale =
+      syncedIntentRef.current?.clientSecret !== existingClientSecret;
+
+    if (amountRef.current !== amount || isIntentStale) {
       initializePaymentIntent();
       amountRef.current = amount;
     }
-  }, [initializePaymentIntent, amount, isLoading]);
+  }, [initializePaymentIntent, amount, isLoading, existingClientSecret]);
 
   return {
     stripePromise,
