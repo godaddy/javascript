@@ -203,7 +203,7 @@ export function CheckoutForm({
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
-  const isFree = orderTotal <= 0;
+  const isFree = orderTotal + tipTotal <= 0;
   const showExpressButtons = subtotal > 0;
   const enableDelivery = Boolean(
     session?.enableShipping || session?.enableLocalPickup

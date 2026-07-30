@@ -87,6 +87,34 @@ async function applyCoupon(
   await user.click(apply as HTMLButtonElement);
 }
 
+// A fully-discounted order: nothing is owed on the order itself, but the
+// subtotal the tip percentages are calculated from is still non-zero.
+function buildFullyDiscountedDraftOrder() {
+  return buildDraftOrder({
+    totals: {
+      subTotal: { value: 5000, currencyCode: 'USD' },
+      discountTotal: { value: 5000, currencyCode: 'USD' },
+      shippingTotal: { value: 0, currencyCode: 'USD' },
+      taxTotal: { value: 0, currencyCode: 'USD' },
+      feeTotal: { value: 0, currencyCode: 'USD' },
+      total: { value: 0, currencyCode: 'USD' },
+    },
+    shippingLines: [],
+    lineItems: [
+      {
+        unitAmount: { value: 5000, currencyCode: 'USD' },
+        fulfillmentMode: 'PURCHASE',
+        totals: {
+          subTotal: { value: 5000, currencyCode: 'USD' },
+          discountTotal: { value: 5000, currencyCode: 'USD' },
+          feeTotal: { value: 0, currencyCode: 'USD' },
+          taxTotal: { value: 0, currencyCode: 'USD' },
+        },
+      },
+    ],
+  });
+}
+
 function buildPaidPurchaseDraftOrder() {
   return buildDraftOrder({
     totals: {
@@ -447,6 +475,90 @@ describe('Checkout free / offline orders', () => {
     expect(
       screen.queryByRole('button', { name: /pay now/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('collects payment on a zero-total order once a tip is added', async () => {
+    const draftOrder = buildFullyDiscountedDraftOrder();
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableTips: true,
+      enableShipping: false,
+      enableLocalPickup: false,
+      enableTaxCollection: false,
+    });
+
+    const { user } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+
+    // Nothing owed yet, so the free path is correct.
+    expect(
+      await screen.findByRole('button', { name: /complete your free order/i })
+    ).toBeInTheDocument();
+
+    // 15% of the $50.00 subtotal is owed even though the order total is zero.
+    await user.click(await screen.findByRole('button', { name: /15%/ }));
+
+    expect(
+      await screen.findByRole('button', { name: /pay now/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /complete your free order/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('returns to the free form when the tip on a zero-total order is cleared', async () => {
+    const draftOrder = buildFullyDiscountedDraftOrder();
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableTips: true,
+      enableShipping: false,
+      enableLocalPickup: false,
+      enableTaxCollection: false,
+    });
+
+    const { user } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+
+    await user.click(await screen.findByRole('button', { name: /15%/ }));
+    expect(
+      await screen.findByRole('button', { name: /pay now/i })
+    ).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /no tip/i }));
+
+    expect(
+      await screen.findByRole('button', { name: /complete your free order/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /pay now/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not send a tip on a zero-total order confirmed through the free form', async () => {
+    const draftOrder = buildFullyDiscountedDraftOrder();
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableTips: true,
+      enableShipping: false,
+      enableLocalPickup: false,
+      enableTaxCollection: false,
+      enableBillingAddressCollection: false,
+    });
+
+    const { user } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(
+      await screen.findByRole('button', { name: /complete your free order/i })
+    );
+
+    await waitForOperation('ConfirmCheckoutSession');
+    expect(getLastConfirmInput()).toMatchObject({
+      paymentType: 'offline',
+      paymentProvider: 'OFFLINE',
+      tipAmount: 0,
+    });
   });
 
   it('keeps the paid form visible when coupon application fails', async () => {
