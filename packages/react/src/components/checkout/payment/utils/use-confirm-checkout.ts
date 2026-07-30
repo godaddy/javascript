@@ -180,7 +180,7 @@ export function useConfirmCheckout() {
             })
           : {};
         const tipAmount = session.enableTips
-          ? (form.getValues('tipAmount') ?? 0)
+          ? (confirmCheckoutInput.tipAmount ?? form.getValues('tipAmount') ?? 0)
           : undefined;
         const payload = {
           ...confirmCheckoutInput,

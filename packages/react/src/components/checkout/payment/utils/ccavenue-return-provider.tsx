@@ -7,6 +7,10 @@ import {
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
+import {
+  clearRedirectTipAmount,
+  getRedirectTipAmount,
+} from '@/lib/redirect-tip-storage';
 
 export function CCAvenueReturnProvider({
   children,
@@ -31,21 +35,31 @@ export function CCAvenueReturnProvider({
 
     hasRun.current = true;
 
+    const authorizedTipAmount = getRedirectTipAmount(session.id);
+
     const confirmInput = {
       paymentToken: encResp,
       paymentType: 'ccavenue' as const,
       paymentProvider: PaymentProvider.CCAVENUE,
+      ...(authorizedTipAmount === null
+        ? {}
+        : { tipAmount: authorizedTipAmount }),
     };
 
-    confirmCheckout.mutateAsync(confirmInput).catch(err => {
-      if (err instanceof GraphQLErrorWithCodes) {
-        setCheckoutErrors(err.codes);
-      } else {
-        setCheckoutErrors([
-          err instanceof Error ? err.message : 'Payment confirmation failed.',
-        ]);
-      }
-    });
+    confirmCheckout
+      .mutateAsync(confirmInput)
+      .then(() => {
+        clearRedirectTipAmount();
+      })
+      .catch(err => {
+        if (err instanceof GraphQLErrorWithCodes) {
+          setCheckoutErrors(err.codes);
+        } else {
+          setCheckoutErrors([
+            err instanceof Error ? err.message : 'Payment confirmation failed.',
+          ]);
+        }
+      });
   }, [session?.token, session?.id, setCheckoutErrors]);
 
   return <>{children}</>;

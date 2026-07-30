@@ -12,6 +12,7 @@ import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/uti
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
+import { setRedirectTipAmount } from '@/lib/redirect-tip-storage';
 import { cn } from '@/lib/utils';
 import { PaymentMethodType } from '@/types';
 
@@ -22,7 +23,7 @@ const CCAVENUE_TEST_URL =
 
 export function CCAvenueCheckoutButton() {
   const { t, apiHost } = useGoDaddyContext();
-  const { setCheckoutErrors, isConfirmingCheckout, ccavenueConfig } =
+  const { session, setCheckoutErrors, isConfirmingCheckout, ccavenueConfig } =
     useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
@@ -75,6 +76,10 @@ export function CCAvenueCheckoutButton() {
         return;
       }
 
+      if (session?.enableTips && session?.id) {
+        setRedirectTipAmount(session.id, form.getValues('tipAmount') ?? 0);
+      }
+
       const formEl = document.createElement('form');
       formEl.method = 'POST';
       formEl.action = redirectUrl;
@@ -108,6 +113,8 @@ export function CCAvenueCheckoutButton() {
     setCheckoutErrors,
     ccavenueConfig?.accessCodeId,
     redirectUrl,
+    session?.enableTips,
+    session?.id,
   ]);
 
   const isBusy = isConfirmingCheckout || isPaymentDisabled;
