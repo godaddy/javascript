@@ -12,10 +12,16 @@ import {
 import { isAddressComplete } from '@/components/checkout/address/utils/is-address-complete';
 import { mapAddressFieldsToInput } from '@/components/checkout/address/utils/map-address-fields-to-input';
 import { useAddressMatches } from '@/components/checkout/address/utils/use-address-matches';
-import { useCheckoutContext } from '@/components/checkout/checkout';
+import {
+  type CheckoutFormData,
+  useCheckoutContext,
+} from '@/components/checkout/checkout';
 import { PhoneInput } from '@/components/checkout/contact/phone-input';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
-import { useDraftOrderFieldSync } from '@/components/checkout/order/use-draft-order-sync';
+import {
+  useDraftOrderFieldDirtyMarker,
+  useRegisterDraftOrderFieldSync,
+} from '@/components/checkout/order/use-draft-order-sync';
 import { AutoComplete } from '@/components/ui/autocomplete';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,10 +56,12 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
-import type { Address } from '@/types';
+import type { Address, DraftOrder } from '@/types';
+
+type SectionKey = 'shipping' | 'billing';
 
 interface AddressFormProps {
-  sectionKey: string;
+  sectionKey: SectionKey;
   /** When true, only show first name and last name fields (used for free pickup orders) */
   onlyNames?: boolean;
 }
@@ -70,11 +78,101 @@ export function mapAutocompleteAddressFields(selectedAddress?: Address) {
   } satisfies Record<string, string | null>;
 }
 
+const addressFieldSuffixes = [
+  'AddressLine1',
+  'AddressLine2',
+  'AddressLine3',
+  'AdminArea4',
+  'AdminArea3',
+  'AdminArea2',
+  'AdminArea1',
+  'PostalCode',
+  'CountryCode',
+] as const;
+
+function getFormString(values: CheckoutFormData, fieldName: string) {
+  return String(values[fieldName as keyof CheckoutFormData] ?? '');
+}
+
+function getSectionAddress(values: CheckoutFormData, sectionKey: SectionKey) {
+  return {
+    addressLine1: getFormString(values, `${sectionKey}AddressLine1`),
+    addressLine2: getFormString(values, `${sectionKey}AddressLine2`),
+    addressLine3: getFormString(values, `${sectionKey}AddressLine3`),
+    adminArea4: getFormString(values, `${sectionKey}AdminArea4`),
+    adminArea3: getFormString(values, `${sectionKey}AdminArea3`),
+    adminArea2: getFormString(values, `${sectionKey}AdminArea2`),
+    adminArea1: getFormString(values, `${sectionKey}AdminArea1`),
+    postalCode: getFormString(values, `${sectionKey}PostalCode`),
+    countryCode: getFormString(values, `${sectionKey}CountryCode`),
+  };
+}
+
+function getDraftOrderSection(
+  draftOrder: DraftOrder | null | undefined,
+  sectionKey: SectionKey
+) {
+  return sectionKey === 'shipping' ? draftOrder?.shipping : draftOrder?.billing;
+}
+
+function getDraftOrderAddress(
+  draftOrder: DraftOrder | null | undefined,
+  sectionKey: SectionKey
+) {
+  const section = getDraftOrderSection(draftOrder, sectionKey);
+  return {
+    addressLine1: section?.address?.addressLine1 || '',
+    addressLine2: section?.address?.addressLine2 || '',
+    addressLine3: section?.address?.addressLine3 || '',
+    adminArea4: section?.address?.adminArea4 || '',
+    adminArea3: section?.address?.adminArea3 || '',
+    adminArea2: section?.address?.adminArea2 || '',
+    adminArea1: section?.address?.adminArea1 || '',
+    postalCode: section?.address?.postalCode || '',
+    countryCode: section?.address?.countryCode || '',
+  };
+}
+
+function sectionNameHasChanged(
+  values: CheckoutFormData,
+  draftOrder: DraftOrder | null | undefined,
+  sectionKey: SectionKey
+) {
+  const section = getDraftOrderSection(draftOrder, sectionKey);
+  return (
+    (section?.firstName || '') !==
+      getFormString(values, `${sectionKey}FirstName`) ||
+    (section?.lastName || '') !== getFormString(values, `${sectionKey}LastName`)
+  );
+}
+
+function sectionAddressHasChanged(
+  values: CheckoutFormData,
+  draftOrder: DraftOrder | null | undefined,
+  sectionKey: SectionKey
+) {
+  if (!draftOrder) return false;
+
+  const orderAddress = getDraftOrderAddress(draftOrder, sectionKey);
+  const formAddress = getSectionAddress(values, sectionKey);
+  const orderSection = getDraftOrderSection(draftOrder, sectionKey);
+
+  if (!orderSection?.address) {
+    return Object.entries(formAddress).some(
+      ([key, value]) => key !== 'countryCode' && Boolean(value.trim())
+    );
+  }
+
+  return Object.entries(orderAddress).some(
+    ([key, value]) => value !== formAddress[key as keyof typeof formAddress]
+  );
+}
+
 export function AddressForm({
   sectionKey,
   onlyNames = false,
 }: AddressFormProps) {
-  const form = useFormContext();
+  const form = useFormContext<CheckoutFormData>();
   const { session } = useCheckoutContext();
   const { t } = useGoDaddyContext();
   const { isConfirmingCheckout, requiredFields } = useCheckoutContext();
@@ -98,216 +196,158 @@ export function AddressForm({
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
-  const addressValue = form.watch(`${sectionKey}AddressLine1`);
-  const countryValue = form.watch(`${sectionKey}CountryCode`);
-  const useShippingAddress = form.watch('paymentUseShippingAddress');
-
-  const [
-    firstName,
-    lastName,
-    addressLine1,
-    addressLine2,
-    addressLine3,
-    adminArea1,
-    adminArea2,
-    adminArea3,
-    adminArea4,
-    postalCode,
-    countryCode,
-  ] = form.watch([
-    `${sectionKey}FirstName`,
-    `${sectionKey}LastName`,
+  const [addressValue, countryValue] = form.watch([
     `${sectionKey}AddressLine1`,
-    `${sectionKey}AddressLine2`,
-    `${sectionKey}AddressLine3`,
-    `${sectionKey}AdminArea1`,
-    `${sectionKey}AdminArea2`,
-    `${sectionKey}AdminArea3`,
-    `${sectionKey}AdminArea4`,
-    `${sectionKey}PostalCode`,
     `${sectionKey}CountryCode`,
   ]);
-
-  const contact = React.useMemo(
-    () => ({ firstName, lastName }),
-    [firstName, lastName]
-  );
-  const serializedContact = React.useMemo(
-    () => JSON.stringify(contact),
-    [contact]
-  );
-
-  const [debouncedContact] = useDebouncedValue(serializedContact, {
-    wait: 1000,
-  });
 
   const [debouncedAddressValue] = useDebouncedValue(addressValue, {
     wait: 200,
   });
 
-  // Check if name values differ from order values
-  const nameHasChanged = React.useMemo(() => {
-    if (!draftOrder) return true; // If no order, allow sync
-    const section =
-      sectionKey === 'shipping' ? draftOrder.shipping : draftOrder.billing;
+  const nameFieldNames = React.useMemo(
+    () => [`${sectionKey}FirstName`, `${sectionKey}LastName`],
+    [sectionKey]
+  );
+  const allAddressFieldNames = React.useMemo(
+    () => addressFieldSuffixes.map(suffix => `${sectionKey}${suffix}`),
+    [sectionKey]
+  );
+  const allSectionFieldNames = React.useMemo(
+    () => [...nameFieldNames, ...allAddressFieldNames],
+    [allAddressFieldNames, nameFieldNames]
+  );
 
-    return (
-      (section?.firstName || '') !== (firstName || '') ||
-      (section?.lastName || '') !== (lastName || '')
-    );
-  }, [draftOrder, sectionKey, firstName, lastName]);
+  const orderAddress = React.useMemo(
+    () => getDraftOrderAddress(draftOrder, sectionKey),
+    [draftOrder, sectionKey]
+  );
 
-  const shouldVerifyName =
-    onlyNames &&
-    nameHasChanged && // Only sync if values differ from order
-    !!firstName?.trim() &&
-    !!lastName?.trim() &&
-    debouncedContact === serializedContact;
+  const addressLine1HasChanged = React.useMemo(
+    () =>
+      Boolean(draftOrder && orderAddress.addressLine1 !== (addressValue || '')),
+    [draftOrder, orderAddress, addressValue]
+  );
 
-  useDraftOrderFieldSync({
-    key: 'name',
-    data: contact,
-    deps: [contact, serializedContact, debouncedContact],
-    enabled: shouldVerifyName,
-    fieldNames: [`${sectionKey}FirstName`, `${sectionKey}LastName`],
-    preserveFormData: false,
-    mapToInput: data => {
-      const fields = {
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        address: null,
-      };
+  useRegisterDraftOrderFieldSync(
+    React.useMemo(
+      () => ({
+        id: `${sectionKey}-names-only`,
+        fieldNames: nameFieldNames,
+        debounceMs: 1000,
+        enabled: ({ values, draftOrder: currentDraftOrder }) =>
+          Boolean(
+            onlyNames &&
+              sectionNameHasChanged(values, currentDraftOrder, sectionKey) &&
+              getFormString(values, `${sectionKey}FirstName`).trim() &&
+              getFormString(values, `${sectionKey}LastName`).trim()
+          ),
+        buildPatch: ({ values }) =>
+          mapAddressFieldsToInput(
+            {
+              firstName: getFormString(values, `${sectionKey}FirstName`).trim(),
+              lastName: getFormString(values, `${sectionKey}LastName`).trim(),
+              address: null,
+            },
+            sectionKey,
+            Boolean(values.paymentUseShippingAddress)
+          ),
+      }),
+      [nameFieldNames, onlyNames, sectionKey]
+    )
+  );
 
-      return mapAddressFieldsToInput(
-        fields,
-        sectionKey as 'shipping' | 'billing',
-        useShippingAddress
-      );
-    },
+  useRegisterDraftOrderFieldSync(
+    React.useMemo(
+      () => ({
+        id: `${sectionKey}-name`,
+        fieldNames: nameFieldNames,
+        debounceMs: 1000,
+        enabled: ({ values, draftOrder: currentDraftOrder }) =>
+          Boolean(
+            !onlyNames &&
+              sectionNameHasChanged(values, currentDraftOrder, sectionKey) &&
+              (sectionKey === 'shipping' ||
+                !sectionAddressHasChanged(
+                  values,
+                  currentDraftOrder,
+                  sectionKey
+                )) &&
+              getFormString(values, `${sectionKey}FirstName`).trim() &&
+              getFormString(values, `${sectionKey}LastName`).trim()
+          ),
+        buildPatch: ({ values }) =>
+          mapAddressFieldsToInput(
+            {
+              firstName: getFormString(values, `${sectionKey}FirstName`).trim(),
+              lastName: getFormString(values, `${sectionKey}LastName`).trim(),
+            },
+            sectionKey,
+            Boolean(values.paymentUseShippingAddress)
+          ),
+      }),
+      [nameFieldNames, onlyNames, sectionKey]
+    )
+  );
+
+  useRegisterDraftOrderFieldSync(
+    React.useMemo(
+      () => ({
+        id: `${sectionKey}-address`,
+        fieldNames: allSectionFieldNames,
+        debounceMs: 1000,
+        enabled: ({ values, draftOrder: currentDraftOrder }) =>
+          Boolean(
+            !onlyNames &&
+              sectionAddressHasChanged(values, currentDraftOrder, sectionKey) &&
+              isAddressComplete(getSectionAddress(values, sectionKey)) &&
+              !isAutocompleteOpen
+          ),
+        buildPatch: ({ values }) => {
+          const hasCompleteName = Boolean(
+            getFormString(values, `${sectionKey}FirstName`).trim() &&
+              getFormString(values, `${sectionKey}LastName`).trim()
+          );
+
+          return mapAddressFieldsToInput(
+            {
+              ...(hasCompleteName
+                ? {
+                    firstName: getFormString(
+                      values,
+                      `${sectionKey}FirstName`
+                    ).trim(),
+                    lastName: getFormString(
+                      values,
+                      `${sectionKey}LastName`
+                    ).trim(),
+                  }
+                : {}),
+              address: getSectionAddress(values, sectionKey),
+            },
+            sectionKey,
+            Boolean(values.paymentUseShippingAddress)
+          );
+        },
+      }),
+      [allSectionFieldNames, isAutocompleteOpen, onlyNames, sectionKey]
+    )
+  );
+
+  useDraftOrderFieldDirtyMarker({
+    id: `${sectionKey}-names-only`,
+    fieldNames: nameFieldNames,
+    disabled: !onlyNames || isConfirmingCheckout,
   });
-
-  const address = React.useMemo(
-    () => ({
-      addressLine1,
-      addressLine2,
-      addressLine3,
-      adminArea1,
-      adminArea2,
-      adminArea3,
-      adminArea4,
-      postalCode,
-      countryCode,
-    }),
-    [
-      addressLine1,
-      addressLine2,
-      addressLine3,
-      adminArea1,
-      adminArea2,
-      adminArea3,
-      adminArea4,
-      postalCode,
-      countryCode,
-    ]
-  );
-
-  const sectionContactAndAddress = React.useMemo(
-    () => ({
-      ...contact,
-      address,
-    }),
-    [contact, address]
-  );
-  const serializedSectionContactAndAddress = React.useMemo(
-    () => JSON.stringify(sectionContactAndAddress),
-    [sectionContactAndAddress]
-  );
-
-  const [debouncedSectionContactAndAddress] = useDebouncedValue(
-    serializedSectionContactAndAddress,
-    { wait: 1000 }
-  );
-
-  // Get existing order address data for comparison
-  const orderAddress = React.useMemo(() => {
-    if (!draftOrder) return null;
-    const section =
-      sectionKey === 'shipping' ? draftOrder.shipping : draftOrder.billing;
-    return section
-      ? {
-          addressLine1: section?.address?.addressLine1 || '',
-          addressLine2: section?.address?.addressLine2 || '',
-          addressLine3: section?.address?.addressLine3 || '',
-          adminArea1: section?.address?.adminArea1 || '',
-          adminArea2: section?.address?.adminArea2 || '',
-          adminArea3: section?.address?.adminArea3 || '',
-          adminArea4: section?.address?.adminArea4 || '',
-          postalCode: section?.address?.postalCode || '',
-          countryCode: section?.address?.countryCode || '',
-        }
-      : null;
-  }, [draftOrder, sectionKey]);
-
-  // Check if current form values differ from order values
-  const addressHasChanged = React.useMemo(() => {
-    if (!orderAddress) return true; // If no order address, allow sync
-
-    return (
-      orderAddress.addressLine1 !== (addressLine1 || '') ||
-      orderAddress.addressLine2 !== (addressLine2 || '') ||
-      orderAddress.addressLine3 !== (addressLine3 || '') ||
-      orderAddress.adminArea1 !== (adminArea1 || '') ||
-      orderAddress.adminArea2 !== (adminArea2 || '') ||
-      orderAddress.adminArea3 !== (adminArea3 || '') ||
-      orderAddress.adminArea4 !== (adminArea4 || '') ||
-      orderAddress.postalCode !== (postalCode || '') ||
-      orderAddress.countryCode !== (countryCode || '')
-    );
-  }, [
-    orderAddress,
-    addressLine1,
-    addressLine2,
-    addressLine3,
-    adminArea1,
-    adminArea2,
-    adminArea3,
-    adminArea4,
-    postalCode,
-    countryCode,
-  ]);
-
-  const addressLine1HasChanged = React.useMemo(() => {
-    if (!orderAddress) return true;
-
-    return orderAddress.addressLine1 !== (addressLine1 || '');
-  }, [orderAddress, addressLine1]);
-
-  const shouldUpdateNameOnly = Boolean(
-    nameHasChanged &&
-      !addressHasChanged &&
-      !!firstName?.trim() &&
-      !!lastName?.trim() &&
-      debouncedContact === serializedContact
-  );
-
-  useDraftOrderFieldSync({
-    key: 'name',
-    data: contact,
-    deps: [contact, serializedContact, debouncedContact, addressHasChanged],
-    enabled: !onlyNames && shouldUpdateNameOnly,
-    fieldNames: [`${sectionKey}FirstName`, `${sectionKey}LastName`],
-    mapToInput: data => {
-      const fields = {
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-      };
-
-      return mapAddressFieldsToInput(
-        fields,
-        sectionKey as 'shipping' | 'billing',
-        useShippingAddress
-      );
-    },
+  useDraftOrderFieldDirtyMarker({
+    id: `${sectionKey}-name`,
+    fieldNames: nameFieldNames,
+    disabled: onlyNames || isConfirmingCheckout,
+  });
+  useDraftOrderFieldDirtyMarker({
+    id: `${sectionKey}-address`,
+    fieldNames: allSectionFieldNames,
+    disabled: onlyNames || isConfirmingCheckout,
   });
 
   const addressMatchesQuery = useAddressMatches(debouncedAddressValue, {
@@ -324,68 +364,15 @@ export function AddressForm({
     for (const [key, value] of Object.entries(
       mapAutocompleteAddressFields(selectedAddress)
     )) {
-      if (value && form.getValues(`${sectionKey}${key}`) !== value) {
-        form.setValue(`${sectionKey}${key}`, value, {
+      const fieldName = `${sectionKey}${key}` as keyof CheckoutFormData;
+      if (value && form.getValues(fieldName) !== value) {
+        form.setValue(fieldName, value, {
           shouldDirty: true,
           shouldValidate: true,
         });
       }
     }
   }
-
-  const shouldUpdateAddress = Boolean(
-    addressHasChanged && // Only sync if address values differ from order
-      isAddressComplete(address) &&
-      debouncedSectionContactAndAddress ===
-        serializedSectionContactAndAddress &&
-      !isAutocompleteOpen
-  );
-
-  const hasCompleteName = Boolean(firstName?.trim() && lastName?.trim());
-  const addressSyncFieldNames = React.useMemo(
-    () => [
-      ...(hasCompleteName
-        ? [`${sectionKey}FirstName`, `${sectionKey}LastName`]
-        : []),
-      `${sectionKey}AddressLine1`,
-      `${sectionKey}AddressLine2`,
-      `${sectionKey}AdminArea2`,
-      `${sectionKey}AdminArea1`,
-      `${sectionKey}PostalCode`,
-      `${sectionKey}CountryCode`,
-    ],
-    [hasCompleteName, sectionKey]
-  );
-
-  useDraftOrderFieldSync({
-    key: 'address',
-    data: sectionContactAndAddress,
-    deps: [
-      sectionContactAndAddress,
-      shouldUpdateAddress,
-      serializedSectionContactAndAddress,
-      debouncedSectionContactAndAddress,
-    ],
-    enabled: !onlyNames && shouldUpdateAddress,
-    fieldNames: addressSyncFieldNames,
-    mapToInput: data => {
-      const fields = {
-        ...(hasCompleteName
-          ? {
-              firstName: data.firstName.trim(),
-              lastName: data.lastName.trim(),
-            }
-          : {}),
-        address: data.address,
-      };
-
-      return mapAddressFieldsToInput(
-        fields,
-        sectionKey as 'shipping' | 'billing',
-        useShippingAddress
-      );
-    },
-  });
 
   return (
     <fieldset className='space-y-2' disabled={isConfirmingCheckout}>

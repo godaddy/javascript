@@ -1,6 +1,5 @@
 'use client';
 
-import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CheckIcon, ChevronsUpDown } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -10,7 +9,10 @@ import { checkIsValidPhone } from '@/components/checkout/address/utils/check-is-
 import { mapAddressFieldsToInput } from '@/components/checkout/address/utils/map-address-fields-to-input';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
-import { useDraftOrderFieldSync } from '@/components/checkout/order/use-draft-order-sync';
+import {
+  useDraftOrderFieldDirtyMarker,
+  useRegisterDraftOrderFieldSync,
+} from '@/components/checkout/order/use-draft-order-sync';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -212,13 +214,6 @@ export function PhoneInput({
   const { session, requiredFields } = useCheckoutContext();
   const { data: draftOrder } = useDraftOrder();
 
-  const phoneValue = form.watch(`${sectionKey}Phone`);
-  const useShippingAddress = form.watch('paymentUseShippingAddress');
-
-  const [phone] = useDebouncedValue(phoneValue, {
-    wait: 1000,
-  });
-
   const section =
     sectionKey === 'shipping' ? draftOrder?.shipping : draftOrder?.billing;
 
@@ -227,33 +222,54 @@ export function PhoneInput({
     session?.shipping?.originAddress?.countryCode ||
     'US';
 
-  const isValidPhone = React.useMemo(() => checkIsValidPhone(phone), [phone]);
+  const phoneFieldName = `${sectionKey}Phone`;
+  const registrationId = `${sectionKey}-phone`;
 
-  // Check if phone value differs from order value
-  const phoneHasChanged = React.useMemo(() => {
-    if (!draftOrder) return true; // If no order, allow sync
-    const orderSection =
-      sectionKey === 'shipping' ? draftOrder.shipping : draftOrder.billing;
-    return (orderSection?.phone || '') !== (phone || '');
-  }, [draftOrder, sectionKey, phone]);
+  useRegisterDraftOrderFieldSync(
+    React.useMemo(
+      () => ({
+        id: registrationId,
+        fieldNames: [phoneFieldName],
+        debounceMs: 1000,
+        enabled: ({ values, draftOrder: currentDraftOrder }) => {
+          if (!session?.enablePhoneCollection || !currentDraftOrder) {
+            return false;
+          }
 
-  useDraftOrderFieldSync({
-    key: 'phone',
-    data: phone,
-    deps: [phone, isValidPhone],
-    enabled:
-      phoneHasChanged && // Only sync if values differ from order
-      phone === phoneValue &&
-      (phone
-        ? isValidPhone && phone?.trim() !== ''
-        : !phone && phoneValue === ''),
-    fieldNames: [`${sectionKey}Phone`],
-    mapToInput: data =>
-      mapAddressFieldsToInput(
-        { phone: data },
-        sectionKey as 'shipping' | 'billing',
-        useShippingAddress
-      ),
+          const phone = String(
+            values[phoneFieldName as keyof typeof values] ?? ''
+          );
+          const orderSection =
+            sectionKey === 'shipping'
+              ? currentDraftOrder.shipping
+              : currentDraftOrder.billing;
+
+          if ((orderSection?.phone || '') === (phone || '')) return false;
+          return phone ? checkIsValidPhone(phone) && phone.trim() !== '' : true;
+        },
+        buildPatch: ({ values }) => {
+          const phone = String(
+            values[phoneFieldName as keyof typeof values] ?? ''
+          );
+          return mapAddressFieldsToInput(
+            { phone },
+            sectionKey as 'shipping' | 'billing',
+            Boolean(values.paymentUseShippingAddress)
+          );
+        },
+      }),
+      [
+        phoneFieldName,
+        registrationId,
+        sectionKey,
+        session?.enablePhoneCollection,
+      ]
+    )
+  );
+  useDraftOrderFieldDirtyMarker({
+    id: registrationId,
+    fieldNames: [phoneFieldName],
+    disabled,
   });
 
   return session?.enablePhoneCollection ? (

@@ -1,11 +1,12 @@
 'use client';
 
-import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
-import { useDraftOrderFieldSync } from '@/components/checkout/order/use-draft-order-sync';
+import {
+  useDraftOrderFieldDirtyMarker,
+  useRegisterDraftOrderFieldSync,
+} from '@/components/checkout/order/use-draft-order-sync';
 import {
   FormControl,
   FormField,
@@ -22,58 +23,42 @@ export function ContactForm() {
   const form = useFormContext();
   const { t } = useGoDaddyContext();
   const { isConfirmingCheckout, requiredFields } = useCheckoutContext();
-  const { data: draftOrder } = useDraftOrder();
 
-  const contactEmail = form.watch('contactEmail');
+  useRegisterDraftOrderFieldSync(
+    useMemo(
+      () => ({
+        id: 'contact-email',
+        fieldNames: ['contactEmail'],
+        debounceMs: 1000,
+        enabled: ({ values, draftOrder: currentDraftOrder }) =>
+          Boolean(
+            currentDraftOrder &&
+              values.contactEmail?.trim() &&
+              (currentDraftOrder.shipping?.email !==
+                values.contactEmail.trim() ||
+                currentDraftOrder.billing?.email !== values.contactEmail.trim())
+          ),
+        buildPatch: ({ values, draftOrder: currentDraftOrder }) => {
+          const email = values.contactEmail?.trim();
+          if (!email || !currentDraftOrder) return null;
 
-  // Check if email values differ from order values
-  const emailHasChanged = useMemo(() => {
-    if (!draftOrder) return true; // If no order, allow sync
-
-    const shippingEmailMissing = !draftOrder?.shipping?.email;
-    const billingEmailMissing = !draftOrder?.billing?.email;
-
-    const shippingIsDifferent = draftOrder?.shipping?.email !== contactEmail;
-    const billingIsDifferent = draftOrder?.billing?.email !== contactEmail;
-
-    return (
-      !!contactEmail?.trim() &&
-      (shippingEmailMissing ||
-        billingEmailMissing ||
-        shippingIsDifferent ||
-        billingIsDifferent)
-    );
-  }, [draftOrder, contactEmail]);
-
-  const [email] = useDebouncedValue(contactEmail, {
-    wait: 1000,
-  });
-
-  useDraftOrderFieldSync({
-    key: 'email',
-    data: email,
-    deps: [email, emailHasChanged, draftOrder],
-    enabled:
-      emailHasChanged &&
-      email?.trim() &&
-      email === contactEmail &&
-      !!draftOrder,
+          return {
+            ...(currentDraftOrder.shipping?.email !== email
+              ? { shipping: { email } }
+              : {}),
+            ...(currentDraftOrder.billing?.email !== email
+              ? { billing: { email } }
+              : {}),
+          };
+        },
+      }),
+      []
+    )
+  );
+  useDraftOrderFieldDirtyMarker({
+    id: 'contact-email',
     fieldNames: ['contactEmail'],
-    mapToInput: emailValue => {
-      if (!draftOrder) return {};
-
-      const shippingIsDifferent = draftOrder?.shipping?.email !== emailValue;
-      const billingIsDifferent = draftOrder?.billing?.email !== emailValue;
-
-      return {
-        ...(shippingIsDifferent
-          ? { shipping: { email: emailValue?.trim() } }
-          : {}),
-        ...(billingIsDifferent
-          ? { billing: { email: emailValue?.trim() } }
-          : {}),
-      };
-    },
+    disabled: isConfirmingCheckout,
   });
 
   return (

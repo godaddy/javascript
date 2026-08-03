@@ -28,13 +28,44 @@ import {
 import { getLastUpdateInput } from '../__tests__/checkout-test-fixtures';
 
 function SyncConsumer() {
-  const { enqueueDraftOrderPatch, flushDraftOrderSync } =
-    useDraftOrderSyncQueue();
+  const {
+    enqueueDraftOrderPatch,
+    flushDraftOrderSync,
+    markDraftOrderSyncDirty,
+    registerDraftOrderSync,
+  } = useDraftOrderSyncQueue();
   const form = useFormContext<CheckoutFormData>();
+
+  React.useEffect(
+    () =>
+      registerDraftOrderSync({
+        id: 'shipping-name',
+        fieldNames: ['shippingFirstName', 'shippingLastName'],
+        debounceMs: 100,
+        enabled: ({ values, draftOrder }) =>
+          Boolean(
+            draftOrder &&
+              values.shippingFirstName?.trim() &&
+              values.shippingLastName?.trim() &&
+              ((draftOrder.shipping?.firstName || '') !==
+                values.shippingFirstName ||
+                (draftOrder.shipping?.lastName || '') !==
+                  values.shippingLastName)
+          ),
+        buildPatch: ({ values }) => ({
+          shipping: {
+            firstName: values.shippingFirstName.trim(),
+            lastName: values.shippingLastName.trim(),
+          },
+        }),
+      }),
+    [registerDraftOrderSync]
+  );
 
   return (
     <div>
       <input aria-label='first name' {...form.register('shippingFirstName')} />
+      <input aria-label='last name' {...form.register('shippingLastName')} />
       <span data-testid='shipping-first-name-dirty'>
         {String(!!form.formState.dirtyFields.shippingFirstName)}
       </span>
@@ -73,6 +104,35 @@ function SyncConsumer() {
       </button>
       <button type='button' onClick={() => void flushDraftOrderSync()}>
         flush
+      </button>
+      <button
+        type='button'
+        onClick={() => markDraftOrderSyncDirty('shipping-name')}
+      >
+        mark-shipping-name
+      </button>
+      <button
+        type='button'
+        onClick={() =>
+          void flushDraftOrderSync({
+            includeCurrentValues: true,
+            refetchLatestOrder: true,
+          })
+        }
+      >
+        flush-current-values
+      </button>
+      <button
+        type='button'
+        onClick={() =>
+          void flushDraftOrderSync({
+            includeCurrentValues: true,
+            refetchLatestOrder: true,
+            allowWhileConfirming: true,
+          })
+        }
+      >
+        flush-final
       </button>
     </div>
   );
@@ -246,6 +306,76 @@ describe('DraftOrderSyncProvider integration', () => {
 
     expect(getLastUpdateInput()).toMatchObject({
       billing: { firstName: 'Immediate' },
+    });
+  });
+
+  it('debounces dirty registrations and builds the patch from current form values', async () => {
+    const { user } = renderSyncHarness();
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Registered');
+    await user.clear(screen.getByLabelText('last name'));
+    await user.type(screen.getByLabelText('last name'), 'Buyer');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Registered', lastName: 'Buyer' },
+    });
+  });
+
+  it('includeCurrentValues flushes registered values even before a dirty mark', async () => {
+    const { user } = renderSyncHarness();
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Current');
+    await user.click(
+      screen.getByRole('button', { name: 'flush-current-values' })
+    );
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Current', lastName: 'Buyer' },
+    });
+    expect(getOperations('DraftOrder').length).toBeGreaterThan(0);
+  });
+
+  it('skips registration patches while confirming unless the flush is the final sync', async () => {
+    const { user } = renderSyncHarness({ isConfirmingCheckout: true });
+
+    await user.click(
+      screen.getByRole('button', { name: 'flush-current-values' })
+    );
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+
+    await user.click(screen.getByRole('button', { name: 'flush-final' }));
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Initial', lastName: 'Buyer' },
+    });
+  });
+
+  it('sends queued patches on the final sync even after confirmation started', async () => {
+    const { user } = renderSyncHarness();
+
+    await user.click(screen.getByRole('button', { name: 'enqueue-a' }));
+    await user.click(screen.getByRole('button', { name: 'start-confirming' }));
+    await advance(100);
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+
+    await user.click(screen.getByRole('button', { name: 'flush-final' }));
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(
+      getOperations('UpdateCheckoutSessionDraftOrder')[0].input
+    ).toMatchObject({
+      shipping: { firstName: 'Alpha' },
     });
   });
 

@@ -307,16 +307,11 @@ describe('Checkout confirm errors', () => {
     });
     mockGodaddyApi({ session, draftOrder });
 
-    const { user, queryClient } = renderCheckoutWithConfirmSeam({
+    const { user } = renderCheckoutWithConfirmSeam({
       session,
       draftOrder,
     });
     await waitForCheckoutReady();
-    queryClient.setQueryDefaults(['draft-order', { sessionId: session.id }], {
-      retry: false,
-      refetchOnWindowFocus: false,
-      staleTime: 0,
-    });
     setApiError('getDraftOrder', 'draft fetch failed');
     clearOperations();
 
@@ -325,8 +320,16 @@ describe('Checkout confirm errors', () => {
     );
 
     await waitForOperation('DraftOrder');
+    // `useDraftOrder` keeps `retry: 3`, so the failed in-confirm fetch only
+    // rejects after its backoff retries are exhausted.
+    await waitFor(
+      () => {
+        expect(document.body).toHaveTextContent(/Failed to update order/i);
+      },
+      { timeout: 15_000 }
+    );
     expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
-  });
+  }, 20_000);
 
   it('rejects a duplicate confirm while the first confirm is in flight without treating it as success', async () => {
     const draftOrder = buildDraftOrder({
