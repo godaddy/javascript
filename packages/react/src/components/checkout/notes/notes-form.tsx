@@ -80,6 +80,7 @@ export function NotesForm() {
           <FormItem>
             <FormLabel className='sr-only'>{t.general.notes}</FormLabel>
             <Textarea
+              autoResize
               placeholder={t.shipping.notesPlaceholder}
               {...field}
               hasError={!!fieldState.error}

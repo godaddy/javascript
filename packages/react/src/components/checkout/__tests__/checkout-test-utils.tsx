@@ -572,6 +572,13 @@ function makeDraftOrderResponse() {
   };
 }
 
+function isDigitalMockLineItem(lineItem: DraftOrderLineItem) {
+  return (
+    lineItem.type === DeliveryMethods.DIGITAL ||
+    lineItem.fulfillmentMode === DeliveryMethods.DIGITAL
+  );
+}
+
 function applyShippingLines(shippingMethods: unknown) {
   if (!state || !Array.isArray(shippingMethods)) return;
 
@@ -615,7 +622,9 @@ function applyShippingLines(shippingMethods: unknown) {
     lineItems:
       state.draftOrder.lineItems?.map(lineItem => ({
         ...lineItem,
-        fulfillmentMode: DeliveryMethods.SHIP,
+        fulfillmentMode: isDigitalMockLineItem(lineItem)
+          ? DeliveryMethods.DIGITAL
+          : DeliveryMethods.SHIP,
       })) ?? [],
   });
   state.session = { ...state.session, draftOrder: state.draftOrder };
@@ -657,7 +666,9 @@ function applyFulfillmentLocation(fulfillmentLocationId?: string | null) {
     lineItems:
       state.draftOrder.lineItems?.map(lineItem => ({
         ...lineItem,
-        fulfillmentMode: DeliveryMethods.PICKUP,
+        fulfillmentMode: isDigitalMockLineItem(lineItem)
+          ? DeliveryMethods.DIGITAL
+          : DeliveryMethods.PICKUP,
       })) ?? [],
     shippingLines: [],
   };

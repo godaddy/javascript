@@ -3,7 +3,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { AddressForm } from '@/components/checkout/address/address-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
+import { useBillingCollectionMode } from '@/components/checkout/payment/utils/billing-collection';
 import {
   PaymentProvider,
   useConfirmCheckout,
@@ -22,8 +22,9 @@ export function FreePaymentForm() {
   const form = useFormContext();
   const confirmCheckout = useConfirmCheckout();
 
-  const deliveryMethod = form.watch('deliveryMethod');
-  const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
+  const billingMode = useBillingCollectionMode({
+    context: 'free-payment-form',
+  });
 
   const handleSubmit = React.useCallback(async () => {
     const valid = await form.trigger();
@@ -69,11 +70,10 @@ export function FreePaymentForm() {
     </Button>
   );
 
-  // For pickup orders, show name fields
-  if (isPickup) {
+  if (billingMode !== 'none') {
     return (
       <div className='space-y-4'>
-        <AddressForm sectionKey='billing' onlyNames />
+        <AddressForm sectionKey='billing' onlyNames={billingMode === 'names'} />
         {submitButton}
       </div>
     );

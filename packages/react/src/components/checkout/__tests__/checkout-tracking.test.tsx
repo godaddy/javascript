@@ -315,11 +315,9 @@ describe('Checkout tracking contract', () => {
       itemCount: 1,
       currencyCode: 'USD',
     });
-    // TODO(T-601): Current implementation tracks an empty-method impression
-    // even when the express section is gated off; PRD notes mark this [!].
-    tracking.expectTracked(eventIds.expressCheckoutImpression, {
-      availableMethods: '',
-    });
+    expect(
+      tracking.getTrackedEvents(eventIds.expressCheckoutImpression)
+    ).toHaveLength(0);
   });
 
   it('tracks invalid-submit field names', async () => {

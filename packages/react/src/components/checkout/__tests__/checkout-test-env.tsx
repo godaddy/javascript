@@ -153,15 +153,23 @@ vi.mock(
             applicationId: 'test-app-id',
           });
           collect.on('nonce', async event => {
+            const currentDeliveryMethod = form.getValues('deliveryMethod');
+            const pickupData =
+              currentDeliveryMethod === 'PICKUP'
+                ? {
+                    fulfillmentLocationId:
+                      form.getValues('pickupLocationId') ?? undefined,
+                    fulfillmentStartAt:
+                      form.getValues('pickupDate') || undefined,
+                    fulfillmentEndAt: form.getValues('pickupTime') || undefined,
+                  }
+                : {};
             await godaddyApi.confirmCheckout(
               {
                 paymentToken: event?.data?.nonce ?? 'test-nonce',
                 paymentType: 'card',
                 paymentProvider: 'POYNT',
-                fulfillmentLocationId:
-                  form.getValues('pickupLocationId') ?? undefined,
-                fulfillmentStartAt: form.getValues('pickupDate') || undefined,
-                fulfillmentEndAt: form.getValues('pickupTime') || undefined,
+                ...pickupData,
               },
               session
             );

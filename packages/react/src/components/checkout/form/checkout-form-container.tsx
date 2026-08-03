@@ -15,6 +15,7 @@ import {
   mapOrderToFormValues,
   mapSkusToItemsDisplay,
 } from '@/components/checkout/utils/checkout-transformers';
+import { getFulfillmentSummary } from '@/components/checkout/utils/fulfillment';
 
 interface CheckoutFormContainerProps extends Omit<CheckoutProps, 'session'> {
   schema: z.ZodObject<any> | z.ZodEffects<any>;
@@ -38,6 +39,10 @@ export function CheckoutFormContainer({
   const items = useMemo(
     () => mapSkusToItemsDisplay(lineItems, skusMap),
     [lineItems, skusMap]
+  );
+  const fulfillmentSummary = useMemo(
+    () => getFulfillmentSummary(lineItems ?? order?.lineItems),
+    [lineItems, order?.lineItems]
   );
 
   const formValues = useMemo(
@@ -78,6 +83,7 @@ export function CheckoutFormContainer({
       {...props}
       schema={schema}
       items={items}
+      fulfillmentSummary={fulfillmentSummary}
       defaultValues={formValues}
       direction={props.direction}
     />

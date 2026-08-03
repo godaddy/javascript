@@ -53,7 +53,8 @@ export function useUpdateOrder() {
             // Always send pickup location address for pickup orders
             await updateTaxes.mutateAsync(pickupLocationAddress);
           } else if (
-            deliveryMethod === DeliveryMethods.PURCHASE &&
+            (deliveryMethod === DeliveryMethods.PURCHASE ||
+              deliveryMethod === DeliveryMethods.DIGITAL) &&
             input.billing?.address
           ) {
             await updateTaxes.mutateAsync(input.billing.address);
