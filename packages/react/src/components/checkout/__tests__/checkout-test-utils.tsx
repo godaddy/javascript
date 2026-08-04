@@ -11,7 +11,7 @@ import { QueryClient } from '@tanstack/react-query';
 import type { RenderResult } from '@testing-library/react';
 import { act, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import type React from 'react';
 import { Checkout, type CheckoutProps } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
@@ -573,10 +573,7 @@ function makeDraftOrderResponse() {
 }
 
 function isDigitalMockLineItem(lineItem: DraftOrderLineItem) {
-  return (
-    lineItem.type === DeliveryMethods.DIGITAL ||
-    lineItem.fulfillmentMode === DeliveryMethods.DIGITAL
-  );
+  return lineItem.type === DeliveryMethods.DIGITAL;
 }
 
 function applyShippingLines(shippingMethods: unknown) {

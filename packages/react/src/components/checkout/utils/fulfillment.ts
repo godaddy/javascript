@@ -12,10 +12,7 @@ export interface FulfillmentSummary {
 }
 
 export function isDigitalLineItem(lineItem?: LineItem | null): boolean {
-  return (
-    lineItem?.type === DeliveryMethods.DIGITAL ||
-    lineItem?.fulfillmentMode === DeliveryMethods.DIGITAL
-  );
+  return lineItem?.type === DeliveryMethods.DIGITAL;
 }
 
 export function hasDigitalLineItems(
