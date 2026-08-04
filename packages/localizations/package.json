@@ -8,9 +8,7 @@
     "type": "git",
     "url": "git+https://github.com/godaddy/javascript.git"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

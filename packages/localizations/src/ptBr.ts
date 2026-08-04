@@ -296,6 +296,8 @@ export const ptBr = {
     ORDER_TOTALS_UPDATE_FAILED: 'Falha ao atualizar totais do pedido',
     ORDER_TOTAL_CALCULATION_FAILED: 'Falha ao calcular totais do pedido',
     SHIPPING_METHOD_APPLICATION_FAILED: 'Falha ao aplicar método de envio',
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      'Métodos de envio não se aplicam a pedidos somente digitais',
     SKU_FETCH_FAILED: 'Falha ao buscar SKUs',
     SHIPPING_RATES_CALCULATION_FAILED: 'Falha ao calcular taxas de envio',
     SHIPPING_METHOD_NOT_FOUND: 'Método de envio não encontrado',
