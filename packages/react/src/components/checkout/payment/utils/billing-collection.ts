@@ -59,6 +59,7 @@ export function getBillingCollectionMode({
       return billingAddressEnabled ? 'address' : 'names';
     }
 
+    if (isPickup && isOffline && !enableTaxCollection) return 'names';
     if (!billingIsSeparateFromShipping) return 'none';
     return billingAddressEnabled ? 'address' : 'names';
   }
