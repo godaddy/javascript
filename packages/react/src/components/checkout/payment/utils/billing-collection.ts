@@ -54,9 +54,9 @@ export function getBillingCollectionMode({
     if (inlineBilling) return 'none';
 
     if (isDigital) {
+      if (!billingAddressEnabled) return 'names';
       if (isOffline && !enableTaxCollection) return 'names';
-      if (enableTaxCollection) return 'address';
-      return billingAddressEnabled ? 'address' : 'names';
+      return 'address';
     }
 
     if (isPickup && isOffline && !enableTaxCollection) return 'names';
@@ -72,7 +72,8 @@ export function getBillingCollectionMode({
   }
 
   if (isDigital) {
-    return enableTaxCollection ? 'address' : 'names';
+    if (!enableTaxCollection) return 'names';
+    return billingAddressEnabled ? 'address' : 'names';
   }
 
   if (isPickup) return 'names';

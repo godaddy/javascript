@@ -290,7 +290,7 @@ export function Checkout(props: CheckoutProps) {
       const isDigital = data.deliveryMethod === DeliveryMethods.DIGITAL;
       const isFreePickup = isOfflinePayment && isPickup;
       const isDigitalTaxDisabledOffline =
-        isDigital && !session?.enableTaxCollection && isOfflinePayment;
+        isDigital && isOfflinePayment && !session?.enableTaxCollection;
       // Billing is separate from shipping when there is no shipping address
       // to copy from. `mapOrderToFormValues` canonicalizes deliveryMethod
       // against session capabilities, so `!isShipping` already covers both
