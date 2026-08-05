@@ -1,3 +1,4 @@
+import { enUs } from '@godaddy/localizations';
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';

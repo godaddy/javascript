@@ -149,12 +149,8 @@ export function useConfirmCheckout() {
           latestDraftOrderSession?.checkoutSession?.draftOrder ?? order;
 
         const hasShippingLines = (latestOrder?.shippingLines?.length ?? 0) > 0;
-        const hasNonDigitalShippingLineItems = Boolean(
-          latestOrder?.lineItems?.some(
-            lineItem =>
-              !isDigitalLineItem(lineItem) &&
-              lineItem.fulfillmentMode === DeliveryMethods.SHIP
-          )
+        const hasNonDigitalLineItems = Boolean(
+          latestOrder?.lineItems?.some(lineItem => !isDigitalLineItem(lineItem))
         );
         const hasLineItemsMissingShippingFulfillment = Boolean(
           getShippingFulfillmentSyncKey(latestOrder?.lineItems)
@@ -162,7 +158,7 @@ export function useConfirmCheckout() {
 
         if (
           isShipping &&
-          hasNonDigitalShippingLineItems &&
+          hasNonDigitalLineItems &&
           (!hasShippingLines || hasLineItemsMissingShippingFulfillment)
         ) {
           setCheckoutErrors(['MISSING_SHIPPING_INFO']);

@@ -291,18 +291,13 @@ export function Checkout(props: CheckoutProps) {
       const isFreePickup = isOfflinePayment && isPickup;
       const isDigitalTaxDisabledOffline =
         isDigital && !session?.enableTaxCollection && isOfflinePayment;
-      const isDigitalBillingAddressRequired =
-        isDigital && (!isOfflinePayment || session?.enableTaxCollection);
-
       // Billing is separate from shipping when there is no shipping address
       // to copy from. `mapOrderToFormValues` canonicalizes deliveryMethod
       // against session capabilities, so `!isShipping` already covers both
       // session.enableShipping=false and orders with no SHIP fulfillment.
       // The remaining case is the user opting out of "use shipping for billing".
       const billingIsSeparateFromShipping =
-        isDigitalBillingAddressRequired ||
-        !isShipping ||
-        !data.paymentUseShippingAddress;
+        !isShipping || !data.paymentUseShippingAddress;
 
       const requireBillingNamesOnly =
         (!enableBillingAddressCollection && billingIsSeparateFromShipping) ||
@@ -407,6 +402,7 @@ export function Checkout(props: CheckoutProps) {
     checkoutFormSchema,
     session?.enableBillingAddressCollection,
     session?.enableShipping,
+    session?.enableTaxCollection,
     t,
   ]);
 
