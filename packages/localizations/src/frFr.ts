@@ -312,6 +312,8 @@ export const frFr = {
     ORDER_TOTAL_CALCULATION_FAILED: 'Échec du calcul des totaux de la commande',
     SHIPPING_METHOD_APPLICATION_FAILED:
       "Échec de l'application de la méthode d'expédition",
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      "Les méthodes d'expédition ne s'appliquent pas aux commandes uniquement numériques",
     SKU_FETCH_FAILED: 'Échec de la récupération des SKU',
     SHIPPING_RATES_CALCULATION_FAILED:
       "Échec du calcul des tarifs d'expédition",

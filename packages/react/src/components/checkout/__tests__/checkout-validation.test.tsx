@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Checkout } from '@/components/checkout/checkout';
 import { GoDaddyProvider } from '@/godaddy-provider';
+import { CheckoutType, PaymentProvider } from '@/types';
 import {
   advanceCheckoutDebounce,
   buildCheckoutSession,
@@ -62,6 +63,79 @@ describe('Checkout validation behaviors', () => {
       );
     });
     expect(getOperations('TokenizeJs.getNonce')).toHaveLength(0);
+  });
+
+  it('shows billing names and phone for offline pickup even when billing address collection is enabled', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableBillingAddressCollection: true,
+        enablePhoneCollection: true,
+        enableTaxCollection: false,
+        paymentMethods: {
+          card: {
+            processor: PaymentProvider.STRIPE,
+            checkoutTypes: [CheckoutType.STANDARD],
+          },
+          offline: {
+            processor: PaymentProvider.OFFLINE,
+            checkoutTypes: [CheckoutType.STANDARD],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+
+    await user.click(
+      await screen.findByRole('button', { name: /offline payments/i })
+    );
+
+    expect(
+      document.querySelector('input[name="billingFirstName"]')
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingLastName"]')
+    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/201.*555/)).toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingPostalCode"]')
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows billing names and phone when billing address collection is disabled but phone collection is enabled', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableBillingAddressCollection: false,
+        enablePhoneCollection: true,
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      document.querySelector('input[name="billingFirstName"]')
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingLastName"]')
+    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/201.*555/)).toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingPostalCode"]')
+    ).not.toBeInTheDocument();
   });
 });
 

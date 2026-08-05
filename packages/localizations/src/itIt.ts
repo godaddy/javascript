@@ -310,6 +310,8 @@ export const itIt = {
     ORDER_TOTAL_CALCULATION_FAILED: "Errore nel calcolo dei totali dell'ordine",
     SHIPPING_METHOD_APPLICATION_FAILED:
       "Errore nell'applicazione del metodo di spedizione",
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      'I metodi di spedizione non si applicano agli ordini solo digitali',
     SKU_FETCH_FAILED: 'Errore nel recupero degli SKU',
     SHIPPING_RATES_CALCULATION_FAILED:
       'Errore nel calcolo delle tariffe di spedizione',

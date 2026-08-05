@@ -1,4 +1,5 @@
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
+import { isDigitalLineItem } from '@/components/checkout/utils/fulfillment';
 import type { DraftOrder, ShippingLines, ShippingMethod } from '@/types';
 
 type LastProcessedShippingState = {
@@ -10,7 +11,10 @@ type LastProcessedShippingState = {
 export function getShippingFulfillmentSyncKey(
   lineItems?: DraftOrder['lineItems']
 ): string | null {
-  const hasLineItemsMissingShippingFulfillment = lineItems?.some(
+  const nonDigitalLineItems = lineItems?.filter(
+    lineItem => !isDigitalLineItem(lineItem)
+  );
+  const hasLineItemsMissingShippingFulfillment = nonDigitalLineItems?.some(
     lineItem =>
       !lineItem.fulfillmentMode ||
       lineItem.fulfillmentMode === DeliveryMethods.NONE
@@ -19,7 +23,7 @@ export function getShippingFulfillmentSyncKey(
   if (!hasLineItemsMissingShippingFulfillment) return null;
 
   return (
-    lineItems
+    nonDigitalLineItems
       ?.map(lineItem => `${lineItem.id}:${lineItem.fulfillmentMode ?? ''}`)
       .join('|') || null
   );

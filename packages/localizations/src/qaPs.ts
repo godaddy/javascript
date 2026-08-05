@@ -300,6 +300,8 @@ export const qaPs = {
     ORDER_TOTALS_UPDATE_FAILED: '[Fâîlëd ţö üþdâţë ördër ţöţâlš]',
     ORDER_TOTAL_CALCULATION_FAILED: '[Fâîlëd ţö çâlçülâţë ördër ţöţâlš]',
     SHIPPING_METHOD_APPLICATION_FAILED: '[Fâîlëd ţö âþþlÿ šhîþþîñg mëţhöd]',
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      "[Šhîþþîñg mëţhödš döñ'ţ âþþļÿ ţö dîgîţâļ-öñļÿ ördërš]",
     SKU_FETCH_FAILED: '[Fâîlëd ţö fëţçh ŠKÜ îñförmâţîöñ]',
     SHIPPING_RATES_CALCULATION_FAILED: '[Fâîlëd ţö çâlçülâţë šhîþþîñg râţëš]',
     SHIPPING_METHOD_NOT_FOUND: '[Šhîþþîñg mëţhöd ñöţ föüñd îñ šÿšţëm]',

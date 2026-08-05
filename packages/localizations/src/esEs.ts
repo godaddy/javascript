@@ -302,6 +302,8 @@ export const esEs = {
     ORDER_TOTAL_CALCULATION_FAILED:
       'No se pudo calcular los totales del pedido',
     SHIPPING_METHOD_APPLICATION_FAILED: 'No se pudo aplicar el método de envío',
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      'Los métodos de envío no se aplican a pedidos solo digitales',
     SKU_FETCH_FAILED: 'No se pudieron obtener los SKUs',
     SHIPPING_RATES_CALCULATION_FAILED:
       'No se pudieron calcular las tarifas de envío',

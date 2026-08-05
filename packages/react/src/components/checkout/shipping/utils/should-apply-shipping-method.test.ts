@@ -63,6 +63,22 @@ describe('getShippingFulfillmentSyncKey', () => {
 
     expect(key).toBeNull();
   });
+
+  it('ignores digital line items with missing fulfillment', () => {
+    const key = getShippingFulfillmentSyncKey([
+      {
+        id: 'digital-line-item',
+        type: 'DIGITAL',
+        fulfillmentMode: 'NONE',
+      },
+      {
+        id: 'line-item-1',
+        fulfillmentMode: 'SHIP',
+      },
+    ] as DraftOrder['lineItems']);
+
+    expect(key).toBeNull();
+  });
 });
 
 describe('shouldApplyShippingMethod', () => {

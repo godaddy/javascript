@@ -7,6 +7,11 @@ import {
 import type { CheckoutFormData } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import type { Product } from '@/components/checkout/line-items';
+import {
+  hasNonDigitalLineItems,
+  isDigitalLineItem,
+  isDigitalOnlyOrder,
+} from '@/components/checkout/utils/fulfillment';
 import type { DraftOrder, SKUProduct } from '@/types';
 
 /**
@@ -112,12 +117,20 @@ export function mapOrderToFormValues({
 
   let deliveryMethod = DeliveryMethods.PURCHASE;
 
-  if (!isPurchaseMode) {
-    const hasPickupItem = order?.lineItems?.some(
+  if (isDigitalOnlyOrder(order?.lineItems)) {
+    deliveryMethod = DeliveryMethods.DIGITAL;
+  } else if (!isPurchaseMode) {
+    const nonDigitalLineItems = order?.lineItems?.filter(
+      lineItem => !isDigitalLineItem(lineItem)
+    );
+    const hasPickupItem = nonDigitalLineItems?.some(
       lineItem => lineItem.fulfillmentMode === DeliveryMethods.PICKUP
     );
-    const hasShipItem = order?.lineItems?.some(
+    const hasShipItem = nonDigitalLineItems?.some(
       lineItem => lineItem.fulfillmentMode === DeliveryMethods.SHIP
+    );
+    const hasPurchaseItem = nonDigitalLineItems?.some(
+      lineItem => lineItem.fulfillmentMode === DeliveryMethods.PURCHASE
     );
 
     // Only treat item-level fulfillment as actionable if the session allows
@@ -125,12 +138,19 @@ export function mapOrderToFormValues({
     // callers retain their previous behavior.
     const isPickup = hasPickupItem && enableLocalPickup !== false;
     const isShipping = hasShipItem && enableShipping !== false;
+    const hasOnlyDigitalAndPurchaseItems =
+      hasPurchaseItem &&
+      !hasPickupItem &&
+      !hasShipItem &&
+      hasNonDigitalLineItems(order?.lineItems);
     const isMixedFulfillment = isPickup && isShipping;
 
     if (!isMixedFulfillment && isPickup) {
       deliveryMethod = DeliveryMethods.PICKUP;
     } else if (!isMixedFulfillment && isShipping) {
       deliveryMethod = DeliveryMethods.SHIP;
+    } else if (hasOnlyDigitalAndPurchaseItems) {
+      deliveryMethod = DeliveryMethods.PURCHASE;
     }
   }
 

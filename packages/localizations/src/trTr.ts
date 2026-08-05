@@ -294,6 +294,8 @@ export const trTr = {
     ORDER_TOTALS_UPDATE_FAILED: 'Sipariş toplamları güncellenemedi',
     ORDER_TOTAL_CALCULATION_FAILED: 'Sipariş toplamları hesaplanamadı',
     SHIPPING_METHOD_APPLICATION_FAILED: 'Kargo yöntemi uygulanamadı',
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      'Kargo yöntemleri yalnızca dijital siparişler için geçerli değildir',
     SKU_FETCH_FAILED: "SKU'lar alınamadı",
     SHIPPING_RATES_CALCULATION_FAILED: 'Kargo ücretleri hesaplanamadı',
     SHIPPING_METHOD_NOT_FOUND: 'Kargo yöntemi bulunamadı',
