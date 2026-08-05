@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.53
+
+### Patch Changes
+
+- 7de41f7: Add support for digital products and fulfillments
+- Updated dependencies [7de41f7]
+  - @godaddy/localizations@1.0.12
+
 ## 1.0.52
 
 ### Patch Changes
