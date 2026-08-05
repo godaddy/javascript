@@ -64,6 +64,28 @@ export interface DraftOrderLineItemsProps {
   removingItemId?: string;
 }
 
+export function getDisplayableImageSrc(image?: string | null) {
+  const trimmedImage = image?.trim();
+  if (!trimmedImage) return undefined;
+
+  if (
+    trimmedImage.startsWith('/') ||
+    trimmedImage.startsWith('data:image/') ||
+    trimmedImage.startsWith('blob:')
+  ) {
+    return trimmedImage;
+  }
+
+  try {
+    const url = new URL(trimmedImage);
+    return url.protocol === 'http:' || url.protocol === 'https:'
+      ? trimmedImage
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function DraftOrderLineItems({
   items,
   currencyCode = 'USD',
@@ -78,103 +100,112 @@ export function DraftOrderLineItems({
   return (
     <div className='space-y-4 mb-4'>
       <Target id='checkout.summary.line-items.before' />
-      {items.map(item => (
-        <div key={item.id} className='flex items-start space-x-4'>
-          {item.image ? (
-            <div className='relative'>
-              <img
-                src={item.image}
-                alt={item.name}
-                className='min-h-12 min-w-12 h-12 w-12 border border-border rounded-lg object-cover'
-              />
-            </div>
-          ) : (
-            <div className='relative bg-muted flex items-center justify-center min-h-12 min-w-12 h-12 w-12 border border-border rounded-lg object-cover'>
-              <Image
-                className='h-5 w-5 text-muted-foreground'
-                name='image-placeholder'
-              />
-            </div>
-          )}
-          <div className='flex-1 space-y-1'>
-            <div className='flex items-start justify-between'>
-              <div className='flex flex-col gap-0.5'>
-                <span className='gap-1'>
-                  <span className='text-sm mr-1'>{item.name}</span>
-                  {item?.selectedOptions?.length ? (
-                    <span className='text-xs'>
-                      (
-                      {item.selectedOptions
-                        .flatMap(option => option.values || [])
-                        .join(' / ')}
-                      )
-                    </span>
-                  ) : null}
-                </span>
-                <span className='text-xs grid'>
-                  {item?.addons?.map((addon: SelectedAddon, index: number) => (
-                    <span key={`addon-${index}`} className='text-xs'>
-                      <span>{addon.attribute}: </span>
-                      {addon.values?.map(value => (
-                        <span
-                          className='text-muted-foreground'
-                          key={`addon-${value.name}`}
-                        >
-                          {value.name}
+      {items.map(item => {
+        const imageSrc = getDisplayableImageSrc(item.image);
+
+        return (
+          <div key={item.id} className='flex items-start space-x-4'>
+            {imageSrc ? (
+              <div className='relative'>
+                <img
+                  src={imageSrc}
+                  alt={item.name}
+                  className='min-h-12 min-w-12 h-12 w-12 border border-border rounded-lg object-cover'
+                />
+              </div>
+            ) : (
+              <div
+                className='relative bg-muted flex items-center justify-center min-h-12 min-w-12 h-12 w-12 border border-border rounded-lg object-cover'
+                data-testid='line-item-image-placeholder'
+              >
+                <Image
+                  className='h-5 w-5 text-muted-foreground'
+                  name='image-placeholder'
+                />
+              </div>
+            )}
+            <div className='flex-1 space-y-1'>
+              <div className='flex items-start justify-between'>
+                <div className='flex flex-col gap-0.5'>
+                  <span className='gap-1'>
+                    <span className='text-sm mr-1'>{item.name}</span>
+                    {item?.selectedOptions?.length ? (
+                      <span className='text-xs'>
+                        (
+                        {item.selectedOptions
+                          .flatMap(option => option.values || [])
+                          .join(' / ')}
+                        )
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className='text-xs grid'>
+                    {item?.addons?.map(
+                      (addon: SelectedAddon, index: number) => (
+                        <span key={`addon-${index}`} className='text-xs'>
+                          <span>{addon.attribute}: </span>
+                          {addon.values?.map(value => (
+                            <span
+                              className='text-muted-foreground'
+                              key={`addon-${value.name}`}
+                            >
+                              {value.name}
+                            </span>
+                          ))}
                         </span>
+                      )
+                    )}
+                  </span>
+                  <span className='text-xs text-muted-foreground'>
+                    {t.general.quantity}: {item.quantity}
+                    {onRemoveFromCart ? (
+                      <>
+                        &middot;{' '}
+                        <Button
+                          className='text-xs p-0 h-auto text-inherit underline'
+                          variant='link'
+                          onClick={() =>
+                            item.id ? onRemoveFromCart(item.id) : null
+                          }
+                          disabled={isRemovingFromCart}
+                          aria-label='Remove item'
+                        >
+                          {isRemovingFromCart && removingItemId === item.id ? (
+                            <span>{t.storefront.removing}</span>
+                          ) : (
+                            <span>{t.storefront.remove}</span>
+                          )}
+                        </Button>
+                      </>
+                    ) : null}
+                  </span>
+                  {item.notes?.length ? (
+                    <span className='text-xs grid'>
+                      <span className='font-bold'>{t.lineItems.note}</span>
+                      {item.notes?.map(note => (
+                        <span key={`note-${note.id}`}>{note.content}</span>
                       ))}
                     </span>
-                  ))}
-                </span>
-                <span className='text-xs text-muted-foreground'>
-                  {t.general.quantity}: {item.quantity}
-                  {onRemoveFromCart ? (
-                    <>
-                      &middot;{' '}
-                      <Button
-                        className='text-xs p-0 h-auto text-inherit underline'
-                        variant='link'
-                        onClick={() =>
-                          item.id ? onRemoveFromCart(item.id) : null
-                        }
-                        disabled={isRemovingFromCart}
-                        aria-label='Remove item'
-                      >
-                        {isRemovingFromCart && removingItemId === item.id ? (
-                          <span>{t.storefront.removing}</span>
-                        ) : (
-                          <span>{t.storefront.remove}</span>
-                        )}
-                      </Button>
-                    </>
                   ) : null}
-                </span>
-                {item.notes?.length ? (
-                  <span className='text-xs grid'>
-                    <span className='font-bold'>{t.lineItems.note}</span>
-                    {item.notes?.map(note => (
-                      <span key={`note-${note.id}`}>{note.content}</span>
-                    ))}
-                  </span>
+                </div>
+                {item.originalPrice != null && item.quantity ? (
+                  <div className='text-right flex items-start gap-2'>
+                    <div className='pt-0.5'>
+                      <span className='text-sm'>
+                        {formatCurrency({
+                          amount: item.originalPrice * item.quantity,
+                          currencyCode,
+                          inputInMinorUnits,
+                        })}
+                      </span>
+                    </div>
+                  </div>
                 ) : null}
               </div>
-              {item.originalPrice != null && item.quantity ? (
-                <div className='text-right flex items-start gap-2'>
-                  <div className='pt-0.5'>
-                    <span className='text-sm'>
-                      {formatCurrency({
-                        amount: item.originalPrice * item.quantity,
-                        currencyCode,
-                        inputInMinorUnits,
-                      })}
-                    </span>
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       <Target id='checkout.summary.line-items.after' />
     </div>
   );

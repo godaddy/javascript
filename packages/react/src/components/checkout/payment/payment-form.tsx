@@ -34,6 +34,10 @@ import {
   PaymentMethodRenderer,
 } from '@/components/checkout/payment/payment-method-renderer';
 import type { TokenizeJs } from '@/components/checkout/payment/types';
+import {
+  hasInlineBillingForm,
+  useBillingCollectionMode,
+} from '@/components/checkout/payment/utils/billing-collection';
 import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import { useGetSelectedPaymentMethod } from '@/components/checkout/payment/utils/use-get-selected-payment-method';
@@ -82,11 +86,6 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   ccavenue: <CcavenueIcon className='h-5 w-5' />,
 };
 
-const INLINE_BILLING_PAYMENT_METHODS: PaymentMethodValue[] = [
-  PaymentMethodType.CREDIT_CARD,
-  PaymentMethodType.ACH,
-];
-
 export function PaymentForm(
   props: DraftOrderTotalsProps & { items: Product[] }
 ) {
@@ -102,14 +101,10 @@ export function PaymentForm(
   const form = useFormContext();
   const paymentMethod = form.watch('paymentMethod');
   const deliveryMethod = form.watch('deliveryMethod');
-  const useShippingAddress = form.watch('paymentUseShippingAddress');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-  const isPaymentMethodWithInlineBilling = paymentMethod
-    ? INLINE_BILLING_PAYMENT_METHODS.includes(
-        paymentMethod as PaymentMethodValue
-      )
-    : false;
+  const billingMode = useBillingCollectionMode({ context: 'top-level' });
+  const isPaymentMethodWithInlineBilling = hasInlineBillingForm(paymentMethod);
   const methodConfig = useGetSelectedPaymentMethod(
     paymentMethod as PaymentMethodValue
   );
@@ -299,24 +294,8 @@ export function PaymentForm(
     googlePaySupported,
   ]);
 
-  // Billing is separate from shipping when there is no shipping address to
-  // copy from. `mapOrderToFormValues` canonicalizes deliveryMethod against
-  // session capabilities, so `!isShipping` already covers:
-  //   - session.enableShipping = false
-  //   - line items have no SHIP fulfillment (PICKUP / PURCHASE / all-NONE)
-  // The remaining case is the user opting out of "use shipping for billing".
-  const billingIsSeparateFromShipping = !isShipping || !useShippingAddress;
-
-  const shouldShowBillingNamesOnly =
-    !isPaymentMethodWithInlineBilling &&
-    session?.enableBillingAddressCollection === false &&
-    billingIsSeparateFromShipping;
-
-  const isBillingAddressRequired =
-    !isPaymentMethodWithInlineBilling &&
-    billingIsSeparateFromShipping &&
-    (shouldShowBillingNamesOnly ||
-      session?.enableBillingAddressCollection !== false);
+  const shouldShowBillingNamesOnly = billingMode === 'names';
+  const isBillingAddressRequired = billingMode !== 'none';
 
   const billingCopy =
     shouldShowBillingNamesOnly && t.payment.billingInformation

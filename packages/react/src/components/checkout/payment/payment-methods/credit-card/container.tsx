@@ -27,16 +27,17 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
   // The remaining case is the user opting out of "use shipping for billing".
   const billingIsSeparateFromShipping = !isShipping || !useShippingAddress;
 
+  const billingAddressEnabled =
+    session?.enableBillingAddressCollection !== false;
   const shouldShowBillingNamesOnly =
     paymentMethod === PaymentMethodType.CREDIT_CARD &&
-    session?.enableBillingAddressCollection === false &&
+    !billingAddressEnabled &&
     billingIsSeparateFromShipping;
 
   const isBillingAddressRequired =
     paymentMethod === PaymentMethodType.CREDIT_CARD &&
     billingIsSeparateFromShipping &&
-    (shouldShowBillingNamesOnly ||
-      session?.enableBillingAddressCollection !== false);
+    (shouldShowBillingNamesOnly || billingAddressEnabled);
 
   const billingCopy =
     shouldShowBillingNamesOnly && t.payment.billingInformation

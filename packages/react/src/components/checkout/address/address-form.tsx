@@ -544,7 +544,9 @@ export function AddressForm({
         />
       </div>
 
-      {!onlyNames && (
+      {onlyNames ? (
+        <PhoneInput sectionKey={sectionKey} disabled={isConfirmingCheckout} />
+      ) : (
         <>
           <FormField
             control={form.control}

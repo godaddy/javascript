@@ -312,6 +312,8 @@ export const deDe = {
       'Berechnung der Bestellsummen fehlgeschlagen',
     SHIPPING_METHOD_APPLICATION_FAILED:
       'Anwenden der Versandmethode fehlgeschlagen',
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      'Versandmethoden gelten nicht für rein digitale Bestellungen',
     SKU_FETCH_FAILED: 'Abrufen der SKUs fehlgeschlagen',
     SHIPPING_RATES_CALCULATION_FAILED:
       'Berechnung der Versandkosten fehlgeschlagen',

@@ -9,6 +9,7 @@ import { useApplyFulfillmentLocation } from '@/components/checkout/delivery/util
 import { NotesForm } from '@/components/checkout/notes/notes-form';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { Target } from '@/components/checkout/target/target';
+import { isDigitalLineItem } from '@/components/checkout/utils/fulfillment';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -73,10 +74,13 @@ function parseISODate(dateStr: string): Date | undefined {
   return new Date(year, month - 1, day);
 }
 
-function getPickupFulfillmentSyncKey(
+export function getPickupFulfillmentSyncKey(
   lineItems?: DraftOrder['lineItems']
 ): string | null {
-  const hasLineItemsMissingPickupFulfillment = lineItems?.some(
+  const nonDigitalLineItems = lineItems?.filter(
+    lineItem => !isDigitalLineItem(lineItem)
+  );
+  const hasLineItemsMissingPickupFulfillment = nonDigitalLineItems?.some(
     lineItem =>
       !lineItem.fulfillmentMode ||
       lineItem.fulfillmentMode === DeliveryMethods.NONE
@@ -85,7 +89,7 @@ function getPickupFulfillmentSyncKey(
   if (!hasLineItemsMissingPickupFulfillment) return null;
 
   return (
-    lineItems
+    nonDigitalLineItems
       ?.map(lineItem => `${lineItem.id}:${lineItem.fulfillmentMode ?? ''}`)
       .join('|') || null
   );

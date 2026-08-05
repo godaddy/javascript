@@ -293,6 +293,8 @@ export const idId = {
     ORDER_TOTALS_UPDATE_FAILED: 'Gagal memperbarui total pesanan',
     ORDER_TOTAL_CALCULATION_FAILED: 'Gagal menghitung total pesanan',
     SHIPPING_METHOD_APPLICATION_FAILED: 'Gagal menerapkan metode pengiriman',
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      'Metode pengiriman tidak berlaku untuk pesanan digital saja',
     SKU_FETCH_FAILED: 'Gagal mengambil SKU',
     SHIPPING_RATES_CALCULATION_FAILED: 'Gagal menghitung tarif pengiriman',
     SHIPPING_METHOD_NOT_FOUND: 'Metode pengiriman tidak ditemukan',

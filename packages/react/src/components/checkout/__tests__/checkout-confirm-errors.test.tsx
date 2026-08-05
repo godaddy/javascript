@@ -13,6 +13,7 @@ import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import {
   buildCheckoutSession,
   buildDraftOrder,
+  buildLineItem,
   buildPickupLocation,
   buildShippingAddress,
   clearOperations,
@@ -203,6 +204,52 @@ describe('Checkout confirm errors', () => {
         address: buildShippingAddress(),
       },
       shippingLines: [],
+    });
+    const session = buildCheckoutSession({
+      draftOrder,
+      ...offlineSessionOverrides(),
+    });
+    mockGodaddyApi({ session, draftOrder, shippingMethods: [] });
+
+    const { user } = renderCheckoutWithConfirmSeam({
+      session,
+      draftOrder,
+      apiOverrides: { shippingMethods: [] },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(
+      await screen.findByRole('button', { name: /confirm seam/i })
+    );
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(
+        /Shipping address or method failed to apply/i
+      );
+    });
+
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+  });
+
+  it('blocks confirm when shipping fulfillment sync leaves non-digital items as NONE', async () => {
+    const draftOrder = buildDraftOrder({
+      shipping: {
+        firstName: 'Ship',
+        lastName: 'Buyer',
+        phone: '+12015550123',
+        address: buildShippingAddress(),
+      },
+      shippingLines: [
+        {
+          requestedService: 'free-shipping',
+          requestedProvider: 'unknown',
+          name: 'Free',
+          amount: { value: 0, currencyCode: 'USD' },
+          discounts: [],
+        },
+      ],
+      lineItems: [buildLineItem({ fulfillmentMode: DeliveryMethods.NONE })],
     });
     const session = buildCheckoutSession({
       draftOrder,

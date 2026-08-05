@@ -300,6 +300,8 @@ export const esCl = {
     ORDER_TOTALS_UPDATE_FAILED: 'Error al actualizar totales de pedido',
     ORDER_TOTAL_CALCULATION_FAILED: 'Error al calcular totales de pedido',
     SHIPPING_METHOD_APPLICATION_FAILED: 'Error al aplicar método de envío',
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      'Los métodos de envío no aplican a pedidos solo digitales',
     SKU_FETCH_FAILED: 'Error al obtener SKUs',
     SHIPPING_RATES_CALCULATION_FAILED: 'Error al calcular tarifas de envío',
     SHIPPING_METHOD_NOT_FOUND: 'Método de envío no encontrado',
