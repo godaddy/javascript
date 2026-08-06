@@ -1,6 +1,6 @@
 {
   "name": "@godaddy/localizations",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Internationalization localizations for GoDaddy checkout components",
   "type": "module",
   "types": "./dist/index.d.ts",
@@ -8,7 +8,9 @@
     "type": "git",
     "url": "git+https://github.com/godaddy/javascript.git"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

@@ -1,5 +1,11 @@
 # @godaddy/localizations
 
+## 1.0.12
+
+### Patch Changes
+
+- 7de41f7: Add support for digital products and fulfillments
+
 ## 1.0.11
 
 ### Patch Changes
