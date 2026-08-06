@@ -30,14 +30,15 @@ export function ContactForm() {
         id: 'contact-email',
         fieldNames: ['contactEmail'],
         debounceMs: 1000,
-        enabled: ({ values, draftOrder: currentDraftOrder }) =>
-          Boolean(
-            currentDraftOrder &&
-              values.contactEmail?.trim() &&
-              (currentDraftOrder.shipping?.email !==
-                values.contactEmail.trim() ||
-                currentDraftOrder.billing?.email !== values.contactEmail.trim())
-          ),
+        enabled: ({ values, draftOrder: currentDraftOrder }) => {
+          const email = values.contactEmail?.trim();
+          if (!currentDraftOrder || !email) return false;
+
+          return (
+            currentDraftOrder.shipping?.email !== email ||
+            currentDraftOrder.billing?.email !== email
+          );
+        },
         buildPatch: ({ values, draftOrder: currentDraftOrder }) => {
           const email = values.contactEmail?.trim();
           if (!email || !currentDraftOrder) return null;

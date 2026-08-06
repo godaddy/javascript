@@ -402,7 +402,7 @@ export function CheckoutForm({
 
   return (
     <CustomFormProvider {...form}>
-      <DraftOrderSyncProvider>
+      <DraftOrderSyncProvider schema={schema}>
         <div>
           <Target id='checkout.before' />
           <div

@@ -244,13 +244,17 @@ export function PhoneInput({
               ? currentDraftOrder.shipping
               : currentDraftOrder.billing;
 
-          if ((orderSection?.phone || '') === (phone || '')) return false;
-          return phone ? checkIsValidPhone(phone) && phone.trim() !== '' : true;
+          if ((orderSection?.phone || '') === (phone.trim() || '')) {
+            return false;
+          }
+          // An empty value clears the phone on the order; anything else has to
+          // be dialable before it is worth sending.
+          return phone.trim() ? checkIsValidPhone(phone) : true;
         },
         buildPatch: ({ values }) => {
           const phone = String(
             values[phoneFieldName as keyof typeof values] ?? ''
-          );
+          ).trim();
           return mapAddressFieldsToInput(
             { phone },
             sectionKey as 'shipping' | 'billing',

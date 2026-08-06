@@ -22,6 +22,7 @@ import {
   flushPromises,
   getOperations,
   mockGodaddyApi,
+  setApiError,
   setApiErrorOnce,
   waitForOperation,
 } from '../__tests__/checkout-test-env';
@@ -275,6 +276,34 @@ describe('DraftOrderSyncProvider integration', () => {
       getOperations('UpdateCheckoutSessionDraftOrder')[1].input
     ).toMatchObject({
       shipping: { firstName: 'Alpha', lastName: 'Beta' },
+    });
+  });
+
+  it('replaces a rejected registration patch with the corrected value instead of retrying it', async () => {
+    const { user } = renderSyncHarness();
+    setApiError('updateDraftOrder', new Error('invalid value'));
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Bad');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Bad' },
+    });
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Good');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder', 2);
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Good' },
     });
   });
 

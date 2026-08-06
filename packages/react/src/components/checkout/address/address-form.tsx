@@ -213,9 +213,9 @@ export function AddressForm({
     () => addressFieldSuffixes.map(suffix => `${sectionKey}${suffix}`),
     [sectionKey]
   );
-  const allSectionFieldNames = React.useMemo(
-    () => [...nameFieldNames, ...allAddressFieldNames],
-    [allAddressFieldNames, nameFieldNames]
+  const addressSyncFieldNames = React.useMemo(
+    () => [...allAddressFieldNames, 'paymentUseShippingAddress'],
+    [allAddressFieldNames]
   );
 
   const orderAddress = React.useMemo(
@@ -294,7 +294,7 @@ export function AddressForm({
     React.useMemo(
       () => ({
         id: `${sectionKey}-address`,
-        fieldNames: allSectionFieldNames,
+        fieldNames: addressSyncFieldNames,
         debounceMs: 1000,
         enabled: ({ values, draftOrder: currentDraftOrder }) =>
           Boolean(
@@ -330,7 +330,7 @@ export function AddressForm({
           );
         },
       }),
-      [allSectionFieldNames, isAutocompleteOpen, onlyNames, sectionKey]
+      [addressSyncFieldNames, isAutocompleteOpen, onlyNames, sectionKey]
     )
   );
 
@@ -346,7 +346,7 @@ export function AddressForm({
   });
   useDraftOrderFieldDirtyMarker({
     id: `${sectionKey}-address`,
-    fieldNames: allSectionFieldNames,
+    fieldNames: addressSyncFieldNames,
     disabled: onlyNames || isConfirmingCheckout,
   });
 

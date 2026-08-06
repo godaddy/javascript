@@ -2,6 +2,7 @@ import { enUs } from '@godaddy/localizations';
 import { screen, waitFor } from '@testing-library/react';
 import { useFormContext } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import { PaymentMethodType, PaymentProvider } from '@/types';
 import {
   buildDraftOrder,
@@ -161,6 +162,173 @@ describe('Checkout form validation', () => {
     });
     expect(document.body).not.toHaveTextContent(enUs.validation.enterAddress);
     expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+  });
+
+  it('enforces a custom checkoutFormSchema rule on a field free pickup validation skips', async () => {
+    const customMessage = 'Phone number is required';
+    const draftOrder = makeFreePickupOrder({
+      billing: {
+        firstName: 'Pat',
+        lastName: 'Pickup',
+        phone: '',
+        address: buildShippingAddress({ addressLine1: '' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      checkoutProps: {
+        checkoutFormSchema: {
+          billingPhone: z.string().min(1, customMessage),
+        },
+      },
+      sessionOverrides: {
+        draftOrder,
+        paymentMethods: stripeOnlyPaymentMethods(),
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(await clickSubmitButton(/complete your free order/i));
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(customMessage);
+    });
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+
+    await user.type(screen.getByLabelText(/phone/i), '4805551234');
+    await user.click(await clickSubmitButton(/complete your free order/i));
+
+    await waitFor(() => {
+      expect(getOperations('ConfirmCheckoutSession')).toHaveLength(1);
+    });
+  });
+
+  it('does not enforce custom phone rules when phone collection is disabled', async () => {
+    const customMessage = 'Phone number is required';
+    const draftOrder = makeFreePickupOrder({
+      billing: {
+        firstName: 'Pat',
+        lastName: 'Pickup',
+        phone: '',
+        address: buildShippingAddress({ addressLine1: '' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      checkoutProps: {
+        checkoutFormSchema: {
+          billingPhone: z.string().min(1, customMessage),
+        },
+      },
+      sessionOverrides: {
+        draftOrder,
+        paymentMethods: stripeOnlyPaymentMethods(),
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+        enablePhoneCollection: false,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    expect(screen.queryByLabelText(/phone/i)).not.toBeInTheDocument();
+
+    await user.click(await clickSubmitButton(/complete your free order/i));
+
+    await waitFor(() => {
+      expect(getOperations('ConfirmCheckoutSession')).toHaveLength(1);
+    });
+    expect(document.body).not.toHaveTextContent(customMessage);
+  });
+
+  it('does not enforce custom shipping rules when pickup is selected', async () => {
+    const customMessage = 'Shipping field is required';
+    const draftOrder = makeFreePickupOrder({
+      billing: {
+        firstName: 'Pat',
+        lastName: 'Pickup',
+        address: buildShippingAddress({ addressLine1: '' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      checkoutProps: {
+        checkoutFormSchema: {
+          shippingAddressLine2: z.string().min(1, customMessage),
+        },
+      },
+      sessionOverrides: {
+        draftOrder,
+        paymentMethods: stripeOnlyPaymentMethods(),
+        enableShipping: true,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    expect(
+      document.querySelector('input[name="shippingAddressLine2"]')
+    ).not.toBeInTheDocument();
+
+    await user.click(await clickSubmitButton(/complete your free order/i));
+
+    await waitFor(() => {
+      expect(getOperations('ConfirmCheckoutSession')).toHaveLength(1);
+    });
+    expect(document.body).not.toHaveTextContent(customMessage);
+  });
+
+  it('does not enforce custom billing address rules when shipping address is reused', async () => {
+    const customMessage = 'Billing address line 2 is required';
+    const sharedAddress = buildShippingAddress({ addressLine2: '' });
+    const draftOrder = buildDraftOrder({
+      shipping: {
+        firstName: 'Jane',
+        lastName: 'Buyer',
+        email: 'jane@example.com',
+        phone: '+12015550123',
+        address: sharedAddress,
+      },
+      billing: {
+        firstName: 'Jane',
+        lastName: 'Buyer',
+        email: 'jane@example.com',
+        phone: '+12015550123',
+        address: sharedAddress,
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      checkoutProps: {
+        checkoutFormSchema: {
+          billingAddressLine2: z.string().min(1, customMessage),
+        },
+      },
+      sessionOverrides: {
+        draftOrder,
+        paymentMethods: stripeOnlyPaymentMethods(),
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    expect(
+      document.querySelector('input[name="billingAddressLine2"]')
+    ).not.toBeInTheDocument();
+
+    await user.click(await clickSubmitButton(/pay now/i));
+
+    await waitFor(() => {
+      expect(getOperations('TokenizeJs.getNonce')).toHaveLength(1);
+    });
+    expect(document.body).not.toHaveTextContent(customMessage);
   });
 
   it('pins current paid pickup card behavior when the billing address line is empty', async () => {

@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
 import { type UseFormReturn, useFormContext } from 'react-hook-form';
+import type { z } from 'zod';
 import {
   type CheckoutFormData,
   useCheckoutContext,
@@ -139,8 +140,14 @@ export function mergeDraftOrderPatch<T>(
 
 export function DraftOrderSyncProvider({
   children,
+  schema,
 }: {
   children: React.ReactNode;
+  /**
+   * The same schema the form resolver uses. Registrations are skipped while
+   * their fields are invalid so rejected values never reach the draft order.
+   */
+  schema?: z.ZodTypeAny;
 }) {
   const updateDraftOrder = useUpdateOrder();
   const queryClient = useQueryClient();
@@ -288,9 +295,36 @@ export function DraftOrderSyncProvider({
     }
   }, [form, session, updateDraftOrder]);
 
+  /**
+   * Field names the form schema currently rejects. RHF's own error state cannot
+   * be used here: the form validates `onBlur`, so a debounced background sync
+   * runs before `formState.errors` knows about the value being typed, and
+   * `formState.isValid` is form-wide (false for any incomplete checkout).
+   * Re-running the resolver schema keeps validation in one place, including
+   * rules supplied through the `checkoutFormSchema` prop.
+   */
+  const getInvalidFieldNames = React.useCallback(
+    (values: CheckoutFormData) => {
+      const invalidFieldNames = new Set<string>();
+      if (!schema) return invalidFieldNames;
+
+      const result = schema.safeParse(values);
+      if (result.success) return invalidFieldNames;
+
+      for (const issue of result.error.issues) {
+        const [fieldName] = issue.path;
+        if (typeof fieldName === 'string') invalidFieldNames.add(fieldName);
+      }
+
+      return invalidFieldNames;
+    },
+    [schema]
+  );
+
   const buildPatchFromRegistrations = React.useCallback(
     (ids: string[], draftOrder?: DraftOrder | null) => {
       const values = form.getValues();
+      const invalidFieldNames = getInvalidFieldNames(values);
       const context: DraftOrderSyncRegistrationContext = {
         values,
         form,
@@ -304,6 +338,18 @@ export function DraftOrderSyncProvider({
       for (const id of ids) {
         const registration = registrationsRef.current.get(id);
         if (!registration) continue;
+        // Only the values the customer edited have to be valid. Untouched
+        // fields can be invalid simply because the order is still incomplete
+        // (for example missing names while the address is being filled in).
+        if (
+          registration.fieldNames.some(
+            fieldName =>
+              invalidFieldNames.has(fieldName) &&
+              form.getFieldState(fieldName as keyof CheckoutFormData).isDirty
+          )
+        ) {
+          continue;
+        }
         if (registration.enabled?.(context) === false) continue;
 
         const registrationPatch = registration.buildPatch(context);
@@ -325,7 +371,7 @@ export function DraftOrderSyncProvider({
         registrationIds: [...registrationIds],
       };
     },
-    [form, session]
+    [form, getInvalidFieldNames, session]
   );
 
   const flushDraftOrderSync = React.useCallback(
@@ -334,12 +380,39 @@ export function DraftOrderSyncProvider({
     ): Promise<FlushDraftOrderSyncResult> => {
       clearTimer();
 
+      const canBuildRegistrationPatches =
+        !isConfirmingCheckout || Boolean(options.allowWhileConfirming);
+
+      // A patch the backend rejected stays queued, so rebuild the dirty
+      // registrations from the current form values and merge them over it
+      // before draining. Without this the queue keeps retrying the rejected
+      // value and a corrected value never replaces it.
+      if (canBuildRegistrationPatches && pendingPatchRef.current) {
+        const queuedIds = [...dirtyRegistrationIdsRef.current];
+
+        if (queuedIds.length) {
+          const rebuilt = buildPatchFromRegistrations(
+            queuedIds,
+            getCurrentDraftOrder()
+          );
+
+          if (rebuilt.patch) {
+            for (const registrationId of rebuilt.registrationIds) {
+              dirtyRegistrationIdsRef.current.delete(registrationId);
+            }
+            queuePatch(
+              rebuilt.patch,
+              rebuilt.fieldNames,
+              rebuilt.registrationIds
+            );
+          }
+        }
+      }
+
       let patchSent = await drainQueue();
       let latestBeforePatch = options.includeCurrentValues
         ? await refetchLatestDraftOrder()
         : getCurrentDraftOrder();
-      const canBuildRegistrationPatches =
-        !isConfirmingCheckout || Boolean(options.allowWhileConfirming);
       let ids: string[] = [];
 
       if (canBuildRegistrationPatches) {

@@ -445,6 +445,45 @@ describe('Checkout draft-order field sync', () => {
     expect(getLastUpdateInput()?.billing).not.toHaveProperty('lastName');
   });
 
+  it('keeps a partial shipping name dirty after address-only sync refetches the order', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        shipping: {
+          firstName: '',
+          lastName: '',
+          address: buildShippingAddress({
+            addressLine1: '',
+            addressLine2: '',
+            adminArea1: 'GA',
+            adminArea2: '',
+            postalCode: '',
+            countryCode: 'US',
+          }),
+        },
+        billing: {
+          firstName: '',
+          lastName: '',
+          address: null,
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await typeIntoNamedField(user, 'shippingFirstName', 'Partial');
+    await typeIntoNamedField(user, 'shippingAddressLine1', '456 Shipping Ln');
+    await typeIntoNamedField(user, 'shippingAdminArea2', 'Jasper');
+    await typeIntoNamedField(user, 'shippingPostalCode', '30143');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    expect(getLastUpdateInput()?.shipping).not.toHaveProperty('firstName');
+    await waitForOperation('DraftOrder');
+
+    await waitFor(() => {
+      expect(getNamedInput('shippingFirstName')).toHaveValue('Partial');
+    });
+  });
+
   it('syncs a complete billing address without requiring first or last name', async () => {
     const { user } = renderCheckout({
       draftOrderOverrides: {
@@ -813,6 +852,33 @@ describe('Checkout draft-order field sync', () => {
       expect(document.body).toHaveTextContent(/Failed to update order/i);
     });
     expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+  });
+
+  it('does not sync an invalid email and syncs it once corrected', async () => {
+    const { user } = renderCheckout();
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    clearOperations();
+
+    await typeIntoNamedField(user, 'contactEmail', 'not-an-email');
+    await advanceCheckoutDebounce();
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+
+    await typeIntoNamedField(user, 'contactEmail', 'valid@example.com');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { email: 'valid@example.com' },
+      billing: { email: 'valid@example.com' },
+    });
+    expect(
+      getOperations('UpdateCheckoutSessionDraftOrder').map(operation =>
+        JSON.stringify(operation.input)
+      )
+    ).not.toContain(expect.stringContaining('not-an-email'));
   });
 
   it('resetField after a successful sync makes the typed value pristine for later refetches', async () => {
