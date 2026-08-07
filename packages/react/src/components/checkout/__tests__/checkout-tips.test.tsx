@@ -805,6 +805,73 @@ describe('Checkout tips', () => {
       });
     });
 
+    it('deselects a threshold amount button when switching to "Custom amount"', async () => {
+      const { user } = renderCheckout({
+        sessionOverrides: {
+          enableTips: true,
+          enableShipping: false,
+          enableLocalPickup: false,
+          enableTaxCollection: false,
+          tips: {
+            default: { percentages: null, amounts: null },
+            thresholds: [
+              {
+                minSubtotal: 2000,
+                maxSubtotal: 5000,
+                amounts: [200, 500, 1000],
+                percentages: null,
+              },
+            ],
+          },
+        },
+        draftOrderOverrides: {
+          totals: {
+            subTotal: { value: 2500, currencyCode: 'USD' },
+            discountTotal: { value: 0, currencyCode: 'USD' },
+            shippingTotal: { value: 0, currencyCode: 'USD' },
+            taxTotal: { value: 0, currencyCode: 'USD' },
+            feeTotal: { value: 0, currencyCode: 'USD' },
+            total: { value: 2500, currencyCode: 'USD' },
+          },
+        },
+      });
+      await waitForCheckoutReady();
+
+      const fiveDollarBtn = await screen.findByRole('button', {
+        name: /\$5\.00/,
+      });
+      await user.click(fiveDollarBtn);
+      await waitFor(() => {
+        expect(fiveDollarBtn).toHaveAttribute('aria-checked', 'true');
+      });
+
+      const customBtn = await screen.findByRole('button', {
+        name: /custom amount/i,
+      });
+      await user.click(customBtn);
+
+      // The custom input carries the $5.00 over, but the preset must not stay
+      // checked — a radiogroup can only have one checked option.
+      await waitFor(() => {
+        expect(customBtn).toHaveAttribute('aria-checked', 'true');
+        expect(fiveDollarBtn).toHaveAttribute('aria-checked', 'false');
+      });
+
+      const checked = screen
+        .getAllByRole('radiogroup')
+        .flatMap(group =>
+          Array.from(group.querySelectorAll('[aria-checked="true"]'))
+        );
+      expect(checked).toEqual([customBtn]);
+
+      // Selecting the preset again re-checks it and clears the custom input.
+      await user.click(fiveDollarBtn);
+      await waitFor(() => {
+        expect(fiveDollarBtn).toHaveAttribute('aria-checked', 'true');
+        expect(customBtn).toHaveAttribute('aria-checked', 'false');
+      });
+    });
+
     it('uses default amounts when options.default.amounts is provided and no threshold matches', async () => {
       renderCheckout({
         sessionOverrides: {

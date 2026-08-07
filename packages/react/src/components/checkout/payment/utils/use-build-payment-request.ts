@@ -320,7 +320,7 @@ export function useBuildPaymentRequest(): {
         }),
         type: 'final',
       },
-      ...(session?.enableTips
+      ...(session?.enableTips && tipAmount
         ? [
             {
               label: 'Tip',

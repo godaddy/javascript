@@ -265,6 +265,7 @@ export function MercadoPagoCheckoutButton() {
       await handleSubmit({ formData });
     } else {
       setIsBrickReady(false);
+      setBrickRevision(revision => revision + 1);
     }
   };
 

@@ -590,4 +590,67 @@ describe('useBuildPaymentRequest', () => {
       expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
     );
   });
+
+  it.each([
+    { scenario: 'the tip is explicitly zero', tipAmount: 0 },
+    { scenario: 'no tip has been selected yet', tipAmount: undefined },
+  ])(
+    'omits the Tip line item when enableTips is true and $scenario',
+    async ({ tipAmount }) => {
+      const { requests } = await renderUseBuildPaymentRequest({
+        sessionOverrides: {
+          enableTips: true,
+        },
+        draftOrderOverrides: {
+          lineItems: [
+            buildLineItem({
+              name: 'Coffee Mug',
+              quantity: 1,
+              details: { sku: 'mug-sku' },
+              totals: {
+                subTotal: money(2000),
+                discountTotal: money(0),
+                feeTotal: money(0),
+                taxTotal: money(0),
+              },
+              unitAmount: money(2000),
+            }),
+          ],
+          shippingLines: [],
+          totals: {
+            subTotal: money(2000),
+            discountTotal: money(0),
+            shippingTotal: money(0),
+            taxTotal: money(0),
+            feeTotal: money(0),
+            total: money(2000),
+          },
+        },
+        products: [productNode({ code: 'mug-sku', label: 'Coffee Mug' })],
+        formDefaultValues: { tipAmount },
+      });
+
+      // A zero tip must not reach the wallet sheets as a "$0.00 Tip" row.
+      expect(requests.applePayRequest.lineItems).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+      );
+      expect(
+        requests.googlePayRequest.transactionInfo.displayItems
+      ).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+      );
+      expect(requests.payPalRequest.purchase_units[0].items).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: 'Tip' })])
+      );
+      expect(requests.poyntStandardRequest.lineItems).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+      );
+      expect(requests.poyntExpressRequest.lineItems).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+      );
+
+      expect(requests.applePayRequest.total.amount).toBe('$20.00');
+      expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
+    }
+  );
 });

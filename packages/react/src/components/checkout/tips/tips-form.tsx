@@ -151,12 +151,14 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
                 variant='outline'
                 className={cn(
                   'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted',
-                  tipAmount === amount
+                  !showCustomTip && tipAmount === amount
                     ? 'border-muted-foreground'
                     : 'bg-card active:ring'
                 )}
                 onClick={() => handleAmountSelect(amount)}
-                aria-checked={tipAmount === amount ? 'true' : 'false'}
+                aria-checked={
+                  !showCustomTip && tipAmount === amount ? 'true' : 'false'
+                }
               >
                 <span className='text-base'>
                   {formatCurrency({
