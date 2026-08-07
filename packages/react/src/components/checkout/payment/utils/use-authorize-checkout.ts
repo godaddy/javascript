@@ -16,12 +16,15 @@ export function useAuthorizeCheckout() {
     mutationFn: async (input: AuthorizeCheckoutSessionInput['input']) => {
       await flushCheckoutSync();
 
-      // Authorize for the same amount confirmCheckout later captures. Read the
-      // tip after the sync flush so pending form state is settled.
+      // Authorize for the same amount confirmCheckout later captures. Prefer an
+      // explicit tip from the caller so a provider that has already committed to
+      // an amount (MercadoPago builds its brick up front) authorizes that exact
+      // amount; otherwise read the tip after the sync flush, once pending form
+      // state has settled.
       const payload = {
         ...input,
         tipAmount: session?.enableTips
-          ? (form?.getValues('tipAmount') ?? 0)
+          ? (input.tipAmount ?? form?.getValues('tipAmount') ?? 0)
           : undefined,
       };
 

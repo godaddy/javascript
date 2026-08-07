@@ -138,6 +138,28 @@ describe('Checkout MercadoPago tips', () => {
     ]);
   });
 
+  it('coalesces a burst of tip changes into a single rebuild and authorization', async () => {
+    const { user } = renderMercadoPagoCheckout();
+    await waitForBrickCalls(1);
+    clearOperations();
+
+    // Back-to-back taps inside the debounce window: only the last one should
+    // reach the provider, since every rebuild authorizes the session again.
+    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('button', { name: /15%/ }));
+
+    await waitForBrickCalls(2);
+    await waitFor(() => {
+      expect(getOperations('AuthorizeCheckoutSession')).toHaveLength(1);
+    });
+
+    expect(brickCalls).toHaveLength(2);
+    expect(brickCalls.at(-1)).toMatchObject({ amount: 28.75 });
+    expect(getAuthorizeInputs()).toEqual([
+      expect.objectContaining({ tipAmount: 375 }),
+    ]);
+  });
+
   it('does not rebuild the brick when the tip-inclusive total is unchanged', async () => {
     const { user } = renderMercadoPagoCheckout();
     await waitForBrickCalls(1);

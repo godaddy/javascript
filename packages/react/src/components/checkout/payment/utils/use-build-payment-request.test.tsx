@@ -532,6 +532,59 @@ describe('useBuildPaymentRequest', () => {
     expect(requests.poyntExpressRequest.total.amount).toBe('25.00');
   });
 
+  it('charges the full order total, not the subtotal, when tips are disabled', async () => {
+    // poyntExpressRequest.total used to be the bare subtotal, which under-charged
+    // any order carrying tax, shipping or a discount. Keep subtotal and total
+    // distinct here so a regression cannot hide behind equal fixtures.
+    const { requests } = await renderUseBuildPaymentRequest({
+      sessionOverrides: {
+        enableTips: false,
+      },
+      draftOrderOverrides: {
+        lineItems: [
+          buildLineItem({
+            name: 'Coffee Mug',
+            quantity: 1,
+            details: { sku: 'mug-sku' },
+            totals: {
+              subTotal: money(2000),
+              discountTotal: money(500),
+              feeTotal: money(0),
+              taxTotal: money(200),
+            },
+            unitAmount: money(2000),
+          }),
+        ],
+        shippingLines: [
+          {
+            id: 'shipping-line-1',
+            requestedService: 'ground',
+            requestedProvider: 'shippo',
+            name: 'Ground',
+            amount: money(1000),
+            discounts: [],
+          },
+        ],
+        totals: {
+          subTotal: money(2000),
+          discountTotal: money(500),
+          shippingTotal: money(1000),
+          taxTotal: money(200),
+          feeTotal: money(0),
+          total: money(2700),
+        },
+      },
+      products: [productNode({ code: 'mug-sku', label: 'Coffee Mug' })],
+      formDefaultValues: { tipAmount: 500 },
+    });
+
+    // subtotal $20.00 - discount $5.00 + shipping $10.00 + tax $2.00 = $27.00
+    expect(requests.poyntExpressRequest.total.amount).toBe('27.00');
+    expect(requests.poyntStandardRequest.total.amount).toBe('27.00');
+    expect(requests.applePayRequest.total.amount).toBe('$27.00');
+    expect(requests.squarePaymentRequest.amount).toBe('27.00');
+  });
+
   it('excludes tipAmount from payment requests when enableTips is false', async () => {
     const { requests } = await renderUseBuildPaymentRequest({
       sessionOverrides: {

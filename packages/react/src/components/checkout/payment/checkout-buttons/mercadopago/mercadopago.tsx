@@ -25,6 +25,9 @@ let brickCreationPromise: Promise<any> | null = null;
 let brickAmount: number | null = null;
 let isSubmitting = false;
 
+// Rebuilds re-authorize the session, so bursts of tip changes are coalesced.
+const BRICK_REBUILD_DEBOUNCE_MS = 400;
+
 function getMercadoPagoInstance(publicKey: string) {
   if (!mpInstance) {
     mpInstance = new (window as any).MercadoPago(publicKey);
@@ -67,11 +70,12 @@ export function MercadoPagoCheckoutButton() {
   const elementId = 'mercadopago-brick-container';
 
   const tipAmount = form.watch('tipAmount');
+  // The tip the brick amount below is derived from. Passed to the authorization
+  // so the preference, the brick and the authorization all describe one amount.
+  const brickTipAmount = session?.enableTips ? tipAmount || 0 : 0;
   const rawAmount = parseFloat(
     formatCurrency({
-      amount:
-        (totals?.total?.value || 0) +
-        (session?.enableTips ? tipAmount || 0 : 0),
+      amount: (totals?.total?.value || 0) + brickTipAmount,
       currencyCode: totals?.total?.currencyCode || 'USD',
       inputInMinorUnits: true,
       returnRaw: true,
@@ -82,11 +86,16 @@ export function MercadoPagoCheckoutButton() {
   const amountRef = useRef(amount);
   amountRef.current = amount;
 
-  const getPreferenceId = async () => {
+  // Whether this checkout has built a brick before. Tracked per instance rather
+  // than read off `brickController`, which an earlier rebuild may have cleared.
+  const hasBuiltBrickRef = useRef(false);
+
+  const getPreferenceId = async (tipForBrick: number) => {
     const response = await authorizeCheckout.mutateAsync({
       paymentToken: '',
       paymentType: PaymentMethodType.MERCADOPAGO,
       paymentProvider: PaymentProvider.MERCADOPAGO,
+      tipAmount: tipForBrick,
     });
     return response?.transactionRefNum;
   };
@@ -140,6 +149,7 @@ export function MercadoPagoCheckoutButton() {
 
   useLayoutEffect(() => {
     const canInitialize = isMercadoPagoLoaded && mercadoPagoConfig?.publicKey;
+    let rebuildTimer: ReturnType<typeof setTimeout> | undefined;
 
     if (canInitialize) {
       if (brickCreationPromise) {
@@ -148,12 +158,15 @@ export function MercadoPagoCheckoutButton() {
         // Brick already exists for this amount, onReady callback will mark as ready
         setIsBrickReady(true);
       } else {
+        const isRebuild = hasBuiltBrickRef.current;
+
         setIsBrickReady(false);
         unmountBrick();
 
         // Create new brick
         const renderBrick = async () => {
           const total = amount;
+          const tip = brickTipAmount;
 
           try {
             const container = document.getElementById(elementId);
@@ -164,7 +177,7 @@ export function MercadoPagoCheckoutButton() {
             const { bricksBuilderInstance: bricksBuilder } =
               getMercadoPagoInstance(mercadoPagoConfig.publicKey);
 
-            const mercadoPagoPreferenceId = await getPreferenceId();
+            const mercadoPagoPreferenceId = await getPreferenceId(tip);
 
             const controller = await bricksBuilder.create(
               'payment',
@@ -222,17 +235,35 @@ export function MercadoPagoCheckoutButton() {
           }
         };
 
-        brickCreationPromise = renderBrick();
-        brickCreationPromise.finally(() => {
-          brickCreationPromise = null;
-          if (brickController && brickAmount !== amountRef.current) {
-            setBrickRevision(revision => revision + 1);
-          }
-        });
+        const startBrickCreation = () => {
+          hasBuiltBrickRef.current = true;
+          brickCreationPromise = renderBrick();
+          brickCreationPromise.finally(() => {
+            brickCreationPromise = null;
+            if (brickController && brickAmount !== amountRef.current) {
+              setBrickRevision(revision => revision + 1);
+            }
+          });
+        };
+
+        if (isRebuild) {
+          // Every rebuild authorizes the session again to get a fresh
+          // preference, so coalesce bursts of tip changes into one rebuild
+          // instead of one per tap. The button is already disabled above.
+          rebuildTimer = setTimeout(
+            startBrickCreation,
+            BRICK_REBUILD_DEBOUNCE_MS
+          );
+        } else {
+          startBrickCreation();
+        }
       }
     }
 
     return () => {
+      if (rebuildTimer) {
+        clearTimeout(rebuildTimer);
+      }
       // Don't unmount if submitting (parent replaces component with loading button)
       // or if creation is in progress (React Strict Mode double-invocation)
       if (brickController && !brickCreationPromise && !isSubmitting) {
@@ -244,6 +275,7 @@ export function MercadoPagoCheckoutButton() {
     mercadoPagoConfig?.publicKey,
     elementId,
     amount,
+    brickTipAmount,
     brickRevision,
     t.errors.failedToInitializePayment,
   ]);
