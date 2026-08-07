@@ -11,10 +11,11 @@ import {
 import { useGoDaddyContext } from '@/godaddy-provider';
 import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
 import { applyShippingMethod } from '@/lib/godaddy/godaddy';
+import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import type { ApplyCheckoutSessionShippingMethodInput } from '@/types';
 
 export function useApplyShippingMethod() {
-  const { session, jwt } = useCheckoutContext();
+  const { session, jwt, setCheckoutErrors } = useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
   const { data: order } = useDraftOrder();
   const updateTaxes = useUpdateTaxes();
@@ -37,6 +38,7 @@ export function useApplyShippingMethod() {
       return data;
     },
     onSuccess: async data => {
+      setCheckoutErrors(undefined);
       if (!session) return;
 
       // Extract shippingTotal from mutation response
@@ -118,6 +120,14 @@ export function useApplyShippingMethod() {
           queryKey: checkoutQueryKeys.draftOrder(session.id),
         });
       }
+    },
+    onError: error => {
+      if (error instanceof GraphQLErrorWithCodes && error.codes.length > 0) {
+        setCheckoutErrors(error.codes);
+        return;
+      }
+
+      setCheckoutErrors(['SHIPPING_METHOD_APPLICATION_FAILED']);
     },
   });
 }

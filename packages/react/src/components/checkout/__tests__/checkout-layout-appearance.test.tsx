@@ -35,8 +35,6 @@ const targetSlots = [
   'checkout.form.pickup.form.before',
   'checkout.form.payment.before',
   'checkout.form.payment.after',
-  'checkout.form.express-checkout.before',
-  'checkout.form.express-checkout.after',
   'checkout.summary.line-items.before',
   'checkout.summary.line-items.after',
   'checkout.summary.totals.subtotal.before',

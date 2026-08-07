@@ -43,16 +43,17 @@ export function GoDaddyACHForm() {
   // The remaining case is the user opting out of "use shipping for billing".
   const billingIsSeparateFromShipping = !isShipping || !useShippingAddress;
 
+  const billingAddressEnabled =
+    session?.enableBillingAddressCollection !== false;
   const shouldShowBillingNamesOnly =
     paymentMethod === PaymentMethodType.ACH &&
-    session?.enableBillingAddressCollection === false &&
+    !billingAddressEnabled &&
     billingIsSeparateFromShipping;
 
   const isBillingAddressRequired =
     paymentMethod === PaymentMethodType.ACH &&
     billingIsSeparateFromShipping &&
-    (shouldShowBillingNamesOnly ||
-      session?.enableBillingAddressCollection !== false);
+    (shouldShowBillingNamesOnly || billingAddressEnabled);
 
   const billingCopy =
     shouldShowBillingNamesOnly && t.payment.billingInformation
@@ -181,6 +182,7 @@ export function GoDaddyACHForm() {
   };
 
   const collect = useRef<TokenizeJs | null>(null);
+  const optionsRef = useRef(options);
 
   useLayoutEffect(() => {
     if (
@@ -202,7 +204,7 @@ export function GoDaddyACHForm() {
       setCollect(collect.current);
     });
 
-    collect?.current?.mount(elementId, document, options);
+    collect?.current?.mount(elementId, document, optionsRef.current);
 
     collect?.current?.on('nonce', async (event: TokenizeJsEvent) => {
       const nonce = event?.data?.nonce;
@@ -248,7 +250,6 @@ export function GoDaddyACHForm() {
     setCheckoutErrors,
     t,
     setIsLoadingNonce,
-    session?.businessId,
     session?.storeId,
     session?.channelId,
     applicationId,

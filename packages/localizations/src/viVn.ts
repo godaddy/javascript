@@ -293,6 +293,8 @@ export const viVn = {
     ORDER_TOTAL_CALCULATION_FAILED: 'Không thể tính tổng đơn hàng',
     SHIPPING_METHOD_APPLICATION_FAILED:
       'Không thể áp dụng phương thức vận chuyển',
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      'Phương thức vận chuyển không áp dụng cho đơn hàng chỉ có sản phẩm kỹ thuật số',
     SKU_FETCH_FAILED: 'Không thể tải SKU',
     SHIPPING_RATES_CALCULATION_FAILED: 'Không thể tính phí vận chuyển',
     SHIPPING_METHOD_NOT_FOUND: 'Không tìm thấy phương thức vận chuyển',

@@ -37,6 +37,7 @@ import { Target } from '@/components/checkout/target/target';
 import { TipsForm } from '@/components/checkout/tips/tips-form';
 import { DraftOrderTotals } from '@/components/checkout/totals/totals';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
+import type { FulfillmentSummary } from '@/components/checkout/utils/fulfillment';
 import { checkoutMutationKeys } from '@/components/checkout/utils/query-keys';
 import { useIsCheckoutBusy } from '@/components/checkout/utils/use-is-checkout-busy';
 import {
@@ -63,6 +64,7 @@ interface CheckoutFormProps extends Omit<CheckoutProps, 'session'> {
   schema: z.ZodObject<any> | z.ZodEffects<any>;
   defaultValues?: Pick<CheckoutFormData, 'contactEmail'>;
   items: Product[];
+  fulfillmentSummary: FulfillmentSummary;
 }
 
 const ORDER_BACKED_FORM_FIELDS = [
@@ -118,6 +120,7 @@ export function CheckoutForm({
   schema,
   defaultValues,
   items,
+  fulfillmentSummary,
   ...props
 }: CheckoutFormProps) {
   const formatCurrency = useFormatCurrency();
@@ -204,9 +207,28 @@ export function CheckoutForm({
   const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
   const isFree = orderTotal + tipTotal <= 0;
-  const showExpressButtons = subtotal > 0;
+  const hasExpressCheckoutPaymentMethod = Object.values(
+    session?.paymentMethods ?? {}
+  ).some(
+    method =>
+      method &&
+      Array.isArray(method.checkoutTypes) &&
+      method.checkoutTypes.includes(CheckoutType.EXPRESS)
+  );
+  const showExpressButtons = Boolean(
+    !isCheckoutDisabled &&
+      subtotal > 0 &&
+      hasExpressCheckoutPaymentMethod &&
+      session?.enableShipping === true &&
+      !fulfillmentSummary.isDigitalOnly &&
+      deliveryMethod !== DeliveryMethods.PURCHASE &&
+      deliveryMethod !== DeliveryMethods.DIGITAL &&
+      !fulfillmentSummary.hasPickupLineItems &&
+      !fulfillmentSummary.hasPurchaseLineItems
+  );
   const enableDelivery = Boolean(
-    session?.enableShipping || session?.enableLocalPickup
+    !fulfillmentSummary.isDigitalOnly &&
+      (session?.enableShipping || session?.enableLocalPickup)
   );
   const enableStandaloneNotes = Boolean(
     session?.enableNotesCollection && !enableDelivery
@@ -219,7 +241,6 @@ export function CheckoutForm({
     (isShipping && !!session?.enableShipping) || shipping > 0;
   const showTaxesLine = !!session?.enableTaxCollection || taxTotal > 0;
   const showFeesLine = feeTotal > 0;
-
   useEffect(() => {
     if (!totalsLoading && isFree) {
       form.setValue('paymentMethod', PaymentMethodType.OFFLINE);
@@ -260,24 +281,17 @@ export function CheckoutForm({
   const totalSavings = Math.abs(orderDiscount + lineItemDiscounts);
 
   const [gridTemplateAreas, sectionLength] = React.useMemo(() => {
-    const { enableTips, paymentMethods } = session || {};
+    const { enableTips } = session || {};
 
     if (!props?.layout) {
-      const enableExpressCheckout = Object.values(paymentMethods ?? {}).some(
-        method =>
-          method &&
-          Array.isArray(method.checkoutTypes) &&
-          method.checkoutTypes.includes(CheckoutType.EXPRESS)
-      );
-
       const deliveryArea = enableDelivery
         ? deliveryMethodToGridArea[deliveryMethod]
         : undefined;
       const defaultAreas = [
-        enableExpressCheckout ? 'express-checkout' : undefined,
+        showExpressButtons ? 'express-checkout' : undefined,
         'contact',
         enableDelivery ? 'delivery' : undefined,
-        deliveryArea,
+        enableDelivery ? deliveryArea : undefined,
         enableTips ? 'tips' : undefined,
         enableStandaloneNotes ? 'notes' : undefined,
         'payment',
@@ -294,28 +308,42 @@ export function CheckoutForm({
       if (section === 'notes') {
         return enableStandaloneNotes;
       }
-
-      if (section !== 'shipping' && section !== 'pickup') {
-        return true;
+      if (section === 'express-checkout') {
+        return showExpressButtons;
+      }
+      if (section === 'delivery') {
+        return enableDelivery;
+      }
+      if (section === 'shipping') {
+        return enableDelivery && deliveryMethod === DeliveryMethods.SHIP;
+      }
+      if (section === 'pickup') {
+        return enableDelivery && deliveryMethod === DeliveryMethods.PICKUP;
       }
 
-      // Only include shipping section if deliveryMethod is SHIP
-      if (section === 'shipping' && deliveryMethod === DeliveryMethods.SHIP) {
-        return true;
-      }
-
-      // Only include pickup section if deliveryMethod is PICKUP
-      return section === 'pickup' && deliveryMethod === DeliveryMethods.PICKUP;
+      return true;
     });
 
     // Get all available section values
     const sectionValues = Object.values(LayoutSections);
 
     const missingLayoutSections = sectionValues.filter(section => {
-      if (section === 'shipping' && deliveryMethod !== DeliveryMethods.SHIP) {
+      if (section === 'express-checkout' && !showExpressButtons) {
         return false;
       }
-      if (section === 'pickup' && deliveryMethod !== DeliveryMethods.PICKUP) {
+      if (section === 'delivery' && !enableDelivery) {
+        return false;
+      }
+      if (
+        section === 'shipping' &&
+        (!enableDelivery || deliveryMethod !== DeliveryMethods.SHIP)
+      ) {
+        return false;
+      }
+      if (
+        section === 'pickup' &&
+        (!enableDelivery || deliveryMethod !== DeliveryMethods.PICKUP)
+      ) {
         return false;
       }
 
@@ -338,6 +366,7 @@ export function CheckoutForm({
     session,
     enableDelivery,
     enableStandaloneNotes,
+    showExpressButtons,
   ]);
 
   React.useEffect(() => {
@@ -405,7 +434,7 @@ export function CheckoutForm({
                       gridTemplateAreas,
                     }}
                   >
-                    {!isCheckoutDisabled && showExpressButtons ? (
+                    {showExpressButtons ? (
                       <ConditionalExpressProviders>
                         <ExpressCheckoutButtons />
                       </ConditionalExpressProviders>
@@ -420,7 +449,7 @@ export function CheckoutForm({
                       <ContactForm />
                       <Target id='checkout.form.contact.after' />
                     </CheckoutSection>
-                    {session?.enableShipping || session?.enableLocalPickup ? (
+                    {enableDelivery ? (
                       <CheckoutSection style={{ gridArea: 'delivery' }}>
                         <Target id='checkout.form.delivery.before' />
                         <CheckoutSectionHeader title={t.delivery?.title} />
@@ -440,7 +469,9 @@ export function CheckoutForm({
                         <Target id='checkout.form.tips.after' />
                       </CheckoutSection>
                     ) : null}
-                    {isPickup && session?.enableLocalPickup ? (
+                    {enableDelivery &&
+                    isPickup &&
+                    session?.enableLocalPickup ? (
                       <CheckoutSection style={{ gridArea: 'pickup' }}>
                         <Target id='checkout.form.pickup.before' />
                         <CheckoutSectionHeader
@@ -457,7 +488,7 @@ export function CheckoutForm({
                         <Target id='checkout.form.pickup.after' />
                       </CheckoutSection>
                     ) : null}
-                    {isShipping && session?.enableShipping ? (
+                    {enableDelivery && isShipping && session?.enableShipping ? (
                       <CheckoutSection style={{ gridArea: 'shipping' }}>
                         <Target id='checkout.form.shipping.before' />
                         <CheckoutSectionHeader

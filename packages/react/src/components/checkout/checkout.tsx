@@ -284,11 +284,13 @@ export function Checkout(props: CheckoutProps) {
 
       // Billing address validation - only required if not using shipping address OR pickup
       // BUT skip for free orders (paymentMethod === 'offline')
-      const isFreeOrder = data.paymentMethod === PaymentMethodType.OFFLINE;
+      const isOfflinePayment = data.paymentMethod === PaymentMethodType.OFFLINE;
       const isPickup = data.deliveryMethod === DeliveryMethods.PICKUP;
       const isShipping = data.deliveryMethod === DeliveryMethods.SHIP;
-      const isFreePickup = isFreeOrder && isPickup;
-
+      const isDigital = data.deliveryMethod === DeliveryMethods.DIGITAL;
+      const isFreePickup = isOfflinePayment && isPickup;
+      const isDigitalTaxDisabledOffline =
+        isDigital && isOfflinePayment && !session?.enableTaxCollection;
       // Billing is separate from shipping when there is no shipping address
       // to copy from. `mapOrderToFormValues` canonicalizes deliveryMethod
       // against session capabilities, so `!isShipping` already covers both
@@ -299,7 +301,8 @@ export function Checkout(props: CheckoutProps) {
 
       const requireBillingNamesOnly =
         (!enableBillingAddressCollection && billingIsSeparateFromShipping) ||
-        isFreePickup;
+        isFreePickup ||
+        isDigitalTaxDisabledOffline;
 
       if (requireBillingNamesOnly) {
         const nameFields = [
@@ -321,6 +324,7 @@ export function Checkout(props: CheckoutProps) {
       const requireBillingAddress =
         enableBillingAddressCollection &&
         !isFreePickup &&
+        !isDigitalTaxDisabledOffline &&
         billingIsSeparateFromShipping;
 
       if (requireBillingAddress) {
@@ -360,8 +364,7 @@ export function Checkout(props: CheckoutProps) {
       // contradictory case where line items declare SHIP fulfillment but the
       // session has enableShipping: false (the shipping form is not rendered
       // in that case, so requiring the fields would block the user).
-      const requireShippingAddress =
-        data.deliveryMethod === DeliveryMethods.SHIP && enableShipping;
+      const requireShippingAddress = isShipping && enableShipping;
 
       if (requireShippingAddress) {
         // Basic shipping fields required for all countries
@@ -399,6 +402,7 @@ export function Checkout(props: CheckoutProps) {
     checkoutFormSchema,
     session?.enableBillingAddressCollection,
     session?.enableShipping,
+    session?.enableTaxCollection,
     t,
   ]);
 

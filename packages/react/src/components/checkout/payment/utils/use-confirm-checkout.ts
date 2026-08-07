@@ -14,6 +14,7 @@ import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-fl
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
 import { getPickupMode } from '@/components/checkout/pickup/utils/generate-pickup-time-slots';
 import { getShippingFulfillmentSyncKey } from '@/components/checkout/shipping/utils/should-apply-shipping-method';
+import { isDigitalLineItem } from '@/components/checkout/utils/fulfillment';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
@@ -148,12 +149,16 @@ export function useConfirmCheckout() {
           latestDraftOrderSession?.checkoutSession?.draftOrder ?? order;
 
         const hasShippingLines = (latestOrder?.shippingLines?.length ?? 0) > 0;
+        const hasNonDigitalLineItems = Boolean(
+          latestOrder?.lineItems?.some(lineItem => !isDigitalLineItem(lineItem))
+        );
         const hasLineItemsMissingShippingFulfillment = Boolean(
           getShippingFulfillmentSyncKey(latestOrder?.lineItems)
         );
 
         if (
           isShipping &&
+          hasNonDigitalLineItems &&
           (!hasShippingLines || hasLineItemsMissingShippingFulfillment)
         ) {
           setCheckoutErrors(['MISSING_SHIPPING_INFO']);

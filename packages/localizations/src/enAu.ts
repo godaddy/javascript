@@ -292,6 +292,8 @@ export const enAu = {
     ORDER_TOTALS_UPDATE_FAILED: 'Failed to update order totals',
     ORDER_TOTAL_CALCULATION_FAILED: 'Failed to calculate order totals',
     SHIPPING_METHOD_APPLICATION_FAILED: 'Failed to apply shipping method',
+    SHIPPING_NOT_APPLICABLE_FOR_DIGITAL_ORDER:
+      "Shipping methods don't apply to digital-only orders",
     SKU_FETCH_FAILED: 'Failed to fetch SKUs',
     SHIPPING_RATES_CALCULATION_FAILED: 'Failed to calculate shipping rates',
     SHIPPING_METHOD_NOT_FOUND: 'Shipping method not found',

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { DraftOrder, SKUProduct } from '@/types';
 
 const DeliveryMethods = {
+  DIGITAL: 'DIGITAL',
+  NONE: 'NONE',
   PICKUP: 'PICKUP',
   PURCHASE: 'PURCHASE',
   SHIP: 'SHIP',
@@ -192,6 +194,59 @@ describe('mapOrderToFormValues', () => {
           fulfillmentMode: DeliveryMethods.PICKUP,
         }),
         buildLineItem({ id: 'ship-1', fulfillmentMode: DeliveryMethods.SHIP }),
+      ],
+      expected: DeliveryMethods.PURCHASE,
+    },
+    {
+      description: 'digital-only line items with NONE fulfillment',
+      lineItems: [
+        buildLineItem({
+          id: 'digital-1',
+          type: DeliveryMethods.DIGITAL,
+          fulfillmentMode: DeliveryMethods.NONE,
+        }),
+      ],
+      expected: DeliveryMethods.DIGITAL,
+    },
+    {
+      description: 'digital and shipping line items',
+      lineItems: [
+        buildLineItem({
+          id: 'digital-1',
+          type: DeliveryMethods.DIGITAL,
+          fulfillmentMode: DeliveryMethods.NONE,
+        }),
+        buildLineItem({ id: 'ship-1', fulfillmentMode: DeliveryMethods.SHIP }),
+      ],
+      expected: DeliveryMethods.SHIP,
+    },
+    {
+      description: 'digital and pickup line items',
+      lineItems: [
+        buildLineItem({
+          id: 'digital-1',
+          type: DeliveryMethods.DIGITAL,
+          fulfillmentMode: DeliveryMethods.NONE,
+        }),
+        buildLineItem({
+          id: 'pickup-1',
+          fulfillmentMode: DeliveryMethods.PICKUP,
+        }),
+      ],
+      expected: DeliveryMethods.PICKUP,
+    },
+    {
+      description: 'digital and purchase line items',
+      lineItems: [
+        buildLineItem({
+          id: 'digital-1',
+          type: DeliveryMethods.DIGITAL,
+          fulfillmentMode: DeliveryMethods.NONE,
+        }),
+        buildLineItem({
+          id: 'purchase-1',
+          fulfillmentMode: DeliveryMethods.PURCHASE,
+        }),
       ],
       expected: DeliveryMethods.PURCHASE,
     },
