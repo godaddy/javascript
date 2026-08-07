@@ -463,6 +463,31 @@ describe('Checkout tips', () => {
     });
   });
 
+  it('omits tipAmount entirely from the confirm payload when tips are disabled', async () => {
+    // Not just `tipAmount: undefined` — the key should not be in the request.
+    const { user } = renderCheckout({
+      sessionOverrides: {
+        enableTips: false,
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableTaxCollection: false,
+        paymentMethods: {
+          card: {
+            processor: 'godaddy',
+            checkoutTypes: ['standard'],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(await screen.findByRole('button', { name: /pay now/i }));
+    await waitForOperation('ConfirmCheckoutSession');
+
+    expect(getLastConfirmInput()).not.toHaveProperty('tipAmount');
+  });
+
   describe('options.thresholds', () => {
     it('uses default percentages when no thresholds match the subtotal', async () => {
       renderCheckout({
@@ -501,6 +526,49 @@ describe('Checkout tips', () => {
       expect(await screen.findByRole('button', { name: /20%/ })).toBeVisible();
       expect(
         screen.queryByRole('button', { name: /\b5%/ })
+      ).not.toBeInTheDocument();
+    });
+
+    it('keeps the default presets when a matching threshold configures an empty list', async () => {
+      // An empty array is not a configured option. Treating it as one used to
+      // clear the default without replacing it, falling through to the
+      // hardcoded 15/18/20 — so the percentages below deliberately avoid those.
+      renderCheckout({
+        sessionOverrides: {
+          enableTips: true,
+          enableShipping: false,
+          enableLocalPickup: false,
+          enableTaxCollection: false,
+          tips: {
+            default: { percentages: [7, 9, 11], amounts: null },
+            thresholds: [
+              {
+                minSubtotal: 2000,
+                maxSubtotal: 5000,
+                percentages: null,
+                amounts: [],
+              },
+            ],
+          },
+        },
+        draftOrderOverrides: {
+          totals: {
+            subTotal: { value: 2500, currencyCode: 'USD' },
+            discountTotal: { value: 0, currencyCode: 'USD' },
+            shippingTotal: { value: 0, currencyCode: 'USD' },
+            taxTotal: { value: 0, currencyCode: 'USD' },
+            feeTotal: { value: 0, currencyCode: 'USD' },
+            total: { value: 2500, currencyCode: 'USD' },
+          },
+        },
+      });
+      await waitForCheckoutReady();
+
+      expect(await screen.findByRole('button', { name: /7%/ })).toBeVisible();
+      expect(await screen.findByRole('button', { name: /9%/ })).toBeVisible();
+      expect(await screen.findByRole('button', { name: /11%/ })).toBeVisible();
+      expect(
+        screen.queryByRole('button', { name: /18%/ })
       ).not.toBeInTheDocument();
     });
 

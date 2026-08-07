@@ -127,10 +127,10 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
       (thres?.maxSubtotal == null || subtotal <= thres.maxSubtotal)
   );
   if (threshold) {
-    if (threshold.amounts) {
+    if (threshold.amounts?.length) {
       tipAmounts = threshold.amounts;
       tipPercentages = undefined;
-    } else if (threshold.percentages) {
+    } else if (threshold.percentages?.length) {
       tipPercentages = threshold.percentages;
       tipAmounts = undefined;
     }
@@ -144,9 +144,9 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
         aria-label={t.tips?.title || 'Tip amount'}
       >
         {tipAmounts?.length
-          ? tipAmounts.map(amount => (
+          ? tipAmounts.map((amount, index) => (
               <Button
-                key={amount}
+                key={`tip-amount-${index}`}
                 type='button'
                 variant='outline'
                 className={cn(
@@ -169,9 +169,12 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
                 </span>
               </Button>
             ))
-          : (tipPercentages || DEFAULT_TIP_PERCENTAGES).map(percentage => (
+          : (tipPercentages?.length
+              ? tipPercentages
+              : DEFAULT_TIP_PERCENTAGES
+            ).map((percentage, index) => (
               <Button
-                key={percentage}
+                key={`tip-percentage-${index}`}
                 type='button'
                 variant='outline'
                 className={cn(

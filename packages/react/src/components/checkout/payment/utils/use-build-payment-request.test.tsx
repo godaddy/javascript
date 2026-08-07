@@ -84,11 +84,14 @@ async function renderUseBuildPaymentRequest({
   sessionOverrides,
   products = [productNode()],
   formDefaultValues,
+  withoutForm = false,
 }: {
   draftOrderOverrides?: DeepPartial<DraftOrder>;
   sessionOverrides?: DeepPartial<CheckoutSession>;
   products?: SKUProduct[];
   formDefaultValues?: Partial<CheckoutFormData>;
+  /** Render outside any FormProvider, so `useFormContext()` returns null. */
+  withoutForm?: boolean;
 } = {}) {
   const queryClient = createTestQueryClient();
   const draftOrder = buildDraftOrder(draftOrderOverrides);
@@ -123,9 +126,13 @@ async function renderUseBuildPaymentRequest({
           setCheckoutErrors: () => undefined,
         }}
       >
-        <FormWrapper defaultValues={formDefaultValues}>
+        {withoutForm ? (
           <PaymentRequestProbe onRequests={onRequests} />
-        </FormWrapper>
+        ) : (
+          <FormWrapper defaultValues={formDefaultValues}>
+            <PaymentRequestProbe onRequests={onRequests} />
+          </FormWrapper>
+        )}
       </checkoutContext.Provider>
     </GoDaddyProvider>
   );
@@ -706,4 +713,46 @@ describe('useBuildPaymentRequest', () => {
       expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
     }
   );
+
+  it('builds requests outside a form provider without a tip', async () => {
+    // Every shipping caller sits inside CustomFormProvider, so this guards the
+    // hook's own contract rather than a reachable path: reading the tip must not
+    // require a form context the way the rest of the hook does not.
+    const { requests } = await renderUseBuildPaymentRequest({
+      withoutForm: true,
+      sessionOverrides: { enableTips: true },
+      draftOrderOverrides: {
+        lineItems: [
+          buildLineItem({
+            name: 'Coffee Mug',
+            quantity: 1,
+            details: { sku: 'mug-sku' },
+            totals: {
+              subTotal: money(2000),
+              discountTotal: money(0),
+              feeTotal: money(0),
+              taxTotal: money(0),
+            },
+            unitAmount: money(2000),
+          }),
+        ],
+        shippingLines: [],
+        totals: {
+          subTotal: money(2000),
+          discountTotal: money(0),
+          shippingTotal: money(0),
+          taxTotal: money(0),
+          feeTotal: money(0),
+          total: money(2000),
+        },
+      },
+      products: [productNode({ code: 'mug-sku', label: 'Coffee Mug' })],
+    });
+
+    expect(requests.applePayRequest.total.amount).toBe('$20.00');
+    expect(requests.applePayRequest.lineItems).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+    );
+    expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
+  });
 });

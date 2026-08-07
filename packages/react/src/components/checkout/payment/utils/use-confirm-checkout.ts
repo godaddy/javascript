@@ -184,13 +184,20 @@ export function useConfirmCheckout() {
                 : undefined,
             })
           : {};
-        const tipAmount = session.enableTips
-          ? (confirmCheckoutInput.tipAmount ?? form.getValues('tipAmount') ?? 0)
-          : undefined;
+        // Destructured out so the key is omitted entirely when tips are off,
+        // rather than sent as `tipAmount: undefined` — and so a caller-supplied
+        // tip cannot ride along on the spread past that gate.
+        const { tipAmount: suppliedTipAmount, ...inputWithoutTip } =
+          confirmCheckoutInput;
         const payload = {
-          ...confirmCheckoutInput,
+          ...inputWithoutTip,
           ...pickUpData,
-          tipAmount,
+          ...(session.enableTips
+            ? {
+                tipAmount:
+                  suppliedTipAmount ?? form.getValues('tipAmount') ?? 0,
+              }
+            : {}),
         };
 
         // keep for debugging

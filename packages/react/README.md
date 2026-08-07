@@ -140,6 +140,8 @@ operatingHours: {
 
 The `tips` field configures preset tip options shown to the customer when `enableTips` is `true`. Tips supports a `default` preset and optional `thresholds` that activate based on the order subtotal.
 
+Throughout this section, "subtotal" means the order's **item subtotal** (`totals.subTotal`) — the sum of item prices **before** discounts, shipping, fees and tax. It is not the order total the customer pays. See [Subtotal basis](#behavior-notes) below.
+
 Every option list — `default` and each threshold — must supply **exactly one** of `amounts` or `percentages`, with **exactly three** values. The API rejects sessions that provide both, neither, or a different number of values. Three values is also what the tip selector is laid out for.
 
 ```typescript
@@ -171,23 +173,26 @@ tips: {
 
 #### `tips.thresholds`
 
-An array of threshold objects that override the default tips when the order subtotal falls within the specified range.
+An array of threshold objects that override the default tips when the order's item subtotal falls within the specified range.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `minSubtotal` | number | Yes | Minimum order subtotal (inclusive) in the smallest currency unit for this threshold to apply. Required by the API — omitting it fails with `INVALID_TIP_THRESHOLD`. |
-| `maxSubtotal` | number | Yes | Maximum order subtotal (inclusive) in the smallest currency unit for this threshold to apply. Required by the API — omitting it fails with `INVALID_TIP_THRESHOLD`. |
+| `minSubtotal` | number | Yes | Minimum item subtotal (inclusive) in the smallest currency unit for this threshold to apply. Required by the API — omitting it fails with `INVALID_TIP_THRESHOLD`. |
+| `maxSubtotal` | number | Yes | Maximum item subtotal (inclusive) in the smallest currency unit for this threshold to apply. Required by the API — omitting it fails with `INVALID_TIP_THRESHOLD`. Must be greater than `minSubtotal`. |
 | `amounts` | number[] | Conditional | Fixed tip amounts in the smallest currency unit (e.g. cents). Exactly three values. Mutually exclusive with `percentages`. |
 | `percentages` | number[] | Conditional | Tip percentage options (integers between 0 and 100). Exactly three values. Mutually exclusive with `amounts`. |
 
 #### Behavior Notes
 
-- **Threshold matching** — Checkout uses the **first** threshold whose range contains the order subtotal. Both bounds are inclusive, so a subtotal equal to `minSubtotal` or `maxSubtotal` matches.
+- **Subtotal basis** — `minSubtotal`, `maxSubtotal` and every `percentages` calculation use the order's item subtotal (`totals.subTotal`), which is the sum of item prices **before discounts, shipping, fees and tax**. A $50 cart with a $20 discount, $6 shipping and $2 tax has a subtotal of `5000`, not the `3800` the customer pays, so it matches a `0–5000` threshold and `20%` offers `1000`. Configure ranges against the pre-discount cart value, not the amount charged.
+- **Threshold matching is client-side** — Checkout selects the preset list. The API stores `tips` and validates its shape, but never re-derives which threshold applied.
+- **Tip ceiling is measured against the order total** — Independent of the presets, the API rejects a `tipAmount` above 100% of the **order total** (post-discount, tax and shipping included) or `2000` minor units, whichever is greater, with `TIP_EXCEEDS_LIMIT`. Note the asymmetry: thresholds bucket on the subtotal, this bound uses the total. Large fixed `amounts` can therefore be rejected on a heavily discounted order — e.g. `amounts: [2500, 5000, 10000]` on an order totalling `1000` allows at most `2000`.
+- **Threshold matching** — Checkout uses the **first** threshold whose range contains the item subtotal. Both bounds are inclusive, so a subtotal equal to `minSubtotal` or `maxSubtotal` matches.
 - **Overlaps are not validated** — The API checks neither overlap nor full coverage of the subtotal range. Adjacent thresholds that share a boundary (e.g. `0–1000` and `1000–2000`) are accepted and resolve silently to whichever comes first in the array. Make ranges contiguous but non-overlapping (e.g. `0–999` then `1000–1999`) so the applied threshold is unambiguous.
 - **Gaps fall back to `default`** — A subtotal outside every threshold range uses `tips.default`.
 - **No `tips` configured** — When `enableTips` is `true` but `tips` is omitted, checkout shows `15%`, `18%`, and `20%`.
 - **Both lists on one threshold** — Should a threshold reach checkout with both `amounts` and `percentages` (the API rejects this), `amounts` wins and the percentages are ignored.
-- **Customer overrides** — The presets are suggestions. The tip selector also offers "No tip" and "Custom amount", so the confirmed `tipAmount` need not match any preset.
+- **Customer overrides** — The presets are suggestions. The tip selector also offers "No tip" and "Custom amount", and the API does not check `tipAmount` against the configured options, so the confirmed tip need not match any preset.
 
 ### Appearance
 

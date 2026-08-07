@@ -208,7 +208,7 @@ export function useBuildPaymentRequest(): {
       0
     ) || 0;
   const discountMinorUnits = totals?.discountTotal?.value || 0;
-  const tipAmount = form.watch('tipAmount') || 0;
+  const tipAmount = form?.watch('tipAmount') || 0;
   const totalMinorUnits = totals?.total?.value || 0;
   const totalWithTipMinorUnits = totalMinorUnits + tipAmount;
 
