@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CheckoutType, PaymentMethodType, PaymentProvider } from '@/types';
 import {
@@ -12,6 +12,29 @@ import { getLastConfirmInput } from './checkout-test-fixtures';
 vi.mock('@/components/checkout/payment/utils/use-load-mercadopago', () => ({
   useLoadMercadoPago: () => ({ isMercadoPagoLoaded: true }),
 }));
+
+// The real flush waits for in-flight draft-order work to settle. Stubbing it
+// makes that wait controllable, which is the only way to hold a pay click open
+// long enough for the total to move underneath it.
+let flushGate: Promise<void> | null = null;
+
+vi.mock('@/components/checkout/payment/utils/use-flush-checkout-sync', () => ({
+  useFlushCheckoutSync: () => async () => {
+    const gate = flushGate;
+    if (gate) {
+      flushGate = null;
+      await gate;
+    }
+  },
+}));
+
+function gateNextFlush() {
+  let release = () => undefined as void;
+  flushGate = new Promise<void>(resolve => {
+    release = () => resolve();
+  });
+  return release;
+}
 
 interface BrickCall {
   amount: number;
@@ -103,6 +126,7 @@ describe('Checkout MercadoPago tips', () => {
   beforeEach(() => {
     brickCalls.length = 0;
     createGate = null;
+    flushGate = null;
   });
 
   it('builds the brick and preference for the tip-inclusive total', async () => {
@@ -203,6 +227,32 @@ describe('Checkout MercadoPago tips', () => {
       expect(payNow).not.toBeDisabled();
     });
     expect(brickCalls.at(-1)).toMatchObject({ amount: 30 });
+  });
+
+  it('starts the pending rebuild when a pay click finds the total has moved', async () => {
+    const { user } = renderMercadoPagoCheckout();
+    await waitForBrickCalls(1);
+    clearOperations();
+
+    // Held inside the flush so the tip lands while the click is still in
+    // flight: the brick that would tokenize the card is for $25, the customer
+    // is now paying $30, and there is nothing valid left to submit.
+    const releaseFlush = gateNextFlush();
+    fireEvent.click(await screen.findByRole('button', { name: /pay now/i }));
+
+    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    releaseFlush();
+    await act(async () => undefined);
+
+    // Asserted without waiting, because waiting is what this is about: the
+    // rebuild is started by the click itself rather than left to sit out the
+    // remaining debounce.
+    expect(getOperations('AuthorizeCheckoutSession')).toHaveLength(1);
+
+    await waitForBrickCalls(2);
+    expect(brickCalls.at(-1)).toMatchObject({ amount: 30 });
+    // Nothing was submitted for the stale total.
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
   });
 
   it('confirms with the tip the brick and preference were built for', async () => {

@@ -28,6 +28,35 @@ let isSubmitting = false;
 // Rebuilds re-authorize the session, so bursts of tip changes are coalesced.
 const BRICK_REBUILD_DEBOUNCE_MS = 400;
 
+// The debounced rebuild is held at module scope alongside the brick it replaces,
+// so a pay click that lands mid-debounce can run it immediately instead of
+// waiting out the remaining delay.
+let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingRebuild: (() => void) | null = null;
+
+function cancelPendingRebuild() {
+  if (rebuildTimer) {
+    clearTimeout(rebuildTimer);
+    rebuildTimer = null;
+  }
+  pendingRebuild = null;
+}
+
+/**
+ * Start a debounced rebuild now rather than waiting out the delay.
+ *
+ * @returns true when a rebuild was pending and has been started.
+ */
+function flushPendingRebuild(): boolean {
+  if (!pendingRebuild) return false;
+
+  const startNow = pendingRebuild;
+  cancelPendingRebuild();
+  startNow();
+
+  return true;
+}
+
 function getMercadoPagoInstance(publicKey: string) {
   if (!mpInstance) {
     mpInstance = new (window as any).MercadoPago(publicKey);
@@ -149,7 +178,6 @@ export function MercadoPagoCheckoutButton() {
 
   useLayoutEffect(() => {
     const canInitialize = isMercadoPagoLoaded && mercadoPagoConfig?.publicKey;
-    let rebuildTimer: ReturnType<typeof setTimeout> | undefined;
 
     if (canInitialize) {
       if (brickCreationPromise) {
@@ -166,6 +194,11 @@ export function MercadoPagoCheckoutButton() {
         // Create new brick
         const renderBrick = async () => {
           const total = amount;
+          // Scoped to this attempt. `brickController` is only assigned once
+          // `create` resolves, so it reads as "not ready" for the whole build —
+          // which made every rebuild reopen the window where a card validation
+          // error looked like an initialization failure.
+          let becameReady = false;
 
           try {
             const container = document.getElementById(elementId);
@@ -201,6 +234,7 @@ export function MercadoPagoCheckoutButton() {
                 },
                 callbacks: {
                   onReady: () => {
+                    becameReady = true;
                     setIsBrickReady(true);
                     const brickContainer = document.getElementById(elementId);
                     const formElement = brickContainer?.querySelector('form');
@@ -216,7 +250,7 @@ export function MercadoPagoCheckoutButton() {
                   onError: () => {
                     // Only treat as initialization failure if the brick never became ready.
                     // Card validation errors are handled by the brick's own UI.
-                    if (!brickController) {
+                    if (!becameReady) {
                       setError(t.errors.failedToInitializePayment);
                       setIsBrickReady(false);
                     }
@@ -249,10 +283,12 @@ export function MercadoPagoCheckoutButton() {
           // Every rebuild authorizes the session again to get a fresh
           // preference, so coalesce bursts of tip changes into one rebuild
           // instead of one per tap. The button is already disabled above.
-          rebuildTimer = setTimeout(
-            startBrickCreation,
-            BRICK_REBUILD_DEBOUNCE_MS
-          );
+          cancelPendingRebuild();
+          pendingRebuild = startBrickCreation;
+          rebuildTimer = setTimeout(() => {
+            cancelPendingRebuild();
+            startBrickCreation();
+          }, BRICK_REBUILD_DEBOUNCE_MS);
         } else {
           startBrickCreation();
         }
@@ -260,9 +296,7 @@ export function MercadoPagoCheckoutButton() {
     }
 
     return () => {
-      if (rebuildTimer) {
-        clearTimeout(rebuildTimer);
-      }
+      cancelPendingRebuild();
       // Don't unmount if submitting (parent replaces component with loading button)
       // or if creation is in progress (React Strict Mode double-invocation)
       if (brickController && !brickCreationPromise && !isSubmitting) {
@@ -273,8 +307,9 @@ export function MercadoPagoCheckoutButton() {
     isMercadoPagoLoaded,
     mercadoPagoConfig?.publicKey,
     elementId,
+    // `brickTipAmount` is deliberately absent: `amount` is derived from it, so
+    // it cannot change without changing this.
     amount,
-    brickTipAmount,
     brickRevision,
     t.errors.failedToInitializePayment,
   ]);
@@ -295,8 +330,15 @@ export function MercadoPagoCheckoutButton() {
       const { formData } = await brickController.getFormData();
       await handleSubmit({ formData });
     } else {
+      // The amount moved while this click awaited validation and the sync flush,
+      // so the brick that would tokenize the card is for the wrong total. It has
+      // to be rebuilt — and rebuilt empty, so there is nothing to submit on the
+      // customer's behalf. Start that now rather than leaving them waiting out
+      // the debounce for a form to come back.
       setIsBrickReady(false);
-      setBrickRevision(revision => revision + 1);
+      if (!flushPendingRebuild()) {
+        setBrickRevision(revision => revision + 1);
+      }
     }
   };
 

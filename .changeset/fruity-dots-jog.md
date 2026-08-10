@@ -8,4 +8,6 @@ Adds the `tips` session config surface (`default` and threshold-based `amounts`/
 
 For redirect gateways (CCAvenue), the authorized tip is persisted across the redirect so the confirmation on the return leg records the tip the customer was actually charged. Checkout refuses to redirect when a non-zero tip cannot be persisted, rather than sending the customer to pay a tip the order would not include.
 
+Fixes the Poynt express wallet total, which showed the item subtotal instead of the order total and so understated tax and shipping. This applies to every Poynt express order, not only tipped ones.
+
 Also gives every `Button` a `cursor-pointer`, so buttons rendered as `<button>` show a pointer cursor on hover instead of the browser default.
