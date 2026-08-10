@@ -11,6 +11,8 @@ import {
   clearRedirectTipAmount,
   getRedirectTipAmount,
 } from '@/lib/redirect-tip-storage';
+import { eventIds } from '@/tracking/events';
+import { TrackingEventType, track } from '@/tracking/track';
 
 export function CCAvenueReturnProvider({
   children,
@@ -35,7 +37,25 @@ export function CCAvenueReturnProvider({
 
     hasRun.current = true;
 
-    const authorizedTipAmount = getRedirectTipAmount(session.id);
+    const sessionId = session.id;
+    const authorizedTipAmount = getRedirectTipAmount(sessionId);
+
+    // The gateway has already collected a tip-inclusive amount by this point, so
+    // the confirmation still has to go through even when the tip cannot be
+    // recovered — refusing would leave the customer paid with no order. The
+    // redirect leg refuses to send a customer whose tip could not be persisted,
+    // so reaching here means storage was cleared mid-redirect: report it, since
+    // the order is about to be recorded for less than was charged.
+    if (session.enableTips && authorizedTipAmount === null) {
+      track({
+        eventId: eventIds.redirectTipUnrecoverable,
+        type: TrackingEventType.EVENT,
+        properties: {
+          provider: PaymentProvider.CCAVENUE,
+          draftOrderId: session.draftOrder?.id || 'unknown',
+        },
+      });
+    }
 
     const confirmInput = {
       paymentToken: encResp,
@@ -49,7 +69,7 @@ export function CCAvenueReturnProvider({
     confirmCheckout
       .mutateAsync(confirmInput)
       .then(() => {
-        clearRedirectTipAmount();
+        clearRedirectTipAmount(sessionId);
       })
       .catch(err => {
         if (err instanceof GraphQLErrorWithCodes) {

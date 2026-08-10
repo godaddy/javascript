@@ -1,20 +1,29 @@
+import { enUs } from '@godaddy/localizations';
 import { screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  clearRedirectTipAmount,
   getRedirectTipAmount,
   setRedirectTipAmount,
 } from '@/lib/redirect-tip-storage';
+import { eventIds } from '@/tracking/events';
 import { CheckoutType, PaymentMethodType, PaymentProvider } from '@/types';
 import {
   clearOperations,
   getOperations,
+  mockTrack,
   renderCheckout,
   setCheckoutUrl,
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
 import { getLastConfirmInput } from './checkout-test-fixtures';
+
+vi.mock('@/tracking/track', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/tracking/track')>();
+  return { ...actual, track: vi.fn() };
+});
+
+const tracking = mockTrack();
 
 const CCAVENUE_SESSION = {
   enableTips: true,
@@ -50,7 +59,9 @@ function getAuthorizeInput() {
 
 describe('Checkout CCAvenue tips', () => {
   beforeEach(() => {
-    clearRedirectTipAmount();
+    window.sessionStorage.clear();
+    window.localStorage.clear();
+    tracking.clearTrackedEvents();
     setCheckoutUrl();
   });
 
@@ -141,6 +152,60 @@ describe('Checkout CCAvenue tips', () => {
 
       expect(getRedirectTipAmount(session.id)).toBeNull();
     });
+
+    it('does not redirect when the tip cannot be persisted', async () => {
+      // Nothing is charged yet, so refusing here is what keeps the customer from
+      // paying a tip the return leg could never record.
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('storage disabled');
+      });
+      const submit = vi
+        .spyOn(HTMLFormElement.prototype, 'submit')
+        .mockImplementation(() => undefined);
+      const { user } = renderCCAvenueCheckout();
+      await waitForCheckoutReady();
+      clearOperations();
+
+      await user.click(await screen.findByRole('button', { name: /20%/ }));
+      await waitFor(() => {
+        expect(screen.getAllByText('$5.00').length).toBeGreaterThan(0);
+      });
+
+      await user.click(
+        await screen.findByRole('button', { name: /pay with ccavenue/i })
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(enUs.apiErrors.TRANSACTION_PROCESSING_FAILED)
+            .length
+        ).toBeGreaterThan(0);
+      });
+      expect(submit).not.toHaveBeenCalled();
+      expect(getOperations('AuthorizeCheckoutSession')).toHaveLength(0);
+    });
+
+    it('still redirects when only a zero tip cannot be persisted', async () => {
+      // Losing a zero tip changes nothing, so it must not block checkout.
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('storage disabled');
+      });
+      const submit = vi
+        .spyOn(HTMLFormElement.prototype, 'submit')
+        .mockImplementation(() => undefined);
+      const { user } = renderCCAvenueCheckout();
+      await waitForCheckoutReady();
+      clearOperations();
+
+      await user.click(
+        await screen.findByRole('button', { name: /pay with ccavenue/i })
+      );
+      await waitForOperation('AuthorizeCheckoutSession');
+
+      await waitFor(() => {
+        expect(submit).toHaveBeenCalled();
+      });
+    });
   });
 
   describe('return from the gateway', () => {
@@ -208,7 +273,25 @@ describe('Checkout CCAvenue tips', () => {
       expect(getLastConfirmInput()).toMatchObject({ tipAmount: 0 });
     });
 
-    it('confirms with a zero tip when nothing was persisted', async () => {
+    it('reads a tip mirrored to localStorage when the tab changed', async () => {
+      // The gateway can return the customer to a new tab, which starts with an
+      // empty sessionStorage.
+      setRedirectTipAmount('checkout-session-1', 500);
+      window.sessionStorage.clear();
+      setCheckoutUrl({
+        pathname: '/checkout/checkout-session-1',
+        search: 'encResp=enc-resp-1',
+      });
+
+      renderCCAvenueCheckout();
+      await waitForOperation('ConfirmCheckoutSession');
+
+      expect(getLastConfirmInput()).toMatchObject({ tipAmount: 500 });
+    });
+
+    it('confirms and reports the discrepancy when the tip is unrecoverable', async () => {
+      // The customer has already paid a tip-inclusive amount, so the order still
+      // has to be created — but the shortfall must not go unrecorded.
       setCheckoutUrl({
         pathname: '/checkout/checkout-session-1',
         search: 'encResp=enc-resp-1',
@@ -218,6 +301,24 @@ describe('Checkout CCAvenue tips', () => {
       await waitForOperation('ConfirmCheckoutSession');
 
       expect(getLastConfirmInput()).toMatchObject({ tipAmount: 0 });
+      tracking.expectTracked(eventIds.redirectTipUnrecoverable);
+    });
+
+    it('does not report a discrepancy when tips are disabled', async () => {
+      setCheckoutUrl({
+        pathname: '/checkout/checkout-session-1',
+        search: 'encResp=enc-resp-1',
+      });
+
+      renderCheckout({
+        checkoutProps: CCAVENUE_PROPS,
+        sessionOverrides: { ...CCAVENUE_SESSION, enableTips: false },
+      });
+      await waitForOperation('ConfirmCheckoutSession');
+
+      expect(
+        tracking.getTrackedEvents(eventIds.redirectTipUnrecoverable)
+      ).toHaveLength(0);
     });
   });
 });
