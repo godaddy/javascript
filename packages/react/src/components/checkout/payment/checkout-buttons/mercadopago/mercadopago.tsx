@@ -70,8 +70,9 @@ export function MercadoPagoCheckoutButton() {
   const elementId = 'mercadopago-brick-container';
 
   const tipAmount = form.watch('tipAmount');
-  // The tip the brick amount below is derived from. Passed to the authorization
-  // so the preference, the brick and the authorization all describe one amount.
+  // The tip the brick amount below is derived from. `useAuthorizeCheckout` reads
+  // the tip from form state itself, so the brick is kept in step by rebuilding it
+  // whenever this changes rather than by passing the amount through.
   const brickTipAmount = session?.enableTips ? tipAmount || 0 : 0;
   const rawAmount = parseFloat(
     formatCurrency({
@@ -90,12 +91,11 @@ export function MercadoPagoCheckoutButton() {
   // than read off `brickController`, which an earlier rebuild may have cleared.
   const hasBuiltBrickRef = useRef(false);
 
-  const getPreferenceId = async (tipForBrick: number) => {
+  const getPreferenceId = async () => {
     const response = await authorizeCheckout.mutateAsync({
       paymentToken: '',
       paymentType: PaymentMethodType.MERCADOPAGO,
       paymentProvider: PaymentProvider.MERCADOPAGO,
-      tipAmount: tipForBrick,
     });
     return response?.transactionRefNum;
   };
@@ -166,7 +166,6 @@ export function MercadoPagoCheckoutButton() {
         // Create new brick
         const renderBrick = async () => {
           const total = amount;
-          const tip = brickTipAmount;
 
           try {
             const container = document.getElementById(elementId);
@@ -177,7 +176,7 @@ export function MercadoPagoCheckoutButton() {
             const { bricksBuilderInstance: bricksBuilder } =
               getMercadoPagoInstance(mercadoPagoConfig.publicKey);
 
-            const mercadoPagoPreferenceId = await getPreferenceId(tip);
+            const mercadoPagoPreferenceId = await getPreferenceId();
 
             const controller = await bricksBuilder.create(
               'payment',

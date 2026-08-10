@@ -2,6 +2,7 @@ import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { TIP_SERVER_ERROR_TYPE } from '@/components/checkout/tips/utils/tip-field-errors';
 import {
   convertMajorToMinorUnits,
   currencyConfigs,
@@ -136,6 +137,25 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
     }
   }
 
+  // A rejection the API attributed to `tipAmount` (TIP_EXCEEDS_LIMIT and
+  // friends) is shown here rather than only in the checkout-wide error list, so
+  // the customer can see which field to fix.
+  const tipFieldError = form.formState.errors.tipAmount;
+
+  // Ref to avoid `form` (unstable reference) in the dependency array.
+  const formRef = useRef(form);
+  formRef.current = form;
+
+  // That rejection goes stale as soon as the customer picks a different amount,
+  // and react-hook-form leaves manually-set errors in place on its own.
+  useEffect(() => {
+    if (
+      formRef.current.formState.errors.tipAmount?.type === TIP_SERVER_ERROR_TYPE
+    ) {
+      formRef.current.clearErrors('tipAmount');
+    }
+  }, [tipAmount]);
+
   return (
     <fieldset className='space-y-4'>
       <div
@@ -237,7 +257,18 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
           subtotal={subtotal}
           formatCurrency={formatCurrency}
         />
-      ) : null}
+      ) : (
+        // When the custom input is open its own FormMessage renders this, wired
+        // to the input via aria-describedby.
+        tipFieldError?.message && (
+          <p
+            className='text-[0.8rem] font-medium text-destructive'
+            role='alert'
+          >
+            {String(tipFieldError.message)}
+          </p>
+        )
+      )}
     </fieldset>
   );
 }

@@ -1,10 +1,12 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { eventIds } from '@/tracking/events';
 import {
   clearOperations,
   mockTrack,
   renderCheckout,
+  setApiError,
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
@@ -486,6 +488,87 @@ describe('Checkout tips', () => {
     await waitForOperation('ConfirmCheckoutSession');
 
     expect(getLastConfirmInput()).not.toHaveProperty('tipAmount');
+  });
+
+  describe('tip rejections from the API', () => {
+    function tipsOnlySession() {
+      return {
+        enableTips: true,
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableTaxCollection: false,
+        paymentMethods: {
+          card: {
+            processor: 'godaddy' as const,
+            checkoutTypes: ['standard' as const],
+          },
+        },
+      };
+    }
+
+    function rejectTipOnConfirm() {
+      setApiError(
+        'confirmCheckout',
+        new GraphQLErrorWithCodes([
+          {
+            message:
+              'Tip may not exceed 100% of the order total or 2000, whichever is greater',
+            code: 'TIP_EXCEEDS_LIMIT',
+            // The API tags its tip errors with the input path they belong to.
+            path: ['tipAmount'],
+          },
+        ])
+      );
+    }
+
+    it('surfaces TIP_EXCEEDS_LIMIT on the tip field, not only in the error list', async () => {
+      const { user } = renderCheckout({
+        sessionOverrides: tipsOnlySession(),
+      });
+      await waitForCheckoutReady();
+
+      await user.click(await screen.findByRole('button', { name: /18%/ }));
+      clearOperations();
+      rejectTipOnConfirm();
+
+      await user.click(await screen.findByRole('button', { name: /pay now/i }));
+      await waitForOperation('ConfirmCheckoutSession');
+
+      // Once beside the tip presets, once in the checkout-wide error list —
+      // which is what scrolls the failure into view.
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(/Tip is too large for this order/i)
+        ).toHaveLength(2);
+      });
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /Tip is too large for this order/i
+      );
+    });
+
+    it('clears the tip field error once a different tip is selected', async () => {
+      const { user } = renderCheckout({
+        sessionOverrides: tipsOnlySession(),
+      });
+      await waitForCheckoutReady();
+
+      await user.click(await screen.findByRole('button', { name: /18%/ }));
+      clearOperations();
+      rejectTipOnConfirm();
+
+      await user.click(await screen.findByRole('button', { name: /pay now/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+
+      // react-hook-form leaves manually-set errors in place, so the tip form has
+      // to drop this one itself when the amount it described no longer applies.
+      await user.click(await screen.findByRole('button', { name: /no tip/i }));
+
+      await waitFor(() => {
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe('options.thresholds', () => {

@@ -109,28 +109,17 @@ describe('useAuthorizeCheckout', () => {
     expect((await authorizedInput())?.tipAmount).toBeUndefined();
   });
 
-  it('prefers a caller-supplied tip over the current form value', async () => {
-    // A provider that commits to an amount before authorizing (MercadoPago
-    // builds its brick up front) passes that tip explicitly so the brick, the
-    // preference and the authorization all describe the same amount, even if
-    // the customer has since changed the tip.
+  it('ignores a caller-supplied tip so the authorized amount cannot drift', async () => {
+    // The form is the single source of truth: confirmCheckout captures the form
+    // value, so authorizing a caller-supplied amount instead would let the
+    // authorized and captured amounts diverge.
     const { result } = renderHook(() => useAuthorizeCheckout(), {
       wrapper: wrapper({ enableTips: true, tipAmount: 500 }),
     });
 
-    await result.current.mutateAsync({ ...cardFieldsInput, tipAmount: 250 });
+    await result.current.mutateAsync({ ...cardFieldsInput, tipAmount: 999 });
 
-    expect((await authorizedInput())?.tipAmount).toBe(250);
-  });
-
-  it('honors a caller-supplied zero tip rather than falling back to the form', async () => {
-    const { result } = renderHook(() => useAuthorizeCheckout(), {
-      wrapper: wrapper({ enableTips: true, tipAmount: 500 }),
-    });
-
-    await result.current.mutateAsync({ ...cardFieldsInput, tipAmount: 0 });
-
-    expect((await authorizedInput())?.tipAmount).toBe(0);
+    expect((await authorizedInput())?.tipAmount).toBe(500);
   });
 
   it('sends no tip when tips are disabled even if the caller supplies one', async () => {

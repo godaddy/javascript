@@ -345,6 +345,9 @@ export const enUs = {
     DEPENDENCY_ERROR:
       "We're unable to process your order right now. Please wait a moment and try again",
     AUTHORIZATION_FAILED: 'Failed to authorize payment',
+    TIP_EXCEEDS_LIMIT: 'Tip is too large for this order',
+    INVALID_TIP_AMOUNT: 'Enter a valid tip amount',
+    TIPS_NOT_ENABLED: 'Tips are not accepted for this order',
   },
   storefront: {
     product: 'Product',
