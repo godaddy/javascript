@@ -22,6 +22,12 @@ export function useAuthorizeCheckout() {
       // match what confirmCheckout later captures, so it cannot drift to a value
       // a provider captured earlier. Read after the sync flush, once pending
       // form state has settled.
+      //
+      // Note the precedence is the opposite of `useConfirmCheckout`, which
+      // prefers a caller-supplied tip. Confirming has to accept one — express
+      // wallets and the CCAvenue return leg know a tip the form no longer holds
+      // — whereas nothing authorizes on their behalf, so there is no such tip to
+      // honour here.
       const payload = {
         ...input,
         tipAmount: session?.enableTips

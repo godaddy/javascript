@@ -32,20 +32,30 @@ interface TipsFormProps {
 
 const DEFAULT_TIP_PERCENTAGES = [15, 18, 20];
 
+// A library cannot assume `process` exists, and bundlers replace this expression
+// at build time, so the warning below is compiled out of production apps.
+const IS_DEV =
+  typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
+
 export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
   const { t } = useGoDaddyContext();
   const form = useFormContext();
   const formatCurrency = useFormatCurrency();
   const [showCustomTip, setShowCustomTip] = useState(false);
+  // Which preset the customer picked. Selection is matched by index as well as
+  // by value so a merchant that lists the same amount twice does not light up
+  // both buttons; the form value stays authoritative.
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const calculateTipAmount = (percentage: number): number => {
     // total is in minor units, so calculate percentage and return in minor units
     return Math.round((subtotal * percentage) / 100);
   };
 
-  const handleAmountSelect = (amount: number) => {
+  const handleAmountSelect = (amount: number, index: number) => {
     form.setValue('tipAmount', amount);
     form.setValue('tipPercentage', null);
+    setSelectedIndex(index);
     setShowCustomTip(false);
 
     // Track tip amount selection
@@ -61,10 +71,11 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
     });
   };
 
-  const handlePercentageSelect = (percentage: number) => {
+  const handlePercentageSelect = (percentage: number, index: number) => {
     const tipAmount = calculateTipAmount(percentage);
     form.setValue('tipAmount', tipAmount);
     form.setValue('tipPercentage', percentage);
+    setSelectedIndex(index);
     setShowCustomTip(false);
 
     // Track tip percentage selection
@@ -83,6 +94,7 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
   const handleNoTip = () => {
     form.setValue('tipAmount', 0);
     form.setValue('tipPercentage', 0);
+    setSelectedIndex(null);
     setShowCustomTip(false);
 
     // Track no tip selection
@@ -102,6 +114,7 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
     const currentTipAmount = form.getValues('tipAmount') || 0;
 
     setShowCustomTip(true);
+    setSelectedIndex(null);
     form.setValue('tipAmount', currentTipAmount);
     form.setValue('tipPercentage', null);
 
@@ -122,11 +135,28 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
   const tipAmount = form.watch('tipAmount');
   let tipAmounts = options?.default?.amounts;
 
-  const threshold = options?.thresholds?.find(
-    thres =>
-      (thres?.minSubtotal == null || subtotal >= thres.minSubtotal) &&
-      (thres?.maxSubtotal == null || subtotal <= thres.maxSubtotal)
-  );
+  const matchingThresholds =
+    options?.thresholds?.filter(
+      thres =>
+        (thres?.minSubtotal == null || subtotal >= thres.minSubtotal) &&
+        (thres?.maxSubtotal == null || subtotal <= thres.maxSubtotal)
+    ) ?? [];
+  const threshold = matchingThresholds[0];
+  const matchCount = matchingThresholds.length;
+
+  // Overlapping ranges make the order of `thresholds` load-bearing, which is
+  // never what a merchant intends and is invisible at runtime — the first match
+  // simply wins. Warned about in development so the config gets fixed rather
+  // than the array quietly reordered later.
+  useEffect(() => {
+    if (!IS_DEV || matchCount <= 1) return;
+
+    // biome-ignore lint/suspicious/noConsole: a misconfiguration only the developer integrating the SDK can fix, and only reachable in development
+    console.warn(
+      `[godaddy-checkout] tips.thresholds has ${matchCount} entries matching a subtotal of ${subtotal}. The first match is used; overlapping ranges make the array order significant.`
+    );
+  }, [matchCount, subtotal]);
+
   if (threshold) {
     if (threshold.amounts?.length) {
       tipAmounts = threshold.amounts;
@@ -136,6 +166,18 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
       tipAmounts = undefined;
     }
   }
+
+  const percentagePresets = tipPercentages?.length
+    ? tipPercentages
+    : DEFAULT_TIP_PERCENTAGES;
+
+  // Derived by value when the tip did not come from a click here — a preset
+  // preselected by the host app still shows as selected — and by the clicked
+  // index otherwise, which is what separates duplicate presets.
+  const activeAmountIndex =
+    selectedIndex ?? tipAmounts?.indexOf(tipAmount) ?? -1;
+  const activePercentageIndex =
+    selectedIndex ?? percentagePresets.indexOf(tipPercentage);
 
   // A rejection the API attributed to `tipAmount` (TIP_EXCEEDS_LIMIT and
   // friends) is shown here rather than only in the checkout-wide error list, so
@@ -164,60 +206,69 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
         aria-label={t.tips?.title || 'Tip amount'}
       >
         {tipAmounts?.length
-          ? tipAmounts.map((amount, index) => (
-              <Button
-                key={`tip-amount-${index}`}
-                type='button'
-                variant='outline'
-                className={cn(
-                  'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted',
-                  !showCustomTip && tipAmount === amount
-                    ? 'border-muted-foreground'
-                    : 'bg-card active:ring'
-                )}
-                onClick={() => handleAmountSelect(amount)}
-                aria-checked={
-                  !showCustomTip && tipAmount === amount ? 'true' : 'false'
-                }
-              >
-                <span className='text-base'>
-                  {formatCurrency({
-                    amount,
-                    currencyCode: currencyCode || 'USD',
-                    inputInMinorUnits: true,
-                  })}
-                </span>
-              </Button>
-            ))
-          : (tipPercentages?.length
-              ? tipPercentages
-              : DEFAULT_TIP_PERCENTAGES
-            ).map((percentage, index) => (
-              <Button
-                key={`tip-percentage-${index}`}
-                type='button'
-                variant='outline'
-                className={cn(
-                  'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted',
-                  tipPercentage === percentage
-                    ? 'border-muted-foreground'
-                    : 'bg-card active:ring'
-                )}
-                onClick={() => handlePercentageSelect(percentage)}
-                aria-checked={tipPercentage === percentage ? 'true' : 'false'}
-              >
-                <span className='text-lg leading-tight font-bold'>
-                  {percentage}%
-                </span>
-                <span className='text-sm'>
-                  {formatCurrency({
-                    amount: calculateTipAmount(percentage),
-                    currencyCode: currencyCode || 'USD',
-                    inputInMinorUnits: true,
-                  })}
-                </span>
-              </Button>
-            ))}
+          ? tipAmounts.map((amount, index) => {
+              const isSelected =
+                !showCustomTip &&
+                tipAmount === amount &&
+                index === activeAmountIndex;
+
+              return (
+                <Button
+                  key={`tip-amount-${index}`}
+                  type='button'
+                  role='radio'
+                  variant='outline'
+                  className={cn(
+                    'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted bg-card',
+                    isSelected
+                      ? 'border-primary ring-2 ring-primary'
+                      : 'active:ring'
+                  )}
+                  onClick={() => handleAmountSelect(amount, index)}
+                  aria-checked={isSelected ? 'true' : 'false'}
+                >
+                  <span className='text-base'>
+                    {formatCurrency({
+                      amount,
+                      currencyCode: currencyCode || 'USD',
+                      inputInMinorUnits: true,
+                    })}
+                  </span>
+                </Button>
+              );
+            })
+          : percentagePresets.map((percentage, index) => {
+              const isSelected =
+                tipPercentage === percentage && index === activePercentageIndex;
+
+              return (
+                <Button
+                  key={`tip-percentage-${index}`}
+                  type='button'
+                  role='radio'
+                  variant='outline'
+                  className={cn(
+                    'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted bg-card',
+                    isSelected
+                      ? 'border-primary ring-2 ring-primary'
+                      : 'active:ring'
+                  )}
+                  onClick={() => handlePercentageSelect(percentage, index)}
+                  aria-checked={isSelected ? 'true' : 'false'}
+                >
+                  <span className='text-lg leading-tight font-bold'>
+                    {percentage}%
+                  </span>
+                  <span className='text-sm'>
+                    {formatCurrency({
+                      amount: calculateTipAmount(percentage),
+                      currencyCode: currencyCode || 'USD',
+                      inputInMinorUnits: true,
+                    })}
+                  </span>
+                </Button>
+              );
+            })}
       </div>
 
       <div
@@ -227,10 +278,13 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
       >
         <Button
           type='button'
+          role='radio'
           variant='outline'
           className={cn(
             'h-12 font-normal hover:bg-muted',
-            !tipAmount && tipPercentage === 0 && 'border-muted-foreground'
+            !tipAmount &&
+              tipPercentage === 0 &&
+              'border-primary ring-2 ring-primary'
           )}
           onClick={handleNoTip}
           aria-checked={!tipAmount && tipPercentage === 0 ? 'true' : 'false'}
@@ -239,10 +293,11 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
         </Button>
         <Button
           type='button'
+          role='radio'
           variant='outline'
           className={cn(
             'h-12 font-normal hover:bg-muted',
-            showCustomTip && 'border-muted-foreground'
+            showCustomTip && 'border-primary ring-2 ring-primary'
           )}
           onClick={handleCustomTip}
           aria-checked={showCustomTip ? 'true' : 'false'}

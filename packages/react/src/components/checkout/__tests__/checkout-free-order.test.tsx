@@ -496,7 +496,7 @@ describe('Checkout free / offline orders', () => {
     ).toBeInTheDocument();
 
     // 15% of the $50.00 subtotal is owed even though the order total is zero.
-    await user.click(await screen.findByRole('button', { name: /15%/ }));
+    await user.click(await screen.findByRole('radio', { name: /15%/ }));
 
     expect(
       await screen.findByRole('button', { name: /pay now/i })
@@ -519,12 +519,12 @@ describe('Checkout free / offline orders', () => {
     const { user } = renderCheckout({ session, draftOrder });
     await waitForCheckoutReady();
 
-    await user.click(await screen.findByRole('button', { name: /15%/ }));
+    await user.click(await screen.findByRole('radio', { name: /15%/ }));
     expect(
       await screen.findByRole('button', { name: /pay now/i })
     ).toBeInTheDocument();
 
-    await user.click(await screen.findByRole('button', { name: /no tip/i }));
+    await user.click(await screen.findByRole('radio', { name: /no tip/i }));
 
     expect(
       await screen.findByRole('button', { name: /complete your free order/i })

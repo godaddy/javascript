@@ -74,7 +74,7 @@ describe('Checkout CCAvenue tips', () => {
       await waitForCheckoutReady();
       clearOperations();
 
-      await user.click(await screen.findByRole('button', { name: /20%/ }));
+      await user.click(await screen.findByRole('radio', { name: /20%/ }));
       await waitFor(() => {
         expect(screen.getAllByText('$5.00').length).toBeGreaterThan(0);
       });
@@ -140,7 +140,7 @@ describe('Checkout CCAvenue tips', () => {
       await waitForCheckoutReady();
       clearOperations();
 
-      await user.click(await screen.findByRole('button', { name: /20%/ }));
+      await user.click(await screen.findByRole('radio', { name: /20%/ }));
       await waitFor(() => {
         expect(screen.getAllByText('$5.00').length).toBeGreaterThan(0);
       });
@@ -166,7 +166,7 @@ describe('Checkout CCAvenue tips', () => {
       await waitForCheckoutReady();
       clearOperations();
 
-      await user.click(await screen.findByRole('button', { name: /20%/ }));
+      await user.click(await screen.findByRole('radio', { name: /20%/ }));
       await waitFor(() => {
         expect(screen.getAllByText('$5.00').length).toBeGreaterThan(0);
       });

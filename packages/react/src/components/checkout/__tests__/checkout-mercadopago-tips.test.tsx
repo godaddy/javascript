@@ -139,7 +139,7 @@ describe('Checkout MercadoPago tips', () => {
     });
     expect(getAuthorizeInputs().at(-1)).toMatchObject({ tipAmount: 0 });
 
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
 
     await waitForBrickCalls(2);
     expect(brickCalls.at(-1)).toMatchObject({ amount: 30 });
@@ -150,10 +150,10 @@ describe('Checkout MercadoPago tips', () => {
     const { user } = renderMercadoPagoCheckout();
     await waitForBrickCalls(1);
 
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
     await waitForBrickCalls(2);
 
-    await user.click(await screen.findByRole('button', { name: /15%/ }));
+    await user.click(await screen.findByRole('radio', { name: /15%/ }));
     await waitForBrickCalls(3);
 
     expect(brickCalls.map(call => call.amount)).toEqual([25, 30, 28.75]);
@@ -169,8 +169,8 @@ describe('Checkout MercadoPago tips', () => {
 
     // Back-to-back taps inside the debounce window: only the last one should
     // reach the provider, since every rebuild authorizes the session again.
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
-    await user.click(await screen.findByRole('button', { name: /15%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /15%/ }));
 
     await waitForBrickCalls(2);
     await waitFor(() => {
@@ -189,10 +189,10 @@ describe('Checkout MercadoPago tips', () => {
     await waitForBrickCalls(1);
     clearOperations();
 
-    await user.click(await screen.findByRole('button', { name: /no tip/i }));
+    await user.click(await screen.findByRole('radio', { name: /no tip/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /no tip/i })).toHaveAttribute(
+      expect(screen.getByRole('radio', { name: /no tip/i })).toHaveAttribute(
         'aria-checked',
         'true'
       );
@@ -215,7 +215,7 @@ describe('Checkout MercadoPago tips', () => {
     });
 
     const rebuild = gateNextCreate();
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
 
     await waitFor(() => {
       expect(payNow).toBeDisabled();
@@ -240,7 +240,7 @@ describe('Checkout MercadoPago tips', () => {
     const releaseFlush = gateNextFlush();
     fireEvent.click(await screen.findByRole('button', { name: /pay now/i }));
 
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
     releaseFlush();
     await act(async () => undefined);
 
@@ -265,7 +265,7 @@ describe('Checkout MercadoPago tips', () => {
     });
     await waitForBrickCalls(1);
 
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
     await waitForBrickCalls(2);
 
     await user.click(await screen.findByRole('button', { name: /pay now/i }));

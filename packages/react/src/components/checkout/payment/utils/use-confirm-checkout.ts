@@ -188,6 +188,12 @@ export function useConfirmCheckout() {
         // Destructured out so the key is omitted entirely when tips are off,
         // rather than sent as `tipAmount: undefined` — and so a caller-supplied
         // tip cannot ride along on the spread past that gate.
+        //
+        // A caller-supplied tip wins over form state here, unlike in
+        // `useAuthorizeCheckout` where the form overrides it. Express wallets
+        // captured their tip inside the sheet, and the CCAvenue return leg reads
+        // it from storage on a fresh document — in both cases the form is either
+        // stale or empty, so the caller is the better source.
         const { tipAmount: suppliedTipAmount, ...inputWithoutTip } =
           confirmCheckoutInput;
         const payload = {

@@ -53,13 +53,13 @@ describe('Checkout tips', () => {
     await waitForCheckoutReady();
 
     expect(
-      screen.queryByRole('button', { name: /15%/ })
+      screen.queryByRole('radio', { name: /15%/ })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /no tip/i })
+      screen.queryByRole('radio', { name: /no tip/i })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /custom amount/i })
+      screen.queryByRole('radio', { name: /custom amount/i })
     ).not.toBeInTheDocument();
   });
 
@@ -67,14 +67,12 @@ describe('Checkout tips', () => {
     renderCheckout({ sessionOverrides: { enableTips: true } });
     await waitForCheckoutReady();
 
-    expect(await screen.findByRole('button', { name: /15%/ })).toBeVisible();
-    expect(await screen.findByRole('button', { name: /18%/ })).toBeVisible();
-    expect(await screen.findByRole('button', { name: /20%/ })).toBeVisible();
+    expect(await screen.findByRole('radio', { name: /15%/ })).toBeVisible();
+    expect(await screen.findByRole('radio', { name: /18%/ })).toBeVisible();
+    expect(await screen.findByRole('radio', { name: /20%/ })).toBeVisible();
+    expect(await screen.findByRole('radio', { name: /no tip/i })).toBeVisible();
     expect(
-      await screen.findByRole('button', { name: /no tip/i })
-    ).toBeVisible();
-    expect(
-      await screen.findByRole('button', { name: /custom amount/i })
+      await screen.findByRole('radio', { name: /custom amount/i })
     ).toBeVisible();
   });
 
@@ -84,7 +82,7 @@ describe('Checkout tips', () => {
     });
     await waitForCheckoutReady();
 
-    const fifteen = await screen.findByRole('button', { name: /15%/ });
+    const fifteen = await screen.findByRole('radio', { name: /15%/ });
     expect(fifteen).toHaveAttribute('aria-checked', 'false');
 
     await user.click(fifteen);
@@ -108,7 +106,7 @@ describe('Checkout tips', () => {
     expect(document.body).toHaveTextContent(/total due/i);
     expect(screen.getAllByText('$25.00').length).toBeGreaterThan(0);
 
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
 
     await waitFor(() => {
       expect(screen.getAllByText('$30.00').length).toBeGreaterThan(0);
@@ -116,7 +114,7 @@ describe('Checkout tips', () => {
       expect(screen.getAllByText('$5.00').length).toBeGreaterThan(0);
     });
 
-    await user.click(await screen.findByRole('button', { name: /no tip/i }));
+    await user.click(await screen.findByRole('radio', { name: /no tip/i }));
 
     await waitFor(() => {
       expect(screen.getAllByText('$25.00').length).toBeGreaterThan(0);
@@ -140,7 +138,7 @@ describe('Checkout tips', () => {
       document.querySelector('input[name="tipAmount"]')
     ).not.toBeInTheDocument();
 
-    const customBtn = await screen.findByRole('button', {
+    const customBtn = await screen.findByRole('radio', {
       name: /custom amount/i,
     });
     await user.click(customBtn);
@@ -163,7 +161,7 @@ describe('Checkout tips', () => {
     await waitForCheckoutReady();
 
     await user.click(
-      await screen.findByRole('button', { name: /custom amount/i })
+      await screen.findByRole('radio', { name: /custom amount/i })
     );
     const input = screen.getByPlaceholderText('0.00');
     await user.click(input);
@@ -204,7 +202,7 @@ describe('Checkout tips', () => {
     clearOperations();
     tracking.clearTrackedEvents();
 
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
     await waitFor(() => {
       expect(screen.getAllByText('$5.00').length).toBeGreaterThan(0);
       expect(screen.getAllByText('$30.00').length).toBeGreaterThan(0);
@@ -236,7 +234,7 @@ describe('Checkout tips', () => {
     await waitForCheckoutReady();
 
     await user.click(
-      await screen.findByRole('button', { name: /custom amount/i })
+      await screen.findByRole('radio', { name: /custom amount/i })
     );
     const input = screen.getByPlaceholderText('0.00');
 
@@ -283,7 +281,7 @@ describe('Checkout tips', () => {
     tracking.clearTrackedEvents();
 
     await user.click(
-      await screen.findByRole('button', { name: /custom amount/i })
+      await screen.findByRole('radio', { name: /custom amount/i })
     );
     const input = await screen.findByPlaceholderText('0.000');
     await user.click(input);
@@ -329,7 +327,7 @@ describe('Checkout tips', () => {
     await waitForCheckoutReady();
 
     await user.click(
-      await screen.findByRole('button', { name: /custom amount/i })
+      await screen.findByRole('radio', { name: /custom amount/i })
     );
     const input = await screen.findByPlaceholderText('0');
     await user.click(input);
@@ -341,7 +339,7 @@ describe('Checkout tips', () => {
       expect(screen.getAllByText('¥1,234').length).toBeGreaterThan(0);
     });
 
-    const fifteen = await screen.findByRole('button', { name: /15%/ });
+    const fifteen = await screen.findByRole('radio', { name: /15%/ });
     await user.click(fifteen);
 
     await waitFor(() => {
@@ -378,7 +376,7 @@ describe('Checkout tips', () => {
     await waitForCheckoutReady();
     clearOperations();
 
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
     await waitFor(() => {
       expect(screen.getAllByText('$5.00').length).toBeGreaterThan(0);
     });
@@ -420,7 +418,7 @@ describe('Checkout tips', () => {
     clearOperations();
 
     await user.click(
-      await screen.findByRole('button', { name: /custom amount/i })
+      await screen.findByRole('radio', { name: /custom amount/i })
     );
     const input = await screen.findByPlaceholderText('0.00');
     await user.click(input);
@@ -527,7 +525,7 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      await user.click(await screen.findByRole('button', { name: /18%/ }));
+      await user.click(await screen.findByRole('radio', { name: /18%/ }));
       clearOperations();
       rejectTipOnConfirm();
 
@@ -552,7 +550,7 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      await user.click(await screen.findByRole('button', { name: /18%/ }));
+      await user.click(await screen.findByRole('radio', { name: /18%/ }));
       clearOperations();
       rejectTipOnConfirm();
 
@@ -563,7 +561,7 @@ describe('Checkout tips', () => {
 
       // react-hook-form leaves manually-set errors in place, so the tip form has
       // to drop this one itself when the amount it described no longer applies.
-      await user.click(await screen.findByRole('button', { name: /no tip/i }));
+      await user.click(await screen.findByRole('radio', { name: /no tip/i }));
 
       await waitFor(() => {
         expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -604,11 +602,11 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      expect(await screen.findByRole('button', { name: /10%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /15%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /20%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /10%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /15%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /20%/ })).toBeVisible();
       expect(
-        screen.queryByRole('button', { name: /\b5%/ })
+        screen.queryByRole('radio', { name: /\b5%/ })
       ).not.toBeInTheDocument();
     });
 
@@ -647,11 +645,11 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      expect(await screen.findByRole('button', { name: /7%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /9%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /11%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /7%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /9%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /11%/ })).toBeVisible();
       expect(
-        screen.queryByRole('button', { name: /18%/ })
+        screen.queryByRole('radio', { name: /18%/ })
       ).not.toBeInTheDocument();
     });
 
@@ -687,17 +685,17 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      expect(await screen.findByRole('button', { name: /5%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /8%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /12%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /5%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /8%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /12%/ })).toBeVisible();
       expect(
-        screen.queryByRole('button', { name: /10%/ })
+        screen.queryByRole('radio', { name: /10%/ })
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole('button', { name: /15%/ })
+        screen.queryByRole('radio', { name: /15%/ })
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole('button', { name: /20%/ })
+        screen.queryByRole('radio', { name: /20%/ })
       ).not.toBeInTheDocument();
     });
 
@@ -734,16 +732,16 @@ describe('Checkout tips', () => {
       await waitForCheckoutReady();
 
       expect(
-        await screen.findByRole('button', { name: /\$1\.00/ })
+        await screen.findByRole('radio', { name: /\$1\.00/ })
       ).toBeVisible();
       expect(
-        await screen.findByRole('button', { name: /\$2\.00/ })
+        await screen.findByRole('radio', { name: /\$2\.00/ })
       ).toBeVisible();
       expect(
-        await screen.findByRole('button', { name: /\$5\.00/ })
+        await screen.findByRole('radio', { name: /\$5\.00/ })
       ).toBeVisible();
       expect(
-        screen.queryByRole('button', { name: /10%/ })
+        screen.queryByRole('radio', { name: /10%/ })
       ).not.toBeInTheDocument();
     });
 
@@ -780,16 +778,16 @@ describe('Checkout tips', () => {
       await waitForCheckoutReady();
 
       expect(
-        await screen.findByRole('button', { name: /\$1\.00/ })
+        await screen.findByRole('radio', { name: /\$1\.00/ })
       ).toBeVisible();
       expect(
-        await screen.findByRole('button', { name: /\$2\.00/ })
+        await screen.findByRole('radio', { name: /\$2\.00/ })
       ).toBeVisible();
       expect(
-        await screen.findByRole('button', { name: /\$5\.00/ })
+        await screen.findByRole('radio', { name: /\$5\.00/ })
       ).toBeVisible();
       expect(
-        screen.queryByRole('button', { name: /5%/ })
+        screen.queryByRole('radio', { name: /5%/ })
       ).not.toBeInTheDocument();
     });
 
@@ -831,11 +829,11 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      expect(await screen.findByRole('button', { name: /3%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /5%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /7%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /3%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /5%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /7%/ })).toBeVisible();
       expect(
-        screen.queryByRole('button', { name: /15%/ })
+        screen.queryByRole('radio', { name: /15%/ })
       ).not.toBeInTheDocument();
     });
 
@@ -871,9 +869,9 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      expect(await screen.findByRole('button', { name: /5%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /8%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /12%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /5%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /8%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /12%/ })).toBeVisible();
     });
 
     it('applies threshold at boundary: subtotal equals maxSubtotal', async () => {
@@ -908,9 +906,9 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      expect(await screen.findByRole('button', { name: /5%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /8%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /12%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /5%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /8%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /12%/ })).toBeVisible();
     });
 
     it('clicking a threshold amount button selects it and updates the total', async () => {
@@ -945,7 +943,7 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      const fiveDollarBtn = await screen.findByRole('button', {
+      const fiveDollarBtn = await screen.findByRole('radio', {
         name: /\$5\.00/,
       });
       await user.click(fiveDollarBtn);
@@ -988,7 +986,7 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      const fiveDollarBtn = await screen.findByRole('button', {
+      const fiveDollarBtn = await screen.findByRole('radio', {
         name: /\$5\.00/,
       });
       await user.click(fiveDollarBtn);
@@ -996,7 +994,7 @@ describe('Checkout tips', () => {
         expect(fiveDollarBtn).toHaveAttribute('aria-checked', 'true');
       });
 
-      const customBtn = await screen.findByRole('button', {
+      const customBtn = await screen.findByRole('radio', {
         name: /custom amount/i,
       });
       await user.click(customBtn);
@@ -1056,16 +1054,16 @@ describe('Checkout tips', () => {
       await waitForCheckoutReady();
 
       expect(
-        await screen.findByRole('button', { name: /\$1\.00/ })
+        await screen.findByRole('radio', { name: /\$1\.00/ })
       ).toBeVisible();
       expect(
-        await screen.findByRole('button', { name: /\$3\.00/ })
+        await screen.findByRole('radio', { name: /\$3\.00/ })
       ).toBeVisible();
       expect(
-        await screen.findByRole('button', { name: /\$5\.00/ })
+        await screen.findByRole('radio', { name: /\$5\.00/ })
       ).toBeVisible();
       expect(
-        screen.queryByRole('button', { name: /15%/ })
+        screen.queryByRole('radio', { name: /15%/ })
       ).not.toBeInTheDocument();
     });
 
@@ -1091,9 +1089,143 @@ describe('Checkout tips', () => {
       });
       await waitForCheckoutReady();
 
-      expect(await screen.findByRole('button', { name: /15%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /18%/ })).toBeVisible();
-      expect(await screen.findByRole('button', { name: /20%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /15%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /18%/ })).toBeVisible();
+      expect(await screen.findByRole('radio', { name: /20%/ })).toBeVisible();
+    });
+
+    it('warns in development when several thresholds match the subtotal', async () => {
+      // Overlapping ranges make the array order load-bearing, which nothing
+      // else surfaces — the first match just wins.
+      const warn = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => undefined);
+
+      renderCheckout({
+        sessionOverrides: {
+          enableTips: true,
+          enableShipping: false,
+          enableLocalPickup: false,
+          enableTaxCollection: false,
+          tips: {
+            default: { percentages: [15, 18, 20], amounts: null },
+            thresholds: [
+              {
+                minSubtotal: 1000,
+                maxSubtotal: 5000,
+                percentages: [5, 8, 10],
+                amounts: null,
+              },
+              {
+                minSubtotal: 2000,
+                maxSubtotal: 6000,
+                percentages: [3, 5, 7],
+                amounts: null,
+              },
+            ],
+          },
+        },
+      });
+      await waitForCheckoutReady();
+
+      // The first match still wins, so behavior is unchanged.
+      expect(await screen.findByRole('radio', { name: /10%/ })).toBeVisible();
+      await waitFor(() => {
+        expect(warn).toHaveBeenCalledWith(
+          expect.stringContaining('tips.thresholds has 2 entries matching')
+        );
+      });
+    });
+
+    it('does not warn when a single threshold matches', async () => {
+      const warn = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => undefined);
+
+      renderCheckout({
+        sessionOverrides: {
+          enableTips: true,
+          enableShipping: false,
+          enableLocalPickup: false,
+          enableTaxCollection: false,
+          tips: {
+            default: { percentages: [15, 18, 20], amounts: null },
+            thresholds: [
+              {
+                minSubtotal: 1000,
+                maxSubtotal: 5000,
+                percentages: [5, 8, 10],
+                amounts: null,
+              },
+            ],
+          },
+        },
+      });
+      await waitForCheckoutReady();
+
+      expect(await screen.findByRole('radio', { name: /10%/ })).toBeVisible();
+      expect(warn).not.toHaveBeenCalledWith(
+        expect.stringContaining('tips.thresholds')
+      );
+    });
+  });
+
+  describe('duplicate presets', () => {
+    function renderDuplicateAmounts() {
+      return renderCheckout({
+        sessionOverrides: {
+          enableTips: true,
+          enableShipping: false,
+          enableLocalPickup: false,
+          enableTaxCollection: false,
+          tips: {
+            default: { percentages: null, amounts: [500, 500, 700] },
+            thresholds: null,
+          },
+          // The GoDaddy card button confirms through `useConfirmCheckout`, which
+          // is what puts the tip on the payload.
+          paymentMethods: {
+            card: {
+              processor: 'godaddy',
+              checkoutTypes: ['standard'],
+            },
+          },
+        },
+      });
+    }
+
+    it('checks only the preset that was clicked', async () => {
+      const { user } = renderDuplicateAmounts();
+      await waitForCheckoutReady();
+
+      const fiveDollarPresets = await screen.findAllByRole('radio', {
+        name: /\$5\.00/,
+      });
+      expect(fiveDollarPresets).toHaveLength(2);
+
+      await user.click(fiveDollarPresets[1]);
+
+      await waitFor(() => {
+        expect(fiveDollarPresets[1]).toHaveAttribute('aria-checked', 'true');
+      });
+      // Matching by value alone would report both as selected.
+      expect(fiveDollarPresets[0]).toHaveAttribute('aria-checked', 'false');
+    });
+
+    it('still applies the tip the duplicate preset is worth', async () => {
+      const { user } = renderDuplicateAmounts();
+      await waitForCheckoutReady();
+      clearOperations();
+
+      const fiveDollarPresets = await screen.findAllByRole('radio', {
+        name: /\$5\.00/,
+      });
+      await user.click(fiveDollarPresets[1]);
+
+      await user.click(await screen.findByRole('button', { name: /pay now/i }));
+      await waitForOperation('ConfirmCheckoutSession');
+
+      expect(getLastConfirmInput()).toMatchObject({ tipAmount: 500 });
     });
   });
 });

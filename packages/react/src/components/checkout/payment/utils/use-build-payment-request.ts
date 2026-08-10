@@ -435,7 +435,7 @@ export function useBuildPaymentRequest(): {
           type: 'LINE_ITEM',
           status: 'FINAL',
         },
-        ...(session?.enableTips
+        ...(session?.enableTips && tipAmount
           ? [
               {
                 label: 'Tip',
