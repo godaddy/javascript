@@ -454,7 +454,39 @@ export function DraftOrderSyncProvider({
         }
       }
 
-      let patchSent = await drainQueue();
+      const awaitedExistingDrain = Boolean(drainPromiseRef.current);
+      let patchSent = false;
+
+      try {
+        patchSent = await drainQueue();
+      } catch (error) {
+        if (!awaitedExistingDrain || !canBuildRegistrationPatches) {
+          throw error;
+        }
+
+        const queuedIds = [...dirtyRegistrationIdsRef.current];
+        if (!queuedIds.length) throw error;
+
+        const rebuilt = buildPatchFromRegistrations(
+          queuedIds,
+          getCurrentDraftOrder()
+        );
+        removePendingRegistrationPatches(queuedIds);
+
+        for (const registrationId of queuedIds) {
+          dirtyRegistrationIdsRef.current.delete(registrationId);
+        }
+
+        if (rebuilt.patch) {
+          queuePatch(
+            rebuilt.patch,
+            rebuilt.fieldNames,
+            rebuilt.registrationIds
+          );
+          patchSent = await drainQueue();
+        }
+      }
+
       let latestBeforePatch = options.includeCurrentValues
         ? await refetchLatestDraftOrder()
         : getCurrentDraftOrder();

@@ -353,6 +353,43 @@ describe('DraftOrderSyncProvider integration', () => {
     expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(1);
   });
 
+  it('syncs a corrected registration value after an in-flight save fails', async () => {
+    const { user } = renderSyncHarness({
+      updateDraftOrderDelayMs: 500,
+      draftOrder: buildDraftOrder({
+        shipping: { firstName: 'Initial', lastName: 'Buyer' },
+      }),
+    });
+    setApiErrorOnce('updateDraftOrder', new Error('invalid value'));
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Bad');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Bad' },
+    });
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Good');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(1);
+
+    await advance(500);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder', 2);
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Good', lastName: 'Buyer' },
+    });
+  });
+
   it('flushDraftOrderSync clears debounce work and waits for the mutation to settle', async () => {
     const { user } = renderSyncHarness({ updateDraftOrderDelayMs: 500 });
 
