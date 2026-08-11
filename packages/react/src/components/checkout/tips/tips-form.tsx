@@ -32,6 +32,32 @@ interface TipsFormProps {
 
 const DEFAULT_TIP_PERCENTAGES = [15, 18, 20];
 
+/** `subtotal` is in minor units, so the tip is too. */
+function percentageToAmount(subtotal: number, percentage: number): number {
+  return Math.round((subtotal * percentage) / 100);
+}
+
+/**
+ * Which preset index counts as selected.
+ *
+ * The clicked index wins, since that is what tells two presets of the same value
+ * apart — but only while it still holds the selected value. It stops doing so
+ * when the subtotal crosses a threshold and swaps the list out from under it,
+ * and it was never set at all for a tip the host app preselected. Both fall back
+ * to matching by value.
+ */
+function resolveActiveIndex(
+  clickedIndex: number | null,
+  presets: readonly (number | null | undefined)[] | null | undefined,
+  value: unknown
+): number {
+  if (!presets) return -1;
+  if (clickedIndex != null && presets[clickedIndex] === value) {
+    return clickedIndex;
+  }
+  return presets.indexOf(value as number);
+}
+
 // A library cannot assume `process` exists, and bundlers replace this expression
 // at build time, so the warning below is compiled out of production apps.
 const IS_DEV =
@@ -47,10 +73,8 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
   // both buttons; the form value stays authoritative.
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  const calculateTipAmount = (percentage: number): number => {
-    // total is in minor units, so calculate percentage and return in minor units
-    return Math.round((subtotal * percentage) / 100);
-  };
+  const calculateTipAmount = (percentage: number): number =>
+    percentageToAmount(subtotal, percentage);
 
   const handleAmountSelect = (amount: number, index: number) => {
     form.setValue('tipAmount', amount);
@@ -171,13 +195,16 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
     ? tipPercentages
     : DEFAULT_TIP_PERCENTAGES;
 
-  // Derived by value when the tip did not come from a click here — a preset
-  // preselected by the host app still shows as selected — and by the clicked
-  // index otherwise, which is what separates duplicate presets.
-  const activeAmountIndex =
-    selectedIndex ?? tipAmounts?.indexOf(tipAmount) ?? -1;
-  const activePercentageIndex =
-    selectedIndex ?? percentagePresets.indexOf(tipPercentage);
+  const activeAmountIndex = resolveActiveIndex(
+    selectedIndex,
+    tipAmounts,
+    tipAmount
+  );
+  const activePercentageIndex = resolveActiveIndex(
+    selectedIndex,
+    percentagePresets,
+    tipPercentage
+  );
 
   // A rejection the API attributed to `tipAmount` (TIP_EXCEEDS_LIMIT and
   // friends) is shown here rather than only in the checkout-wide error list, so
@@ -187,6 +214,21 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
   // Ref to avoid `form` (unstable reference) in the dependency array.
   const formRef = useRef(form);
   formRef.current = form;
+
+  // A percentage preset is worth whatever it is worth now. The amount shown under
+  // the button is recomputed from the current subtotal on every render, so form
+  // state has to follow it — otherwise a preset picked before the draft-order
+  // totals arrived stays worth a percentage of nothing while displaying, and
+  // reporting as selected, the amount it would be worth today.
+  useEffect(() => {
+    const percentage = formRef.current.getValues('tipPercentage');
+    if (!percentage) return;
+
+    const nextTipAmount = percentageToAmount(subtotal, percentage);
+    if (formRef.current.getValues('tipAmount') !== nextTipAmount) {
+      formRef.current.setValue('tipAmount', nextTipAmount);
+    }
+  }, [subtotal]);
 
   // That rejection goes stale as soon as the customer picks a different amount,
   // and react-hook-form leaves manually-set errors in place on its own.

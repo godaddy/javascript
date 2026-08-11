@@ -11,6 +11,7 @@ import {
   PaymentProvider,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
+import { applyTipFieldError } from '@/components/checkout/tips/utils/tip-field-errors';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { eventIds } from '@/tracking/events';
@@ -29,7 +30,7 @@ export function useConfirmExpressCheckout() {
     setIsConfirmingCheckout,
     setCheckoutErrors,
   } = useCheckoutContext();
-  const { apiHost } = useGoDaddyContext();
+  const { apiHost, t } = useGoDaddyContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   // Express buttons can render outside a form provider, so this may be null.
   const form = useFormContext();
@@ -157,6 +158,16 @@ export function useConfirmExpressCheckout() {
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
+
+      // This payload carries a tip, so it can be rejected for one. Attributed to
+      // the tip field as in `useAuthorizeCheckout` and `useConfirmCheckout`,
+      // which leaves the customer somewhere to fix it rather than only a
+      // checkout-wide message. A no-op when the button renders without a form.
+      applyTipFieldError(
+        form,
+        error,
+        code => t.apiErrors?.[code as keyof typeof t.apiErrors]
+      );
 
       track({
         eventId: eventIds.checkoutError,
