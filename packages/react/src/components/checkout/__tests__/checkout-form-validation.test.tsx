@@ -207,13 +207,54 @@ describe('Checkout form validation', () => {
     });
   });
 
-  it('does not enforce custom phone rules when phone collection is disabled', async () => {
-    const customMessage = 'Phone number is required';
+  it.each([false, null])(
+    'does not enforce custom phone rules when phone collection is %s',
+    async enablePhoneCollection => {
+      const customMessage = 'Phone number is required';
+      const draftOrder = makeFreePickupOrder({
+        billing: {
+          firstName: 'Pat',
+          lastName: 'Pickup',
+          phone: '',
+          address: buildShippingAddress({ addressLine1: '' }),
+        },
+      });
+      const { user } = renderCheckout({
+        draftOrder,
+        checkoutProps: {
+          checkoutFormSchema: {
+            billingPhone: z.string().min(1, customMessage),
+          },
+        },
+        sessionOverrides: {
+          draftOrder,
+          paymentMethods: stripeOnlyPaymentMethods(),
+          enableShipping: false,
+          enableLocalPickup: true,
+          enableTaxCollection: false,
+          enablePhoneCollection,
+        },
+      });
+      await waitForCheckoutReady();
+      clearOperations();
+
+      expect(screen.queryByLabelText(/phone/i)).not.toBeInTheDocument();
+
+      await user.click(await clickSubmitButton(/complete your free order/i));
+
+      await waitFor(() => {
+        expect(getOperations('ConfirmCheckoutSession')).toHaveLength(1);
+      });
+      expect(document.body).not.toHaveTextContent(customMessage);
+    }
+  );
+
+  it('does not enforce custom notes rules when notes collection is not enabled', async () => {
+    const customMessage = 'Notes are required';
     const draftOrder = makeFreePickupOrder({
       billing: {
         firstName: 'Pat',
         lastName: 'Pickup',
-        phone: '',
         address: buildShippingAddress({ addressLine1: '' }),
       },
     });
@@ -221,7 +262,7 @@ describe('Checkout form validation', () => {
       draftOrder,
       checkoutProps: {
         checkoutFormSchema: {
-          billingPhone: z.string().min(1, customMessage),
+          notes: z.string().min(1, customMessage),
         },
       },
       sessionOverrides: {
@@ -230,13 +271,13 @@ describe('Checkout form validation', () => {
         enableShipping: false,
         enableLocalPickup: true,
         enableTaxCollection: false,
-        enablePhoneCollection: false,
+        enableNotesCollection: null,
       },
     });
     await waitForCheckoutReady();
     clearOperations();
 
-    expect(screen.queryByLabelText(/phone/i)).not.toBeInTheDocument();
+    expect(document.querySelector('textarea[name="notes"]')).toBeNull();
 
     await user.click(await clickSubmitButton(/complete your free order/i));
 

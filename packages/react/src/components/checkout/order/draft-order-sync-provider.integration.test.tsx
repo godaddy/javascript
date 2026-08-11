@@ -1,7 +1,12 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
 import {
   type CheckoutFormData,
@@ -70,6 +75,9 @@ function SyncConsumer() {
       <span data-testid='shipping-first-name-dirty'>
         {String(!!form.formState.dirtyFields.shippingFirstName)}
       </span>
+      <span data-testid='shipping-first-name-value'>
+        {useWatch({ control: form.control, name: 'shippingFirstName' })}
+      </span>
       <button
         type='button'
         onClick={() =>
@@ -111,6 +119,16 @@ function SyncConsumer() {
         onClick={() => markDraftOrderSyncDirty('shipping-name')}
       >
         mark-shipping-name
+      </button>
+      <button
+        type='button'
+        onClick={() => {
+          form.setValue('shippingFirstName', 'Initial', { shouldDirty: true });
+          form.setValue('shippingLastName', 'Buyer', { shouldDirty: true });
+          markDraftOrderSyncDirty('shipping-name');
+        }}
+      >
+        revert-shipping-name
       </button>
       <button
         type='button'
@@ -307,6 +325,34 @@ describe('DraftOrderSyncProvider integration', () => {
     });
   });
 
+  it('drops a rejected registration patch when the field is reverted to the order value', async () => {
+    const { user } = renderSyncHarness({
+      draftOrder: buildDraftOrder({
+        shipping: { firstName: 'Initial', lastName: 'Buyer' },
+      }),
+    });
+    setApiErrorOnce('updateDraftOrder', new Error('invalid value'));
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Bad');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Bad' },
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: 'revert-shipping-name' })
+    );
+    await advance(100);
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(1);
+  });
+
   it('flushDraftOrderSync clears debounce work and waits for the mutation to settle', async () => {
     const { user } = renderSyncHarness({ updateDraftOrderDelayMs: 500 });
 
@@ -452,8 +498,8 @@ describe('DraftOrderSyncProvider integration', () => {
     const input = screen.getByLabelText('first name');
 
     await user.clear(input);
-    await user.type(input, 'Typed Value');
-    expect(input).toHaveValue('Typed Value');
+    await user.type(input, 'Alpha');
+    expect(input).toHaveValue('Alpha');
     expect(screen.getByTestId('shipping-first-name-dirty')).toHaveTextContent(
       'true'
     );
@@ -467,7 +513,31 @@ describe('DraftOrderSyncProvider integration', () => {
         'false'
       );
     });
-    expect(input).toHaveValue('Typed Value');
+    expect(input).toHaveValue('Alpha');
     expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(1);
+  });
+
+  it('does not mark a field pristine when it changes while its save is in flight', async () => {
+    const { user } = renderSyncHarness({ updateDraftOrderDelayMs: 500 });
+    const input = screen.getByLabelText('first name');
+
+    await user.clear(input);
+    await user.type(input, 'Alpha');
+    await user.click(screen.getByRole('button', { name: 'enqueue-a' }));
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    await user.clear(input);
+    await user.type(input, 'Beta');
+    await advance(500);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('shipping-first-name-dirty')).toHaveTextContent(
+        'true'
+      );
+      expect(screen.getByTestId('shipping-first-name-value')).toHaveTextContent(
+        'Beta'
+      );
+    });
   });
 });

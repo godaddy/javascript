@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import isEqual from 'fast-deep-equal';
 import * as React from 'react';
 import { type UseFormReturn, useFormContext } from 'react-hook-form';
 import type { z } from 'zod';
@@ -62,6 +63,12 @@ export interface FlushDraftOrderSyncResult {
   latestOrder?: DraftOrder | null;
   patchSent: boolean;
 }
+
+type PendingDraftOrderPatch = {
+  patch: DraftOrderPatch;
+  fieldNames: string[];
+  registrationIds: string[];
+};
 
 interface DraftOrderSyncContextValue {
   enqueueDraftOrderPatch: (
@@ -158,6 +165,7 @@ export function DraftOrderSyncProvider({
     Map<DraftOrderSyncRegistrationId, DraftOrderSyncRegistration>
   >(new Map());
   const dirtyRegistrationIdsRef = React.useRef<Set<string>>(new Set());
+  const pendingPatchEntriesRef = React.useRef<PendingDraftOrderPatch[]>([]);
   const pendingPatchRef = React.useRef<DraftOrderPatch | null>(null);
   const pendingFieldNamesRef = React.useRef<Set<string>>(new Set());
   const pendingRegistrationIdsRef = React.useRef<Set<string>>(new Set());
@@ -196,26 +204,53 @@ export function DraftOrderSyncProvider({
     return result.data ?? getCurrentDraftOrder();
   }, [draftOrderQuery, getCurrentDraftOrder, session?.id]);
 
+  const syncPendingPatchRefs = React.useCallback(() => {
+    pendingPatchRef.current = pendingPatchEntriesRef.current.reduce(
+      (merged, entry) => mergeDraftOrderPatch(merged, entry.patch),
+      null as DraftOrderPatch | null
+    );
+    pendingFieldNamesRef.current = new Set(
+      pendingPatchEntriesRef.current.flatMap(entry => entry.fieldNames)
+    );
+    pendingRegistrationIdsRef.current = new Set(
+      pendingPatchEntriesRef.current.flatMap(entry => entry.registrationIds)
+    );
+  }, []);
+
+  const clearPendingPatches = React.useCallback(() => {
+    pendingPatchEntriesRef.current = [];
+    syncPendingPatchRefs();
+  }, [syncPendingPatchRefs]);
+
   const queuePatch = React.useCallback(
     (
       patch: DraftOrderPatch,
       fieldNames: string[] = [],
       registrationIds: string[] = []
     ) => {
-      pendingPatchRef.current = mergeDraftOrderPatch(
-        pendingPatchRef.current,
-        patch
-      );
-
-      for (const fieldName of fieldNames) {
-        pendingFieldNamesRef.current.add(fieldName);
-      }
-
-      for (const registrationId of registrationIds) {
-        pendingRegistrationIdsRef.current.add(registrationId);
-      }
+      pendingPatchEntriesRef.current.push({
+        patch,
+        fieldNames,
+        registrationIds,
+      });
+      syncPendingPatchRefs();
     },
-    []
+    [syncPendingPatchRefs]
+  );
+
+  const removePendingRegistrationPatches = React.useCallback(
+    (registrationIds: string[]) => {
+      if (!registrationIds.length) return;
+      const registrationIdSet = new Set(registrationIds);
+      pendingPatchEntriesRef.current = pendingPatchEntriesRef.current.filter(
+        entry =>
+          !entry.registrationIds.some(registrationId =>
+            registrationIdSet.has(registrationId)
+          )
+      );
+      syncPendingPatchRefs();
+    },
+    [syncPendingPatchRefs]
   );
 
   const drainQueue = React.useCallback(async () => {
@@ -227,27 +262,29 @@ export function DraftOrderSyncProvider({
       let patchSent = false;
 
       while (pendingPatchRef.current) {
+        const entries = pendingPatchEntriesRef.current;
         const patch = pendingPatchRef.current;
 
         if (!session) {
-          pendingPatchRef.current = null;
-          pendingFieldNamesRef.current = new Set();
-          pendingRegistrationIdsRef.current = new Set();
+          clearPendingPatches();
           break;
         }
         const { channelId, storeId, draftOrder, customerId } = session;
         if (!channelId || !storeId || !draftOrder?.id) {
-          pendingPatchRef.current = null;
-          pendingFieldNamesRef.current = new Set();
-          pendingRegistrationIdsRef.current = new Set();
+          clearPendingPatches();
           break;
         }
 
+        const fieldSnapshots = new Map<keyof CheckoutFormData, unknown>();
+        for (const fieldName of pendingFieldNamesRef.current) {
+          fieldSnapshots.set(
+            fieldName as keyof CheckoutFormData,
+            form.getValues(fieldName as keyof CheckoutFormData)
+          );
+        }
         const fieldNames = [...pendingFieldNamesRef.current];
         const registrationIds = [...pendingRegistrationIdsRef.current];
-        pendingPatchRef.current = null;
-        pendingFieldNamesRef.current = new Set();
-        pendingRegistrationIdsRef.current = new Set();
+        clearPendingPatches();
         inFlightRef.current = true;
 
         try {
@@ -261,22 +298,21 @@ export function DraftOrderSyncProvider({
           patchSent = true;
 
           for (const fieldName of fieldNames) {
-            const currentValue = form.getValues(
-              fieldName as keyof CheckoutFormData
-            );
-            form.resetField(fieldName as keyof CheckoutFormData, {
+            const typedFieldName = fieldName as keyof CheckoutFormData;
+            const submittedValue = fieldSnapshots.get(typedFieldName);
+            const currentValue = form.getValues(typedFieldName);
+            if (!isEqual(currentValue, submittedValue)) continue;
+            form.resetField(typedFieldName, {
               defaultValue: currentValue,
             });
           }
         } catch (error) {
-          pendingPatchRef.current = pendingPatchRef.current
-            ? mergeDraftOrderPatch(patch, pendingPatchRef.current)
-            : patch;
-          for (const fieldName of fieldNames) {
-            pendingFieldNamesRef.current.add(fieldName);
-          }
+          pendingPatchEntriesRef.current = [
+            ...entries,
+            ...pendingPatchEntriesRef.current,
+          ];
+          syncPendingPatchRefs();
           for (const registrationId of registrationIds) {
-            pendingRegistrationIdsRef.current.add(registrationId);
             dirtyRegistrationIdsRef.current.add(registrationId);
           }
           throw error;
@@ -293,7 +329,13 @@ export function DraftOrderSyncProvider({
     } finally {
       drainPromiseRef.current = null;
     }
-  }, [form, session, updateDraftOrder]);
+  }, [
+    clearPendingPatches,
+    form,
+    session,
+    syncPendingPatchRefs,
+    updateDraftOrder,
+  ]);
 
   /**
    * Field names the form schema currently rejects. RHF's own error state cannot
@@ -396,10 +438,13 @@ export function DraftOrderSyncProvider({
             getCurrentDraftOrder()
           );
 
+          removePendingRegistrationPatches(queuedIds);
+
+          for (const registrationId of queuedIds) {
+            dirtyRegistrationIdsRef.current.delete(registrationId);
+          }
+
           if (rebuilt.patch) {
-            for (const registrationId of rebuilt.registrationIds) {
-              dirtyRegistrationIdsRef.current.delete(registrationId);
-            }
             queuePatch(
               rebuilt.patch,
               rebuilt.fieldNames,
@@ -453,6 +498,7 @@ export function DraftOrderSyncProvider({
       isConfirmingCheckout,
       queuePatch,
       refetchLatestDraftOrder,
+      removePendingRegistrationPatches,
     ]
   );
 

@@ -128,9 +128,9 @@ export function CustomFormProvider<
           const billingNamesAreCollectable = billingMode !== 'none';
           const billingAddressIsCollectable = billingMode === 'address';
           const phoneIsCollectable =
-            currentSession?.enablePhoneCollection !== false;
+            currentSession?.enablePhoneCollection === true;
           const notesAreCollectable =
-            currentSession?.enableNotesCollection !== false;
+            currentSession?.enableNotesCollection === true;
 
           const isCollectable = (fieldName: string) => {
             if (fieldName === 'shippingPhone') {
