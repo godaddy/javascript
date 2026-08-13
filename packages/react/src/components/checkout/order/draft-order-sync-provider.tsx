@@ -572,7 +572,13 @@ export function DraftOrderSyncProvider({
       };
 
       if (options.immediate) {
-        drainQueueSafely();
+        void flushDraftOrderSync({
+          allowWhileConfirming: options.allowWhileConfirming,
+        }).catch(() => {
+          // The failed patch is restored in drainQueue's catch block. Ignore
+          // background sync failures here so payment/explicit flush paths can
+          // surface the recoverable error to the customer.
+        });
         return;
       }
 
@@ -581,7 +587,13 @@ export function DraftOrderSyncProvider({
         drainQueueSafely();
       }, options.debounceMs ?? 750);
     },
-    [clearTimer, drainQueue, isConfirmingCheckout, queuePatch]
+    [
+      clearTimer,
+      drainQueue,
+      flushDraftOrderSync,
+      isConfirmingCheckout,
+      queuePatch,
+    ]
   );
 
   const registerDraftOrderSync = React.useCallback(
