@@ -355,7 +355,8 @@ export function DraftOrderSyncProvider({
 
       for (const issue of result.error.issues) {
         const [fieldName] = issue.path;
-        if (typeof fieldName === 'string') invalidFieldNames.add(fieldName);
+        if (typeof fieldName !== 'string') continue;
+        invalidFieldNames.add(fieldName);
       }
 
       return invalidFieldNames;

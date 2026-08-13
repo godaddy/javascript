@@ -1,5 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import {
@@ -567,6 +568,31 @@ describe('Checkout draft-order field sync', () => {
     await waitForOperation('UpdateCheckoutSessionDraftOrder');
 
     expect(getLastUpdateInput()).toMatchObject({ notes: null });
+  });
+
+  it('does not clear order notes while a custom required notes field is empty', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        notes: [{ authorType: 'CUSTOMER', content: 'Leave at door' }],
+      },
+      checkoutProps: {
+        checkoutFormSchema: {
+          notes: z.string().min(1, 'notes are required'),
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    const notes = document.querySelector<HTMLTextAreaElement>(
+      'textarea[name="notes"]'
+    );
+    expect(notes).toBeTruthy();
+    await user.clear(notes as HTMLTextAreaElement);
+    await advanceCheckoutDebounce();
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
   });
 
   it('syncs names-only billing without stale address fields', async () => {

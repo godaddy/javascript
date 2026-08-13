@@ -249,6 +249,111 @@ describe('Checkout form validation', () => {
     }
   );
 
+  it('enforces custom notes rules when notes collection is enabled', async () => {
+    const customMessage = 'notes are required';
+    const draftOrder = makeFreePickupOrder({
+      billing: {
+        firstName: 'Pat',
+        lastName: 'Pickup',
+        address: buildShippingAddress({ addressLine1: '' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      checkoutProps: {
+        checkoutFormSchema: {
+          notes: z.string().min(1, customMessage),
+        },
+      },
+      sessionOverrides: {
+        draftOrder,
+        paymentMethods: {
+          ...stripeOnlyPaymentMethods(),
+          card: null as never,
+          offline: {
+            processor: PaymentProvider.OFFLINE,
+            checkoutTypes: ['standard'],
+          },
+        },
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+        enableNotesCollection: true,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    const notes = document.querySelector<HTMLTextAreaElement>(
+      'textarea[name="notes"]'
+    );
+    expect(notes).toBeInTheDocument();
+
+    await user.click(await clickSubmitButton(/complete your free order/i));
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(customMessage);
+    });
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+
+    await user.type(notes as HTMLTextAreaElement, 'Please include utensils');
+    await user.click(await clickSubmitButton(/complete your free order/i));
+
+    await waitFor(() => {
+      expect(getOperations('ConfirmCheckoutSession')).toHaveLength(1);
+    });
+  });
+
+  it('shows a custom notes validation error when existing notes are deleted before submit', async () => {
+    const customMessage = 'notes are required';
+    const draftOrder = makeFreePickupOrder({
+      notes: [{ authorType: 'CUSTOMER', content: 'Existing note' }],
+      billing: {
+        firstName: 'Pat',
+        lastName: 'Pickup',
+        address: buildShippingAddress({ addressLine1: '' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      checkoutProps: {
+        checkoutFormSchema: {
+          notes: z.string().min(1, customMessage),
+        },
+      },
+      sessionOverrides: {
+        draftOrder,
+        paymentMethods: {
+          ...stripeOnlyPaymentMethods(),
+          card: null as never,
+          offline: {
+            processor: PaymentProvider.OFFLINE,
+            checkoutTypes: ['standard'],
+          },
+        },
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+        enableNotesCollection: true,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    const notes = document.querySelector<HTMLTextAreaElement>(
+      'textarea[name="notes"]'
+    );
+    expect(notes).toHaveValue('Existing note');
+
+    await user.clear(notes as HTMLTextAreaElement);
+    await user.click(await clickSubmitButton(/complete your free order/i));
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(customMessage);
+    });
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+  });
+
   it('does not enforce custom notes rules when notes collection is not enabled', async () => {
     const customMessage = 'Notes are required';
     const draftOrder = makeFreePickupOrder({
