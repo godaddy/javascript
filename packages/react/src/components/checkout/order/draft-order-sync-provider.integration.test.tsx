@@ -464,6 +464,45 @@ describe('DraftOrderSyncProvider integration', () => {
     expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
   });
 
+  it('rechecks current values after async schema validation settles', async () => {
+    let resolveValidationStarted: (() => void) | undefined;
+    let resolveValidationCanFinish: (() => void) | undefined;
+    const validationStarted = new Promise<void>(resolve => {
+      resolveValidationStarted = resolve;
+    });
+    const validationCanFinish = new Promise<void>(resolve => {
+      resolveValidationCanFinish = resolve;
+    });
+    const { user } = renderSyncHarness({
+      schema: z.object({
+        shippingFirstName: z.string().refine(async () => {
+          resolveValidationStarted?.();
+          await validationCanFinish;
+          return true;
+        }),
+        shippingLastName: z.string(),
+      }),
+    });
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'First');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await validationStarted;
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Second');
+    resolveValidationCanFinish?.();
+    await flushPromises();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Second', lastName: 'Buyer' },
+    });
+  });
+
   it('flushDraftOrderSync clears debounce work and waits for the mutation to settle', async () => {
     const { user } = renderSyncHarness({ updateDraftOrderDelayMs: 500 });
 

@@ -366,19 +366,44 @@ export function DraftOrderSyncProvider({
 
   const buildPatchFromRegistrations = React.useCallback(
     async (ids: string[], draftOrder?: DraftOrder | null) => {
-      const values = form.getValues();
-      const invalidFieldNames = await getInvalidFieldNames(values);
+      let values = form.getValues();
+      let invalidFieldNames = await getInvalidFieldNames(values);
+      const watchedFieldNames = new Set<string>();
+      let patch: DraftOrderPatch | null = null;
+      const fieldNames = new Set<string>();
+      const registrationIds = new Set<string>();
+      const missingRegistrationIds = new Set<string>();
+
+      for (const id of ids) {
+        const registration = registrationsRef.current.get(id);
+        if (!registration) continue;
+        for (const fieldName of registration.fieldNames) {
+          watchedFieldNames.add(fieldName);
+        }
+      }
+
+      while (watchedFieldNames.size) {
+        const latestValues = form.getValues();
+        const valuesChanged = [...watchedFieldNames].some(
+          fieldName =>
+            !isEqual(
+              values[fieldName as keyof CheckoutFormData],
+              latestValues[fieldName as keyof CheckoutFormData]
+            )
+        );
+
+        if (!valuesChanged) break;
+
+        values = latestValues;
+        invalidFieldNames = await getInvalidFieldNames(values);
+      }
+
       const context: DraftOrderSyncRegistrationContext = {
         values,
         form,
         draftOrder,
         session,
       };
-      let patch: DraftOrderPatch | null = null;
-      const fieldNames = new Set<string>();
-      const registrationIds = new Set<string>();
-
-      const missingRegistrationIds = new Set<string>();
 
       for (const id of ids) {
         const registration = registrationsRef.current.get(id);
