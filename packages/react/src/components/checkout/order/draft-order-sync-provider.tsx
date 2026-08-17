@@ -346,11 +346,11 @@ export function DraftOrderSyncProvider({
    * rules supplied through the `checkoutFormSchema` prop.
    */
   const getInvalidFieldNames = React.useCallback(
-    (values: CheckoutFormData) => {
+    async (values: CheckoutFormData) => {
       const invalidFieldNames = new Set<string>();
       if (!schema) return invalidFieldNames;
 
-      const result = schema.safeParse(values);
+      const result = await schema.safeParseAsync(values);
       if (result.success) return invalidFieldNames;
 
       for (const issue of result.error.issues) {
@@ -365,9 +365,9 @@ export function DraftOrderSyncProvider({
   );
 
   const buildPatchFromRegistrations = React.useCallback(
-    (ids: string[], draftOrder?: DraftOrder | null) => {
+    async (ids: string[], draftOrder?: DraftOrder | null) => {
       const values = form.getValues();
-      const invalidFieldNames = getInvalidFieldNames(values);
+      const invalidFieldNames = await getInvalidFieldNames(values);
       const context: DraftOrderSyncRegistrationContext = {
         values,
         form,
@@ -378,9 +378,14 @@ export function DraftOrderSyncProvider({
       const fieldNames = new Set<string>();
       const registrationIds = new Set<string>();
 
+      const missingRegistrationIds = new Set<string>();
+
       for (const id of ids) {
         const registration = registrationsRef.current.get(id);
-        if (!registration) continue;
+        if (!registration) {
+          missingRegistrationIds.add(id);
+          continue;
+        }
         // Only the values the customer edited have to be valid. Untouched
         // fields can be invalid simply because the order is still incomplete
         // (for example missing names while the address is being filled in).
@@ -412,6 +417,7 @@ export function DraftOrderSyncProvider({
         patch,
         fieldNames: [...fieldNames],
         registrationIds: [...registrationIds],
+        missingRegistrationIds: [...missingRegistrationIds],
       };
     },
     [form, getInvalidFieldNames, session]
@@ -434,14 +440,17 @@ export function DraftOrderSyncProvider({
         const queuedIds = [...dirtyRegistrationIdsRef.current];
 
         if (queuedIds.length) {
-          const rebuilt = buildPatchFromRegistrations(
+          const rebuilt = await buildPatchFromRegistrations(
             queuedIds,
             getCurrentDraftOrder()
           );
 
           removePendingRegistrationPatches(queuedIds);
 
-          for (const registrationId of queuedIds) {
+          for (const registrationId of [
+            ...queuedIds,
+            ...rebuilt.missingRegistrationIds,
+          ]) {
             dirtyRegistrationIdsRef.current.delete(registrationId);
           }
 
@@ -468,13 +477,16 @@ export function DraftOrderSyncProvider({
         const queuedIds = [...dirtyRegistrationIdsRef.current];
         if (!queuedIds.length) throw error;
 
-        const rebuilt = buildPatchFromRegistrations(
+        const rebuilt = await buildPatchFromRegistrations(
           queuedIds,
           getCurrentDraftOrder()
         );
         removePendingRegistrationPatches(queuedIds);
 
-        for (const registrationId of queuedIds) {
+        for (const registrationId of [
+          ...queuedIds,
+          ...rebuilt.missingRegistrationIds,
+        ]) {
           dirtyRegistrationIdsRef.current.delete(registrationId);
         }
 
@@ -502,7 +514,7 @@ export function DraftOrderSyncProvider({
       if (ids.length) {
         latestBeforePatch ??= await refetchLatestDraftOrder();
         const { patch, fieldNames, registrationIds } =
-          buildPatchFromRegistrations(ids, latestBeforePatch);
+          await buildPatchFromRegistrations(ids, latestBeforePatch);
 
         if (patch) {
           for (const registrationId of registrationIds) {
@@ -602,10 +614,9 @@ export function DraftOrderSyncProvider({
 
       return () => {
         const current = registrationsRef.current.get(registration.id);
-        if (current === registration) {
-          registrationsRef.current.delete(registration.id);
-          dirtyRegistrationIdsRef.current.delete(registration.id);
-        }
+        if (current !== registration) return;
+
+        registrationsRef.current.delete(registration.id);
       };
     },
     []

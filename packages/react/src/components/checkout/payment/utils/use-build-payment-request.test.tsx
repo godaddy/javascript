@@ -98,7 +98,10 @@ async function renderUseBuildPaymentRequest({
       <checkoutContext.Provider
         value={{
           session,
-          paypalConfig: { clientId: 'paypal-client-id', merchantId: 'MERCHANTID123' },
+          paypalConfig: {
+            clientId: 'paypal-client-id',
+            merchantId: 'MERCHANTID123',
+          },
           isConfirmingCheckout: false,
           setIsConfirmingCheckout: () => undefined,
           checkoutErrors: undefined,

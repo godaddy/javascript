@@ -8,6 +8,7 @@ import {
   useWatch,
 } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import {
   type CheckoutFormData,
   checkoutContext,
@@ -41,6 +42,11 @@ function SyncConsumer() {
     registerDraftOrderSync,
   } = useDraftOrderSyncQueue();
   const form = useFormContext<CheckoutFormData>();
+  const [registrationVersion, setRegistrationVersion] = React.useState(0);
+  const shippingFirstName = useWatch({
+    control: form.control,
+    name: 'shippingFirstName',
+  });
 
   React.useEffect(
     () =>
@@ -65,7 +71,7 @@ function SyncConsumer() {
           },
         }),
       }),
-    [registerDraftOrderSync]
+    [registerDraftOrderSync, registrationVersion, shippingFirstName]
   );
 
   return (
@@ -75,9 +81,7 @@ function SyncConsumer() {
       <span data-testid='shipping-first-name-dirty'>
         {String(!!form.formState.dirtyFields.shippingFirstName)}
       </span>
-      <span data-testid='shipping-first-name-value'>
-        {useWatch({ control: form.control, name: 'shippingFirstName' })}
-      </span>
+      <span data-testid='shipping-first-name-value'>{shippingFirstName}</span>
       <button
         type='button'
         onClick={() =>
@@ -122,6 +126,12 @@ function SyncConsumer() {
       </button>
       <button
         type='button'
+        onClick={() => setRegistrationVersion(version => version + 1)}
+      >
+        refresh-registration
+      </button>
+      <button
+        type='button'
         onClick={() => {
           form.setValue('shippingFirstName', 'Initial', { shouldDirty: true });
           form.setValue('shippingLastName', 'Buyer', { shouldDirty: true });
@@ -161,10 +171,12 @@ function SyncHarness({
   session,
   draftOrder,
   isConfirmingCheckout = false,
+  schema,
 }: {
   session: CheckoutSession | null;
   draftOrder: DraftOrder;
   isConfirmingCheckout?: boolean;
+  schema?: z.ZodTypeAny;
 }) {
   const [confirming, setConfirming] = React.useState(isConfirmingCheckout);
   const form = useForm<CheckoutFormData>({
@@ -186,7 +198,7 @@ function SyncHarness({
           setCheckoutErrors: () => undefined,
         }}
       >
-        <DraftOrderSyncProvider>
+        <DraftOrderSyncProvider schema={schema}>
           <SyncConsumer />
           <button type='button' onClick={() => setConfirming(true)}>
             start-confirming
@@ -202,11 +214,13 @@ function renderSyncHarness({
   draftOrder: providedDraftOrder,
   updateDraftOrderDelayMs = 0,
   isConfirmingCheckout = false,
+  schema,
 }: {
   session?: CheckoutSession | null;
   draftOrder?: DraftOrder;
   updateDraftOrderDelayMs?: number;
   isConfirmingCheckout?: boolean;
+  schema?: z.ZodTypeAny;
 } = {}) {
   const draftOrder = providedDraftOrder ?? buildDraftOrder();
   const session =
@@ -240,6 +254,7 @@ function renderSyncHarness({
         session={session}
         draftOrder={draftOrder}
         isConfirmingCheckout={isConfirmingCheckout}
+        schema={schema}
       />
     </GoDaddyProvider>
   );
@@ -388,6 +403,65 @@ describe('DraftOrderSyncProvider integration', () => {
     expect(getLastUpdateInput()).toMatchObject({
       shipping: { firstName: 'Good', lastName: 'Buyer' },
     });
+  });
+
+  it('keeps a dirty registration when its registration object refreshes before debounce flush', async () => {
+    const { user } = renderSyncHarness();
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Dirty');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'refresh-registration' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Dirty', lastName: 'Buyer' },
+    });
+  });
+
+  it('supports async schema refinements when checking dirty registrations', async () => {
+    const { user } = renderSyncHarness({
+      schema: z.object({
+        shippingFirstName: z.string().refine(async () => true),
+        shippingLastName: z.string(),
+      }),
+    });
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Async');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Async', lastName: 'Buyer' },
+    });
+  });
+
+  it('skips a dirty registration rejected by an async schema refinement', async () => {
+    const { user } = renderSyncHarness({
+      schema: z.object({
+        shippingFirstName: z.string().refine(async value => value !== 'Bad'),
+        shippingLastName: z.string(),
+      }),
+    });
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Bad');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
   });
 
   it('flushDraftOrderSync clears debounce work and waits for the mutation to settle', async () => {
