@@ -79,6 +79,7 @@ export type SquareConfig = {
 
 export type PayPalConfig = {
   clientId: string;
+  merchantId?: string;
   disableFunding?: Array<'credit' | 'card' | 'paylater' | 'venmo'>;
 };
 
