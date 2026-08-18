@@ -354,6 +354,9 @@ export const qaPs = {
     DEPENDENCY_ERROR:
       'موږ اوس ستاسو امر پروسس نشو کولی. مهرباني وکړئ یو شېبه انتظار وکړئ او بیا هڅه وکړئ',
     AUTHORIZATION_FAILED: '[Fâîlëd ţö âüţhörîžë þâÿmëñţ]',
+    TIP_EXCEEDS_LIMIT: '[Ţîþ îš ţöö lârgë för ţhîš örðër]',
+    INVALID_TIP_AMOUNT: '[Ëñţër â vâlîd ţîþ âmöüñţ]',
+    TIPS_NOT_ENABLED: '[Ţîþš ârë ñöţ âççëþţëd för ţhîš örðër]',
   },
   storefront: {
     product: '[Product]',

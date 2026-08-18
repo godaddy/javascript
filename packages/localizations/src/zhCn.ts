@@ -332,6 +332,9 @@ export const zhCn = {
     MISSING_SHIPPING_INFO: '配送地址或方式应用失败',
     DEPENDENCY_ERROR: '我们目前无法处理您的订单。请稍等片刻再试',
     AUTHORIZATION_FAILED: '付款授权失败',
+    TIP_EXCEEDS_LIMIT: '小费金额超出此订单的上限',
+    INVALID_TIP_AMOUNT: '请输入有效的小费金额',
+    TIPS_NOT_ENABLED: '此订单不接受小费',
   },
   storefront: {
     product: '产品',

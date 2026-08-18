@@ -369,6 +369,9 @@ export const deDe = {
     DEPENDENCY_ERROR:
       'Wir können Ihre Bestellung derzeit nicht bearbeiten. Bitte warten Sie einen Moment und versuchen Sie es erneut',
     AUTHORIZATION_FAILED: 'Zahlungsautorisierung fehlgeschlagen',
+    TIP_EXCEEDS_LIMIT: 'Das Trinkgeld ist für diese Bestellung zu hoch',
+    INVALID_TIP_AMOUNT: 'Gültigen Trinkgeldbetrag eingeben',
+    TIPS_NOT_ENABLED: 'Für diese Bestellung wird kein Trinkgeld akzeptiert',
   },
   storefront: {
     product: 'Produkt',

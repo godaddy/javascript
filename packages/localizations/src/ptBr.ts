@@ -350,6 +350,9 @@ export const ptBr = {
     DEPENDENCY_ERROR:
       'Não conseguimos processar seu pedido no momento. Aguarde um momento e tente novamente',
     AUTHORIZATION_FAILED: 'Falha ao autorizar pagamento',
+    TIP_EXCEEDS_LIMIT: 'A gorjeta é muito alta para este pedido',
+    INVALID_TIP_AMOUNT: 'Digite um valor de gorjeta válido',
+    TIPS_NOT_ENABLED: 'Gorjetas não são aceitas para este pedido',
   },
   storefront: {
     product: 'Produto',

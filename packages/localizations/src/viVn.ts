@@ -345,6 +345,9 @@ export const viVn = {
     DEPENDENCY_ERROR:
       'Chúng tôi không thể xử lý đơn hàng của bạn ngay bây giờ. Vui lòng đợi một chút và thử lại',
     AUTHORIZATION_FAILED: 'Không thể ủy quyền thanh toán',
+    TIP_EXCEEDS_LIMIT: 'Tiền tip quá lớn cho đơn hàng này',
+    INVALID_TIP_AMOUNT: 'Nhập số tiền tip hợp lệ',
+    TIPS_NOT_ENABLED: 'Đơn hàng này không nhận tiền tip',
   },
   storefront: {
     product: 'Sản phẩm',

@@ -369,6 +369,9 @@ export const frCa = {
     DEPENDENCY_ERROR:
       'Nous ne pouvons pas traiter votre commande actuellement. Veuillez patienter un moment et réessayer',
     AUTHORIZATION_FAILED: "Échec de l'autorisation du paiement",
+    TIP_EXCEEDS_LIMIT: 'Le pourboire est trop élevé pour cette commande',
+    INVALID_TIP_AMOUNT: 'Entrez un montant de pourboire valide',
+    TIPS_NOT_ENABLED: 'Les pourboires ne sont pas acceptés pour cette commande',
   },
   storefront: {
     product: 'Produit',

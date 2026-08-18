@@ -345,6 +345,9 @@ export const trTr = {
     DEPENDENCY_ERROR:
       'Şu anda siparişinizi işleme alamıyoruz. Lütfen bir dakika bekleyin ve tekrar deneyin',
     AUTHORIZATION_FAILED: 'Ödeme yetkilendirmesi başarısız',
+    TIP_EXCEEDS_LIMIT: 'Bahşiş bu sipariş için çok yüksek',
+    INVALID_TIP_AMOUNT: 'Geçerli bir bahşiş tutarı girin',
+    TIPS_NOT_ENABLED: 'Bu sipariş için bahşiş kabul edilmiyor',
   },
   storefront: {
     product: 'Ürün',
