@@ -1,5 +1,6 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FlushDraftOrderSyncResult } from '@/components/checkout/order/draft-order-sync-provider';
 import { CheckoutType, PaymentMethodType, PaymentProvider } from '@/types';
 import {
   clearOperations,
@@ -25,6 +26,11 @@ vi.mock('@/components/checkout/payment/utils/use-flush-checkout-sync', () => ({
       flushGate = null;
       await gate;
     }
+    // The stub still has to answer with the real hook's result shape:
+    // `useConfirmCheckout` destructures `latestOrder` off it and would throw on
+    // `undefined`. No patch is sent here, and `latestOrder` left absent makes
+    // the caller fall back to the draft order already in the query cache.
+    return { patchSent: false } satisfies FlushDraftOrderSyncResult;
   },
 }));
 
