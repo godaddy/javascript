@@ -2981,6 +2981,80 @@ const introspection = {
       },
       {
         "kind": "OBJECT",
+        "name": "CheckoutSessionFee",
+        "fields": [
+          {
+            "name": "amount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "feeProgramId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "feeProgramType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "feeType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "signature",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionFeesResult",
+        "fields": [
+          {
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CheckoutSessionFee"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
         "name": "CheckoutSessionFreeShippingRule",
         "fields": [
           {
@@ -6694,6 +6768,24 @@ const introspection = {
         ]
       },
       {
+        "kind": "ENUM",
+        "name": "FundingSourceType",
+        "enumValues": [
+          {
+            "name": "CREDIT",
+            "isDeprecated": false
+          },
+          {
+            "name": "DEBIT",
+            "isDeprecated": false
+          },
+          {
+            "name": "PREPAID",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
         "kind": "OBJECT",
         "name": "GeoCoordinates",
         "fields": [
@@ -7676,6 +7768,26 @@ const introspection = {
                   "ofType": {
                     "kind": "INPUT_OBJECT",
                     "name": "MutationAuthorizeCheckoutSessionInput"
+                  }
+                }
+              }
+            ],
+            "isDeprecated": false
+          },
+          {
+            "name": "calculateCheckoutSessionFees",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionFeesResult"
+            },
+            "args": [
+              {
+                "name": "fundingSourceType",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "ENUM",
+                    "name": "FundingSourceType"
                   }
                 }
               }
