@@ -230,6 +230,7 @@ export function PhoneInput({
       () => ({
         id: registrationId,
         fieldNames: [phoneFieldName],
+        dependencyFieldNames: ['paymentUseShippingAddress'],
         debounceMs: 1000,
         enabled: ({ values, draftOrder: currentDraftOrder }) => {
           if (!session?.enablePhoneCollection || !currentDraftOrder) {

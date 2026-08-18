@@ -213,9 +213,9 @@ export function AddressForm({
     () => addressFieldSuffixes.map(suffix => `${sectionKey}${suffix}`),
     [sectionKey]
   );
-  const addressSyncFieldNames = React.useMemo(
-    () => [...allAddressFieldNames, 'paymentUseShippingAddress'],
-    [allAddressFieldNames]
+  const addressSyncDependencyFieldNames = React.useMemo(
+    () => ['paymentUseShippingAddress'],
+    []
   );
 
   const orderAddress = React.useMemo(
@@ -234,6 +234,7 @@ export function AddressForm({
       () => ({
         id: `${sectionKey}-names-only`,
         fieldNames: nameFieldNames,
+        dependencyFieldNames: addressSyncDependencyFieldNames,
         debounceMs: 1000,
         enabled: ({ values, draftOrder: currentDraftOrder }) =>
           Boolean(
@@ -253,7 +254,7 @@ export function AddressForm({
             Boolean(values.paymentUseShippingAddress)
           ),
       }),
-      [nameFieldNames, onlyNames, sectionKey]
+      [addressSyncDependencyFieldNames, nameFieldNames, onlyNames, sectionKey]
     )
   );
 
@@ -262,6 +263,7 @@ export function AddressForm({
       () => ({
         id: `${sectionKey}-name`,
         fieldNames: nameFieldNames,
+        dependencyFieldNames: addressSyncDependencyFieldNames,
         debounceMs: 1000,
         enabled: ({ values, draftOrder: currentDraftOrder }) =>
           Boolean(
@@ -286,7 +288,7 @@ export function AddressForm({
             Boolean(values.paymentUseShippingAddress)
           ),
       }),
-      [nameFieldNames, onlyNames, sectionKey]
+      [addressSyncDependencyFieldNames, nameFieldNames, onlyNames, sectionKey]
     )
   );
 
@@ -294,7 +296,8 @@ export function AddressForm({
     React.useMemo(
       () => ({
         id: `${sectionKey}-address`,
-        fieldNames: addressSyncFieldNames,
+        fieldNames: allAddressFieldNames,
+        dependencyFieldNames: addressSyncDependencyFieldNames,
         debounceMs: 1000,
         enabled: ({ values, draftOrder: currentDraftOrder }) =>
           Boolean(
@@ -330,7 +333,13 @@ export function AddressForm({
           );
         },
       }),
-      [addressSyncFieldNames, isAutocompleteOpen, onlyNames, sectionKey]
+      [
+        addressSyncDependencyFieldNames,
+        allAddressFieldNames,
+        isAutocompleteOpen,
+        onlyNames,
+        sectionKey,
+      ]
     )
   );
 
@@ -346,7 +355,7 @@ export function AddressForm({
   });
   useDraftOrderFieldDirtyMarker({
     id: `${sectionKey}-address`,
-    fieldNames: addressSyncFieldNames,
+    fieldNames: allAddressFieldNames,
     disabled: onlyNames || isConfirmingCheckout,
   });
 

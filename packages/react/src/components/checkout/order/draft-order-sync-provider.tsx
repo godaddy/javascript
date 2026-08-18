@@ -29,7 +29,10 @@ type DraftOrderSyncRegistrationContext = {
 
 export type DraftOrderSyncRegistration = {
   id: DraftOrderSyncRegistrationId;
+  /** Fields this registration owns and marks pristine after a successful sync. */
   fieldNames: string[];
+  /** Additional form values read while deciding whether/how to build the patch. */
+  dependencyFieldNames?: string[];
   debounceMs?: number;
   /** Skips the registration when its values are unchanged or not yet valid. */
   enabled?: (context: DraftOrderSyncRegistrationContext) => boolean;
@@ -368,23 +371,26 @@ export function DraftOrderSyncProvider({
     async (ids: string[], draftOrder?: DraftOrder | null) => {
       let values = form.getValues();
       let invalidFieldNames = await getInvalidFieldNames(values);
-      const watchedFieldNames = new Set<string>();
       let patch: DraftOrderPatch | null = null;
       const fieldNames = new Set<string>();
       const registrationIds = new Set<string>();
       const missingRegistrationIds = new Set<string>();
 
+      const valueDependencyFieldNames = new Set<string>();
       for (const id of ids) {
         const registration = registrationsRef.current.get(id);
         if (!registration) continue;
-        for (const fieldName of registration.fieldNames) {
-          watchedFieldNames.add(fieldName);
+        for (const fieldName of [
+          ...registration.fieldNames,
+          ...(registration.dependencyFieldNames ?? []),
+        ]) {
+          valueDependencyFieldNames.add(fieldName);
         }
       }
 
-      while (watchedFieldNames.size) {
+      while (valueDependencyFieldNames.size) {
         const latestValues = form.getValues();
-        const valuesChanged = [...watchedFieldNames].some(
+        const valuesChanged = [...valueDependencyFieldNames].some(
           fieldName =>
             !isEqual(
               values[fieldName as keyof CheckoutFormData],

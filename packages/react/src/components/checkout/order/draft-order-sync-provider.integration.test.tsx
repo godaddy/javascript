@@ -53,6 +53,7 @@ function SyncConsumer() {
       registerDraftOrderSync({
         id: 'shipping-name',
         fieldNames: ['shippingFirstName', 'shippingLastName'],
+        dependencyFieldNames: ['paymentUseShippingAddress'],
         debounceMs: 100,
         enabled: ({ values, draftOrder }) =>
           Boolean(
@@ -69,6 +70,14 @@ function SyncConsumer() {
             firstName: values.shippingFirstName.trim(),
             lastName: values.shippingLastName.trim(),
           },
+          ...(values.paymentUseShippingAddress
+            ? {
+                billing: {
+                  firstName: values.shippingFirstName.trim(),
+                  lastName: values.shippingLastName.trim(),
+                },
+              }
+            : {}),
         }),
       }),
     [registerDraftOrderSync, registrationVersion, shippingFirstName]
@@ -78,6 +87,11 @@ function SyncConsumer() {
     <div>
       <input aria-label='first name' {...form.register('shippingFirstName')} />
       <input aria-label='last name' {...form.register('shippingLastName')} />
+      <input
+        aria-label='use shipping address'
+        type='checkbox'
+        {...form.register('paymentUseShippingAddress')}
+      />
       <span data-testid='shipping-first-name-dirty'>
         {String(!!form.formState.dirtyFields.shippingFirstName)}
       </span>
@@ -183,6 +197,7 @@ function SyncHarness({
     defaultValues: {
       shippingFirstName: 'Initial',
       shippingLastName: 'Buyer',
+      paymentUseShippingAddress: false,
     } as CheckoutFormData,
   });
 
@@ -481,9 +496,11 @@ describe('DraftOrderSyncProvider integration', () => {
           return true;
         }),
         shippingLastName: z.string(),
+        paymentUseShippingAddress: z.boolean(),
       }),
     });
 
+    await user.click(screen.getByLabelText('use shipping address'));
     await user.clear(screen.getByLabelText('first name'));
     await user.type(screen.getByLabelText('first name'), 'First');
     await user.click(
@@ -492,6 +509,7 @@ describe('DraftOrderSyncProvider integration', () => {
     await advance(100);
     await validationStarted;
 
+    await user.click(screen.getByLabelText('use shipping address'));
     await user.clear(screen.getByLabelText('first name'));
     await user.type(screen.getByLabelText('first name'), 'Second');
     resolveValidationCanFinish?.();
@@ -501,6 +519,7 @@ describe('DraftOrderSyncProvider integration', () => {
     expect(getLastUpdateInput()).toMatchObject({
       shipping: { firstName: 'Second', lastName: 'Buyer' },
     });
+    expect(getLastUpdateInput()).not.toHaveProperty('billing');
   });
 
   it('flushDraftOrderSync clears debounce work and waits for the mutation to settle', async () => {
