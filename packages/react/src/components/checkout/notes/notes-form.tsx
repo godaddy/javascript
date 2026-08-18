@@ -4,8 +4,10 @@ import { useDebouncedValue } from '@tanstack/react-pacer';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
-import { useDraftOrderFieldSync } from '@/components/checkout/order/use-draft-order-sync';
+import {
+  useDraftOrderFieldDirtyMarker,
+  useRegisterDraftOrderFieldSync,
+} from '@/components/checkout/order/use-draft-order-sync';
 import {
   FormField,
   FormItem,
@@ -21,8 +23,6 @@ export function NotesForm() {
   const form = useFormContext();
   const { t } = useGoDaddyContext();
   const { isConfirmingCheckout, requiredFields } = useCheckoutContext();
-  const { data: draftOrder } = useDraftOrder();
-
   const notesField = form.watch('notes');
 
   const [notes] = useDebouncedValue(notesField, {
@@ -43,32 +43,37 @@ export function NotesForm() {
     }
   }, [notes]);
 
-  // Check if notes value differs from order value
-  const notesHasChanged = React.useMemo(() => {
-    if (!draftOrder) return true; // If no order, allow sync
-    const orderNotes =
-      draftOrder.notes?.find(note => note.authorType === 'CUSTOMER')?.content ||
-      '';
-    return orderNotes !== (notes || '');
-  }, [draftOrder, notes]);
-
-  useDraftOrderFieldSync({
-    key: 'notes',
-    data: notes,
-    deps: [notes, notesHasChanged],
-    enabled: notesHasChanged,
+  useRegisterDraftOrderFieldSync(
+    React.useMemo(
+      () => ({
+        id: 'notes',
+        fieldNames: ['notes'],
+        debounceMs: 1000,
+        enabled: ({ values, draftOrder }) => {
+          if (!draftOrder) return false;
+          const orderNotes =
+            draftOrder.notes?.find(note => note.authorType === 'CUSTOMER')
+              ?.content || '';
+          return orderNotes !== (values.notes || '');
+        },
+        buildPatch: ({ values }) => ({
+          notes: values.notes?.trim()
+            ? [
+                {
+                  authorType: 'CUSTOMER',
+                  content: values.notes.trim(),
+                },
+              ]
+            : null,
+        }),
+      }),
+      []
+    )
+  );
+  useDraftOrderFieldDirtyMarker({
+    id: 'notes',
     fieldNames: ['notes'],
-    preserveFormData: false,
-    mapToInput: notesValue => ({
-      notes: notesValue?.trim()
-        ? [
-            {
-              authorType: 'CUSTOMER',
-              content: notesValue.trim(),
-            },
-          ]
-        : null,
-    }),
+    disabled: isConfirmingCheckout,
   });
 
   return (

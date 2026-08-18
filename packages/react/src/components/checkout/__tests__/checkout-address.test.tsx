@@ -343,7 +343,11 @@ describe('Checkout address behavior', () => {
     await typeIntoNamedField(user, 'shippingAddressLine1', '456 Shipping Ln');
     await advanceCheckoutDebounce();
 
-    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(1);
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Ship', lastName: 'Buyer' },
+    });
+    expect(getLastUpdateInput()?.shipping).not.toHaveProperty('address');
 
     // Provide remaining fields → sync fires once with the full address.
     await typeIntoNamedField(user, 'shippingAdminArea2', 'Jasper');

@@ -78,6 +78,9 @@ export function ConditionalPaymentProviders({
       <PayPalScriptProvider
         options={{
           clientId: paypalConfig.clientId,
+          ...(paypalConfig.merchantId?.trim()
+            ? { merchantId: paypalConfig.merchantId.trim() }
+            : {}),
           currency:
             payPalRequest?.purchase_units?.[0]?.amount?.currency_code || 'USD',
           intent: 'capture',

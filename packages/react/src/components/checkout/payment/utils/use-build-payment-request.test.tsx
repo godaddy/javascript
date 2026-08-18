@@ -98,6 +98,10 @@ async function renderUseBuildPaymentRequest({
       <checkoutContext.Provider
         value={{
           session,
+          paypalConfig: {
+            clientId: 'paypal-client-id',
+            merchantId: 'MERCHANTID123',
+          },
           isConfirmingCheckout: false,
           setIsConfirmingCheckout: () => undefined,
           checkoutErrors: undefined,
@@ -259,6 +263,7 @@ describe('useBuildPaymentRequest', () => {
     );
 
     expect(requests.payPalRequest.purchase_units[0]).toMatchObject({
+      payee: { merchant_id: 'MERCHANTID123' },
       amount: {
         currency_code: 'USD',
         value: '56.50',

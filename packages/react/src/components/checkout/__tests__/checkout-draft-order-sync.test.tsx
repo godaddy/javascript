@@ -1,5 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import {
@@ -11,6 +12,8 @@ import {
   flushPromises,
   getCurrentDraftOrder,
   getNamedInput,
+  getOperationNames,
+  getOperationOrder,
   getOperations,
   renderCheckout,
   setApiError,
@@ -443,6 +446,45 @@ describe('Checkout draft-order field sync', () => {
     expect(getLastUpdateInput()?.billing).not.toHaveProperty('lastName');
   });
 
+  it('keeps a partial shipping name dirty after address-only sync refetches the order', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        shipping: {
+          firstName: '',
+          lastName: '',
+          address: buildShippingAddress({
+            addressLine1: '',
+            addressLine2: '',
+            adminArea1: 'GA',
+            adminArea2: '',
+            postalCode: '',
+            countryCode: 'US',
+          }),
+        },
+        billing: {
+          firstName: '',
+          lastName: '',
+          address: null,
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await typeIntoNamedField(user, 'shippingFirstName', 'Partial');
+    await typeIntoNamedField(user, 'shippingAddressLine1', '456 Shipping Ln');
+    await typeIntoNamedField(user, 'shippingAdminArea2', 'Jasper');
+    await typeIntoNamedField(user, 'shippingPostalCode', '30143');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    expect(getLastUpdateInput()?.shipping).not.toHaveProperty('firstName');
+    await waitForOperation('DraftOrder');
+
+    await waitFor(() => {
+      expect(getNamedInput('shippingFirstName')).toHaveValue('Partial');
+    });
+  });
+
   it('syncs a complete billing address without requiring first or last name', async () => {
     const { user } = renderCheckout({
       draftOrderOverrides: {
@@ -526,6 +568,31 @@ describe('Checkout draft-order field sync', () => {
     await waitForOperation('UpdateCheckoutSessionDraftOrder');
 
     expect(getLastUpdateInput()).toMatchObject({ notes: null });
+  });
+
+  it('does not clear order notes while a custom required notes field is empty', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        notes: [{ authorType: 'CUSTOMER', content: 'Leave at door' }],
+      },
+      checkoutProps: {
+        checkoutFormSchema: {
+          notes: z.string().min(1, 'notes are required'),
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    const notes = document.querySelector<HTMLTextAreaElement>(
+      'textarea[name="notes"]'
+    );
+    expect(notes).toBeTruthy();
+    await user.clear(notes as HTMLTextAreaElement);
+    await advanceCheckoutDebounce();
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
   });
 
   it('syncs names-only billing without stale address fields', async () => {
@@ -612,6 +679,232 @@ describe('Checkout draft-order field sync', () => {
     expect(getLastUpdateInput()).toMatchObject({
       shipping: { phone: '+12015550123' },
     });
+  });
+
+  it('syncs current notes before immediate offline confirmation', async () => {
+    const { user } = renderCheckout({
+      sessionOverrides: {
+        paymentMethods: offlinePaymentMethods(),
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    const notes = document.querySelector<HTMLTextAreaElement>(
+      'textarea[name="notes"]'
+    );
+    expect(notes).toBeTruthy();
+    await user.clear(notes as HTMLTextAreaElement);
+    await user.type(notes as HTMLTextAreaElement, 'Race note');
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+    await waitForOperation('ConfirmCheckoutSession');
+
+    const [updateIdx, confirmIdx] = getOperationOrder([
+      'UpdateCheckoutSessionDraftOrder',
+      'ConfirmCheckoutSession',
+    ]);
+    expect(updateIdx).toBeGreaterThanOrEqual(0);
+    expect(confirmIdx).toBeGreaterThan(updateIdx);
+    expect(getLastUpdateInput()).toMatchObject({
+      notes: [{ authorType: 'CUSTOMER', content: 'Race note' }],
+    });
+  });
+
+  it('syncs current shipping name before immediate offline confirmation', async () => {
+    const { user } = renderCheckout({
+      sessionOverrides: {
+        paymentMethods: offlinePaymentMethods(),
+      },
+    });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    clearOperations();
+
+    await typeIntoNamedField(user, 'shippingFirstName', 'Race');
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+    await waitForOperation('ConfirmCheckoutSession');
+
+    const [updateIdx, confirmIdx] = getOperationOrder([
+      'UpdateCheckoutSessionDraftOrder',
+      'ConfirmCheckoutSession',
+    ]);
+    expect(updateIdx).toBeGreaterThanOrEqual(0);
+    expect(confirmIdx).toBeGreaterThan(updateIdx);
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Race', lastName: 'Buyer' },
+      billing: { firstName: 'Race', lastName: 'Buyer' },
+    });
+  });
+
+  it('syncs names-only billing edits before immediate free-pickup confirmation', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        billing: {
+          firstName: '',
+          lastName: '',
+          phone: '',
+          email: 'jane@example.com',
+          address: null,
+        },
+        lineItems: [{ fulfillmentMode: DeliveryMethods.PICKUP }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+        paymentMethods: offlinePaymentMethods(),
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    // No debounce advance: the names are only in the form when Pay is clicked.
+    await typeIntoNamedField(user, 'billingFirstName', 'Pickup');
+    await typeIntoNamedField(user, 'billingLastName', 'Person');
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+    await waitForOperation('ConfirmCheckoutSession');
+
+    const [updateIndex, confirmIndex] = getOperationOrder([
+      'UpdateCheckoutSessionDraftOrder',
+      'ConfirmCheckoutSession',
+    ]);
+    expect(updateIndex).toBeGreaterThanOrEqual(0);
+    expect(confirmIndex).toBeGreaterThan(updateIndex);
+    expect(getLastUpdateInput()).toMatchObject({
+      billing: { firstName: 'Pickup', lastName: 'Person' },
+    });
+  });
+
+  it('disables form edits while the final sync runs', async () => {
+    const { user } = renderCheckout({
+      apiOverrides: { delayMs: 100 },
+      sessionOverrides: {
+        paymentMethods: offlinePaymentMethods(),
+      },
+    });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    clearOperations();
+
+    const payButton = await screen.findByRole('button', {
+      name: /complete your order/i,
+    });
+    await waitFor(() => {
+      expect(payButton).not.toBeDisabled();
+    });
+
+    await typeIntoNamedField(user, 'shippingFirstName', 'Locked');
+    const click = user.click(payButton);
+
+    await waitFor(() => {
+      expect(getNamedInput('shippingFirstName')).toBeDisabled();
+    });
+
+    await click;
+    await waitForOperation('ConfirmCheckoutSession');
+  });
+
+  it('refetches the draft order after the final sync patch and before confirming', async () => {
+    const { user } = renderCheckout({
+      sessionOverrides: {
+        paymentMethods: offlinePaymentMethods(),
+      },
+    });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    clearOperations();
+
+    await typeIntoNamedField(user, 'shippingFirstName', 'Refetch');
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+    await waitForOperation('ConfirmCheckoutSession');
+
+    const operations = getOperationNames();
+    const updateIndex = operations.indexOf('UpdateCheckoutSessionDraftOrder');
+    const confirmIndex = operations.indexOf('ConfirmCheckoutSession');
+    const refetchIndex = operations.findIndex(
+      (name, index) => name === 'DraftOrder' && index > updateIndex
+    );
+
+    expect(updateIndex).toBeGreaterThanOrEqual(0);
+    expect(refetchIndex).toBeGreaterThan(updateIndex);
+    expect(confirmIndex).toBeGreaterThan(refetchIndex);
+  });
+
+  it('does not send a final sync patch when the form already matches the order', async () => {
+    const { user } = renderCheckout({
+      sessionOverrides: {
+        paymentMethods: offlinePaymentMethods(),
+      },
+    });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    clearOperations();
+
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+    await waitForOperation('ConfirmCheckoutSession');
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+  });
+
+  it('blocks confirmation and surfaces a sync error when the final sync patch fails', async () => {
+    const { user } = renderCheckout({
+      sessionOverrides: {
+        paymentMethods: offlinePaymentMethods(),
+      },
+    });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    clearOperations();
+
+    setApiError('updateDraftOrder', new Error('update failed'));
+
+    await typeIntoNamedField(user, 'shippingFirstName', 'Broken');
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(/Failed to update order/i);
+    });
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+  });
+
+  it('does not sync an invalid email and syncs it once corrected', async () => {
+    const { user } = renderCheckout();
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    clearOperations();
+
+    await typeIntoNamedField(user, 'contactEmail', 'not-an-email');
+    await advanceCheckoutDebounce();
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+
+    await typeIntoNamedField(user, 'contactEmail', 'valid@example.com');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { email: 'valid@example.com' },
+      billing: { email: 'valid@example.com' },
+    });
+    expect(
+      getOperations('UpdateCheckoutSessionDraftOrder').map(operation =>
+        JSON.stringify(operation.input)
+      )
+    ).not.toContain(expect.stringContaining('not-an-email'));
   });
 
   it('resetField after a successful sync makes the typed value pristine for later refetches', async () => {

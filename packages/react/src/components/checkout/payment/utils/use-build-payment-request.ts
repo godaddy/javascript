@@ -53,6 +53,9 @@ export interface GooglePayRequest {
 // PayPal request interface
 export interface PayPalRequest {
   purchase_units: Array<{
+    payee?: {
+      merchant_id: string;
+    };
     amount: {
       currency_code: string;
       value: string;
@@ -179,7 +182,7 @@ export function useBuildPaymentRequest(): {
   squarePaymentRequest: SquarePaymentRequest;
 } {
   const formatCurrency = useFormatCurrency();
-  const { session } = useCheckoutContext();
+  const { paypalConfig, session } = useCheckoutContext();
 
   const draftOrderTotalsQuery = useDraftOrderTotals();
   const draftOrderQuery = useDraftOrder();
@@ -429,9 +432,13 @@ export function useBuildPaymentRequest(): {
     shippingMinorUnits -
     discountMinorUnits;
 
+  const payPalMerchantId = paypalConfig?.merchantId?.trim();
   const payPalRequest: PayPalRequest = {
     purchase_units: [
       {
+        ...(payPalMerchantId
+          ? { payee: { merchant_id: payPalMerchantId } }
+          : {}),
         amount: {
           currency_code: currencyCode,
           value: formatCurrency({
