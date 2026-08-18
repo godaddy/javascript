@@ -80,7 +80,20 @@ export function CCAvenueReturnProvider({
           ]);
         }
       });
-  }, [session?.token, session?.id, setCheckoutErrors]);
+    // Every value the effect reads is a dependency, `jwt` included: in the
+    // token-exchange path the session cookie is absent, so `jwt` is the only
+    // credential that unblocks the gate above, and it can arrive after the
+    // first run. Re-running is safe — `hasRun` makes the confirmation
+    // fire-once regardless of how many times the effect is re-invoked.
+  }, [
+    session?.token,
+    session?.id,
+    session?.enableTips,
+    session?.draftOrder?.id,
+    jwt,
+    confirmCheckout.mutateAsync,
+    setCheckoutErrors,
+  ]);
 
   return <>{children}</>;
 }

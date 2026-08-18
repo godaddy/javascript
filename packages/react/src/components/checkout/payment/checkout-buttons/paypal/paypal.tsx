@@ -3,7 +3,7 @@ import {
   PayPalButtons,
   usePayPalScriptReducer,
 } from '@paypal/react-paypal-js';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
@@ -19,7 +19,7 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 
 function PayPalButtonsWrapper() {
-  const { setCheckoutErrors } = useCheckoutContext();
+  const { session, setCheckoutErrors } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const { payPalRequest } = useBuildPaymentRequest();
@@ -29,6 +29,10 @@ function PayPalButtonsWrapper() {
   const deliveryMethod = form.watch('deliveryMethod');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const [{ isResolved, isPending }] = usePayPalScriptReducer();
+  const tipAmount = form.watch('tipAmount') || 0;
+  // PayPal's popup can stay open while the tip changes underneath, so confirm
+  // sends the tip `createOrder` submitted rather than the current form value.
+  const authorizedTipAmount = useRef<number | null>(null);
 
   // PayPal onClick handler that returns Promise<boolean>
   const handleClick = async (_data, actions) => {
@@ -54,6 +58,7 @@ function PayPalButtonsWrapper() {
   };
 
   const createOrder = async (_data, actions) => {
+    authorizedTipAmount.current = session?.enableTips ? tipAmount : null;
     const order = {
       ...payPalRequest,
       purchase_units: payPalRequest.purchase_units
@@ -80,6 +85,9 @@ function PayPalButtonsWrapper() {
         paymentToken: `${details.id}:${details.payer.payer_id}`,
         paymentType: 'paypal',
         paymentProvider: PaymentProvider.PAYPAL,
+        ...(authorizedTipAmount.current === null
+          ? {}
+          : { tipAmount: authorizedTipAmount.current }),
       });
     } catch (err: unknown) {
       if (err instanceof GraphQLErrorWithCodes) {
