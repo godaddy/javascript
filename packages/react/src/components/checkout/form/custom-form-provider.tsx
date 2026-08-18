@@ -1,8 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { FieldPath, UseFormReturn, UseFormTrigger } from 'react-hook-form';
 import { FormProvider } from 'react-hook-form';
+import {
+  getBillingCollectionMode,
+  hasInlineBillingForm,
+} from '@/components/checkout/payment/utils/billing-collection';
 import { PaymentMethodType } from '@/types';
-import type { CheckoutFormData } from '../checkout';
+import { type CheckoutFormData, useCheckoutContext } from '../checkout';
 import { DeliveryMethods } from '../delivery/delivery-method';
 
 /**
@@ -19,10 +23,15 @@ export function CustomFormProvider<
   const methodsRef = React.useRef(methods);
   // Use state to force re-render
   const [, setForceUpdate] = useState({});
+  const { customSchemaFields, session } = useCheckoutContext();
+  const customSchemaFieldsRef = React.useRef(customSchemaFields);
+  const sessionRef = React.useRef(session);
 
-  // Update the ref on every render
+  // Update the refs on every render
   useEffect(() => {
     methodsRef.current = methods;
+    customSchemaFieldsRef.current = customSchemaFields;
+    sessionRef.current = session;
   });
 
   const enhancedMethods = useMemo(() => {
@@ -58,10 +67,108 @@ export function CustomFormProvider<
           const isShipping = deliveryMethod === DeliveryMethods.SHIP;
           const isFreeOrder = paymentMethod === PaymentMethodType.OFFLINE;
           const isFreePickup = isFreeOrder && isPickup;
+          const currentSession = sessionRef.current;
+          let billingContext:
+            | 'top-level'
+            | 'inline-payment-form'
+            | 'free-payment-form' = 'top-level';
+          if (hasInlineBillingForm(paymentMethod)) {
+            billingContext = 'inline-payment-form';
+          } else if (isFreeOrder) {
+            billingContext = 'free-payment-form';
+          }
+          const billingMode = getBillingCollectionMode({
+            context: billingContext,
+            deliveryMethod,
+            paymentMethod,
+            paymentUseShippingAddress,
+            enableBillingAddressCollection:
+              currentSession?.enableBillingAddressCollection,
+            enableTaxCollection: currentSession?.enableTaxCollection,
+          });
 
           // Get all field names and filter based on conditions
           const allFieldNames = Object.keys(values);
           let fieldNames = [...allFieldNames] as Array<FieldPath<TFormValues>>;
+          const shippingAddressFieldNames = new Set([
+            'shippingFirstName',
+            'shippingLastName',
+            'shippingAddressLine1',
+            'shippingAddressLine2',
+            'shippingAddressLine3',
+            'shippingAdminArea4',
+            'shippingAdminArea3',
+            'shippingAdminArea2',
+            'shippingAdminArea1',
+            'shippingPostalCode',
+            'shippingCountryCode',
+          ]);
+          const billingAddressFieldNames = new Set([
+            'billingAddressLine1',
+            'billingAddressLine2',
+            'billingAddressLine3',
+            'billingAdminArea4',
+            'billingAdminArea3',
+            'billingAdminArea2',
+            'billingAdminArea1',
+            'billingPostalCode',
+            'billingCountryCode',
+          ]);
+          const billingNameFieldNames = new Set([
+            'billingFirstName',
+            'billingLastName',
+          ]);
+          const shippingSectionIsCollectable = Boolean(
+            isShipping && currentSession?.enableShipping
+          );
+          const shippingAddressIsCollectable = Boolean(
+            shippingSectionIsCollectable &&
+              currentSession?.enableShippingAddressCollection
+          );
+          const billingNamesAreCollectable = billingMode !== 'none';
+          const billingAddressIsCollectable = billingMode === 'address';
+          const phoneIsCollectable =
+            currentSession?.enablePhoneCollection === true;
+          const notesAreCollectable =
+            currentSession?.enableNotesCollection === true;
+
+          const isCollectable = (fieldName: string) => {
+            if (fieldName === 'shippingPhone') {
+              return shippingAddressIsCollectable && phoneIsCollectable;
+            }
+            if (fieldName === 'billingPhone') {
+              return billingNamesAreCollectable && phoneIsCollectable;
+            }
+            if (shippingAddressFieldNames.has(fieldName)) {
+              return shippingAddressIsCollectable;
+            }
+            if (fieldName === 'shippingMethod') {
+              return shippingSectionIsCollectable;
+            }
+            if (billingNameFieldNames.has(fieldName)) {
+              return billingNamesAreCollectable;
+            }
+            if (billingAddressFieldNames.has(fieldName)) {
+              return billingAddressIsCollectable;
+            }
+            if (fieldName.startsWith('shipping')) {
+              return shippingSectionIsCollectable;
+            }
+            if (fieldName.startsWith('billing')) {
+              return billingNamesAreCollectable;
+            }
+            if (fieldName === 'notes') {
+              return notesAreCollectable;
+            }
+            return true;
+          };
+          fieldNames = fieldNames.filter(fieldName => isCollectable(fieldName));
+
+          const customFieldNames = new Set<string>(
+            (customSchemaFieldsRef.current ?? []).filter(isCollectable)
+          );
+          const isSkippable = (fieldName: string) =>
+            !customFieldNames.has(fieldName);
 
           /* For free pickup orders, only validate billingFirstName and billingLastName */
           if (isFreePickup) {
@@ -69,7 +176,8 @@ export function CustomFormProvider<
               fieldName =>
                 !fieldName.startsWith('billing') ||
                 fieldName === 'billingFirstName' ||
-                fieldName === 'billingLastName'
+                fieldName === 'billingLastName' ||
+                !isSkippable(fieldName)
             );
           } else if (paymentUseShippingAddress && isShipping) {
             /* If using shipping address for billing, filter out billing-related field validations.
@@ -77,24 +185,20 @@ export function CustomFormProvider<
              * fulfillment orders, or sessions with enableShipping: false, still validate
              * billing fields — there's no shipping address to copy from in those cases. */
             fieldNames = fieldNames.filter(
-              fieldName => !fieldName.startsWith('billing')
+              fieldName =>
+                !fieldName.startsWith('billing') || !isSkippable(fieldName)
             );
           }
 
           /* If the delivery method is not shipping (i.e. pickup), filter out shipping-related field validations */
           if (!isShipping) {
             fieldNames = fieldNames.filter(
-              fieldName => !fieldName.startsWith('shipping')
+              fieldName =>
+                !fieldName.startsWith('shipping') || !isSkippable(fieldName)
             );
           }
 
-          // Trigger validation only on the filtered fields if any condition is true,
-          // otherwise trigger on all fields
-          if (paymentUseShippingAddress || isPickup || isFreeOrder) {
-            result = await methods.trigger(fieldNames, triggerOptions);
-          } else {
-            result = await methods.trigger(undefined, triggerOptions);
-          }
+          result = await methods.trigger(fieldNames, triggerOptions);
         }
 
         // Force update to ensure error messages show immediately

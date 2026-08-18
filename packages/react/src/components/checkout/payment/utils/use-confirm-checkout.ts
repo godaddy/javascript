@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -6,17 +6,13 @@ import {
   useCheckoutContext,
 } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
-import {
-  type DraftOrderSession,
-  useDraftOrder,
-} from '@/components/checkout/order/use-draft-order';
+import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
 import { getPickupMode } from '@/components/checkout/pickup/utils/generate-pickup-time-slots';
 import { getShippingFulfillmentSyncKey } from '@/components/checkout/shipping/utils/should-apply-shipping-method';
 import { applyTipFieldError } from '@/components/checkout/tips/utils/tip-field-errors';
 import { isDigitalLineItem } from '@/components/checkout/utils/fulfillment';
-import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { eventIds } from '@/tracking/events';
@@ -100,7 +96,6 @@ export function useConfirmCheckout() {
   const { apiHost, t } = useGoDaddyContext();
   const form = useFormContext();
   const { data: order } = useDraftOrder();
-  const queryClient = useQueryClient();
   const flushCheckoutSync = useFlushCheckoutSync();
   const isPendingRef = useRef(false);
 
@@ -128,7 +123,12 @@ export function useConfirmCheckout() {
       try {
         const { isExpress, ...confirmCheckoutInput } = input;
 
-        await flushCheckoutSync();
+        setCheckoutErrors(undefined);
+        setIsConfirmingCheckout(true);
+
+        const { latestOrder } = await flushCheckoutSync({
+          includeCurrentFormDiff: true,
+        });
 
         const deliveryMethod = form.getValues('deliveryMethod');
         const isPickup =
@@ -136,25 +136,13 @@ export function useConfirmCheckout() {
         const isShipping =
           deliveryMethod === DeliveryMethods.SHIP && !isExpress;
 
-        const latestDraftOrderSession = session?.id
-          ? await queryClient
-              .fetchQuery<DraftOrderSession>({
-                queryKey: checkoutQueryKeys.draftOrder(session.id),
-              })
-              .catch(error => {
-                setCheckoutErrors(['DRAFT_ORDER_UPDATE_FAILED']);
-                throw error;
-              })
-          : undefined;
-        const latestOrder =
-          latestDraftOrderSession?.checkoutSession?.draftOrder ?? order;
-
+        const latestDraftOrder = latestOrder ?? order;
         const hasShippingLines = (latestOrder?.shippingLines?.length ?? 0) > 0;
         const hasNonDigitalLineItems = Boolean(
           latestOrder?.lineItems?.some(lineItem => !isDigitalLineItem(lineItem))
         );
         const hasLineItemsMissingShippingFulfillment = Boolean(
-          getShippingFulfillmentSyncKey(latestOrder?.lineItems)
+          getShippingFulfillmentSyncKey(latestDraftOrder?.lineItems)
         );
 
         if (
@@ -216,9 +204,6 @@ export function useConfirmCheckout() {
         // 	timezone: form.getValues("pickupTimezone") || "UTC",
         // 	pickUpData,
         // });
-
-        setCheckoutErrors(undefined);
-        setIsConfirmingCheckout(true);
 
         track({
           eventId: eventIds.paymentStart,

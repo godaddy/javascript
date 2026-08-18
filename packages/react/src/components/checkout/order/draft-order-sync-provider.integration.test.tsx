@@ -1,8 +1,14 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import {
   type CheckoutFormData,
   checkoutContext,
@@ -22,22 +28,74 @@ import {
   flushPromises,
   getOperations,
   mockGodaddyApi,
+  setApiError,
   setApiErrorOnce,
   waitForOperation,
 } from '../__tests__/checkout-test-env';
 import { getLastUpdateInput } from '../__tests__/checkout-test-fixtures';
 
 function SyncConsumer() {
-  const { enqueueDraftOrderPatch, flushDraftOrderSync } =
-    useDraftOrderSyncQueue();
+  const {
+    enqueueDraftOrderPatch,
+    flushDraftOrderSync,
+    markDraftOrderSyncDirty,
+    registerDraftOrderSync,
+  } = useDraftOrderSyncQueue();
   const form = useFormContext<CheckoutFormData>();
+  const [registrationVersion, setRegistrationVersion] = React.useState(0);
+  const shippingFirstName = useWatch({
+    control: form.control,
+    name: 'shippingFirstName',
+  });
+
+  React.useEffect(
+    () =>
+      registerDraftOrderSync({
+        id: 'shipping-name',
+        fieldNames: ['shippingFirstName', 'shippingLastName'],
+        dependencyFieldNames: ['paymentUseShippingAddress'],
+        debounceMs: 100,
+        enabled: ({ values, draftOrder }) =>
+          Boolean(
+            draftOrder &&
+              values.shippingFirstName?.trim() &&
+              values.shippingLastName?.trim() &&
+              ((draftOrder.shipping?.firstName || '') !==
+                values.shippingFirstName ||
+                (draftOrder.shipping?.lastName || '') !==
+                  values.shippingLastName)
+          ),
+        buildPatch: ({ values }) => ({
+          shipping: {
+            firstName: values.shippingFirstName.trim(),
+            lastName: values.shippingLastName.trim(),
+          },
+          ...(values.paymentUseShippingAddress
+            ? {
+                billing: {
+                  firstName: values.shippingFirstName.trim(),
+                  lastName: values.shippingLastName.trim(),
+                },
+              }
+            : {}),
+        }),
+      }),
+    [registerDraftOrderSync, registrationVersion, shippingFirstName]
+  );
 
   return (
     <div>
       <input aria-label='first name' {...form.register('shippingFirstName')} />
+      <input aria-label='last name' {...form.register('shippingLastName')} />
+      <input
+        aria-label='use shipping address'
+        type='checkbox'
+        {...form.register('paymentUseShippingAddress')}
+      />
       <span data-testid='shipping-first-name-dirty'>
         {String(!!form.formState.dirtyFields.shippingFirstName)}
       </span>
+      <span data-testid='shipping-first-name-value'>{shippingFirstName}</span>
       <button
         type='button'
         onClick={() =>
@@ -74,6 +132,51 @@ function SyncConsumer() {
       <button type='button' onClick={() => void flushDraftOrderSync()}>
         flush
       </button>
+      <button
+        type='button'
+        onClick={() => markDraftOrderSyncDirty('shipping-name')}
+      >
+        mark-shipping-name
+      </button>
+      <button
+        type='button'
+        onClick={() => setRegistrationVersion(version => version + 1)}
+      >
+        refresh-registration
+      </button>
+      <button
+        type='button'
+        onClick={() => {
+          form.setValue('shippingFirstName', 'Initial', { shouldDirty: true });
+          form.setValue('shippingLastName', 'Buyer', { shouldDirty: true });
+          markDraftOrderSyncDirty('shipping-name');
+        }}
+      >
+        revert-shipping-name
+      </button>
+      <button
+        type='button'
+        onClick={() =>
+          void flushDraftOrderSync({
+            includeCurrentValues: true,
+            refetchLatestOrder: true,
+          })
+        }
+      >
+        flush-current-values
+      </button>
+      <button
+        type='button'
+        onClick={() =>
+          void flushDraftOrderSync({
+            includeCurrentValues: true,
+            refetchLatestOrder: true,
+            allowWhileConfirming: true,
+          })
+        }
+      >
+        flush-final
+      </button>
     </div>
   );
 }
@@ -82,16 +185,19 @@ function SyncHarness({
   session,
   draftOrder,
   isConfirmingCheckout = false,
+  schema,
 }: {
   session: CheckoutSession | null;
   draftOrder: DraftOrder;
   isConfirmingCheckout?: boolean;
+  schema?: z.ZodTypeAny;
 }) {
   const [confirming, setConfirming] = React.useState(isConfirmingCheckout);
   const form = useForm<CheckoutFormData>({
     defaultValues: {
       shippingFirstName: 'Initial',
       shippingLastName: 'Buyer',
+      paymentUseShippingAddress: false,
     } as CheckoutFormData,
   });
 
@@ -107,7 +213,7 @@ function SyncHarness({
           setCheckoutErrors: () => undefined,
         }}
       >
-        <DraftOrderSyncProvider>
+        <DraftOrderSyncProvider schema={schema}>
           <SyncConsumer />
           <button type='button' onClick={() => setConfirming(true)}>
             start-confirming
@@ -123,11 +229,13 @@ function renderSyncHarness({
   draftOrder: providedDraftOrder,
   updateDraftOrderDelayMs = 0,
   isConfirmingCheckout = false,
+  schema,
 }: {
   session?: CheckoutSession | null;
   draftOrder?: DraftOrder;
   updateDraftOrderDelayMs?: number;
   isConfirmingCheckout?: boolean;
+  schema?: z.ZodTypeAny;
 } = {}) {
   const draftOrder = providedDraftOrder ?? buildDraftOrder();
   const session =
@@ -161,6 +269,7 @@ function renderSyncHarness({
         session={session}
         draftOrder={draftOrder}
         isConfirmingCheckout={isConfirmingCheckout}
+        schema={schema}
       />
     </GoDaddyProvider>
   );
@@ -218,6 +327,201 @@ describe('DraftOrderSyncProvider integration', () => {
     });
   });
 
+  it('replaces a rejected registration patch with the corrected value instead of retrying it', async () => {
+    const { user } = renderSyncHarness();
+    setApiError('updateDraftOrder', new Error('invalid value'));
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Bad');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Bad' },
+    });
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Good');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder', 2);
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Good' },
+    });
+  });
+
+  it('drops a rejected registration patch when the field is reverted to the order value', async () => {
+    const { user } = renderSyncHarness({
+      draftOrder: buildDraftOrder({
+        shipping: { firstName: 'Initial', lastName: 'Buyer' },
+      }),
+    });
+    setApiErrorOnce('updateDraftOrder', new Error('invalid value'));
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Bad');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Bad' },
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: 'revert-shipping-name' })
+    );
+    await advance(100);
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(1);
+  });
+
+  it('syncs a corrected registration value after an in-flight save fails', async () => {
+    const { user } = renderSyncHarness({
+      updateDraftOrderDelayMs: 500,
+      draftOrder: buildDraftOrder({
+        shipping: { firstName: 'Initial', lastName: 'Buyer' },
+      }),
+    });
+    setApiErrorOnce('updateDraftOrder', new Error('invalid value'));
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Bad');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Bad' },
+    });
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Good');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(1);
+
+    await advance(500);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder', 2);
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Good', lastName: 'Buyer' },
+    });
+  });
+
+  it('keeps a dirty registration when its registration object refreshes before debounce flush', async () => {
+    const { user } = renderSyncHarness();
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Dirty');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'refresh-registration' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Dirty', lastName: 'Buyer' },
+    });
+  });
+
+  it('supports async schema refinements when checking dirty registrations', async () => {
+    const { user } = renderSyncHarness({
+      schema: z.object({
+        shippingFirstName: z.string().refine(async () => true),
+        shippingLastName: z.string(),
+      }),
+    });
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Async');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Async', lastName: 'Buyer' },
+    });
+  });
+
+  it('skips a dirty registration rejected by an async schema refinement', async () => {
+    const { user } = renderSyncHarness({
+      schema: z.object({
+        shippingFirstName: z.string().refine(async value => value !== 'Bad'),
+        shippingLastName: z.string(),
+      }),
+    });
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Bad');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+  });
+
+  it('rechecks current values after async schema validation settles', async () => {
+    let resolveValidationStarted: (() => void) | undefined;
+    let resolveValidationCanFinish: (() => void) | undefined;
+    const validationStarted = new Promise<void>(resolve => {
+      resolveValidationStarted = resolve;
+    });
+    const validationCanFinish = new Promise<void>(resolve => {
+      resolveValidationCanFinish = resolve;
+    });
+    const { user } = renderSyncHarness({
+      schema: z.object({
+        shippingFirstName: z.string().refine(async () => {
+          resolveValidationStarted?.();
+          await validationCanFinish;
+          return true;
+        }),
+        shippingLastName: z.string(),
+        paymentUseShippingAddress: z.boolean(),
+      }),
+    });
+
+    await user.click(screen.getByLabelText('use shipping address'));
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'First');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await validationStarted;
+
+    await user.click(screen.getByLabelText('use shipping address'));
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Second');
+    resolveValidationCanFinish?.();
+    await flushPromises();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Second', lastName: 'Buyer' },
+    });
+    expect(getLastUpdateInput()).not.toHaveProperty('billing');
+  });
+
   it('flushDraftOrderSync clears debounce work and waits for the mutation to settle', async () => {
     const { user } = renderSyncHarness({ updateDraftOrderDelayMs: 500 });
 
@@ -246,6 +550,76 @@ describe('DraftOrderSyncProvider integration', () => {
 
     expect(getLastUpdateInput()).toMatchObject({
       billing: { firstName: 'Immediate' },
+    });
+  });
+
+  it('debounces dirty registrations and builds the patch from current form values', async () => {
+    const { user } = renderSyncHarness();
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Registered');
+    await user.clear(screen.getByLabelText('last name'));
+    await user.type(screen.getByLabelText('last name'), 'Buyer');
+    await user.click(
+      screen.getByRole('button', { name: 'mark-shipping-name' })
+    );
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Registered', lastName: 'Buyer' },
+    });
+  });
+
+  it('includeCurrentValues flushes registered values even before a dirty mark', async () => {
+    const { user } = renderSyncHarness();
+
+    await user.clear(screen.getByLabelText('first name'));
+    await user.type(screen.getByLabelText('first name'), 'Current');
+    await user.click(
+      screen.getByRole('button', { name: 'flush-current-values' })
+    );
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Current', lastName: 'Buyer' },
+    });
+    expect(getOperations('DraftOrder').length).toBeGreaterThan(0);
+  });
+
+  it('skips registration patches while confirming unless the flush is the final sync', async () => {
+    const { user } = renderSyncHarness({ isConfirmingCheckout: true });
+
+    await user.click(
+      screen.getByRole('button', { name: 'flush-current-values' })
+    );
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+
+    await user.click(screen.getByRole('button', { name: 'flush-final' }));
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      shipping: { firstName: 'Initial', lastName: 'Buyer' },
+    });
+  });
+
+  it('sends queued patches on the final sync even after confirmation started', async () => {
+    const { user } = renderSyncHarness();
+
+    await user.click(screen.getByRole('button', { name: 'enqueue-a' }));
+    await user.click(screen.getByRole('button', { name: 'start-confirming' }));
+    await advance(100);
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+
+    await user.click(screen.getByRole('button', { name: 'flush-final' }));
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(
+      getOperations('UpdateCheckoutSessionDraftOrder')[0].input
+    ).toMatchObject({
+      shipping: { firstName: 'Alpha' },
     });
   });
 
@@ -293,8 +667,8 @@ describe('DraftOrderSyncProvider integration', () => {
     const input = screen.getByLabelText('first name');
 
     await user.clear(input);
-    await user.type(input, 'Typed Value');
-    expect(input).toHaveValue('Typed Value');
+    await user.type(input, 'Alpha');
+    expect(input).toHaveValue('Alpha');
     expect(screen.getByTestId('shipping-first-name-dirty')).toHaveTextContent(
       'true'
     );
@@ -308,7 +682,31 @@ describe('DraftOrderSyncProvider integration', () => {
         'false'
       );
     });
-    expect(input).toHaveValue('Typed Value');
+    expect(input).toHaveValue('Alpha');
     expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(1);
+  });
+
+  it('does not mark a field pristine when it changes while its save is in flight', async () => {
+    const { user } = renderSyncHarness({ updateDraftOrderDelayMs: 500 });
+    const input = screen.getByLabelText('first name');
+
+    await user.clear(input);
+    await user.type(input, 'Alpha');
+    await user.click(screen.getByRole('button', { name: 'enqueue-a' }));
+    await advance(100);
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    await user.clear(input);
+    await user.type(input, 'Beta');
+    await advance(500);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('shipping-first-name-dirty')).toHaveTextContent(
+        'true'
+      );
+      expect(screen.getByTestId('shipping-first-name-value')).toHaveTextContent(
+        'Beta'
+      );
+    });
   });
 });

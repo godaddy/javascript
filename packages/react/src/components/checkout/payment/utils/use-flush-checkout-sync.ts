@@ -14,6 +14,7 @@ const CHECKOUT_SYNC_ERROR = 'DRAFT_ORDER_UPDATE_FAILED';
 interface FlushCheckoutSyncOptions {
   timeoutMs?: number;
   includeFetches?: boolean;
+  includeCurrentFormDiff?: boolean;
 }
 
 function delay(ms: number) {
@@ -28,8 +29,6 @@ export function useFlushCheckoutSync() {
   return React.useCallback(
     async (options: FlushCheckoutSyncOptions = {}) => {
       try {
-        await flushDraftOrderSync();
-
         const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         const includeFetches = options.includeFetches ?? true;
         const startedAt = Date.now();
@@ -58,31 +57,51 @@ export function useFlushCheckoutSync() {
             : []),
         ];
 
-        while (true) {
-          const pendingMutations = criticalMutationKeys.reduce(
-            (count, mutationKey) =>
-              count + queryClient.isMutating({ mutationKey }),
-            0
-          );
+        const waitForCriticalWork = async () => {
+          while (true) {
+            const pendingMutations = criticalMutationKeys.reduce(
+              (count, mutationKey) =>
+                count + queryClient.isMutating({ mutationKey }),
+              0
+            );
 
-          const pendingFetches = includeFetches
-            ? criticalQueryKeys.reduce(
-                (count, queryKey) =>
-                  count + queryClient.isFetching({ queryKey }),
-                0
-              )
-            : 0;
+            const pendingFetches = includeFetches
+              ? criticalQueryKeys.reduce(
+                  (count, queryKey) =>
+                    count + queryClient.isFetching({ queryKey }),
+                  0
+                )
+              : 0;
 
-          if (pendingMutations === 0 && pendingFetches === 0) {
-            return;
+            if (pendingMutations === 0 && pendingFetches === 0) return;
+
+            if (Date.now() - startedAt > timeoutMs) {
+              throw new Error('Timed out waiting for checkout sync to settle');
+            }
+
+            await delay(POLL_INTERVAL_MS);
           }
+        };
 
-          if (Date.now() - startedAt > timeoutMs) {
-            throw new Error('Timed out waiting for checkout sync to settle');
-          }
-
-          await delay(POLL_INTERVAL_MS);
+        if (!options.includeCurrentFormDiff) {
+          const result = await flushDraftOrderSync();
+          await waitForCriticalWork();
+          return result;
         }
+
+        // Drain queued work and let critical checkout mutations/fetches settle
+        // first, so the final diff compares against post-settle backend state.
+        await flushDraftOrderSync();
+        await waitForCriticalWork();
+
+        const result = await flushDraftOrderSync({
+          includeCurrentValues: true,
+          refetchLatestOrder: true,
+          allowWhileConfirming: true,
+        });
+        await waitForCriticalWork();
+
+        return result;
       } catch (error) {
         setCheckoutErrors([CHECKOUT_SYNC_ERROR]);
         throw error;
