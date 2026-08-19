@@ -353,6 +353,7 @@ export const ptBr = {
     TIP_EXCEEDS_LIMIT: 'A gorjeta é muito alta para este pedido',
     INVALID_TIP_AMOUNT: 'Digite um valor de gorjeta válido',
     TIPS_NOT_ENABLED: 'Gorjetas não são aceitas para este pedido',
+    TIP_CHARGE_FAILED: 'Tente outro valor de gorjeta ou escolha Sem Gorjeta',
   },
   storefront: {
     product: 'Produto',

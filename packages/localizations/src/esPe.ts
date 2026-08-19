@@ -355,6 +355,7 @@ export const esPe = {
     TIP_EXCEEDS_LIMIT: 'La propina es demasiado alta para este pedido',
     INVALID_TIP_AMOUNT: 'Ingrese un monto de propina válido',
     TIPS_NOT_ENABLED: 'No se aceptan propinas para este pedido',
+    TIP_CHARGE_FAILED: 'Pruebe otro monto de propina o elija Sin Propina',
   },
   storefront: {
     product: 'Producto',

@@ -372,6 +372,8 @@ export const deDe = {
     TIP_EXCEEDS_LIMIT: 'Das Trinkgeld ist für diese Bestellung zu hoch',
     INVALID_TIP_AMOUNT: 'Gültigen Trinkgeldbetrag eingeben',
     TIPS_NOT_ENABLED: 'Für diese Bestellung wird kein Trinkgeld akzeptiert',
+    TIP_CHARGE_FAILED:
+      'Anderen Trinkgeldbetrag versuchen oder Kein Trinkgeld auswählen',
   },
   storefront: {
     product: 'Produkt',

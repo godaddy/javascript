@@ -335,6 +335,7 @@ export const zhCn = {
     TIP_EXCEEDS_LIMIT: '小费金额超出此订单的上限',
     INVALID_TIP_AMOUNT: '请输入有效的小费金额',
     TIPS_NOT_ENABLED: '此订单不接受小费',
+    TIP_CHARGE_FAILED: '请尝试其他小费金额或选择无小费',
   },
   storefront: {
     product: '产品',

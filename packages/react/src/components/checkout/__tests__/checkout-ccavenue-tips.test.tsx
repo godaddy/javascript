@@ -1,6 +1,7 @@
 import { enUs } from '@godaddy/localizations';
 import { screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import {
   getRedirectTipAmount,
   setRedirectTipAmount,
@@ -204,6 +205,53 @@ describe('Checkout CCAvenue tips', () => {
 
       await waitFor(() => {
         expect(submit).toHaveBeenCalled();
+      });
+    });
+
+    it('points at the tip when the authorization refuses a tip-only charge', async () => {
+      // Nothing is owed on the order, so the tip is the only amount being
+      // authorized and the only one the customer can change — and the API blamed
+      // nothing, so the field can only say what to do about it.
+      vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(
+        () => undefined
+      );
+      const { user } = renderCheckout({
+        checkoutProps: CCAVENUE_PROPS,
+        sessionOverrides: CCAVENUE_SESSION,
+        draftOrderOverrides: {
+          totals: {
+            subTotal: { value: 2500, currencyCode: 'USD' },
+            discountTotal: { value: 2500, currencyCode: 'USD' },
+            shippingTotal: { value: 0, currencyCode: 'USD' },
+            taxTotal: { value: 0, currencyCode: 'USD' },
+            feeTotal: { value: 0, currencyCode: 'USD' },
+            total: { value: 0, currencyCode: 'USD' },
+          },
+        },
+        apiOverrides: {
+          errors: {
+            authorizeCheckoutSession: new GraphQLErrorWithCodes([
+              {
+                message: 'Amount must be at least $0.50 USD',
+                code: 'TRANSACTION_PROCESSING_FAILED',
+              },
+            ]),
+          },
+        },
+      });
+      await waitForCheckoutReady();
+      clearOperations();
+
+      await user.click(await screen.findByRole('radio', { name: /20%/ }));
+      await user.click(
+        await screen.findByRole('button', { name: /pay with ccavenue/i })
+      );
+      await waitForOperation('AuthorizeCheckoutSession');
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(enUs.apiErrors.TIP_CHARGE_FAILED)
+        ).toBeInTheDocument();
       });
     });
   });

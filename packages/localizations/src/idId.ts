@@ -347,6 +347,7 @@ export const idId = {
     TIP_EXCEEDS_LIMIT: 'Tip terlalu besar untuk pesanan ini',
     INVALID_TIP_AMOUNT: 'Masukkan jumlah tip yang valid',
     TIPS_NOT_ENABLED: 'Tip tidak diterima untuk pesanan ini',
+    TIP_CHARGE_FAILED: 'Coba jumlah tip lain atau pilih Tanpa Tip',
   },
   storefront: {
     product: 'Produk',

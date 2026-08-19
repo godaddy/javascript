@@ -348,6 +348,7 @@ export const trTr = {
     TIP_EXCEEDS_LIMIT: 'Bahşiş bu sipariş için çok yüksek',
     INVALID_TIP_AMOUNT: 'Geçerli bir bahşiş tutarı girin',
     TIPS_NOT_ENABLED: 'Bu sipariş için bahşiş kabul edilmiyor',
+    TIP_CHARGE_FAILED: 'Farklı bir bahşiş tutarı deneyin veya Bahşiş Yok seçin',
   },
   storefront: {
     product: 'Ürün',

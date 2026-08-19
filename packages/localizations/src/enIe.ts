@@ -348,6 +348,7 @@ export const enIe = {
     TIP_EXCEEDS_LIMIT: 'Tip is too large for this order',
     INVALID_TIP_AMOUNT: 'Enter a valid tip amount',
     TIPS_NOT_ENABLED: 'Tips are not accepted for this order',
+    TIP_CHARGE_FAILED: 'Try a different tip amount, or choose No Tip',
   },
   storefront: {
     product: 'Product',

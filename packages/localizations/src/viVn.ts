@@ -348,6 +348,7 @@ export const viVn = {
     TIP_EXCEEDS_LIMIT: 'Tiền tip quá lớn cho đơn hàng này',
     INVALID_TIP_AMOUNT: 'Nhập số tiền tip hợp lệ',
     TIPS_NOT_ENABLED: 'Đơn hàng này không nhận tiền tip',
+    TIP_CHARGE_FAILED: 'Hãy thử số tiền tip khác hoặc chọn Không tip',
   },
   storefront: {
     product: 'Sản phẩm',

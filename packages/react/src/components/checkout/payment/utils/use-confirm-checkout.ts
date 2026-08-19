@@ -11,7 +11,10 @@ import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-fl
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
 import { getPickupMode } from '@/components/checkout/pickup/utils/generate-pickup-time-slots';
 import { getShippingFulfillmentSyncKey } from '@/components/checkout/shipping/utils/should-apply-shipping-method';
-import { applyTipFieldError } from '@/components/checkout/tips/utils/tip-field-errors';
+import {
+  applyTipFieldError,
+  applyTipOnlyChargeError,
+} from '@/components/checkout/tips/utils/tip-field-errors';
 import { isDigitalLineItem } from '@/components/checkout/utils/fulfillment';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
@@ -280,11 +283,18 @@ export function useConfirmCheckout() {
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
 
-      applyTipFieldError(
-        form,
-        error,
-        code => t.apiErrors?.[code as keyof typeof t.apiErrors]
-      );
+      const translate = (code: string) =>
+        t.apiErrors?.[code as keyof typeof t.apiErrors];
+
+      // An unattributed rejection still belongs on the tip field when the tip is
+      // the only thing being charged.
+      if (!applyTipFieldError(form, error, translate) && session?.enableTips) {
+        applyTipOnlyChargeError(
+          form,
+          order?.totals?.total?.value || 0,
+          translate
+        );
+      }
 
       // Track checkout error event
       track({

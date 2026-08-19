@@ -355,6 +355,7 @@ export const esAr = {
     TIP_EXCEEDS_LIMIT: 'La propina es demasiado alta para este pedido',
     INVALID_TIP_AMOUNT: 'Ingresá un monto de propina válido',
     TIPS_NOT_ENABLED: 'No se aceptan propinas para este pedido',
+    TIP_CHARGE_FAILED: 'Probá otro monto de propina o elegí Sin Propina',
   },
   storefront: {
     product: 'Producto',

@@ -371,6 +371,8 @@ export const itIt = {
     TIP_EXCEEDS_LIMIT: 'La mancia è troppo alta per questo ordine',
     INVALID_TIP_AMOUNT: 'Inserisci un importo della mancia valido',
     TIPS_NOT_ENABLED: 'Le mance non sono accettate per questo ordine',
+    TIP_CHARGE_FAILED:
+      'Prova un altro importo della mancia o scegli Nessuna Mancia',
   },
   storefront: {
     product: 'Prodotto',

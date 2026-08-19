@@ -519,6 +519,36 @@ describe('Checkout tips', () => {
       );
     }
 
+    /**
+     * A processor decline, which is all the API can say when the charge itself is
+     * refused: a generic code and no `path` to blame.
+     */
+    function rejectConfirmBlamingNothing() {
+      setApiError(
+        'confirmCheckout',
+        new GraphQLErrorWithCodes([
+          {
+            message: 'Amount must be at least $0.50 USD',
+            code: 'TRANSACTION_PROCESSING_FAILED',
+          },
+        ])
+      );
+    }
+
+    /** Nothing is owed on the order, but the subtotal the tip runs on is not zero. */
+    function fullyDiscountedTotals() {
+      return {
+        totals: {
+          subTotal: { value: 5000, currencyCode: 'USD' },
+          discountTotal: { value: 5000, currencyCode: 'USD' },
+          shippingTotal: { value: 0, currencyCode: 'USD' },
+          taxTotal: { value: 0, currencyCode: 'USD' },
+          feeTotal: { value: 0, currencyCode: 'USD' },
+          total: { value: 0, currencyCode: 'USD' },
+        },
+      };
+    }
+
     it('surfaces TIP_EXCEEDS_LIMIT on the tip field, not only in the error list', async () => {
       const { user } = renderCheckout({
         sessionOverrides: tipsOnlySession(),
@@ -566,6 +596,55 @@ describe('Checkout tips', () => {
       await waitFor(() => {
         expect(screen.queryByRole('alert')).not.toBeInTheDocument();
       });
+    });
+
+    it('points at the tip when the tip is the whole charge', async () => {
+      // Nothing is owed on the order, so the tip is the only amount being charged
+      // and the only one the customer can change. The API blamed nothing, so the
+      // reason stays in the error list and the field just says what to do.
+      const { user } = renderCheckout({
+        sessionOverrides: tipsOnlySession(),
+        draftOrderOverrides: fullyDiscountedTotals(),
+      });
+      await waitForCheckoutReady();
+
+      await user.click(await screen.findByRole('radio', { name: /15%/ }));
+      clearOperations();
+      rejectConfirmBlamingNothing();
+
+      await user.click(await screen.findByRole('button', { name: /pay now/i }));
+      await waitForOperation('ConfirmCheckoutSession');
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/try a different tip amount, or choose no tip/i)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('leaves the tip out of it when the order itself is being charged', async () => {
+      // The order total is owed with or without the tip, so changing the tip
+      // would not get the customer any further.
+      const { user } = renderCheckout({
+        sessionOverrides: tipsOnlySession(),
+      });
+      await waitForCheckoutReady();
+
+      await user.click(await screen.findByRole('radio', { name: /15%/ }));
+      clearOperations();
+      rejectConfirmBlamingNothing();
+
+      await user.click(await screen.findByRole('button', { name: /pay now/i }));
+      await waitForOperation('ConfirmCheckoutSession');
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/failed to process transaction/i)
+        ).toBeInTheDocument();
+      });
+      expect(
+        screen.queryByText(/try a different tip amount/i)
+      ).not.toBeInTheDocument();
     });
   });
 
