@@ -145,7 +145,10 @@ function ShippingPrefixedCustomFieldProbe() {
   return (
     <div>
       <label htmlFor='shipping-gift-message'>Shipping gift message</label>
-      <input id='shipping-gift-message' {...form.register('shippingGiftMessage')} />
+      <input
+        id='shipping-gift-message'
+        {...form.register('shippingGiftMessage')}
+      />
     </div>
   );
 }
@@ -523,7 +526,10 @@ describe('Checkout form validation', () => {
     });
     expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
 
-    await user.type(screen.getByLabelText(/shipping gift message/i), 'Gift wrap');
+    await user.type(
+      screen.getByLabelText(/shipping gift message/i),
+      'Gift wrap'
+    );
     await user.click(await clickSubmitButton(/complete your free order/i));
 
     await waitFor(() => {

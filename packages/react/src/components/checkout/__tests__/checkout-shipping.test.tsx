@@ -403,7 +403,9 @@ describe('Checkout shipping behavior', () => {
   });
 
   it('collects neither shipping nor billing address UI when hidden shipping is reused as billing', async () => {
-    const sharedAddress = buildShippingAddress({ addressLine1: '1 Hidden Way' });
+    const sharedAddress = buildShippingAddress({
+      addressLine1: '1 Hidden Way',
+    });
     const { user } = renderCheckout({
       draftOrderOverrides: {
         shipping: {
@@ -436,7 +438,9 @@ describe('Checkout shipping behavior', () => {
     await waitForCheckoutReady();
     clearOperations();
 
-    expect(screen.getByLabelText(/use shipping address as billing/i)).toBeChecked();
+    expect(
+      screen.getByLabelText(/use shipping address as billing/i)
+    ).toBeChecked();
     expect(
       document.querySelector('input[name="shippingAddressLine1"]')
     ).not.toBeInTheDocument();

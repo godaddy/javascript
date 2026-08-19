@@ -43,10 +43,7 @@ function getOfflineBillingMode({
   | 'enableBillingAddressCollection'
   | 'enableTaxCollection'
 >): BillingCollectionMode {
-  if (
-    deliveryMethod === DeliveryMethods.SHIP &&
-    paymentUseShippingAddress
-  ) {
+  if (deliveryMethod === DeliveryMethods.SHIP && paymentUseShippingAddress) {
     return 'none';
   }
 
@@ -73,10 +70,7 @@ function getPaidStandardBillingMode({
   | 'paymentUseShippingAddress'
   | 'enableBillingAddressCollection'
 >): BillingCollectionMode {
-  if (
-    deliveryMethod === DeliveryMethods.SHIP &&
-    paymentUseShippingAddress
-  ) {
+  if (deliveryMethod === DeliveryMethods.SHIP && paymentUseShippingAddress) {
     return 'none';
   }
 

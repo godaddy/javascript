@@ -11,8 +11,8 @@ import type {
 } from '@/components/checkout/payment/types';
 import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
-import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
 import { usePoyntACHCollect } from '@/components/checkout/payment/utils/poynt-ach-provider';
+import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
 import {
   PaymentProvider,
   useConfirmCheckout,

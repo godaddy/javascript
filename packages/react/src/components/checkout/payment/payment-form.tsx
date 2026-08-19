@@ -35,8 +35,8 @@ import {
 } from '@/components/checkout/payment/payment-method-renderer';
 import type { TokenizeJs } from '@/components/checkout/payment/types';
 import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
-import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
+import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
 import { useGetSelectedPaymentMethod } from '@/components/checkout/payment/utils/use-get-selected-payment-method';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { Target } from '@/components/checkout/target/target';

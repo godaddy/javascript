@@ -59,10 +59,7 @@ function getExpectedMode({
   enableBillingAddressCollection,
   enableTaxCollection,
 }: BillingPolicyInput): BillingCollectionMode {
-  if (
-    deliveryMethod === DeliveryMethods.SHIP &&
-    paymentUseShippingAddress
-  ) {
+  if (deliveryMethod === DeliveryMethods.SHIP && paymentUseShippingAddress) {
     return 'none';
   }
 
