@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRef } from 'react';
-import { useFormContext } from 'react-hook-form';
 import {
   redirectToSuccessUrl,
   useCheckoutContext,
@@ -11,7 +10,6 @@ import {
   PaymentProvider,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
-import { applyTipFieldError } from '@/components/checkout/tips/utils/tip-field-errors';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { eventIds } from '@/tracking/events';
@@ -30,10 +28,8 @@ export function useConfirmExpressCheckout() {
     setIsConfirmingCheckout,
     setCheckoutErrors,
   } = useCheckoutContext();
-  const { apiHost, t } = useGoDaddyContext();
+  const { apiHost } = useGoDaddyContext();
   const isPaymentDisabled = useIsPaymentDisabled();
-  // Express buttons can render outside a form provider, so this may be null.
-  const form = useFormContext();
   const isPendingRef = useRef(false);
 
   return useMutation({
@@ -70,18 +66,6 @@ export function useConfirmExpressCheckout() {
       try {
         const { isExpress: _isExpress, ...confirmCheckoutInput } = input;
 
-        // The wallet sheet and the Stripe Elements amount are tip-inclusive, so
-        // capture the same tip the customer authorized. Callers may pass their
-        // own tipAmount; otherwise fall back to the tips section's form value.
-        const payload = {
-          ...confirmCheckoutInput,
-          tipAmount: session.enableTips
-            ? (confirmCheckoutInput.tipAmount ??
-              form?.getValues('tipAmount') ??
-              0)
-            : undefined,
-        };
-
         setCheckoutErrors(undefined);
         setIsConfirmingCheckout(true);
 
@@ -97,11 +81,11 @@ export function useConfirmExpressCheckout() {
 
         const data = jwt
           ? await confirmCheckout(
-              payload,
+              confirmCheckoutInput,
               { accessToken: jwt, sessionId: session?.id || '' },
               apiHost
             )
-          : await confirmCheckout(payload, session, apiHost);
+          : await confirmCheckout(confirmCheckoutInput, session, apiHost);
 
         if (!data) {
           throw new Error('Express checkout confirmation failed');
@@ -158,16 +142,6 @@ export function useConfirmExpressCheckout() {
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
-
-      // This payload carries a tip, so it can be rejected for one. Attributed to
-      // the tip field as in `useAuthorizeCheckout` and `useConfirmCheckout`,
-      // which leaves the customer somewhere to fix it rather than only a
-      // checkout-wide message. A no-op when the button renders without a form.
-      applyTipFieldError(
-        form,
-        error,
-        code => t.apiErrors?.[code as keyof typeof t.apiErrors]
-      );
 
       track({
         eventId: eventIds.checkoutError,

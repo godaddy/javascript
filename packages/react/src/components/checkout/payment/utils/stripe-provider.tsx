@@ -17,11 +17,17 @@ function StripeElementsUpdater({ amount = 0 }: { amount?: number }) {
   return null; // This component only updates Elements
 }
 
-export function StripeProvider({ children }: { children: React.ReactNode }) {
+export function StripeProvider({
+  children,
+  isExpress = false,
+}: {
+  children: React.ReactNode;
+  isExpress?: boolean;
+}) {
   const { stripeConfig } = useCheckoutContext();
 
   const { stripePromise, currency, clientSecret, isLoading, amount } =
-    useStripePaymentIntent();
+    useStripePaymentIntent({ isExpress });
 
   if (!stripeConfig?.publishableKey?.trim()) {
     return <>{children}</>;

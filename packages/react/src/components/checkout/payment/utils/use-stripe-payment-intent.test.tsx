@@ -60,14 +60,17 @@ function stubIntentApi() {
 function Probe({
   enableClientSecret = true,
   updateIntent = true,
+  isExpress = false,
 }: {
   enableClientSecret?: boolean;
   updateIntent?: boolean;
+  isExpress?: boolean;
 }) {
   const form = useFormContext<CheckoutFormData>();
   const { clientSecret, amount } = useStripePaymentIntent({
     enableClientSecret,
     updateIntent,
+    isExpress,
   });
 
   return (
@@ -99,10 +102,12 @@ function Host({
   hostIntent = false,
   enableClientSecret = true,
   updateIntent = true,
+  isExpress = false,
 }: {
   hostIntent?: boolean;
   enableClientSecret?: boolean;
   updateIntent?: boolean;
+  isExpress?: boolean;
 }) {
   const methods = useForm<CheckoutFormData>({
     defaultValues: {
@@ -131,6 +136,7 @@ function Host({
         <Probe
           enableClientSecret={enableClientSecret}
           updateIntent={updateIntent}
+          isExpress={isExpress}
         />
       </FormProvider>
     </checkoutContext.Provider>
@@ -164,6 +170,22 @@ describe('useStripePaymentIntent', () => {
     renderProbe();
 
     await waitForClientSecret('pi_1_secret');
+    expect(requests).toEqual([
+      { url: '/api/create-payment-intent', amount: 2500, id: undefined },
+    ]);
+  });
+
+  it('leaves the tip out of the express amount', async () => {
+    // The express wallet sheet is built from the subtotal plus the shipping and
+    // taxes it calculates itself, and its confirmation records no tip. Charging
+    // the tip here would take money the order never accounts for.
+    const { user } = renderProbe({ isExpress: true });
+    await waitForClientSecret('pi_1_secret');
+
+    await user.click(screen.getByTestId('add-tip'));
+    await waitForClientSecret('pi_1_secret');
+
+    expect(screen.getByTestId('amount')).toHaveTextContent('2500');
     expect(requests).toEqual([
       { url: '/api/create-payment-intent', amount: 2500, id: undefined },
     ]);

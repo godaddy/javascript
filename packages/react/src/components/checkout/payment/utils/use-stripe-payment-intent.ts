@@ -21,11 +21,13 @@ function getStripe(publishableKey: string): Promise<Stripe | null> {
 type UseStripePaymentIntentOptions = {
   updateIntent?: boolean;
   enableClientSecret?: boolean;
+  isExpress?: boolean;
 };
 
 export function useStripePaymentIntent({
   updateIntent = false,
   enableClientSecret = false,
+  isExpress = false,
 }: UseStripePaymentIntentOptions = {}) {
   const { session, stripeConfig } = useCheckoutContext();
   const form =
@@ -35,7 +37,10 @@ export function useStripePaymentIntent({
   const { data: totals, isLoading: isLoadingTotals } = draftOrderTotalsQuery;
   const total = totals?.total?.value || 0;
   const tipAmount = form?.watch('tipAmount') || 0;
-  const amount = session?.enableTips ? total + tipAmount : total;
+  // Express never charges a tip — it builds its own totals in the wallet's
+  // event handlers and applies them at confirmation — so its amount stays
+  // tip-free even when the session collects tips for the standard form.
+  const amount = session?.enableTips && !isExpress ? total + tipAmount : total;
   const currency = totals?.total?.currencyCode?.toLowerCase() || 'usd';
 
   const existingClientSecret = form?.watch('stripePaymentIntent');

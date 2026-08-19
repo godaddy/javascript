@@ -488,14 +488,10 @@ describe('useBuildPaymentRequest', () => {
     // Square total includes tip
     expect(requests.squarePaymentRequest.amount).toBe('25.00');
 
-    // Poynt Express total includes tip
-    expect(requests.poyntExpressRequest.total.amount).toBe('25.00');
-
-    // Poynt Express includes tip line item so recomputed wallet totals keep it
-    expect(requests.poyntExpressRequest.lineItems).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ label: 'Tip', amount: '5.00' }),
-      ])
+    // Poynt Express never charges a tip, so it stays on the bare subtotal
+    expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
+    expect(requests.poyntExpressRequest.lineItems).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
     );
 
     // Poynt Standard includes tip line item
@@ -506,7 +502,7 @@ describe('useBuildPaymentRequest', () => {
     );
   });
 
-  it('includes tax and tip in poyntExpressRequest.total.amount when applicable', async () => {
+  it('keeps tax and tip out of poyntExpressRequest.total.amount', async () => {
     const { requests } = await renderUseBuildPaymentRequest({
       sessionOverrides: {
         enableTips: true,
@@ -540,14 +536,16 @@ describe('useBuildPaymentRequest', () => {
       formDefaultValues: { tipAmount: 300 },
     });
 
-    // total is $22.00 (subtotal $20 + tax $2) + tip $3 = $25.00
-    expect(requests.poyntExpressRequest.total.amount).toBe('25.00');
+    // Express opens on the $20.00 subtotal: the wallet adds the $2.00 tax in its
+    // own event flow, and it never charges the $3.00 tip.
+    expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
   });
 
-  it('charges the full order total, not the subtotal, when tips are disabled', async () => {
-    // poyntExpressRequest.total used to be the bare subtotal, which under-charged
-    // any order carrying tax, shipping or a discount. Keep subtotal and total
-    // distinct here so a regression cannot hide behind equal fixtures.
+  it('opens express on the subtotal while the standard wallet charges the full total', async () => {
+    // Express recalculates shipping and taxes in the wallet's event handlers and
+    // applies them at confirmation, so its sheet starts from the subtotal. The
+    // standard wallet requests have no such flow and must charge the full total.
+    // Keep subtotal and total distinct so neither can hide behind equal fixtures.
     const { requests } = await renderUseBuildPaymentRequest({
       sessionOverrides: {
         enableTips: false,
@@ -590,8 +588,9 @@ describe('useBuildPaymentRequest', () => {
       formDefaultValues: { tipAmount: 500 },
     });
 
+    expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
+
     // subtotal $20.00 - discount $5.00 + shipping $10.00 + tax $2.00 = $27.00
-    expect(requests.poyntExpressRequest.total.amount).toBe('27.00');
     expect(requests.poyntStandardRequest.total.amount).toBe('27.00');
     expect(requests.applePayRequest.total.amount).toBe('$27.00');
     expect(requests.squarePaymentRequest.amount).toBe('27.00');

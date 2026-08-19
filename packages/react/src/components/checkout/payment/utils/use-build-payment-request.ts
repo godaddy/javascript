@@ -630,44 +630,30 @@ export function useBuildPaymentRequest(): {
     sellerKeyedIn: false,
   };
 
+  // Express starts from the item subtotal on purpose: the wallet's own event
+  // flows add shipping and taxes as the customer picks an address and method,
+  // and express never charges a tip.
   const poyntExpressRequest: PoyntExpressRequest = {
     total: {
       label: 'Order Total',
       amount: formatCurrency({
-        amount: session?.enableTips ? totalWithTipMinorUnits : totalMinorUnits,
+        amount: subtotalMinorUnits,
         currencyCode,
         inputInMinorUnits: true,
         returnRaw: true,
       }),
     },
-    lineItems: [
-      ...(items || []).map(lineItem => {
-        return {
-          label: lineItem?.name || '',
-          amount: formatCurrency({
-            amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
-            currencyCode,
-            inputInMinorUnits: true,
-            returnRaw: true,
-          }),
-        };
-      }),
-      // Keep the tip in the line items so the wallet sheet itemizes it and the
-      // totals recomputed from these line items stay tip-inclusive.
-      ...(session?.enableTips && tipAmount
-        ? [
-            {
-              label: 'Tip',
-              amount: formatCurrency({
-                amount: tipAmount,
-                currencyCode,
-                inputInMinorUnits: true,
-                returnRaw: true,
-              }),
-            },
-          ]
-        : []),
-    ],
+    lineItems: (items || []).map(lineItem => {
+      return {
+        label: lineItem?.name || '',
+        amount: formatCurrency({
+          amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
+          currencyCode,
+          inputInMinorUnits: true,
+          returnRaw: true,
+        }),
+      };
+    }),
   };
 
   const poyntStandardRequest: PoyntStandardRequest = {
