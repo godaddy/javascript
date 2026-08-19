@@ -241,10 +241,27 @@ export function CheckoutForm({
     (isShipping && !!session?.enableShipping) || shipping > 0;
   const showTaxesLine = !!session?.enableTaxCollection || taxTotal > 0;
   const showFeesLine = feeTotal > 0;
+  // A free order has nothing to pay, so checkout picks `offline` itself. Merchants
+  // can offer `offline` for real, so once a tip makes the order payable that
+  // selection looks valid to `PaymentForm` and would leave the customer on a form
+  // that collects nothing. Clearing it lets `PaymentForm` apply its own default.
+  const didAutoSelectOffline = useRef(false);
   useEffect(() => {
-    if (!totalsLoading && isFree) {
+    if (totalsLoading) return;
+
+    if (isFree) {
       form.setValue('paymentMethod', PaymentMethodType.OFFLINE);
+      didAutoSelectOffline.current = true;
+      return;
     }
+
+    if (
+      didAutoSelectOffline.current &&
+      form.getValues('paymentMethod') === PaymentMethodType.OFFLINE
+    ) {
+      form.setValue('paymentMethod', '');
+    }
+    didAutoSelectOffline.current = false;
   }, [form, totalsLoading, isFree]);
 
   // Track checkout start impression when the component first renders

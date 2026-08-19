@@ -506,6 +506,85 @@ describe('Checkout free / offline orders', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('hands back the payment method when a tip makes a zero-total order payable and offline is offered', async () => {
+    // A free order is put on `offline` for the customer. Merchants can offer
+    // `offline` for real, so that selection has to be released once the tip makes
+    // the order payable — otherwise the customer submits an order that collects
+    // nothing while the tip rides along on it.
+    const draftOrder = buildFullyDiscountedDraftOrder();
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableTips: true,
+      enableShipping: false,
+      enableLocalPickup: false,
+      enableTaxCollection: false,
+      enableBillingAddressCollection: false,
+      paymentMethods: {
+        card: {
+          processor: 'stripe',
+          checkoutTypes: ['standard'],
+        },
+        offline: {
+          processor: 'offline',
+          checkoutTypes: ['standard'],
+        },
+      },
+    });
+
+    const { user } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+
+    await user.click(await screen.findByRole('radio', { name: /15%/ }));
+
+    expect(
+      await screen.findByRole('button', { name: /pay now/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /complete your order/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps an offline method the customer selected on a payable order', async () => {
+    const draftOrder = buildPaidPurchaseDraftOrder();
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableTips: true,
+      enableShipping: false,
+      enableLocalPickup: false,
+      enableTaxCollection: false,
+      enableBillingAddressCollection: false,
+      paymentMethods: {
+        card: {
+          processor: 'stripe',
+          checkoutTypes: ['standard'],
+        },
+        offline: {
+          processor: 'offline',
+          checkoutTypes: ['standard'],
+        },
+      },
+    });
+
+    const { user } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+
+    await user.click(
+      await screen.findByRole('button', { name: /offline payments/i })
+    );
+    expect(
+      await screen.findByRole('button', { name: /complete your order/i })
+    ).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('radio', { name: /15%/ }));
+
+    expect(
+      await screen.findByRole('button', { name: /complete your order/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /pay now/i })
+    ).not.toBeInTheDocument();
+  });
+
   it('returns to the free form when the tip on a zero-total order is cleared', async () => {
     const draftOrder = buildFullyDiscountedDraftOrder();
     const session = buildCheckoutSession({
