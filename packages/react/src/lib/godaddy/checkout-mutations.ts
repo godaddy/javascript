@@ -294,9 +294,34 @@ export const UpdateCheckoutSessionDraftOrderMutation = graphql(`
 export const CalculateCheckoutSessionTaxesMutation = graphql(`
     mutation CalculateCheckoutSessionTaxes($destination: TaxDestinationAddressInput) {
         calculateCheckoutSessionTaxes(destination: $destination) {
-        totalTaxAmount {
-          value
-          currencyCode
+          totalTaxAmount {
+            value
+            currencyCode
+          }
+          taxAmounts {
+            rate {
+              id
+              name
+              label
+              calculationMethod
+              value {
+                appliedPercentage
+                appliedAmount {
+                  currencyCode
+                  value
+                }
+                amount {
+                  currencyCode
+                  value
+                }
+                percentage
+              }
+            }
+            totalTaxAmount {
+              value
+              currencyCode
+            }
+          }
         }
       }
     }
