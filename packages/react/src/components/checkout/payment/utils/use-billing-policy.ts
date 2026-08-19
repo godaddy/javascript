@@ -6,6 +6,7 @@ import { isFreeOrderTotal } from '@/components/checkout/order/is-free-order';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
 import {
   type BillingPolicy,
+  canOfferShippingAddressAsBilling,
   getBillingPolicy,
 } from '@/components/checkout/payment/utils/billing-collection';
 import type { CheckoutSession, Totals } from '@/types';
@@ -30,6 +31,23 @@ export function resolveBillingPolicyForCheckoutState(input: {
       input.session?.enableBillingAddressCollection !== false,
     enableTaxCollection: input.session?.enableTaxCollection === true,
   });
+}
+
+export function useCanOfferShippingAddressAsBilling() {
+  const form = useFormContext<CheckoutFormData>();
+  const { session } = useCheckoutContext();
+  const deliveryMethod = form.watch('deliveryMethod');
+
+  return useMemo(
+    () =>
+      canOfferShippingAddressAsBilling({
+        deliveryMethod,
+        enableShipping: session?.enableShipping !== false,
+        enableShippingAddressCollection:
+          session?.enableShippingAddressCollection !== false,
+      }),
+    [deliveryMethod, session]
+  );
 }
 
 export function useBillingPolicy(): BillingPolicy {

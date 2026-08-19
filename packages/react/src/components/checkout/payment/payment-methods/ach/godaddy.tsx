@@ -4,7 +4,6 @@ import { AddressForm } from '@/components/checkout/address';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { CheckoutSectionHeader } from '@/components/checkout/checkout-section-header';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import type {
   TokenizeJs,
   TokenizeJsEvent,
@@ -12,7 +11,10 @@ import type {
 import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import { usePoyntACHCollect } from '@/components/checkout/payment/utils/poynt-ach-provider';
-import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
+import {
+  useBillingPolicy,
+  useCanOfferShippingAddressAsBilling,
+} from '@/components/checkout/payment/utils/use-billing-policy';
 import {
   PaymentProvider,
   useConfirmCheckout,
@@ -32,9 +34,9 @@ export function GoDaddyACHForm() {
 
   const form = useFormContext();
   const paymentMethod = form.watch('paymentMethod');
-  const deliveryMethod = form.watch('deliveryMethod');
-  const isShipping = deliveryMethod === DeliveryMethods.SHIP;
   const billingPolicy = useBillingPolicy();
+  const canOfferShippingAddressAsBilling =
+    useCanOfferShippingAddressAsBilling();
   const shouldShowBilling =
     billingPolicy.location === 'inline-payment-form' &&
     paymentMethod === PaymentMethodType.ACH &&
@@ -248,8 +250,7 @@ export function GoDaddyACHForm() {
       {error ? (
         <p className='text-[0.8rem] font-medium text-destructive'>{error}</p>
       ) : null}
-      {session?.enableShipping &&
-      isShipping &&
+      {canOfferShippingAddressAsBilling &&
       paymentMethod === PaymentMethodType.ACH ? (
         <PaymentAddressToggle className='pt-4' />
       ) : null}

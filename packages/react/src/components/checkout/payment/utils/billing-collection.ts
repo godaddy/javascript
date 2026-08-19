@@ -31,21 +31,46 @@ const INLINE_BILLING_PAYMENT_METHODS: PaymentMethodValue[] = [
   PaymentMethodType.ACH,
 ];
 
-function getOfflineBillingMode({
+export function canOfferShippingAddressAsBilling({
   deliveryMethod,
+  enableShipping,
+  enableShippingAddressCollection,
+}: Pick<
+  BillingPolicyInput,
+  'deliveryMethod' | 'enableShipping' | 'enableShippingAddressCollection'
+>) {
+  return Boolean(
+    deliveryMethod === DeliveryMethods.SHIP &&
+      enableShipping &&
+      enableShippingAddressCollection
+  );
+}
+
+export function isUsingShippingAddressAsBilling({
   paymentUseShippingAddress,
-  enableBillingAddressCollection,
-  enableTaxCollection,
+  ...input
 }: Pick<
   BillingPolicyInput,
   | 'deliveryMethod'
   | 'paymentUseShippingAddress'
-  | 'enableBillingAddressCollection'
-  | 'enableTaxCollection'
->): BillingCollectionMode {
-  if (deliveryMethod === DeliveryMethods.SHIP && paymentUseShippingAddress) {
-    return 'none';
-  }
+  | 'enableShipping'
+  | 'enableShippingAddressCollection'
+>) {
+  return canOfferShippingAddressAsBilling(input) && paymentUseShippingAddress;
+}
+
+function getOfflineBillingMode({
+  deliveryMethod,
+  usesShippingAddress,
+  enableBillingAddressCollection,
+  enableTaxCollection,
+}: Pick<
+  BillingPolicyInput,
+  'deliveryMethod' | 'enableBillingAddressCollection' | 'enableTaxCollection'
+> & {
+  usesShippingAddress: boolean;
+}): BillingCollectionMode {
+  if (usesShippingAddress) return 'none';
 
   if (deliveryMethod === DeliveryMethods.PICKUP) return 'names';
 
@@ -61,18 +86,12 @@ function getOfflineBillingMode({
 }
 
 function getPaidStandardBillingMode({
-  deliveryMethod,
-  paymentUseShippingAddress,
+  usesShippingAddress,
   enableBillingAddressCollection,
-}: Pick<
-  BillingPolicyInput,
-  | 'deliveryMethod'
-  | 'paymentUseShippingAddress'
-  | 'enableBillingAddressCollection'
->): BillingCollectionMode {
-  if (deliveryMethod === DeliveryMethods.SHIP && paymentUseShippingAddress) {
-    return 'none';
-  }
+}: Pick<BillingPolicyInput, 'enableBillingAddressCollection'> & {
+  usesShippingAddress: boolean;
+}): BillingCollectionMode {
+  if (usesShippingAddress) return 'none';
 
   return enableBillingAddressCollection ? 'address' : 'names';
 }
@@ -93,12 +112,17 @@ export function getBillingPolicy({
   paymentMethod,
   deliveryMethod,
   paymentUseShippingAddress,
+  enableShipping,
+  enableShippingAddressCollection,
   enableBillingAddressCollection,
   enableTaxCollection,
 }: BillingPolicyInput): BillingPolicy {
-  const usesShippingAddress = Boolean(
-    deliveryMethod === DeliveryMethods.SHIP && paymentUseShippingAddress
-  );
+  const usesShippingAddress = isUsingShippingAddressAsBilling({
+    deliveryMethod,
+    paymentUseShippingAddress,
+    enableShipping,
+    enableShippingAddressCollection,
+  });
   const effectivePaymentMethod = isFreeOrder
     ? PaymentMethodType.OFFLINE
     : paymentMethod;
@@ -107,13 +131,12 @@ export function getBillingPolicy({
   const mode = isOffline
     ? getOfflineBillingMode({
         deliveryMethod,
-        paymentUseShippingAddress,
+        usesShippingAddress,
         enableBillingAddressCollection,
         enableTaxCollection,
       })
     : getPaidStandardBillingMode({
-        deliveryMethod,
-        paymentUseShippingAddress,
+        usesShippingAddress,
         enableBillingAddressCollection,
       });
 

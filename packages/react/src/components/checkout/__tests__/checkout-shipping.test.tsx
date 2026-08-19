@@ -402,21 +402,21 @@ describe('Checkout shipping behavior', () => {
     await advanceCheckoutDebounce(0);
   });
 
-  it('collects neither shipping nor billing address UI when hidden shipping is reused as billing', async () => {
+  it('collects billing when shipping address collection is disabled even if shipping is prefilled', async () => {
     const sharedAddress = buildShippingAddress({
       addressLine1: '1 Hidden Way',
     });
-    const { user } = renderCheckout({
+    renderCheckout({
       draftOrderOverrides: {
         shipping: {
-          firstName: '',
-          lastName: '',
+          firstName: 'Ship',
+          lastName: 'Buyer',
           phone: '',
           address: sharedAddress,
         },
         billing: {
-          firstName: '',
-          lastName: '',
+          firstName: 'Bill',
+          lastName: 'Buyer',
           phone: '',
           address: sharedAddress,
         },
@@ -424,6 +424,7 @@ describe('Checkout shipping behavior', () => {
       sessionOverrides: {
         enableShipping: true,
         enableShippingAddressCollection: false,
+        enableBillingAddressCollection: true,
         enableLocalPickup: false,
         enableTaxCollection: false,
         paymentMethods: {
@@ -436,23 +437,16 @@ describe('Checkout shipping behavior', () => {
       },
     });
     await waitForCheckoutReady();
-    clearOperations();
 
     expect(
-      screen.getByLabelText(/use shipping address as billing/i)
-    ).toBeChecked();
+      screen.queryByLabelText(/use shipping address as billing/i)
+    ).not.toBeInTheDocument();
     expect(
       document.querySelector('input[name="shippingAddressLine1"]')
     ).not.toBeInTheDocument();
     expect(
       document.querySelector('input[name="billingAddressLine1"]')
-    ).not.toBeInTheDocument();
-
-    await user.click(
-      await screen.findByRole('button', { name: /complete your order/i })
-    );
-
-    await waitForOperation('ConfirmCheckoutSession');
+    ).toBeInTheDocument();
   });
 
   it('records a shipping-method fetch failure when rates are refetched', async () => {

@@ -141,6 +141,7 @@ function BillingReuseProbe() {
 
 function ShippingPrefixedCustomFieldProbe() {
   const form = useFormContext();
+  const error = form.formState.errors.shippingGiftMessage?.message;
 
   return (
     <div>
@@ -149,6 +150,7 @@ function ShippingPrefixedCustomFieldProbe() {
         id='shipping-gift-message'
         {...form.register('shippingGiftMessage')}
       />
+      {typeof error === 'string' ? <p>{error}</p> : null}
     </div>
   );
 }

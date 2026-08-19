@@ -56,10 +56,17 @@ function getExpectedMode({
   paymentMethod,
   deliveryMethod,
   paymentUseShippingAddress,
+  enableShipping,
+  enableShippingAddressCollection,
   enableBillingAddressCollection,
   enableTaxCollection,
 }: BillingPolicyInput): BillingCollectionMode {
-  if (deliveryMethod === DeliveryMethods.SHIP && paymentUseShippingAddress) {
+  if (
+    deliveryMethod === DeliveryMethods.SHIP &&
+    enableShipping &&
+    enableShippingAddressCollection &&
+    paymentUseShippingAddress
+  ) {
     return 'none';
   }
 
@@ -86,6 +93,8 @@ function getExpectedPolicy(input: BillingPolicyInput): BillingPolicy {
   const mode = getExpectedMode(input);
   const usesShippingAddress = Boolean(
     input.deliveryMethod === DeliveryMethods.SHIP &&
+      input.enableShipping &&
+      input.enableShippingAddressCollection &&
       input.paymentUseShippingAddress
   );
 
@@ -251,6 +260,44 @@ describe('getBillingPolicy', () => {
         });
       }
     }
+  });
+
+  it('does not reuse shipping as billing when shipping address collection is disabled', () => {
+    expect(
+      getBillingPolicy({
+        isFreeOrder: false,
+        paymentMethod: PaymentMethodType.CREDIT_CARD,
+        deliveryMethod: DeliveryMethods.SHIP,
+        paymentUseShippingAddress: true,
+        enableShipping: true,
+        enableShippingAddressCollection: false,
+        enableBillingAddressCollection: true,
+        enableTaxCollection: true,
+      })
+    ).toEqual({
+      mode: 'address',
+      location: 'inline-payment-form',
+      usesShippingAddress: false,
+    });
+  });
+
+  it('does not reuse shipping as billing when shipping is disabled', () => {
+    expect(
+      getBillingPolicy({
+        isFreeOrder: false,
+        paymentMethod: PaymentMethodType.CREDIT_CARD,
+        deliveryMethod: DeliveryMethods.SHIP,
+        paymentUseShippingAddress: true,
+        enableShipping: false,
+        enableShippingAddressCollection: true,
+        enableBillingAddressCollection: true,
+        enableTaxCollection: true,
+      })
+    ).toEqual({
+      mode: 'address',
+      location: 'inline-payment-form',
+      usesShippingAddress: false,
+    });
   });
 
   it('never returns address mode when billing address collection is disabled', () => {

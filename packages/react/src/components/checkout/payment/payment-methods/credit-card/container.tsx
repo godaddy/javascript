@@ -2,23 +2,23 @@ import type { ReactNode } from 'react';
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { AddressForm } from '@/components/checkout/address';
-import { useCheckoutContext } from '@/components/checkout/checkout';
 import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { CheckoutSectionHeader } from '@/components/checkout/checkout-section-header';
-import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
-import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
+import {
+  useBillingPolicy,
+  useCanOfferShippingAddressAsBilling,
+} from '@/components/checkout/payment/utils/use-billing-policy';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { PaymentMethodType } from '@/types';
 
 export function CreditCardContainer({ children }: { children?: ReactNode }) {
-  const { session } = useCheckoutContext();
   const form = useFormContext();
   const { t } = useGoDaddyContext();
   const paymentMethod = form.watch('paymentMethod');
-  const deliveryMethod = form.watch('deliveryMethod');
-  const isShipping = deliveryMethod === DeliveryMethods.SHIP;
   const billingPolicy = useBillingPolicy();
+  const canOfferShippingAddressAsBilling =
+    useCanOfferShippingAddressAsBilling();
   const shouldShowBilling =
     billingPolicy.location === 'inline-payment-form' &&
     paymentMethod === PaymentMethodType.CREDIT_CARD &&
@@ -44,8 +44,7 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
     <>
       {description && <div className='pb-4'>{description}</div>}
       {children}
-      {session?.enableShipping &&
-        isShipping &&
+      {canOfferShippingAddressAsBilling &&
         paymentMethod === PaymentMethodType.CREDIT_CARD && (
           <PaymentAddressToggle className='pt-4' />
         )}

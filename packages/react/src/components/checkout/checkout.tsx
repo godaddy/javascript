@@ -113,12 +113,6 @@ interface CheckoutContextValue {
   checkoutErrors?: string[] | undefined;
   setCheckoutErrors: (error?: string[] | undefined) => void;
   requiredFields?: { [key: string]: boolean };
-  /**
-   * Field names supplied through the `checkoutFormSchema` prop. Consumer rules
-   * must always be validated, even when the built-in conditional validation
-   * would skip that field for the current delivery/payment combination.
-   */
-  customSchemaFields?: string[];
 }
 
 export const checkoutContext = React.createContext<CheckoutContextValue>({
@@ -291,10 +285,6 @@ export function Checkout(props: CheckoutProps) {
     return getRequiredFieldsFromSchema(validationAdapter.schema);
   }, [validationAdapter]);
 
-  const customSchemaFields = React.useMemo(() => {
-    return Object.keys(checkoutFormSchema ?? {});
-  }, [checkoutFormSchema]);
-
   if (!props.isLoading && !isLoadingJWT && !session) {
     return (
       <div className='flex items-center justify-center min-h-[50vh] p-4'>
@@ -344,7 +334,6 @@ export function Checkout(props: CheckoutProps) {
           paypalConfig,
           ccavenueConfig,
           requiredFields,
-          customSchemaFields,
           isConfirmingCheckout,
           setIsConfirmingCheckout,
           checkoutErrors,
