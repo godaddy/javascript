@@ -1,6 +1,3 @@
-import { useFormContext } from 'react-hook-form';
-import type { CheckoutFormData } from '@/components/checkout/checkout';
-import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { PaymentMethodType, type PaymentMethodValue } from '@/types';
 
@@ -11,11 +8,6 @@ export type BillingCollectionLocation =
   | 'top-level'
   | 'inline-payment-form'
   | 'free-payment-form';
-
-export type BillingCollectionContext = Exclude<
-  BillingCollectionLocation,
-  'none'
->;
 
 export type BillingPolicyInput = {
   isFreeOrder: boolean;
@@ -91,7 +83,7 @@ function getPaidStandardBillingMode({
   return enableBillingAddressCollection ? 'address' : 'names';
 }
 
-export function hasInlineBillingForm(
+function isInlineBillingPaymentMethod(
   paymentMethod?: PaymentMethodValue | string | null
 ) {
   return Boolean(
@@ -117,7 +109,7 @@ export function getBillingPolicy({
     ? PaymentMethodType.OFFLINE
     : paymentMethod;
   const isOffline = effectivePaymentMethod === PaymentMethodType.OFFLINE;
-  const isInline = hasInlineBillingForm(effectivePaymentMethod);
+  const isInline = isInlineBillingPaymentMethod(effectivePaymentMethod);
   const mode = isOffline
     ? getOfflineBillingMode({
         deliveryMethod,
@@ -144,81 +136,4 @@ export function getBillingPolicy({
   }
 
   return { mode, location: 'top-level', usesShippingAddress };
-}
-
-export function getBillingCollectionMode({
-  context,
-  deliveryMethod,
-  paymentMethod,
-  paymentUseShippingAddress = true,
-  enableShipping = true,
-  enableShippingAddressCollection = true,
-  enableBillingAddressCollection = true,
-  enableTaxCollection = false,
-}: {
-  context: BillingCollectionContext;
-  deliveryMethod?: DeliveryMethods | string | null;
-  paymentMethod?: PaymentMethodValue | string | null;
-  paymentUseShippingAddress?: boolean | null;
-  enableShipping?: boolean | null;
-  enableShippingAddressCollection?: boolean | null;
-  enableBillingAddressCollection?: boolean | null;
-  enableTaxCollection?: boolean | null;
-}): BillingCollectionMode {
-  const policy = getBillingPolicy({
-    isFreeOrder: context === 'free-payment-form',
-    deliveryMethod,
-    paymentMethod,
-    paymentUseShippingAddress: paymentUseShippingAddress !== false,
-    enableShipping: enableShipping !== false,
-    enableShippingAddressCollection: enableShippingAddressCollection !== false,
-    enableBillingAddressCollection: enableBillingAddressCollection !== false,
-    enableTaxCollection: enableTaxCollection === true,
-  });
-
-  return policy.location === context ? policy.mode : 'none';
-}
-
-export function getEffectiveBillingCollectionMode({
-  isFreeOrder = false,
-  deliveryMethod,
-  paymentMethod,
-  paymentUseShippingAddress = true,
-  enableShipping = true,
-  enableShippingAddressCollection = true,
-  enableBillingAddressCollection = true,
-  enableTaxCollection = false,
-}: Omit<Parameters<typeof getBillingCollectionMode>[0], 'context'> & {
-  isFreeOrder?: boolean;
-}): BillingCollectionMode {
-  return getBillingPolicy({
-    isFreeOrder,
-    deliveryMethod,
-    paymentMethod,
-    paymentUseShippingAddress: paymentUseShippingAddress !== false,
-    enableShipping: enableShipping !== false,
-    enableShippingAddressCollection: enableShippingAddressCollection !== false,
-    enableBillingAddressCollection: enableBillingAddressCollection !== false,
-    enableTaxCollection: enableTaxCollection === true,
-  }).mode;
-}
-
-export function useBillingCollectionMode({
-  context,
-}: {
-  context: BillingCollectionContext;
-}): BillingCollectionMode {
-  const form = useFormContext<CheckoutFormData>();
-  const { session } = useCheckoutContext();
-
-  return getBillingCollectionMode({
-    context,
-    deliveryMethod: form.watch('deliveryMethod'),
-    paymentMethod: form.watch('paymentMethod'),
-    paymentUseShippingAddress: form.watch('paymentUseShippingAddress'),
-    enableShipping: session?.enableShipping,
-    enableShippingAddressCollection: session?.enableShippingAddressCollection,
-    enableBillingAddressCollection: session?.enableBillingAddressCollection,
-    enableTaxCollection: session?.enableTaxCollection,
-  });
 }

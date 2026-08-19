@@ -27,10 +27,6 @@ export function FreePaymentForm() {
 
   const billingPolicy = useBillingPolicy();
   const isShipping = form.watch('deliveryMethod') === DeliveryMethods.SHIP;
-  /* Free orders honour `paymentUseShippingAddress` exactly like paid offline
-   * ones, so the customer needs the same control over it. Without the toggle,
-   * an order that starts with only a shipping address is stuck asking for a
-   * separate billing address with no way to say "same as shipping". */
   const showAddressToggle = isShipping && session?.enableShipping !== false;
 
   const handleSubmit = React.useCallback(async () => {

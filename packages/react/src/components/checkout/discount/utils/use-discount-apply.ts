@@ -55,6 +55,7 @@ export function useDiscountApply() {
                   ...old?.checkoutSession?.draftOrder,
                   totals: {
                     ...old?.checkoutSession?.draftOrder?.totals,
+                    ...(responseData?.totals ?? {}),
                     discountTotal,
                     total:
                       responseData?.totals?.total ||
@@ -139,7 +140,10 @@ export function useDiscountApply() {
         );
       }
 
-      if (session?.enableTaxCollection) {
+      if (
+        session?.enableTaxCollection &&
+        (responseData?.totals?.total?.value ?? 0) > 0
+      ) {
         // If the delivery method is pickup, we need to update taxes based on the pickup location
         // Otherwise, we can just update taxes without a specific address
         // TODO: Move this to API layer

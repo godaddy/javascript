@@ -77,26 +77,19 @@ function getCustomErrorMessages(errors: Record<string, unknown>) {
   });
 }
 
-/**
- * Custom FormProvider that extends React Hook Form's FormProvider
- * to add smart validation that respects unregistered fields
- */
 export function CustomFormProvider<
   TFormValues extends Record<string, unknown> = CheckoutFormData,
 >({
   children,
   ...methods
 }: { children: React.ReactNode } & UseFormReturn<TFormValues>) {
-  // Original methods reference to use in the enhancedTrigger
   const methodsRef = React.useRef(methods);
-  // Use state to force re-render
   const [, setForceUpdate] = useState({});
   const { session } = useCheckoutContext();
   const { data: totals } = useDraftOrderTotals();
   const sessionRef = React.useRef(session);
   const totalsRef = React.useRef(totals);
 
-  // Update the refs on every render
   useEffect(() => {
     methodsRef.current = methods;
     sessionRef.current = session;
@@ -104,7 +97,6 @@ export function CustomFormProvider<
   });
 
   const enhancedMethods = useMemo(() => {
-    // Override the trigger function with a type-safe version that ensures error messages are displayed
     const enhancedTrigger: UseFormTrigger<TFormValues> = async (
       name?:
         | FieldPath<TFormValues>
@@ -115,18 +107,13 @@ export function CustomFormProvider<
       try {
         const currentMethods = methodsRef.current;
 
-        // Always enable shouldFocus by default unless explicitly disabled
         const triggerOptions = { shouldFocus: true, ...options };
 
         let result: boolean;
 
-        // If specific fields are provided, use the original trigger
         if (name) {
-          // Use original methods directly to ensure formState is properly updated
           result = await methods.trigger(name, triggerOptions);
-        }
-        // Get the current delivery method using type assertion for safety
-        else {
+        } else {
           const values = currentMethods.getValues();
           const isShipping = values.deliveryMethod === DeliveryMethods.SHIP;
           const currentSession = sessionRef.current;
@@ -199,7 +186,6 @@ export function CustomFormProvider<
           }
         }
 
-        // Force update to ensure error messages show immediately
         setTimeout(() => {
           setForceUpdate({});
         }, 0);
@@ -210,13 +196,11 @@ export function CustomFormProvider<
       }
     };
 
-    // Return the enhanced methods object with properly typed trigger and original state
     const result = {
       ...methods,
       trigger: enhancedTrigger,
     } as UseFormReturn<TFormValues>;
 
-    // Make sure we're not losing formState reactivity
     Object.defineProperty(result, 'formState', {
       get: () => methodsRef.current.formState,
     });

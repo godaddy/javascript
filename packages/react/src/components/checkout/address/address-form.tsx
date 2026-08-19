@@ -238,6 +238,7 @@ export function AddressForm({
         enabled: ({ values, draftOrder: currentDraftOrder }) =>
           Boolean(
             onlyNames &&
+              currentDraftOrder &&
               sectionNameHasChanged(values, currentDraftOrder, sectionKey) &&
               getFormString(values, `${sectionKey}FirstName`).trim() &&
               getFormString(values, `${sectionKey}LastName`).trim()

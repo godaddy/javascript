@@ -2,14 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { PaymentMethodType } from '@/types';
 import {
-  type BillingCollectionContext,
   type BillingCollectionMode,
   type BillingPolicy,
   type BillingPolicyInput,
-  getBillingCollectionMode,
   getBillingPolicy,
-  getEffectiveBillingCollectionMode,
-  hasInlineBillingForm,
 } from './billing-collection';
 
 const deliveryMethods = [
@@ -104,29 +100,15 @@ function getExpectedPolicy(input: BillingPolicyInput): BillingPolicy {
     return { mode, location: 'free-payment-form', usesShippingAddress };
   }
 
-  if (hasInlineBillingForm(input.paymentMethod)) {
+  if (
+    input.paymentMethod === PaymentMethodType.CREDIT_CARD ||
+    input.paymentMethod === PaymentMethodType.ACH
+  ) {
     return { mode, location: 'inline-payment-form', usesShippingAddress };
   }
 
   return { mode, location: 'top-level', usesShippingAddress };
 }
-
-describe('hasInlineBillingForm', () => {
-  it.each([
-    [PaymentMethodType.CREDIT_CARD, true],
-    [PaymentMethodType.ACH, true],
-    [PaymentMethodType.OFFLINE, false],
-    [PaymentMethodType.PAYPAL, false],
-    [PaymentMethodType.APPLE_PAY, false],
-  ])('returns %s for %s', (paymentMethod, expected) => {
-    expect(hasInlineBillingForm(paymentMethod)).toBe(expected);
-  });
-
-  it('returns false for a missing payment method', () => {
-    expect(hasInlineBillingForm(null)).toBe(false);
-    expect(hasInlineBillingForm(undefined)).toBe(false);
-  });
-});
 
 describe('getBillingPolicy', () => {
   it('implements the authoritative matrix for every supported input combination', () => {
@@ -282,77 +264,6 @@ describe('getBillingPolicy', () => {
       });
 
       expect(policy.mode).not.toBe('address');
-    });
-  });
-});
-
-describe('compatibility wrappers', () => {
-  it('returns the policy mode only for the requested collection context', () => {
-    const input = {
-      deliveryMethod: DeliveryMethods.PICKUP,
-      paymentMethod: PaymentMethodType.CREDIT_CARD,
-      paymentUseShippingAddress: false,
-      enableShipping: true,
-      enableShippingAddressCollection: true,
-      enableBillingAddressCollection: true,
-      enableTaxCollection: true,
-    };
-
-    expect(
-      getBillingCollectionMode({ ...input, context: 'top-level' })
-    ).toBe('none');
-    expect(
-      getBillingCollectionMode({ ...input, context: 'inline-payment-form' })
-    ).toBe('address');
-    expect(
-      getBillingCollectionMode({ ...input, context: 'free-payment-form' })
-    ).toBe('names');
-  });
-
-  it('returns the effective policy mode', () => {
-    everyPolicyCombination(input => {
-      expect(
-        getEffectiveBillingCollectionMode({
-          deliveryMethod: input.deliveryMethod,
-          paymentMethod: input.paymentMethod,
-          paymentUseShippingAddress: input.paymentUseShippingAddress,
-          enableShipping: input.enableShipping,
-          enableShippingAddressCollection:
-            input.enableShippingAddressCollection,
-          enableBillingAddressCollection:
-            input.enableBillingAddressCollection,
-          enableTaxCollection: input.enableTaxCollection,
-          isFreeOrder: input.isFreeOrder,
-        })
-      ).toBe(getBillingPolicy(input).mode);
-    });
-  });
-
-  it('collects billing in exactly one active location', () => {
-    everyPolicyCombination(input => {
-      const contexts: BillingCollectionContext[] = input.isFreeOrder
-        ? ['free-payment-form']
-        : ['top-level', 'inline-payment-form'];
-      const activeContextCount = contexts
-        .map(context =>
-          getBillingCollectionMode({
-            context,
-            deliveryMethod: input.deliveryMethod,
-            paymentMethod: input.paymentMethod,
-            paymentUseShippingAddress: input.paymentUseShippingAddress,
-            enableShipping: input.enableShipping,
-            enableShippingAddressCollection:
-              input.enableShippingAddressCollection,
-            enableBillingAddressCollection:
-              input.enableBillingAddressCollection,
-            enableTaxCollection: input.enableTaxCollection,
-          })
-        )
-        .filter(mode => mode !== 'none').length;
-
-      expect(activeContextCount).toBe(
-        getBillingPolicy(input).mode === 'none' ? 0 : 1
-      );
     });
   });
 });
