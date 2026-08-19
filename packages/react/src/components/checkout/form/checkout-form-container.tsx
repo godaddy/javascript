@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import type { z } from 'zod';
 import {
   type CheckoutProps,
   useCheckoutContext,
 } from '@/components/checkout/checkout';
 import { CheckoutSkeleton } from '@/components/checkout/checkout-skeleton';
 import { CheckoutForm } from '@/components/checkout/form/checkout-form';
+import type { CheckoutValidationAdapter } from '@/components/checkout/form/checkout-validation-adapter';
 import {
   useDraftOrder,
   useDraftOrderLineItems,
@@ -18,12 +18,12 @@ import {
 import { getFulfillmentSummary } from '@/components/checkout/utils/fulfillment';
 
 interface CheckoutFormContainerProps extends Omit<CheckoutProps, 'session'> {
-  schema: z.ZodObject<any> | z.ZodEffects<any>;
+  validationAdapter: CheckoutValidationAdapter;
   isLoadingJWT?: boolean;
 }
 
 export function CheckoutFormContainer({
-  schema,
+  validationAdapter,
   isLoadingJWT,
   ...props
 }: CheckoutFormContainerProps) {
@@ -81,7 +81,7 @@ export function CheckoutFormContainer({
   return (
     <CheckoutForm
       {...props}
-      schema={schema}
+      validationAdapter={validationAdapter}
       items={items}
       fulfillmentSummary={fulfillmentSummary}
       defaultValues={formValues}

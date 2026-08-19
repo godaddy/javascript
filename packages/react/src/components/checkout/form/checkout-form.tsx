@@ -1,10 +1,8 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useIsMutating } from '@tanstack/react-query';
 import isEqual from 'fast-deep-equal';
 import React, { useEffect, useRef } from 'react';
 import type { DefaultValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import type { z } from 'zod';
 import { AddressForm } from '@/components/checkout/address';
 import {
   type CheckoutFormData,
@@ -19,12 +17,14 @@ import { DeliveryMethodForm } from '@/components/checkout/delivery/delivery-meth
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { ExpressCheckoutButtons } from '@/components/checkout/express-checkout/express-checkout-buttons';
 import { CheckoutErrorList } from '@/components/checkout/form/checkout-error-list';
+import type { CheckoutValidationAdapter } from '@/components/checkout/form/checkout-validation-adapter';
 import {
   DraftOrderLineItems,
   type Product,
 } from '@/components/checkout/line-items/line-items';
 import { NotesForm } from '@/components/checkout/notes/notes-form';
 import { DraftOrderSyncProvider } from '@/components/checkout/order/draft-order-sync-provider';
+import { isFreeOrderTotal } from '@/components/checkout/order/is-free-order';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
 import { BillingPolicyTransitionController } from '@/components/checkout/payment/billing-policy-transition-controller';
 import { PaymentForm } from '@/components/checkout/payment/payment-form';
@@ -62,7 +62,7 @@ const deliveryMethodToGridArea: Record<string, string> = {
 };
 
 interface CheckoutFormProps extends Omit<CheckoutProps, 'session'> {
-  schema: z.ZodObject<any> | z.ZodEffects<any>;
+  validationAdapter: CheckoutValidationAdapter;
   defaultValues?: Pick<CheckoutFormData, 'contactEmail'>;
   items: Product[];
   fulfillmentSummary: FulfillmentSummary;
@@ -118,7 +118,7 @@ function mergeOrderBackedFormValues(
 }
 
 export function CheckoutForm({
-  schema,
+  validationAdapter,
   defaultValues,
   items,
   fulfillmentSummary,
@@ -130,8 +130,15 @@ export function CheckoutForm({
     useCheckoutContext();
 
   const formValues = (defaultValues ?? {}) as DefaultValues<CheckoutFormData>;
+  const validationContextRef = useRef({
+    session,
+    totals: undefined as typeof totals | undefined,
+  });
+  validationContextRef.current.session = session;
+
   const form = useForm<CheckoutFormData>({
-    resolver: zodResolver(schema),
+    resolver: (values, _context, options) =>
+      validationAdapter.resolver(values, validationContextRef.current, options),
     defaultValues: formValues,
     reValidateMode: 'onBlur',
     mode: 'onBlur',
@@ -195,6 +202,7 @@ export function CheckoutForm({
   const draftOrderTotalsQuery = useDraftOrderTotals();
 
   const { data: totals, isLoading: totalsLoading } = draftOrderTotalsQuery;
+  validationContextRef.current.totals = totals;
 
   // Order summary calculations - keep all values in minor units
   const subtotal = totals?.subTotal?.value || 0;
@@ -207,7 +215,7 @@ export function CheckoutForm({
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
-  const isFree = orderTotal <= 0;
+  const isFree = isFreeOrderTotal(totals);
   const hasExpressCheckoutPaymentMethod = Object.values(
     session?.paymentMethods ?? {}
   ).some(
@@ -403,7 +411,7 @@ export function CheckoutForm({
 
   return (
     <CustomFormProvider {...form}>
-      <DraftOrderSyncProvider schema={schema}>
+      <DraftOrderSyncProvider validationAdapter={validationAdapter}>
         <BillingPolicyTransitionController />
         <div>
           <Target id='checkout.before' />
