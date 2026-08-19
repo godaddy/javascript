@@ -56,6 +56,9 @@ export function useDiscountApply() {
                   totals: {
                     ...old?.checkoutSession?.draftOrder?.totals,
                     discountTotal,
+                    total:
+                      responseData?.totals?.total ||
+                      old?.checkoutSession?.draftOrder?.totals?.total,
                   },
                   // Update order-level discounts
                   discounts:
@@ -152,8 +155,18 @@ export function useDiscountApply() {
           if (locationAddress) {
             await updateTaxes.mutateAsync(locationAddress);
           }
+        } else if (
+          deliveryMethod === DeliveryMethods.PURCHASE ||
+          deliveryMethod === DeliveryMethods.DIGITAL
+        ) {
+          const billingAddress = draftOrder?.billing?.address;
+          const hasRequiredLocationData =
+            billingAddress?.postalCode && billingAddress?.countryCode;
+
+          if (hasRequiredLocationData) {
+            await updateTaxes.mutateAsync(billingAddress);
+          }
         } else {
-          // Only update taxes if we have the required location data
           const hasRequiredLocationData =
             draftOrder?.shipping?.address?.postalCode &&
             draftOrder?.shipping?.address?.countryCode;

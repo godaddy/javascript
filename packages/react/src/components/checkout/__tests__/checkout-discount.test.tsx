@@ -3,6 +3,7 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import {
+  buildBillingAddress,
   clearOperations,
   flushPromises,
   getOperations,
@@ -146,6 +147,45 @@ describe('Checkout discounts', () => {
 
     expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
   });
+
+  it.each(['PURCHASE', 'DIGITAL'] as const)(
+    'recalculates taxes using the billing address when a coupon is applied to a %s order',
+    async fulfillmentMode => {
+      const billingAddress = buildBillingAddress({
+        addressLine1: '123 Billing St',
+        adminArea2: 'Tempe',
+        adminArea1: 'AZ',
+        postalCode: '85281',
+        countryCode: 'US',
+      });
+      const { user } = renderCheckout({
+        draftOrderOverrides: {
+          billing: {
+            firstName: 'Bill',
+            lastName: 'Buyer',
+            address: billingAddress,
+          },
+          lineItems: [{ fulfillmentMode }],
+        },
+        sessionOverrides: {
+          enableShipping: false,
+          enableLocalPickup: false,
+          enableTaxCollection: true,
+        },
+      });
+      await waitForCheckoutReady();
+      clearOperations();
+
+      await applyCoupon(user, 'onedollar');
+      await waitForOperation('CalculateCheckoutSessionTaxes');
+
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toContainEqual(
+        expect.objectContaining({
+          input: { destination: billingAddress },
+        })
+      );
+    }
+  );
 
   it('shows duplicate coupon validation without issuing a duplicate mutation', async () => {
     const { user } = renderCheckout({
