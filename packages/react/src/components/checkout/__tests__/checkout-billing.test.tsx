@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as godaddyApi from '@/lib/godaddy/godaddy';
 import {
@@ -84,6 +84,129 @@ describe('Checkout billing behavior', () => {
         addressLine1: '789 Billing Rd',
         adminArea2: 'Atlanta',
         postalCode: '30301',
+        countryCode: 'US',
+      }),
+    });
+  });
+
+  it('collects names only for paid offline purchase mode when tax collection is disabled', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        billing: {
+          firstName: 'Pay',
+          lastName: 'In Person',
+          address: buildBillingAddress({ addressLine1: '' }),
+        },
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableBillingAddressCollection: true,
+        enableTaxCollection: false,
+        paymentMethods: {
+          card: null as never,
+          offline: {
+            processor: 'offline',
+            checkoutTypes: ['standard'],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+
+    await waitFor(() => {
+      expect(
+        document.querySelector('input[name="billingFirstName"]')
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingLastName"]')
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingAddressLine1"]')
+      ).not.toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingPostalCode"]')
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('respects disabled billing address collection in purchase mode even when tax collection is enabled', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        billing: {
+          firstName: 'Names',
+          lastName: 'Only',
+          address: buildBillingAddress({ addressLine1: '' }),
+        },
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableBillingAddressCollection: false,
+        enableTaxCollection: true,
+      },
+    });
+    await waitForCheckoutReady();
+
+    await waitFor(() => {
+      expect(
+        document.querySelector('input[name="billingFirstName"]')
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingLastName"]')
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingAddressLine1"]')
+      ).not.toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingPostalCode"]')
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('collects billing address for paid offline purchase mode when tax collection is enabled and uses it for taxes', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        billing: { address: buildBillingAddress({ addressLine1: '' }) },
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableBillingAddressCollection: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: null as never,
+          offline: {
+            processor: 'offline',
+            checkoutTypes: ['standard'],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toBeInTheDocument();
+
+    await typeIntoNamedField(user, 'billingFirstName', 'Offline');
+    await typeIntoNamedField(user, 'billingLastName', 'Buyer');
+    await typeIntoNamedField(user, 'billingAddressLine1', '456 Tax Lane');
+    await typeIntoNamedField(user, 'billingAdminArea2', 'Austin');
+    await typeIntoNamedField(user, 'billingPostalCode', '78701');
+    await advanceCheckoutDebounce();
+    await waitForOperation('CalculateCheckoutSessionTaxes');
+
+    expect(
+      getOperations('CalculateCheckoutSessionTaxes').at(-1)?.input
+    ).toMatchObject({
+      destination: expect.objectContaining({
+        addressLine1: '456 Tax Lane',
+        adminArea2: 'Austin',
+        postalCode: '78701',
         countryCode: 'US',
       }),
     });

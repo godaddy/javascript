@@ -44,6 +44,7 @@ export function getBillingCollectionMode({
   const isDigital = deliveryMethod === DeliveryMethods.DIGITAL;
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
+  const isPurchase = deliveryMethod === DeliveryMethods.PURCHASE;
   const isOffline = paymentMethod === PaymentMethodType.OFFLINE;
   const inlineBilling = hasInlineBillingForm(paymentMethod);
   const billingAddressEnabled = enableBillingAddressCollection !== false;
@@ -59,7 +60,8 @@ export function getBillingCollectionMode({
       return 'address';
     }
 
-    if (isPickup && isOffline && !enableTaxCollection) return 'names';
+    if (isPickup && isOffline) return 'names';
+    if (isPurchase && isOffline && !enableTaxCollection) return 'names';
     if (!billingIsSeparateFromShipping) return 'none';
     return billingAddressEnabled ? 'address' : 'names';
   }

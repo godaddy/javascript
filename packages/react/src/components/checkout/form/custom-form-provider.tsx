@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { FieldPath, UseFormReturn, UseFormTrigger } from 'react-hook-form';
 import { FormProvider } from 'react-hook-form';
+import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
 import {
   getBillingCollectionMode,
   hasInlineBillingForm,
@@ -24,14 +25,17 @@ export function CustomFormProvider<
   // Use state to force re-render
   const [, setForceUpdate] = useState({});
   const { customSchemaFields, session } = useCheckoutContext();
+  const { data: totals } = useDraftOrderTotals();
   const customSchemaFieldsRef = React.useRef(customSchemaFields);
   const sessionRef = React.useRef(session);
+  const totalsRef = React.useRef(totals);
 
   // Update the refs on every render
   useEffect(() => {
     methodsRef.current = methods;
     customSchemaFieldsRef.current = customSchemaFields;
     sessionRef.current = session;
+    totalsRef.current = totals;
   });
 
   const enhancedMethods = useMemo(() => {
@@ -65,16 +69,20 @@ export function CustomFormProvider<
             values.paymentUseShippingAddress as unknown as boolean;
           const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
           const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-          const isFreeOrder = paymentMethod === PaymentMethodType.OFFLINE;
-          const isFreePickup = isFreeOrder && isPickup;
+          const isOfflinePayment = paymentMethod === PaymentMethodType.OFFLINE;
           const currentSession = sessionRef.current;
+          const orderTotal =
+            totalsRef.current?.total?.value ??
+            currentSession?.draftOrder?.totals?.total?.value;
+          const isFreeOrder = typeof orderTotal === 'number' && orderTotal <= 0;
+          const isOfflinePickup = isOfflinePayment && isPickup;
           let billingContext:
             | 'top-level'
             | 'inline-payment-form'
             | 'free-payment-form' = 'top-level';
           if (hasInlineBillingForm(paymentMethod)) {
             billingContext = 'inline-payment-form';
-          } else if (isFreeOrder) {
+          } else if (isFreeOrder && isOfflinePayment) {
             billingContext = 'free-payment-form';
           }
           const billingMode = getBillingCollectionMode({
@@ -170,8 +178,8 @@ export function CustomFormProvider<
           const isSkippable = (fieldName: string) =>
             !customFieldNames.has(fieldName);
 
-          /* For free pickup orders, only validate billingFirstName and billingLastName */
-          if (isFreePickup) {
+          /* For offline pickup orders, only validate billingFirstName and billingLastName */
+          if (isOfflinePickup) {
             fieldNames = fieldNames.filter(
               fieldName =>
                 !fieldName.startsWith('billing') ||

@@ -62,7 +62,6 @@ type SectionKey = 'shipping' | 'billing';
 
 interface AddressFormProps {
   sectionKey: SectionKey;
-  /** When true, only show first name and last name fields (used for free pickup orders) */
   onlyNames?: boolean;
 }
 

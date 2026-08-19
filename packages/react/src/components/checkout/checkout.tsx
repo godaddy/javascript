@@ -289,15 +289,16 @@ export function Checkout(props: CheckoutProps) {
         }
       }
 
-      // Billing address validation - only required if not using shipping address OR pickup
-      // BUT skip for free orders (paymentMethod === 'offline')
       const isOfflinePayment = data.paymentMethod === PaymentMethodType.OFFLINE;
       const isPickup = data.deliveryMethod === DeliveryMethods.PICKUP;
       const isShipping = data.deliveryMethod === DeliveryMethods.SHIP;
       const isDigital = data.deliveryMethod === DeliveryMethods.DIGITAL;
-      const isFreePickup = isOfflinePayment && isPickup;
+      const isPurchase = data.deliveryMethod === DeliveryMethods.PURCHASE;
+      const isOfflinePickup = isOfflinePayment && isPickup;
       const isDigitalTaxDisabledOffline =
         isDigital && isOfflinePayment && !session?.enableTaxCollection;
+      const isPurchaseTaxDisabledOffline =
+        isPurchase && isOfflinePayment && !session?.enableTaxCollection;
       // Billing is separate from shipping when there is no shipping address
       // to copy from. `mapOrderToFormValues` canonicalizes deliveryMethod
       // against session capabilities, so `!isShipping` already covers both
@@ -308,8 +309,9 @@ export function Checkout(props: CheckoutProps) {
 
       const requireBillingNamesOnly =
         (!enableBillingAddressCollection && billingIsSeparateFromShipping) ||
-        isFreePickup ||
-        isDigitalTaxDisabledOffline;
+        isOfflinePickup ||
+        isDigitalTaxDisabledOffline ||
+        isPurchaseTaxDisabledOffline;
 
       if (requireBillingNamesOnly) {
         const nameFields = [
@@ -330,8 +332,9 @@ export function Checkout(props: CheckoutProps) {
 
       const requireBillingAddress =
         enableBillingAddressCollection &&
-        !isFreePickup &&
+        !isOfflinePickup &&
         !isDigitalTaxDisabledOffline &&
+        !isPurchaseTaxDisabledOffline &&
         billingIsSeparateFromShipping;
 
       if (requireBillingAddress) {
