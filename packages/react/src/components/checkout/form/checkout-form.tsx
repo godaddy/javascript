@@ -202,11 +202,11 @@ export function CheckoutForm({
   const taxTotal = totals?.taxTotal?.value || 0;
   const feeTotal = totals?.feeTotal?.value || 0;
   const orderTotal = totals?.total?.value || 0;
-  const tipTotal = tipAmount || 0;
+  const tipTotal = session?.enableTips ? tipAmount || 0 : 0;
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
-  const isFree = orderTotal <= 0;
+  const isFree = orderTotal + tipTotal <= 0;
   const hasExpressCheckoutPaymentMethod = Object.values(
     session?.paymentMethods ?? {}
   ).some(
@@ -241,10 +241,27 @@ export function CheckoutForm({
     (isShipping && !!session?.enableShipping) || shipping > 0;
   const showTaxesLine = !!session?.enableTaxCollection || taxTotal > 0;
   const showFeesLine = feeTotal > 0;
+  // A free order has nothing to pay, so checkout picks `offline` itself. Merchants
+  // can offer `offline` for real, so once a tip makes the order payable that
+  // selection looks valid to `PaymentForm` and would leave the customer on a form
+  // that collects nothing. Clearing it lets `PaymentForm` apply its own default.
+  const didAutoSelectOffline = useRef(false);
   useEffect(() => {
-    if (!totalsLoading && isFree) {
+    if (totalsLoading) return;
+
+    if (isFree) {
       form.setValue('paymentMethod', PaymentMethodType.OFFLINE);
+      didAutoSelectOffline.current = true;
+      return;
     }
+
+    if (
+      didAutoSelectOffline.current &&
+      form.getValues('paymentMethod') === PaymentMethodType.OFFLINE
+    ) {
+      form.setValue('paymentMethod', '');
+    }
+    didAutoSelectOffline.current = false;
   }, [form, totalsLoading, isFree]);
 
   // Track checkout start impression when the component first renders
@@ -463,7 +480,9 @@ export function CheckoutForm({
                         <CheckoutSectionHeader title={t.tips?.title} />
                         <TipsForm
                           currencyCode={currencyCode}
-                          total={orderTotal}
+                          subtotal={subtotal}
+                          isTotalsLoading={totalsLoading}
+                          options={session?.tips}
                         />
                         <Target id='checkout.form.tips.after' />
                       </CheckoutSection>

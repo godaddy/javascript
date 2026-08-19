@@ -353,6 +353,10 @@ export const esMx = {
     DEPENDENCY_ERROR:
       'No podemos procesar su pedido en este momento. Espere un momento e inténtelo de nuevo',
     AUTHORIZATION_FAILED: 'Error al autorizar el pago',
+    TIP_EXCEEDS_LIMIT: 'La propina es demasiado alta para este pedido',
+    INVALID_TIP_AMOUNT: 'Ingrese una cantidad de propina válida',
+    TIPS_NOT_ENABLED: 'No se aceptan propinas para este pedido',
+    TIP_CHARGE_FAILED: 'Pruebe otra cantidad de propina o elija Sin Propina',
   },
   storefront: {
     product: 'Producto',

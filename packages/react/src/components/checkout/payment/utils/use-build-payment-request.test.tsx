@@ -1,7 +1,11 @@
 import { render, waitFor } from '@testing-library/react';
 import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
-import { checkoutContext } from '@/components/checkout/checkout';
+import {
+  type CheckoutFormData,
+  checkoutContext,
+} from '@/components/checkout/checkout';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { GoDaddyProvider } from '@/godaddy-provider';
 import type { CheckoutSession, DraftOrder, SKUProduct } from '@/types';
@@ -48,6 +52,19 @@ function productNode(overrides: Partial<SKUProduct> = {}): SKUProduct {
   } as SKUProduct;
 }
 
+function FormWrapper({
+  defaultValues,
+  children,
+}: {
+  defaultValues?: Partial<CheckoutFormData>;
+  children: React.ReactNode;
+}) {
+  const methods = useForm<CheckoutFormData>({
+    defaultValues: defaultValues ?? {},
+  });
+  return <FormProvider {...methods}>{children}</FormProvider>;
+}
+
 function PaymentRequestProbe({
   onRequests,
 }: {
@@ -66,10 +83,15 @@ async function renderUseBuildPaymentRequest({
   draftOrderOverrides,
   sessionOverrides,
   products = [productNode()],
+  formDefaultValues,
+  withoutForm = false,
 }: {
   draftOrderOverrides?: DeepPartial<DraftOrder>;
   sessionOverrides?: DeepPartial<CheckoutSession>;
   products?: SKUProduct[];
+  formDefaultValues?: Partial<CheckoutFormData>;
+  /** Render outside any FormProvider, so `useFormContext()` returns null. */
+  withoutForm?: boolean;
 } = {}) {
   const queryClient = createTestQueryClient();
   const draftOrder = buildDraftOrder(draftOrderOverrides);
@@ -108,7 +130,13 @@ async function renderUseBuildPaymentRequest({
           setCheckoutErrors: () => undefined,
         }}
       >
-        <PaymentRequestProbe onRequests={onRequests} />
+        {withoutForm ? (
+          <PaymentRequestProbe onRequests={onRequests} />
+        ) : (
+          <FormWrapper defaultValues={formDefaultValues}>
+            <PaymentRequestProbe onRequests={onRequests} />
+          </FormWrapper>
+        )}
       </checkoutContext.Provider>
     </GoDaddyProvider>
   );
@@ -381,5 +409,354 @@ describe('useBuildPaymentRequest', () => {
     expect(requests.googlePayRequest.transactionInfo.totalPrice).toContain(
       '1.234'
     );
+  });
+
+  it('includes tipAmount in payment request totals when enableTips is true', async () => {
+    const { requests } = await renderUseBuildPaymentRequest({
+      sessionOverrides: {
+        enableTips: true,
+      },
+      draftOrderOverrides: {
+        lineItems: [
+          buildLineItem({
+            name: 'Coffee Mug',
+            quantity: 1,
+            details: { sku: 'mug-sku' },
+            totals: {
+              subTotal: money(2000),
+              discountTotal: money(0),
+              feeTotal: money(0),
+              taxTotal: money(0),
+            },
+            unitAmount: money(2000),
+          }),
+        ],
+        shippingLines: [],
+        totals: {
+          subTotal: money(2000),
+          discountTotal: money(0),
+          shippingTotal: money(0),
+          taxTotal: money(0),
+          feeTotal: money(0),
+          total: money(2000),
+        },
+      },
+      products: [productNode({ code: 'mug-sku', label: 'Coffee Mug' })],
+      formDefaultValues: { tipAmount: 500 },
+    });
+
+    // Apple Pay total includes tip
+    expect(requests.applePayRequest.total.amount).toBe('$25.00');
+    expect(requests.applePayRequest.lineItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Tip',
+          amount: '$5.00',
+          type: 'final',
+        }),
+      ])
+    );
+
+    // Google Pay total includes tip
+    expect(requests.googlePayRequest.transactionInfo.totalPrice).toBe('$25.00');
+    expect(requests.googlePayRequest.transactionInfo.displayItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Tip',
+          price: 5,
+          type: 'LINE_ITEM',
+          status: 'FINAL',
+        }),
+      ])
+    );
+
+    // PayPal total includes tip in breakdown and items
+    expect(requests.payPalRequest.purchase_units[0].amount.value).toBe('25.00');
+    expect(
+      requests.payPalRequest.purchase_units[0].amount.breakdown.item_total.value
+    ).toBe('25.00');
+    expect(requests.payPalRequest.purchase_units[0].items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'Tip',
+          unit_amount: { currency_code: 'USD', value: '5.00' },
+          quantity: '1',
+        }),
+      ])
+    );
+
+    // Square total includes tip
+    expect(requests.squarePaymentRequest.amount).toBe('25.00');
+
+    // Poynt Express never charges a tip, so it stays on the bare subtotal
+    expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
+    expect(requests.poyntExpressRequest.lineItems).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+    );
+
+    // Poynt Standard includes tip line item
+    expect(requests.poyntStandardRequest.lineItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'Tip', amount: '5.00' }),
+      ])
+    );
+  });
+
+  it('keeps tax and tip out of poyntExpressRequest.total.amount', async () => {
+    const { requests } = await renderUseBuildPaymentRequest({
+      sessionOverrides: {
+        enableTips: true,
+      },
+      draftOrderOverrides: {
+        lineItems: [
+          buildLineItem({
+            name: 'Coffee Mug',
+            quantity: 1,
+            details: { sku: 'mug-sku' },
+            totals: {
+              subTotal: money(2000),
+              discountTotal: money(0),
+              feeTotal: money(0),
+              taxTotal: money(200),
+            },
+            unitAmount: money(2000),
+          }),
+        ],
+        shippingLines: [],
+        totals: {
+          subTotal: money(2000),
+          discountTotal: money(0),
+          shippingTotal: money(0),
+          taxTotal: money(200),
+          feeTotal: money(0),
+          total: money(2200),
+        },
+      },
+      products: [productNode({ code: 'mug-sku', label: 'Coffee Mug' })],
+      formDefaultValues: { tipAmount: 300 },
+    });
+
+    // Express opens on the $20.00 subtotal: the wallet adds the $2.00 tax in its
+    // own event flow, and it never charges the $3.00 tip.
+    expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
+  });
+
+  it('opens express on the subtotal while the standard wallet charges the full total', async () => {
+    // Express recalculates shipping and taxes in the wallet's event handlers and
+    // applies them at confirmation, so its sheet starts from the subtotal. The
+    // standard wallet requests have no such flow and must charge the full total.
+    // Keep subtotal and total distinct so neither can hide behind equal fixtures.
+    const { requests } = await renderUseBuildPaymentRequest({
+      sessionOverrides: {
+        enableTips: false,
+      },
+      draftOrderOverrides: {
+        lineItems: [
+          buildLineItem({
+            name: 'Coffee Mug',
+            quantity: 1,
+            details: { sku: 'mug-sku' },
+            totals: {
+              subTotal: money(2000),
+              discountTotal: money(500),
+              feeTotal: money(0),
+              taxTotal: money(200),
+            },
+            unitAmount: money(2000),
+          }),
+        ],
+        shippingLines: [
+          {
+            id: 'shipping-line-1',
+            requestedService: 'ground',
+            requestedProvider: 'shippo',
+            name: 'Ground',
+            amount: money(1000),
+            discounts: [],
+          },
+        ],
+        totals: {
+          subTotal: money(2000),
+          discountTotal: money(500),
+          shippingTotal: money(1000),
+          taxTotal: money(200),
+          feeTotal: money(0),
+          total: money(2700),
+        },
+      },
+      products: [productNode({ code: 'mug-sku', label: 'Coffee Mug' })],
+      formDefaultValues: { tipAmount: 500 },
+    });
+
+    expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
+
+    // subtotal $20.00 - discount $5.00 + shipping $10.00 + tax $2.00 = $27.00
+    expect(requests.poyntStandardRequest.total.amount).toBe('27.00');
+    expect(requests.applePayRequest.total.amount).toBe('$27.00');
+    expect(requests.squarePaymentRequest.amount).toBe('27.00');
+  });
+
+  it('excludes tipAmount from payment requests when enableTips is false', async () => {
+    const { requests } = await renderUseBuildPaymentRequest({
+      sessionOverrides: {
+        enableTips: false,
+      },
+      draftOrderOverrides: {
+        lineItems: [
+          buildLineItem({
+            name: 'Coffee Mug',
+            quantity: 1,
+            details: { sku: 'mug-sku' },
+            totals: {
+              subTotal: money(2000),
+              discountTotal: money(0),
+              feeTotal: money(0),
+              taxTotal: money(0),
+            },
+            unitAmount: money(2000),
+          }),
+        ],
+        shippingLines: [],
+        totals: {
+          subTotal: money(2000),
+          discountTotal: money(0),
+          shippingTotal: money(0),
+          taxTotal: money(0),
+          feeTotal: money(0),
+          total: money(2000),
+        },
+      },
+      products: [productNode({ code: 'mug-sku', label: 'Coffee Mug' })],
+      formDefaultValues: { tipAmount: 500 },
+    });
+
+    // Totals should NOT include tip when enableTips is false
+    expect(requests.applePayRequest.total.amount).toBe('$20.00');
+    expect(requests.googlePayRequest.transactionInfo.totalPrice).toBe('$20.00');
+    expect(requests.payPalRequest.purchase_units[0].amount.value).toBe('20.00');
+    expect(requests.squarePaymentRequest.amount).toBe('20.00');
+    expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
+
+    // No Tip line item in any request
+    expect(requests.applePayRequest.lineItems).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+    );
+    expect(requests.googlePayRequest.transactionInfo.displayItems).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+    );
+    expect(requests.payPalRequest.purchase_units[0].items).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'Tip' })])
+    );
+    expect(requests.poyntStandardRequest.lineItems).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+    );
+    expect(requests.poyntExpressRequest.lineItems).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+    );
+  });
+
+  it.each([
+    { scenario: 'the tip is explicitly zero', tipAmount: 0 },
+    { scenario: 'no tip has been selected yet', tipAmount: undefined },
+  ])(
+    'omits the Tip line item when enableTips is true and $scenario',
+    async ({ tipAmount }) => {
+      const { requests } = await renderUseBuildPaymentRequest({
+        sessionOverrides: {
+          enableTips: true,
+        },
+        draftOrderOverrides: {
+          lineItems: [
+            buildLineItem({
+              name: 'Coffee Mug',
+              quantity: 1,
+              details: { sku: 'mug-sku' },
+              totals: {
+                subTotal: money(2000),
+                discountTotal: money(0),
+                feeTotal: money(0),
+                taxTotal: money(0),
+              },
+              unitAmount: money(2000),
+            }),
+          ],
+          shippingLines: [],
+          totals: {
+            subTotal: money(2000),
+            discountTotal: money(0),
+            shippingTotal: money(0),
+            taxTotal: money(0),
+            feeTotal: money(0),
+            total: money(2000),
+          },
+        },
+        products: [productNode({ code: 'mug-sku', label: 'Coffee Mug' })],
+        formDefaultValues: { tipAmount },
+      });
+
+      // A zero tip must not reach the wallet sheets as a "$0.00 Tip" row.
+      expect(requests.applePayRequest.lineItems).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+      );
+      expect(
+        requests.googlePayRequest.transactionInfo.displayItems
+      ).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+      );
+      expect(requests.payPalRequest.purchase_units[0].items).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: 'Tip' })])
+      );
+      expect(requests.poyntStandardRequest.lineItems).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+      );
+      expect(requests.poyntExpressRequest.lineItems).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+      );
+
+      expect(requests.applePayRequest.total.amount).toBe('$20.00');
+      expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
+    }
+  );
+
+  it('builds requests outside a form provider without a tip', async () => {
+    // Every shipping caller sits inside CustomFormProvider, so this guards the
+    // hook's own contract rather than a reachable path: reading the tip must not
+    // require a form context the way the rest of the hook does not.
+    const { requests } = await renderUseBuildPaymentRequest({
+      withoutForm: true,
+      sessionOverrides: { enableTips: true },
+      draftOrderOverrides: {
+        lineItems: [
+          buildLineItem({
+            name: 'Coffee Mug',
+            quantity: 1,
+            details: { sku: 'mug-sku' },
+            totals: {
+              subTotal: money(2000),
+              discountTotal: money(0),
+              feeTotal: money(0),
+              taxTotal: money(0),
+            },
+            unitAmount: money(2000),
+          }),
+        ],
+        shippingLines: [],
+        totals: {
+          subTotal: money(2000),
+          discountTotal: money(0),
+          shippingTotal: money(0),
+          taxTotal: money(0),
+          feeTotal: money(0),
+          total: money(2000),
+        },
+      },
+      products: [productNode({ code: 'mug-sku', label: 'Coffee Mug' })],
+    });
+
+    expect(requests.applePayRequest.total.amount).toBe('$20.00');
+    expect(requests.applePayRequest.lineItems).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'Tip' })])
+    );
+    expect(requests.poyntExpressRequest.total.amount).toBe('20.00');
   });
 });

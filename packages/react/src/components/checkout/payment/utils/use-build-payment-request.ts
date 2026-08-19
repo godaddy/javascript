@@ -3,6 +3,7 @@ import type {
   PaymentMethodCreateParams,
 } from '@stripe/stripe-js';
 import { useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import {
   useDraftOrder,
@@ -183,6 +184,7 @@ export function useBuildPaymentRequest(): {
 } {
   const formatCurrency = useFormatCurrency();
   const { paypalConfig, session } = useCheckoutContext();
+  const form = useFormContext();
 
   const draftOrderTotalsQuery = useDraftOrderTotals();
   const draftOrderQuery = useDraftOrder();
@@ -209,7 +211,9 @@ export function useBuildPaymentRequest(): {
       0
     ) || 0;
   const discountMinorUnits = totals?.discountTotal?.value || 0;
+  const tipAmount = form?.watch('tipAmount') || 0;
   const totalMinorUnits = totals?.total?.value || 0;
+  const totalWithTipMinorUnits = totalMinorUnits + tipAmount;
 
   const countryCode = useMemo(
     () => session?.shipping?.originAddress?.countryCode || 'US',
@@ -262,7 +266,7 @@ export function useBuildPaymentRequest(): {
     total: {
       label: 'Order Total',
       amount: formatCurrency({
-        amount: totals?.total?.value || 0,
+        amount: session?.enableTips ? totalWithTipMinorUnits : totalMinorUnits,
         currencyCode,
         inputInMinorUnits: true,
       }),
@@ -319,6 +323,19 @@ export function useBuildPaymentRequest(): {
         }),
         type: 'final',
       },
+      ...(session?.enableTips && tipAmount
+        ? [
+            {
+              label: 'Tip',
+              amount: formatCurrency({
+                amount: tipAmount,
+                currencyCode,
+                inputInMinorUnits: true,
+              }),
+              type: 'final',
+            },
+          ]
+        : []),
     ].filter(item => Number.parseFloat(item.amount) !== 0),
   };
 
@@ -356,7 +373,7 @@ export function useBuildPaymentRequest(): {
     transactionInfo: {
       totalPriceStatus: 'FINAL',
       totalPrice: formatCurrency({
-        amount: totals?.total?.value || 0,
+        amount: session?.enableTips ? totalWithTipMinorUnits : totalMinorUnits,
         currencyCode,
         inputInMinorUnits: true,
       }),
@@ -421,6 +438,23 @@ export function useBuildPaymentRequest(): {
           type: 'LINE_ITEM',
           status: 'FINAL',
         },
+        ...(session?.enableTips && tipAmount
+          ? [
+              {
+                label: 'Tip',
+                price: Number.parseFloat(
+                  formatCurrency({
+                    amount: tipAmount,
+                    currencyCode,
+                    inputInMinorUnits: true,
+                    returnRaw: true,
+                  })
+                ),
+                type: 'LINE_ITEM',
+                status: 'FINAL',
+              },
+            ]
+          : []),
       ].filter(item => item?.price !== 0),
     },
   };
@@ -430,7 +464,8 @@ export function useBuildPaymentRequest(): {
     subtotalMinorUnits +
     taxMinorUnits +
     shippingMinorUnits -
-    discountMinorUnits;
+    discountMinorUnits +
+    (session?.enableTips ? tipAmount : 0);
 
   const payPalMerchantId = paypalConfig?.merchantId?.trim();
   const payPalRequest: PayPalRequest = {
@@ -451,7 +486,9 @@ export function useBuildPaymentRequest(): {
             item_total: {
               currency_code: currencyCode,
               value: formatCurrency({
-                amount: subtotalMinorUnits,
+                amount: session?.enableTips
+                  ? subtotalMinorUnits + tipAmount
+                  : subtotalMinorUnits,
                 currencyCode,
                 inputInMinorUnits: true,
                 returnRaw: true,
@@ -486,19 +523,39 @@ export function useBuildPaymentRequest(): {
             },
           },
         },
-        items: items.map(lineItem => ({
-          name: lineItem?.name || '',
-          unit_amount: {
-            currency_code: currencyCode,
-            value: formatCurrency({
-              amount: lineItem?.originalPrice || 0,
-              currencyCode,
-              inputInMinorUnits: true,
-              returnRaw: true,
-            }),
-          },
-          quantity: (lineItem?.quantity || 1).toString(),
-        })),
+        items: items
+          .map(lineItem => ({
+            name: lineItem?.name || '',
+            unit_amount: {
+              currency_code: currencyCode,
+              value: formatCurrency({
+                amount: lineItem?.originalPrice || 0,
+                currencyCode,
+                inputInMinorUnits: true,
+                returnRaw: true,
+              }),
+            },
+            quantity: (lineItem?.quantity || 1).toString(),
+          }))
+          .concat(
+            session?.enableTips && tipAmount
+              ? [
+                  {
+                    name: 'Tip',
+                    unit_amount: {
+                      currency_code: currencyCode,
+                      value: formatCurrency({
+                        amount: tipAmount,
+                        currencyCode,
+                        inputInMinorUnits: true,
+                        returnRaw: true,
+                      }),
+                    },
+                    quantity: '1',
+                  },
+                ]
+              : []
+          ),
         shipping: shippingAddress,
         billing: billingAddress,
       },
@@ -548,7 +605,7 @@ export function useBuildPaymentRequest(): {
 
   const squarePaymentRequest: SquarePaymentRequest = {
     amount: formatCurrency({
-      amount: totals?.total?.value || 0,
+      amount: session?.enableTips ? totalWithTipMinorUnits : totalMinorUnits,
       currencyCode,
       inputInMinorUnits: true,
       returnRaw: true,
@@ -573,6 +630,9 @@ export function useBuildPaymentRequest(): {
     sellerKeyedIn: false,
   };
 
+  // Express starts from the item subtotal on purpose: the wallet's own event
+  // flows add shipping and taxes as the customer picks an address and method,
+  // and express never charges a tip.
   const poyntExpressRequest: PoyntExpressRequest = {
     total: {
       label: 'Order Total',
@@ -583,26 +643,24 @@ export function useBuildPaymentRequest(): {
         returnRaw: true,
       }),
     },
-    lineItems: [
-      ...(items || []).map(lineItem => {
-        return {
-          label: lineItem?.name || '',
-          amount: formatCurrency({
-            amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
-            currencyCode,
-            inputInMinorUnits: true,
-            returnRaw: true,
-          }),
-        };
-      }),
-    ],
+    lineItems: (items || []).map(lineItem => {
+      return {
+        label: lineItem?.name || '',
+        amount: formatCurrency({
+          amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
+          currencyCode,
+          inputInMinorUnits: true,
+          returnRaw: true,
+        }),
+      };
+    }),
   };
 
   const poyntStandardRequest: PoyntStandardRequest = {
     total: {
       label: 'Order Total',
       amount: formatCurrency({
-        amount: totalMinorUnits,
+        amount: session?.enableTips ? totalWithTipMinorUnits : totalMinorUnits,
         currencyCode,
         inputInMinorUnits: true,
         returnRaw: true,
@@ -647,6 +705,19 @@ export function useBuildPaymentRequest(): {
           returnRaw: true,
         }),
       },
+      ...(session?.enableTips && tipAmount
+        ? [
+            {
+              label: 'Tip',
+              amount: formatCurrency({
+                amount: tipAmount,
+                currencyCode,
+                inputInMinorUnits: true,
+                returnRaw: true,
+              }),
+            },
+          ]
+        : []),
     ],
   };
 

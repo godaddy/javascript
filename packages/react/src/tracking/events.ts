@@ -60,6 +60,9 @@ export const eventIds = {
   // Tips events
   selectTipAmount: 'select_tip_amount.click',
   enterCustomTip: 'enter_custom_tip.click',
+  // A redirect gateway charged a tip-inclusive amount but the tip could not be
+  // recovered on the return leg, so the order is recorded without it.
+  redirectTipUnrecoverable: 'redirect_tip_unrecoverable.event',
 
   // Notes events
   addOrderNote: 'add_order_note.click',

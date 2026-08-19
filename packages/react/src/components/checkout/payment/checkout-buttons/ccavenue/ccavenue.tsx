@@ -12,6 +12,10 @@ import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/uti
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
+import {
+  clearRedirectTipAmount,
+  setRedirectTipAmount,
+} from '@/lib/redirect-tip-storage';
 import { cn } from '@/lib/utils';
 import { PaymentMethodType } from '@/types';
 
@@ -22,7 +26,7 @@ const CCAVENUE_TEST_URL =
 
 export function CCAvenueCheckoutButton() {
   const { t, apiHost } = useGoDaddyContext();
-  const { setCheckoutErrors, isConfirmingCheckout, ccavenueConfig } =
+  const { session, setCheckoutErrors, isConfirmingCheckout, ccavenueConfig } =
     useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
@@ -63,6 +67,23 @@ export function CCAvenueCheckoutButton() {
       return;
     }
 
+    // Persisted before authorizing, not after: the gateway collects the
+    // tip-inclusive amount, and the confirmation on the return leg can only
+    // recover the tip from storage. Failing here costs nothing, whereas
+    // discovering it once the customer has paid would record the order for less
+    // than they were charged.
+    if (session?.enableTips && session?.id) {
+      const tipAmount = form.getValues('tipAmount') ?? 0;
+      const persisted = setRedirectTipAmount(session.id, tipAmount);
+
+      // A zero tip is persisted best-effort only — losing it changes nothing,
+      // since the API also treats a missing tip as zero.
+      if (!persisted && tipAmount > 0) {
+        setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
+        return;
+      }
+    }
+
     try {
       const resData = await authorizeCheckout.mutateAsync({
         paymentType: PaymentMethodType.CCAVENUE,
@@ -71,6 +92,11 @@ export function CCAvenueCheckoutButton() {
       });
       const transactionRefNum = resData?.transactionRefNum ?? '';
       if (!transactionRefNum) {
+        // No redirect will happen, so the tip saved above would only sit there
+        // until it expired.
+        if (session?.id) {
+          clearRedirectTipAmount(session.id);
+        }
         setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
         return;
       }
@@ -92,6 +118,9 @@ export function CCAvenueCheckoutButton() {
       document.body.appendChild(formEl);
       formEl.submit();
     } catch (err: unknown) {
+      if (session?.id) {
+        clearRedirectTipAmount(session.id);
+      }
       if (err instanceof GraphQLErrorWithCodes) {
         setCheckoutErrors(err.codes);
       } else {
@@ -108,6 +137,8 @@ export function CCAvenueCheckoutButton() {
     setCheckoutErrors,
     ccavenueConfig?.accessCodeId,
     redirectUrl,
+    session?.enableTips,
+    session?.id,
   ]);
 
   const isBusy = isConfirmingCheckout || isPaymentDisabled;

@@ -7,6 +7,12 @@ import {
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
+import {
+  clearRedirectTipAmount,
+  getRedirectTipAmount,
+} from '@/lib/redirect-tip-storage';
+import { eventIds } from '@/tracking/events';
+import { TrackingEventType, track } from '@/tracking/track';
 
 export function CCAvenueReturnProvider({
   children,
@@ -31,22 +37,63 @@ export function CCAvenueReturnProvider({
 
     hasRun.current = true;
 
+    const sessionId = session.id;
+    const authorizedTipAmount = getRedirectTipAmount(sessionId);
+
+    // The gateway has already collected a tip-inclusive amount by this point, so
+    // the confirmation still has to go through even when the tip cannot be
+    // recovered — refusing would leave the customer paid with no order. The
+    // redirect leg refuses to send a customer whose tip could not be persisted,
+    // so reaching here means storage was cleared mid-redirect: report it, since
+    // the order is about to be recorded for less than was charged.
+    if (session.enableTips && authorizedTipAmount === null) {
+      track({
+        eventId: eventIds.redirectTipUnrecoverable,
+        type: TrackingEventType.EVENT,
+        properties: {
+          provider: PaymentProvider.CCAVENUE,
+          draftOrderId: session.draftOrder?.id || 'unknown',
+        },
+      });
+    }
+
     const confirmInput = {
       paymentToken: encResp,
       paymentType: 'ccavenue' as const,
       paymentProvider: PaymentProvider.CCAVENUE,
+      ...(authorizedTipAmount === null
+        ? {}
+        : { tipAmount: authorizedTipAmount }),
     };
 
-    confirmCheckout.mutateAsync(confirmInput).catch(err => {
-      if (err instanceof GraphQLErrorWithCodes) {
-        setCheckoutErrors(err.codes);
-      } else {
-        setCheckoutErrors([
-          err instanceof Error ? err.message : 'Payment confirmation failed.',
-        ]);
-      }
-    });
-  }, [session?.token, session?.id, setCheckoutErrors]);
+    confirmCheckout
+      .mutateAsync(confirmInput)
+      .then(() => {
+        clearRedirectTipAmount(sessionId);
+      })
+      .catch(err => {
+        if (err instanceof GraphQLErrorWithCodes) {
+          setCheckoutErrors(err.codes);
+        } else {
+          setCheckoutErrors([
+            err instanceof Error ? err.message : 'Payment confirmation failed.',
+          ]);
+        }
+      });
+    // Every value the effect reads is a dependency, `jwt` included: in the
+    // token-exchange path the session cookie is absent, so `jwt` is the only
+    // credential that unblocks the gate above, and it can arrive after the
+    // first run. Re-running is safe — `hasRun` makes the confirmation
+    // fire-once regardless of how many times the effect is re-invoked.
+  }, [
+    session?.token,
+    session?.id,
+    session?.enableTips,
+    session?.draftOrder?.id,
+    jwt,
+    confirmCheckout.mutateAsync,
+    setCheckoutErrors,
+  ]);
 
   return <>{children}</>;
 }
