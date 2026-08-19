@@ -481,6 +481,7 @@ export function CheckoutForm({
                         <TipsForm
                           currencyCode={currencyCode}
                           subtotal={subtotal}
+                          isTotalsLoading={totalsLoading}
                           options={session?.tips}
                         />
                         <Target id='checkout.form.tips.after' />

@@ -28,6 +28,8 @@ interface TipsFormProps {
   subtotal: number;
   options?: CheckoutSession['tips'];
   currencyCode?: string;
+  /** The subtotal arrives with the draft order, so it reads as 0 until then. */
+  isTotalsLoading?: boolean;
 }
 
 const DEFAULT_TIP_PERCENTAGES = [15, 18, 20];
@@ -63,7 +65,12 @@ function resolveActiveIndex(
 const IS_DEV =
   typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
-export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
+export function TipsForm({
+  subtotal,
+  options,
+  currencyCode,
+  isTotalsLoading = false,
+}: TipsFormProps) {
   const { t } = useGoDaddyContext();
   const form = useFormContext();
   const formatCurrency = useFormatCurrency();
@@ -195,6 +202,14 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
     ? tipPercentages
     : DEFAULT_TIP_PERCENTAGES;
 
+  // Percentages of a zero subtotal are all worth nothing, so the presets would be
+  // $0.00 buttons that do nothing when picked; Custom Amount still tips. Fixed
+  // amounts are worth what they say. A subtotal still loading keeps the presets
+  // rather than flashing them in once the draft order lands.
+  const showAmountPresets = Boolean(tipAmounts?.length);
+  const showPercentagePresets =
+    !showAmountPresets && (isTotalsLoading || subtotal > 0);
+
   const activeAmountIndex = resolveActiveIndex(
     selectedIndex,
     tipAmounts,
@@ -242,76 +257,79 @@ export function TipsForm({ subtotal, options, currencyCode }: TipsFormProps) {
 
   return (
     <fieldset className='space-y-4'>
-      <div
-        className='grid grid-cols-1 sm:grid-cols-3 gap-2'
-        role='radiogroup'
-        aria-label={t.tips?.title || 'Tip amount'}
-      >
-        {tipAmounts?.length
-          ? tipAmounts.map((amount, index) => {
-              const isSelected =
-                !showCustomTip &&
-                tipAmount === amount &&
-                index === activeAmountIndex;
+      {showAmountPresets || showPercentagePresets ? (
+        <div
+          className='grid grid-cols-1 sm:grid-cols-3 gap-2'
+          role='radiogroup'
+          aria-label={t.tips?.title || 'Tip amount'}
+        >
+          {tipAmounts?.length
+            ? tipAmounts.map((amount, index) => {
+                const isSelected =
+                  !showCustomTip &&
+                  tipAmount === amount &&
+                  index === activeAmountIndex;
 
-              return (
-                <Button
-                  key={`tip-amount-${index}`}
-                  type='button'
-                  role='radio'
-                  variant='outline'
-                  className={cn(
-                    'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted bg-card',
-                    isSelected
-                      ? 'border-primary ring-2 ring-primary'
-                      : 'active:ring'
-                  )}
-                  onClick={() => handleAmountSelect(amount, index)}
-                  aria-checked={isSelected ? 'true' : 'false'}
-                >
-                  <span className='text-base'>
-                    {formatCurrency({
-                      amount,
-                      currencyCode: currencyCode || 'USD',
-                      inputInMinorUnits: true,
-                    })}
-                  </span>
-                </Button>
-              );
-            })
-          : percentagePresets.map((percentage, index) => {
-              const isSelected =
-                tipPercentage === percentage && index === activePercentageIndex;
+                return (
+                  <Button
+                    key={`tip-amount-${index}`}
+                    type='button'
+                    role='radio'
+                    variant='outline'
+                    className={cn(
+                      'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted bg-card',
+                      isSelected
+                        ? 'border-primary ring-2 ring-primary'
+                        : 'active:ring'
+                    )}
+                    onClick={() => handleAmountSelect(amount, index)}
+                    aria-checked={isSelected ? 'true' : 'false'}
+                  >
+                    <span className='text-base'>
+                      {formatCurrency({
+                        amount,
+                        currencyCode: currencyCode || 'USD',
+                        inputInMinorUnits: true,
+                      })}
+                    </span>
+                  </Button>
+                );
+              })
+            : percentagePresets.map((percentage, index) => {
+                const isSelected =
+                  tipPercentage === percentage &&
+                  index === activePercentageIndex;
 
-              return (
-                <Button
-                  key={`tip-percentage-${index}`}
-                  type='button'
-                  role='radio'
-                  variant='outline'
-                  className={cn(
-                    'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted bg-card',
-                    isSelected
-                      ? 'border-primary ring-2 ring-primary'
-                      : 'active:ring'
-                  )}
-                  onClick={() => handlePercentageSelect(percentage, index)}
-                  aria-checked={isSelected ? 'true' : 'false'}
-                >
-                  <span className='text-lg leading-tight font-bold'>
-                    {percentage}%
-                  </span>
-                  <span className='text-sm'>
-                    {formatCurrency({
-                      amount: calculateTipAmount(percentage),
-                      currencyCode: currencyCode || 'USD',
-                      inputInMinorUnits: true,
-                    })}
-                  </span>
-                </Button>
-              );
-            })}
-      </div>
+                return (
+                  <Button
+                    key={`tip-percentage-${index}`}
+                    type='button'
+                    role='radio'
+                    variant='outline'
+                    className={cn(
+                      'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted bg-card',
+                      isSelected
+                        ? 'border-primary ring-2 ring-primary'
+                        : 'active:ring'
+                    )}
+                    onClick={() => handlePercentageSelect(percentage, index)}
+                    aria-checked={isSelected ? 'true' : 'false'}
+                  >
+                    <span className='text-lg leading-tight font-bold'>
+                      {percentage}%
+                    </span>
+                    <span className='text-sm'>
+                      {formatCurrency({
+                        amount: calculateTipAmount(percentage),
+                        currencyCode: currencyCode || 'USD',
+                        inputInMinorUnits: true,
+                      })}
+                    </span>
+                  </Button>
+                );
+              })}
+        </div>
+      ) : null}
 
       <div
         className='grid grid-cols-1 sm:grid-cols-2 gap-2'

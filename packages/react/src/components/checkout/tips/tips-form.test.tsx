@@ -22,12 +22,16 @@ function Harness({
   initialSubtotal,
   nextSubtotal,
   options,
+  isTotalsLoading = false,
 }: {
   initialSubtotal: number;
   nextSubtotal: number;
   options?: TipsOptions;
+  /** The draft order landing is what moves the subtotal, so it ends the load. */
+  isTotalsLoading?: boolean;
 }) {
   const [subtotal, setSubtotal] = useState(initialSubtotal);
+  const [totalsLoading, setTotalsLoading] = useState(isTotalsLoading);
   const form = useForm({ defaultValues: { tipAmount: 0 } });
 
   return (
@@ -41,11 +45,19 @@ function Harness({
       }}
     >
       <FormProvider {...form}>
-        <TipsForm subtotal={subtotal} options={options} currencyCode='USD' />
+        <TipsForm
+          subtotal={subtotal}
+          options={options}
+          currencyCode='USD'
+          isTotalsLoading={totalsLoading}
+        />
         <button
           type='button'
           data-testid='move-subtotal'
-          onClick={() => setSubtotal(nextSubtotal)}
+          onClick={() => {
+            setSubtotal(nextSubtotal);
+            setTotalsLoading(false);
+          }}
         >
           move subtotal
         </button>
@@ -82,7 +94,11 @@ describe('TipsForm when the subtotal moves under a selection', () => {
   it('re-derives what a percentage preset is worth', async () => {
     // The totals had not arrived when the customer picked a tip, so 20% of the
     // subtotal was 20% of nothing.
-    const { user } = renderTipsForm({ initialSubtotal: 0, nextSubtotal: 2500 });
+    const { user } = renderTipsForm({
+      initialSubtotal: 0,
+      nextSubtotal: 2500,
+      isTotalsLoading: true,
+    });
 
     await user.click(screen.getByRole('radio', { name: /20%/ }));
     expect(screen.getByTestId('tip-amount')).toHaveTextContent('0');
@@ -152,5 +168,68 @@ describe('TipsForm when the subtotal moves under a selection', () => {
       'false'
     );
     expect(screen.getByTestId('tip-amount')).toHaveTextContent('1000');
+  });
+});
+
+describe('TipsForm presets on a zero subtotal', () => {
+  it('drops the percentage presets and still offers a custom amount', async () => {
+    // Every percentage of nothing is nothing, so the presets would be $0.00
+    // buttons that leave the tip at zero when picked.
+    const { user } = renderTipsForm({ initialSubtotal: 0, nextSubtotal: 0 });
+
+    expect(
+      screen.queryByRole('radio', { name: /15%/ })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /%/ })).not.toBeInTheDocument();
+
+    // A tip is still possible, it just cannot be a proportion of the subtotal.
+    await user.click(screen.getByRole('radio', { name: /custom amount/i }));
+    const input = await screen.findByPlaceholderText('0.00');
+    await user.type(input, '5');
+    await user.tab();
+
+    expect(screen.getByTestId('tip-amount')).toHaveTextContent('500');
+  });
+
+  it('keeps the percentage presets while the totals load', async () => {
+    renderTipsForm({
+      initialSubtotal: 0,
+      nextSubtotal: 2500,
+      isTotalsLoading: true,
+    });
+
+    // Hiding them here would flash them in once the draft order lands.
+    expect(screen.getByRole('radio', { name: /15%/ })).toHaveTextContent(
+      '$0.00'
+    );
+  });
+
+  it('drops the percentage presets when the totals land on a zero subtotal', async () => {
+    const { user } = renderTipsForm({
+      initialSubtotal: 0,
+      nextSubtotal: 0,
+      isTotalsLoading: true,
+    });
+
+    expect(screen.getByRole('radio', { name: /15%/ })).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('move-subtotal'));
+
+    expect(
+      screen.queryByRole('radio', { name: /15%/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps fixed-amount presets, which are worth what they say', async () => {
+    renderTipsForm({
+      initialSubtotal: 0,
+      nextSubtotal: 0,
+      options: {
+        default: { amounts: [300, 500, 700], percentages: null },
+        thresholds: null,
+      },
+    });
+
+    expect(screen.getByRole('radio', { name: /\$5\.00/ })).toBeInTheDocument();
   });
 });
