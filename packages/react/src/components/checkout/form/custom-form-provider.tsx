@@ -2,13 +2,80 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { FieldPath, UseFormReturn, UseFormTrigger } from 'react-hook-form';
 import { FormProvider } from 'react-hook-form';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
-import {
-  getBillingCollectionMode,
-  hasInlineBillingForm,
-} from '@/components/checkout/payment/utils/billing-collection';
-import { PaymentMethodType } from '@/types';
+import { resolveBillingPolicyForCheckoutState } from '@/components/checkout/payment/utils/use-billing-policy';
 import { type CheckoutFormData, useCheckoutContext } from '../checkout';
 import { DeliveryMethods } from '../delivery/delivery-method';
+
+const SHIPPING_ADDRESS_FIELD_NAMES = new Set([
+  'shippingFirstName',
+  'shippingLastName',
+  'shippingAddressLine1',
+  'shippingAddressLine2',
+  'shippingAddressLine3',
+  'shippingAdminArea4',
+  'shippingAdminArea3',
+  'shippingAdminArea2',
+  'shippingAdminArea1',
+  'shippingPostalCode',
+  'shippingCountryCode',
+]);
+
+const BILLING_ADDRESS_FIELD_NAMES = new Set([
+  'billingAddressLine1',
+  'billingAddressLine2',
+  'billingAddressLine3',
+  'billingAdminArea4',
+  'billingAdminArea3',
+  'billingAdminArea2',
+  'billingAdminArea1',
+  'billingPostalCode',
+  'billingCountryCode',
+]);
+
+const BILLING_NAME_FIELD_NAMES = new Set([
+  'billingFirstName',
+  'billingLastName',
+]);
+
+const BUILT_IN_FIELD_NAMES = new Set([
+  ...SHIPPING_ADDRESS_FIELD_NAMES,
+  ...BILLING_ADDRESS_FIELD_NAMES,
+  ...BILLING_NAME_FIELD_NAMES,
+  'contactEmail',
+  'deliveryMethod',
+  'paymentUseShippingAddress',
+  'shippingPhone',
+  'shippingMethod',
+  'billingPhone',
+  'paymentCardNumber',
+  'paymentCardNumberDisplay',
+  'paymentCardType',
+  'paymentExpiryDate',
+  'paymentMonth',
+  'paymentYear',
+  'paymentSecurityCode',
+  'paymentNameOnCard',
+  'notes',
+  'pickupDate',
+  'pickupTime',
+  'pickupLocationId',
+  'pickupLeadTime',
+  'pickupTimezone',
+  'tipAmount',
+  'tipPercentage',
+  'paymentMethod',
+  'stripePaymentIntent',
+  'stripePaymentIntentId',
+]);
+
+function getCustomErrorMessages(errors: Record<string, unknown>) {
+  return Object.entries(errors).flatMap(([fieldName, error]) => {
+    if (BUILT_IN_FIELD_NAMES.has(fieldName)) return [];
+
+    const message = (error as { message?: unknown })?.message;
+    return typeof message === 'string' && message ? [message] : [];
+  });
+}
 
 /**
  * Custom FormProvider that extends React Hook Form's FormProvider
@@ -24,16 +91,14 @@ export function CustomFormProvider<
   const methodsRef = React.useRef(methods);
   // Use state to force re-render
   const [, setForceUpdate] = useState({});
-  const { customSchemaFields, session } = useCheckoutContext();
+  const { session } = useCheckoutContext();
   const { data: totals } = useDraftOrderTotals();
-  const customSchemaFieldsRef = React.useRef(customSchemaFields);
   const sessionRef = React.useRef(session);
   const totalsRef = React.useRef(totals);
 
   // Update the refs on every render
   useEffect(() => {
     methodsRef.current = methods;
-    customSchemaFieldsRef.current = customSchemaFields;
     sessionRef.current = session;
     totalsRef.current = totals;
   });
@@ -63,69 +128,14 @@ export function CustomFormProvider<
         // Get the current delivery method using type assertion for safety
         else {
           const values = currentMethods.getValues();
-          const deliveryMethod = values.deliveryMethod as unknown as string;
-          const paymentMethod = values.paymentMethod as unknown as string;
-          const paymentUseShippingAddress =
-            values.paymentUseShippingAddress as unknown as boolean;
-          const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
-          const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-          const isOfflinePayment = paymentMethod === PaymentMethodType.OFFLINE;
+          const isShipping = values.deliveryMethod === DeliveryMethods.SHIP;
           const currentSession = sessionRef.current;
-          const orderTotal =
-            totalsRef.current?.total?.value ??
-            currentSession?.draftOrder?.totals?.total?.value;
-          const isFreeOrder = typeof orderTotal === 'number' && orderTotal <= 0;
-          const isOfflinePickup = isOfflinePayment && isPickup;
-          let billingContext:
-            | 'top-level'
-            | 'inline-payment-form'
-            | 'free-payment-form' = 'top-level';
-          if (hasInlineBillingForm(paymentMethod)) {
-            billingContext = 'inline-payment-form';
-          } else if (isFreeOrder && isOfflinePayment) {
-            billingContext = 'free-payment-form';
-          }
-          const billingMode = getBillingCollectionMode({
-            context: billingContext,
-            deliveryMethod,
-            paymentMethod,
-            paymentUseShippingAddress,
-            enableBillingAddressCollection:
-              currentSession?.enableBillingAddressCollection,
-            enableTaxCollection: currentSession?.enableTaxCollection,
+          const policy = resolveBillingPolicyForCheckoutState({
+            values: values as unknown as CheckoutFormData,
+            session: currentSession,
+            totals: totalsRef.current,
           });
 
-          // Get all field names and filter based on conditions
-          const allFieldNames = Object.keys(values);
-          let fieldNames = [...allFieldNames] as Array<FieldPath<TFormValues>>;
-          const shippingAddressFieldNames = new Set([
-            'shippingFirstName',
-            'shippingLastName',
-            'shippingAddressLine1',
-            'shippingAddressLine2',
-            'shippingAddressLine3',
-            'shippingAdminArea4',
-            'shippingAdminArea3',
-            'shippingAdminArea2',
-            'shippingAdminArea1',
-            'shippingPostalCode',
-            'shippingCountryCode',
-          ]);
-          const billingAddressFieldNames = new Set([
-            'billingAddressLine1',
-            'billingAddressLine2',
-            'billingAddressLine3',
-            'billingAdminArea4',
-            'billingAdminArea3',
-            'billingAdminArea2',
-            'billingAdminArea1',
-            'billingPostalCode',
-            'billingCountryCode',
-          ]);
-          const billingNameFieldNames = new Set([
-            'billingFirstName',
-            'billingLastName',
-          ]);
           const shippingSectionIsCollectable = Boolean(
             isShipping && currentSession?.enableShipping
           );
@@ -133,8 +143,8 @@ export function CustomFormProvider<
             shippingSectionIsCollectable &&
               currentSession?.enableShippingAddressCollection
           );
-          const billingNamesAreCollectable = billingMode !== 'none';
-          const billingAddressIsCollectable = billingMode === 'address';
+          const billingIsCollectable = policy.mode !== 'none';
+          const billingAddressIsCollectable = policy.mode === 'address';
           const phoneIsCollectable =
             currentSession?.enablePhoneCollection === true;
           const notesAreCollectable =
@@ -145,68 +155,48 @@ export function CustomFormProvider<
               return shippingAddressIsCollectable && phoneIsCollectable;
             }
             if (fieldName === 'billingPhone') {
-              return billingNamesAreCollectable && phoneIsCollectable;
+              return billingIsCollectable && phoneIsCollectable;
             }
-            if (shippingAddressFieldNames.has(fieldName)) {
+            if (SHIPPING_ADDRESS_FIELD_NAMES.has(fieldName)) {
               return shippingAddressIsCollectable;
             }
             if (fieldName === 'shippingMethod') {
               return shippingSectionIsCollectable;
             }
-            if (billingNameFieldNames.has(fieldName)) {
-              return billingNamesAreCollectable;
+            if (BILLING_NAME_FIELD_NAMES.has(fieldName)) {
+              return billingIsCollectable;
             }
-            if (billingAddressFieldNames.has(fieldName)) {
+            if (BILLING_ADDRESS_FIELD_NAMES.has(fieldName)) {
               return billingAddressIsCollectable;
-            }
-            if (fieldName.startsWith('shipping')) {
-              return shippingSectionIsCollectable;
-            }
-            if (fieldName.startsWith('billing')) {
-              return billingNamesAreCollectable;
             }
             if (fieldName === 'notes') {
               return notesAreCollectable;
             }
             return true;
           };
-          fieldNames = fieldNames.filter(fieldName => isCollectable(fieldName));
 
-          const customFieldNames = new Set<string>(
-            (customSchemaFieldsRef.current ?? []).filter(isCollectable)
+          const registeredFields = Object.keys(
+            (
+              currentMethods.control as unknown as {
+                _fields?: Record<string, unknown>;
+              }
+            )._fields ?? {}
           );
-          const isSkippable = (fieldName: string) =>
-            !customFieldNames.has(fieldName);
-
-          /* For offline pickup orders, only validate billingFirstName and billingLastName */
-          if (isOfflinePickup) {
-            fieldNames = fieldNames.filter(
-              fieldName =>
-                !fieldName.startsWith('billing') ||
-                fieldName === 'billingFirstName' ||
-                fieldName === 'billingLastName' ||
-                !isSkippable(fieldName)
-            );
-          } else if (paymentUseShippingAddress && isShipping) {
-            /* If using shipping address for billing, filter out billing-related field validations.
-             * We require isShipping (not just !isPickup) so that PURCHASE / all-NONE
-             * fulfillment orders, or sessions with enableShipping: false, still validate
-             * billing fields — there's no shipping address to copy from in those cases. */
-            fieldNames = fieldNames.filter(
-              fieldName =>
-                !fieldName.startsWith('billing') || !isSkippable(fieldName)
-            );
-          }
-
-          /* If the delivery method is not shipping (i.e. pickup), filter out shipping-related field validations */
-          if (!isShipping) {
-            fieldNames = fieldNames.filter(
-              fieldName =>
-                !fieldName.startsWith('shipping') || !isSkippable(fieldName)
-            );
-          }
+          const fieldNames = Array.from(
+            new Set([...Object.keys(values), ...registeredFields])
+          ).filter(isCollectable) as Array<FieldPath<TFormValues>>;
 
           result = await methods.trigger(fieldNames, triggerOptions);
+
+          const customRegisteredFields = registeredFields.filter(
+            fieldName => !BUILT_IN_FIELD_NAMES.has(fieldName)
+          ) as Array<FieldPath<TFormValues>>;
+          if (customRegisteredFields.length > 0) {
+            result =
+              (await methods.trigger(customRegisteredFields, {
+                shouldFocus: false,
+              })) && result;
+          }
         }
 
         // Force update to ensure error messages show immediately
@@ -234,5 +224,20 @@ export function CustomFormProvider<
     return result;
   }, []);
 
-  return <FormProvider {...enhancedMethods}>{children}</FormProvider>;
+  const customErrorMessages = getCustomErrorMessages(
+    methods.formState.errors as Record<string, unknown>
+  );
+
+  return (
+    <FormProvider {...enhancedMethods}>
+      {children}
+      {customErrorMessages.length > 0 ? (
+        <div className='sr-only' role='alert' aria-live='assertive'>
+          {customErrorMessages.map(message => (
+            <p key={message}>{message}</p>
+          ))}
+        </div>
+      ) : null}
+    </FormProvider>
+  );
 }
