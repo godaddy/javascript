@@ -26,6 +26,7 @@ import {
 import { NotesForm } from '@/components/checkout/notes/notes-form';
 import { DraftOrderSyncProvider } from '@/components/checkout/order/draft-order-sync-provider';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import { BillingPolicyTransitionController } from '@/components/checkout/payment/billing-policy-transition-controller';
 import { PaymentForm } from '@/components/checkout/payment/payment-form';
 import {
   ConditionalExpressProviders,
@@ -403,6 +404,7 @@ export function CheckoutForm({
   return (
     <CustomFormProvider {...form}>
       <DraftOrderSyncProvider schema={schema}>
+        <BillingPolicyTransitionController />
         <div>
           <Target id='checkout.before' />
           <div
