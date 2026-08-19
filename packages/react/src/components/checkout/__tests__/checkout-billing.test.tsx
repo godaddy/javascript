@@ -308,4 +308,115 @@ describe('Checkout billing behavior', () => {
       screen.getByLabelText(/use shipping address as billing/i)
     ).not.toBeChecked();
   });
+
+  it('clears a collected billing address when switching to offline pickup hides it', async () => {
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      billing: {
+        firstName: 'Card',
+        lastName: 'Payer',
+        address: buildBillingAddress({ addressLine1: '500 Card St' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      session: buildCheckoutSession({
+        draftOrder,
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: { processor: 'godaddy', checkoutTypes: ['standard'] } as never,
+          offline: { processor: 'offline', checkoutTypes: ['standard'] },
+        },
+      }),
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    // Offline pickup collects names only, so the address the card form had
+    // collected must not stay behind on the draft order where the customer can
+    // no longer see or correct it.
+    await user.click(
+      await screen.findByRole('button', { name: /offline payments/i })
+    );
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      billing: { firstName: 'Card', lastName: 'Payer', address: null },
+    });
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
+  });
+
+  it('clears a collected billing address when switching delivery to offline pickup hides it', async () => {
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'SHIP' }],
+      billing: {
+        firstName: 'Jane',
+        lastName: 'Buyer',
+        address: buildBillingAddress({ addressLine1: '77 Separate Way' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      session: buildCheckoutSession({
+        draftOrder,
+        enableShipping: true,
+        enableLocalPickup: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: null as never,
+          offline: { processor: 'offline', checkoutTypes: ['standard'] },
+        },
+      }),
+    });
+    await waitForCheckoutReady();
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toHaveValue('77 Separate Way');
+    clearOperations();
+
+    await user.click(screen.getByRole('radio', { name: /local pickup/i }));
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      billing: { firstName: 'Jane', lastName: 'Buyer', address: null },
+    });
+  });
+
+  it('keeps a merchant-provided billing address that offline pickup never asks about', async () => {
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      billing: {
+        firstName: 'Merchant',
+        lastName: 'Prefill',
+        address: buildBillingAddress({ addressLine1: '1 Prefilled Rd' }),
+      },
+    });
+    renderCheckout({
+      draftOrder,
+      session: buildCheckoutSession({
+        draftOrder,
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: null as never,
+          offline: { processor: 'offline', checkoutTypes: ['standard'] },
+        },
+      }),
+    });
+    await waitForCheckoutReady();
+    await advanceCheckoutDebounce();
+
+    // Only customer-driven changes clear the address; loading a checkout must
+    // never delete data the merchant put on the draft order.
+    expect(
+      getOperations('UpdateCheckoutSessionDraftOrder').filter(operation =>
+        Object.hasOwn(operation.input as object, 'billing')
+      )
+    ).toHaveLength(0);
+  });
 });

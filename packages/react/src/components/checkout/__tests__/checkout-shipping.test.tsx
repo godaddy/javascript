@@ -2,9 +2,11 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import * as godaddyApi from '@/lib/godaddy/godaddy';
+import { CheckoutType, PaymentProvider } from '@/types';
 import {
   advanceCheckoutDebounce,
   buildDraftOrder,
+  buildShippingAddress,
   clearOperations,
   flushPromises,
   getOperations,
@@ -361,6 +363,92 @@ describe('Checkout shipping behavior', () => {
     expect(
       document.querySelector('input[name="shippingPostalCode"]')
     ).not.toBeInTheDocument();
+  });
+
+  // The trigger filter also skips these fields, so this passes with or without
+  // the matching schema rule; it guards the end-to-end guarantee that a hidden
+  // shipping form can never block checkout, whichever layer regresses.
+  it('completes checkout when enableShippingAddressCollection hides missing shipping names', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        // Address is intact so shipping rates still resolve; the names the
+        // hidden form would have collected are what the schema must not demand.
+        shipping: { firstName: '', lastName: '' },
+      },
+      sessionOverrides: {
+        enableShipping: true,
+        enableShippingAddressCollection: false,
+        enableLocalPickup: false,
+        enableTaxCollection: false,
+        paymentMethods: {
+          card: null as never,
+          offline: {
+            processor: PaymentProvider.OFFLINE,
+            checkoutTypes: [CheckoutType.STANDARD],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    // The address form is hidden, so the schema must not require fields the
+    // customer has no way to fill in.
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+
+    await waitForOperation('ConfirmCheckoutSession');
+    await advanceCheckoutDebounce(0);
+  });
+
+  it('collects neither shipping nor billing address UI when hidden shipping is reused as billing', async () => {
+    const sharedAddress = buildShippingAddress({ addressLine1: '1 Hidden Way' });
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        shipping: {
+          firstName: '',
+          lastName: '',
+          phone: '',
+          address: sharedAddress,
+        },
+        billing: {
+          firstName: '',
+          lastName: '',
+          phone: '',
+          address: sharedAddress,
+        },
+      },
+      sessionOverrides: {
+        enableShipping: true,
+        enableShippingAddressCollection: false,
+        enableLocalPickup: false,
+        enableTaxCollection: false,
+        paymentMethods: {
+          card: null as never,
+          offline: {
+            processor: PaymentProvider.OFFLINE,
+            checkoutTypes: [CheckoutType.STANDARD],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    expect(screen.getByLabelText(/use shipping address as billing/i)).toBeChecked();
+    expect(
+      document.querySelector('input[name="shippingAddressLine1"]')
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+
+    await waitForOperation('ConfirmCheckoutSession');
   });
 
   it('records a shipping-method fetch failure when rates are refetched', async () => {
