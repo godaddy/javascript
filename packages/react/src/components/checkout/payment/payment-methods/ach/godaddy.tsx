@@ -11,6 +11,7 @@ import type {
 } from '@/components/checkout/payment/types';
 import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
+import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
 import { usePoyntACHCollect } from '@/components/checkout/payment/utils/poynt-ach-provider';
 import {
   PaymentProvider,
@@ -31,32 +32,16 @@ export function GoDaddyACHForm() {
 
   const form = useFormContext();
   const paymentMethod = form.watch('paymentMethod');
-  const useShippingAddress = form.watch('paymentUseShippingAddress');
   const deliveryMethod = form.watch('deliveryMethod');
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-
-  // Billing is separate from shipping when there is no shipping address to
-  // copy from. `mapOrderToFormValues` canonicalizes deliveryMethod against
-  // session capabilities, so `!isShipping` already covers:
-  //   - session.enableShipping = false
-  //   - line items have no SHIP fulfillment (PICKUP / PURCHASE / all-NONE)
-  // The remaining case is the user opting out of "use shipping for billing".
-  const billingIsSeparateFromShipping = !isShipping || !useShippingAddress;
-
-  const billingAddressEnabled =
-    session?.enableBillingAddressCollection !== false;
-  const shouldShowBillingNamesOnly =
+  const billingPolicy = useBillingPolicy();
+  const shouldShowBilling =
+    billingPolicy.location === 'inline-payment-form' &&
     paymentMethod === PaymentMethodType.ACH &&
-    !billingAddressEnabled &&
-    billingIsSeparateFromShipping;
-
-  const isBillingAddressRequired =
-    paymentMethod === PaymentMethodType.ACH &&
-    billingIsSeparateFromShipping &&
-    (shouldShowBillingNamesOnly || billingAddressEnabled);
+    billingPolicy.mode !== 'none';
 
   const billingCopy =
-    shouldShowBillingNamesOnly && t.payment.billingInformation
+    billingPolicy.mode === 'names' && t.payment.billingInformation
       ? t.payment.billingInformation
       : t.payment.billingAddress;
 
@@ -268,7 +253,7 @@ export function GoDaddyACHForm() {
       paymentMethod === PaymentMethodType.ACH ? (
         <PaymentAddressToggle className='pt-4' />
       ) : null}
-      {isBillingAddressRequired ? (
+      {shouldShowBilling ? (
         <CheckoutSection className='pt-5'>
           <CheckoutSectionHeader
             title={billingCopy.title}
@@ -276,7 +261,7 @@ export function GoDaddyACHForm() {
           />
           <AddressForm
             sectionKey='billing'
-            onlyNames={shouldShowBillingNamesOnly}
+            onlyNames={billingPolicy.mode === 'names'}
           />
         </CheckoutSection>
       ) : null}

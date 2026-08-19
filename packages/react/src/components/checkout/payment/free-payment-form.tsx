@@ -3,7 +3,9 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { AddressForm } from '@/components/checkout/address/address-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useBillingCollectionMode } from '@/components/checkout/payment/utils/billing-collection';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
+import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
+import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
 import {
   PaymentProvider,
   useConfirmCheckout,
@@ -17,14 +19,19 @@ import { PaymentMethodType } from '@/types';
 
 export function FreePaymentForm() {
   const { t } = useGoDaddyContext();
-  const { setCheckoutErrors, isConfirmingCheckout } = useCheckoutContext();
+  const { session, setCheckoutErrors, isConfirmingCheckout } =
+    useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
   const confirmCheckout = useConfirmCheckout();
 
-  const billingMode = useBillingCollectionMode({
-    context: 'free-payment-form',
-  });
+  const billingPolicy = useBillingPolicy();
+  const isShipping = form.watch('deliveryMethod') === DeliveryMethods.SHIP;
+  /* Free orders honour `paymentUseShippingAddress` exactly like paid offline
+   * ones, so the customer needs the same control over it. Without the toggle,
+   * an order that starts with only a shipping address is stuck asking for a
+   * separate billing address with no way to say "same as shipping". */
+  const showAddressToggle = isShipping && session?.enableShipping !== false;
 
   const handleSubmit = React.useCallback(async () => {
     const valid = await form.trigger();
@@ -70,10 +77,20 @@ export function FreePaymentForm() {
     </Button>
   );
 
-  if (billingMode !== 'none') {
+  const shouldShowBilling =
+    billingPolicy.location === 'free-payment-form' &&
+    billingPolicy.mode !== 'none';
+
+  if (showAddressToggle || shouldShowBilling) {
     return (
       <div className='space-y-4'>
-        <AddressForm sectionKey='billing' onlyNames={billingMode === 'names'} />
+        {showAddressToggle ? <PaymentAddressToggle /> : null}
+        {shouldShowBilling ? (
+          <AddressForm
+            sectionKey='billing'
+            onlyNames={billingPolicy.mode === 'names'}
+          />
+        ) : null}
         {submitButton}
       </div>
     );

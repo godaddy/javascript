@@ -7,6 +7,7 @@ import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { CheckoutSectionHeader } from '@/components/checkout/checkout-section-header';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
+import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { PaymentMethodType } from '@/types';
 
@@ -15,32 +16,16 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
   const form = useFormContext();
   const { t } = useGoDaddyContext();
   const paymentMethod = form.watch('paymentMethod');
-  const useShippingAddress = form.watch('paymentUseShippingAddress');
   const deliveryMethod = form.watch('deliveryMethod');
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-
-  // Billing is separate from shipping when there is no shipping address to
-  // copy from. `mapOrderToFormValues` canonicalizes deliveryMethod against
-  // session capabilities, so `!isShipping` already covers:
-  //   - session.enableShipping = false
-  //   - line items have no SHIP fulfillment (PICKUP / PURCHASE / all-NONE)
-  // The remaining case is the user opting out of "use shipping for billing".
-  const billingIsSeparateFromShipping = !isShipping || !useShippingAddress;
-
-  const billingAddressEnabled =
-    session?.enableBillingAddressCollection !== false;
-  const shouldShowBillingNamesOnly =
+  const billingPolicy = useBillingPolicy();
+  const shouldShowBilling =
+    billingPolicy.location === 'inline-payment-form' &&
     paymentMethod === PaymentMethodType.CREDIT_CARD &&
-    !billingAddressEnabled &&
-    billingIsSeparateFromShipping;
-
-  const isBillingAddressRequired =
-    paymentMethod === PaymentMethodType.CREDIT_CARD &&
-    billingIsSeparateFromShipping &&
-    (shouldShowBillingNamesOnly || billingAddressEnabled);
+    billingPolicy.mode !== 'none';
 
   const billingCopy =
-    shouldShowBillingNamesOnly && t.payment.billingInformation
+    billingPolicy.mode === 'names' && t.payment.billingInformation
       ? t.payment.billingInformation
       : t.payment.billingAddress;
 
@@ -64,7 +49,7 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
         paymentMethod === PaymentMethodType.CREDIT_CARD && (
           <PaymentAddressToggle className='pt-4' />
         )}
-      {isBillingAddressRequired ? (
+      {shouldShowBilling ? (
         <CheckoutSection className='pt-5'>
           <CheckoutSectionHeader
             title={billingCopy.title}
@@ -72,7 +57,7 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
           />
           <AddressForm
             sectionKey='billing'
-            onlyNames={shouldShowBillingNamesOnly}
+            onlyNames={billingPolicy.mode === 'names'}
           />
         </CheckoutSection>
       ) : null}
