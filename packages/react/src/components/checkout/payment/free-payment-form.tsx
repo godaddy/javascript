@@ -3,6 +3,10 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { AddressForm } from '@/components/checkout/address/address-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import {
+  BillingCollectionLocations,
+  BillingCollectionModes,
+} from '@/components/checkout/payment/utils/billing-collection';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import {
   useBillingPolicy,
@@ -74,8 +78,8 @@ export function FreePaymentForm() {
   );
 
   const shouldShowBilling =
-    billingPolicy.location === 'free-payment-form' &&
-    billingPolicy.mode !== 'none';
+    billingPolicy.location === BillingCollectionLocations.FREE_PAYMENT_FORM &&
+    billingPolicy.mode !== BillingCollectionModes.NONE;
 
   if (showAddressToggle || shouldShowBilling) {
     return (
@@ -84,7 +88,7 @@ export function FreePaymentForm() {
         {shouldShowBilling ? (
           <AddressForm
             sectionKey='billing'
-            onlyNames={billingPolicy.mode === 'names'}
+            onlyNames={billingPolicy.mode === BillingCollectionModes.NAMES}
           />
         ) : null}
         {submitButton}

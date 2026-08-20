@@ -1,13 +1,24 @@
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { PaymentMethodType, type PaymentMethodValue } from '@/types';
 
-export type BillingCollectionMode = 'none' | 'names' | 'address';
+export const BillingCollectionModes = {
+  NONE: 'none',
+  NAMES: 'names',
+  ADDRESS: 'address',
+} as const;
+
+export type BillingCollectionMode =
+  (typeof BillingCollectionModes)[keyof typeof BillingCollectionModes];
+
+export const BillingCollectionLocations = {
+  NONE: 'none',
+  TOP_LEVEL: 'top-level',
+  INLINE_PAYMENT_FORM: 'inline-payment-form',
+  FREE_PAYMENT_FORM: 'free-payment-form',
+} as const;
 
 export type BillingCollectionLocation =
-  | 'none'
-  | 'top-level'
-  | 'inline-payment-form'
-  | 'free-payment-form';
+  (typeof BillingCollectionLocations)[keyof typeof BillingCollectionLocations];
 
 export type BillingPolicyInput = {
   isFreeOrder: boolean;
@@ -70,19 +81,25 @@ function getOfflineBillingMode({
 > & {
   usesShippingAddress: boolean;
 }): BillingCollectionMode {
-  if (usesShippingAddress) return 'none';
+  if (usesShippingAddress) return BillingCollectionModes.NONE;
 
-  if (deliveryMethod === DeliveryMethods.PICKUP) return 'names';
+  if (deliveryMethod === DeliveryMethods.PICKUP) {
+    return BillingCollectionModes.NAMES;
+  }
 
   if (
     deliveryMethod === DeliveryMethods.PURCHASE ||
     deliveryMethod === DeliveryMethods.DIGITAL
   ) {
-    if (!enableTaxCollection) return 'names';
-    return enableBillingAddressCollection ? 'address' : 'names';
+    if (!enableTaxCollection) return BillingCollectionModes.NAMES;
+    return enableBillingAddressCollection
+      ? BillingCollectionModes.ADDRESS
+      : BillingCollectionModes.NAMES;
   }
 
-  return enableBillingAddressCollection ? 'address' : 'names';
+  return enableBillingAddressCollection
+    ? BillingCollectionModes.ADDRESS
+    : BillingCollectionModes.NAMES;
 }
 
 function getPaidStandardBillingMode({
@@ -91,9 +108,11 @@ function getPaidStandardBillingMode({
 }: Pick<BillingPolicyInput, 'enableBillingAddressCollection'> & {
   usesShippingAddress: boolean;
 }): BillingCollectionMode {
-  if (usesShippingAddress) return 'none';
+  if (usesShippingAddress) return BillingCollectionModes.NONE;
 
-  return enableBillingAddressCollection ? 'address' : 'names';
+  return enableBillingAddressCollection
+    ? BillingCollectionModes.ADDRESS
+    : BillingCollectionModes.NAMES;
 }
 
 function isInlineBillingPaymentMethod(
@@ -140,17 +159,33 @@ export function getBillingPolicy({
         enableBillingAddressCollection,
       });
 
-  if (mode === 'none') {
-    return { mode, location: 'none', usesShippingAddress };
+  if (mode === BillingCollectionModes.NONE) {
+    return {
+      mode,
+      location: BillingCollectionLocations.NONE,
+      usesShippingAddress,
+    };
   }
 
   if (isFreeOrder) {
-    return { mode, location: 'free-payment-form', usesShippingAddress };
+    return {
+      mode,
+      location: BillingCollectionLocations.FREE_PAYMENT_FORM,
+      usesShippingAddress,
+    };
   }
 
   if (isInline) {
-    return { mode, location: 'inline-payment-form', usesShippingAddress };
+    return {
+      mode,
+      location: BillingCollectionLocations.INLINE_PAYMENT_FORM,
+      usesShippingAddress,
+    };
   }
 
-  return { mode, location: 'top-level', usesShippingAddress };
+  return {
+    mode,
+    location: BillingCollectionLocations.TOP_LEVEL,
+    usesShippingAddress,
+  };
 }

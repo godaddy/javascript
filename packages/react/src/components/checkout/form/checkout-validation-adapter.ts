@@ -12,6 +12,7 @@ import type {
   CheckoutFormSchema,
 } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
+import { BillingCollectionModes } from '@/components/checkout/payment/utils/billing-collection';
 import { resolveBillingPolicyForCheckoutState } from '@/components/checkout/payment/utils/use-billing-policy';
 import type { CheckoutSession, Totals } from '@/types';
 
@@ -91,8 +92,9 @@ function isBuiltInConditionalFieldHidden(
     session,
     totals: context?.totals,
   });
-  const billingIsCollectable = policy.mode !== 'none';
-  const billingAddressIsCollectable = policy.mode === 'address';
+  const billingIsCollectable = policy.mode !== BillingCollectionModes.NONE;
+  const billingAddressIsCollectable =
+    policy.mode === BillingCollectionModes.ADDRESS;
   const phoneIsCollectable = session?.enablePhoneCollection === true;
   const notesAreCollectable = session?.enableNotesCollection === true;
 
@@ -187,12 +189,15 @@ export function createCheckoutSchema(
       totals: context?.totals,
     });
 
-    if (policy.mode === 'names' || policy.mode === 'address') {
+    if (
+      policy.mode === BillingCollectionModes.NAMES ||
+      policy.mode === BillingCollectionModes.ADDRESS
+    ) {
       addRequiredIssue(ctx, data, 'billingFirstName', messages.enterFirstName);
       addRequiredIssue(ctx, data, 'billingLastName', messages.enterLastName);
     }
 
-    if (policy.mode === 'address') {
+    if (policy.mode === BillingCollectionModes.ADDRESS) {
       addRequiredIssue(ctx, data, 'billingAddressLine1', messages.enterAddress);
       addRequiredIssue(ctx, data, 'billingAdminArea2', messages.enterCity);
       addRequiredIssue(

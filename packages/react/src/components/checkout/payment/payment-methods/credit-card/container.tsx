@@ -4,6 +4,10 @@ import { useFormContext } from 'react-hook-form';
 import { AddressForm } from '@/components/checkout/address';
 import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { CheckoutSectionHeader } from '@/components/checkout/checkout-section-header';
+import {
+  BillingCollectionLocations,
+  BillingCollectionModes,
+} from '@/components/checkout/payment/utils/billing-collection';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import {
   useBillingPolicy,
@@ -20,12 +24,13 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
   const canOfferShippingAddressAsBilling =
     useCanOfferShippingAddressAsBilling();
   const shouldShowBilling =
-    billingPolicy.location === 'inline-payment-form' &&
+    billingPolicy.location === BillingCollectionLocations.INLINE_PAYMENT_FORM &&
     paymentMethod === PaymentMethodType.CREDIT_CARD &&
-    billingPolicy.mode !== 'none';
+    billingPolicy.mode !== BillingCollectionModes.NONE;
 
   const billingCopy =
-    billingPolicy.mode === 'names' && t.payment.billingInformation
+    billingPolicy.mode === BillingCollectionModes.NAMES &&
+    t.payment.billingInformation
       ? t.payment.billingInformation
       : t.payment.billingAddress;
 
@@ -56,7 +61,7 @@ export function CreditCardContainer({ children }: { children?: ReactNode }) {
           />
           <AddressForm
             sectionKey='billing'
-            onlyNames={billingPolicy.mode === 'names'}
+            onlyNames={billingPolicy.mode === BillingCollectionModes.NAMES}
           />
         </CheckoutSection>
       ) : null}

@@ -6,6 +6,7 @@ import {
   useCheckoutContext,
 } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import { BillingCollectionModes } from '@/components/checkout/payment/utils/billing-collection';
 import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
 
 export function BillingPolicyTransitionController(): null {
@@ -46,8 +47,8 @@ export function BillingPolicyTransitionController(): null {
     }
 
     if (
-      previousState.mode === 'address' &&
-      policy.mode === 'names' &&
+      previousState.mode === BillingCollectionModes.ADDRESS &&
+      policy.mode === BillingCollectionModes.NAMES &&
       (Boolean(previousState.paymentMethod) ||
         form.getFieldState('paymentMethod').isDirty ||
         form.getFieldState('deliveryMethod').isDirty ||

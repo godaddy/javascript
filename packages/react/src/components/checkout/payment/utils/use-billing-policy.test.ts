@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
+import {
+  BillingCollectionLocations,
+  BillingCollectionModes,
+} from '@/components/checkout/payment/utils/billing-collection';
 import { type CheckoutSession, PaymentMethodType, type Totals } from '@/types';
 import { resolveBillingPolicyForCheckoutState } from './use-billing-policy';
 
@@ -51,8 +55,8 @@ describe('resolveBillingPolicyForCheckoutState', () => {
           totals: paidTotals,
         })
       ).toEqual({
-        mode: 'address',
-        location: 'inline-payment-form',
+        mode: BillingCollectionModes.ADDRESS,
+        location: BillingCollectionLocations.INLINE_PAYMENT_FORM,
         usesShippingAddress: false,
       });
     }
@@ -66,8 +70,8 @@ describe('resolveBillingPolicyForCheckoutState', () => {
         totals: paidTotals,
       })
     ).toEqual({
-      mode: 'none',
-      location: 'none',
+      mode: BillingCollectionModes.NONE,
+      location: BillingCollectionLocations.NONE,
       usesShippingAddress: true,
     });
   });
@@ -80,8 +84,8 @@ describe('resolveBillingPolicyForCheckoutState', () => {
         totals: paidTotals,
       })
     ).toEqual({
-      mode: 'address',
-      location: 'inline-payment-form',
+      mode: BillingCollectionModes.ADDRESS,
+      location: BillingCollectionLocations.INLINE_PAYMENT_FORM,
       usesShippingAddress: false,
     });
   });
@@ -98,8 +102,8 @@ describe('resolveBillingPolicyForCheckoutState', () => {
         totals: freeTotals,
       })
     ).toEqual({
-      mode: 'names',
-      location: 'free-payment-form',
+      mode: BillingCollectionModes.NAMES,
+      location: BillingCollectionLocations.FREE_PAYMENT_FORM,
       usesShippingAddress: false,
     });
   });
@@ -116,8 +120,8 @@ describe('resolveBillingPolicyForCheckoutState', () => {
         totals: undefined,
       })
     ).toEqual({
-      mode: 'names',
-      location: 'free-payment-form',
+      mode: BillingCollectionModes.NAMES,
+      location: BillingCollectionLocations.FREE_PAYMENT_FORM,
       usesShippingAddress: false,
     });
   });
@@ -134,8 +138,8 @@ describe('resolveBillingPolicyForCheckoutState', () => {
         totals: paidTotals,
       })
     ).toEqual({
-      mode: 'address',
-      location: 'inline-payment-form',
+      mode: BillingCollectionModes.ADDRESS,
+      location: BillingCollectionLocations.INLINE_PAYMENT_FORM,
       usesShippingAddress: false,
     });
   });

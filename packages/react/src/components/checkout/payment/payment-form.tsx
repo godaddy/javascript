@@ -34,6 +34,10 @@ import {
   PaymentMethodRenderer,
 } from '@/components/checkout/payment/payment-method-renderer';
 import type { TokenizeJs } from '@/components/checkout/payment/types';
+import {
+  BillingCollectionLocations,
+  BillingCollectionModes,
+} from '@/components/checkout/payment/utils/billing-collection';
 import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import {
@@ -299,9 +303,11 @@ export function PaymentForm(
   ]);
 
   const shouldShowBilling =
-    billingPolicy.location === 'top-level' && billingPolicy.mode !== 'none';
+    billingPolicy.location === BillingCollectionLocations.TOP_LEVEL &&
+    billingPolicy.mode !== BillingCollectionModes.NONE;
   const billingCopy =
-    billingPolicy.mode === 'names' && t.payment.billingInformation
+    billingPolicy.mode === BillingCollectionModes.NAMES &&
+    t.payment.billingInformation
       ? t.payment.billingInformation
       : t.payment.billingAddress;
 
@@ -548,7 +554,7 @@ export function PaymentForm(
           />
           <AddressForm
             sectionKey='billing'
-            onlyNames={billingPolicy.mode === 'names'}
+            onlyNames={billingPolicy.mode === BillingCollectionModes.NAMES}
           />
         </CheckoutSection>
       ) : null}

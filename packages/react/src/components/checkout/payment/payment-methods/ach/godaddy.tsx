@@ -8,6 +8,10 @@ import type {
   TokenizeJs,
   TokenizeJsEvent,
 } from '@/components/checkout/payment/types';
+import {
+  BillingCollectionLocations,
+  BillingCollectionModes,
+} from '@/components/checkout/payment/utils/billing-collection';
 import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
 import { usePoyntACHCollect } from '@/components/checkout/payment/utils/poynt-ach-provider';
@@ -38,12 +42,13 @@ export function GoDaddyACHForm() {
   const canOfferShippingAddressAsBilling =
     useCanOfferShippingAddressAsBilling();
   const shouldShowBilling =
-    billingPolicy.location === 'inline-payment-form' &&
+    billingPolicy.location === BillingCollectionLocations.INLINE_PAYMENT_FORM &&
     paymentMethod === PaymentMethodType.ACH &&
-    billingPolicy.mode !== 'none';
+    billingPolicy.mode !== BillingCollectionModes.NONE;
 
   const billingCopy =
-    billingPolicy.mode === 'names' && t.payment.billingInformation
+    billingPolicy.mode === BillingCollectionModes.NAMES &&
+    t.payment.billingInformation
       ? t.payment.billingInformation
       : t.payment.billingAddress;
 
@@ -262,7 +267,7 @@ export function GoDaddyACHForm() {
           />
           <AddressForm
             sectionKey='billing'
-            onlyNames={billingPolicy.mode === 'names'}
+            onlyNames={billingPolicy.mode === BillingCollectionModes.NAMES}
           />
         </CheckoutSection>
       ) : null}

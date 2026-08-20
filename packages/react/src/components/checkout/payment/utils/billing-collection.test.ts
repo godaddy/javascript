@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { PaymentMethodType } from '@/types';
 import {
+  BillingCollectionLocations,
   type BillingCollectionMode,
+  BillingCollectionModes,
   type BillingPolicy,
   type BillingPolicyInput,
   getBillingPolicy,
@@ -67,7 +69,7 @@ function getExpectedMode({
     enableShippingAddressCollection &&
     paymentUseShippingAddress
   ) {
-    return 'none';
+    return BillingCollectionModes.NONE;
   }
 
   const effectivePaymentMethod = isFreeOrder
@@ -76,17 +78,23 @@ function getExpectedMode({
   const isOffline = effectivePaymentMethod === PaymentMethodType.OFFLINE;
 
   if (isOffline) {
-    if (deliveryMethod === DeliveryMethods.PICKUP) return 'names';
+    if (deliveryMethod === DeliveryMethods.PICKUP) {
+      return BillingCollectionModes.NAMES;
+    }
     if (
       deliveryMethod === DeliveryMethods.PURCHASE ||
       deliveryMethod === DeliveryMethods.DIGITAL
     ) {
-      if (!enableTaxCollection) return 'names';
-      return enableBillingAddressCollection ? 'address' : 'names';
+      if (!enableTaxCollection) return BillingCollectionModes.NAMES;
+      return enableBillingAddressCollection
+        ? BillingCollectionModes.ADDRESS
+        : BillingCollectionModes.NAMES;
     }
   }
 
-  return enableBillingAddressCollection ? 'address' : 'names';
+  return enableBillingAddressCollection
+    ? BillingCollectionModes.ADDRESS
+    : BillingCollectionModes.NAMES;
 }
 
 function getExpectedPolicy(input: BillingPolicyInput): BillingPolicy {
@@ -98,22 +106,38 @@ function getExpectedPolicy(input: BillingPolicyInput): BillingPolicy {
       input.paymentUseShippingAddress
   );
 
-  if (mode === 'none') {
-    return { mode, location: 'none', usesShippingAddress };
+  if (mode === BillingCollectionModes.NONE) {
+    return {
+      mode,
+      location: BillingCollectionLocations.NONE,
+      usesShippingAddress,
+    };
   }
 
   if (input.isFreeOrder) {
-    return { mode, location: 'free-payment-form', usesShippingAddress };
+    return {
+      mode,
+      location: BillingCollectionLocations.FREE_PAYMENT_FORM,
+      usesShippingAddress,
+    };
   }
 
   if (
     input.paymentMethod === PaymentMethodType.CREDIT_CARD ||
     input.paymentMethod === PaymentMethodType.ACH
   ) {
-    return { mode, location: 'inline-payment-form', usesShippingAddress };
+    return {
+      mode,
+      location: BillingCollectionLocations.INLINE_PAYMENT_FORM,
+      usesShippingAddress,
+    };
   }
 
-  return { mode, location: 'top-level', usesShippingAddress };
+  return {
+    mode,
+    location: BillingCollectionLocations.TOP_LEVEL,
+    usesShippingAddress,
+  };
 }
 
 describe('getBillingPolicy', () => {
@@ -149,8 +173,8 @@ describe('getBillingPolicy', () => {
         })
       );
       expect(getBillingPolicy(input)).toEqual({
-        mode: 'names',
-        location: 'free-payment-form',
+        mode: BillingCollectionModes.NAMES,
+        location: BillingCollectionLocations.FREE_PAYMENT_FORM,
         usesShippingAddress: false,
       });
     }
@@ -178,8 +202,10 @@ describe('getBillingPolicy', () => {
           enableTaxCollection: false,
         });
 
-        expect(policy.location).toBe('inline-payment-form');
-        expect(policy.mode).toBe('address');
+        expect(policy.location).toBe(
+          BillingCollectionLocations.INLINE_PAYMENT_FORM
+        );
+        expect(policy.mode).toBe(BillingCollectionModes.ADDRESS);
       }
     }
   });
@@ -201,8 +227,8 @@ describe('getBillingPolicy', () => {
         enableTaxCollection: true,
       });
 
-      expect(policy.location).toBe('top-level');
-      expect(policy.mode).not.toBe('none');
+      expect(policy.location).toBe(BillingCollectionLocations.TOP_LEVEL);
+      expect(policy.mode).not.toBe(BillingCollectionModes.NONE);
     }
   });
 
@@ -224,8 +250,10 @@ describe('getBillingPolicy', () => {
         enableTaxCollection: true,
       });
 
-      expect(policy.location).toBe('free-payment-form');
-      expect(policy.mode).not.toBe('none');
+      expect(policy.location).toBe(
+        BillingCollectionLocations.FREE_PAYMENT_FORM
+      );
+      expect(policy.mode).not.toBe(BillingCollectionModes.NONE);
     }
   });
 
@@ -233,8 +261,8 @@ describe('getBillingPolicy', () => {
     everyPolicyCombination(input => {
       const policy = getBillingPolicy(input);
 
-      if (policy.mode === 'none') {
-        expect(policy.location).toBe('none');
+      if (policy.mode === BillingCollectionModes.NONE) {
+        expect(policy.location).toBe(BillingCollectionLocations.NONE);
       }
     });
   });
@@ -254,8 +282,8 @@ describe('getBillingPolicy', () => {
         });
 
         expect(policy).toEqual({
-          mode: 'none',
-          location: 'none',
+          mode: BillingCollectionModes.NONE,
+          location: BillingCollectionLocations.NONE,
           usesShippingAddress: true,
         });
       }
@@ -275,8 +303,8 @@ describe('getBillingPolicy', () => {
         enableTaxCollection: true,
       })
     ).toEqual({
-      mode: 'address',
-      location: 'inline-payment-form',
+      mode: BillingCollectionModes.ADDRESS,
+      location: BillingCollectionLocations.INLINE_PAYMENT_FORM,
       usesShippingAddress: false,
     });
   });
@@ -294,8 +322,8 @@ describe('getBillingPolicy', () => {
         enableTaxCollection: true,
       })
     ).toEqual({
-      mode: 'address',
-      location: 'inline-payment-form',
+      mode: BillingCollectionModes.ADDRESS,
+      location: BillingCollectionLocations.INLINE_PAYMENT_FORM,
       usesShippingAddress: false,
     });
   });
@@ -307,7 +335,7 @@ describe('getBillingPolicy', () => {
         enableBillingAddressCollection: false,
       });
 
-      expect(policy.mode).not.toBe('address');
+      expect(policy.mode).not.toBe(BillingCollectionModes.ADDRESS);
     });
   });
 });
