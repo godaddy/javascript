@@ -24,9 +24,9 @@ export function resolveBillingPolicyForCheckoutState(input: {
     deliveryMethod: input.values.deliveryMethod,
     paymentMethod: input.values.paymentMethod,
     paymentUseShippingAddress: input.values.paymentUseShippingAddress !== false,
-    enableShipping: input.session?.enableShipping !== false,
+    enableShipping: input.session?.enableShipping === true,
     enableShippingAddressCollection:
-      input.session?.enableShippingAddressCollection !== false,
+      input.session?.enableShippingAddressCollection === true,
     enableBillingAddressCollection:
       input.session?.enableBillingAddressCollection !== false,
     enableTaxCollection: input.session?.enableTaxCollection === true,
@@ -42,9 +42,9 @@ export function useCanOfferShippingAddressAsBilling() {
     () =>
       canOfferShippingAddressAsBilling({
         deliveryMethod,
-        enableShipping: session?.enableShipping !== false,
+        enableShipping: session?.enableShipping === true,
         enableShippingAddressCollection:
-          session?.enableShippingAddressCollection !== false,
+          session?.enableShippingAddressCollection === true,
       }),
     [deliveryMethod, session]
   );
