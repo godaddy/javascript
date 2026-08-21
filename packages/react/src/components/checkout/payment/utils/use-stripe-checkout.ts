@@ -1,5 +1,8 @@
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import type { StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js';
+import type {
+  PaymentMethodCreateParams,
+  StripeExpressCheckoutElementConfirmEvent,
+} from '@stripe/stripe-js';
 import { useCallback, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
@@ -8,10 +11,12 @@ import {
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useConfirmExpressCheckout } from '@/components/checkout/payment/utils/use-confirm-express-checkout';
+import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import type {
   CalculatedAdjustments,
   CalculatedTaxes,
+  DraftOrder,
   ShippingMethod,
 } from '@/types';
 import { PaymentMethodType } from '@/types';
@@ -22,6 +27,29 @@ type UseStripeCheckoutOptions = {
 };
 
 // Express checkout data to pass to confirmCheckout
+export function buildStripeExpressPaymentMethodParams(
+  billingDetails:
+    | StripeExpressCheckoutElementConfirmEvent['billingDetails']
+    | null
+    | undefined
+): PaymentMethodCreateParams {
+  return {
+    billing_details: {
+      name: billingDetails?.name || undefined,
+      email: billingDetails?.email || undefined,
+      phone: billingDetails?.phone || undefined,
+      address: {
+        line1: billingDetails?.address?.line1 || undefined,
+        line2: billingDetails?.address?.line2 || undefined,
+        city: billingDetails?.address?.city || undefined,
+        state: billingDetails?.address?.state || undefined,
+        postal_code: billingDetails?.address?.postal_code || undefined,
+        country: billingDetails?.address?.country || undefined,
+      },
+    },
+  };
+}
+
 export type StripeExpressCheckoutData = {
   // Stripe confirm event data
   event: StripeExpressCheckoutElementConfirmEvent;
@@ -42,11 +70,16 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
   const confirmCheckout = useConfirmCheckout();
   const confirmExpressCheckout = useConfirmExpressCheckout();
   const { setCheckoutErrors } = useCheckoutContext();
-  const { stripePaymentMethodParams } = useBuildPaymentRequest();
+  const { stripePaymentMethodParams, buildPaymentRequestsFromOrder } =
+    useBuildPaymentRequest();
+  const flushCheckoutSync = useFlushCheckoutSync();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const handleSubmit = useCallback(
-    async (expressData?: StripeExpressCheckoutData) => {
+    async (
+      expressData?: StripeExpressCheckoutData,
+      resolvedOrder?: DraftOrder | null
+    ) => {
       setIsProcessingPayment(true);
       try {
         if (!stripe || !elements) {
@@ -60,8 +93,18 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
             return;
           }
 
+          const latestOrder =
+            resolvedOrder ??
+            (
+              await flushCheckoutSync({
+                includeCurrentFormDiff: true,
+              })
+            ).latestOrder;
           const { paymentMethod, error } = await stripe.createPaymentMethod({
-            ...stripePaymentMethodParams,
+            ...(latestOrder
+              ? buildPaymentRequestsFromOrder(latestOrder)
+                  .stripePaymentMethodParams
+              : stripePaymentMethodParams),
             card: cardElement,
             type: 'card',
           });
@@ -92,7 +135,9 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
         if (mode === 'express') {
           const { error, paymentMethod } = await stripe.createPaymentMethod({
             elements,
-            params: stripePaymentMethodParams,
+            params: buildStripeExpressPaymentMethodParams(
+              expressData?.event.billingDetails
+            ),
           });
 
           if (error) {
@@ -231,6 +276,8 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
       stripe,
       elements,
       confirmCheckout.mutateAsync,
+      flushCheckoutSync,
+      buildPaymentRequestsFromOrder,
       confirmExpressCheckout.mutateAsync,
       setCheckoutErrors,
       stripePaymentMethodParams,
