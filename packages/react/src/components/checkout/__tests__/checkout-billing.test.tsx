@@ -309,6 +309,43 @@ describe('Checkout billing behavior', () => {
     ).not.toBeChecked();
   });
 
+  it('does not resync matching billing when switching to shipping', async () => {
+    const address = buildShippingAddress({ addressLine1: '10 Shared St' });
+    const contact = {
+      firstName: 'Same',
+      lastName: 'Buyer',
+      phone: '+12015550123',
+      address,
+    };
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      shipping: contact,
+      billing: contact,
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      session: buildCheckoutSession({
+        draftOrder,
+        enableShipping: true,
+        enableLocalPickup: true,
+      }),
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(screen.getByRole('radio', { name: /^shipping/i }));
+
+    expect(
+      await screen.findByLabelText(/use shipping address as billing/i)
+    ).toBeChecked();
+    await advanceCheckoutDebounce();
+    expect(
+      getOperations('UpdateCheckoutSessionDraftOrder').some(operation =>
+        Object.hasOwn(operation.input as object, 'billing')
+      )
+    ).toBe(false);
+  });
+
   it('clears a collected billing address when switching to offline pickup hides it', async () => {
     const draftOrder = buildDraftOrder({
       lineItems: [{ fulfillmentMode: 'PICKUP' }],

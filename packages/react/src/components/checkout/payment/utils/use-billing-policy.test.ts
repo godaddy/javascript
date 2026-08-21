@@ -108,7 +108,7 @@ describe('resolveBillingPolicyForCheckoutState', () => {
     });
   });
 
-  it('uses free offline purchase rules when the total is missing', () => {
+  it('does not treat a missing total as a free order', () => {
     expect(
       resolveBillingPolicyForCheckoutState({
         values: {
@@ -120,8 +120,8 @@ describe('resolveBillingPolicyForCheckoutState', () => {
         totals: undefined,
       })
     ).toEqual({
-      mode: BillingCollectionModes.NAMES,
-      location: BillingCollectionLocations.FREE_PAYMENT_FORM,
+      mode: BillingCollectionModes.ADDRESS,
+      location: BillingCollectionLocations.INLINE_PAYMENT_FORM,
       usesShippingAddress: false,
     });
   });

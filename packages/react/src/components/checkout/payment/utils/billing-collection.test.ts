@@ -16,12 +16,9 @@ const deliveryMethods = [
   DeliveryMethods.PURCHASE,
   DeliveryMethods.DIGITAL,
 ];
-const paymentMethods = [
-  PaymentMethodType.CREDIT_CARD,
-  PaymentMethodType.ACH,
-  PaymentMethodType.OFFLINE,
-  PaymentMethodType.PAYPAL,
-];
+const paymentMethods = Object.values(PaymentMethodType).filter(
+  paymentMethod => paymentMethod !== PaymentMethodType.EXPRESS
+);
 const flags = [true, false];
 
 function everyPolicyCombination(callback: (input: BillingPolicyInput) => void) {

@@ -368,7 +368,7 @@ describe('Checkout FreePaymentForm integration', () => {
     expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
   });
 
-  it('treats a missing order total as free in both the rendered form and validation', async () => {
+  it('does not treat a missing order total as free', async () => {
     const draftOrder = buildFreeDraftOrder({
       lineItems: [{ fulfillmentMode: 'PURCHASE' }],
       totals: { total: null },
@@ -380,21 +380,14 @@ describe('Checkout FreePaymentForm integration', () => {
       enableTaxCollection: false,
     });
 
-    const { user } = renderCheckout({ session, draftOrder });
+    renderCheckout({ session, draftOrder });
     await waitForCheckoutReady();
 
     expect(
-      screen.getByRole('button', { name: /complete your free order/i })
+      screen.queryByRole('button', { name: /complete your free order/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /pay now/i })
     ).toBeInTheDocument();
-
-    // Rendering and validation must agree on "free", otherwise the button
-    // validates fields that were never rendered and silently does nothing.
-    await submitFreeOrder(user);
-
-    expect(getLastConfirmInput()).toMatchObject({
-      paymentToken: '',
-      paymentType: 'offline',
-      paymentProvider: 'OFFLINE',
-    });
   });
 });
