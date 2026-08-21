@@ -5,7 +5,10 @@ import {
   type CheckoutFormData,
   useCheckoutContext,
 } from '@/components/checkout/checkout';
-import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import {
+  useDraftOrder,
+  useDraftOrderTotals,
+} from '@/components/checkout/order/use-draft-order';
 import { BillingCollectionModes } from '@/components/checkout/payment/utils/billing-collection';
 import { useBillingPolicy } from '@/components/checkout/payment/utils/use-billing-policy';
 
@@ -13,6 +16,7 @@ export function BillingPolicyTransitionController(): null {
   const form = useFormContext<CheckoutFormData>();
   const { session } = useCheckoutContext();
   const policy = useBillingPolicy();
+  const { data: draftOrder } = useDraftOrder();
   const { data: totals } = useDraftOrderTotals();
   const totalValue = totals?.total?.value ?? null;
   const deliveryMethod = form.watch('deliveryMethod');
@@ -49,6 +53,7 @@ export function BillingPolicyTransitionController(): null {
     if (
       previousState.mode === BillingCollectionModes.ADDRESS &&
       policy.mode === BillingCollectionModes.NAMES &&
+      draftOrder?.billing?.address != null &&
       (Boolean(previousState.paymentMethod) ||
         form.getFieldState('paymentMethod').isDirty ||
         form.getFieldState('deliveryMethod').isDirty ||
@@ -59,6 +64,7 @@ export function BillingPolicyTransitionController(): null {
   }, [
     clearBillingAddressDetails,
     deliveryMethod,
+    draftOrder?.billing?.address,
     form,
     paymentMethod,
     policy.mode,

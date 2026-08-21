@@ -346,6 +346,39 @@ describe('Checkout billing behavior', () => {
     ).toBe(false);
   });
 
+  it('does not clear billing when switching to offline without a collected address', async () => {
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      billing: {
+        firstName: '',
+        lastName: '',
+        address: null,
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      session: buildCheckoutSession({
+        draftOrder,
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: { processor: 'godaddy', checkoutTypes: ['standard'] } as never,
+          offline: { processor: 'offline', checkoutTypes: ['standard'] },
+        },
+      }),
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(
+      await screen.findByRole('button', { name: /offline payments/i })
+    );
+    await advanceCheckoutDebounce();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+  });
+
   it('clears a collected billing address when switching to offline pickup hides it', async () => {
     const draftOrder = buildDraftOrder({
       lineItems: [{ fulfillmentMode: 'PICKUP' }],

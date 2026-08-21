@@ -10,7 +10,10 @@ import {
   useDraftOrder,
   useDraftOrderLineItems,
 } from '@/components/checkout/order/use-draft-order';
-import { useDraftOrderProductsMap } from '@/components/checkout/order/use-draft-order-products';
+import {
+  useDraftOrderProductsMap,
+  useRefreshProductsWhenLineItemsChange,
+} from '@/components/checkout/order/use-draft-order-products';
 import {
   mapOrderToFormValues,
   mapSkusToItemsDisplay,
@@ -35,6 +38,7 @@ export function CheckoutFormContainer({
 
   const { data: order } = draftOrderQuery;
   const { data: lineItems } = draftOrderLineItemsQuery;
+  useRefreshProductsWhenLineItemsChange(lineItems);
 
   const items = useMemo(
     () => mapSkusToItemsDisplay(lineItems, skusMap),

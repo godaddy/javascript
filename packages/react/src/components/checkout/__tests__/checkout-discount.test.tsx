@@ -148,6 +148,29 @@ describe('Checkout discounts', () => {
     expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
   });
 
+  it('refetches the draft order when taxes cannot be recalculated without a billing address', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        billing: { address: null },
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableTaxCollection: true,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await applyCoupon(user, 'onedollar');
+    await waitForOperation('ApplyCheckoutSessionDiscount');
+    await waitForOperation('DraftOrder');
+
+    expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
+    expect(getOperations('DraftOrder')).toHaveLength(1);
+  });
+
   it.each(['PURCHASE', 'DIGITAL'] as const)(
     'recalculates taxes using the billing address when a coupon is applied to a %s order',
     async fulfillmentMode => {
