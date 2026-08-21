@@ -42,7 +42,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
   const confirmCheckout = useConfirmCheckout();
   const confirmExpressCheckout = useConfirmExpressCheckout();
   const { setCheckoutErrors } = useCheckoutContext();
-  const { stripePaymentExpressRequest } = useBuildPaymentRequest();
+  const { stripePaymentMethodParams } = useBuildPaymentRequest();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const handleSubmit = useCallback(
@@ -61,6 +61,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
           }
 
           const { paymentMethod, error } = await stripe.createPaymentMethod({
+            ...stripePaymentMethodParams,
             card: cardElement,
             type: 'card',
           });
@@ -91,7 +92,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
         if (mode === 'express') {
           const { error, paymentMethod } = await stripe.createPaymentMethod({
             elements,
-            params: stripePaymentExpressRequest,
+            params: stripePaymentMethodParams,
           });
 
           if (error) {
@@ -232,6 +233,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
       confirmCheckout.mutateAsync,
       confirmExpressCheckout.mutateAsync,
       setCheckoutErrors,
+      stripePaymentMethodParams,
     ]
   );
 

@@ -124,7 +124,7 @@ async function renderUseBuildPaymentRequest({
 }
 
 describe('useBuildPaymentRequest', () => {
-  it('builds Apple Pay, Google Pay, and PayPal request shapes from draft-order totals', async () => {
+  it('builds payment request shapes from draft-order totals and billing details', async () => {
     const lineItem = buildLineItem({
       name: 'Coffee Mug',
       quantity: 2,
@@ -262,6 +262,21 @@ describe('useBuildPaymentRequest', () => {
       ])
     );
 
+    expect(requests.stripePaymentMethodParams).toEqual({
+      billing_details: {
+        name: 'Bill Buyer',
+        email: 'bill@example.com',
+        phone: '+12015550124',
+        address: {
+          line1: '1 Billing Way',
+          line2: 'Suite 3',
+          city: 'Tempe',
+          state: 'AZ',
+          postal_code: '85284',
+          country: 'US',
+        },
+      },
+    });
     expect(requests.payPalRequest.purchase_units[0]).toMatchObject({
       payee: { merchant_id: 'MERCHANTID123' },
       amount: {

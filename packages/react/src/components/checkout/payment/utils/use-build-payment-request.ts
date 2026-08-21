@@ -1,7 +1,4 @@
-import type {
-  CreateTokenCardData,
-  PaymentMethodCreateParams,
-} from '@stripe/stripe-js';
+import type { PaymentMethodCreateParams } from '@stripe/stripe-js';
 import { useMemo } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import {
@@ -174,8 +171,7 @@ export function useBuildPaymentRequest(): {
   applePayRequest: ApplePayRequest;
   googlePayRequest: GooglePayRequest;
   payPalRequest: PayPalRequest;
-  stripePaymentCardRequest: CreateTokenCardData;
-  stripePaymentExpressRequest: PaymentMethodCreateParams;
+  stripePaymentMethodParams: PaymentMethodCreateParams;
   poyntCardRequest: PoyntCardRequest;
   poyntExpressRequest: PoyntExpressRequest;
   poyntStandardRequest: PoyntStandardRequest;
@@ -505,24 +501,13 @@ export function useBuildPaymentRequest(): {
     ],
   };
 
-  const stripePaymentCardRequest: CreateTokenCardData = {
-    name:
-      `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() ||
-      undefined,
-    address_line1: order?.billing?.address?.addressLine1 || undefined,
-    address_line2: order?.billing?.address?.addressLine2 || undefined,
-    address_city: order?.billing?.address?.adminArea2 || undefined,
-    address_state: order?.billing?.address?.adminArea1 || undefined,
-    address_zip: order?.billing?.address?.postalCode || undefined,
-    address_country: order?.billing?.address?.countryCode || undefined,
-  };
-
-  const stripePaymentExpressRequest: PaymentMethodCreateParams = {
+  const stripePaymentMethodParams: PaymentMethodCreateParams = {
     billing_details: {
       name:
         `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() ||
         undefined,
       email: order?.billing?.email || undefined,
+      phone: order?.billing?.phone || undefined,
       address: {
         line1: order?.billing?.address?.addressLine1 || undefined,
         line2: order?.billing?.address?.addressLine2 || undefined,
@@ -654,8 +639,7 @@ export function useBuildPaymentRequest(): {
     applePayRequest,
     googlePayRequest,
     payPalRequest,
-    stripePaymentCardRequest,
-    stripePaymentExpressRequest,
+    stripePaymentMethodParams,
     poyntCardRequest,
     poyntExpressRequest,
     poyntStandardRequest,
