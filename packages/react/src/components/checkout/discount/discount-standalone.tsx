@@ -1,5 +1,20 @@
 'use client';
 
+/**
+ * Coupon entry for checkout totals (VNEXT-83184 design).
+ *
+ * Layout is intentionally inlined here instead of composing the older
+ * DiscountInput / DiscountApplyButton / DiscountErrorList / Discounts /
+ * DiscountTag pieces. Those matched the previous UX (separate input + button,
+ * large error alert, chip tags without amounts). The new specs require:
+ * - one combined bordered field (input + Apply, or clear on error)
+ * - compact helper error text under the field
+ * - a full-width success bar with code + formatted amount + remove
+ *
+ * Applied coupons render via DiscountAppliedBar. Legacy discount-* modules are
+ * left in the package for now (still exported) but are unused by this path.
+ */
+
 import { enUs } from '@godaddy/localizations';
 import { Loader2, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';

@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * Success state for an applied coupon (green bar with check, code, amount, remove).
+ *
+ * Replaces the old DiscountTag chip for DiscountStandalone: tags only showed the
+ * code, while the redesign requires the discounted amount beside a remove control
+ * in a full-width success row.
+ */
+
 import { Check, Loader2, X } from 'lucide-react';
 
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
