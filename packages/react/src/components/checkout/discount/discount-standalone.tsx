@@ -2,7 +2,7 @@
 
 import { enUs } from '@godaddy/localizations';
 import { Loader2, X } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DiscountAppliedBar } from '@/components/checkout/discount/discount-applied-bar';
 import { useDiscountApply } from '@/components/checkout/discount/utils/use-discount-apply';
@@ -11,58 +11,12 @@ import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { cn } from '@/lib/utils';
-import type { DraftOrder } from '@/types';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
 import type { DiscountFormProps } from './types';
 
-type AppliedDiscount = {
-  code: string;
-  amount: number;
-  currencyCode: string;
-};
-
-function collectAppliedDiscounts(draftOrder: DraftOrder): AppliedDiscount[] {
-  const discountsByCode = new Map<string, AppliedDiscount>();
-
-  const addDiscount = (discount: {
-    code?: string | null;
-    amount?: { value?: number | null; currencyCode?: string | null } | null;
-  }) => {
-    if (!discount.code) return;
-
-    const existing = discountsByCode.get(discount.code);
-    const amountValue = discount.amount?.value ?? 0;
-    const currencyCode = discount.amount?.currencyCode ?? 'USD';
-
-    if (existing) {
-      existing.amount += amountValue;
-      return;
-    }
-
-    discountsByCode.set(discount.code, {
-      code: discount.code,
-      amount: amountValue,
-      currencyCode,
-    });
-  };
-
-  draftOrder.discounts?.forEach(addDiscount);
-  draftOrder.lineItems?.forEach(lineItem => {
-    lineItem.discounts?.forEach(addDiscount);
-  });
-  draftOrder.shippingLines?.forEach(shippingLine => {
-    shippingLine.discounts?.forEach(addDiscount);
-  });
-
-  return Array.from(discountsByCode.values());
-}
-
-function collectDiscountCodes(appliedDiscounts: AppliedDiscount[]): string[] {
-  return appliedDiscounts.map(discount => discount.code);
-}
-
 export function DiscountStandalone({
+  initialDiscounts = [],
   onDiscountsChange,
   onError,
 }: DiscountFormProps) {
@@ -70,19 +24,84 @@ export function DiscountStandalone({
   const { elements } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const { data: draftOrder } = useDraftOrder();
-  const appliedDiscounts = useMemo(
-    () => (draftOrder ? collectAppliedDiscounts(draftOrder) : []),
-    [draftOrder]
-  );
-  const currentDiscountCodes = useMemo(
-    () => collectDiscountCodes(appliedDiscounts),
-    [appliedDiscounts]
-  );
+
+  // Get current discount codes from order-level, line item-level, and shipping line-level discounts
+  const currentDiscountCodes = React.useMemo(() => {
+    if (!draftOrder) return [];
+
+    const allCodes = new Set<string>();
+
+    // Add order-level discount codes
+    if (draftOrder.discounts) {
+      for (const discount of draftOrder.discounts) {
+        if (discount.code) {
+          allCodes.add(discount.code);
+        }
+      }
+    }
+
+    // Add line item-level discount codes
+    if (draftOrder.lineItems) {
+      for (const lineItem of draftOrder.lineItems) {
+        if (lineItem.discounts) {
+          for (const discount of lineItem.discounts) {
+            if (discount.code) {
+              allCodes.add(discount.code);
+            }
+          }
+        }
+      }
+    }
+
+    // Add shipping line-level discount codes
+    if (draftOrder.shippingLines) {
+      for (const shippingLine of draftOrder.shippingLines) {
+        if (shippingLine.discounts) {
+          for (const discount of shippingLine.discounts) {
+            if (discount.code) {
+              allCodes.add(discount.code);
+            }
+          }
+        }
+      }
+    }
+
+    return Array.from(allCodes);
+  }, [draftOrder]);
+
+  // Amounts for the success bar UI only (apply/remove still use currentDiscountCodes)
+  const discountAmountsByCode = React.useMemo(() => {
+    const amounts = new Map<string, { amount: number; currencyCode: string }>();
+    if (!draftOrder) return amounts;
+
+    const addAmount = (discount: {
+      code?: string | null;
+      amount?: { value?: number | null; currencyCode?: string | null } | null;
+    }) => {
+      if (!discount.code) return;
+      const existing = amounts.get(discount.code);
+      const value = discount.amount?.value ?? 0;
+      const currencyCode = discount.amount?.currencyCode ?? 'USD';
+      if (existing) {
+        existing.amount += value;
+        return;
+      }
+      amounts.set(discount.code, { amount: value, currencyCode });
+    };
+
+    draftOrder.discounts?.forEach(addAmount);
+    draftOrder.lineItems?.forEach(lineItem => {
+      lineItem.discounts?.forEach(addAmount);
+    });
+    draftOrder.shippingLines?.forEach(shippingLine => {
+      shippingLine.discounts?.forEach(addAmount);
+    });
+
+    return amounts;
+  }, [draftOrder]);
 
   const [discountCode, setDiscountCode] = useState<string>('');
-  const [formErrors, setFormErrors] = useState<string[] | undefined>(
-    undefined
-  );
+  const [formErrors, setFormErrors] = useState<string[] | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRemovingDiscount, setIsRemovingDiscount] = useState<
     string | undefined
@@ -95,18 +114,8 @@ export function DiscountStandalone({
   const isApplyDisabled =
     !hasInputValue || isPaymentDisabled || isSubmitting || !!isRemovingDiscount;
 
-  const resolveErrorMessage = (error: string) => {
-    if (
-      error === t.discounts.alreadyApplied ||
-      error === t.discounts.enterCodeValidation
-    ) {
-      return error;
-    }
-
-    return t.discounts.invalid ?? enUs.discounts.invalid;
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Same space-stripping behavior DiscountInput used to provide
     setDiscountCode(e.target.value.replace(/\s+/g, ''));
     setFormErrors(undefined);
   };
@@ -117,6 +126,8 @@ export function DiscountStandalone({
   };
 
   const handleApply = async () => {
+    // Validation
+
     if (!discountCode.trim()) {
       setFormErrors([t.discounts.enterCodeValidation]);
       return;
@@ -124,18 +135,22 @@ export function DiscountStandalone({
 
     try {
       setIsSubmitting(true);
+      // Normalize the discount code to uppercase for consistency
       const normalizedCode = discountCode.trim();
 
+      // Check if the code already exists
       if (currentDiscountCodes.includes(normalizedCode)) {
         setFormErrors([t.discounts.alreadyApplied]);
         return;
       }
 
+      // Apply discount with current codes + new code
       const newDiscountCodes = [...currentDiscountCodes, normalizedCode];
       await applyDiscount.mutateAsync({
         discountCodes: newDiscountCodes,
       });
 
+      // Track successful discount application
       track({
         eventId: eventIds.applyCoupon,
         type: TrackingEventType.CLICK,
@@ -145,12 +160,17 @@ export function DiscountStandalone({
         },
       });
 
+      // Call the change handler if provided
       onDiscountsChange?.(newDiscountCodes);
+
+      // Reset the input
       setDiscountCode('');
       setFormErrors(undefined);
     } catch (error) {
       if (error instanceof GraphQLErrorWithCodes) {
         setFormErrors(error.codes);
+
+        // Track discount error
         track({
           eventId: eventIds.discountError,
           type: TrackingEventType.EVENT,
@@ -163,6 +183,8 @@ export function DiscountStandalone({
         const genericError = new Error(t.discounts.failedToApply);
         setFormErrors([t.discounts.failedToApply]);
         onError?.(genericError);
+
+        // Track generic discount error
         track({
           eventId: eventIds.discountError,
           type: TrackingEventType.EVENT,
@@ -186,7 +208,7 @@ export function DiscountStandalone({
 
   const handleRemoveDiscount = async (discountToRemove: string) => {
     const newDiscountCodes = currentDiscountCodes.filter(
-      code => code !== discountToRemove
+      d => d !== discountToRemove
     );
 
     try {
@@ -195,6 +217,7 @@ export function DiscountStandalone({
         discountCodes: newDiscountCodes,
       });
 
+      // Track discount removal
       track({
         eventId: eventIds.removeDiscount,
         type: TrackingEventType.CLICK,
@@ -209,6 +232,8 @@ export function DiscountStandalone({
     } catch (error) {
       if (error instanceof GraphQLErrorWithCodes) {
         setFormErrors(error.codes);
+
+        // Track discount error
         track({
           eventId: eventIds.discountError,
           type: TrackingEventType.EVENT,
@@ -221,6 +246,8 @@ export function DiscountStandalone({
         const genericError = new Error(t.discounts.failedToApply);
         setFormErrors([t.discounts.failedToApply]);
         onError?.(genericError);
+
+        // Track generic discount error
         track({
           eventId: eventIds.discountError,
           type: TrackingEventType.EVENT,
@@ -233,30 +260,41 @@ export function DiscountStandalone({
     }
   };
 
-  const label =
-    t.discounts.haveACouponCode ?? enUs.discounts.haveACouponCode;
-  const primaryError = formErrors?.[0]
-    ? resolveErrorMessage(formErrors[0])
-    : undefined;
+  const primaryError = (() => {
+    const error = formErrors?.[0];
+    if (!error) return undefined;
+    if (
+      error === t.discounts.alreadyApplied ||
+      error === t.discounts.enterCodeValidation
+    ) {
+      return error;
+    }
+    return t.discounts.invalid ?? enUs.discounts.invalid;
+  })();
 
   return (
     <div className='flex flex-col gap-2'>
-      <label className='text-sm font-medium text-[#111111]'>{label}</label>
+      <label className='text-sm font-medium text-[#111111]'>
+        {t.discounts.haveACouponCode ?? enUs.discounts.haveACouponCode}
+      </label>
 
-      {appliedDiscounts.length > 0 ? (
+      {currentDiscountCodes.length > 0 && (
         <div className='flex flex-col gap-2'>
-          {appliedDiscounts.map(discount => (
-            <DiscountAppliedBar
-              key={discount.code}
-              code={discount.code}
-              amount={discount.amount}
-              currencyCode={discount.currencyCode}
-              onRemove={() => handleRemoveDiscount(discount.code)}
-              isRemoving={isRemovingDiscount === discount.code}
-            />
-          ))}
+          {currentDiscountCodes.map(code => {
+            const amountInfo = discountAmountsByCode.get(code);
+            return (
+              <DiscountAppliedBar
+                key={code}
+                code={code}
+                amount={amountInfo?.amount ?? 0}
+                currencyCode={amountInfo?.currencyCode ?? 'USD'}
+                onRemove={() => handleRemoveDiscount(code)}
+                isRemoving={isRemovingDiscount === code}
+              />
+            );
+          })}
         </div>
-      ) : null}
+      )}
 
       <div className='flex flex-col gap-1.5'>
         <div
@@ -291,7 +329,9 @@ export function DiscountStandalone({
                 type='button'
                 className='flex h-6 w-6 items-center justify-center text-[#111111]'
                 onClick={handleClearInput}
-                aria-label={t.discounts.removeCoupon ?? enUs.discounts.removeCoupon}
+                aria-label={
+                  t.discounts.removeCoupon ?? enUs.discounts.removeCoupon
+                }
               >
                 <X className='h-4 w-4' />
               </button>
