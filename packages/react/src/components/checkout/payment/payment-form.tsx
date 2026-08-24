@@ -35,11 +35,15 @@ import {
 } from '@/components/checkout/payment/payment-method-renderer';
 import type { TokenizeJs } from '@/components/checkout/payment/types';
 import {
-  hasInlineBillingForm,
-  useBillingCollectionMode,
+  BillingCollectionLocations,
+  BillingCollectionModes,
 } from '@/components/checkout/payment/utils/billing-collection';
 import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
+import {
+  useBillingPolicy,
+  useCanOfferShippingAddressAsBilling,
+} from '@/components/checkout/payment/utils/use-billing-policy';
 import { useGetSelectedPaymentMethod } from '@/components/checkout/payment/utils/use-get-selected-payment-method';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
 import { Target } from '@/components/checkout/target/target';
@@ -102,9 +106,13 @@ export function PaymentForm(
   const paymentMethod = form.watch('paymentMethod');
   const deliveryMethod = form.watch('deliveryMethod');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
-  const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-  const billingMode = useBillingCollectionMode({ context: 'top-level' });
-  const isPaymentMethodWithInlineBilling = hasInlineBillingForm(paymentMethod);
+  const _isShipping = deliveryMethod === DeliveryMethods.SHIP;
+  const billingPolicy = useBillingPolicy();
+  const selectedMethodUsesInlineBilling =
+    paymentMethod === PaymentMethodType.CREDIT_CARD ||
+    paymentMethod === PaymentMethodType.ACH;
+  const canOfferShippingAddressAsBilling =
+    useCanOfferShippingAddressAsBilling();
   const methodConfig = useGetSelectedPaymentMethod(
     paymentMethod as PaymentMethodValue
   );
@@ -294,11 +302,12 @@ export function PaymentForm(
     googlePaySupported,
   ]);
 
-  const shouldShowBillingNamesOnly = billingMode === 'names';
-  const isBillingAddressRequired = billingMode !== 'none';
-
+  const shouldShowBilling =
+    billingPolicy.location === BillingCollectionLocations.TOP_LEVEL &&
+    billingPolicy.mode !== BillingCollectionModes.NONE;
   const billingCopy =
-    shouldShowBillingNamesOnly && t.payment.billingInformation
+    billingPolicy.mode === BillingCollectionModes.NAMES &&
+    t.payment.billingInformation
       ? t.payment.billingInformation
       : t.payment.billingAddress;
 
@@ -534,12 +543,10 @@ export function PaymentForm(
         />
       ) : null}
 
-      {isShipping &&
-      session?.enableShipping &&
-      !isPaymentMethodWithInlineBilling ? (
+      {canOfferShippingAddressAsBilling && !selectedMethodUsesInlineBilling ? (
         <PaymentAddressToggle />
       ) : null}
-      {isBillingAddressRequired ? (
+      {shouldShowBilling ? (
         <CheckoutSection className={isPickup ? 'pt-5' : ''}>
           <CheckoutSectionHeader
             title={billingCopy.title}
@@ -547,7 +554,7 @@ export function PaymentForm(
           />
           <AddressForm
             sectionKey='billing'
-            onlyNames={shouldShowBillingNamesOnly}
+            onlyNames={billingPolicy.mode === BillingCollectionModes.NAMES}
           />
         </CheckoutSection>
       ) : null}

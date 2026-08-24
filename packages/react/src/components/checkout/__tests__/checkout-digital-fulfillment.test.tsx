@@ -221,6 +221,24 @@ describe('Digital fulfillment checkout', () => {
     expectBillingNamesOnlyWithPhone();
   });
 
+  it('respects disabled billing address collection for taxable digital-only orders', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        shipping: { address: null },
+        lineItems: [buildDigitalLineItem()],
+      },
+      sessionOverrides: {
+        enableBillingAddressCollection: false,
+        enableTaxCollection: true,
+        enableShipping: true,
+        enableLocalPickup: true,
+      },
+    });
+    await waitForCheckoutReady();
+
+    expectBillingNamesOnlyWithPhone();
+  });
+
   it('shows billing names and phone for free digital-only orders when tax is disabled', async () => {
     renderCheckout({
       draftOrderOverrides: {

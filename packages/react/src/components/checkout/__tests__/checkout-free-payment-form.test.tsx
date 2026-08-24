@@ -1,7 +1,9 @@
+import { enUs } from '@godaddy/localizations';
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
   advanceCheckoutDebounce,
+  buildBillingAddress,
   buildCheckoutSession,
   buildDraftOrder,
   buildShippingRates,
@@ -39,6 +41,36 @@ function buildFreeDraftOrder(
     ],
     ...overrides,
   });
+}
+
+function buildFreeShippingDraftOrder(
+  overrides: Parameters<typeof buildDraftOrder>[0] = {}
+) {
+  return buildFreeDraftOrder({
+    lineItems: [{ fulfillmentMode: 'SHIP' }],
+    shippingLines: [
+      {
+        id: 'shipping-line-free',
+        requestedService: 'free-shipping',
+        requestedProvider: 'unknown',
+        name: 'Free',
+        amount: { value: 0, currencyCode: 'USD' },
+        discounts: [],
+      },
+    ],
+    ...overrides,
+  });
+}
+
+function freeShippingRates() {
+  return buildShippingRates([
+    {
+      serviceCode: 'free-shipping',
+      displayName: 'Free',
+      description: 'Free',
+      cost: { value: 0, currencyCode: 'USD' },
+    },
+  ]);
 }
 
 async function submitFreeOrder(
@@ -152,7 +184,7 @@ describe('Checkout FreePaymentForm integration', () => {
     expect(getLastConfirmInput()).not.toHaveProperty('fulfillmentLocationId');
   });
 
-  it('renders a free purchase order without collecting address fields', async () => {
+  it('collects billing names only for a free purchase order when tax collection is disabled', async () => {
     const draftOrder = buildFreeDraftOrder({
       lineItems: [{ fulfillmentMode: 'PURCHASE' }],
     });
@@ -169,14 +201,193 @@ describe('Checkout FreePaymentForm integration', () => {
     expect(
       screen.getByRole('button', { name: /complete your free order/i })
     ).toBeInTheDocument();
-    // Current FreePaymentForm renders the submit button only for PURCHASE
-    // orders. PRD T-107/T-401 notes document that new billing collection
-    // fields are not rendered for this case.
+    // A free purchase order follows the same rules as a paid offline one: names
+    // are collected, and the address is skipped because no tax destination is
+    // needed.
+    expect(
+      document.querySelector('input[name="billingFirstName"]')
+    ).toBeInTheDocument();
     expect(
       document.querySelector('input[name="billingAddressLine1"]')
     ).not.toBeInTheDocument();
     expect(
       document.querySelector('input[name="shippingAddressLine1"]')
     ).not.toBeInTheDocument();
+  });
+
+  it('collects a billing address for a free purchase order when tax collection is enabled', async () => {
+    const draftOrder = buildFreeDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      billing: { address: buildBillingAddress({ addressLine1: '' }) },
+    });
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableShipping: false,
+      enableLocalPickup: false,
+      enableBillingAddressCollection: true,
+      enableTaxCollection: true,
+    });
+
+    renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingPostalCode"]')
+    ).toBeInTheDocument();
+  });
+
+  it('blocks a free purchase order confirm while a required billing field is empty', async () => {
+    const draftOrder = buildFreeDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      billing: { firstName: '', lastName: '' },
+    });
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableShipping: false,
+      enableLocalPickup: false,
+      enableTaxCollection: false,
+    });
+
+    const { user } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    // The schema requires billing names here, so the fields must be rendered
+    // and validated instead of leaving the button silently inert.
+    await user.click(
+      await screen.findByRole('button', { name: /complete your free order/i })
+    );
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(enUs.validation.enterFirstName);
+    });
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+  });
+
+  it('collects a billing address for a free shipping order whose billing differs from shipping', async () => {
+    const draftOrder = buildFreeDraftOrder({
+      lineItems: [{ fulfillmentMode: 'SHIP' }],
+      billing: {
+        address: buildBillingAddress({ addressLine1: '99 Billing Blvd' }),
+      },
+    });
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableShipping: true,
+      enableLocalPickup: false,
+      enableBillingAddressCollection: true,
+      enableTaxCollection: false,
+    });
+
+    renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+
+    // Billing is not a copy of shipping, so the free form has to keep showing
+    // the billing address the schema still requires.
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toHaveValue('99 Billing Blvd');
+  });
+
+  it('lets a free shipping order reuse the shipping address for billing', async () => {
+    const draftOrder = buildFreeShippingDraftOrder({
+      billing: { firstName: '', lastName: '', phone: '', address: null },
+    });
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableShipping: true,
+      enableLocalPickup: false,
+      enableTaxCollection: false,
+    });
+
+    const { user } = renderCheckout({
+      session,
+      draftOrder,
+      apiOverrides: { shippingMethods: freeShippingRates() },
+    });
+    await waitForCheckoutReady();
+
+    // An order that arrives with only a shipping address starts out asking for
+    // a separate billing address, so the customer needs the same opt-out the
+    // paid form offers instead of being forced to retype the address.
+    const toggle = screen.getByLabelText(/use shipping address as billing/i);
+    expect(toggle).not.toBeChecked();
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toBeChecked();
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
+    await submitFreeOrder(user);
+    expect(getLastConfirmInput()).toMatchObject({ paymentType: 'offline' });
+  });
+
+  it('lets a free shipping order opt into a separate billing address', async () => {
+    const draftOrder = buildFreeShippingDraftOrder();
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableShipping: true,
+      enableLocalPickup: false,
+      enableTaxCollection: false,
+    });
+
+    const { user } = renderCheckout({
+      session,
+      draftOrder,
+      apiOverrides: { shippingMethods: freeShippingRates() },
+    });
+    await waitForCheckoutReady();
+
+    const toggle = screen.getByLabelText(/use shipping address as billing/i);
+    expect(toggle).toBeChecked();
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
+
+    await user.click(toggle);
+
+    // Opting out reveals the billing address form and, because unchecking
+    // clears the copied address, the order cannot confirm until it is filled.
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toBeInTheDocument();
+    clearOperations();
+    await user.click(
+      await screen.findByRole('button', { name: /complete your free order/i })
+    );
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(enUs.validation.enterAddress);
+    });
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+  });
+
+  it('does not treat a missing order total as free', async () => {
+    const draftOrder = buildFreeDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      totals: { total: null },
+    });
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableShipping: false,
+      enableLocalPickup: false,
+      enableTaxCollection: false,
+    });
+
+    renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+
+    expect(
+      screen.queryByRole('button', { name: /complete your free order/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /pay now/i })
+    ).toBeInTheDocument();
   });
 });

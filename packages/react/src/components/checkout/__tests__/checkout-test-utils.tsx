@@ -630,7 +630,17 @@ function applyShippingLines(shippingMethods: unknown) {
 function applyDiscountCodes(discountCodes: string[]) {
   if (!state) return;
   const discounts = discountCodes.map(code => discount(code));
-  const discountTotal = money(discountCodes.length * 100);
+  const totals = state.draftOrder.totals ?? defaultTotals();
+  const freeOrderDiscount =
+    (totals.subTotal?.value ?? 0) +
+    (totals.shippingTotal?.value ?? 0) +
+    (totals.taxTotal?.value ?? 0) +
+    (totals.feeTotal?.value ?? 0);
+  const discountTotal = money(
+    discountCodes.some(code => code.toLowerCase() === 'free100')
+      ? freeOrderDiscount
+      : discountCodes.length * 100
+  );
   state.draftOrder = recalculateTotal({
     ...state.draftOrder,
     discounts,
