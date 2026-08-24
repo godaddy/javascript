@@ -155,12 +155,15 @@ export const enUs = {
     noCountryFound: 'No country found.',
   },
   discounts: {
+    haveACouponCode: 'Have a coupon code?',
     placeholder: 'Coupon code',
     enterCode: 'Enter coupon code',
     apply: 'Apply',
     alreadyApplied: 'This coupon code has already been applied',
     failedToApply: 'Failed to apply coupon code',
     enterCodeValidation: 'Please enter a coupon code',
+    invalid: "This coupon code isn't valid. Please try again.",
+    removeCoupon: 'Remove coupon',
   },
   totals: {
     subtotal: 'Subtotal',
