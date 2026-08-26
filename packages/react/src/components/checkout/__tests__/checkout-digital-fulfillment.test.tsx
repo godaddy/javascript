@@ -342,7 +342,7 @@ describe('Digital fulfillment checkout', () => {
     ).toBeVisible();
   });
 
-  it('hides express for mixed digital and pickup orders', async () => {
+  it('shows express for mixed digital and pickup orders when shipping is enabled', async () => {
     renderCheckout({
       draftOrderOverrides: {
         lineItems: [
@@ -362,8 +362,8 @@ describe('Digital fulfillment checkout', () => {
     await waitForCheckoutReady();
 
     expect(
-      screen.queryByTestId('mock-godaddy-express-button')
-    ).not.toBeInTheDocument();
+      await screen.findByTestId('mock-godaddy-express-button')
+    ).toBeVisible();
   });
 
   it('does not let digital NONE lines trigger shipping fulfillment sync', async () => {

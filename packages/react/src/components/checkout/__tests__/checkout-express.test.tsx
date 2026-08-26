@@ -92,6 +92,49 @@ describe('Express checkout section visibility', () => {
     ).toBeVisible();
   });
 
+  it('does not render express checkout for a purchase-only session', async () => {
+    renderCheckout({
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        paymentMethods: {
+          card: { processor: 'stripe', checkoutTypes: ['standard'] },
+          express: { processor: 'godaddy', checkoutTypes: ['express'] },
+        },
+      },
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      screen.queryByTestId('mock-godaddy-express-button')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/^OR$/)).not.toBeInTheDocument();
+  });
+
+  it('renders express checkout for pickup fulfillment when shipping is enabled', async () => {
+    renderCheckout({
+      sessionOverrides: {
+        enableShipping: true,
+        enableLocalPickup: true,
+        paymentMethods: {
+          card: { processor: 'stripe', checkoutTypes: ['standard'] },
+          express: { processor: 'godaddy', checkoutTypes: ['express'] },
+        },
+      },
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      await screen.findByTestId('mock-godaddy-express-button')
+    ).toBeVisible();
+  });
+
   it('does not render express checkout for a digital-only order', async () => {
     renderCheckout({
       sessionOverrides: {
