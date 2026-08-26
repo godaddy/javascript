@@ -232,6 +232,50 @@ describe('Checkout discounts', () => {
     expect(taxIndex).toBeGreaterThan(lastDiscountIndex);
   });
 
+  it('clears applied shipping once when the discount rate refresh returns no methods', async () => {
+    const paidShipping = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 1000, currencyCode: 'USD' },
+      },
+    ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods: paidShipping },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 1000, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+    setShippingMethods([]);
+
+    await applyCoupon(user, 'onedollar');
+    await waitFor(() => {
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
+    });
+    await flushPromises();
+    await flushPromises();
+
+    expect(getOperations('DraftOrderShippingRates')).toHaveLength(1);
+    expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(1);
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod')[0].input
+    ).toEqual([]);
+    expect(getOperations('ApplyCheckoutSessionDiscount')).toHaveLength(2);
+    expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
+    expect(screen.queryByText('Standard')).not.toBeInTheDocument();
+    expect(document.body).toHaveTextContent(/no shipping methods found/i);
+  });
+
   it('applies a newly available free method before calculating taxes', async () => {
     const paidShipping = buildShippingRates([
       {

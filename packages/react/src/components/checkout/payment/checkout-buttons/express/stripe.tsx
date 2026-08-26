@@ -75,14 +75,10 @@ export function StripeExpressCheckoutForm() {
   const [shippingAddress, setShippingAddress] =
     useState<StripePartialAddress | null>(null);
 
-  // Track the status of coupon code fetching
-  const [couponFetchStatus, setCouponFetchStatus] = useState<
-    'idle' | 'fetching' | 'done'
-  >('idle');
-
   // Use refs for values needed in event handlers to avoid stale closures
   const appliedCouponCodeRef = useRef<string | null>(null);
   const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
+  const couponSyncRequestRef = useRef(0);
 
   const draftOrderDiscountCodes = useMemo(
     () => getDraftOrderDiscountCodes(draftOrder),
@@ -92,32 +88,36 @@ export function StripeExpressCheckoutForm() {
   const hasDraftOrder = Boolean(draftOrder);
 
   useEffect(() => {
-    if (!hasDraftOrder || couponFetchStatus === 'fetching') return;
+    if (!hasDraftOrder) return;
 
-    const fetchPriceAdjustments = async () => {
-      setCouponFetchStatus('fetching');
+    const requestId = ++couponSyncRequestRef.current;
+    const couponCode = draftOrderDiscountCodes[0];
+
+    const syncPriceAdjustments = async () => {
+      if (!couponCode) {
+        appliedCouponCodeRef.current = null;
+        calculatedAdjustmentsRef.current = null;
+        return;
+      }
 
       try {
-        const couponCode = draftOrderDiscountCodes[0];
-        if (couponCode) {
-          const result = await getPriceAdjustments.mutateAsync({
-            discountCodes: [couponCode],
-          });
+        const result = await getPriceAdjustments.mutateAsync({
+          discountCodes: [couponCode],
+        });
 
-          if (result) {
-            appliedCouponCodeRef.current = couponCode;
-            calculatedAdjustmentsRef.current = result;
-          }
-        } else {
-          appliedCouponCodeRef.current = null;
-          calculatedAdjustmentsRef.current = null;
-        }
-      } finally {
-        setCouponFetchStatus('done');
+        if (requestId !== couponSyncRequestRef.current) return;
+
+        appliedCouponCodeRef.current = result ? couponCode : null;
+        calculatedAdjustmentsRef.current = result ?? null;
+      } catch {
+        if (requestId !== couponSyncRequestRef.current) return;
+
+        appliedCouponCodeRef.current = null;
+        calculatedAdjustmentsRef.current = null;
       }
     };
 
-    fetchPriceAdjustments();
+    syncPriceAdjustments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasDraftOrder, discountCodesKey]);
 

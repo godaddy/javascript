@@ -66,6 +66,7 @@ export function ShippingMethodForm() {
       mutationKey: checkoutMutationKeys.applyDiscount(session?.id),
     }) > 0;
   const lastShippingMethodsKeyRef = useRef<string | null>(null);
+  const wasApplyingDiscountRef = useRef(false);
 
   // Track the last processed state to avoid duplicate API calls
   const lastProcessedStateRef = useRef<{
@@ -86,6 +87,7 @@ export function ShippingMethodForm() {
 
   useEffect(() => {
     if (isApplyingDiscount) {
+      wasApplyingDiscountRef.current = true;
       lastShippingMethodsKeyRef.current =
         getShippingMethodsKey(shippingMethods);
       lastProcessedStateRef.current = {
@@ -105,6 +107,8 @@ export function ShippingMethodForm() {
     )
       return;
 
+    const discountJustSettled = wasApplyingDiscountRef.current;
+    wasApplyingDiscountRef.current = false;
     const hasShippingMethods = (shippingMethods?.length ?? 0) > 0;
     const currentServiceCode = shippingLines?.requestedService || null;
     const lastState = lastProcessedStateRef.current;
@@ -122,6 +126,19 @@ export function ShippingMethodForm() {
     // Case 1: No shipping methods available - clear shipping and set fulfillment to SHIP
     if (!hasShippingMethods && hasShippingAddress) {
       lastShippingMethodsKeyRef.current = getShippingMethodsKey([]);
+
+      if (discountJustSettled && !currentServiceCode) {
+        lastProcessedStateRef.current = {
+          serviceCode: null,
+          cost: null,
+          hadShippingMethods: false,
+          wasPickup: isPickup,
+          clearedShippingMethod: true,
+          blockedFulfillmentKey: null,
+        };
+        return;
+      }
+
       // Apply empty shipping method if:
       // - Pickup mode and has shipping code OR wasn't pickup before
       // - Shipping mode and (had methods before OR haven't cleared yet)

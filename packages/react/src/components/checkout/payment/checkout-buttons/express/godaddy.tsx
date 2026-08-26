@@ -95,6 +95,7 @@ export function ExpressCheckoutButton() {
   // Use refs to store current coupon state to avoid stale closures in event handlers
   const appliedCouponCodeRef = useRef<string | null>(null);
   const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
+  const couponSyncRequestRef = useRef(0);
 
   const calculateGodaddyExpressTaxes = useCallback(
     async ({
@@ -301,6 +302,7 @@ export function ExpressCheckoutButton() {
   const [couponFetchStatus, setCouponFetchStatus] = useState<
     'idle' | 'fetching' | 'done'
   >('idle');
+  const [couponSyncRevision, setCouponSyncRevision] = useState(0);
 
   const draftOrderDiscountCodes = useMemo(
     () => getDraftOrderDiscountCodes(draftOrder),
@@ -312,34 +314,43 @@ export function ExpressCheckoutButton() {
     draftOrderDiscountCodes.length === 0 || couponFetchStatus === 'done';
 
   useEffect(() => {
-    if (!hasDraftOrder || couponFetchStatus === 'fetching') return;
+    if (!hasDraftOrder) return;
 
-    const fetchPriceAdjustments = async () => {
-      setCouponFetchStatus('fetching');
+    const requestId = ++couponSyncRequestRef.current;
+    const couponCode = draftOrderDiscountCodes[0];
+    setCouponFetchStatus('fetching');
 
+    const syncPriceAdjustments = async () => {
       try {
-        const couponCode = draftOrderDiscountCodes[0];
-        if (couponCode) {
-          const result = await getPriceAdjustments.mutateAsync({
-            discountCodes: [couponCode],
-          });
-
-          if (result) {
-            appliedCouponCodeRef.current = couponCode;
-            calculatedAdjustmentsRef.current = result;
-          }
-        } else {
+        if (!couponCode) {
           appliedCouponCodeRef.current = null;
           calculatedAdjustmentsRef.current = null;
+          return;
         }
+
+        const result = await getPriceAdjustments.mutateAsync({
+          discountCodes: [couponCode],
+        });
+
+        if (requestId !== couponSyncRequestRef.current) return;
+
+        appliedCouponCodeRef.current = result ? couponCode : null;
+        calculatedAdjustmentsRef.current = result ?? null;
+      } catch {
+        if (requestId !== couponSyncRequestRef.current) return;
+
+        appliedCouponCodeRef.current = null;
+        calculatedAdjustmentsRef.current = null;
       } finally {
-        setCouponFetchStatus('done');
+        if (requestId === couponSyncRequestRef.current) {
+          setCouponFetchStatus('done');
+        }
       }
     };
 
-    fetchPriceAdjustments();
+    syncPriceAdjustments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasDraftOrder, discountCodesKey]);
+  }, [hasDraftOrder, discountCodesKey, couponSyncRevision]);
 
   // Initialize the TokenizeJs instance when the component mounts
   // But only after price adjustments have been fetched
@@ -492,6 +503,7 @@ export function ExpressCheckoutButton() {
       // Reset coupon fetch status to trigger re-sync with draft order on next open
       // This ensures any coupon changes made inside the wallet (but not committed) are discarded
       setCouponFetchStatus('idle');
+      setCouponSyncRevision(value => value + 1);
       setCalculatedTaxes(null);
 
       // Clear coupon refs - will be re-synced with draft order on next fetch
