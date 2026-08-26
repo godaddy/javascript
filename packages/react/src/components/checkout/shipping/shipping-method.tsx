@@ -152,8 +152,16 @@ export function ShippingMethodForm() {
         : lastState.hadShippingMethods || !lastState.clearedShippingMethod;
 
       if (shouldClearShipping) {
+        const previousShippingMethod =
+          form.getValues('shippingMethod') || currentServiceCode || '';
         form.setValue('shippingMethod', '', { shouldDirty: false });
-        applyShippingMethod.mutate([]);
+        applyShippingMethod.mutate([], {
+          onError: () => {
+            form.setValue('shippingMethod', previousShippingMethod, {
+              shouldDirty: false,
+            });
+          },
+        });
         lastProcessedStateRef.current = {
           serviceCode: null,
           cost: null,
@@ -217,7 +225,14 @@ export function ShippingMethodForm() {
             };
           }
 
+          const previousShippingMethod =
+            currentFormMethod || currentServiceCode || '';
           applyShippingMethod.mutate(buildShippingPayload(methodToApply), {
+            onError: () => {
+              form.setValue('shippingMethod', previousShippingMethod, {
+                shouldDirty: false,
+              });
+            },
             onSuccess: () => {
               if (!isFulfillmentSync || !session?.id) return;
 

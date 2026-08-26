@@ -60,12 +60,12 @@ export function useReconcileAfterDiscount() {
           previousMethodsKey: getShippingMethodsKey(previousShippingMethods),
         });
 
-        form.setValue('shippingMethod', selectedMethod?.serviceCode ?? '', {
-          shouldDirty: false,
-        });
         await applyShippingMethod.mutateAsync(
           selectedMethod ? buildShippingPayload(selectedMethod) : []
         );
+        form.setValue('shippingMethod', selectedMethod?.serviceCode ?? '', {
+          shouldDirty: false,
+        });
 
         if (session.enablePromotionCodes && variables.discountCodes?.length) {
           await reapplyDiscount.mutateAsync(variables);

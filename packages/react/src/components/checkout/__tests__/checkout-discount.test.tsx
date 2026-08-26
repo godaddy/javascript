@@ -285,6 +285,129 @@ describe('Checkout discounts', () => {
     }
   );
 
+  it('keeps the previous shipping selection when discount reconciliation fails', async () => {
+    const paidShipping = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 1000, currencyCode: 'USD' },
+      },
+    ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods: paidShipping },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 1000, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+    setApiError('applyShippingMethod', 'apply failed');
+    setShippingMethods([
+      ...paidShipping,
+      ...buildShippingRates([
+        {
+          serviceCode: 'free',
+          carrierCode: 'carrier',
+          displayName: 'Free',
+          cost: { value: 0, currencyCode: 'USD' },
+        },
+      ]),
+    ]);
+
+    await applyCoupon(user, 'onedollar');
+    await waitFor(() => {
+      expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
+        2
+      );
+    });
+    await flushPromises();
+    await flushPromises();
+
+    expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(2);
+    expect(screen.getByRole('radio', { name: /standard/i })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /free/i })).not.toBeChecked();
+    expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
+  });
+
+  it.each(['empty', 'replacement'] as const)(
+    'does not display a failed %s automatic shipping selection',
+    async result => {
+      const paidShipping = buildShippingRates([
+        {
+          serviceCode: 'standard',
+          carrierCode: 'carrier',
+          displayName: 'Standard',
+          cost: { value: 1000, currencyCode: 'USD' },
+        },
+      ]);
+      const { user } = renderCheckout({
+        apiOverrides: { shippingMethods: paidShipping },
+        draftOrderOverrides: {
+          shippingLines: [
+            {
+              requestedService: 'standard',
+              requestedProvider: 'carrier',
+              name: 'Standard',
+              amount: { value: 1000, currencyCode: 'USD' },
+            },
+          ],
+        },
+      });
+      await waitForCheckoutReady();
+      clearOperations();
+      setApiError('applyShippingMethod', 'apply failed');
+      setShippingMethods(
+        result === 'empty'
+          ? []
+          : buildShippingRates([
+              {
+                serviceCode: 'express',
+                carrierCode: 'carrier',
+                displayName: 'Express',
+                cost: { value: 1500, currencyCode: 'USD' },
+              },
+              {
+                serviceCode: 'overnight',
+                carrierCode: 'carrier',
+                displayName: 'Overnight',
+                cost: { value: 2000, currencyCode: 'USD' },
+              },
+            ])
+      );
+
+      await applyCoupon(user, 'onedollar');
+      await waitFor(() => {
+        expect(
+          getOperations('ApplyCheckoutSessionShippingMethod')
+        ).toHaveLength(2);
+      });
+      await flushPromises();
+      await flushPromises();
+
+      expect(getOperations('ApplyCheckoutSessionDiscount')).toHaveLength(1);
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
+
+      if (result === 'empty') {
+        expect(document.body).toHaveTextContent(/no shipping methods found/i);
+      } else {
+        expect(
+          screen.getByRole('radio', { name: /express/i })
+        ).not.toBeChecked();
+        expect(
+          screen.getByRole('radio', { name: /overnight/i })
+        ).not.toBeChecked();
+      }
+    }
+  );
+
   it('applies a newly available free method before calculating taxes', async () => {
     const paidShipping = buildShippingRates([
       {
