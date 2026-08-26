@@ -41,9 +41,10 @@ export function useReconcileAfterDiscount() {
 
     if (deliveryMethod === DeliveryMethods.SHIP && hasShippingDestination) {
       const previousShippingMethods = shippingMethodsQuery.data ?? [];
-      const { data: refreshedMethods } = await shippingMethodsQuery.refetch();
+      const { data, isError } = await shippingMethodsQuery.refetch();
+      const refreshedMethods = isError ? [] : (data ?? []);
       const shippingRequiresReconciliation = requiresShippingReconciliation({
-        shippingMethods: refreshedMethods ?? [],
+        shippingMethods: refreshedMethods,
         previousShippingMethods,
         currentShippingLine: draftOrder?.shippingLines?.[0],
         selectedServiceCode: form.getValues('shippingMethod'),
@@ -54,7 +55,7 @@ export function useReconcileAfterDiscount() {
           form.getValues('shippingMethod') ||
           draftOrder?.shippingLines?.[0]?.requestedService;
         const { selectedMethod } = selectShippingMethod({
-          shippingMethods: refreshedMethods ?? [],
+          shippingMethods: refreshedMethods,
           currentServiceCode,
           previousMethodsKey: getShippingMethodsKey(previousShippingMethods),
         });

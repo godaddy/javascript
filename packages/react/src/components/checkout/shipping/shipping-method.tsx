@@ -42,8 +42,11 @@ export function ShippingMethodForm() {
   const queryClient = useQueryClient();
   const isPaymentDisabled = useIsPaymentDisabled();
 
-  const { data: shippingMethodsData, isLoading: isShippingMethodsLoading } =
-    useDraftOrderShippingMethods();
+  const {
+    data: shippingMethodsData,
+    isError: isShippingMethodsError,
+    isLoading: isShippingMethodsLoading,
+  } = useDraftOrderShippingMethods();
   const { data: shippingAddress, isLoading: isShippingAddressLoading } =
     useDraftOrderShippingAddress();
   const { data: order, isLoading: isDraftOrderLoading } = useDraftOrder();
@@ -58,7 +61,9 @@ export function ShippingMethodForm() {
   const fulfillmentSyncKey = getShippingFulfillmentSyncKey(order?.lineItems);
   const hasLineItemsMissingShippingFulfillment = Boolean(fulfillmentSyncKey);
 
-  const shippingMethods = sortShippingMethods(shippingMethodsData || []);
+  const shippingMethods = sortShippingMethods(
+    isShippingMethodsError ? [] : shippingMethodsData || []
+  );
 
   const applyShippingMethod = useApplyShippingMethod();
   const isApplyingDiscount =
