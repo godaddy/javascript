@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { getDraftOrderDiscountCodes } from '@/components/checkout/discount/utils/get-draft-order-discount-codes';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
   useDraftOrder,
@@ -24,7 +25,7 @@ import {
 import { useConfirmExpressCheckout } from '@/components/checkout/payment/utils/use-confirm-express-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useLoadPoyntCollect } from '@/components/checkout/payment/utils/use-load-poynt-collect';
-import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
+import { sortShippingMethods } from '@/components/checkout/shipping/utils/sort-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
 import {
@@ -144,13 +145,7 @@ export function ExpressCheckoutButton() {
 
       setShippingMethods(shippingMethodsData);
 
-      const orderSubTotal = totals?.subTotal?.value || 0;
-
-      const sortedMethods = filterAndSortShippingMethods({
-        shippingMethods: shippingMethodsData || [],
-        orderSubTotal,
-        experimentalRules: session?.experimental_rules,
-      });
+      const sortedMethods = sortShippingMethods(shippingMethodsData || []);
 
       const methods = sortedMethods?.map(method => {
         const shippingMethodPrice = formatCurrency({
@@ -177,7 +172,7 @@ export function ExpressCheckoutButton() {
 
       return methods;
     },
-    [getShippingMethodsByAddress.mutateAsync, session, totals]
+    [getShippingMethodsByAddress.mutateAsync, currencyCode, formatCurrency]
   );
 
   const handleExpressPayClick = useCallback(
@@ -307,83 +302,33 @@ export function ExpressCheckoutButton() {
     'idle' | 'fetching' | 'done'
   >('idle');
 
-  // Extract discount codes from draft order for comparison
-  const draftOrderDiscountCodes = useMemo(() => {
-    const allCodes = new Set<string>();
-
-    // Add order-level discount codes
-    if (draftOrder?.discounts) {
-      for (const discount of draftOrder.discounts) {
-        if (discount.code) {
-          allCodes.add(discount.code);
-        }
-      }
-    }
-
-    // Add line item-level discount codes
-    if (draftOrder?.lineItems) {
-      for (const lineItem of draftOrder.lineItems) {
-        if (lineItem.discounts) {
-          for (const discount of lineItem.discounts) {
-            if (discount.code) {
-              allCodes.add(discount.code);
-            }
-          }
-        }
-      }
-    }
-
-    return Array.from(allCodes).sort().join(','); // Stable string for comparison
-  }, [draftOrder]);
+  const draftOrderDiscountCodes = useMemo(
+    () => getDraftOrderDiscountCodes(draftOrder),
+    [draftOrder]
+  );
+  const discountCodesKey = JSON.stringify(draftOrderDiscountCodes);
+  const hasDraftOrder = Boolean(draftOrder);
+  const areCouponAdjustmentsReady =
+    draftOrderDiscountCodes.length === 0 || couponFetchStatus === 'done';
 
   useEffect(() => {
-    if (!draftOrder) return;
-    // Prevent concurrent fetches (but allow new fetches when draft order changes)
-    if (couponFetchStatus === 'fetching') return;
+    if (!hasDraftOrder || couponFetchStatus === 'fetching') return;
 
     const fetchPriceAdjustments = async () => {
       setCouponFetchStatus('fetching');
 
       try {
-        const allCodes = new Set<string>();
-
-        // Add order-level discount codes
-        if (draftOrder?.discounts) {
-          for (const discount of draftOrder.discounts) {
-            if (discount.code) {
-              allCodes.add(discount.code);
-            }
-          }
-        }
-
-        // Add line item-level discount codes
-        if (draftOrder?.lineItems) {
-          for (const lineItem of draftOrder.lineItems) {
-            if (lineItem.discounts) {
-              for (const discount of lineItem.discounts) {
-                if (discount.code) {
-                  allCodes.add(discount.code);
-                }
-              }
-            }
-          }
-        }
-
-        const discountCodes = Array.from(allCodes);
-
-        // Update refs based on what's in the draft order
-        if (discountCodes?.length && discountCodes?.[0]) {
+        const couponCode = draftOrderDiscountCodes[0];
+        if (couponCode) {
           const result = await getPriceAdjustments.mutateAsync({
-            discountCodes: [discountCodes?.[0]],
+            discountCodes: [couponCode],
           });
 
           if (result) {
-            // Update refs with current coupon state
-            appliedCouponCodeRef.current = discountCodes?.[0];
+            appliedCouponCodeRef.current = couponCode;
             calculatedAdjustmentsRef.current = result;
           }
         } else {
-          // No coupons in draft order - clear refs
           appliedCouponCodeRef.current = null;
           calculatedAdjustmentsRef.current = null;
         }
@@ -394,7 +339,7 @@ export function ExpressCheckoutButton() {
 
     fetchPriceAdjustments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftOrder, draftOrderDiscountCodes]);
+  }, [hasDraftOrder, discountCodesKey]);
 
   // Initialize the TokenizeJs instance when the component mounts
   // But only after price adjustments have been fetched
@@ -407,7 +352,7 @@ export function ExpressCheckoutButton() {
       !isCollectLoading ||
       !draftOrder ||
       hasMounted.current ||
-      couponFetchStatus !== 'done'
+      !areCouponAdjustmentsReady
     )
       return;
 
@@ -502,7 +447,7 @@ export function ExpressCheckoutButton() {
     businessId,
     isCollectLoading,
     draftOrder,
-    couponFetchStatus,
+    areCouponAdjustmentsReady,
     countryCode,
     currencyCode,
     session?.storeId,

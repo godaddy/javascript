@@ -10,6 +10,7 @@ import type {
 } from '@stripe/stripe-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { getDraftOrderDiscountCodes } from '@/components/checkout/discount/utils/get-draft-order-discount-codes';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
   useDraftOrder,
@@ -18,7 +19,7 @@ import {
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useStripeCheckout } from '@/components/checkout/payment/utils/use-stripe-checkout';
 import { useStripePaymentIntent } from '@/components/checkout/payment/utils/use-stripe-payment-intent';
-import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
+import { sortShippingMethods } from '@/components/checkout/shipping/utils/sort-shipping-methods';
 import { useGetShippingMethodByAddress } from '@/components/checkout/shipping/utils/use-get-shipping-methods';
 import { useGetTaxes } from '@/components/checkout/taxes/utils/use-get-taxes';
 
@@ -83,84 +84,31 @@ export function StripeExpressCheckoutForm() {
   const appliedCouponCodeRef = useRef<string | null>(null);
   const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
 
-  // Extract discount codes from draft order for comparison (stable string)
-  const draftOrderDiscountCodes = useMemo(() => {
-    const allCodes = new Set<string>();
+  const draftOrderDiscountCodes = useMemo(
+    () => getDraftOrderDiscountCodes(draftOrder),
+    [draftOrder]
+  );
+  const discountCodesKey = JSON.stringify(draftOrderDiscountCodes);
+  const hasDraftOrder = Boolean(draftOrder);
 
-    // Add order-level discount codes
-    if (draftOrder?.discounts) {
-      for (const discount of draftOrder.discounts) {
-        if (discount.code) {
-          allCodes.add(discount.code);
-        }
-      }
-    }
-
-    // Add line item-level discount codes
-    if (draftOrder?.lineItems) {
-      for (const lineItem of draftOrder.lineItems) {
-        if (lineItem.discounts) {
-          for (const discount of lineItem.discounts) {
-            if (discount.code) {
-              allCodes.add(discount.code);
-            }
-          }
-        }
-      }
-    }
-
-    return Array.from(allCodes).sort().join(','); // Stable string for comparison
-  }, [draftOrder]);
-
-  // Fetch and cache price adjustments for pre-applied coupons
   useEffect(() => {
-    if (!draftOrder) return;
-    // Prevent concurrent fetches (but allow new fetches when draft order changes)
-    if (couponFetchStatus === 'fetching') return;
+    if (!hasDraftOrder || couponFetchStatus === 'fetching') return;
 
     const fetchPriceAdjustments = async () => {
       setCouponFetchStatus('fetching');
 
       try {
-        const allCodes = new Set<string>();
-
-        // Add order-level discount codes
-        if (draftOrder?.discounts) {
-          for (const discount of draftOrder.discounts) {
-            if (discount.code) {
-              allCodes.add(discount.code);
-            }
-          }
-        }
-
-        // Add line item-level discount codes
-        if (draftOrder?.lineItems) {
-          for (const lineItem of draftOrder.lineItems) {
-            if (lineItem.discounts) {
-              for (const discount of lineItem.discounts) {
-                if (discount.code) {
-                  allCodes.add(discount.code);
-                }
-              }
-            }
-          }
-        }
-
-        const discountCodes = Array.from(allCodes);
-
-        // Update refs based on what's in the draft order
-        if (discountCodes?.length && discountCodes?.[0]) {
+        const couponCode = draftOrderDiscountCodes[0];
+        if (couponCode) {
           const result = await getPriceAdjustments.mutateAsync({
-            discountCodes: [discountCodes[0]],
+            discountCodes: [couponCode],
           });
 
           if (result) {
-            // Update refs with current coupon state
-            appliedCouponCodeRef.current = discountCodes[0];
+            appliedCouponCodeRef.current = couponCode;
             calculatedAdjustmentsRef.current = result;
           }
         } else {
-          // No coupons in draft order - clear refs
           appliedCouponCodeRef.current = null;
           calculatedAdjustmentsRef.current = null;
         }
@@ -171,7 +119,7 @@ export function StripeExpressCheckoutForm() {
 
     fetchPriceAdjustments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftOrder, draftOrderDiscountCodes]);
+  }, [hasDraftOrder, discountCodesKey]);
 
   // Calculate taxes for express checkout
   const calculateExpressTaxes = useCallback(
@@ -224,19 +172,9 @@ export function StripeExpressCheckoutForm() {
 
       setShippingMethods(shippingMethodsData || null);
 
-      const orderSubTotal = totals?.subTotal?.value || 0;
-
-      return filterAndSortShippingMethods({
-        shippingMethods: shippingMethodsData || [],
-        orderSubTotal,
-        experimentalRules: session?.experimental_rules,
-      });
+      return sortShippingMethods(shippingMethodsData || []);
     },
-    [
-      getShippingMethodsByAddress,
-      session?.experimental_rules,
-      totals?.subTotal?.value,
-    ]
+    [getShippingMethodsByAddress]
   );
 
   // Convert shipping methods to Stripe ShippingRate format

@@ -7,16 +7,19 @@ import {
   useDraftOrder,
   useDraftOrderShipping,
   useDraftOrderShippingAddress,
-  useDraftOrderTotals,
 } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { ShippingMethodSkeleton } from '@/components/checkout/shipping/shipping-method-skeleton';
-import { filterAndSortShippingMethods } from '@/components/checkout/shipping/utils/filter-shipping-methods';
+import {
+  getShippingMethodsKey,
+  selectShippingMethod,
+} from '@/components/checkout/shipping/utils/requires-shipping-reconciliation';
 import {
   getShippingFulfillmentSyncKey,
   shouldApplyShippingMethod,
 } from '@/components/checkout/shipping/utils/should-apply-shipping-method';
+import { sortShippingMethods } from '@/components/checkout/shipping/utils/sort-shipping-methods';
 import { useApplyShippingMethod } from '@/components/checkout/shipping/utils/use-apply-shipping-method';
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
@@ -61,7 +64,6 @@ export function ShippingMethodForm() {
     useDraftOrderShippingMethods();
   const { data: shippingAddress, isLoading: isShippingAddressLoading } =
     useDraftOrderShippingAddress();
-  const { data: totals } = useDraftOrderTotals();
   const { data: order, isLoading: isDraftOrderLoading } = useDraftOrder();
   const { data: shippingLines } = useDraftOrderShipping();
 
@@ -74,15 +76,10 @@ export function ShippingMethodForm() {
   const fulfillmentSyncKey = getShippingFulfillmentSyncKey(order?.lineItems);
   const hasLineItemsMissingShippingFulfillment = Boolean(fulfillmentSyncKey);
 
-  const orderSubTotal = totals?.subTotal?.value || 0;
-
-  const shippingMethods = filterAndSortShippingMethods({
-    shippingMethods: shippingMethodsData || [],
-    orderSubTotal,
-    experimentalRules: session?.experimental_rules,
-  });
+  const shippingMethods = sortShippingMethods(shippingMethodsData || []);
 
   const applyShippingMethod = useApplyShippingMethod();
+  const lastShippingMethodsKeyRef = useRef<string | null>(null);
 
   // Track the last processed state to avoid duplicate API calls
   const lastProcessedStateRef = useRef<{
@@ -126,6 +123,7 @@ export function ShippingMethodForm() {
 
     // Case 1: No shipping methods available - clear shipping and set fulfillment to SHIP
     if (!hasShippingMethods && hasShippingAddress) {
+      lastShippingMethodsKeyRef.current = getShippingMethodsKey([]);
       // Apply empty shipping method if:
       // - Pickup mode and has shipping code OR wasn't pickup before
       // - Shipping mode and (had methods before OR haven't cleared yet)
@@ -158,19 +156,17 @@ export function ShippingMethodForm() {
 
     // Case 2: Shipping methods available - apply or re-apply as needed
     if (hasShippingMethods) {
-      const firstMethod = shippingMethods[0];
       const currentFormMethod = form.getValues('shippingMethod');
       const existingMethod = currentFormMethod || currentServiceCode;
+      const { selectedMethod: methodToApply, methodsKey } =
+        selectShippingMethod({
+          shippingMethods,
+          currentServiceCode: existingMethod,
+          previousMethodsKey: lastShippingMethodsKeyRef.current,
+        });
+      lastShippingMethodsKeyRef.current = methodsKey;
 
-      // Try to find the existing method in available methods. Prefer the
-      // current form selection so an in-flight explicit user click is not
-      // overwritten by the stale draft-order shipping line while the mutation
-      // and refetch settle.
-      const matchedMethod = existingMethod
-        ? shippingMethods.find(m => m.serviceCode === existingMethod)
-        : null;
-
-      const methodToApply = matchedMethod || firstMethod;
+      if (!methodToApply) return;
       // Check if we've already processed this exact state. If cart contents
       // changed after a shipping method was selected, shippingLines can still
       // match the selected rate while new line items are NONE. In that case we

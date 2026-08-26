@@ -72,6 +72,47 @@ describe('Express checkout section visibility', () => {
     expect(screen.getByRole('button', { name: /pay now/i })).toBeVisible();
   });
 
+  it('renders express checkout for a shipping-enabled session with purchase fulfillment', async () => {
+    renderCheckout({
+      sessionOverrides: {
+        enableShipping: true,
+        paymentMethods: {
+          card: { processor: 'stripe', checkoutTypes: ['standard'] },
+          express: { processor: 'godaddy', checkoutTypes: ['express'] },
+        },
+      },
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      await screen.findByTestId('mock-godaddy-express-button')
+    ).toBeVisible();
+  });
+
+  it('does not render express checkout for a digital-only order', async () => {
+    renderCheckout({
+      sessionOverrides: {
+        enableShipping: true,
+        paymentMethods: {
+          card: { processor: 'stripe', checkoutTypes: ['standard'] },
+          express: { processor: 'godaddy', checkoutTypes: ['express'] },
+        },
+      },
+      draftOrderOverrides: {
+        lineItems: [{ type: 'DIGITAL', fulfillmentMode: 'DIGITAL' }],
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      screen.queryByTestId('mock-godaddy-express-button')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/^OR$/)).not.toBeInTheDocument();
+  });
+
   it('renders the Stripe express button when paymentMethods.express is configured for stripe', async () => {
     renderCheckout({
       sessionOverrides: {

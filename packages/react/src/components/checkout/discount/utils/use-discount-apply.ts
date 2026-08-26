@@ -1,147 +1,50 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { ResultOf } from 'gql.tada';
+import { useQueryClient } from '@tanstack/react-query';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
-import {
-  checkoutMutationKeys,
-  checkoutQueryKeys,
-} from '@/components/checkout/utils/query-keys';
-import { useGoDaddyContext } from '@/godaddy-provider';
-import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
-import { applyDiscount } from '@/lib/godaddy/godaddy';
-import type { ApplyCheckoutSessionDiscountInput } from '@/types';
+import { requiresShippingReconciliation } from '@/components/checkout/shipping/utils/requires-shipping-reconciliation';
+import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
+import { useApplyDiscountCore } from './use-apply-discount-core';
 
 export function useDiscountApply() {
-  const { session, jwt } = useCheckoutContext();
-  const { apiHost } = useGoDaddyContext();
+  const { session } = useCheckoutContext();
   const form = useFormContext();
   const queryClient = useQueryClient();
   const updateTaxes = useUpdateTaxes();
   const { data: draftOrder } = useDraftOrder();
+  const shippingMethodsQuery = useDraftOrderShippingMethods();
 
-  return useMutation({
-    mutationKey: checkoutMutationKeys.applyDiscount(session?.id),
-    mutationFn: async ({
-      discountCodes,
-    }: {
-      discountCodes: ApplyCheckoutSessionDiscountInput['input']['discountCodes'];
-    }) => {
-      const data = jwt
-        ? await applyDiscount(discountCodes, { accessToken: jwt }, apiHost)
-        : await applyDiscount(discountCodes, session, apiHost);
-      return data;
-    },
-    onSuccess: async (data, { discountCodes }) => {
+  return useApplyDiscountCore({
+    onSuccess: async () => {
       if (!session) return;
 
-      const discountTotal =
-        data?.applyCheckoutSessionDiscount?.totals?.discountTotal;
-      const responseData = data?.applyCheckoutSessionDiscount;
-      // Update the cached draft-order query (includes totals)
+      const deliveryMethod = form.getValues('deliveryMethod');
 
-      if (discountTotal) {
-        queryClient.setQueryData(
-          checkoutQueryKeys.draftOrder(session.id),
-          (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
-            if (!old) return old;
-            return {
-              ...old,
-              checkoutSession: {
-                ...old.checkoutSession,
-                draftOrder: {
-                  ...old?.checkoutSession?.draftOrder,
-                  totals: {
-                    ...old?.checkoutSession?.draftOrder?.totals,
-                    discountTotal,
-                    total:
-                      responseData?.totals?.total ||
-                      old?.checkoutSession?.draftOrder?.totals?.total,
-                  },
-                  // Update order-level discounts
-                  discounts:
-                    responseData?.discounts ||
-                    old?.checkoutSession?.draftOrder?.discounts ||
-                    [],
-                  // Update lineItem discounts
-                  lineItems:
-                    responseData?.lineItems
-                      ?.map(responseLineItem => {
-                        const existingLineItem =
-                          old?.checkoutSession?.draftOrder?.lineItems?.find(
-                            li => li.id === responseLineItem.id
-                          );
-                        return existingLineItem
-                          ? {
-                              ...existingLineItem,
-                              discounts: responseLineItem.discounts || [],
-                            }
-                          : existingLineItem;
-                      })
-                      .filter(Boolean) ||
-                    old?.checkoutSession?.draftOrder?.lineItems,
-                  // Update shippingLine discounts
-                  shippingLines:
-                    responseData?.shippingLines
-                      ?.map((responseShippingLine, index) => {
-                        const existingShippingLine =
-                          old?.checkoutSession?.draftOrder?.shippingLines?.[
-                            index
-                          ];
-                        return existingShippingLine
-                          ? {
-                              ...existingShippingLine,
-                              discounts: responseShippingLine.discounts || [],
-                            }
-                          : existingShippingLine;
-                      })
-                      .filter(Boolean) ||
-                    old?.checkoutSession?.draftOrder?.shippingLines,
-                },
-              },
-            };
-          }
-        );
-      }
+      const shippingAddress = draftOrder?.shipping?.address;
+      const hasShippingDestination = Boolean(
+        shippingAddress?.addressLine1 &&
+          shippingAddress.postalCode &&
+          shippingAddress.countryCode
+      );
 
-      if (!discountCodes?.length) {
-        // If no discount codes, we need to remove any existing discounts from the cache
-        queryClient.setQueryData(
-          checkoutQueryKeys.draftOrder(session.id),
-          (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
-            if (!old) return old;
-            return {
-              ...old,
-              checkoutSession: {
-                ...old.checkoutSession,
-                draftOrder: {
-                  ...old?.checkoutSession?.draftOrder,
-                  discounts: [],
-                  lineItems: old?.checkoutSession?.draftOrder?.lineItems?.map(
-                    li => ({
-                      ...li,
-                      discounts: [],
-                    })
-                  ),
-                  shippingLines:
-                    old?.checkoutSession?.draftOrder?.shippingLines?.map(
-                      sl => ({
-                        ...sl,
-                        discounts: [],
-                      })
-                    ) || null,
-                },
-              },
-            };
-          }
-        );
+      if (deliveryMethod === DeliveryMethods.SHIP && hasShippingDestination) {
+        const previousShippingMethods = shippingMethodsQuery.data ?? [];
+        const { data: refreshedMethods } = await shippingMethodsQuery.refetch();
+        const shippingRequiresReconciliation = requiresShippingReconciliation({
+          shippingMethods: refreshedMethods ?? [],
+          previousShippingMethods,
+          currentShippingLine: draftOrder?.shippingLines?.[0],
+          selectedServiceCode: form.getValues('shippingMethod'),
+        });
+
+        if (shippingRequiresReconciliation) return;
       }
 
       if (session.enableTaxCollection) {
         // TODO: Move this to API layer
-        const deliveryMethod = form.getValues('deliveryMethod');
 
         if (deliveryMethod === DeliveryMethods.PICKUP) {
           const pickupLocationId = form.getValues('pickupLocationId');
@@ -163,13 +66,12 @@ export function useDiscountApply() {
             await updateTaxes.mutateAsync(billingAddress);
             return;
           }
-        } else {
-          const shippingAddress = draftOrder?.shipping?.address;
-
-          if (shippingAddress?.postalCode && shippingAddress?.countryCode) {
-            await updateTaxes.mutateAsync(undefined);
-            return;
-          }
+        } else if (
+          shippingAddress?.postalCode &&
+          shippingAddress?.countryCode
+        ) {
+          await updateTaxes.mutateAsync(undefined);
+          return;
         }
       }
 

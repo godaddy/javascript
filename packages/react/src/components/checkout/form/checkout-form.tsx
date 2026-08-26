@@ -230,10 +230,7 @@ export function CheckoutForm({
       hasExpressCheckoutPaymentMethod &&
       session?.enableShipping === true &&
       !fulfillmentSummary.isDigitalOnly &&
-      deliveryMethod !== DeliveryMethods.PURCHASE &&
-      deliveryMethod !== DeliveryMethods.DIGITAL &&
-      !fulfillmentSummary.hasPickupLineItems &&
-      !fulfillmentSummary.hasPurchaseLineItems
+      !fulfillmentSummary.hasPickupLineItems
   );
   const enableDelivery = Boolean(
     !fulfillmentSummary.isDigitalOnly &&

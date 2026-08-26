@@ -95,7 +95,7 @@ describe('Checkout shipping behavior', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('filters free shipping below the minimum order total and shows it once the subtotal qualifies', async () => {
+  it('shows free shipping returned by the API', async () => {
     const shippingMethods = [
       {
         serviceCode: 'free-shipping',
@@ -118,35 +118,12 @@ describe('Checkout shipping behavior', () => {
         cost: { value: 500, currencyCode: 'USD' },
       },
     ];
-    const experimental_rules = {
-      freeShipping: { enabled: true, minimumOrderTotal: 5000 },
-    };
 
-    const { unmount } = renderCheckout({
-      sessionOverrides: { experimental_rules },
-      apiOverrides: { shippingMethods },
-    });
-    await waitForCheckoutReady();
-
-    expect(
-      screen.queryByRole('radio', { name: /free/i })
-    ).not.toBeInTheDocument();
-    expect(screen.getAllByText('Paid Rate').length).toBeGreaterThan(0);
-
-    unmount();
-    renderCheckout({
-      sessionOverrides: { experimental_rules },
-      draftOrderOverrides: {
-        totals: {
-          subTotal: { value: 5000, currencyCode: 'USD' },
-          total: { value: 5000, currencyCode: 'USD' },
-        },
-      },
-      apiOverrides: { shippingMethods },
-    });
+    renderCheckout({ apiOverrides: { shippingMethods } });
     await waitForCheckoutReady();
 
     expect(screen.getByRole('radio', { name: /free/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Paid Rate').length).toBeGreaterThan(0);
   });
 
   it('renders FREE for a single zero-cost shipping method', async () => {
