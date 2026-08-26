@@ -58,10 +58,6 @@ export const GetCheckoutSessionQuery = graphql(`
                 }
             }
             experimental_rules {
-              freeShipping {
-                enabled
-                  minimumOrderTotal
-              }
               gopay_override {
                 enabled
                 goPayAppId
