@@ -229,8 +229,7 @@ export function CheckoutForm({
       subtotal > 0 &&
       hasExpressCheckoutPaymentMethod &&
       session?.enableShipping === true &&
-      !fulfillmentSummary.isDigitalOnly &&
-      !fulfillmentSummary.hasPickupLineItems
+      !fulfillmentSummary.isDigitalOnly
   );
   const enableDelivery = Boolean(
     !fulfillmentSummary.isDigitalOnly &&

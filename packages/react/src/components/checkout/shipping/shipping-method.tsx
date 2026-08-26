@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
@@ -8,9 +8,9 @@ import {
   useDraftOrderShipping,
   useDraftOrderShippingAddress,
 } from '@/components/checkout/order/use-draft-order';
-import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { ShippingMethodSkeleton } from '@/components/checkout/shipping/shipping-method-skeleton';
+import { buildShippingPayload } from '@/components/checkout/shipping/utils/build-shipping-payload';
 import {
   getShippingMethodsKey,
   selectShippingMethod,
@@ -23,40 +23,22 @@ import { sortShippingMethods } from '@/components/checkout/shipping/utils/sort-s
 import { useApplyShippingMethod } from '@/components/checkout/shipping/utils/use-apply-shipping-method';
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
-import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
+import {
+  checkoutMutationKeys,
+  checkoutQueryKeys,
+} from '@/components/checkout/utils/query-keys';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
-import type { ShippingMethod } from '@/types';
-
-// Helper function to build the shipping payload
-function buildShippingPayload(method: ShippingMethod) {
-  return [
-    {
-      taxTotal: {
-        value: 0,
-        currencyCode: method?.cost?.currencyCode || 'USD',
-      },
-      subTotal: {
-        value: method?.cost?.value || 0,
-        currencyCode: method?.cost?.currencyCode || 'USD',
-      },
-      requestedService: method?.serviceCode,
-      requestedProvider: method?.carrierCode,
-      name: method?.displayName || '',
-    },
-  ];
-}
 
 export function ShippingMethodForm() {
   const formatCurrency = useFormatCurrency();
   const form = useFormContext();
   const { t } = useGoDaddyContext();
   const { session, isConfirmingCheckout } = useCheckoutContext();
-  const updateTaxes = useUpdateTaxes();
   const queryClient = useQueryClient();
   const isPaymentDisabled = useIsPaymentDisabled();
 
@@ -79,6 +61,10 @@ export function ShippingMethodForm() {
   const shippingMethods = sortShippingMethods(shippingMethodsData || []);
 
   const applyShippingMethod = useApplyShippingMethod();
+  const isApplyingDiscount =
+    useIsMutating({
+      mutationKey: checkoutMutationKeys.applyDiscount(session?.id),
+    }) > 0;
   const lastShippingMethodsKeyRef = useRef<string | null>(null);
 
   // Track the last processed state to avoid duplicate API calls
@@ -99,6 +85,18 @@ export function ShippingMethodForm() {
   });
 
   useEffect(() => {
+    if (isApplyingDiscount) {
+      lastShippingMethodsKeyRef.current =
+        getShippingMethodsKey(shippingMethods);
+      lastProcessedStateRef.current = {
+        ...lastProcessedStateRef.current,
+        serviceCode: shippingLines?.requestedService ?? null,
+        cost: shippingLines?.amount?.value ?? null,
+        hadShippingMethods: shippingMethods.length > 0,
+      };
+      return;
+    }
+
     if (
       isShippingMethodsLoading ||
       isDraftOrderLoading ||
@@ -206,8 +204,6 @@ export function ShippingMethodForm() {
               });
             },
           });
-        } else if (session?.enableTaxCollection) {
-          updateTaxes.mutate(undefined);
         }
 
         lastProcessedStateRef.current = {
@@ -224,14 +220,13 @@ export function ShippingMethodForm() {
     }
   }, [
     isConfirmingCheckout,
+    isApplyingDiscount,
     shippingMethods,
     shippingLines,
     hasShippingAddress,
     isShippingMethodsLoading,
     form,
     applyShippingMethod,
-    updateTaxes.mutate,
-    session?.enableTaxCollection,
     queryClient,
     session?.id,
     isPickup,

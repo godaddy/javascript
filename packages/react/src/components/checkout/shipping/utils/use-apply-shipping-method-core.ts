@@ -28,7 +28,8 @@ interface UseApplyShippingMethodCoreOptions {
 export function updateShippingMethodCache(
   queryClient: QueryClient,
   sessionId: string,
-  data: ShippingMutationResult
+  data: ShippingMutationResult,
+  shippingMethods: ShippingMethods
 ) {
   const shippingTotal =
     data.applyCheckoutSessionShippingMethod?.draftOrder?.totals?.shippingTotal;
@@ -45,12 +46,19 @@ export function updateShippingMethodCache(
           ...cached.checkoutSession,
           draftOrder: {
             ...cached.checkoutSession?.draftOrder,
-            shippingLines: [
-              {
-                ...cached.checkoutSession?.draftOrder?.shippingLines?.[0],
-                amount: { ...shippingTotal },
-              },
-            ],
+            shippingLines: shippingMethods[0]
+              ? [
+                  {
+                    ...cached.checkoutSession?.draftOrder?.shippingLines?.[0],
+                    name: shippingMethods[0].name,
+                    requestedProvider:
+                      shippingMethods[0].requestedProvider ?? null,
+                    requestedService:
+                      shippingMethods[0].requestedService ?? null,
+                    amount: { ...shippingTotal },
+                  },
+                ]
+              : [],
             totals: {
               ...cached.checkoutSession?.draftOrder?.totals,
               shippingTotal: { ...shippingTotal },
@@ -81,7 +89,7 @@ export function useApplyShippingMethodCore(
     onSuccess: async (data, shippingMethods) => {
       if (!session || !data) return;
 
-      updateShippingMethodCache(queryClient, session.id, data);
+      updateShippingMethodCache(queryClient, session.id, data, shippingMethods);
       await options.onSuccess?.(data, shippingMethods);
     },
     onError: options.onError,
