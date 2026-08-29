@@ -35,9 +35,10 @@ export function useDraftOrder<TData = DraftOrder>(
         ? getDraftOrder({ accessToken: jwt }, apiHost)
         : getDraftOrder(session, apiHost),
     enabled: !!session?.id,
+    staleTime: 5_000,
     select: select ?? (data => data.checkoutSession?.draftOrder as TData),
     retry: 3,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: 'always',
   });
 }
 

@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getProductsFromOrderSkus } from '@/lib/godaddy/godaddy';
-import type { SKUProduct } from '@/types';
+import type { DraftOrder, SKUProduct } from '@/types';
 
 /**
  * Hook to fetch products from SKUs in the draft order
@@ -21,8 +21,53 @@ export function useDraftOrderProducts() {
         ? getProductsFromOrderSkus({ accessToken: jwt }, apiHost)
         : getProductsFromOrderSkus(session, apiHost),
     enabled: !!session?.id,
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnMount: false,
+    refetchOnWindowFocus: 'always',
     select: data => data.checkoutSession?.skus?.edges,
   });
+}
+
+function getLineItemProductIdentity(
+  lineItems: DraftOrder['lineItems'] | null | undefined
+) {
+  if (!lineItems) return null;
+
+  const identities = lineItems.map(lineItem => {
+    if (lineItem.details?.sku) return `sku:${lineItem.details.sku}`;
+    if (lineItem.productId) return `product:${lineItem.productId}`;
+    return `line:${lineItem.id}`;
+  });
+
+  return JSON.stringify([...new Set(identities)].sort());
+}
+
+export function useRefreshProductsWhenLineItemsChange(
+  lineItems: DraftOrder['lineItems'] | null | undefined
+) {
+  const { session } = useCheckoutContext();
+  const queryClient = useQueryClient();
+  const identity = getLineItemProductIdentity(lineItems);
+  const previousRef = useRef<
+    | {
+        sessionId: string;
+        identity: string;
+      }
+    | undefined
+  >(undefined);
+
+  useEffect(() => {
+    if (!session?.id || identity === null) return;
+
+    const previous = previousRef.current;
+    previousRef.current = { sessionId: session.id, identity };
+
+    if (previous?.sessionId === session.id && previous.identity !== identity) {
+      void queryClient.invalidateQueries({
+        queryKey: checkoutQueryKeys.draftOrderProducts(session.id),
+      });
+    }
+  }, [identity, queryClient, session?.id]);
 }
 
 /**

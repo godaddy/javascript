@@ -25,8 +25,10 @@ export function StripeCreditCardCheckoutButton() {
         form.setFocus(firstError);
       }
     } else {
-      await flushCheckoutSync();
-      await handleSubmit();
+      const { latestOrder } = await flushCheckoutSync({
+        includeCurrentFormDiff: true,
+      });
+      await handleSubmit(undefined, latestOrder);
     }
   };
 

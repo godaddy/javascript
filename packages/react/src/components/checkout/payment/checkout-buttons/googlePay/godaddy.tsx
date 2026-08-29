@@ -34,7 +34,8 @@ export function GoDaddyGooglePayCheckoutButton() {
   const [isCollectLoading, setIsCollectLoading] = useState(true);
   const [error, setError] = useState('');
   const { data: totals } = useDraftOrderTotals();
-  const { poyntStandardRequest } = useBuildPaymentRequest();
+  const { poyntStandardRequest, buildPaymentRequestsFromOrder } =
+    useBuildPaymentRequest();
 
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
@@ -64,11 +65,16 @@ export function GoDaddyGooglePayCheckoutButton() {
       return;
     }
 
-    await flushCheckoutSync();
+    const { latestOrder } = await flushCheckoutSync({
+      includeCurrentFormDiff: true,
+    });
+    const request = latestOrder
+      ? buildPaymentRequestsFromOrder(latestOrder).poyntStandardRequest
+      : poyntStandardRequest;
 
     setCheckoutErrors(undefined);
 
-    collect?.current?.startGooglePaySession(poyntStandardRequest);
+    collect?.current?.startGooglePaySession(request);
 
     track({
       eventId: eventIds.googlePayClick,
@@ -79,6 +85,7 @@ export function GoDaddyGooglePayCheckoutButton() {
     });
   }, [
     poyntStandardRequest,
+    buildPaymentRequestsFromOrder,
     flushCheckoutSync,
     setCheckoutErrors,
     form,

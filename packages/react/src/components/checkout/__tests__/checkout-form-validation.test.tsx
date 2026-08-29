@@ -139,6 +139,22 @@ function BillingReuseProbe() {
   );
 }
 
+function ShippingPrefixedCustomFieldProbe() {
+  const form = useFormContext();
+  const error = form.formState.errors.shippingGiftMessage?.message;
+
+  return (
+    <div>
+      <label htmlFor='shipping-gift-message'>Shipping gift message</label>
+      <input
+        id='shipping-gift-message'
+        {...form.register('shippingGiftMessage')}
+      />
+      {typeof error === 'string' ? <p>{error}</p> : null}
+    </div>
+  );
+}
+
 describe('Checkout form validation', () => {
   it('requires only billing names for free pickup and does not require billing address fields', async () => {
     const draftOrder = makeFreePickupOrder();
@@ -392,6 +408,45 @@ describe('Checkout form validation', () => {
     expect(document.body).not.toHaveTextContent(customMessage);
   });
 
+  it('does not enforce custom billing address rules when names-only billing hides the address', async () => {
+    const customMessage = 'Billing address is required';
+    const draftOrder = makeFreePickupOrder({
+      billing: {
+        firstName: 'Pat',
+        lastName: 'Pickup',
+        address: buildShippingAddress({ addressLine1: '' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      checkoutProps: {
+        checkoutFormSchema: {
+          billingAddressLine1: z.string().min(1, customMessage),
+        },
+      },
+      sessionOverrides: {
+        draftOrder,
+        paymentMethods: stripeOnlyPaymentMethods(),
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
+
+    await user.click(await clickSubmitButton(/complete your free order/i));
+
+    await waitFor(() => {
+      expect(getOperations('ConfirmCheckoutSession')).toHaveLength(1);
+    });
+    expect(document.body).not.toHaveTextContent(customMessage);
+  });
+
   it('does not enforce custom shipping rules when pickup is selected', async () => {
     const customMessage = 'Shipping field is required';
     const draftOrder = makeFreePickupOrder({
@@ -429,6 +484,59 @@ describe('Checkout form validation', () => {
       expect(getOperations('ConfirmCheckoutSession')).toHaveLength(1);
     });
     expect(document.body).not.toHaveTextContent(customMessage);
+  });
+
+  it('does not filter unrelated rendered custom fields that share a shipping prefix', async () => {
+    const customMessage = 'Shipping gift message is required';
+    const draftOrder = makeFreePickupOrder({
+      billing: {
+        firstName: 'Pat',
+        lastName: 'Pickup',
+        address: buildShippingAddress({ addressLine1: '' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      checkoutProps: {
+        checkoutFormSchema: {
+          shippingGiftMessage: z.preprocess(
+            value => value ?? '',
+            z.string().min(1, customMessage)
+          ),
+        },
+        targets: {
+          'checkout.form.payment.before': ShippingPrefixedCustomFieldProbe,
+        },
+      },
+      sessionOverrides: {
+        draftOrder,
+        paymentMethods: stripeOnlyPaymentMethods(),
+        enableShipping: true,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    expect(screen.getByLabelText(/shipping gift message/i)).toBeInTheDocument();
+
+    await user.click(await clickSubmitButton(/complete your free order/i));
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(customMessage);
+    });
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+
+    await user.type(
+      screen.getByLabelText(/shipping gift message/i),
+      'Gift wrap'
+    );
+    await user.click(await clickSubmitButton(/complete your free order/i));
+
+    await waitFor(() => {
+      expect(getOperations('ConfirmCheckoutSession')).toHaveLength(1);
+    });
   });
 
   it('does not enforce custom billing address rules when shipping address is reused', async () => {

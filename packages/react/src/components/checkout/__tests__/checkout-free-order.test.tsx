@@ -1,6 +1,8 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
+  advanceCheckoutDebounce,
+  buildBillingAddress,
   buildCheckoutSession,
   buildDraftOrder,
   buildShippingRates,
@@ -87,7 +89,7 @@ async function applyCoupon(
   await user.click(apply as HTMLButtonElement);
 }
 
-function buildPaidPurchaseDraftOrder() {
+function buildPaidOrder(fulfillmentMode: 'PICKUP' | 'PURCHASE') {
   return buildDraftOrder({
     totals: {
       subTotal: { value: 100, currencyCode: 'USD' },
@@ -100,7 +102,7 @@ function buildPaidPurchaseDraftOrder() {
     lineItems: [
       {
         unitAmount: { value: 100, currencyCode: 'USD' },
-        fulfillmentMode: 'PURCHASE',
+        fulfillmentMode,
         totals: {
           subTotal: { value: 100, currencyCode: 'USD' },
           discountTotal: { value: 0, currencyCode: 'USD' },
@@ -110,6 +112,14 @@ function buildPaidPurchaseDraftOrder() {
       },
     ],
   });
+}
+
+function buildPaidPurchaseDraftOrder() {
+  return buildPaidOrder('PURCHASE');
+}
+
+function buildPaidPickupDraftOrder() {
+  return buildPaidOrder('PICKUP');
 }
 
 describe('Checkout free / offline orders', () => {
@@ -325,6 +335,56 @@ describe('Checkout free / offline orders', () => {
       paymentProvider: 'OFFLINE',
     });
     expect(getLastConfirmInput()).not.toHaveProperty('fulfillmentLocationId');
+  });
+
+  it('clears a paid card pickup billing address exactly once when a coupon makes the order free', async () => {
+    const draftOrder = buildPaidPickupDraftOrder();
+    draftOrder.billing = {
+      firstName: 'Card',
+      lastName: 'Pickup',
+      phone: '',
+      email: 'jane@example.com',
+      address: buildBillingAddress({ addressLine1: '500 Card St' }),
+    };
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableShipping: false,
+      enableLocalPickup: true,
+      enableTaxCollection: true,
+    });
+
+    const { user } = renderCheckout({ session, draftOrder });
+    await waitForCheckoutReady();
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toBeInTheDocument();
+
+    clearOperations();
+    await applyCoupon(user, 'free100');
+    await waitForOperation('ApplyCheckoutSessionDiscount');
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    await advanceCheckoutDebounce(2500);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /complete your free order/i })
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingAddressLine1"]')
+      ).not.toBeInTheDocument();
+    });
+
+    const nullAddressUpdates = getOperations(
+      'UpdateCheckoutSessionDraftOrder'
+    ).filter(
+      operation =>
+        (operation.input as { billing?: { address?: unknown } }).billing
+          ?.address === null
+    );
+    expect(nullAddressUpdates).toHaveLength(1);
+    expect(nullAddressUpdates[0].input).toMatchObject({
+      billing: { firstName: 'Card', lastName: 'Pickup', address: null },
+    });
   });
 
   it('switches from paid payment methods to FreePaymentForm after a 100% coupon', async () => {

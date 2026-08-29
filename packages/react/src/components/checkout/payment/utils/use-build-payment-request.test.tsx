@@ -124,7 +124,7 @@ async function renderUseBuildPaymentRequest({
 }
 
 describe('useBuildPaymentRequest', () => {
-  it('builds Apple Pay, Google Pay, and PayPal request shapes from draft-order totals', async () => {
+  it('builds payment request shapes from draft-order totals and billing details', async () => {
     const lineItem = buildLineItem({
       name: 'Coffee Mug',
       quantity: 2,
@@ -262,6 +262,21 @@ describe('useBuildPaymentRequest', () => {
       ])
     );
 
+    expect(requests.stripePaymentMethodParams).toEqual({
+      billing_details: {
+        name: 'Bill Buyer',
+        email: 'bill@example.com',
+        phone: '+12015550124',
+        address: {
+          line1: '1 Billing Way',
+          line2: 'Suite 3',
+          city: 'Tempe',
+          state: 'AZ',
+          postal_code: '85284',
+          country: 'US',
+        },
+      },
+    });
     expect(requests.payPalRequest.purchase_units[0]).toMatchObject({
       payee: { merchant_id: 'MERCHANTID123' },
       amount: {
@@ -328,6 +343,56 @@ describe('useBuildPaymentRequest', () => {
     expect(requests.payPalRequest.purchase_units[0].amount.value).toBe('0.00');
     expect(requests.poyntStandardRequest.total.amount).toBe('0.00');
     expect(requests.squarePaymentRequest.amount).toBe('0.00');
+  });
+
+  it('builds submission requests from an explicitly supplied latest order', async () => {
+    const { requests } = await renderUseBuildPaymentRequest();
+    const latestOrder = buildDraftOrder({
+      billing: {
+        firstName: 'Latest',
+        lastName: 'Buyer',
+        email: 'latest@example.com',
+        address: buildBillingAddress({ postalCode: '78701' }),
+      },
+      totals: {
+        total: money(4321),
+        subTotal: money(4321),
+        discountTotal: money(0),
+        shippingTotal: money(0),
+        taxTotal: money(0),
+        feeTotal: money(0),
+      },
+    });
+
+    const latestRequests = requests.buildPaymentRequestsFromOrder(latestOrder);
+
+    expect(
+      latestRequests.stripePaymentMethodParams.billing_details
+    ).toMatchObject({
+      name: 'Latest Buyer',
+      email: 'latest@example.com',
+      address: { postal_code: '78701' },
+    });
+    expect(latestRequests.poyntCardRequest).toMatchObject({
+      firstName: 'Latest',
+      lastName: 'Buyer',
+      emailAddress: 'latest@example.com',
+      zipCode: '78701',
+    });
+    expect(latestRequests.squarePaymentRequest).toMatchObject({
+      amount: '43.21',
+      billingContact: {
+        givenName: 'Latest',
+        familyName: 'Buyer',
+        email: 'latest@example.com',
+        postalCode: '78701',
+      },
+    });
+    expect(latestRequests.payPalRequest.purchase_units[0]).toMatchObject({
+      amount: { value: '43.21' },
+      billing: { name: { full_name: 'Latest Buyer' } },
+    });
+    expect(latestRequests.poyntStandardRequest.total.amount).toBe('43.21');
   });
 
   it('preserves three-decimal KWD precision for raw payment request amounts', async () => {

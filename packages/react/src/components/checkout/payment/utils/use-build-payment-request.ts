@@ -1,16 +1,11 @@
-import type {
-  CreateTokenCardData,
-  PaymentMethodCreateParams,
-} from '@stripe/stripe-js';
-import { useMemo } from 'react';
+import type { PaymentMethodCreateParams } from '@stripe/stripe-js';
+import { useCallback, useMemo } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import {
-  useDraftOrder,
-  useDraftOrderTotals,
-} from '@/components/checkout/order/use-draft-order';
+import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderProductsMap } from '@/components/checkout/order/use-draft-order-products';
 import { mapSkusToItemsDisplay } from '@/components/checkout/utils/checkout-transformers';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
+import type { CheckoutSession, DraftOrder, SKUProduct } from '@/types';
 
 // Apple Pay request interface
 export interface ApplePayRequest {
@@ -170,35 +165,64 @@ export interface PoyntExpressRequest {
 
 export interface PoyntStandardRequest extends PoyntExpressRequest {}
 
-export function useBuildPaymentRequest(): {
+export function buildStripePaymentMethodParams(
+  order?: DraftOrder | null
+): PaymentMethodCreateParams {
+  return {
+    billing_details: {
+      name:
+        `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() ||
+        undefined,
+      email: order?.billing?.email || undefined,
+      phone: order?.billing?.phone || undefined,
+      address: {
+        line1: order?.billing?.address?.addressLine1 || undefined,
+        line2: order?.billing?.address?.addressLine2 || undefined,
+        city: order?.billing?.address?.adminArea2 || undefined,
+        state: order?.billing?.address?.adminArea1 || undefined,
+        postal_code: order?.billing?.address?.postalCode || undefined,
+        country: order?.billing?.address?.countryCode || undefined,
+      },
+    },
+  };
+}
+
+export type PaymentRequests = {
   applePayRequest: ApplePayRequest;
   googlePayRequest: GooglePayRequest;
   payPalRequest: PayPalRequest;
-  stripePaymentCardRequest: CreateTokenCardData;
-  stripePaymentExpressRequest: PaymentMethodCreateParams;
+  stripePaymentMethodParams: PaymentMethodCreateParams;
   poyntCardRequest: PoyntCardRequest;
   poyntExpressRequest: PoyntExpressRequest;
   poyntStandardRequest: PoyntStandardRequest;
   squarePaymentRequest: SquarePaymentRequest;
-} {
-  const formatCurrency = useFormatCurrency();
-  const { paypalConfig, session } = useCheckoutContext();
+};
 
-  const draftOrderTotalsQuery = useDraftOrderTotals();
-  const draftOrderQuery = useDraftOrder();
-  const skusMap = useDraftOrderProductsMap();
+export type PaymentRequestBuilder = (
+  order?: DraftOrder | null
+) => PaymentRequests;
 
-  const { data: totals } = draftOrderTotalsQuery;
-  const { data: order } = draftOrderQuery;
+type BuildPaymentRequestsInput = {
+  order?: DraftOrder | null;
+  skusMap: Record<string, SKUProduct>;
+  formatCurrency: ReturnType<typeof useFormatCurrency>;
+  session?: CheckoutSession | null;
+  paypalMerchantId?: string;
+  hostname: string;
+};
 
-  // Extract totals information based on the data format
+export function buildPaymentRequests({
+  order,
+  skusMap,
+  formatCurrency,
+  session,
+  paypalMerchantId,
+  hostname,
+}: BuildPaymentRequestsInput): PaymentRequests {
+  const totals = order?.totals;
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const lineItems = order?.lineItems || [];
-
-  const items = useMemo(
-    () => mapSkusToItemsDisplay(lineItems, skusMap),
-    [lineItems, skusMap]
-  );
+  const items = mapSkusToItemsDisplay(lineItems, skusMap);
 
   // Extract amounts in minor units for use across payment requests
   const subtotalMinorUnits = totals?.subTotal?.value || 0;
@@ -211,47 +235,35 @@ export function useBuildPaymentRequest(): {
   const discountMinorUnits = totals?.discountTotal?.value || 0;
   const totalMinorUnits = totals?.total?.value || 0;
 
-  const countryCode = useMemo(
-    () => session?.shipping?.originAddress?.countryCode || 'US',
-    [session?.shipping?.originAddress?.countryCode]
-  );
-
-  // Memoize address information with null handling
-  const shippingAddress = useMemo(
-    () => ({
-      name: {
-        full_name:
-          `${order?.shipping?.firstName || ''} ${order?.shipping?.lastName || ''}`.trim(),
-      },
-      address: {
-        address_line_1: order?.shipping?.address?.addressLine1 || undefined,
-        address_line_2: order?.shipping?.address?.addressLine2 || undefined,
-        admin_area_2: order?.shipping?.address?.adminArea2 || undefined,
-        admin_area_1: order?.shipping?.address?.adminArea1 || undefined,
-        postal_code: order?.shipping?.address?.postalCode || undefined,
-        country_code: order?.shipping?.address?.countryCode || countryCode,
-      },
-    }),
-    [order?.shipping, countryCode]
-  );
-
-  const billingAddress = useMemo(
-    () => ({
-      name: {
-        full_name:
-          `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim(),
-      },
-      address: {
-        address_line_1: order?.billing?.address?.addressLine1 || undefined,
-        address_line_2: order?.billing?.address?.addressLine2 || undefined,
-        admin_area_2: order?.billing?.address?.adminArea2 || undefined,
-        admin_area_1: order?.billing?.address?.adminArea1 || undefined,
-        postal_code: order?.billing?.address?.postalCode || undefined,
-        country_code: order?.billing?.address?.countryCode || countryCode,
-      },
-    }),
-    [order?.billing, countryCode]
-  );
+  const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
+  const shippingAddress = {
+    name: {
+      full_name:
+        `${order?.shipping?.firstName || ''} ${order?.shipping?.lastName || ''}`.trim(),
+    },
+    address: {
+      address_line_1: order?.shipping?.address?.addressLine1 || undefined,
+      address_line_2: order?.shipping?.address?.addressLine2 || undefined,
+      admin_area_2: order?.shipping?.address?.adminArea2 || undefined,
+      admin_area_1: order?.shipping?.address?.adminArea1 || undefined,
+      postal_code: order?.shipping?.address?.postalCode || undefined,
+      country_code: order?.shipping?.address?.countryCode || countryCode,
+    },
+  };
+  const billingAddress = {
+    name: {
+      full_name:
+        `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim(),
+    },
+    address: {
+      address_line_1: order?.billing?.address?.addressLine1 || undefined,
+      address_line_2: order?.billing?.address?.addressLine2 || undefined,
+      admin_area_2: order?.billing?.address?.adminArea2 || undefined,
+      admin_area_1: order?.billing?.address?.adminArea1 || undefined,
+      postal_code: order?.billing?.address?.postalCode || undefined,
+      country_code: order?.billing?.address?.countryCode || countryCode,
+    },
+  };
 
   // Create Apple Pay request
   const applePayRequest: ApplePayRequest = {
@@ -351,7 +363,7 @@ export function useBuildPaymentRequest(): {
     merchantInfo: {
       merchantId: session?.storeId || '',
       merchantName: session?.storeName || '',
-      merchantOrigin: document.location.hostname,
+      merchantOrigin: hostname,
     },
     transactionInfo: {
       totalPriceStatus: 'FINAL',
@@ -432,7 +444,7 @@ export function useBuildPaymentRequest(): {
     shippingMinorUnits -
     discountMinorUnits;
 
-  const payPalMerchantId = paypalConfig?.merchantId?.trim();
+  const payPalMerchantId = paypalMerchantId?.trim();
   const payPalRequest: PayPalRequest = {
     purchase_units: [
       {
@@ -505,34 +517,7 @@ export function useBuildPaymentRequest(): {
     ],
   };
 
-  const stripePaymentCardRequest: CreateTokenCardData = {
-    name:
-      `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() ||
-      undefined,
-    address_line1: order?.billing?.address?.addressLine1 || undefined,
-    address_line2: order?.billing?.address?.addressLine2 || undefined,
-    address_city: order?.billing?.address?.adminArea2 || undefined,
-    address_state: order?.billing?.address?.adminArea1 || undefined,
-    address_zip: order?.billing?.address?.postalCode || undefined,
-    address_country: order?.billing?.address?.countryCode || undefined,
-  };
-
-  const stripePaymentExpressRequest: PaymentMethodCreateParams = {
-    billing_details: {
-      name:
-        `${order?.billing?.firstName || ''} ${order?.billing?.lastName || ''}`.trim() ||
-        undefined,
-      email: order?.billing?.email || undefined,
-      address: {
-        line1: order?.billing?.address?.addressLine1 || undefined,
-        line2: order?.billing?.address?.addressLine2 || undefined,
-        city: order?.billing?.address?.adminArea2 || undefined,
-        state: order?.billing?.address?.adminArea1 || undefined,
-        postal_code: order?.billing?.address?.postalCode || undefined,
-        country: order?.billing?.address?.countryCode || undefined,
-      },
-    },
-  };
+  const stripePaymentMethodParams = buildStripePaymentMethodParams(order);
 
   const poyntCardRequest: PoyntCardRequest = {
     emailAddress: order?.billing?.email || undefined,
@@ -654,11 +639,42 @@ export function useBuildPaymentRequest(): {
     applePayRequest,
     googlePayRequest,
     payPalRequest,
-    stripePaymentCardRequest,
-    stripePaymentExpressRequest,
+    stripePaymentMethodParams,
     poyntCardRequest,
     poyntExpressRequest,
     poyntStandardRequest,
     squarePaymentRequest,
   };
+}
+
+export function useBuildPaymentRequest(): PaymentRequests & {
+  buildPaymentRequestsFromOrder: PaymentRequestBuilder;
+} {
+  const formatCurrency = useFormatCurrency();
+  const { paypalConfig, session } = useCheckoutContext();
+  const { data: order } = useDraftOrder();
+  const skusMap = useDraftOrderProductsMap();
+  const hostname =
+    typeof document === 'undefined' ? '' : document.location.hostname;
+  const paypalMerchantId = paypalConfig?.merchantId;
+
+  const buildPaymentRequestsFromOrder = useCallback<PaymentRequestBuilder>(
+    orderOverride =>
+      buildPaymentRequests({
+        order: orderOverride === undefined ? order : orderOverride,
+        skusMap,
+        formatCurrency,
+        session,
+        paypalMerchantId,
+        hostname,
+      }),
+    [formatCurrency, hostname, order, paypalMerchantId, session, skusMap]
+  );
+
+  const requests = useMemo(
+    () => buildPaymentRequestsFromOrder(order),
+    [buildPaymentRequestsFromOrder, order]
+  );
+
+  return { ...requests, buildPaymentRequestsFromOrder };
 }
