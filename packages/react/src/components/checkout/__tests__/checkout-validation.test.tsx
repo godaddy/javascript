@@ -6,6 +6,7 @@ import { GoDaddyProvider } from '@/godaddy-provider';
 import { CheckoutType, PaymentProvider } from '@/types';
 import {
   advanceCheckoutDebounce,
+  buildBillingAddress,
   buildCheckoutSession,
   buildDraftOrder,
   clearOperations,
@@ -65,6 +66,54 @@ describe('Checkout validation behaviors', () => {
     expect(getOperations('TokenizeJs.getNonce')).toHaveLength(0);
   });
 
+  it('shows full billing address for pickup card and names-only billing for offline pickup with tax enabled', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableBillingAddressCollection: true,
+        enablePhoneCollection: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: {
+            processor: PaymentProvider.STRIPE,
+            checkoutTypes: [CheckoutType.STANDARD],
+          },
+          offline: {
+            processor: PaymentProvider.OFFLINE,
+            checkoutTypes: [CheckoutType.STANDARD],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toBeInTheDocument();
+
+    await user.click(
+      await screen.findByRole('button', { name: /offline payments/i })
+    );
+
+    expect(
+      document.querySelector('input[name="billingFirstName"]')
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingLastName"]')
+    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/201.*555/)).toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('input[name="billingPostalCode"]')
+    ).not.toBeInTheDocument();
+  });
+
   it('shows billing names and phone for offline pickup even when billing address collection is enabled', async () => {
     const { user } = renderCheckout({
       draftOrderOverrides: {
@@ -107,6 +156,125 @@ describe('Checkout validation behaviors', () => {
     expect(
       document.querySelector('input[name="billingPostalCode"]')
     ).not.toBeInTheDocument();
+  });
+
+  it('blocks a paid offline purchase-mode confirm while the required billing address is empty', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        billing: {
+          firstName: 'Pay',
+          lastName: 'In Person',
+          address: buildBillingAddress({
+            addressLine1: '',
+            adminArea2: '',
+            postalCode: '',
+          }),
+        },
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableBillingAddressCollection: true,
+        enableTaxCollection: true,
+        enablePhoneCollection: false,
+        paymentMethods: {
+          card: null as never,
+          offline: {
+            processor: PaymentProvider.OFFLINE,
+            checkoutTypes: [CheckoutType.STANDARD],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+
+    // A paid offline order renders PaymentForm, so the billing address it shows
+    // must also be validated — the free-order rules must not leak in here.
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toBeInTheDocument();
+    clearOperations();
+
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(enUs.validation.enterAddress);
+    });
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+
+    // Filling the address it asked for lets the same click through.
+    await typeIntoNamedField(user, 'billingAddressLine1', '789 Billing Rd');
+    await typeIntoNamedField(user, 'billingAdminArea2', 'Atlanta');
+    await typeIntoNamedField(user, 'billingPostalCode', '30301');
+    await user.click(
+      screen.getByRole('button', { name: /complete your order/i })
+    );
+
+    await waitForOperation('ConfirmCheckoutSession');
+    await advanceCheckoutDebounce(0);
+  });
+
+  it('blocks a paid offline pickup confirm while the billing phone is invalid', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        billing: {
+          firstName: 'Pay',
+          lastName: 'In Person',
+          phone: '',
+        },
+        lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableBillingAddressCollection: true,
+        enablePhoneCollection: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: null as never,
+          offline: {
+            processor: PaymentProvider.OFFLINE,
+            checkoutTypes: [CheckoutType.STANDARD],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+
+    // Offline pickup collects names + phone only; the phone it renders still
+    // has to be validated before confirming.
+    const phone = (
+      await screen.findAllByPlaceholderText(/201.*555/)
+    )[0] as HTMLInputElement;
+    await user.clear(phone);
+    await user.type(phone, '12');
+    clearOperations();
+
+    await user.click(
+      await screen.findByRole('button', { name: /complete your order/i })
+    );
+
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(
+        enUs.validation.enterValidBillingPhone
+      );
+    });
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+
+    const rerenderedPhone = (
+      await screen.findAllByPlaceholderText(/201.*555/)
+    )[0] as HTMLInputElement;
+    await user.clear(rerenderedPhone);
+    await user.type(rerenderedPhone, '2015550123');
+    await user.click(
+      screen.getByRole('button', { name: /complete your order/i })
+    );
+
+    await waitForOperation('ConfirmCheckoutSession');
+    await advanceCheckoutDebounce(0);
   });
 
   it('shows billing names and phone when billing address collection is disabled but phone collection is enabled', async () => {

@@ -1,21 +1,121 @@
-import { useFormContext } from 'react-hook-form';
-import type { CheckoutFormData } from '@/components/checkout/checkout';
-import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { PaymentMethodType, type PaymentMethodValue } from '@/types';
 
-export type BillingCollectionMode = 'none' | 'names' | 'address';
-export type BillingCollectionContext =
-  | 'top-level'
-  | 'inline-payment-form'
-  | 'free-payment-form';
+export const BillingCollectionModes = {
+  NONE: 'none',
+  NAMES: 'names',
+  ADDRESS: 'address',
+} as const;
+
+export type BillingCollectionMode =
+  (typeof BillingCollectionModes)[keyof typeof BillingCollectionModes];
+
+export const BillingCollectionLocations = {
+  NONE: 'none',
+  TOP_LEVEL: 'top-level',
+  INLINE_PAYMENT_FORM: 'inline-payment-form',
+  FREE_PAYMENT_FORM: 'free-payment-form',
+} as const;
+
+export type BillingCollectionLocation =
+  (typeof BillingCollectionLocations)[keyof typeof BillingCollectionLocations];
+
+export type BillingPolicyInput = {
+  isFreeOrder: boolean;
+  paymentMethod?: PaymentMethodValue | string | null;
+  deliveryMethod?: DeliveryMethods | string | null;
+  paymentUseShippingAddress: boolean;
+  enableShipping: boolean;
+  enableShippingAddressCollection: boolean;
+  enableBillingAddressCollection: boolean;
+  enableTaxCollection: boolean;
+};
+
+export type BillingPolicy = {
+  mode: BillingCollectionMode;
+  location: BillingCollectionLocation;
+  usesShippingAddress: boolean;
+};
 
 const INLINE_BILLING_PAYMENT_METHODS: PaymentMethodValue[] = [
   PaymentMethodType.CREDIT_CARD,
   PaymentMethodType.ACH,
 ];
 
-export function hasInlineBillingForm(
+export function canOfferShippingAddressAsBilling({
+  deliveryMethod,
+  enableShipping,
+  enableShippingAddressCollection,
+}: Pick<
+  BillingPolicyInput,
+  'deliveryMethod' | 'enableShipping' | 'enableShippingAddressCollection'
+>) {
+  return Boolean(
+    deliveryMethod === DeliveryMethods.SHIP &&
+      enableShipping &&
+      enableShippingAddressCollection
+  );
+}
+
+export function isUsingShippingAddressAsBilling({
+  paymentUseShippingAddress,
+  ...input
+}: Pick<
+  BillingPolicyInput,
+  | 'deliveryMethod'
+  | 'paymentUseShippingAddress'
+  | 'enableShipping'
+  | 'enableShippingAddressCollection'
+>) {
+  return canOfferShippingAddressAsBilling(input) && paymentUseShippingAddress;
+}
+
+function getOfflineBillingMode({
+  deliveryMethod,
+  usesShippingAddress,
+  enableBillingAddressCollection,
+  enableTaxCollection,
+}: Pick<
+  BillingPolicyInput,
+  'deliveryMethod' | 'enableBillingAddressCollection' | 'enableTaxCollection'
+> & {
+  usesShippingAddress: boolean;
+}): BillingCollectionMode {
+  if (usesShippingAddress) return BillingCollectionModes.NONE;
+
+  if (deliveryMethod === DeliveryMethods.PICKUP) {
+    return BillingCollectionModes.NAMES;
+  }
+
+  if (
+    deliveryMethod === DeliveryMethods.PURCHASE ||
+    deliveryMethod === DeliveryMethods.DIGITAL
+  ) {
+    if (!enableTaxCollection) return BillingCollectionModes.NAMES;
+    return enableBillingAddressCollection
+      ? BillingCollectionModes.ADDRESS
+      : BillingCollectionModes.NAMES;
+  }
+
+  return enableBillingAddressCollection
+    ? BillingCollectionModes.ADDRESS
+    : BillingCollectionModes.NAMES;
+}
+
+function getPaidStandardBillingMode({
+  usesShippingAddress,
+  enableBillingAddressCollection,
+}: Pick<BillingPolicyInput, 'enableBillingAddressCollection'> & {
+  usesShippingAddress: boolean;
+}): BillingCollectionMode {
+  if (usesShippingAddress) return BillingCollectionModes.NONE;
+
+  return enableBillingAddressCollection
+    ? BillingCollectionModes.ADDRESS
+    : BillingCollectionModes.NAMES;
+}
+
+function isInlineBillingPaymentMethod(
   paymentMethod?: PaymentMethodValue | string | null
 ) {
   return Boolean(
@@ -26,75 +126,66 @@ export function hasInlineBillingForm(
   );
 }
 
-export function getBillingCollectionMode({
-  context,
-  deliveryMethod,
+export function getBillingPolicy({
+  isFreeOrder,
   paymentMethod,
-  paymentUseShippingAddress = true,
-  enableBillingAddressCollection = true,
-  enableTaxCollection = false,
-}: {
-  context: BillingCollectionContext;
-  deliveryMethod?: DeliveryMethods | string | null;
-  paymentMethod?: PaymentMethodValue | string | null;
-  paymentUseShippingAddress?: boolean | null;
-  enableBillingAddressCollection?: boolean | null;
-  enableTaxCollection?: boolean | null;
-}): BillingCollectionMode {
-  const isDigital = deliveryMethod === DeliveryMethods.DIGITAL;
-  const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
-  const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-  const isOffline = paymentMethod === PaymentMethodType.OFFLINE;
-  const inlineBilling = hasInlineBillingForm(paymentMethod);
-  const billingAddressEnabled = enableBillingAddressCollection !== false;
-  const billingIsSeparateFromShipping =
-    !isShipping || !paymentUseShippingAddress;
-
-  if (context === 'top-level') {
-    if (inlineBilling) return 'none';
-
-    if (isDigital) {
-      if (!billingAddressEnabled) return 'names';
-      if (isOffline && !enableTaxCollection) return 'names';
-      return 'address';
-    }
-
-    if (isPickup && isOffline && !enableTaxCollection) return 'names';
-    if (!billingIsSeparateFromShipping) return 'none';
-    return billingAddressEnabled ? 'address' : 'names';
-  }
-
-  if (context === 'inline-payment-form') {
-    if (!inlineBilling) return 'none';
-    if (isDigital) return billingAddressEnabled ? 'address' : 'names';
-    if (!billingIsSeparateFromShipping) return 'none';
-    return billingAddressEnabled ? 'address' : 'names';
-  }
-
-  if (isDigital) {
-    if (!enableTaxCollection) return 'names';
-    return billingAddressEnabled ? 'address' : 'names';
-  }
-
-  if (isPickup) return 'names';
-
-  return 'none';
-}
-
-export function useBillingCollectionMode({
-  context,
-}: {
-  context: BillingCollectionContext;
-}): BillingCollectionMode {
-  const form = useFormContext<CheckoutFormData>();
-  const { session } = useCheckoutContext();
-
-  return getBillingCollectionMode({
-    context,
-    deliveryMethod: form.watch('deliveryMethod'),
-    paymentMethod: form.watch('paymentMethod'),
-    paymentUseShippingAddress: form.watch('paymentUseShippingAddress'),
-    enableBillingAddressCollection: session?.enableBillingAddressCollection,
-    enableTaxCollection: session?.enableTaxCollection,
+  deliveryMethod,
+  paymentUseShippingAddress,
+  enableShipping,
+  enableShippingAddressCollection,
+  enableBillingAddressCollection,
+  enableTaxCollection,
+}: BillingPolicyInput): BillingPolicy {
+  const usesShippingAddress = isUsingShippingAddressAsBilling({
+    deliveryMethod,
+    paymentUseShippingAddress,
+    enableShipping,
+    enableShippingAddressCollection,
   });
+  const effectivePaymentMethod = isFreeOrder
+    ? PaymentMethodType.OFFLINE
+    : paymentMethod;
+  const isOffline = effectivePaymentMethod === PaymentMethodType.OFFLINE;
+  const isInline = isInlineBillingPaymentMethod(effectivePaymentMethod);
+  const mode = isOffline
+    ? getOfflineBillingMode({
+        deliveryMethod,
+        usesShippingAddress,
+        enableBillingAddressCollection,
+        enableTaxCollection,
+      })
+    : getPaidStandardBillingMode({
+        usesShippingAddress,
+        enableBillingAddressCollection,
+      });
+
+  if (mode === BillingCollectionModes.NONE) {
+    return {
+      mode,
+      location: BillingCollectionLocations.NONE,
+      usesShippingAddress,
+    };
+  }
+
+  if (isFreeOrder) {
+    return {
+      mode,
+      location: BillingCollectionLocations.FREE_PAYMENT_FORM,
+      usesShippingAddress,
+    };
+  }
+
+  if (isInline) {
+    return {
+      mode,
+      location: BillingCollectionLocations.INLINE_PAYMENT_FORM,
+      usesShippingAddress,
+    };
+  }
+
+  return {
+    mode,
+    location: BillingCollectionLocations.TOP_LEVEL,
+    usesShippingAddress,
+  };
 }

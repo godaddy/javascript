@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as godaddyApi from '@/lib/godaddy/godaddy';
 import {
@@ -84,6 +84,129 @@ describe('Checkout billing behavior', () => {
         addressLine1: '789 Billing Rd',
         adminArea2: 'Atlanta',
         postalCode: '30301',
+        countryCode: 'US',
+      }),
+    });
+  });
+
+  it('collects names only for paid offline purchase mode when tax collection is disabled', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        billing: {
+          firstName: 'Pay',
+          lastName: 'In Person',
+          address: buildBillingAddress({ addressLine1: '' }),
+        },
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableBillingAddressCollection: true,
+        enableTaxCollection: false,
+        paymentMethods: {
+          card: null as never,
+          offline: {
+            processor: 'offline',
+            checkoutTypes: ['standard'],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+
+    await waitFor(() => {
+      expect(
+        document.querySelector('input[name="billingFirstName"]')
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingLastName"]')
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingAddressLine1"]')
+      ).not.toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingPostalCode"]')
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('respects disabled billing address collection in purchase mode even when tax collection is enabled', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        billing: {
+          firstName: 'Names',
+          lastName: 'Only',
+          address: buildBillingAddress({ addressLine1: '' }),
+        },
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableBillingAddressCollection: false,
+        enableTaxCollection: true,
+      },
+    });
+    await waitForCheckoutReady();
+
+    await waitFor(() => {
+      expect(
+        document.querySelector('input[name="billingFirstName"]')
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingLastName"]')
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingAddressLine1"]')
+      ).not.toBeInTheDocument();
+      expect(
+        document.querySelector('input[name="billingPostalCode"]')
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('collects billing address for paid offline purchase mode when tax collection is enabled and uses it for taxes', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        billing: { address: buildBillingAddress({ addressLine1: '' }) },
+        lineItems: [{ fulfillmentMode: 'PURCHASE' }],
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableBillingAddressCollection: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: null as never,
+          offline: {
+            processor: 'offline',
+            checkoutTypes: ['standard'],
+          },
+        },
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toBeInTheDocument();
+
+    await typeIntoNamedField(user, 'billingFirstName', 'Offline');
+    await typeIntoNamedField(user, 'billingLastName', 'Buyer');
+    await typeIntoNamedField(user, 'billingAddressLine1', '456 Tax Lane');
+    await typeIntoNamedField(user, 'billingAdminArea2', 'Austin');
+    await typeIntoNamedField(user, 'billingPostalCode', '78701');
+    await advanceCheckoutDebounce();
+    await waitForOperation('CalculateCheckoutSessionTaxes');
+
+    expect(
+      getOperations('CalculateCheckoutSessionTaxes').at(-1)?.input
+    ).toMatchObject({
+      destination: expect.objectContaining({
+        addressLine1: '456 Tax Lane',
+        adminArea2: 'Austin',
+        postalCode: '78701',
         countryCode: 'US',
       }),
     });
@@ -184,5 +307,186 @@ describe('Checkout billing behavior', () => {
     expect(
       screen.getByLabelText(/use shipping address as billing/i)
     ).not.toBeChecked();
+  });
+
+  it('does not resync matching billing when switching to shipping', async () => {
+    const address = buildShippingAddress({ addressLine1: '10 Shared St' });
+    const contact = {
+      firstName: 'Same',
+      lastName: 'Buyer',
+      phone: '+12015550123',
+      address,
+    };
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      shipping: contact,
+      billing: contact,
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      session: buildCheckoutSession({
+        draftOrder,
+        enableShipping: true,
+        enableLocalPickup: true,
+      }),
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(screen.getByRole('radio', { name: /^shipping/i }));
+
+    expect(
+      await screen.findByLabelText(/use shipping address as billing/i)
+    ).toBeChecked();
+    await advanceCheckoutDebounce();
+    expect(
+      getOperations('UpdateCheckoutSessionDraftOrder').some(operation =>
+        Object.hasOwn(operation.input as object, 'billing')
+      )
+    ).toBe(false);
+  });
+
+  it('does not clear billing when switching to offline without a collected address', async () => {
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      billing: {
+        firstName: '',
+        lastName: '',
+        address: null,
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      session: buildCheckoutSession({
+        draftOrder,
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: { processor: 'godaddy', checkoutTypes: ['standard'] } as never,
+          offline: { processor: 'offline', checkoutTypes: ['standard'] },
+        },
+      }),
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    await user.click(
+      await screen.findByRole('button', { name: /offline payments/i })
+    );
+    await advanceCheckoutDebounce();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+  });
+
+  it('clears a collected billing address when switching to offline pickup hides it', async () => {
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      billing: {
+        firstName: 'Card',
+        lastName: 'Payer',
+        address: buildBillingAddress({ addressLine1: '500 Card St' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      session: buildCheckoutSession({
+        draftOrder,
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: { processor: 'godaddy', checkoutTypes: ['standard'] } as never,
+          offline: { processor: 'offline', checkoutTypes: ['standard'] },
+        },
+      }),
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    // Offline pickup collects names only, so the address the card form had
+    // collected must not stay behind on the draft order where the customer can
+    // no longer see or correct it.
+    await user.click(
+      await screen.findByRole('button', { name: /offline payments/i })
+    );
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      billing: { firstName: 'Card', lastName: 'Payer', address: null },
+    });
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).not.toBeInTheDocument();
+  });
+
+  it('clears a collected billing address when switching delivery to offline pickup hides it', async () => {
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'SHIP' }],
+      billing: {
+        firstName: 'Jane',
+        lastName: 'Buyer',
+        address: buildBillingAddress({ addressLine1: '77 Separate Way' }),
+      },
+    });
+    const { user } = renderCheckout({
+      draftOrder,
+      session: buildCheckoutSession({
+        draftOrder,
+        enableShipping: true,
+        enableLocalPickup: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: null as never,
+          offline: { processor: 'offline', checkoutTypes: ['standard'] },
+        },
+      }),
+    });
+    await waitForCheckoutReady();
+    expect(
+      document.querySelector('input[name="billingAddressLine1"]')
+    ).toHaveValue('77 Separate Way');
+    clearOperations();
+
+    await user.click(screen.getByRole('radio', { name: /local pickup/i }));
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      billing: { firstName: 'Jane', lastName: 'Buyer', address: null },
+    });
+  });
+
+  it('keeps a merchant-provided billing address that offline pickup never asks about', async () => {
+    const draftOrder = buildDraftOrder({
+      lineItems: [{ fulfillmentMode: 'PICKUP' }],
+      billing: {
+        firstName: 'Merchant',
+        lastName: 'Prefill',
+        address: buildBillingAddress({ addressLine1: '1 Prefilled Rd' }),
+      },
+    });
+    renderCheckout({
+      draftOrder,
+      session: buildCheckoutSession({
+        draftOrder,
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: true,
+        paymentMethods: {
+          card: null as never,
+          offline: { processor: 'offline', checkoutTypes: ['standard'] },
+        },
+      }),
+    });
+    await waitForCheckoutReady();
+    await advanceCheckoutDebounce();
+
+    // Only customer-driven changes clear the address; loading a checkout must
+    // never delete data the merchant put on the draft order.
+    expect(
+      getOperations('UpdateCheckoutSessionDraftOrder').filter(operation =>
+        Object.hasOwn(operation.input as object, 'billing')
+      )
+    ).toHaveLength(0);
   });
 });

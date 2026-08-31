@@ -221,6 +221,24 @@ describe('Digital fulfillment checkout', () => {
     expectBillingNamesOnlyWithPhone();
   });
 
+  it('respects disabled billing address collection for taxable digital-only orders', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        shipping: { address: null },
+        lineItems: [buildDigitalLineItem()],
+      },
+      sessionOverrides: {
+        enableBillingAddressCollection: false,
+        enableTaxCollection: true,
+        enableShipping: true,
+        enableLocalPickup: true,
+      },
+    });
+    await waitForCheckoutReady();
+
+    expectBillingNamesOnlyWithPhone();
+  });
+
   it('shows billing names and phone for free digital-only orders when tax is disabled', async () => {
     renderCheckout({
       draftOrderOverrides: {
@@ -324,7 +342,7 @@ describe('Digital fulfillment checkout', () => {
     ).toBeVisible();
   });
 
-  it('hides express for mixed digital and pickup orders', async () => {
+  it('shows express for mixed digital and pickup orders when shipping is enabled', async () => {
     renderCheckout({
       draftOrderOverrides: {
         lineItems: [
@@ -344,8 +362,8 @@ describe('Digital fulfillment checkout', () => {
     await waitForCheckoutReady();
 
     expect(
-      screen.queryByTestId('mock-godaddy-express-button')
-    ).not.toBeInTheDocument();
+      await screen.findByTestId('mock-godaddy-express-button')
+    ).toBeVisible();
   });
 
   it('does not let digital NONE lines trigger shipping fulfillment sync', async () => {

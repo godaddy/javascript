@@ -62,7 +62,6 @@ type SectionKey = 'shipping' | 'billing';
 
 interface AddressFormProps {
   sectionKey: SectionKey;
-  /** When true, only show first name and last name fields (used for free pickup orders) */
   onlyNames?: boolean;
 }
 
@@ -239,6 +238,7 @@ export function AddressForm({
         enabled: ({ values, draftOrder: currentDraftOrder }) =>
           Boolean(
             onlyNames &&
+              currentDraftOrder &&
               sectionNameHasChanged(values, currentDraftOrder, sectionKey) &&
               getFormString(values, `${sectionKey}FirstName`).trim() &&
               getFormString(values, `${sectionKey}LastName`).trim()

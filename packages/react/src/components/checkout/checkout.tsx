@@ -3,8 +3,6 @@
 import { CircleAlert } from 'lucide-react';
 import React, { type ReactNode } from 'react';
 import { z } from 'zod';
-import { hasRegionData } from '@/components/checkout/address';
-import { checkIsValidPhone } from '@/components/checkout/address/utils/check-is-valid-phone';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { getRequiredFieldsFromSchema } from '@/components/checkout/form/utils/get-required-fields-from-schema';
 import { type GoDaddyVariables, useGoDaddyContext } from '@/godaddy-provider';
@@ -13,8 +11,12 @@ import { type Theme, useTheme } from '@/hooks/use-theme';
 import { useVariables } from '@/hooks/use-variables';
 import type { TrackingProperties } from '@/tracking/event-properties';
 import { TrackingProvider } from '@/tracking/tracking-provider';
-import { type CheckoutSession, PaymentMethodType } from '@/types';
+import { type CheckoutSession } from '@/types';
 import { CheckoutFormContainer } from './form/checkout-form-container';
+import {
+  type CheckoutValidationMessages,
+  createCheckoutValidationAdapter,
+} from './form/checkout-validation-adapter';
 import type { Target } from './target/types';
 
 // Utility function for redirecting to success URL after checkout
@@ -111,12 +113,6 @@ interface CheckoutContextValue {
   checkoutErrors?: string[] | undefined;
   setCheckoutErrors: (error?: string[] | undefined) => void;
   requiredFields?: { [key: string]: boolean };
-  /**
-   * Field names supplied through the `checkoutFormSchema` prop. Consumer rules
-   * must always be validated, even when the built-in conditional validation
-   * would skip that field for the current delivery/payment combination.
-   */
-  customSchemaFields?: string[];
 }
 
 export const checkoutContext = React.createContext<CheckoutContextValue>({
@@ -259,167 +255,35 @@ export function Checkout(props: CheckoutProps) {
   useTheme(session?.appearance?.theme);
   useVariables(session?.appearance?.variables || props?.appearance?.variables);
 
-  const formSchema = React.useMemo(() => {
-    const extendedSchema = checkoutFormSchema
-      ? baseCheckoutSchema.extend(checkoutFormSchema)
-      : baseCheckoutSchema;
+  const validationMessages = React.useMemo<CheckoutValidationMessages>(
+    () => ({
+      enterValidBillingPhone: t.validation.enterValidBillingPhone,
+      enterValidShippingPhone: t.validation.enterValidShippingPhone,
+      enterFirstName: t.validation.enterFirstName,
+      enterLastName: t.validation.enterLastName,
+      enterAddress: t.validation.enterAddress,
+      enterCity: t.validation.enterCity,
+      enterZipPostalCode: t.validation.enterZipPostalCode,
+      enterCountry: t.validation.enterCountry,
+      selectState: t.validation.selectState,
+    }),
+    [t]
+  );
 
-    const enableBillingAddressCollection =
-      session?.enableBillingAddressCollection !== false;
-    const enableShipping = session?.enableShipping !== false;
-
-    return extendedSchema.superRefine((data, ctx) => {
-      if (data.billingPhone) {
-        if (!checkIsValidPhone(String(data?.billingPhone))) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t.validation.enterValidBillingPhone,
-            path: ['billingPhone'],
-          });
-        }
-      }
-
-      if (data.shippingPhone) {
-        if (!checkIsValidPhone(String(data?.shippingPhone))) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t.validation.enterValidShippingPhone,
-            path: ['shippingPhone'],
-          });
-        }
-      }
-
-      // Billing address validation - only required if not using shipping address OR pickup
-      // BUT skip for free orders (paymentMethod === 'offline')
-      const isOfflinePayment = data.paymentMethod === PaymentMethodType.OFFLINE;
-      const isPickup = data.deliveryMethod === DeliveryMethods.PICKUP;
-      const isShipping = data.deliveryMethod === DeliveryMethods.SHIP;
-      const isDigital = data.deliveryMethod === DeliveryMethods.DIGITAL;
-      const isFreePickup = isOfflinePayment && isPickup;
-      const isDigitalTaxDisabledOffline =
-        isDigital && isOfflinePayment && !session?.enableTaxCollection;
-      // Billing is separate from shipping when there is no shipping address
-      // to copy from. `mapOrderToFormValues` canonicalizes deliveryMethod
-      // against session capabilities, so `!isShipping` already covers both
-      // session.enableShipping=false and orders with no SHIP fulfillment.
-      // The remaining case is the user opting out of "use shipping for billing".
-      const billingIsSeparateFromShipping =
-        !isShipping || !data.paymentUseShippingAddress;
-
-      const requireBillingNamesOnly =
-        (!enableBillingAddressCollection && billingIsSeparateFromShipping) ||
-        isFreePickup ||
-        isDigitalTaxDisabledOffline;
-
-      if (requireBillingNamesOnly) {
-        const nameFields = [
-          { key: 'billingFirstName', message: t.validation.enterFirstName },
-          { key: 'billingLastName', message: t.validation.enterLastName },
-        ];
-
-        for (const { key, message } of nameFields) {
-          if (!data[key as keyof typeof data]) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message,
-              path: [key],
-            });
-          }
-        }
-      }
-
-      const requireBillingAddress =
-        enableBillingAddressCollection &&
-        !isFreePickup &&
-        !isDigitalTaxDisabledOffline &&
-        billingIsSeparateFromShipping;
-
-      if (requireBillingAddress) {
-        // Basic billing fields required for all countries
-        const billingFields = [
-          { key: 'billingFirstName', message: t.validation.enterFirstName },
-          { key: 'billingLastName', message: t.validation.enterLastName },
-          { key: 'billingAddressLine1', message: t.validation.enterAddress },
-          { key: 'billingAdminArea2', message: t.validation.enterCity },
-          {
-            key: 'billingPostalCode',
-            message: t.validation.enterZipPostalCode,
-          },
-          { key: 'billingCountryCode', message: t.validation.enterCountry },
-        ];
-
-        if (hasRegionData(String(data.billingCountryCode))) {
-          billingFields.push({
-            key: 'billingAdminArea1',
-            message: t.validation.selectState,
-          });
-        }
-
-        for (const { key, message } of billingFields) {
-          if (!data[key as keyof typeof data]) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message,
-              path: [key],
-            });
-          }
-        }
-      }
-
-      // Shipping address validation - only required if delivery method is SHIP
-      // AND shipping is enabled at the session level. This guards against the
-      // contradictory case where line items declare SHIP fulfillment but the
-      // session has enableShipping: false (the shipping form is not rendered
-      // in that case, so requiring the fields would block the user).
-      const requireShippingAddress = isShipping && enableShipping;
-
-      if (requireShippingAddress) {
-        // Basic shipping fields required for all countries
-        const shippingFields = [
-          { key: 'shippingFirstName', message: t.validation.enterFirstName },
-          { key: 'shippingLastName', message: t.validation.enterLastName },
-          { key: 'shippingAddressLine1', message: t.validation.enterAddress },
-          { key: 'shippingAdminArea2', message: t.validation.enterCity },
-          {
-            key: 'shippingPostalCode',
-            message: t.validation.enterZipPostalCode,
-          },
-          { key: 'shippingCountryCode', message: t.validation.enterCountry },
-        ];
-
-        if (hasRegionData(String(data.shippingCountryCode))) {
-          shippingFields.push({
-            key: 'shippingAdminArea1',
-            message: t.validation.selectState,
-          });
-        }
-
-        for (const { key, message } of shippingFields) {
-          if (!data[key as keyof typeof data]) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message,
-              path: [key],
-            });
-          }
-        }
-      }
-    });
-  }, [
-    checkoutFormSchema,
-    session?.enableBillingAddressCollection,
-    session?.enableShipping,
-    session?.enableTaxCollection,
-    t,
-  ]);
+  const validationAdapter = React.useMemo(
+    () =>
+      createCheckoutValidationAdapter({
+        baseSchema: baseCheckoutSchema,
+        checkoutFormSchema,
+        messages: validationMessages,
+        getContext: () => ({ session }),
+      }),
+    [checkoutFormSchema, session, validationMessages]
+  );
 
   const requiredFields = React.useMemo(() => {
-    return getRequiredFieldsFromSchema(formSchema);
-  }, [formSchema]);
-
-  const customSchemaFields = React.useMemo(() => {
-    return Object.keys(checkoutFormSchema ?? {});
-  }, [checkoutFormSchema]);
+    return getRequiredFieldsFromSchema(validationAdapter.schema);
+  }, [validationAdapter]);
 
   if (!props.isLoading && !isLoadingJWT && !session) {
     return (
@@ -470,7 +334,6 @@ export function Checkout(props: CheckoutProps) {
           paypalConfig,
           ccavenueConfig,
           requiredFields,
-          customSchemaFields,
           isConfirmingCheckout,
           setIsConfirmingCheckout,
           checkoutErrors,
@@ -480,7 +343,7 @@ export function Checkout(props: CheckoutProps) {
         <CheckoutFormContainer
           {...props}
           isLoadingJWT={isLoadingJWT}
-          schema={formSchema}
+          validationAdapter={validationAdapter}
           direction={props.direction}
         />
       </checkoutContext.Provider>

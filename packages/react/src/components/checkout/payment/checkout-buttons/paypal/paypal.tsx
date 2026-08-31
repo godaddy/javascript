@@ -22,7 +22,8 @@ function PayPalButtonsWrapper() {
   const { setCheckoutErrors } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
-  const { payPalRequest } = useBuildPaymentRequest();
+  const { payPalRequest, buildPaymentRequestsFromOrder } =
+    useBuildPaymentRequest();
   const confirmCheckout = useConfirmCheckout();
   const flushCheckoutSync = useFlushCheckoutSync();
   const [isPaypalDisabled, setIsPaypalDisabled] = useState<boolean>(false);
@@ -47,19 +48,23 @@ function PayPalButtonsWrapper() {
       return actions.reject();
     }
 
-    await flushCheckoutSync();
-
     // Return true to continue flow, false to stop it
     return actions.resolve();
   };
 
   const createOrder = async (_data, actions) => {
+    const { latestOrder } = await flushCheckoutSync({
+      includeCurrentFormDiff: true,
+    });
+    const request = latestOrder
+      ? buildPaymentRequestsFromOrder(latestOrder).payPalRequest
+      : payPalRequest;
     const order = {
-      ...payPalRequest,
-      purchase_units: payPalRequest.purchase_units
+      ...request,
+      purchase_units: request.purchase_units
         ? [
             {
-              ...payPalRequest.purchase_units[0],
+              ...request.purchase_units[0],
               ...(isPickup ? { shipping: undefined } : {}), // Remove shipping if pickup
             },
           ]
