@@ -396,6 +396,8 @@ export const ConfirmCheckoutSessionMutation = graphql(`
   mutation ConfirmCheckoutSession($input: MutationConfirmCheckoutSessionInput!, $sessionId: String!)  {
         confirmCheckoutSession(input: $input, sessionId: $sessionId) {
           status
+          successUrl
+          orderId
         }
     }
 `);

@@ -263,7 +263,10 @@ export function useConfirmCheckout() {
         },
       });
 
-      redirectToSuccessUrl(session?.successUrl);
+      // Use the successUrl from the response (which has the orderId replaced) if available,
+      // otherwise fall back to the session successUrl
+      const successUrl = (data as any)?.successUrl || session?.successUrl;
+      redirectToSuccessUrl(successUrl);
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
