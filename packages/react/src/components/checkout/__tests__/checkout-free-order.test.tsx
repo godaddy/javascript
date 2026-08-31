@@ -1,3 +1,4 @@
+import { enUs } from '@godaddy/localizations';
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
@@ -532,6 +533,6 @@ describe('Checkout free / offline orders', () => {
     expect(
       screen.queryByRole('button', { name: /complete your free order/i })
     ).not.toBeInTheDocument();
-    expect(document.body).toHaveTextContent(/failed to apply coupon code/i);
+    expect(document.body).toHaveTextContent(enUs.discounts.invalid);
   });
 });
