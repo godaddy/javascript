@@ -1,5 +1,6 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { getIncludedTaxTotal } from '@/components/checkout/totals/utils/get-included-tax-total';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { getDraftOrder } from '@/lib/godaddy/godaddy';
@@ -59,6 +60,14 @@ export function useDraftOrderShippingAddress() {
 export function useDraftOrderTotals() {
   return useDraftOrder<Totals | null>(
     data => data.checkoutSession?.draftOrder?.totals ?? null,
+    'draft-order'
+  );
+}
+
+export function useDraftOrderIncludedTaxTotal() {
+  return useDraftOrder<number>(
+    data =>
+      getIncludedTaxTotal(data.checkoutSession?.draftOrder?.taxes ?? null),
     'draft-order'
   );
 }
