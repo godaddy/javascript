@@ -168,7 +168,7 @@ export const enUs = {
     shipping: 'Shipping',
     tip: 'Tip',
     estimatedTaxes: 'Estimated taxes',
-    vatIncluded: 'VAT Included',
+    vatIncluded: 'VAT included',
     fees: 'Fees',
     totalDue: 'Total Due',
     orderSummary: 'Order Summary',
