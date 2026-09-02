@@ -66,6 +66,47 @@ describe('Checkout totals and order summary UI', () => {
     expect(document.body).toHaveTextContent(/estimated taxes/i);
     expect(document.body).toHaveTextContent(/fees/i);
     expect(document.body).toHaveTextContent(/total due/i);
+    expect(document.body).not.toHaveTextContent(/vat included/i);
+  });
+
+  it('renders the total of included tax constituents separately from additive taxes', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        totals: totals({
+          taxTotal: { value: 456, currencyCode: 'USD' },
+        }),
+        taxes: [
+          {
+            id: 'included-tax-1',
+            name: 'VAT',
+            included: true,
+            exempted: false,
+            ratePercentage: '2.5',
+            amount: { value: 100, currencyCode: 'USD' },
+          },
+          {
+            id: 'additive-tax',
+            name: 'Sales tax',
+            included: false,
+            exempted: false,
+            ratePercentage: '5',
+            amount: { value: 456, currencyCode: 'USD' },
+          },
+          {
+            id: 'included-tax-2',
+            name: 'VAT surcharge',
+            included: true,
+            exempted: false,
+            ratePercentage: '0.5',
+            amount: { value: 23, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(document.body).toHaveTextContent(/vat included/i);
+    expect(screen.getAllByText('$1.23').length).toBeGreaterThan(0);
   });
 
   it('renders loading skeleton rows for in-flight discount, shipping, tax, and fee mutations', async () => {

@@ -25,7 +25,10 @@ import {
 import { NotesForm } from '@/components/checkout/notes/notes-form';
 import { DraftOrderSyncProvider } from '@/components/checkout/order/draft-order-sync-provider';
 import { isFreeOrderTotal } from '@/components/checkout/order/is-free-order';
-import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import {
+  useDraftOrderIncludedTaxTotal,
+  useDraftOrderTotals,
+} from '@/components/checkout/order/use-draft-order';
 import { BillingPolicyTransitionController } from '@/components/checkout/payment/billing-policy-transition-controller';
 import { PaymentForm } from '@/components/checkout/payment/payment-form';
 import {
@@ -200,6 +203,7 @@ export function CheckoutForm({
   }, [dirtyFields, form, formValues, isCheckoutBusy]);
 
   const draftOrderTotalsQuery = useDraftOrderTotals();
+  const { data: vatIncluded = 0 } = useDraftOrderIncludedTaxTotal();
 
   const { data: totals, isLoading: totalsLoading } = draftOrderTotalsQuery;
   validationContextRef.current.totals = totals;
@@ -551,6 +555,7 @@ export function CheckoutForm({
                                 currencyCode={currencyCode}
                                 tip={tipTotal}
                                 taxes={taxTotal}
+                                vatIncluded={vatIncluded}
                                 fees={feeTotal}
                                 isTaxLoading={isUpdatingTaxes}
                                 isFeeLoading={isUpdatingFees}
@@ -622,6 +627,7 @@ export function CheckoutForm({
                             currencyCode={currencyCode}
                             tip={tipTotal}
                             taxes={taxTotal}
+                            vatIncluded={vatIncluded}
                             fees={feeTotal}
                             isTaxLoading={isUpdatingTaxes}
                             isFeeLoading={isUpdatingFees}
@@ -656,6 +662,7 @@ export function CheckoutForm({
                     currencyCode={currencyCode}
                     tip={tipTotal}
                     taxes={taxTotal}
+                    vatIncluded={vatIncluded}
                     fees={feeTotal}
                     isTaxLoading={isUpdatingTaxes}
                     isFeeLoading={isUpdatingFees}

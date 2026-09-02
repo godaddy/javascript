@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, ShoppingCart } from 'lucide-react';
 import type { Product } from '@/components/checkout/line-items/line-items';
+import { getIncludedTaxTotal } from '@/components/checkout/totals/utils/get-included-tax-total';
 import { CartLineItems } from '@/components/storefront/cart-line-items';
 import { CartTotals } from '@/components/storefront/cart-totals';
 import { Button } from '@/components/ui/button';
@@ -110,6 +111,7 @@ export function Cart({
   const subtotal = order?.totals?.subTotal?.value || 0;
   const shipping = order?.totals?.shippingTotal?.value || 0;
   const taxes = order?.totals?.taxTotal?.value || 0;
+  const vatIncluded = getIncludedTaxTotal(order?.taxes);
   const discount = order?.totals?.discountTotal?.value || 0;
   const total = order?.totals?.total?.value || 0;
 
@@ -122,6 +124,7 @@ export function Cart({
     total,
     tip: 0,
     taxes,
+    vatIncluded,
     enableDiscounts: false,
     enableTaxes: true,
     isTaxLoading: false,
