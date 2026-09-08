@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { useState, useSyncExternalStore } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { CommerceClient } from './client';
 import { redirectToCheckout } from './redirect';
@@ -82,6 +82,56 @@ function SelectedOptions({
         </div>
       ))}
     </dl>
+  );
+}
+
+function QuantityInput({
+  name,
+  quantity,
+  disabled,
+  onCommit,
+}: {
+  name: string | null;
+  quantity: number;
+  disabled: boolean;
+  onCommit: (quantity: number) => Promise<unknown>;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const submitting = useRef(false);
+  const commit = async () => {
+    if (draft === null || submitting.current) return;
+    const count = draft.trim() === '' ? Number.NaN : Number(draft);
+    if (!Number.isSafeInteger(count) || count < 0 || count === quantity) {
+      setDraft(null);
+      return;
+    }
+    submitting.current = true;
+    try {
+      await onCommit(count);
+    } finally {
+      submitting.current = false;
+      // Resume reading the authoritative quantity after success or failure.
+      setDraft(null);
+    }
+  };
+  return (
+    <input
+      aria-label={`Quantity for ${name}`}
+      type='number'
+      min='0'
+      step='1'
+      value={draft ?? quantity}
+      disabled={disabled}
+      onFocus={event => event.target.select()}
+      onChange={event => setDraft(event.target.value)}
+      onBlur={() => void commit()}
+      onKeyDown={event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      }}
+    />
   );
 }
 
@@ -232,21 +282,13 @@ function Drawer({
                               <path d='M3 8h10' />
                             </svg>
                           </button>
-                          <input
-                            aria-label={`Quantity for ${line.name}`}
-                            type='number'
-                            min='0'
-                            step='1'
-                            value={line.quantity || 0}
+                          <QuantityInput
+                            name={line.name}
+                            quantity={line.quantity || 0}
                             disabled={busy}
-                            onFocus={event => event.target.select()}
-                            onChange={event => {
-                              const count = event.target.valueAsNumber;
-                              if (Number.isSafeInteger(count) && count >= 0)
-                                void perform(() =>
-                                  client.setQuantity(line.id, count)
-                                );
-                            }}
+                            onCommit={count =>
+                              perform(() => client.setQuantity(line.id, count))
+                            }
                           />
                           <button
                             type='button'

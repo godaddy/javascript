@@ -78,6 +78,8 @@ Cart checkout, Buy now, and standalone payment buttons always navigate in the cu
 
 The cart persists only its draft-order ID in local storage, scoped by API host, client, store, and channel. Prices and totals are read from Commerce. Mutations are serialized and refresh server state; browsers with Web Locks also serialize same-origin tabs. Browsers without Web Locks do not have cross-tab write serialization. Storage-denied browsers keep the cart in memory. Cart mutations are never automatically retried after uncertain network failures. Refresh to inspect the authoritative state before retrying a failed action.
 
+Typed quantity edits are submitted on blur or Enter. The field keeps its typed value while the mutation is pending, then resumes showing the server quantity. Empty or invalid edits revert without a request; entering zero removes the item.
+
 The first `gddy-add-to-cart` click creates an empty draft order internally, then calls `addLineItemBySkuId` with that draft ID, the selected SKU ID, and quantity. This two-call flow lets Commerce resolve catalog pricing; inline draft creation requires caller-supplied line-item amounts. The component saves the draft ID immediately and refetches the cart after adding the item. Later additions reuse that draft; adding the same SKU increases its quantity. Adopting applications do not create a separate draft or maintain a second cart.
 
 Checkout waits for queued cart changes, refreshes the draft, and creates a session from its ID. Repeated identical checkout requests share the in-flight operation; different concurrent purchases are rejected. The cart is locked during session creation. The managed buttons release the transient session state when handing off, so a failed navigation or browser Back does not leave controls locked. The saved cart is preserved.
@@ -96,7 +98,7 @@ Buttons expose `::part(button)` and `::part(status)`. Set `--gddy-color`, `--gdd
 
 ## Optional npm and React usage
 
-For applications that intentionally bundle and pin the implementation:
+For applications that intentionally bundle and pin the implementation, React and React DOM 18 or 19 are required peers. Use the same React major version for both; the library uses the host application's React instance. Development and tests use React 19. The managed CDN bundles its own runtime and does not require consumers to install these npm peers.
 
 ```tsx
 import { configureCommerce } from '@godaddy/commerce';
