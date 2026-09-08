@@ -1,0 +1,64 @@
+{
+  "name": "@godaddy/commerce",
+  "version": "0.1.0",
+  "description": "Managed GoDaddy Commerce carts and checkout for any website",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "AGENT-INTEGRATION.md"
+  ],
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./elements": {
+      "types": "./dist/elements.d.ts",
+      "import": "./dist/elements.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js"
+    },
+    "./styles.css": "./dist/index.css"
+  },
+  "sideEffects": true,
+  "scripts": {
+    "build": "node scripts/scope-checkout-css.mjs && tsdown && node scripts/package-styles.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "biome check ./src",
+    "lint:fix": "biome check --write ./src"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.6",
+    "@godaddy/react": "workspace:*",
+    "@tanstack/react-query": "^5.85.5",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-hook-form": "^7.54.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.2",
+    "@types/node": "^22.13.1",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "biome-config-godaddy": "workspace:*",
+    "jsdom": "^26.0.0",
+    "tsdown": "^0.15.6",
+    "typescript": "~5.7.3",
+    "vitest": "^4.1.2",
+    "postcss": "8.5.6"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/godaddy/javascript.git",
+    "directory": "packages/commerce"
+  }
+}

@@ -58,10 +58,10 @@ const SheetContent = React.forwardRef<
   React.ComponentRef<typeof SheetPrimitive.Content>,
   SheetContentProps
 >(({ side = 'right', className, children, ...props }, ref) => {
-  const { t } = useGoDaddyContext();
+  const { t, uiContainer } = useGoDaddyContext();
 
   return (
-    <SheetPortal>
+    <SheetPortal container={uiContainer}>
       <SheetOverlay />
       <SheetPrimitive.Content
         ref={ref}

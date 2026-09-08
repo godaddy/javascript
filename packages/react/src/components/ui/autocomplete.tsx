@@ -71,7 +71,7 @@ export function AutoComplete<T extends string>({
   hasError = false,
   disabled = false,
 }: AutoCompleteProps<T>) {
-  const { t } = useGoDaddyContext();
+  const { t, uiContainer } = useGoDaddyContext();
   const listRef = React.useRef<Array<HTMLElement | null>>([]);
   const [hasSelected, setHasSelected] = React.useState(false);
   const [open, setOpen] = React.useState(false);
@@ -177,7 +177,7 @@ export function AutoComplete<T extends string>({
         )}
       </div>
       {open ? (
-        <FloatingPortal>
+        <FloatingPortal root={uiContainer}>
           <FloatingFocusManager
             visuallyHiddenDismiss
             context={floating.context}

@@ -15,20 +15,19 @@ export type Theme = keyof typeof themes;
  * Hook that applies theme from override or context
  * @param {Theme} [overrideTheme] - Optional theme that overrides context theme
  */
-export function useTheme(overrideTheme?: Theme | null) {
-  const { appearance } = useGoDaddyContext();
+export function useTheme(overrideTheme?: Theme | null, target?: HTMLElement) {
+  const { appearance, uiContainer } = useGoDaddyContext();
 
   // Priority: overrideTheme > context.appearance.theme
   const theme = overrideTheme ?? appearance?.theme;
 
   useInsertionEffect(() => {
+    const root = target ?? uiContainer ?? document.documentElement;
     // Remove all theme classes
-    document.documentElement.classList.remove(
-      ...Object.values(themes).map(t => t.value)
-    );
+    root.classList.remove(...Object.values(themes).map(t => t.value));
 
     if (theme && theme !== 'base') {
-      document.documentElement.classList.add(themes?.[theme]?.value);
+      root.classList.add(themes?.[theme]?.value);
     }
-  }, [theme]);
+  }, [theme, target, uiContainer]);
 }

@@ -27,6 +27,8 @@ export function useConfirmExpressCheckout() {
     isConfirmingCheckout,
     setIsConfirmingCheckout,
     setCheckoutErrors,
+    onComplete,
+    embedded,
   } = useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
   const isPaymentDisabled = useIsPaymentDisabled();
@@ -138,7 +140,8 @@ export function useConfirmExpressCheckout() {
         },
       });
 
-      redirectToSuccessUrl(session?.successUrl);
+      if (onComplete) onComplete();
+      else if (!embedded) redirectToSuccessUrl(session?.successUrl);
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;

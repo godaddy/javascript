@@ -24,6 +24,27 @@ function createMockJwtWithoutExp(payload: Record<string, unknown> = {}) {
 }
 
 describe('Checkout JWT/session acquisition', () => {
+  it('keeps the host URL hash and isolates an embedded session from legacy checkout storage', async () => {
+    const jwt = createMockJwt();
+    setCheckoutUrl({ pathname: '/products', hash: '#red-small' });
+    seedCheckoutSessionStorage({
+      jwt: 'legacy-jwt',
+      sessionId: 'other-session',
+    });
+    renderCheckout({
+      checkoutProps: { embedded: true },
+      apiOverrides: { exchangeToken: jwt },
+    });
+    await waitForCheckoutReady();
+    expect(window.location.hash).toBe('#red-small');
+    expect(window.sessionStorage.getItem('godaddy-checkout-jwt')).toBe(
+      JSON.stringify('legacy-jwt')
+    );
+    expect(getOperations('CheckoutSession').at(-1)?.input).toEqual({
+      accessToken: jwt,
+    });
+  });
+
   it('renders without a session prop, reads session id/token from URL, and exchanges the checkout token', async () => {
     const jwt = createMockJwt();
     setCheckoutUrl({

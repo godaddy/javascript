@@ -90,8 +90,14 @@ export enum PaymentProvider {
 }
 
 export function useConfirmCheckout() {
-  const { session, jwt, setIsConfirmingCheckout, setCheckoutErrors } =
-    useCheckoutContext();
+  const {
+    session,
+    jwt,
+    setIsConfirmingCheckout,
+    setCheckoutErrors,
+    onComplete,
+    embedded,
+  } = useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
   const form = useFormContext();
   const { data: order } = useDraftOrder();
@@ -263,7 +269,8 @@ export function useConfirmCheckout() {
         },
       });
 
-      redirectToSuccessUrl(session?.successUrl);
+      if (onComplete) onComplete();
+      else if (!embedded) redirectToSuccessUrl(session?.successUrl);
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;

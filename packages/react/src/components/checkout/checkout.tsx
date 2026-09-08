@@ -95,6 +95,8 @@ export type CCAvenueConfig = {
 };
 
 interface CheckoutContextValue {
+  onComplete?: () => void;
+  embedded?: boolean;
   elements?: CheckoutElements;
   targets?: Partial<
     Record<Target, (session?: CheckoutSession | null) => ReactNode>
@@ -205,6 +207,12 @@ export type CheckoutFormSchema = Partial<{
 export type CheckoutFormData = z.infer<typeof baseCheckoutSchema>;
 
 export interface CheckoutProps {
+  /** Keep checkout inside its host instead of redirecting after confirmation. */
+  embedded?: boolean;
+  /** Checkout was accepted; this does not imply payment settlement or fulfillment. */
+  onComplete?: () => void;
+  /** Lets an embedding host prevent dismissal during payment confirmation. */
+  onConfirmingChange?: (isConfirming: boolean) => void;
   session?: CheckoutSession | undefined;
   appearance?: Appearance;
   isCheckoutDisabled?: boolean;
@@ -250,6 +258,10 @@ export function Checkout(props: CheckoutProps) {
     string[] | undefined
   >(undefined);
   const { t } = useGoDaddyContext();
+
+  React.useEffect(() => {
+    props.onConfirmingChange?.(isConfirmingCheckout);
+  }, [isConfirmingCheckout, props.onConfirmingChange]);
 
   const { session, jwt, isLoading: isLoadingJWT } = useCheckoutSession(props);
   useTheme(session?.appearance?.theme);
@@ -322,6 +334,8 @@ export function Checkout(props: CheckoutProps) {
     >
       <checkoutContext.Provider
         value={{
+          onComplete: props.onComplete,
+          embedded: props.embedded,
           elements: props?.appearance?.elements,
           targets: props?.targets,
           isCheckoutDisabled,
