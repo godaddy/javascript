@@ -116,11 +116,37 @@ describe('managed cart lifecycle', () => {
 
   it('serializes simultaneous first adds, creates one cart, and persists only its reference', async () => {
     const client = new CommerceClient(config);
-    await Promise.all([client.addItem('sku-a'), client.addItem('sku-b')]);
+    await Promise.all([client.addItem('sku-a', 2), client.addItem('sku-b')]);
     expect(writes).toEqual(['create', 'add:sku-a', 'add:sku-b']);
     expect(client.getSnapshot().cart?.lineItems).toHaveLength(2);
     expect(localStorage.getItem(client.storageKey)).toBe('cart-1');
     expect(localStorage.length).toBe(1);
+    expect(api.createCartOrder).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(api.createCartOrder).mock.calls[0][0]).not.toHaveProperty(
+      'lineItems'
+    );
+    expect(api.addCartLineItem).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        orderId: 'cart-1',
+        skuId: 'sku-a',
+        quantity: 2,
+      }),
+      'store',
+      'client',
+      'api.godaddy.com'
+    );
+    expect(api.addCartLineItem).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        orderId: 'cart-1',
+        skuId: 'sku-b',
+        quantity: 1,
+      }),
+      'store',
+      'client',
+      'api.godaddy.com'
+    );
     expect(api.createCartOrder).toHaveBeenCalledWith(
       expect.objectContaining({
         context: { storeId: 'store', channelId: 'channel' },
@@ -244,32 +270,29 @@ describe('checkout handoff', () => {
     client.dispose();
   });
 
-  it('buy-now preserves the shopping cart even when checkout completes', async () => {
+  it('buy-now preserves the shopping cart through the hosted handoff', async () => {
     const client = new CommerceClient(config);
     await client.addItem('sku-a');
     await client.buyNow('sku-b', 2);
     expect(
       vi.mocked(api.createCheckoutSession).mock.calls[0][0].lineItems
     ).toEqual([{ skuId: 'sku-b', quantity: 2 }]);
-    client.completeCheckout();
+    client.closeCheckout();
     expect(client.getSnapshot().cart?.lineItems?.[0].skuId).toBe('sku-a');
     expect(localStorage.getItem(client.storageKey)).toBe('cart-1');
     client.dispose();
   });
 
-  it('retires only the cart accepted by checkout and never clears a newer cart from another tab', async () => {
+  it('preserves the saved cart when releasing a hosted checkout session', async () => {
     const client = new CommerceClient(config);
     await client.addItem('sku-a');
     await client.checkout();
-    client.completeCheckout();
-    expect(localStorage.getItem(client.storageKey)).toBeNull();
-    expect(client.getSnapshot().checkoutComplete).toBe(true);
     client.closeCheckout();
+    expect(localStorage.getItem(client.storageKey)).toBe('cart-1');
+    expect(client.getSnapshot().cart?.lineItems).toHaveLength(1);
+    expect(client.getSnapshot().checkout).toBeNull();
     await client.addItem('sku-b');
-    await client.checkout();
-    localStorage.setItem(client.storageKey, 'newer-cart');
-    client.completeCheckout();
-    expect(localStorage.getItem(client.storageKey)).toBe('newer-cart');
+    expect(client.getSnapshot().cart?.lineItems).toHaveLength(2);
     client.dispose();
   });
 

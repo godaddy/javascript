@@ -3,6 +3,7 @@ import {
   getCommerce,
   onCommerceConfigured,
 } from './index';
+import { redirectToCheckout } from './redirect';
 
 // Importing this entry on an SSR server must not access DOM globals.
 const ElementBase = (globalThis.HTMLElement || class {}) as typeof HTMLElement;
@@ -21,7 +22,7 @@ abstract class CommerceButton extends ElementBase {
     if (!this.shadowRoot) {
       const root = this.attachShadow({ mode: 'open' });
       const style = document.createElement('style');
-      style.textContent = `:host{display:inline-block;font:inherit}button{font:inherit;cursor:pointer;border:1px solid var(--gddy-color,#111);border-radius:var(--gddy-radius,8px);background:var(--gddy-color,#111);color:var(--gddy-on-color,#fff);padding:.7em 1.1em;min-height:44px}button:disabled{opacity:.55;cursor:default}button:focus-visible{outline:3px solid var(--gddy-focus,#09757a);outline-offset:3px}[role=status]{display:block;font-size:.85em;max-width:30ch;margin-top:.3em;color:var(--gddy-error,#a31919)}[role=status]:empty{display:none}`;
+      style.textContent = `:host{display:inline-block;font:inherit}button{font:inherit;cursor:pointer;border:1px solid var(--gddy-color,#303036);border-radius:var(--gddy-radius,10px);background:linear-gradient(#ffffff12,#0000000a),var(--gddy-color,#303036);color:var(--gddy-on-color,#fff);padding:.7em 1.1em;min-height:48px;box-shadow:inset 0 1px 0 #ffffff26,0 2px 3px #18181b1a}button:disabled{opacity:.55;cursor:default}button:focus-visible{outline:3px solid var(--gddy-focus,#51515b);outline-offset:3px}[role=status]{display:block;font-size:.85em;max-width:30ch;margin-top:.3em;color:var(--gddy-error,#a31919)}[role=status]:empty{display:none}`;
       this.button = document.createElement('button');
       this.button.type = 'button';
       this.button.setAttribute('part', 'button');
@@ -141,18 +142,19 @@ export class GddyCartButton extends CommerceButton {
 export class GddyBuyNow extends CommerceButton {
   protected label = 'Buy now';
   protected async activate(client: CommerceClient): Promise<void> {
-    await client.buyNow(this.getAttribute('sku-id') || '', this.count());
-    const { openCart } = await import('./drawer');
-    openCart(client);
+    const session = await client.buyNow(
+      this.getAttribute('sku-id') || '',
+      this.count()
+    );
+    redirectToCheckout(client, session);
   }
 }
 
 export class GddyPaymentButton extends CommerceButton {
   protected label = 'Pay now';
   protected async activate(client: CommerceClient): Promise<void> {
-    await client.pay(this.getAttribute('reference') || '');
-    const { openCart } = await import('./drawer');
-    openCart(client);
+    const session = await client.pay(this.getAttribute('reference') || '');
+    redirectToCheckout(client, session);
   }
 }
 

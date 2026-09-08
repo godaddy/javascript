@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { configureCommerce } from './index';
 import './elements';
+import type { Session } from './types';
 
 const client = configureCommerce({
   clientId: 'client',
@@ -10,9 +11,54 @@ const client = configureCommerce({
 afterEach(() => {
   document.body.replaceChildren();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('web component integration', () => {
+  it.each([
+    ['gddy-buy-now', 'buyNow', 'sku-id', 'red-large'],
+    ['gddy-payment-button', 'pay', 'reference', 'invoice-123'],
+  ] as const)(
+    'redirects %s to the returned hosted URL without opening a drawer',
+    async (tag, method, attribute, value) => {
+      const assign = vi.fn();
+      vi.stubGlobal('location', { assign });
+      const session = {
+        id: 'hosted',
+        url: 'https://checkout.example/c/hosted?token=opaque',
+      } as Session;
+      const purchase = vi.spyOn(client, method).mockResolvedValue(session);
+      const element = document.createElement(tag);
+      element.setAttribute(attribute, value);
+      document.body.append(element);
+      await client.ready();
+      element.shadowRoot!.querySelector('button')!.click();
+      await vi.waitFor(() => expect(assign).toHaveBeenCalledWith(session.url));
+      expect(purchase.mock.calls[0][0]).toBe(value);
+      expect(document.querySelector('[data-gddy-root]')).toBeNull();
+    }
+  );
+
+  it('reports session creation failures without navigating', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { assign });
+    vi.spyOn(client, 'buyNow').mockRejectedValue(
+      new Error('Checkout unavailable')
+    );
+    const element = document.createElement('gddy-buy-now');
+    element.setAttribute('sku-id', 'shirt');
+    document.body.append(element);
+    await client.ready();
+    element.shadowRoot!.querySelector('button')!.click();
+    await vi.waitFor(() =>
+      expect(
+        element.shadowRoot!.querySelector('[role=status]')!.textContent
+      ).toContain('Checkout unavailable')
+    );
+    expect(assign).not.toHaveBeenCalled();
+    expect(element.shadowRoot!.querySelector('button')!.disabled).toBe(false);
+  });
+
   it('uses the selected SKU and quantity, emits addition, and respects disabled', async () => {
     const add = vi.spyOn(client, 'addItem').mockResolvedValue(null);
     const element = document.createElement('gddy-add-to-cart');

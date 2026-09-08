@@ -1,4 +1,3 @@
-import type { CheckoutProps } from '@godaddy/react';
 import type {
   CheckoutSession,
   CreateCheckoutSessionInputWithKebabCase,
@@ -10,7 +9,6 @@ export type Cart = NonNullable<
 >;
 export type Session = NonNullable<CheckoutSession> & {
   id: string;
-  token: string;
   url: string;
 };
 export type SessionInput = CreateCheckoutSessionInputWithKebabCase;
@@ -37,18 +35,6 @@ export interface CommerceConfig {
     returnUrl?: string;
     successUrl?: string;
   };
-  /** Public processor configuration for the existing managed checkout UI. */
-  payment?: Pick<
-    CheckoutProps,
-    | 'stripeConfig'
-    | 'godaddyPaymentsConfig'
-    | 'squareConfig'
-    | 'paypalConfig'
-    | 'mercadoPagoConfig'
-    | 'ccavenueConfig'
-  >;
-  /** Optional external checkout for payment methods requiring top-level navigation. */
-  presentation?: 'drawer' | 'redirect';
   /** Resolve application-priced invoices/deposits on your server, using an application reference. */
   resolvePayment?: (reference: string) => Promise<NonCatalogPayment>;
 }
@@ -67,7 +53,6 @@ export interface CommerceSnapshot {
   readonly error: Error | null;
   readonly checkout: Session | null;
   readonly checkoutSource: 'cart' | 'buy-now' | 'payment' | null;
-  readonly checkoutComplete: boolean;
 }
 
 export class CommerceError extends Error {

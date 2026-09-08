@@ -16,7 +16,6 @@ const INITIAL: CommerceSnapshot = Object.freeze({
   error: null,
   checkout: null,
   checkoutSource: null,
-  checkoutComplete: false,
 });
 
 function identifier(value: string, name: string): string {
@@ -254,6 +253,9 @@ export class CommerceClient {
         );
       }
       if (!this.cartId) {
+        // Match the storefront API contract: create the draft first, then add
+        // the SKU below so Commerce resolves pricing. Inline draft line items
+        // require caller-supplied amounts and are not the catalog add path.
         const zero = { value: 0, currencyCode };
         const created = await api.createCartOrder(
           {
@@ -433,7 +435,7 @@ export class CommerceClient {
         { ...checkout, ...purchase, storeId, channelId, returnUrl, successUrl },
         { accessToken: token, apiHost }
       );
-      if (!session?.id || !session.token || !session.url)
+      if (!session?.id || !session.url)
         throw new CommerceError(
           'CHECKOUT_CREATE_FAILED',
           'Commerce did not return a complete checkout session'
@@ -446,13 +448,11 @@ export class CommerceClient {
       const completeSession = {
         ...session,
         id: session.id,
-        token: session.token,
         url: session.url,
       };
       this.update({
         checkout: completeSession,
         checkoutSource: source,
-        checkoutComplete: false,
       });
       return completeSession;
     }).finally(() => {
@@ -529,29 +529,10 @@ export class CommerceClient {
     );
   }
 
-  /** Called only after the Checkout component reports accepted confirmation, never from a return URL. */
-  completeCheckout(): void {
-    if (!this.snapshot.checkout || this.snapshot.checkoutComplete) return;
-    const purchasedId =
-      this.snapshot.checkoutSource === 'cart'
-        ? this.snapshot.checkout.draftOrder?.id
-        : null;
-    if (
-      purchasedId &&
-      this.cartId === purchasedId &&
-      this.readId() === purchasedId
-    ) {
-      this.saveId(null);
-      this.update({ cart: null });
-    }
-    this.update({ checkoutComplete: true });
-  }
-
   closeCheckout(): void {
     this.update({
       checkout: null,
       checkoutSource: null,
-      checkoutComplete: false,
     });
   }
 }

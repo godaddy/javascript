@@ -157,18 +157,12 @@ importers:
       '@radix-ui/react-dialog':
         specifier: ^1.1.6
         version: 1.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@tanstack/react-query':
-        specifier: ^5.85.5
-        version: 5.90.5(react@19.2.0)
       react:
         specifier: ^19.2.0
         version: 19.2.0
       react-dom:
         specifier: ^19.2.0
         version: 19.2.0(react@19.2.0)
-      react-hook-form:
-        specifier: ^7.54.2
-        version: 7.65.0(react@19.2.0)
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.3.2
@@ -185,9 +179,6 @@ importers:
       biome-config-godaddy:
         specifier: workspace:*
         version: link:../biome-config-godaddy
-      postcss:
-        specifier: 8.5.6
-        version: 8.5.6
       jsdom:
         specifier: ^26.0.0
         version: 26.1.0

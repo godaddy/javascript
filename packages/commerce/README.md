@@ -17,9 +17,8 @@ Use your existing OAuth client and merchant configuration. The token callback mu
     // oauthClient is your application's existing OAuth integration.
     // Replace this adapter with the actual method exposed by your OAuth client.
     getAccessToken: () => oauthClient.getAccessToken(),
-    // Existing Commerce checkout settings and public processor configuration.
+    // Existing Commerce hosted checkout settings.
     checkout: merchantCheckoutSettings,
-    payment: merchantPaymentConfiguration,
   };
 </script>
 <script defer src="https://YOUR_CDN_DOMAIN/v1/commerce.js"></script>
@@ -30,7 +29,7 @@ Use your existing OAuth client and merchant configuration. The token callback mu
 <gddy-buy-now sku-id="SKU_RED_SMALL">Buy now</gddy-buy-now>
 ```
 
-The script loads a shared runtime and registers the elements. Cart and checkout UI load on demand. Each open page keeps the release it loaded, including its later lazy imports. Compatible updates reach newly loaded pages through `/v1`; breaking changes require a new major channel. You do not need to update an npm package to receive CDN fixes.
+The script loads a shared runtime and registers the elements. The cart drawer loads on demand; payment takes place on hosted checkout. Each open page keeps the release it loaded, including its later lazy imports. Compatible updates reach newly loaded pages through `/v1`; breaking changes require a new major channel. You do not need to update an npm package to receive CDN fixes.
 
 You can instead call `window.GddyCommerce.configureCommerce(config)` after the `gddy:ready` event. Choose one configuration method and configure once per page. Elements added before configuration stay disabled until configuration completes. Listen for `gddy:error` before loading the script to provide a fallback if the CDN is unavailable.
 
@@ -40,8 +39,8 @@ You can instead call `window.GddyCommerce.configureCommerce(config)` after the `
 | --- | --- | --- |
 | `gddy-add-to-cart` | `sku-id` | Adds the selected catalog SKU; optional positive integer `quantity`, default 1. |
 | `gddy-cart-button` | None | Shows the current item count and opens the shared cart drawer. |
-| `gddy-buy-now` | `sku-id` | Checks out that SKU directly; optional `quantity`. Preserves the saved cart. |
-| `gddy-payment-button` | `reference` | Resolves a standalone payment and opens checkout. Preserves the saved cart. |
+| `gddy-buy-now` | `sku-id` | Redirects to hosted checkout for that SKU; optional `quantity`. Preserves the saved cart. |
+| `gddy-payment-button` | `reference` | Resolves a standalone payment and redirects to hosted checkout. Preserves the saved cart. |
 
 All elements accept `disabled` and text content for their button label. `disabled` is a boolean HTML attribute: remove it to enable the button. Use SKU IDs for selected variants, not parent product IDs. One configured storefront is supported per page. The headless factory supports independent clients.
 
@@ -73,15 +72,17 @@ Configure the resolver before the CDN script loads. Amounts use integer currency
 
 `clientId`, `storeId`, and `channelId` are required. `apiHost` optionally selects an existing Commerce API hostname, without a scheme or path. Cart-only usage does not require `getAccessToken`; checkout does. The callback is invoked when creating a session, allowing the existing OAuth client to refresh credentials.
 
-`checkout` accepts existing checkout session options, including merchant shipping, pickup, tax, promotion, appearance, and navigation settings. Purchase inputs and store/channel IDs are owned by the client. `payment` forwards the existing Checkout component's public `godaddyPaymentsConfig`, `stripeConfig`, `squareConfig`, `paypalConfig`, `mercadoPagoConfig`, or `ccavenueConfig`. Supply the configuration appropriate to the merchant's enabled processor. The library does not provision payment accounts or infer missing merchant settings.
+`checkout` accepts existing checkout session options, including merchant shipping, pickup, tax, promotion, appearance, and navigation settings. Purchase inputs and store/channel IDs are owned by the client. Processor configuration and payment collection belong to hosted checkout; this library does not provision payment accounts or collect payment details.
 
-`presentation` defaults to `drawer`. Use `redirect` to open the session's hosted checkout URL when a payment method requires top-level navigation. Return and success URLs default to the current page; override them in `checkout` where appropriate. Hosted/processor redirects do not emit a local completion event or automatically clear the cart on return.
+Cart checkout, Buy now, and standalone payment buttons always navigate in the current tab to the session URL returned by Commerce. There is no inline checkout or presentation switch. Return and success URLs default to the current page; override them in `checkout` where appropriate. Redirecting does not emit a local completion event or clear the cart on return.
 
 The cart persists only its draft-order ID in local storage, scoped by API host, client, store, and channel. Prices and totals are read from Commerce. Mutations are serialized and refresh server state; browsers with Web Locks also serialize same-origin tabs. Browsers without Web Locks do not have cross-tab write serialization. Storage-denied browsers keep the cart in memory. Cart mutations are never automatically retried after uncertain network failures. Refresh to inspect the authoritative state before retrying a failed action.
 
-Checkout waits for queued cart changes, refreshes the draft, and creates a session from its ID. Repeated identical checkout requests share the in-flight operation; different concurrent purchases are rejected. The cart is locked while checkout is open. Cancellation preserves it. Accepted embedded confirmation retires only the purchased cart reference, leaving a newer cart from another tab intact.
+The first `gddy-add-to-cart` click creates an empty draft order internally, then calls `addLineItemBySkuId` with that draft ID, the selected SKU ID, and quantity. This two-call flow lets Commerce resolve catalog pricing; inline draft creation requires caller-supplied line-item amounts. The component saves the draft ID immediately and refetches the cart after adding the item. Later additions reuse that draft; adding the same SKU increases its quantity. Adopting applications do not create a separate draft or maintain a second cart.
 
-`gddy:checkout-complete` means the confirmation API accepted checkout. It is not evidence that a payment has settled or an order should be fulfilled. Verify payment/order status through your existing backend/webhook workflow. Do not derive fulfillment from browser events or return URL parameters.
+Checkout waits for queued cart changes, refreshes the draft, and creates a session from its ID. Repeated identical checkout requests share the in-flight operation; different concurrent purchases are rejected. The cart is locked during session creation. The managed buttons release the transient session state when handing off, so a failed navigation or browser Back does not leave controls locked. The saved cart is preserved.
+
+Verify payment/order status through your existing backend/webhook workflow before fulfillment. Do not derive payment success from navigation or return URL parameters.
 
 ## Events and customization
 
@@ -90,9 +91,8 @@ Checkout waits for queued cart changes, refreshes the draft, and creates a sessi
 | `gddy:ready` | `window` | The CDN runtime is available. |
 | `gddy:error` | Trigger, bubbling, or `window` for loader errors | `{ error }` |
 | `gddy:cart-change` | Add-to-cart trigger, bubbling | `{ cart }` after a successful addition. Use client subscriptions for all state changes. |
-| `gddy:checkout-complete` | `window` | `{ sessionId, orderId, source }`; no credentials. |
 
-Buttons expose `::part(button)` and `::part(status)`. Set `--gddy-color`, `--gddy-on-color`, `--gddy-radius`, and `--gddy-focus` on elements and/or the document. Checkout uses the existing Commerce appearance settings. The drawer contains checkout CSS and portals within its own scope. `locale` controls currency formatting and is forwarded to Checkout; cart labels currently use English.
+Buttons expose `::part(button)` and `::part(status)`. Set `--gddy-color`, `--gddy-on-color`, `--gddy-radius`, and `--gddy-focus` on elements and/or the document. Hosted checkout uses the existing Commerce appearance settings. `locale` controls cart currency formatting; cart labels currently use English.
 
 ## Optional npm and React usage
 
@@ -113,7 +113,7 @@ function Product() {
 
 The React entry wraps the same elements and provides `useCart`. For SSR, render the elements normally and configure in browser bootstrap; call `useCart(client)` with an explicit client if reading state during SSR. Never configure the browser singleton on a server. Do not combine the CDN runtime and bundled npm elements on the same page.
 
-For custom UI, `createCommerce(config)` returns an isolated client with `ready`, `refresh`, `addItem`, `setQuantity`, `removeItem`, `applyDiscount`, `checkout`, `buyNow`, `pay`, `getSnapshot`, `subscribe`, `closeCheckout`, and `dispose`. Setting quantity to zero removes an item. An empty discount string removes the applied code. `checkout`/`buyNow`/`pay` return a session; headless callers own displaying or navigating to it. `completeCheckout` is reserved for an accepted checkout confirmation callback.
+For custom UI, `createCommerce(config)` returns an isolated client with `ready`, `refresh`, `addItem`, `setQuantity`, `removeItem`, `applyDiscount`, `checkout`, `buyNow`, `pay`, `getSnapshot`, `subscribe`, `closeCheckout`, and `dispose`. Setting quantity to zero removes an item. An empty discount string removes the applied code. `checkout`/`buyNow`/`pay` return a session; headless callers navigate to `session.url` and call `closeCheckout()` to release transient session state without clearing the cart.
 
 ## Public library and managed CDN
 
@@ -121,6 +121,6 @@ This OSS repository owns the reusable library, web components, React bindings, t
 
 A separate protected repository owns the managed CDN entry point, loader, bundle build, release manifests, AWS infrastructure, and deployment/promotion/rollback automation. It consumes an explicitly pinned, reviewed version of this library. Publishing or merging here does not deploy the CDN. The CDN URL and browser global/event contract above describe the intended managed integration; its implementation and deployment belong to that protected repository.
 
-Build the public library from the monorepo root with `pnpm --filter @godaddy/commerce... build`, then run `pnpm --filter @godaddy/commerce test` and `pnpm --filter @godaddy/commerce typecheck`. Generated package files and scoped checkout CSS are ignored by git.
+Build the public library from the monorepo root with `pnpm --filter @godaddy/commerce... build`, then run `pnpm --filter @godaddy/commerce test` and `pnpm --filter @godaddy/commerce typecheck`. Generated package files are ignored by git.
 
 See [agent integration instructions](./AGENT-INTEGRATION.md) for the small, consistent contract to use when generating a storefront.

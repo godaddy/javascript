@@ -1,37 +1,12 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import {
-  Component,
-  lazy,
-  type ReactNode,
-  Suspense,
-  useState,
-  useSyncExternalStore,
-} from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { CommerceClient } from './client';
+import { redirectToCheckout } from './redirect';
+import type { Cart } from './types';
 import './drawer.css';
 
-const CheckoutView = lazy(() => import('./checkout-view'));
 let active: { client: CommerceClient; container: HTMLElement } | undefined;
-
-class CheckoutBoundary extends Component<
-  { children: ReactNode },
-  { error?: Error }
-> {
-  state: { error?: Error } = {};
-  static getDerivedStateFromError(error: Error): { error: Error } {
-    return { error };
-  }
-  render(): ReactNode {
-    return this.state.error ? (
-      <p role='alert'>
-        Checkout could not load. Close this drawer and try again.
-      </p>
-    ) : (
-      this.props.children
-    );
-  }
-}
 
 function money(
   value:
@@ -50,6 +25,66 @@ function money(
   );
 }
 
+function ProductImage({ src }: { src?: string | null }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className='gddy-product-image'>
+      {src && !failed ? (
+        <img
+          src={src}
+          alt=''
+          width={64}
+          height={64}
+          loading='lazy'
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <svg
+          aria-hidden='true'
+          width='24'
+          height='24'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='1.5'
+        >
+          <rect x='3.5' y='3.5' width='17' height='17' rx='2' />
+          <circle cx='8.5' cy='8.5' r='1.5' />
+          <path d='m4 17 5-5 3 3 3-4 5 6' />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+function SelectedOptions({
+  details,
+}: {
+  details: NonNullable<Cart['lineItems']>[number]['details'];
+}) {
+  const selections = [
+    ...(details?.selectedOptions || []).map(option => ({
+      label: option.attribute,
+      values: option.values || [],
+    })),
+    ...(details?.selectedAddons || []).map(addon => ({
+      label: addon.attribute,
+      values: addon.values?.map(value => value.name).filter(Boolean) || [],
+    })),
+  ].filter(selection => selection.values.length > 0);
+  if (!selections.length) return null;
+  return (
+    <dl className='gddy-options'>
+      {selections.map((selection, index) => (
+        <div key={`${selection.label}-${index}`}>
+          {selection.label && <dt>{selection.label}:</dt>}
+          <dd>{selection.values.join(', ')}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 function Drawer({
   client,
   dismiss,
@@ -62,11 +97,12 @@ function Drawer({
     client.getSnapshot,
     client.getServerSnapshot
   );
-  const [confirming, setConfirming] = useState(false);
   const [discount, setDiscount] = useState('');
   const [localError, setLocalError] = useState<string>();
-  const busy = Boolean(snapshot.pending || confirming);
+  const busy = Boolean(snapshot.pending);
   const cart = snapshot.cart;
+  const itemCount =
+    cart?.lineItems?.reduce((sum, line) => sum + (line.quantity || 0), 0) || 0;
   const close = () => {
     if (!busy) {
       client.closeCheckout();
@@ -81,19 +117,6 @@ function Drawer({
       setLocalError(error instanceof Error ? error.message : String(error));
     }
   };
-  const complete = () => {
-    client.completeCheckout();
-    setConfirming(false);
-    window.dispatchEvent(
-      new CustomEvent('gddy:checkout-complete', {
-        detail: {
-          sessionId: snapshot.checkout?.id,
-          orderId: snapshot.checkout?.draftOrder?.id ?? null,
-          source: snapshot.checkoutSource,
-        },
-      })
-    );
-  };
 
   return (
     <Dialog.Root
@@ -105,7 +128,7 @@ function Drawer({
       <Dialog.Portal>
         <Dialog.Overlay className='gddy-overlay' />
         <Dialog.Content
-          className={`gddy-drawer${snapshot.checkout ? ' gddy-checkout' : ''}`}
+          className='gddy-drawer'
           onEscapeKeyDown={event => {
             if (busy) event.preventDefault();
           }}
@@ -114,12 +137,18 @@ function Drawer({
           <header className='gddy-header'>
             <div>
               <Dialog.Title>
-                {snapshot.checkout ? 'Checkout' : 'Your cart'}
+                Your cart
+                {itemCount > 0 && (
+                  <span
+                    className='gddy-item-count'
+                    aria-label={`${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
+                  >
+                    {itemCount}
+                  </span>
+                )}
               </Dialog.Title>
-              <Dialog.Description>
-                {snapshot.checkout
-                  ? 'Complete your purchase securely.'
-                  : 'Review your items before checkout.'}
+              <Dialog.Description className='gddy-sr-only'>
+                Review your items before checkout.
               </Dialog.Description>
             </div>
             <button
@@ -129,7 +158,17 @@ function Drawer({
               onClick={close}
               aria-label='Close cart'
             >
-              ×
+              <svg
+                aria-hidden='true'
+                width='20'
+                height='20'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='1.75'
+              >
+                <path d='m6 6 12 12M18 6 6 18' />
+              </svg>
             </button>
           </header>
           <div className='gddy-body'>
@@ -138,56 +177,61 @@ function Drawer({
                 {localError || snapshot.error?.message}
               </p>
             )}
-            {snapshot.checkoutComplete && (
-              <div role='status'>
-                <h3>Thanks for your order</h3>
-                <p>We’re confirming your payment details.</p>
-                <button className='gddy-primary' type='button' onClick={close}>
-                  Continue shopping
-                </button>
-              </div>
-            )}
-            {!snapshot.checkoutComplete && snapshot.checkout && (
-              <CheckoutBoundary>
-                <Suspense
-                  fallback={<p role='status'>Loading secure checkout…</p>}
-                >
-                  <CheckoutView
-                    client={client}
-                    session={snapshot.checkout}
-                    onComplete={complete}
-                    onConfirmingChange={setConfirming}
-                  />
-                </Suspense>
-              </CheckoutBoundary>
-            )}
-            {!snapshot.checkoutComplete && !snapshot.checkout && (
-              <>
-                {snapshot.status === 'loading' && !cart && (
-                  <p role='status'>Loading your cart…</p>
-                )}
-                {!cart?.lineItems?.length && snapshot.status !== 'loading' && (
-                  <div className='gddy-empty'>
-                    <h3>Your cart is empty</h3>
-                    <p>Add something you like, then come back here.</p>
-                    <button type='button' onClick={close}>
-                      Continue shopping
-                    </button>
-                  </div>
-                )}
-                <ul className='gddy-lines'>
-                  {cart?.lineItems?.map(line => (
-                    <li key={line.id}>
-                      <div className='gddy-line-content'>
+            <>
+              {snapshot.status === 'loading' && !cart && (
+                <p role='status'>Loading your cart…</p>
+              )}
+              {!cart?.lineItems?.length && snapshot.status !== 'loading' && (
+                <div className='gddy-empty'>
+                  <h3>Your cart is empty</h3>
+                  <p>Add something you like, then come back here.</p>
+                  <button type='button' onClick={close}>
+                    Continue shopping
+                  </button>
+                </div>
+              )}
+              <ul className='gddy-lines'>
+                {cart?.lineItems?.map(line => (
+                  <li key={line.id}>
+                    <ProductImage
+                      key={line.details?.productAssetUrl || line.id}
+                      src={line.details?.productAssetUrl}
+                    />
+                    <div className='gddy-line-content'>
+                      <div className='gddy-line-heading'>
                         <strong>{line.name}</strong>
-                        <span>
-                          {line.details?.selectedOptions
-                            ?.map(option => option.values?.join(', '))
-                            .filter(Boolean)
-                            .join(' · ')}
+                        <span className='gddy-line-price'>
+                          {money(line.totals?.subTotal, client.config.locale)}
                         </span>
-                        <label>
-                          Quantity{' '}
+                      </div>
+                      <SelectedOptions details={line.details} />
+                      <div className='gddy-line-controls'>
+                        <div className='gddy-quantity'>
+                          <button
+                            type='button'
+                            disabled={busy}
+                            aria-label={`Decrease quantity for ${line.name}`}
+                            onClick={() => {
+                              void perform(() =>
+                                client.setQuantity(
+                                  line.id,
+                                  Math.max(0, (line.quantity || 0) - 1)
+                                )
+                              );
+                            }}
+                          >
+                            <svg
+                              aria-hidden='true'
+                              width='14'
+                              height='14'
+                              viewBox='0 0 16 16'
+                              fill='none'
+                              stroke='currentColor'
+                              strokeWidth='1.5'
+                            >
+                              <path d='M3 8h10' />
+                            </svg>
+                          </button>
                           <input
                             aria-label={`Quantity for ${line.name}`}
                             type='number'
@@ -195,6 +239,7 @@ function Drawer({
                             step='1'
                             value={line.quantity || 0}
                             disabled={busy}
+                            onFocus={event => event.target.select()}
                             onChange={event => {
                               const count = event.target.valueAsNumber;
                               if (Number.isSafeInteger(count) && count >= 0)
@@ -203,10 +248,36 @@ function Drawer({
                                 );
                             }}
                           />
-                        </label>
+                          <button
+                            type='button'
+                            disabled={busy}
+                            aria-label={`Increase quantity for ${line.name}`}
+                            onClick={() => {
+                              void perform(() =>
+                                client.setQuantity(
+                                  line.id,
+                                  (line.quantity || 0) + 1
+                                )
+                              );
+                            }}
+                          >
+                            <svg
+                              aria-hidden='true'
+                              width='14'
+                              height='14'
+                              viewBox='0 0 16 16'
+                              fill='none'
+                              stroke='currentColor'
+                              strokeWidth='1.5'
+                            >
+                              <path d='M3 8h10M8 3v10' />
+                            </svg>
+                          </button>
+                        </div>
                         <button
                           type='button'
                           className='gddy-text-button'
+                          aria-label={`Remove ${line.name}`}
                           disabled={busy}
                           onClick={() => {
                             void perform(() => client.removeItem(line.id));
@@ -215,88 +286,113 @@ function Drawer({
                           Remove
                         </button>
                       </div>
-                      <strong>
-                        {money(line.totals?.subTotal, client.config.locale)}
-                      </strong>
-                    </li>
-                  ))}
-                </ul>
-                {Boolean(cart?.lineItems?.length) && (
-                  <>
-                    {client.config.checkout?.enablePromotionCodes && (
-                      <form
-                        className='gddy-discount'
-                        onSubmit={event => {
-                          event.preventDefault();
-                          void perform(() => client.applyDiscount(discount));
-                        }}
-                      >
-                        <label>
-                          Discount code
-                          <input
-                            value={discount}
-                            onChange={event => setDiscount(event.target.value)}
-                          />
-                        </label>
-                        <button disabled={busy} type='submit'>
-                          Apply
-                        </button>
-                      </form>
-                    )}
-                    <dl className='gddy-totals'>
-                      <div>
-                        <dt>Subtotal</dt>
-                        <dd>
-                          {money(cart?.totals?.subTotal, client.config.locale)}
-                        </dd>
-                      </div>
-                      {Boolean(cart?.totals?.discountTotal?.value) && (
-                        <div>
-                          <dt>Discount</dt>
-                          <dd>
-                            −
-                            {money(
-                              cart?.totals?.discountTotal,
-                              client.config.locale
-                            )}
-                          </dd>
-                        </div>
-                      )}
-                    </dl>
-                    <p className='gddy-note'>
-                      Shipping and taxes are confirmed at checkout.
-                    </p>
-                    <button
-                      type='button'
-                      className='gddy-primary'
-                      disabled={busy}
-                      onClick={() => {
-                        void perform(async () => {
-                          const session = await client.checkout();
-                          if (client.config.presentation === 'redirect')
-                            location.assign(session.url);
-                        });
-                      }}
-                    >
-                      {busy ? 'Updating…' : 'Checkout'}
-                    </button>
-                  </>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {snapshot.status === 'error' && (
+                <button
+                  type='button'
+                  disabled={busy}
+                  onClick={() => {
+                    void perform(() => client.refresh());
+                  }}
+                >
+                  Refresh cart
+                </button>
+              )}
+            </>
+          </div>
+          {Boolean(cart?.lineItems?.length) && (
+            <section
+              className='gddy-purchase-summary'
+              aria-label='Cart summary'
+            >
+              <dl className='gddy-totals' aria-live='polite' aria-atomic='true'>
+                <div>
+                  <dt>Subtotal</dt>
+                  <dd>{money(cart?.totals?.subTotal, client.config.locale)}</dd>
+                </div>
+                {Boolean(cart?.totals?.discountTotal?.value) && (
+                  <div>
+                    <dt>Discount</dt>
+                    <dd>
+                      −
+                      {money(cart?.totals?.discountTotal, client.config.locale)}
+                    </dd>
+                  </div>
                 )}
-                {snapshot.status === 'error' && (
-                  <button
-                    type='button'
-                    disabled={busy}
-                    onClick={() => {
-                      void perform(() => client.refresh());
+              </dl>
+              {client.config.checkout?.enablePromotionCodes && (
+                <details className='gddy-promo'>
+                  <summary>
+                    Add promo code
+                    <svg
+                      aria-hidden='true'
+                      width='16'
+                      height='16'
+                      viewBox='0 0 16 16'
+                      fill='none'
+                      stroke='currentColor'
+                      strokeWidth='1.5'
+                    >
+                      <path d='m4 6 4 4 4-4' />
+                    </svg>
+                  </summary>
+                  <form
+                    className='gddy-discount'
+                    onSubmit={event => {
+                      event.preventDefault();
+                      void perform(() => client.applyDiscount(discount));
                     }}
                   >
-                    Refresh cart
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-          <footer className='gddy-footer'>Powered by GoDaddy Commerce</footer>
+                    <label>
+                      <span className='gddy-sr-only'>Promo code</span>
+                      <input
+                        placeholder='Enter promo code'
+                        disabled={busy}
+                        value={discount}
+                        onChange={event => setDiscount(event.target.value)}
+                      />
+                    </label>
+                    <button disabled={busy} type='submit'>
+                      Apply
+                    </button>
+                  </form>
+                </details>
+              )}
+              <div className='gddy-cart-actions'>
+                <p className='gddy-note'>
+                  Shipping and taxes are confirmed at checkout.
+                </p>
+                <button
+                  type='button'
+                  className='gddy-primary'
+                  disabled={busy}
+                  onClick={() => {
+                    void perform(async () => {
+                      const session = await client.checkout();
+                      redirectToCheckout(client, session);
+                    });
+                  }}
+                >
+                  {busy ? 'Updating…' : 'Continue to checkout'}
+                </button>
+              </div>
+            </section>
+          )}
+          <footer className='gddy-footer'>
+            <svg
+              className='gddy-footer-logo'
+              viewBox='0 0 38.2 34'
+              fill='currentColor'
+              aria-hidden='true'
+              focusable='false'
+            >
+              <path d='M32.9368 1.5539C28.9685-.9255 23.7444-.3348 19.085 2.5929 14.4404-.3348 9.213-.9255 5.2496 1.5539c-6.2696 3.918-7.0318 14.0086-1.701 22.539 3.9295 6.2891 10.0745 9.9741 15.5446 9.9062 5.4701.068 11.615-3.6171 15.5445-9.9061 5.3245-8.5305 4.5687-18.621-1.701-22.5391zM6.431 22.2917a20.4336 20.4336 0 01-2.46-5.632 16.1045 16.1045 0 01-.534-5.3098c.238-3.1526 1.5213-5.6077 3.6122-6.9137 2.091-1.306 4.8552-1.3853 7.799-.2169.4418.1764.8788.3804 1.3125.6053a24.0895 24.0895 0 00-4.2272 5.0817c-3.2368 5.1788-4.224 10.9418-3.0943 15.5364a20.911 20.911 0 01-2.4082-3.151zm27.786-5.6335a20.4822 20.4822 0 01-2.46 5.632 21.1004 21.1004 0 01-2.4082 3.1574c1.01-4.1188.3237-9.1649-2.1524-13.897a.6247.6247 0 00-.895-.2428l-7.7196 4.8228a.6312.6312 0 00-.2007.8707l1.1329 1.811a.6295.6295 0 00.869.2006l5.004-3.1267c.1619.4855.3237.971.4451 1.4566.472 1.7257.653 3.518.5357 5.3034-.238 3.151-1.5213 5.606-3.6122 6.9137a7.0593 7.0593 0 01-3.5783 1.0357h-.1601a7.0513 7.0513 0 01-3.5783-1.0357c-2.0926-1.3077-3.376-3.7628-3.6138-6.9137a16.1433 16.1433 0 01.534-5.31 21.0146 21.0146 0 016.4444-10.3138A16.1368 16.1368 0 0123.335 4.216c2.9357-1.1685 5.7047-1.0908 7.7973.2169 2.0926 1.3076 3.3743 3.761 3.6122 6.9137a16.145 16.145 0 01-.5276 5.3115z' />
+            </svg>
+            <span>Powered by GoDaddy Commerce</span>
+          </footer>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -305,13 +401,6 @@ function Drawer({
 
 /** A single overlay is shared by every trigger on the page. */
 export function openCart(client: CommerceClient): void {
-  if (
-    client.config.presentation === 'redirect' &&
-    client.getSnapshot().checkout
-  ) {
-    location.assign(client.getSnapshot().checkout?.url || '');
-    return;
-  }
   if (active) {
     if (active.client !== client)
       throw new Error(
