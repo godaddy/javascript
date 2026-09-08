@@ -12,7 +12,10 @@ import {
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useConfirmExpressCheckout } from '@/components/checkout/payment/utils/use-confirm-express-checkout';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
-import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
+import {
+  GraphQLErrorWithCodes,
+  getPaymentActionRequiredResult,
+} from '@/lib/graphql-with-errors';
 import type {
   CalculatedAdjustments,
   CalculatedTaxes,
@@ -50,6 +53,28 @@ export function buildStripeExpressPaymentMethodParams(
   };
 }
 
+type StripeNextAction = {
+  clientSecret: string;
+};
+
+function getStripeNextAction(error: unknown): StripeNextAction | undefined {
+  const paymentResult = getPaymentActionRequiredResult(error);
+  const nextStep = paymentResult?.nextStep;
+
+  if (
+    paymentResult?.provider !== PaymentProvider.STRIPE ||
+    nextStep?.type !== 'SDK_ACTION' ||
+    nextStep.sdk !== 'STRIPE_JS' ||
+    nextStep.action !== 'HANDLE_NEXT_ACTION' ||
+    typeof nextStep.clientSecret !== 'string' ||
+    nextStep.clientSecret.length === 0
+  ) {
+    return undefined;
+  }
+
+  return { clientSecret: nextStep.clientSecret };
+}
+
 export type StripeExpressCheckoutData = {
   // Stripe confirm event data
   event: StripeExpressCheckoutElementConfirmEvent;
@@ -69,7 +94,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
   const elements = useElements();
   const confirmCheckout = useConfirmCheckout();
   const confirmExpressCheckout = useConfirmExpressCheckout();
-  const { setCheckoutErrors } = useCheckoutContext();
+  const { setCheckoutErrors, setIsConfirmingCheckout } = useCheckoutContext();
   const { stripePaymentMethodParams, buildPaymentRequestsFromOrder } =
     useBuildPaymentRequest();
   const flushCheckoutSync = useFlushCheckoutSync();
@@ -115,17 +140,58 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
           }
 
           if (paymentMethod) {
+            const confirmInput = {
+              paymentToken: paymentMethod.id,
+              paymentType: PaymentMethodType.CREDIT_CARD,
+              paymentProvider: PaymentProvider.STRIPE,
+            };
+
             try {
-              await confirmCheckout.mutateAsync({
-                paymentToken: paymentMethod.id,
-                paymentType: PaymentMethodType.CREDIT_CARD,
-                paymentProvider: PaymentProvider.STRIPE,
-              });
+              await confirmCheckout.mutateAsync(confirmInput);
             } catch (err: unknown) {
-              if (err instanceof GraphQLErrorWithCodes) {
-                setCheckoutErrors(err.codes);
+              const nextAction = getStripeNextAction(err);
+              if (!nextAction) {
+                const errorCodes =
+                  err instanceof GraphQLErrorWithCodes ? err.codes : [];
+                setCheckoutErrors(
+                  errorCodes.length > 0 &&
+                    !errorCodes.includes('PAYMENT_ACTION_REQUIRED')
+                    ? errorCodes
+                    : ['TRANSACTION_PROCESSING_FAILED']
+                );
+                setIsConfirmingCheckout(false);
+                return;
               }
-              // Other errors are silently ignored
+
+              try {
+                const actionResult = await stripe.handleNextAction({
+                  clientSecret: nextAction.clientSecret,
+                });
+
+                if (actionResult.error || !actionResult.paymentIntent?.id) {
+                  setCheckoutErrors([
+                    actionResult.error?.code || 'TRANSACTION_PROCESSING_FAILED',
+                  ]);
+                  setIsConfirmingCheckout(false);
+                  return;
+                }
+
+                await confirmCheckout.mutateAsync({
+                  ...confirmInput,
+                  paymentToken: actionResult.paymentIntent.id,
+                });
+              } catch (finalizationError: unknown) {
+                const isRepeatedActionRequired = Boolean(
+                  getPaymentActionRequiredResult(finalizationError)
+                );
+                setCheckoutErrors(
+                  finalizationError instanceof GraphQLErrorWithCodes &&
+                    !isRepeatedActionRequired
+                    ? finalizationError.codes
+                    : ['TRANSACTION_PROCESSING_FAILED']
+                );
+                setIsConfirmingCheckout(false);
+              }
             }
           } else {
             setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
@@ -280,6 +346,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
       buildPaymentRequestsFromOrder,
       confirmExpressCheckout.mutateAsync,
       setCheckoutErrors,
+      setIsConfirmingCheckout,
       stripePaymentMethodParams,
     ]
   );
