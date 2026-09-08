@@ -14,6 +14,7 @@ import { getShippingFulfillmentSyncKey } from '@/components/checkout/shipping/ut
 import { isDigitalLineItem } from '@/components/checkout/utils/fulfillment';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
+import { getPaymentActionRequiredResult } from '@/lib/graphql-with-errors';
 import { eventIds } from '@/tracking/events';
 import {
   type TrackingEventId,
@@ -267,6 +268,20 @@ export function useConfirmCheckout() {
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
+
+      const paymentResult = getPaymentActionRequiredResult(error);
+      const nextStep = paymentResult?.nextStep;
+      if (
+        data?.paymentProvider === PaymentProvider.STRIPE &&
+        paymentResult?.provider === PaymentProvider.STRIPE &&
+        nextStep?.type === 'SDK_ACTION' &&
+        nextStep.sdk === 'STRIPE_JS' &&
+        nextStep.action === 'HANDLE_NEXT_ACTION' &&
+        typeof nextStep.clientSecret === 'string' &&
+        nextStep.clientSecret.length > 0
+      ) {
+        return;
+      }
 
       // Track checkout error event
       track({

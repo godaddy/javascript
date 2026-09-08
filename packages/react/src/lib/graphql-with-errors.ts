@@ -5,12 +5,14 @@ import {
   type Variables,
 } from 'graphql-request';
 
-// Define the shape of GraphQL errors explicitly
+export type GraphQLErrorDetails = {
+  message?: string;
+  code?: string;
+  extensions?: Record<string, unknown>;
+};
+
 export class GraphQLErrorWithCodes<
-  T extends { message?: string; code?: string } = {
-    message?: string;
-    code?: string;
-  },
+  T extends GraphQLErrorDetails = GraphQLErrorDetails,
 > extends Error {
   constructor(public errors: T[]) {
     const errorMessage =
@@ -34,6 +36,44 @@ export class GraphQLErrorWithCodes<
   }
 }
 
+export type PaymentActionRequiredResult = {
+  status: 'ACTION_REQUIRED';
+  provider?: string;
+  reason?: string;
+  transactionId?: string;
+  paymentReference?: string;
+  nextStep: Record<string, unknown> & { type: string };
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function getPaymentActionRequiredResult(
+  error: unknown
+): PaymentActionRequiredResult | undefined {
+  if (!(error instanceof GraphQLErrorWithCodes)) return undefined;
+
+  for (const graphqlError of error.errors) {
+    if (graphqlError.code !== 'PAYMENT_ACTION_REQUIRED') continue;
+
+    const paymentResult = graphqlError.extensions?.paymentResult;
+    if (
+      !isRecord(paymentResult) ||
+      paymentResult.status !== 'ACTION_REQUIRED'
+    ) {
+      continue;
+    }
+
+    const nextStep = paymentResult.nextStep;
+    if (!isRecord(nextStep) || typeof nextStep.type !== 'string') continue;
+
+    return paymentResult as PaymentActionRequiredResult;
+  }
+
+  return undefined;
+}
+
 export async function graphqlRequestWithErrors<T = any>(
   endpoint: string,
   query: RequestDocument,
@@ -47,6 +87,7 @@ export async function graphqlRequestWithErrors<T = any>(
       const parsedErrors = err.response.errors.map(e => ({
         message: e.message as string,
         code: e.extensions?.code as string,
+        extensions: e.extensions as Record<string, unknown> | undefined,
       }));
       throw new GraphQLErrorWithCodes(parsedErrors);
     }

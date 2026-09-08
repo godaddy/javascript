@@ -14,7 +14,9 @@ export function StripeCreditCardCheckoutButton() {
   const { isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const flushCheckoutSync = useFlushCheckoutSync();
-  const { handleSubmit } = useStripeCheckout({ mode: 'card' });
+  const { handleSubmit, isProcessingPayment } = useStripeCheckout({
+    mode: 'card',
+  });
 
   const handleStripeCheckout = async () => {
     const valid = await form.trigger();
@@ -36,7 +38,9 @@ export function StripeCreditCardCheckoutButton() {
     <Button
       className='w-full'
       size='lg'
-      disabled={isConfirmingCheckout || isPaymentDisabled}
+      disabled={
+        isProcessingPayment || isConfirmingCheckout || isPaymentDisabled
+      }
       onClick={handleStripeCheckout}
     >
       {t.payment.payNow}
