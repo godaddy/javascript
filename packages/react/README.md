@@ -177,8 +177,8 @@ An array of threshold objects that override the default tips when the order's it
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `minSubtotal` | number | Yes | Minimum item subtotal (inclusive) in the smallest currency unit for this threshold to apply. Required by the API — omitting it fails with `INVALID_TIP_THRESHOLD`. |
-| `maxSubtotal` | number | Yes | Maximum item subtotal (inclusive) in the smallest currency unit for this threshold to apply. Required by the API — omitting it fails with `INVALID_TIP_THRESHOLD`. Must be greater than `minSubtotal`. |
+| `minSubtotal` | number | Yes | Minimum item subtotal (inclusive) in the smallest currency unit for this threshold to apply. Non-null in the API's input type, so omitting it fails GraphQL input validation. |
+| `maxSubtotal` | number | Yes | Maximum item subtotal (inclusive) in the smallest currency unit for this threshold to apply. Non-null in the API's input type, so omitting it fails GraphQL input validation. Must be greater than `minSubtotal`, which the API enforces with `INVALID_TIP_THRESHOLD`. |
 | `amounts` | number[] | Conditional | Fixed tip amounts in the smallest currency unit (e.g. cents). Exactly three values. Mutually exclusive with `percentages`. |
 | `percentages` | number[] | Conditional | Tip percentage options (integers between 0 and 100). Exactly three values. Mutually exclusive with `amounts`. |
 

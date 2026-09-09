@@ -488,6 +488,62 @@ describe('Checkout tips', () => {
     expect(getLastConfirmInput()).not.toHaveProperty('tipAmount');
   });
 
+  describe('offline confirmation', () => {
+    function offlineTipsSession() {
+      return {
+        enableTips: true,
+        enableShipping: false,
+        enableLocalPickup: false,
+        enableTaxCollection: false,
+        enableBillingAddressCollection: false,
+        paymentMethods: {
+          offline: {
+            processor: 'offline' as const,
+            checkoutTypes: ['standard' as const],
+          },
+        },
+      };
+    }
+
+    it('omits a zero tipAmount, which the API rejects even at zero', async () => {
+      const { user } = renderCheckout({
+        sessionOverrides: offlineTipsSession(),
+      });
+      await waitForCheckoutReady();
+      await user.click(
+        await screen.findByRole('button', { name: /offline payments/i })
+      );
+      clearOperations();
+
+      await user.click(
+        await screen.findByRole('button', { name: /complete your order/i })
+      );
+      await waitForOperation('ConfirmCheckoutSession');
+
+      expect(getLastConfirmInput()).not.toHaveProperty('tipAmount');
+    });
+
+    it('still sends a positive tipAmount so the rejection reaches the customer', async () => {
+      const { user } = renderCheckout({
+        sessionOverrides: offlineTipsSession(),
+      });
+      await waitForCheckoutReady();
+      await user.click(
+        await screen.findByRole('button', { name: /offline payments/i })
+      );
+
+      await user.click(await screen.findByRole('radio', { name: /15%/ }));
+      clearOperations();
+
+      await user.click(
+        await screen.findByRole('button', { name: /complete your order/i })
+      );
+      await waitForOperation('ConfirmCheckoutSession');
+
+      expect(getLastConfirmInput()).toMatchObject({ tipAmount: 375 });
+    });
+  });
+
   describe('tip rejections from the API', () => {
     function tipsOnlySession() {
       return {

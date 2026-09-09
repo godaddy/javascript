@@ -187,15 +187,16 @@ export function useConfirmCheckout() {
         // stale or empty, so the caller is the better source.
         const { tipAmount: suppliedTipAmount, ...inputWithoutTip } =
           confirmCheckoutInput;
+        const tipAmount = suppliedTipAmount ?? form.getValues('tipAmount') ?? 0;
+        // Offline rejects a defined `tipAmount`, zero included, so omit it there.
+        // A positive tip still goes so the rejection surfaces instead of vanishing.
+        const includeTipAmount =
+          session.enableTips &&
+          (tipAmount > 0 || input.paymentProvider !== PaymentProvider.OFFLINE);
         const payload = {
           ...inputWithoutTip,
           ...pickUpData,
-          ...(session.enableTips
-            ? {
-                tipAmount:
-                  suppliedTipAmount ?? form.getValues('tipAmount') ?? 0,
-              }
-            : {}),
+          ...(includeTipAmount ? { tipAmount } : {}),
         };
 
         // keep for debugging
