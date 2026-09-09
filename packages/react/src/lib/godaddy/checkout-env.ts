@@ -3598,6 +3598,15 @@ const introspection = {
             },
             "args": [],
             "isDeprecated": false
+          },
+          {
+            "name": "razorpay",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfig"
+            },
+            "args": [],
+            "isDeprecated": false
           }
         ],
         "interfaces": []
@@ -3671,6 +3680,13 @@ const introspection = {
           },
           {
             "name": "paze",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfigInput"
+            }
+          },
+          {
+            "name": "razorpay",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "CheckoutSessionPaymentMethodConfigInput"

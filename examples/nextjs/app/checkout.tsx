@@ -63,8 +63,14 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
       ccavenueConfig={
         process.env.NEXT_PUBLIC_CCAVENUE_ACCESS_CODE_ID
           ? {
-              accessCodeId:
-                process.env.NEXT_PUBLIC_CCAVENUE_ACCESS_CODE_ID,
+              accessCodeId: process.env.NEXT_PUBLIC_CCAVENUE_ACCESS_CODE_ID,
+            }
+          : undefined
+      }
+      razorpayConfig={
+        process.env.NEXT_PUBLIC_RAZORPAY_PUBLIC_TOKEN
+          ? {
+              publicToken: process.env.NEXT_PUBLIC_RAZORPAY_PUBLIC_TOKEN,
             }
           : undefined
       }

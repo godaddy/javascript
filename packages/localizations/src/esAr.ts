@@ -114,6 +114,7 @@ export const esAr = {
       ach: 'Cuenta Bancaria',
       mercadopago: 'Mercado Pago',
       ccavenue: 'الدفع عبر CCAvenue',
+      razorpay: 'Razorpay',
     },
     descriptions: {
       creditCard: '',
@@ -126,6 +127,7 @@ export const esAr = {
       mercadopago:
         'Usa el formulario de MercadoPago a continuación para completar tu compra de forma segura.',
       ccavenue: '',
+      razorpay: '',
     },
     noMethodsAvailable: 'No hay métodos de pago disponibles',
     cardNumber: 'Número de tarjeta',
