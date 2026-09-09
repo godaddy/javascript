@@ -192,7 +192,11 @@ export function mapOrderToFormValues({
       orderBillingAddress?.countryCode || defaultCountryCode || 'US',
 
     // Contact information
-    contactEmail: order?.shipping?.email || defaultValues?.contactEmail || '',
+    contactEmail:
+      order?.shipping?.email ||
+      order?.billing?.email ||
+      defaultValues?.contactEmail ||
+      '',
 
     // Delivery Methods
     deliveryMethod: deliveryMethod,

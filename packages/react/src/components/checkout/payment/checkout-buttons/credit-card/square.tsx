@@ -17,7 +17,8 @@ import { PaymentMethodType } from '@/types';
 export function SquareCreditCardCheckoutButton() {
   const { t } = useGoDaddyContext();
   const { card, isLoading } = useSquare();
-  const { squarePaymentRequest } = useBuildPaymentRequest();
+  const { squarePaymentRequest, buildPaymentRequestsFromOrder } =
+    useBuildPaymentRequest();
   const confirmCheckout = useConfirmCheckout();
   const { setCheckoutErrors, isConfirmingCheckout } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
@@ -40,11 +41,16 @@ export function SquareCreditCardCheckoutButton() {
       return;
     }
 
-    await flushCheckoutSync();
+    const { latestOrder } = await flushCheckoutSync({
+      includeCurrentFormDiff: true,
+    });
+    const request = latestOrder
+      ? buildPaymentRequestsFromOrder(latestOrder).squarePaymentRequest
+      : squarePaymentRequest;
 
     try {
       setIsSquareDisabled(true);
-      const cardToken = await card.tokenize(squarePaymentRequest);
+      const cardToken = await card.tokenize(request);
 
       if (cardToken.status === 'OK' && cardToken?.token) {
         await confirmCheckout.mutateAsync({
@@ -61,6 +67,7 @@ export function SquareCreditCardCheckoutButton() {
       setIsSquareDisabled(false);
     }
   }, [
+    buildPaymentRequestsFromOrder,
     form,
     flushCheckoutSync,
     card,

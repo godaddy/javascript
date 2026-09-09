@@ -570,6 +570,59 @@ describe('Checkout draft-order field sync', () => {
     expect(getLastUpdateInput()).toMatchObject({ notes: null });
   });
 
+  it('does not sync a billing phone value rejected by checkoutFormSchema', async () => {
+    const { user } = renderCheckout({
+      draftOrderOverrides: {
+        billing: {
+          firstName: 'Pat',
+          lastName: 'Pickup',
+          phone: '',
+          email: 'jane@example.com',
+          address: null,
+        },
+        lineItems: [{ fulfillmentMode: DeliveryMethods.PICKUP }],
+        totals: {
+          subTotal: { value: 0, currencyCode: 'USD' },
+          discountTotal: { value: 0, currencyCode: 'USD' },
+          shippingTotal: { value: 0, currencyCode: 'USD' },
+          taxTotal: { value: 0, currencyCode: 'USD' },
+          feeTotal: { value: 0, currencyCode: 'USD' },
+          total: { value: 0, currencyCode: 'USD' },
+        },
+      },
+      checkoutProps: {
+        checkoutFormSchema: {
+          billingPhone: z.string().min(12, 'full billing phone required'),
+        },
+      },
+      sessionOverrides: {
+        enableShipping: false,
+        enableLocalPickup: true,
+        enableTaxCollection: false,
+        enablePhoneCollection: true,
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    const phone = screen.getByLabelText(/phone/i);
+    await user.clear(phone);
+    await user.type(phone, '123');
+    await advanceCheckoutDebounce();
+    await flushPromises();
+
+    expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
+
+    await user.clear(phone);
+    await user.type(phone, '+12015550123');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+
+    expect(getLastUpdateInput()).toMatchObject({
+      billing: { phone: '+12015550123' },
+    });
+  });
+
   it('does not clear order notes while a custom required notes field is empty', async () => {
     const { user } = renderCheckout({
       draftOrderOverrides: {

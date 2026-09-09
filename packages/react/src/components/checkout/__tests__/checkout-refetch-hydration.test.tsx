@@ -8,11 +8,15 @@ import {
   buildDraftOrder,
   buildPickupLocation,
   buildShippingAddress,
+  clearOperations,
   flushPromises,
   getNamedInput,
+  getOperations,
   renderCheckout,
+  setCurrentDraftOrder,
   typeIntoNamedField,
   waitForCheckoutReady,
+  waitForOperation,
 } from './checkout-test-env';
 
 function ClientStateProbe() {
@@ -102,6 +106,64 @@ function BillingToggleProbe() {
 }
 
 describe('Checkout refetch hydration', () => {
+  it('refetches SKUs when draft-order product identity changes', async () => {
+    const { queryClient, session } = renderCheckout();
+    await waitForCheckoutReady();
+    await waitFor(() => {
+      expect(
+        queryClient.getQueryState(
+          checkoutQueryKeys.draftOrderProducts(session.id)
+        )?.fetchStatus
+      ).toBe('idle');
+    });
+    clearOperations();
+
+    const updated = buildDraftOrder({
+      lineItems: [
+        {
+          id: 'line-item-1',
+          productId: 'product-2',
+          details: { sku: 'sku-2' },
+        },
+      ],
+    });
+    setCurrentDraftOrder(updated);
+    await act(async () => {
+      queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+        checkoutSession: { draftOrder: updated },
+      });
+      await flushPromises();
+    });
+    await waitForOperation('DraftOrderSkus');
+
+    expect(getOperations('DraftOrderSkus')).toHaveLength(1);
+  });
+
+  it('does not refetch SKUs for non-product draft-order updates', async () => {
+    const { queryClient, session } = renderCheckout();
+    await waitForCheckoutReady();
+    await waitFor(() => {
+      expect(
+        queryClient.getQueryState(
+          checkoutQueryKeys.draftOrderProducts(session.id)
+        )?.fetchStatus
+      ).toBe('idle');
+    });
+    clearOperations();
+
+    const updated = buildDraftOrder({
+      billing: { firstName: 'Updated' },
+    });
+    await act(async () => {
+      queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+        checkoutSession: { draftOrder: updated },
+      });
+      await flushPromises();
+    });
+
+    expect(getOperations('DraftOrderSkus')).toHaveLength(0);
+  });
+
   it('hydrates pristine fields from draft-order refetch without clobbering dirty fields', async () => {
     const { user, queryClient, session } = renderCheckout({
       draftOrderOverrides: {

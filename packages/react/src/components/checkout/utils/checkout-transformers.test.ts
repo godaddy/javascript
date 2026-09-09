@@ -326,6 +326,18 @@ describe('mapOrderToFormValues', () => {
     expect(values.notes).toBe('Leave by the gate');
   });
 
+  it('hydrates contact email from billing when pickup has no shipping contact', () => {
+    const values = mapOrderToFormValues({
+      order: buildDraftOrder({
+        shipping: null,
+        billing: { email: 'pickup@example.com' },
+        lineItems: [{ fulfillmentMode: DeliveryMethods.PICKUP }],
+      }),
+    });
+
+    expect(values.contactEmail).toBe('pickup@example.com');
+  });
+
   it('returns schema defaults for an empty draft order without throwing', () => {
     const values = mapOrderToFormValues({ order: null });
 

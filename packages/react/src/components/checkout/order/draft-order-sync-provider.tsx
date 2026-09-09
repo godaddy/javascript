@@ -2,11 +2,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import isEqual from 'fast-deep-equal';
 import * as React from 'react';
 import { type UseFormReturn, useFormContext } from 'react-hook-form';
-import type { z } from 'zod';
 import {
   type CheckoutFormData,
   useCheckoutContext,
 } from '@/components/checkout/checkout';
+import type { CheckoutValidationAdapter } from '@/components/checkout/form/checkout-validation-adapter';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateOrder } from '@/components/checkout/order/use-update-order';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
@@ -150,14 +150,22 @@ export function mergeDraftOrderPatch<T>(
 
 export function DraftOrderSyncProvider({
   children,
+  validationAdapter,
   schema,
 }: {
   children: React.ReactNode;
   /**
-   * The same schema the form resolver uses. Registrations are skipped while
-   * their fields are invalid so rejected values never reach the draft order.
+   * The same policy-aware adapter the form resolver uses. Registrations are
+   * skipped while their fields are invalid so rejected values never reach the
+   * draft order.
    */
-  schema?: z.ZodTypeAny;
+  validationAdapter?: Pick<CheckoutValidationAdapter, 'safeParseAsync'>;
+  schema?: {
+    safeParseAsync: (values: CheckoutFormData) => Promise<{
+      success: boolean;
+      error?: { issues: Array<{ path: Array<string | number> }> };
+    }>;
+  };
 }) {
   const updateDraftOrder = useUpdateOrder();
   const queryClient = useQueryClient();
@@ -351,10 +359,14 @@ export function DraftOrderSyncProvider({
   const getInvalidFieldNames = React.useCallback(
     async (values: CheckoutFormData) => {
       const invalidFieldNames = new Set<string>();
-      if (!schema) return invalidFieldNames;
-
-      const result = await schema.safeParseAsync(values);
-      if (result.success) return invalidFieldNames;
+      const result = validationAdapter
+        ? await validationAdapter.safeParseAsync(values, {
+            session,
+            totals: draftOrderQuery.data?.totals ?? null,
+          })
+        : await schema?.safeParseAsync(values);
+      if (!result) return invalidFieldNames;
+      if (result.success || !result.error) return invalidFieldNames;
 
       for (const issue of result.error.issues) {
         const [fieldName] = issue.path;
@@ -364,7 +376,7 @@ export function DraftOrderSyncProvider({
 
       return invalidFieldNames;
     },
-    [schema]
+    [draftOrderQuery.data?.totals, schema, session, validationAdapter]
   );
 
   const buildPatchFromRegistrations = React.useCallback(

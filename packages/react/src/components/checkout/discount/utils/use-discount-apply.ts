@@ -139,37 +139,43 @@ export function useDiscountApply() {
         );
       }
 
-      if (session?.enableTaxCollection) {
-        // If the delivery method is pickup, we need to update taxes based on the pickup location
-        // Otherwise, we can just update taxes without a specific address
+      if (session.enableTaxCollection) {
         // TODO: Move this to API layer
         const deliveryMethod = form.getValues('deliveryMethod');
-        const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
 
-        if (isPickup) {
+        if (deliveryMethod === DeliveryMethods.PICKUP) {
           const pickupLocationId = form.getValues('pickupLocationId');
-          const locationAddress = session?.locations?.find(
+          const locationAddress = session.locations?.find(
             loc => loc.id === pickupLocationId
           )?.address;
 
           if (locationAddress) {
             await updateTaxes.mutateAsync(locationAddress);
+            return;
+          }
+        } else if (
+          deliveryMethod === DeliveryMethods.PURCHASE ||
+          deliveryMethod === DeliveryMethods.DIGITAL
+        ) {
+          const billingAddress = draftOrder?.billing?.address;
+
+          if (billingAddress?.postalCode && billingAddress?.countryCode) {
+            await updateTaxes.mutateAsync(billingAddress);
+            return;
           }
         } else {
-          // Only update taxes if we have the required location data
-          const hasRequiredLocationData =
-            draftOrder?.shipping?.address?.postalCode &&
-            draftOrder?.shipping?.address?.countryCode;
+          const shippingAddress = draftOrder?.shipping?.address;
 
-          if (hasRequiredLocationData) {
+          if (shippingAddress?.postalCode && shippingAddress?.countryCode) {
             await updateTaxes.mutateAsync(undefined);
+            return;
           }
         }
-      } else {
-        queryClient.invalidateQueries({
-          queryKey: checkoutQueryKeys.draftOrder(session.id),
-        });
       }
+
+      await queryClient.invalidateQueries({
+        queryKey: checkoutQueryKeys.draftOrder(session.id),
+      });
     },
   });
 }

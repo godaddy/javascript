@@ -13,7 +13,8 @@ export function CreditCardCheckoutButton() {
   const { isConfirmingCheckout, setCheckoutErrors } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
-  const { poyntCardRequest } = useBuildPaymentRequest();
+  const { poyntCardRequest, buildPaymentRequestsFromOrder } =
+    useBuildPaymentRequest();
   const flushCheckoutSync = useFlushCheckoutSync();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { t } = useGoDaddyContext();
@@ -34,16 +35,22 @@ export function CreditCardCheckoutButton() {
     }
 
     try {
-      await flushCheckoutSync();
+      const { latestOrder } = await flushCheckoutSync({
+        includeCurrentFormDiff: true,
+      });
+      const request = latestOrder
+        ? buildPaymentRequestsFromOrder(latestOrder).poyntCardRequest
+        : poyntCardRequest;
 
       setCheckoutErrors(undefined);
       setIsLoadingNonce(true);
-      collect.getNonce(poyntCardRequest);
+      collect.getNonce(request);
     } catch (_error) {
       setIsLoadingNonce(false);
       setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
     }
   }, [
+    buildPaymentRequestsFromOrder,
     collect,
     flushCheckoutSync,
     form,
