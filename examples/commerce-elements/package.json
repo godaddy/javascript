@@ -1,0 +1,25 @@
+{
+  "name": "commerce-elements",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:deps": "pnpm --filter @godaddy/localizations build && pnpm --filter @godaddy/react build && pnpm --filter @godaddy/commerce build",
+    "dev": "pnpm run prepare:deps && vite",
+    "dev:only": "vite",
+    "build": "pnpm run prepare:deps && tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@godaddy/commerce": "workspace:*",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "~5.7.3",
+    "vite": "^6.4.1"
+  }
+}

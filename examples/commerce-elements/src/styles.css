@@ -1,0 +1,88 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --gddy-color: #0f172a;
+  --gddy-on-color: #ffffff;
+  --gddy-radius: 999px;
+}
+body {
+  margin: 0;
+  background: #f8fafc;
+  color: #0f172a;
+}
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  gap: 24px;
+}
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+h1 {
+  margin: 0 0 4px;
+  font-size: 28px;
+}
+h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+.muted {
+  color: #64748b;
+  margin: 0;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.ghost {
+  --gddy-color: #ffffff;
+  --gddy-on-color: #0f172a;
+}
+.debug {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+}
+.debug dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 0;
+}
+.debug dt {
+  color: #64748b;
+}
+.debug dd {
+  margin: 0;
+}
+.errors {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #a31919;
+}
