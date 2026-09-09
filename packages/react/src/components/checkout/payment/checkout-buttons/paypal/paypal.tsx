@@ -57,16 +57,13 @@ function PayPalButtonsWrapper() {
   };
 
   const createOrder = async (_data, actions) => {
-<<<<<<< HEAD
     authorizedTipAmount.current = session?.enableTips ? tipAmount : null;
-=======
     const { latestOrder } = await flushCheckoutSync({
       includeCurrentFormDiff: true,
     });
     const request = latestOrder
       ? buildPaymentRequestsFromOrder(latestOrder).payPalRequest
       : payPalRequest;
->>>>>>> 2dac66bef9934f9b16d5e95e777e498024e56926
     const order = {
       ...request,
       purchase_units: request.purchase_units
