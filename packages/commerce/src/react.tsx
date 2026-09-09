@@ -1,9 +1,13 @@
 import type { ReactNode } from 'react';
-import { createElement, useEffect, useSyncExternalStore } from 'react';
+import { createElement, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { type CommerceClient, getCommerce } from './index';
 import './elements';
 
-/** Configure in the browser entry point, or pass an isolated client for SSR. */
+/**
+ * Configure in the browser entry point, or pass an isolated client for SSR.
+ * Returns the current snapshot plus stable actions; `checkout` is the open
+ * session, `startCheckout` creates one.
+ */
 export function useCart(client: CommerceClient = getCommerce()) {
   const snapshot = useSyncExternalStore(
     client.subscribe,
@@ -15,13 +19,22 @@ export function useCart(client: CommerceClient = getCommerce()) {
       /* Exposed through snapshot.error. */
     });
   }, [client]);
-  return {
-    ...snapshot,
-    addItem: client.addItem.bind(client),
-    setQuantity: client.setQuantity.bind(client),
-    removeItem: client.removeItem.bind(client),
-    checkout: client.checkout.bind(client),
-  };
+  const actions = useMemo(
+    () => ({
+      addItem: (skuId: string, count?: number) => client.addItem(skuId, count),
+      setQuantity: (lineId: string, count: number) =>
+        client.setQuantity(lineId, count),
+      removeItem: (lineId: string) => client.removeItem(lineId),
+      applyDiscount: (code: string) => client.applyDiscount(code),
+      startCheckout: () => client.checkout(),
+      buyNow: (skuId: string, count?: number) => client.buyNow(skuId, count),
+      pay: (reference: string) => client.pay(reference),
+      refresh: () => client.refresh(),
+      closeCheckout: () => client.closeCheckout(),
+    }),
+    [client]
+  );
+  return { ...snapshot, ...actions, client };
 }
 
 type ButtonProps = {
@@ -30,19 +43,34 @@ type ButtonProps = {
   disabled?: boolean;
 };
 type SkuButtonProps = ButtonProps & { skuId: string; quantity?: number };
+
+/**
+ * Custom elements receive attributes, not properties. React 18 stringifies
+ * booleans (`disabled="false"`) and does not map `className`, so translate here.
+ */
+function attributes({
+  className,
+  disabled,
+  ...rest
+}: ButtonProps & Record<string, unknown>) {
+  return { ...rest, class: className, disabled: disabled ? '' : undefined };
+}
+
 export function AddToCartButton({ skuId, quantity, ...props }: SkuButtonProps) {
-  return createElement('gddy-add-to-cart', {
-    'sku-id': skuId,
-    quantity,
-    ...props,
-  });
+  return createElement(
+    'gddy-add-to-cart',
+    attributes({ 'sku-id': skuId, quantity, ...props })
+  );
 }
 export function CartButton(props: ButtonProps) {
-  return createElement('gddy-cart-button', props);
+  return createElement('gddy-cart-button', attributes(props));
 }
 export function BuyNowButton({ skuId, quantity, ...props }: SkuButtonProps) {
-  return createElement('gddy-buy-now', { 'sku-id': skuId, quantity, ...props });
+  return createElement(
+    'gddy-buy-now',
+    attributes({ 'sku-id': skuId, quantity, ...props })
+  );
 }
 export function PaymentButton(props: ButtonProps & { reference: string }) {
-  return createElement('gddy-payment-button', props);
+  return createElement('gddy-payment-button', attributes(props));
 }

@@ -38,7 +38,7 @@ You can instead call `window.GddyCommerce.configureCommerce(config)` after the `
 | Element | Required attributes | Behavior |
 | --- | --- | --- |
 | `gddy-add-to-cart` | `sku-id` | Adds the selected catalog SKU; optional positive integer `quantity`, default 1. |
-| `gddy-cart-button` | None | Shows the current item count and opens the shared cart drawer. |
+| `gddy-cart-button` | None | Opens the shared cart drawer; shows the item count in `::part(count)` when the cart has items. Stays enabled while the cart updates. |
 | `gddy-buy-now` | `sku-id` | Redirects to hosted checkout for that SKU; optional `quantity`. Preserves the saved cart. |
 | `gddy-payment-button` | `reference` | Resolves a standalone payment and redirects to hosted checkout. Preserves the saved cart. |
 
@@ -74,15 +74,15 @@ Configure the resolver before the CDN script loads. Amounts use integer currency
 
 `checkout` accepts existing checkout session options, including merchant shipping, pickup, tax, promotion, appearance, and navigation settings. Purchase inputs and store/channel IDs are owned by the client. Processor configuration and payment collection belong to hosted checkout; this library does not provision payment accounts or collect payment details.
 
-Cart checkout, Buy now, and standalone payment buttons always navigate in the current tab to the session URL returned by Commerce. There is no inline checkout or presentation switch. Return and success URLs default to the current page; override them in `checkout` where appropriate. Redirecting does not emit a local completion event or clear the cart on return.
+Cart checkout, Buy now, and standalone payment buttons always navigate in the current tab to the session URL returned by Commerce. There is no inline checkout or presentation switch. Return and success URLs default to the current page; override them in `checkout` where appropriate. Relative overrides resolve against the current page, and only HTTP(S) URLs are accepted (`INVALID_URL`). Redirecting does not emit a local completion event or clear the cart on return.
 
-The cart persists only its draft-order ID in local storage, scoped by API host, client, store, and channel. Prices and totals are read from Commerce. Mutations are serialized and refresh server state; browsers with Web Locks also serialize same-origin tabs. Browsers without Web Locks do not have cross-tab write serialization. Storage-denied browsers keep the cart in memory. Cart mutations are never automatically retried after uncertain network failures. Refresh to inspect the authoritative state before retrying a failed action.
+The cart persists only its draft-order ID in local storage, scoped by API host, client, store, and channel. Prices and totals are read from Commerce. `ready()` reads the saved cart once, without locking; every element and `useCart` call shares that read. If Commerce no longer knows the saved order (a null result or a not-found error), the saved ID is released and the cart starts empty. Mutations are serialized and re-read the cart before writing; browsers with Web Locks also serialize same-origin tabs. Browsers without Web Locks do not have cross-tab write serialization. Storage-denied browsers keep the cart in memory. Cart mutations are never automatically retried after uncertain network failures. Refresh to inspect the authoritative state before retrying a failed action.
 
 Typed quantity edits are submitted on blur or Enter. The field keeps its typed value while the mutation is pending, then resumes showing the server quantity. Empty or invalid edits revert without a request; entering zero removes the item.
 
 The first `gddy-add-to-cart` click creates an empty draft order internally, then calls `addLineItemBySkuId` with that draft ID, the selected SKU ID, and quantity. This two-call flow lets Commerce resolve catalog pricing; inline draft creation requires caller-supplied line-item amounts. The component saves the draft ID immediately and refetches the cart after adding the item. Later additions reuse that draft; adding the same SKU increases its quantity. Adopting applications do not create a separate draft or maintain a second cart.
 
-Checkout waits for queued cart changes, refreshes the draft, and creates a session from its ID. Repeated identical checkout requests share the in-flight operation; different concurrent purchases are rejected. The cart is locked during session creation. The managed buttons release the transient session state when handing off, so a failed navigation or browser Back does not leave controls locked. The saved cart is preserved.
+Checkout resolves the OAuth token first, then waits for queued cart changes, refreshes the draft, and creates a session from its ID. The cart lock is held only for the refresh and session creation, so a slow token callback does not block other tabs. Repeated identical checkout requests share the in-flight operation; different concurrent purchases are rejected. The managed buttons release the transient session state when handing off, so a failed navigation or browser Back does not leave controls locked. The saved cart is preserved.
 
 Verify payment/order status through your existing backend/webhook workflow before fulfillment. Do not derive payment success from navigation or return URL parameters.
 
@@ -94,7 +94,7 @@ Verify payment/order status through your existing backend/webhook workflow befor
 | `gddy:error` | Trigger, bubbling, or `window` for loader errors | `{ error }` |
 | `gddy:cart-change` | Add-to-cart trigger, bubbling | `{ cart }` after a successful addition. Use client subscriptions for all state changes. |
 
-Buttons expose `::part(button)` and `::part(status)`. Set `--gddy-color`, `--gddy-on-color`, `--gddy-radius`, and `--gddy-focus` on elements and/or the document. Hosted checkout uses the existing Commerce appearance settings. `locale` controls cart currency formatting; cart labels currently use English.
+Buttons expose `::part(button)`, `::part(status)`, and, on the cart button, `::part(count)`. Set `--gddy-color`, `--gddy-on-color`, `--gddy-radius`, and `--gddy-focus` on elements and/or the document. Hosted checkout uses the existing Commerce appearance settings. `locale` controls cart currency formatting; cart labels currently use English.
 
 ## Optional npm and React usage
 
@@ -113,9 +113,9 @@ function Product() {
 }
 ```
 
-The React entry wraps the same elements and provides `useCart`. For SSR, render the elements normally and configure in browser bootstrap; call `useCart(client)` with an explicit client if reading state during SSR. Never configure the browser singleton on a server. Do not combine the CDN runtime and bundled npm elements on the same page.
+The React entry wraps the same elements and provides `useCart`, which returns the snapshot (`cart`, `status`, `pending`, `error`, `checkout`) plus stable actions: `addItem`, `setQuantity`, `removeItem`, `applyDiscount`, `startCheckout`, `buyNow`, `pay`, `refresh`, `closeCheckout`, and the `client`. The wrappers translate `disabled` and `className` into attributes, so they behave the same on React 18 and 19. For SSR, render the elements normally and configure in browser bootstrap; call `useCart(client)` with an explicit client if reading state during SSR. Never configure the browser singleton on a server. Do not combine the CDN runtime and bundled npm elements on the same page.
 
-For custom UI, `createCommerce(config)` returns an isolated client with `ready`, `refresh`, `addItem`, `setQuantity`, `removeItem`, `applyDiscount`, `checkout`, `buyNow`, `pay`, `getSnapshot`, `subscribe`, `closeCheckout`, and `dispose`. Setting quantity to zero removes an item. An empty discount string removes the applied code. `checkout`/`buyNow`/`pay` return a session; headless callers navigate to `session.url` and call `closeCheckout()` to release transient session state without clearing the cart.
+For custom UI, `createCommerce(config)` returns an isolated client with `ready`, `refresh`, `addItem`, `setQuantity`, `removeItem`, `applyDiscount`, `checkout`, `buyNow`, `pay`, `getSnapshot`, `subscribe`, `closeCheckout`, and `dispose`; `itemCount(cart)` sums line quantities. The snapshot's `status` is derived from `pending` and `error`. Setting quantity to zero removes an item. An empty discount string removes the applied code. `checkout`/`buyNow`/`pay` return a session; headless callers navigate to `session.url` and call `closeCheckout()` to release transient session state without clearing the cart.
 
 ## Public library and managed CDN
 

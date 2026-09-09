@@ -48,11 +48,14 @@ export interface NonCatalogPayment {
 
 export interface CommerceSnapshot {
   readonly cart: Cart | null;
+  /** Derived from `pending`, `error`, and whether the saved cart has been read. */
   readonly status: 'idle' | 'loading' | 'ready' | 'error';
+  /** Operations in flight, including hydration and checkout session creation. */
   readonly pending: number;
+  /** The most recently settled operation's failure, cleared when the next one starts. */
   readonly error: Error | null;
+  /** The hosted checkout session until `closeCheckout()` releases it. */
   readonly checkout: Session | null;
-  readonly checkoutSource: 'cart' | 'buy-now' | 'payment' | null;
 }
 
 export class CommerceError extends Error {

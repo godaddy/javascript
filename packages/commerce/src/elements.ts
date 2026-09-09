@@ -1,34 +1,62 @@
+import { itemCount } from './cart';
 import {
   type CommerceClient,
   getCommerce,
   onCommerceConfigured,
 } from './index';
 import { redirectToCheckout } from './redirect';
+import type { CommerceSnapshot } from './types';
 
 // Importing this entry on an SSR server must not access DOM globals.
 const ElementBase = (globalThis.HTMLElement || class {}) as typeof HTMLElement;
+
+const STYLE = [
+  ':host{display:inline-block;font:inherit}',
+  'button{font:inherit;cursor:pointer;border:1px solid var(--gddy-color,#303036);border-radius:var(--gddy-radius,10px);',
+  'background:linear-gradient(#ffffff12,#0000000a),var(--gddy-color,#303036);color:var(--gddy-on-color,#fff);',
+  'padding:.7em 1.1em;min-height:48px;box-shadow:inset 0 1px 0 #ffffff26,0 2px 3px #18181b1a}',
+  'button:disabled{opacity:.55;cursor:default}',
+  'button:focus-visible{outline:3px solid var(--gddy-focus,#51515b);outline-offset:3px}',
+  '[part=count]{margin-left:.5em;padding:0 .55em;border-radius:999px;font-size:.85em;line-height:1.7;',
+  'background:var(--gddy-on-color,#fff);color:var(--gddy-color,#303036)}',
+  '[part=count]:empty{display:none}',
+  '[role=status]{display:block;font-size:.85em;max-width:30ch;margin-top:.3em;color:var(--gddy-error,#a31919)}',
+  '[role=status]:empty{display:none}',
+].join('');
 
 abstract class CommerceButton extends ElementBase {
   static observedAttributes = ['sku-id', 'quantity', 'reference', 'disabled'];
   private unsubscribe?: () => void;
   private unconfigure?: () => void;
   private button?: HTMLButtonElement;
+  private countBadge?: HTMLElement;
   private status?: HTMLElement;
   protected client?: CommerceClient;
+  /** Fallback label when the element has no text content. */
   protected abstract label: string;
+  /** Whether the button is unavailable while the cart is busy or a checkout is open. */
+  protected readonly waitsForCart: boolean = true;
   protected abstract activate(client: CommerceClient): Promise<unknown>;
+
+  /** A count rendered in `::part(count)` and the accessible name, or null for none. */
+  protected badge(_snapshot: CommerceSnapshot | undefined): number | null {
+    return null;
+  }
 
   connectedCallback(): void {
     if (!this.shadowRoot) {
       const root = this.attachShadow({ mode: 'open' });
       const style = document.createElement('style');
-      style.textContent = `:host{display:inline-block;font:inherit}button{font:inherit;cursor:pointer;border:1px solid var(--gddy-color,#303036);border-radius:var(--gddy-radius,10px);background:linear-gradient(#ffffff12,#0000000a),var(--gddy-color,#303036);color:var(--gddy-on-color,#fff);padding:.7em 1.1em;min-height:48px;box-shadow:inset 0 1px 0 #ffffff26,0 2px 3px #18181b1a}button:disabled{opacity:.55;cursor:default}button:focus-visible{outline:3px solid var(--gddy-focus,#51515b);outline-offset:3px}[role=status]{display:block;font-size:.85em;max-width:30ch;margin-top:.3em;color:var(--gddy-error,#a31919)}[role=status]:empty{display:none}`;
+      style.textContent = STYLE;
       this.button = document.createElement('button');
       this.button.type = 'button';
       this.button.setAttribute('part', 'button');
       const slot = document.createElement('slot');
       slot.textContent = this.label;
-      this.button.append(slot);
+      this.countBadge = document.createElement('span');
+      this.countBadge.setAttribute('part', 'count');
+      this.countBadge.setAttribute('aria-hidden', 'true');
+      this.button.append(slot, this.countBadge);
       this.status = document.createElement('span');
       this.status.setAttribute('role', 'status');
       this.status.setAttribute('part', 'status');
@@ -68,28 +96,23 @@ abstract class CommerceButton extends ElementBase {
     this.button.disabled =
       !this.client ||
       this.hasAttribute('disabled') ||
-      (this.localName !== 'gddy-cart-button' &&
-        Boolean(snapshot?.pending || snapshot?.checkout));
+      (this.waitsForCart && Boolean(snapshot?.pending || snapshot?.checkout));
     this.button.setAttribute('aria-busy', String(Boolean(snapshot?.pending)));
-    if (this.localName === 'gddy-cart-button') {
-      const count =
-        snapshot?.cart?.lineItems?.reduce(
-          (sum, line) => sum + (line.quantity || 0),
-          0
-        ) || 0;
-      const slot = this.button.querySelector('slot');
-      if (slot) slot.textContent = `Cart (${count})`;
-      this.button.setAttribute(
-        'aria-label',
-        `${this.textContent?.trim() || 'Cart'} (${count})`
-      );
+    const count = this.badge(snapshot);
+    if (this.countBadge)
+      this.countBadge.textContent = count ? String(count) : '';
+    if (count) {
+      const text = this.textContent?.trim() || this.label;
+      this.button.setAttribute('aria-label', `${text} (${count})`);
+    } else {
+      this.button.removeAttribute('aria-label');
     }
   }
 
   private async clickAction(): Promise<void> {
     try {
       if (this.status) this.status.textContent = '';
-      await this.activate(getCommerce());
+      await this.activate(this.client ?? getCommerce());
     } catch (error) {
       this.report(error);
     }
@@ -133,6 +156,11 @@ export class GddyAddToCart extends CommerceButton {
 
 export class GddyCartButton extends CommerceButton {
   protected label = 'Cart';
+  /** The cart can always be opened, including while it is updating. */
+  protected readonly waitsForCart = false;
+  protected badge(snapshot: CommerceSnapshot | undefined): number | null {
+    return itemCount(snapshot?.cart);
+  }
   protected async activate(client: CommerceClient): Promise<void> {
     const { openCart } = await import('./drawer');
     openCart(client);

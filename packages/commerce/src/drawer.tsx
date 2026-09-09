@@ -1,12 +1,39 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useRef, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
+import { itemCount } from './cart';
 import type { CommerceClient } from './client';
 import { redirectToCheckout } from './redirect';
 import type { Cart } from './types';
 import './drawer.css';
 
 let active: { client: CommerceClient; container: HTMLElement } | undefined;
+
+const formatters = new Map<string, Intl.NumberFormat | null>();
+
+/** Cached per locale and currency; an invalid merchant locale falls back to en-US. */
+function formatter(
+  locale: string | undefined,
+  currency: string
+): Intl.NumberFormat | null {
+  const key = `${locale ?? ''}|${currency}`;
+  if (!formatters.has(key)) {
+    let created: Intl.NumberFormat | null = null;
+    for (const candidate of [locale, 'en-US']) {
+      try {
+        created = new Intl.NumberFormat(candidate, {
+          style: 'currency',
+          currency,
+        });
+        break;
+      } catch {
+        /* Try the next locale. */
+      }
+    }
+    formatters.set(key, created);
+  }
+  return formatters.get(key) ?? null;
+}
 
 function money(
   value:
@@ -16,13 +43,10 @@ function money(
   locale?: string
 ): string {
   if (value?.value == null || !value.currencyCode) return '—';
-  const formatter = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: value.currencyCode,
-  });
-  return formatter.format(
-    value.value / 10 ** (formatter.resolvedOptions().maximumFractionDigits ?? 2)
-  );
+  const format = formatter(locale, value.currencyCode);
+  if (!format) return `${value.value} ${value.currencyCode}`;
+  const digits = format.resolvedOptions().maximumFractionDigits ?? 2;
+  return format.format(value.value / 10 ** digits);
 }
 
 function ProductImage({ src }: { src?: string | null }) {
@@ -151,8 +175,7 @@ function Drawer({
   const [localError, setLocalError] = useState<string>();
   const busy = Boolean(snapshot.pending);
   const cart = snapshot.cart;
-  const itemCount =
-    cart?.lineItems?.reduce((sum, line) => sum + (line.quantity || 0), 0) || 0;
+  const items = itemCount(cart);
   const close = () => {
     if (!busy) {
       client.closeCheckout();
@@ -188,12 +211,12 @@ function Drawer({
             <div>
               <Dialog.Title>
                 Your cart
-                {itemCount > 0 && (
+                {items > 0 && (
                   <span
                     className='gddy-item-count'
-                    aria-label={`${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
+                    aria-label={`${items} ${items === 1 ? 'item' : 'items'}`}
                   >
-                    {itemCount}
+                    {items}
                   </span>
                 )}
               </Dialog.Title>

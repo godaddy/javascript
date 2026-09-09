@@ -1,5 +1,5 @@
 import * as api from '@godaddy/react/client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommerceClient } from './client';
 import type { Cart, CommerceConfig, Session } from './types';
 
@@ -336,5 +336,137 @@ describe('checkout handoff', () => {
       'configured storefront'
     );
     expect(client.getSnapshot().checkout).toBeNull();
+  });
+});
+
+describe('hydration, locking, and navigation', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  function stubLocks() {
+    const request = vi.fn((_name: string, operation: () => Promise<unknown>) =>
+      operation()
+    );
+    vi.stubGlobal('navigator', { ...navigator, locks: { request } });
+    return request;
+  }
+
+  it('reads the saved cart once for many ready() calls without taking the write lock', async () => {
+    const request = stubLocks();
+    const client = new CommerceClient(config);
+    localStorage.setItem(client.storageKey, 'cart-1');
+    await Promise.all([client.ready(), client.ready(), client.ready()]);
+    expect(api.getCartOrder).toHaveBeenCalledTimes(1);
+    expect(request).not.toHaveBeenCalled();
+    expect(client.getSnapshot().status).toBe('ready');
+    await client.ready();
+    expect(api.getCartOrder).toHaveBeenCalledTimes(1);
+    await client.addItem('sku-a');
+    expect(request).toHaveBeenCalledExactlyOnceWith(
+      client.storageKey,
+      expect.any(Function)
+    );
+    client.dispose();
+  });
+
+  it('reads a saved cart once per mutation, before and after the write', async () => {
+    const client = new CommerceClient(config);
+    localStorage.setItem(client.storageKey, 'cart-1');
+    await client.addItem('sku-a');
+    expect(api.getCartOrder).toHaveBeenCalledTimes(2);
+    expect(api.getSku).toHaveBeenCalledTimes(1);
+    client.dispose();
+  });
+
+  it('resolves the OAuth token before taking the cart lock', async () => {
+    const request = stubLocks();
+    let release!: (token: string) => void;
+    const getAccessToken = vi.fn(
+      () =>
+        new Promise<string>(resolve => {
+          release = resolve;
+        })
+    );
+    const client = new CommerceClient({ ...config, getAccessToken });
+    await client.addItem('sku-a');
+    request.mockClear();
+    const checkout = client.checkout();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(getAccessToken).toHaveBeenCalledOnce();
+    expect(request).not.toHaveBeenCalled();
+    expect(client.getSnapshot().status).toBe('loading');
+    release('oauth-token');
+    await checkout;
+    expect(request).toHaveBeenCalledOnce();
+    expect(api.createCheckoutSession).toHaveBeenCalledWith(expect.anything(), {
+      accessToken: 'oauth-token',
+      apiHost: 'api.godaddy.com',
+    });
+    client.closeCheckout();
+    client.dispose();
+  });
+
+  it('releases a saved cart that Commerce reports as not found', async () => {
+    const client = new CommerceClient(config);
+    localStorage.setItem(client.storageKey, 'gone');
+    vi.mocked(api.getCartOrder).mockRejectedValueOnce(
+      Object.assign(new Error('Order not found'), {
+        name: 'GraphQLErrorWithCodes',
+        codes: ['NOT_FOUND'],
+        messages: ['Order not found'],
+      })
+    );
+    await client.ready();
+    expect(localStorage.getItem(client.storageKey)).toBeNull();
+    expect(client.getSnapshot()).toMatchObject({
+      cart: null,
+      status: 'ready',
+      error: null,
+    });
+    await client.addItem('sku-a');
+    expect(api.createCartOrder).toHaveBeenCalledTimes(1);
+    client.dispose();
+  });
+
+  it('resolves relative navigation URLs against the page and rejects other schemes', async () => {
+    const client = new CommerceClient({
+      ...config,
+      checkout: { returnUrl: '/cart', successUrl: '/thanks' },
+    });
+    await client.buyNow('sku-a');
+    expect(vi.mocked(api.createCheckoutSession).mock.calls[0][0]).toMatchObject(
+      {
+        returnUrl: `${location.origin}/cart`,
+        successUrl: `${location.origin}/thanks`,
+      }
+    );
+    const unsafe = new CommerceClient({
+      ...config,
+      checkout: { successUrl: 'javascript:alert(1)' },
+    });
+    await expect(unsafe.buyNow('sku-a')).rejects.toMatchObject({
+      code: 'INVALID_URL',
+    });
+    expect(api.createCheckoutSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('derives status from pending work and the last failure', async () => {
+    const client = new CommerceClient(config);
+    expect(client.getSnapshot().status).toBe('idle');
+    const ready = client.ready();
+    expect(client.getSnapshot().status).toBe('loading');
+    await ready;
+    expect(client.getSnapshot().status).toBe('ready');
+    vi.mocked(api.getSku).mockRejectedValueOnce(new Error('offline'));
+    await expect(client.addItem('sku-a')).rejects.toThrow('offline');
+    expect(client.getSnapshot()).toMatchObject({ status: 'error', pending: 0 });
+    const retry = client.addItem('sku-a');
+    expect(client.getSnapshot()).toMatchObject({
+      status: 'loading',
+      error: null,
+    });
+    await retry;
+    expect(client.getSnapshot().status).toBe('ready');
+    expect(client.getSnapshot().cart?.lineItems).toHaveLength(1);
+    client.dispose();
   });
 });

@@ -8,6 +8,7 @@ import {
   type Session,
   type SessionInput,
 } from './types';
+import { navigationUrl } from './url';
 
 const INITIAL: CommerceSnapshot = Object.freeze({
   cart: null,
@@ -15,8 +16,9 @@ const INITIAL: CommerceSnapshot = Object.freeze({
   pending: 0,
   error: null,
   checkout: null,
-  checkoutSource: null,
 });
+
+type Purchase = Pick<SessionInput, 'draftOrderId' | 'lineItems'>;
 
 function identifier(value: string, name: string): string {
   if (typeof value !== 'string' || !value.trim())
@@ -42,18 +44,38 @@ function freeze<T>(value: T): T {
   return value;
 }
 
+/**
+ * Commerce may report a deleted or unknown order as a GraphQL error rather than
+ * a null result. Treat that like an empty result so a stale saved ID is released.
+ */
+function isMissingOrderError(error: unknown): boolean {
+  if (!(error instanceof Error) || error.name !== 'GraphQLErrorWithCodes')
+    return false;
+  const { codes = [], messages = [] } = error as Error & {
+    codes?: string[];
+    messages?: string[];
+  };
+  return (
+    codes.some(code => /NOT_FOUND/i.test(code)) ||
+    messages.some(message => /\bnot found\b/i.test(message))
+  );
+}
+
 /** An isolated client. Creating it does not read browser storage or make requests. */
 export class CommerceClient {
   readonly config: Readonly<CommerceConfig>;
   readonly storageKey: string;
   private snapshot = INITIAL;
   private listeners = new Set<() => void>();
+  /** Local write queue; also the order in which the cross-tab lock is requested. */
   private queue: Promise<unknown> = Promise.resolve();
   private cartId: string | null = null;
+  /** True once the saved cart has been read (or found absent) at least once. */
   private hydrated = false;
+  private readyPromise: Promise<void> | null = null;
   private listening = false;
-  private checkoutPromise: Promise<Session> | null = null;
-  private checkoutIntent: string | null = null;
+  private activeCheckout: { intent: string; promise: Promise<Session> } | null =
+    null;
 
   constructor(config: CommerceConfig) {
     const apiHost = config.apiHost || 'api.godaddy.com';
@@ -69,7 +91,9 @@ export class CommerceClient {
       channelId: identifier(config.channelId, 'channelId'),
       apiHost,
     });
-    this.storageKey = `gddy:cart:v1:${[apiHost, this.config.clientId, this.config.storeId, this.config.channelId].map(encodeURIComponent).join(':')}`;
+    const scope = [apiHost, this.config.clientId, this.config.storeId];
+    scope.push(this.config.channelId);
+    this.storageKey = `gddy:cart:v1:${scope.map(encodeURIComponent).join(':')}`;
   }
 
   getSnapshot = (): CommerceSnapshot => this.snapshot;
@@ -79,8 +103,12 @@ export class CommerceClient {
     return () => this.listeners.delete(listener);
   };
 
-  private update(patch: Partial<CommerceSnapshot>): void {
-    this.snapshot = freeze({ ...this.snapshot, ...patch });
+  private update(patch: Partial<Omit<CommerceSnapshot, 'status'>>): void {
+    const next = { ...this.snapshot, ...patch };
+    let status: CommerceSnapshot['status'] = this.hydrated ? 'ready' : 'idle';
+    if (next.pending > 0) status = 'loading';
+    else if (next.error) status = 'error';
+    this.snapshot = freeze({ ...next, status });
     for (const listener of this.listeners) listener();
   }
 
@@ -119,27 +147,32 @@ export class CommerceClient {
     this.listeners.clear();
   }
 
+  /** Follow other tabs' cart changes and pick up the saved cart ID. */
+  private sync(): void {
+    if (!this.listening && typeof window !== 'undefined') {
+      window.addEventListener('storage', this.onStorage);
+      this.listening = true;
+    }
+    this.cartId = this.readId();
+  }
+
   private async readCart(): Promise<Cart | null> {
-    if (!this.cartId) {
-      this.update({ cart: null });
-      return null;
-    }
     const { storeId, clientId, channelId, apiHost } = this.config;
-    const result = await api.getCartOrder(
-      this.cartId,
-      storeId,
-      clientId,
-      apiHost
-    );
-    const cart = result.orderById;
-    if (!cart) {
-      this.saveId(null);
-      this.update({ cart: null });
-      return null;
+    let cart: Cart | null | undefined = null;
+    if (this.cartId) {
+      try {
+        cart = (await api.getCartOrder(this.cartId, storeId, clientId, apiHost))
+          .orderById;
+      } catch (error) {
+        if (!isMissingOrderError(error)) throw error;
+      }
+      if (!cart) this.saveId(null);
     }
+    this.hydrated = true;
     if (
-      cart.context?.storeId !== storeId ||
-      cart.context?.channelId !== channelId
+      cart &&
+      (cart.context?.storeId !== storeId ||
+        cart.context?.channelId !== channelId)
     ) {
       this.saveId(null);
       this.update({ cart: null });
@@ -148,69 +181,60 @@ export class CommerceClient {
         'The saved cart belongs to a different storefront'
       );
     }
-    this.update({ cart });
-    return cart;
+    this.update({ cart: cart ?? null });
+    return cart ?? null;
   }
 
+  /** Publish pending/error state around an operation. */
+  private async track<T>(operation: () => Promise<T>): Promise<T> {
+    this.update({ pending: this.snapshot.pending + 1, error: null });
+    try {
+      const value = await operation();
+      this.update({ pending: this.snapshot.pending - 1, error: null });
+      return value;
+    } catch (error) {
+      const failure = error instanceof Error ? error : new Error(String(error));
+      this.update({ pending: this.snapshot.pending - 1, error: failure });
+      throw failure;
+    }
+  }
+
+  /**
+   * Serialize writes behind earlier writes in this tab and, where Web Locks
+   * exist, behind writes from other same-origin tabs. Writes are never retried.
+   */
   private run<T>(operation: () => Promise<T>): Promise<T> {
-    this.update({
-      pending: this.snapshot.pending + 1,
-      error: null,
-      status: 'loading',
+    return this.track(() => {
+      const result = this.queue.then(() => {
+        if (typeof navigator !== 'undefined' && navigator.locks)
+          return navigator.locks.request(this.storageKey, operation);
+        return operation();
+      });
+      this.queue = result.catch(() => undefined);
+      return result;
     });
-    const execute = async () => {
-      // Web Locks serialize tabs on browsers that support them. Mutations are never automatically retried.
-      if (typeof navigator !== 'undefined' && navigator.locks) {
-        return navigator.locks.request(this.storageKey, operation);
-      }
-      return operation();
-    };
-    const result = this.queue.then(execute).then(
-      value => {
-        this.update({
-          pending: this.snapshot.pending - 1,
-          status: this.snapshot.pending > 1 ? 'loading' : 'ready',
-          error: null,
-        });
-        return value;
-      },
-      error => {
-        const failure =
-          error instanceof Error ? error : new Error(String(error));
-        this.update({
-          pending: this.snapshot.pending - 1,
-          status: 'error',
-          error: failure,
-        });
-        throw failure;
-      }
-    );
-    this.queue = result.catch(() => undefined);
-    return result;
   }
 
-  private async hydrate(): Promise<void> {
-    if (!this.listening && typeof window !== 'undefined') {
-      window.addEventListener('storage', this.onStorage);
-      this.listening = true;
-    }
-    const id = this.readId();
-    if (!this.hydrated || id !== this.cartId) {
-      this.cartId = id;
-      await this.readCart();
-      this.hydrated = true;
-    }
-  }
-
+  /**
+   * Read the saved cart once. Later calls resolve immediately; a failed read can
+   * be retried. Reads do not take the write lock.
+   */
   ready(): Promise<void> {
-    return this.run(() => this.hydrate());
+    if (this.readyPromise) return this.readyPromise;
+    if (this.hydrated) return Promise.resolve();
+    this.readyPromise = this.track(async () => {
+      this.sync();
+      await this.readCart();
+    }).finally(() => {
+      this.readyPromise = null;
+    });
+    return this.readyPromise;
   }
+
   refresh(): Promise<Cart | null> {
-    return this.run(async () => {
-      this.cartId = this.readId();
-      const cart = await this.readCart();
-      this.hydrated = true;
-      return cart;
+    return this.run(() => {
+      this.sync();
+      return this.readCart();
     });
   }
 
@@ -227,16 +251,13 @@ export class CommerceClient {
     quantity(count);
     return this.run(async () => {
       this.assertEditable();
-      await this.hydrate();
-      // Fetch again after acquiring the tab lock to avoid stale quantity updates.
-      await this.readCart();
+      this.sync();
       const { storeId, channelId, clientId, apiHost } = this.config;
-      const { sku } = await api.getSku(
-        { id: skuId },
-        storeId,
-        clientId,
-        apiHost
-      );
+      // Read the cart inside the lock so merged quantities are current; the SKU lookup is independent.
+      const [, { sku }] = await Promise.all([
+        this.readCart(),
+        api.getSku({ id: skuId }, storeId, clientId, apiHost),
+      ]);
       const currencyCode = sku?.prices?.edges?.[0]?.node?.value?.currencyCode;
       if (!sku?.id || !sku.name || !currencyCode)
         throw new CommerceError(
@@ -252,7 +273,8 @@ export class CommerceClient {
           'All cart items must use the same currency'
         );
       }
-      if (!this.cartId) {
+      let orderId = this.cartId;
+      if (!orderId) {
         // Match the storefront API contract: create the draft first, then add
         // the SKU below so Commerce resolves pricing. Inline draft line items
         // require caller-supplied amounts and are not the catalog add path.
@@ -273,20 +295,15 @@ export class CommerceClient {
           clientId,
           apiHost
         );
-        if (!created.addDraftOrder?.id)
+        orderId = created.addDraftOrder?.id ?? null;
+        if (!orderId)
           throw new CommerceError(
             'CART_CREATE_FAILED',
             'Commerce did not return a cart ID'
           );
         // Preserve the ID even if the subsequent SKU add fails.
-        this.saveId(created.addDraftOrder.id);
+        this.saveId(orderId);
       }
-      const orderId = this.cartId;
-      if (!orderId)
-        throw new CommerceError(
-          'CART_CREATE_FAILED',
-          'Commerce did not return a cart ID'
-        );
       const existing = this.snapshot.cart?.lineItems?.find(
         item => item.skuId === skuId
       );
@@ -325,7 +342,7 @@ export class CommerceClient {
     quantity(count, true);
     return this.run(async () => {
       this.assertEditable();
-      await this.hydrate();
+      this.sync();
       await this.readCart();
       if (
         !this.cartId ||
@@ -361,7 +378,8 @@ export class CommerceClient {
   applyDiscount(code: string): Promise<Cart | null> {
     return this.run(async () => {
       this.assertEditable();
-      await this.hydrate();
+      this.sync();
+      await this.readCart();
       if (!this.cartId)
         throw new CommerceError(
           'EMPTY_CART',
@@ -381,13 +399,36 @@ export class CommerceClient {
     });
   }
 
+  /** Return and success URLs default to the current page; relative overrides resolve against it. */
+  private navigation(): { returnUrl: string; successUrl: string } {
+    const page = typeof location === 'undefined' ? undefined : location.href;
+    const { checkout } = this.config;
+    const returnUrl = checkout?.returnUrl || page;
+    const successUrl = checkout?.successUrl || page;
+    if (!returnUrl || !successUrl)
+      throw new CommerceError(
+        'RETURN_URL_REQUIRED',
+        'Checkout requires return and success URLs'
+      );
+    return {
+      returnUrl: navigationUrl(returnUrl, page),
+      successUrl: navigationUrl(successUrl, page),
+    };
+  }
+
+  /**
+   * One checkout starts at a time. Identical concurrent requests share the
+   * in-flight session; different purchases are rejected. The OAuth token is
+   * resolved before the cart lock is taken so a slow token callback cannot
+   * block cart changes in other tabs.
+   */
   private startCheckout(
-    source: 'cart' | 'buy-now' | 'payment',
     intent: string,
-    input: () => Promise<Pick<SessionInput, 'draftOrderId' | 'lineItems'>>
+    input: () => Promise<Purchase>
   ): Promise<Session> {
-    if (this.checkoutPromise) {
-      if (this.checkoutIntent === intent) return this.checkoutPromise;
+    if (this.activeCheckout) {
+      if (this.activeCheckout.intent === intent)
+        return this.activeCheckout.promise;
       return Promise.reject(
         new CommerceError(
           'CHECKOUT_ACTIVE',
@@ -399,8 +440,7 @@ export class CommerceClient {
       return Promise.reject(
         new CommerceError('CHECKOUT_ACTIVE', 'A checkout is already open')
       );
-    this.checkoutIntent = intent;
-    this.checkoutPromise = this.run(async () => {
+    const promise = this.track(async () => {
       const { getAccessToken, storeId, channelId, apiHost, checkout } =
         this.config;
       if (!getAccessToken)
@@ -414,57 +454,41 @@ export class CommerceClient {
           'OAUTH_REQUIRED',
           'The OAuth client did not return an access token'
         );
-      const purchase = await input();
-      const currentUrl =
-        typeof location === 'undefined' ? undefined : location.href;
-      const returnUrl = checkout?.returnUrl || currentUrl;
-      const successUrl = checkout?.successUrl || currentUrl;
-      if (!returnUrl || !successUrl)
-        throw new CommerceError(
-          'RETURN_URL_REQUIRED',
-          'Checkout requires return and success URLs'
+      const navigation = this.navigation();
+      return this.run(async () => {
+        const purchase = await input();
+        const session = await api.createCheckoutSession(
+          { ...checkout, ...purchase, storeId, channelId, ...navigation },
+          { accessToken: token, apiHost }
         );
-      for (const url of [returnUrl, successUrl]) {
-        if (!['https:', 'http:'].includes(new URL(url).protocol))
+        if (!session?.id || !session.url)
           throw new CommerceError(
-            'INVALID_URL',
-            'Checkout navigation URLs must use HTTP or HTTPS'
+            'CHECKOUT_CREATE_FAILED',
+            'Commerce did not return a complete checkout session'
           );
-      }
-      const session = await api.createCheckoutSession(
-        { ...checkout, ...purchase, storeId, channelId, returnUrl, successUrl },
-        { accessToken: token, apiHost }
-      );
-      if (!session?.id || !session.url)
-        throw new CommerceError(
-          'CHECKOUT_CREATE_FAILED',
-          'Commerce did not return a complete checkout session'
-        );
-      if (session.storeId !== storeId || session.channelId !== channelId)
-        throw new CommerceError(
-          'CHECKOUT_SCOPE_MISMATCH',
-          'Checkout does not match the configured storefront'
-        );
-      const completeSession = {
-        ...session,
-        id: session.id,
-        url: session.url,
-      };
-      this.update({
-        checkout: completeSession,
-        checkoutSource: source,
+        if (session.storeId !== storeId || session.channelId !== channelId)
+          throw new CommerceError(
+            'CHECKOUT_SCOPE_MISMATCH',
+            'Checkout does not match the configured storefront'
+          );
+        const complete: Session = {
+          ...session,
+          id: session.id,
+          url: session.url,
+        };
+        this.update({ checkout: complete });
+        return complete;
       });
-      return completeSession;
     }).finally(() => {
-      this.checkoutPromise = null;
-      this.checkoutIntent = null;
+      this.activeCheckout = null;
     });
-    return this.checkoutPromise;
+    this.activeCheckout = { intent, promise };
+    return promise;
   }
 
   checkout(): Promise<Session> {
-    return this.startCheckout('cart', 'cart', async () => {
-      await this.hydrate();
+    return this.startCheckout('cart', async () => {
+      this.sync();
       const cart = await this.readCart();
       if (!cart?.lineItems?.length)
         throw new CommerceError(
@@ -479,18 +503,14 @@ export class CommerceClient {
     identifier(skuId, 'skuId');
     quantity(count);
     return this.startCheckout(
-      'buy-now',
       JSON.stringify(['buy-now', skuId, count]),
-      async () => ({
-        lineItems: [{ skuId, quantity: count }],
-      })
+      async () => ({ lineItems: [{ skuId, quantity: count }] })
     );
   }
 
   pay(reference: string): Promise<Session> {
     identifier(reference, 'payment reference');
     return this.startCheckout(
-      'payment',
       JSON.stringify(['payment', reference]),
       async () => {
         if (!this.config.resolvePayment)
@@ -529,10 +549,8 @@ export class CommerceClient {
     );
   }
 
+  /** Release the hosted session so the cart can change again. The saved cart is kept. */
   closeCheckout(): void {
-    this.update({
-      checkout: null,
-      checkoutSource: null,
-    });
+    this.update({ checkout: null });
   }
 }

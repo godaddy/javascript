@@ -1,6 +1,7 @@
 import { CommerceClient } from './client';
 import { type CommerceConfig, CommerceError } from './types';
 
+export { itemCount } from './cart';
 export { CommerceClient } from './client';
 export * from './types';
 
