@@ -1,5 +1,6 @@
 import type { PaymentMethodCreateParams } from '@stripe/stripe-js';
 import { useCallback, useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderProductsMap } from '@/components/checkout/order/use-draft-order-products';
@@ -209,6 +210,7 @@ type BuildPaymentRequestsInput = {
   session?: CheckoutSession | null;
   paypalMerchantId?: string;
   hostname: string;
+  tipAmount?: number;
 };
 
 export function buildPaymentRequests({
@@ -218,6 +220,7 @@ export function buildPaymentRequests({
   session,
   paypalMerchantId,
   hostname,
+  tipAmount = 0,
 }: BuildPaymentRequestsInput): PaymentRequests {
   const totals = order?.totals;
   const currencyCode = totals?.total?.currencyCode || 'USD';
@@ -234,6 +237,7 @@ export function buildPaymentRequests({
     ) || 0;
   const discountMinorUnits = totals?.discountTotal?.value || 0;
   const totalMinorUnits = totals?.total?.value || 0;
+  const totalWithTipMinorUnits = totalMinorUnits + tipAmount;
 
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
   const shippingAddress = {
@@ -274,7 +278,7 @@ export function buildPaymentRequests({
     total: {
       label: 'Order Total',
       amount: formatCurrency({
-        amount: totals?.total?.value || 0,
+        amount: session?.enableTips ? totalWithTipMinorUnits : totalMinorUnits,
         currencyCode,
         inputInMinorUnits: true,
       }),
@@ -331,6 +335,19 @@ export function buildPaymentRequests({
         }),
         type: 'final',
       },
+      ...(session?.enableTips && tipAmount
+        ? [
+            {
+              label: 'Tip',
+              amount: formatCurrency({
+                amount: tipAmount,
+                currencyCode,
+                inputInMinorUnits: true,
+              }),
+              type: 'final',
+            },
+          ]
+        : []),
     ].filter(item => Number.parseFloat(item.amount) !== 0),
   };
 
@@ -368,7 +385,7 @@ export function buildPaymentRequests({
     transactionInfo: {
       totalPriceStatus: 'FINAL',
       totalPrice: formatCurrency({
-        amount: totals?.total?.value || 0,
+        amount: session?.enableTips ? totalWithTipMinorUnits : totalMinorUnits,
         currencyCode,
         inputInMinorUnits: true,
       }),
@@ -433,6 +450,23 @@ export function buildPaymentRequests({
           type: 'LINE_ITEM',
           status: 'FINAL',
         },
+        ...(session?.enableTips && tipAmount
+          ? [
+              {
+                label: 'Tip',
+                price: Number.parseFloat(
+                  formatCurrency({
+                    amount: tipAmount,
+                    currencyCode,
+                    inputInMinorUnits: true,
+                    returnRaw: true,
+                  })
+                ),
+                type: 'LINE_ITEM',
+                status: 'FINAL',
+              },
+            ]
+          : []),
       ].filter(item => item?.price !== 0),
     },
   };
@@ -442,7 +476,8 @@ export function buildPaymentRequests({
     subtotalMinorUnits +
     taxMinorUnits +
     shippingMinorUnits -
-    discountMinorUnits;
+    discountMinorUnits +
+    (session?.enableTips ? tipAmount : 0);
 
   const payPalMerchantId = paypalMerchantId?.trim();
   const payPalRequest: PayPalRequest = {
@@ -463,7 +498,9 @@ export function buildPaymentRequests({
             item_total: {
               currency_code: currencyCode,
               value: formatCurrency({
-                amount: subtotalMinorUnits,
+                amount: session?.enableTips
+                  ? subtotalMinorUnits + tipAmount
+                  : subtotalMinorUnits,
                 currencyCode,
                 inputInMinorUnits: true,
                 returnRaw: true,
@@ -498,19 +535,39 @@ export function buildPaymentRequests({
             },
           },
         },
-        items: items.map(lineItem => ({
-          name: lineItem?.name || '',
-          unit_amount: {
-            currency_code: currencyCode,
-            value: formatCurrency({
-              amount: lineItem?.originalPrice || 0,
-              currencyCode,
-              inputInMinorUnits: true,
-              returnRaw: true,
-            }),
-          },
-          quantity: (lineItem?.quantity || 1).toString(),
-        })),
+        items: items
+          .map(lineItem => ({
+            name: lineItem?.name || '',
+            unit_amount: {
+              currency_code: currencyCode,
+              value: formatCurrency({
+                amount: lineItem?.originalPrice || 0,
+                currencyCode,
+                inputInMinorUnits: true,
+                returnRaw: true,
+              }),
+            },
+            quantity: (lineItem?.quantity || 1).toString(),
+          }))
+          .concat(
+            session?.enableTips && tipAmount
+              ? [
+                  {
+                    name: 'Tip',
+                    unit_amount: {
+                      currency_code: currencyCode,
+                      value: formatCurrency({
+                        amount: tipAmount,
+                        currencyCode,
+                        inputInMinorUnits: true,
+                        returnRaw: true,
+                      }),
+                    },
+                    quantity: '1',
+                  },
+                ]
+              : []
+          ),
         shipping: shippingAddress,
         billing: billingAddress,
       },
@@ -533,7 +590,7 @@ export function buildPaymentRequests({
 
   const squarePaymentRequest: SquarePaymentRequest = {
     amount: formatCurrency({
-      amount: totals?.total?.value || 0,
+      amount: session?.enableTips ? totalWithTipMinorUnits : totalMinorUnits,
       currencyCode,
       inputInMinorUnits: true,
       returnRaw: true,
@@ -558,6 +615,9 @@ export function buildPaymentRequests({
     sellerKeyedIn: false,
   };
 
+  // Express starts from the item subtotal on purpose: the wallet's own event
+  // flows add shipping and taxes as the customer picks an address and method,
+  // and express never charges a tip.
   const poyntExpressRequest: PoyntExpressRequest = {
     total: {
       label: 'Order Total',
@@ -568,26 +628,24 @@ export function buildPaymentRequests({
         returnRaw: true,
       }),
     },
-    lineItems: [
-      ...(items || []).map(lineItem => {
-        return {
-          label: lineItem?.name || '',
-          amount: formatCurrency({
-            amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
-            currencyCode,
-            inputInMinorUnits: true,
-            returnRaw: true,
-          }),
-        };
-      }),
-    ],
+    lineItems: (items || []).map(lineItem => {
+      return {
+        label: lineItem?.name || '',
+        amount: formatCurrency({
+          amount: (lineItem?.originalPrice || 0) * (lineItem?.quantity || 1),
+          currencyCode,
+          inputInMinorUnits: true,
+          returnRaw: true,
+        }),
+      };
+    }),
   };
 
   const poyntStandardRequest: PoyntStandardRequest = {
     total: {
       label: 'Order Total',
       amount: formatCurrency({
-        amount: totalMinorUnits,
+        amount: session?.enableTips ? totalWithTipMinorUnits : totalMinorUnits,
         currencyCode,
         inputInMinorUnits: true,
         returnRaw: true,
@@ -632,6 +690,19 @@ export function buildPaymentRequests({
           returnRaw: true,
         }),
       },
+      ...(session?.enableTips && tipAmount
+        ? [
+            {
+              label: 'Tip',
+              amount: formatCurrency({
+                amount: tipAmount,
+                currencyCode,
+                inputInMinorUnits: true,
+                returnRaw: true,
+              }),
+            },
+          ]
+        : []),
     ],
   };
 
@@ -657,6 +728,11 @@ export function useBuildPaymentRequest(): PaymentRequests & {
   const hostname =
     typeof document === 'undefined' ? '' : document.location.hostname;
   const paypalMerchantId = paypalConfig?.merchantId;
+  // Shipping callers all sit inside CustomFormProvider, but the hook does not
+  // require a form context, so tolerate its absence and treat the tip as 0.
+  const form = useFormContext();
+  // Subscribing keeps the requests below in step with the tip the buyer picks.
+  const watchedTipAmount = form?.watch('tipAmount') || 0;
 
   const buildPaymentRequestsFromOrder = useCallback<PaymentRequestBuilder>(
     orderOverride =>
@@ -667,13 +743,34 @@ export function useBuildPaymentRequest(): PaymentRequests & {
         session,
         paypalMerchantId,
         hostname,
+        // Read now rather than trusting the last render: callers such as
+        // PayPal's `createOrder` run from an event handler after the buyer may
+        // have changed the tip.
+        tipAmount: form?.getValues('tipAmount') ?? 0,
       }),
-    [formatCurrency, hostname, order, paypalMerchantId, session, skusMap]
+    [form, formatCurrency, hostname, order, paypalMerchantId, session, skusMap]
   );
 
   const requests = useMemo(
-    () => buildPaymentRequestsFromOrder(order),
-    [buildPaymentRequestsFromOrder, order]
+    () =>
+      buildPaymentRequests({
+        order,
+        skusMap,
+        formatCurrency,
+        session,
+        paypalMerchantId,
+        hostname,
+        tipAmount: watchedTipAmount,
+      }),
+    [
+      formatCurrency,
+      hostname,
+      order,
+      paypalMerchantId,
+      session,
+      skusMap,
+      watchedTipAmount,
+    ]
   );
 
   return { ...requests, buildPaymentRequestsFromOrder };

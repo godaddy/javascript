@@ -1,24 +1,60 @@
 import { useMutation } from '@tanstack/react-query';
+import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
+import {
+  applyTipFieldError,
+  applyTipOnlyChargeError,
+} from '@/components/checkout/tips/utils/tip-field-errors';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { authorizeCheckoutSession } from '@/lib/godaddy/godaddy';
 import type { AuthorizeCheckoutSessionInput } from '@/types';
 
 export function useAuthorizeCheckout() {
   const { session, jwt } = useCheckoutContext();
-  const { apiHost } = useGoDaddyContext();
+  const { apiHost, t } = useGoDaddyContext();
+  const form = useFormContext();
+  const { data: totals } = useDraftOrderTotals();
   const flushCheckoutSync = useFlushCheckoutSync();
 
   return useMutation({
     mutationFn: async (input: AuthorizeCheckoutSessionInput['input']) => {
       await flushCheckoutSync();
 
+      // The form is the single source of truth for the tip, deliberately
+      // overriding any `tipAmount` the caller passed: the authorized amount must
+      // match what confirmCheckout later captures, so it cannot drift to a value
+      // a provider captured earlier. Read after the sync flush, once pending
+      // form state has settled.
+      //
+      // Note the precedence is the opposite of `useConfirmCheckout`, which
+      // prefers a caller-supplied tip. Confirming has to accept one — express
+      // wallets and the CCAvenue return leg know a tip the form no longer holds
+      // — whereas nothing authorizes on their behalf, so there is no such tip to
+      // honour here.
+      const payload = {
+        ...input,
+        tipAmount: session?.enableTips
+          ? (form?.getValues('tipAmount') ?? 0)
+          : undefined,
+      };
+
       const result = jwt
-        ? await authorizeCheckoutSession(input, { accessToken: jwt }, apiHost)
-        : await authorizeCheckoutSession(input, session, apiHost);
+        ? await authorizeCheckoutSession(payload, { accessToken: jwt }, apiHost)
+        : await authorizeCheckoutSession(payload, session, apiHost);
 
       return result.authorizeCheckoutSession;
+    },
+    onError: (error: unknown) => {
+      const translate = (code: string) =>
+        t.apiErrors?.[code as keyof typeof t.apiErrors];
+
+      // An unattributed rejection still belongs on the tip field when the tip is
+      // the only thing being charged.
+      if (!applyTipFieldError(form, error, translate) && session?.enableTips) {
+        applyTipOnlyChargeError(form, totals?.total?.value || 0, translate);
+      }
     },
   });
 }

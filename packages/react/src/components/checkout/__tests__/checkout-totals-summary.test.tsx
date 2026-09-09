@@ -216,7 +216,7 @@ describe('Checkout totals and order summary UI', () => {
     });
     await waitForCheckoutReady();
 
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
 
     await waitFor(() => {
       expect(screen.getAllByText('$5.00').length).toBeGreaterThan(0);

@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { describe, expect, it } from 'vitest';
 import { checkoutContext } from '@/components/checkout/checkout';
 import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
@@ -14,8 +15,16 @@ import {
   mockGodaddyApi,
 } from '../../__tests__/checkout-test-env';
 
-function wrapper(session = buildCheckoutSession()) {
+function wrapper(
+  session = buildCheckoutSession(),
+  formValues?: { tipAmount?: number }
+) {
   const queryClient = createTestQueryClient();
+
+  function MaybeForm({ children }: { children: React.ReactNode }) {
+    const form = useForm({ defaultValues: formValues });
+    return <FormProvider {...form}>{children}</FormProvider>;
+  }
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
     const [isConfirmingCheckout, setIsConfirmingCheckout] =
@@ -35,7 +44,7 @@ function wrapper(session = buildCheckoutSession()) {
             setCheckoutErrors,
           }}
         >
-          {children}
+          {formValues ? <MaybeForm>{children}</MaybeForm> : children}
         </checkoutContext.Provider>
       </GoDaddyProvider>
     );
@@ -82,6 +91,37 @@ describe('useConfirmExpressCheckout', () => {
     ).not.toHaveProperty('isExpress');
     expect(getOperations('UpdateCheckoutSessionDraftOrder')).toHaveLength(0);
     expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
+  });
+
+  it.each([
+    { scenario: 'tips are enabled for the session', enableTips: true },
+    { scenario: 'tips are disabled for the session', enableTips: false },
+  ])('omits the tip when $scenario', async ({ enableTips }) => {
+    // Express never charges a tip: its wallet sheet is built from the subtotal
+    // plus the shipping and taxes it calculates in its own event flows. A tip
+    // the customer typed into the standard form must not ride along.
+    const session = buildCheckoutSession({ enableTips });
+    const draftOrder = buildDraftOrder();
+    mockGodaddyApi({ session, draftOrder });
+
+    const { result } = renderHook(() => useConfirmExpressCheckout(), {
+      wrapper: wrapper(session, { tipAmount: 1234 }),
+    });
+
+    await result.current.mutateAsync({
+      paymentToken: 'wallet-nonce',
+      paymentType: 'apple_pay',
+      paymentProvider: PaymentProvider.POYNT,
+      isExpress: true,
+    });
+
+    await waitFor(() => {
+      expect(getOperations('ConfirmCheckoutSession')).toHaveLength(1);
+    });
+    const confirmInput = getOperations('ConfirmCheckoutSession')[0]?.input as
+      | { tipAmount?: number }
+      | undefined;
+    expect(confirmInput?.tipAmount).toBeUndefined();
   });
 
   it('rejects without confirming while checkout is already confirming', async () => {

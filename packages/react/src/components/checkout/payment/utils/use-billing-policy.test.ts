@@ -126,6 +126,44 @@ describe('resolveBillingPolicyForCheckoutState', () => {
     });
   });
 
+  it('leaves the free flow once a tip makes a zero-total order payable', () => {
+    expect(
+      resolveBillingPolicyForCheckoutState({
+        values: {
+          ...values,
+          deliveryMethod: DeliveryMethods.PICKUP,
+          paymentUseShippingAddress: false,
+          tipAmount: 500,
+        },
+        session: buildSession({ enableTips: true }),
+        totals: freeTotals,
+      })
+    ).toEqual({
+      mode: BillingCollectionModes.ADDRESS,
+      location: BillingCollectionLocations.INLINE_PAYMENT_FORM,
+      usesShippingAddress: false,
+    });
+  });
+
+  it('ignores a stale tip when the session has tips disabled', () => {
+    expect(
+      resolveBillingPolicyForCheckoutState({
+        values: {
+          ...values,
+          deliveryMethod: DeliveryMethods.PICKUP,
+          paymentUseShippingAddress: false,
+          tipAmount: 500,
+        },
+        session: buildSession({ enableTips: false }),
+        totals: freeTotals,
+      })
+    ).toEqual({
+      mode: BillingCollectionModes.NAMES,
+      location: BillingCollectionLocations.FREE_PAYMENT_FORM,
+      usesShippingAddress: false,
+    });
+  });
+
   it('keeps a positive-total card order in the paid inline flow', () => {
     expect(
       resolveBillingPolicyForCheckoutState({

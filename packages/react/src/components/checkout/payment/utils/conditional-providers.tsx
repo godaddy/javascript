@@ -117,7 +117,9 @@ export function ConditionalExpressProviders({
 
   // Only wrap with StripeProvider if Stripe is configured
   if (stripeConfig?.publishableKey?.trim()) {
-    wrappedChildren = <StripeProvider>{wrappedChildren}</StripeProvider>;
+    wrappedChildren = (
+      <StripeProvider isExpress>{wrappedChildren}</StripeProvider>
+    );
   }
 
   return <>{wrappedChildren}</>;
