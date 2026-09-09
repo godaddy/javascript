@@ -24,15 +24,15 @@ export default async function Home() {
       enableTips: true,
       tips: {
         default: {
-          percentages: [ 20, 40, 60 ]
+          percentages: [20, 40, 60],
         },
         thresholds: [
           {
             minSubtotal: 0,
             maxSubtotal: 1000,
-            amounts: [ 300, 500, 700 ]
-          }
-        ]
+            amounts: [300, 500, 700],
+          },
+        ],
       },
       shipping: {
         fulfillmentLocationId: 'default-location',

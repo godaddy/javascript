@@ -14,7 +14,10 @@ import type { CheckoutSession, Totals } from '@/types';
 export function resolveBillingPolicyForCheckoutState(input: {
   values: Pick<
     CheckoutFormData,
-    'paymentMethod' | 'deliveryMethod' | 'paymentUseShippingAddress' | 'tipAmount'
+    | 'paymentMethod'
+    | 'deliveryMethod'
+    | 'paymentUseShippingAddress'
+    | 'tipAmount'
   >;
   session?: CheckoutSession | null;
   totals?: Totals | null;

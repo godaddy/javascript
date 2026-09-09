@@ -5,7 +5,10 @@ import type { Totals } from '@/types';
  * Single definition of "free order" so the rendered payment form, the trigger
  * field filter, and the schema all agree.
  */
-export function isFreeOrderTotal(totals?: Totals | null, tipAmount?: number): boolean {
+export function isFreeOrderTotal(
+  totals?: Totals | null,
+  tipAmount?: number
+): boolean {
   const totalValue = totals?.total?.value;
   return typeof totalValue === 'number' && totalValue + (tipAmount || 0) <= 0;
 }
