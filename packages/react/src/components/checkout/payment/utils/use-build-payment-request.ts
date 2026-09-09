@@ -1,12 +1,12 @@
 import type { PaymentMethodCreateParams } from '@stripe/stripe-js';
 import { useCallback, useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useDraftOrderProductsMap } from '@/components/checkout/order/use-draft-order-products';
 import { mapSkusToItemsDisplay } from '@/components/checkout/utils/checkout-transformers';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import type { CheckoutSession, DraftOrder, SKUProduct } from '@/types';
-import { useFormContext } from 'react-hook-form';
 
 // Apple Pay request interface
 export interface ApplePayRequest {
@@ -210,6 +210,7 @@ type BuildPaymentRequestsInput = {
   session?: CheckoutSession | null;
   paypalMerchantId?: string;
   hostname: string;
+  tipAmount?: number;
 };
 
 export function buildPaymentRequests({
@@ -219,6 +220,7 @@ export function buildPaymentRequests({
   session,
   paypalMerchantId,
   hostname,
+  tipAmount = 0,
 }: BuildPaymentRequestsInput): PaymentRequests {
   const totals = order?.totals;
   const currencyCode = totals?.total?.currencyCode || 'USD';
@@ -234,8 +236,6 @@ export function buildPaymentRequests({
       0
     ) || 0;
   const discountMinorUnits = totals?.discountTotal?.value || 0;
-  const form = useFormContext();
-  const tipAmount = form?.watch('tipAmount') || 0;
   const totalMinorUnits = totals?.total?.value || 0;
   const totalWithTipMinorUnits = totalMinorUnits + tipAmount;
 
@@ -728,6 +728,11 @@ export function useBuildPaymentRequest(): PaymentRequests & {
   const hostname =
     typeof document === 'undefined' ? '' : document.location.hostname;
   const paypalMerchantId = paypalConfig?.merchantId;
+  // Shipping callers all sit inside CustomFormProvider, but the hook does not
+  // require a form context, so tolerate its absence and treat the tip as 0.
+  const form = useFormContext();
+  // Subscribing keeps the requests below in step with the tip the buyer picks.
+  const watchedTipAmount = form?.watch('tipAmount') || 0;
 
   const buildPaymentRequestsFromOrder = useCallback<PaymentRequestBuilder>(
     orderOverride =>
@@ -738,13 +743,34 @@ export function useBuildPaymentRequest(): PaymentRequests & {
         session,
         paypalMerchantId,
         hostname,
+        // Read now rather than trusting the last render: callers such as
+        // PayPal's `createOrder` run from an event handler after the buyer may
+        // have changed the tip.
+        tipAmount: form?.getValues('tipAmount') ?? 0,
       }),
-    [formatCurrency, hostname, order, paypalMerchantId, session, skusMap]
+    [form, formatCurrency, hostname, order, paypalMerchantId, session, skusMap]
   );
 
   const requests = useMemo(
-    () => buildPaymentRequestsFromOrder(order),
-    [buildPaymentRequestsFromOrder, order]
+    () =>
+      buildPaymentRequests({
+        order,
+        skusMap,
+        formatCurrency,
+        session,
+        paypalMerchantId,
+        hostname,
+        tipAmount: watchedTipAmount,
+      }),
+    [
+      formatCurrency,
+      hostname,
+      order,
+      paypalMerchantId,
+      session,
+      skusMap,
+      watchedTipAmount,
+    ]
   );
 
   return { ...requests, buildPaymentRequestsFromOrder };
