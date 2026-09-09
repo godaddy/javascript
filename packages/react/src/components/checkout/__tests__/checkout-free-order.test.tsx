@@ -693,12 +693,12 @@ describe('Checkout free / offline orders', () => {
     );
 
     await waitForOperation('ConfirmCheckoutSession');
-    const confirmInput = getLastConfirmInput();
-    expect(confirmInput).toMatchObject({
+    // Sent, not omitted: the API accepts a zero tip on an offline confirm.
+    expect(getLastConfirmInput()).toMatchObject({
       paymentType: 'offline',
       paymentProvider: 'OFFLINE',
+      tipAmount: 0,
     });
-    expect(confirmInput).not.toHaveProperty('tipAmount');
   });
 
   it('keeps the paid form visible when coupon application fails', async () => {

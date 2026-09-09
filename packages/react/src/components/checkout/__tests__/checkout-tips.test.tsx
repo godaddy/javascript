@@ -505,7 +505,7 @@ describe('Checkout tips', () => {
       };
     }
 
-    it('omits a zero tipAmount, which the API rejects even at zero', async () => {
+    it('sends a zero tipAmount, which the API accepts for an offline order', async () => {
       const { user } = renderCheckout({
         sessionOverrides: offlineTipsSession(),
       });
@@ -520,10 +520,12 @@ describe('Checkout tips', () => {
       );
       await waitForOperation('ConfirmCheckoutSession');
 
-      expect(getLastConfirmInput()).not.toHaveProperty('tipAmount');
+      expect(getLastConfirmInput()).toMatchObject({ tipAmount: 0 });
     });
 
-    it('still sends a positive tipAmount so the rejection reaches the customer', async () => {
+    // Offline collects no tip, so the API rejects a positive one. Sent anyway: a tip
+    // dropped here would report success for money nobody ever collects.
+    it('sends a positive tipAmount so the rejection reaches the customer', async () => {
       const { user } = renderCheckout({
         sessionOverrides: offlineTipsSession(),
       });
