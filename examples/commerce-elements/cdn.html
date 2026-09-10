@@ -50,9 +50,8 @@
       <section class="grid" id="products" aria-label="Products"></section>
       <ul class="errors" id="errors" aria-label="Runtime errors"></ul>
       <p class="muted">
-        Serve the runtime with
-        <code>pnpm --filter @godaddy/commerce build:cdn cdn:serve</code>.
-        The <a href="/">bundled page</a> uses the npm entry points instead.
+        The runtime comes from <code>VITE_COMMERCE_CDN_URL</code>. The
+        <a href="/">bundled page</a> uses the npm entry points instead.
       </p>
     </main>
     <script>

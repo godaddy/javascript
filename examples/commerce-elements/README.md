@@ -30,14 +30,7 @@ browser console, for example `await gddy.addItem('<sku-id>')`.
 
 `/cdn.html` is the same storefront built the way a merchant would build it: a
 config object, a `<script defer>` tag, and `gddy-*` tags in plain HTML. Nothing
-is bundled. Build and serve the runtime first:
-
-```bash
-pnpm --filter @godaddy/commerce build:cdn
-pnpm --filter @godaddy/commerce cdn:serve   # http://localhost:5181/v1/commerce.js
-```
-
-Then open http://localhost:5180/cdn.html. `VITE_COMMERCE_CDN_URL` in
-`.env.local` selects the runtime; point it at a deployed `/v1/commerce.js` to
-exercise a real release. The page shows the runtime version and commit from the
-`gddy:ready` event.
+is bundled here. `VITE_COMMERCE_CDN_URL` in `.env.local` selects the runtime:
+a deployed `/v1/commerce.js`, or one served locally from the protected
+checkout repository that builds it. The page shows the runtime version and
+commit from the `gddy:ready` event.
