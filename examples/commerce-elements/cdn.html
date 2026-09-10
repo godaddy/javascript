@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commerce elements from the CDN</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script>
+      // Everything a storefront needs: one config object and one script tag.
+      // Vite fills the VITE_ placeholders below from .env.local.
+      window.gddyCommerceConfig = {
+        clientId: '%VITE_GODADDY_CLIENT_ID%',
+        storeId: '%VITE_GODADDY_STORE_ID%',
+        channelId: '%VITE_GODADDY_CHANNEL_ID%',
+        apiHost: '%VITE_GODADDY_API_HOST%'.replace(/^https?:\/\//, ''),
+        locale: 'en-US',
+        createSession: async input => {
+          const response = await fetch('/api/commerce/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(input),
+          });
+          if (!response.ok) throw new Error('Checkout is unavailable');
+          return response.json();
+        },
+      };
+      window.addEventListener('gddy:ready', event => {
+        const { version, commit } = event.detail.release;
+        document.getElementById('release').textContent =
+          `runtime ${version} @ ${commit.slice(0, 7)}`;
+      });
+      window.addEventListener('gddy:error', event => {
+        const item = document.createElement('li');
+        const { error } = event.detail ?? {};
+        item.textContent = String(error?.message ?? error ?? 'Unknown error');
+        document.getElementById('errors').append(item);
+      });
+    </script>
+    <script defer src="%VITE_COMMERCE_CDN_URL%"></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="bar">
+        <div>
+          <h1>Commerce elements from the CDN</h1>
+          <p class="muted" id="release">Waiting for the runtime…</p>
+        </div>
+        <gddy-cart-button>Basket</gddy-cart-button>
+      </header>
+      <section class="grid" id="products" aria-label="Products"></section>
+      <ul class="errors" id="errors" aria-label="Runtime errors"></ul>
+      <p class="muted">
+        Serve the runtime with
+        <code>pnpm --filter @godaddy/commerce build:cdn cdn:serve</code>.
+        The <a href="/">bundled page</a> uses the npm entry points instead.
+      </p>
+    </main>
+    <script>
+      // Product cards from VITE_COMMERCE_DEMO_SKUS (`id|label,...`). The elements
+      // stay disabled until the runtime registers them and configuration completes.
+      const grid = document.getElementById('products');
+      for (const entry of '%VITE_COMMERCE_DEMO_SKUS%'.split(',')) {
+        const [id, label] = entry.trim().split('|');
+        if (!id) continue;
+        const card = document.createElement('article');
+        card.className = 'card';
+        const title = document.createElement('h2');
+        title.textContent = label || id;
+        const code = document.createElement('p');
+        code.className = 'muted mono';
+        code.textContent = id;
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+        const add = document.createElement('gddy-add-to-cart');
+        add.setAttribute('sku-id', id);
+        add.textContent = 'Add to cart';
+        const buy = document.createElement('gddy-buy-now');
+        buy.setAttribute('sku-id', id);
+        buy.textContent = 'Buy now';
+        actions.append(add, buy);
+        card.append(title, code, actions);
+        grid.append(card);
+      }
+    </script>
+  </body>
+</html>

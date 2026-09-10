@@ -164,10 +164,17 @@ For custom UI, `createCommerce(config)` returns an isolated client with `ready`,
 
 ## Public library and managed CDN
 
-This OSS repository owns the reusable library, web components, React bindings, types, tests, and integration documentation. It builds the npm package and its stylesheet only.
+This repository owns the library, the elements, the React bindings, the docs, and the source of the managed CDN runtime. `pnpm --filter @godaddy/commerce build` produces the npm package. `pnpm --filter @godaddy/commerce build:cdn` produces `cdn/`, a self-contained browser build that is never published to npm:
 
-A separate protected repository owns the managed CDN entry point, loader, bundle build, release manifests, AWS infrastructure, and deployment/promotion/rollback automation. It consumes an explicitly pinned, reviewed version of this library. Publishing or merging here does not deploy the CDN. The CDN URL and browser global/event contract above describe the intended managed integration; its implementation and deployment belong to that protected repository.
+| File | Cache life | Purpose |
+| --- | --- | --- |
+| `commerce.js` | 5 minutes | The `/v1/commerce.js` loader, a few hundred bytes of classic script that imports the current runtime chunk relative to its own URL. Include it with `<script defer src>`, not `type="module"`. If the import fails it dispatches `gddy:error` on `window`. |
+| `chunks/runtime-*.js` | 1 year, immutable | The runtime. Registers the elements, exposes `window.GddyCommerce` (the library plus `release.version` and `release.commit`), applies `window.gddyCommerceConfig`, links the stylesheet, and fires `gddy:ready` with `{ release }`. |
+| `chunks/*` | 1 year, immutable | The other content-hashed pieces: the drawer with its own React, the redirect helper, and the stylesheet. |
+| `manifest.json` | 5 minutes | Version, commit, build time, and file list of the release currently served. |
 
-Build the public library from the monorepo root with `pnpm --filter @godaddy/commerce... build`, then run `pnpm --filter @godaddy/commerce test` and `pnpm --filter @godaddy/commerce typecheck`. Generated package files are ignored by git.
+The protected checkout repository deploys it. Its workflow checks out this repository at a chosen git ref, runs `build:cdn`, uploads `chunks/` without deleting earlier chunks, then uploads the entry and manifest and invalidates those two paths. The entry has a short cache life and every chunk it references is immutable, so a page that has already loaded keeps its release, new page loads pick up the new build within minutes, and rolling back means uploading an earlier entry again. Merging here changes nothing on the CDN until that workflow runs, and a CDN update needs no npm release.
+
+For a local run, `pnpm --filter @godaddy/commerce cdn:serve` serves `cdn/` at `http://localhost:5181/v1/` with the production cache and CORS headers, and `examples/commerce-elements/cdn.html` loads it from a plain script tag.
 
 See [agent integration instructions](./AGENT-INTEGRATION.md) for the small, consistent contract to use when generating a storefront.

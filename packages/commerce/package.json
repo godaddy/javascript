@@ -27,6 +27,8 @@
   "sideEffects": true,
   "scripts": {
     "build": "tsdown && node scripts/package-styles.mjs",
+    "build:cdn": "tsdown -c tsdown.cdn.config.ts && node scripts/cdn-finish.mjs",
+    "cdn:serve": "node scripts/cdn-serve.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "biome check ./src",
