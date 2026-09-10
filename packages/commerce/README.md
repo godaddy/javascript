@@ -117,7 +117,9 @@ The buttons render in shadow DOM and the drawer renders in light DOM, but both r
 | `--gddy-hover-brightness` / `--gddy-active-brightness` | `1.08` / `.96` | built-in hover and press feedback (`1` disables) |
 | `--gddy-badge-background` / `--gddy-badge-color` | `--gddy-on-color` / `--gddy-color` | cart button count |
 
-Add the `flat` attribute to any button (`<gddy-add-to-cart flat>`) for a solid fill with no gradient, shadow, or contrasting border. For anything else, target the parts from page CSS: `::part(button)`, `::part(count)` on the cart button, and `::part(status)`. Slotted text or markup replaces the default label.
+Add the `flat` attribute to any button (`<gddy-add-to-cart flat>`) for a solid fill with no gradient, shadow, or contrasting border. For anything else, target the parts from page CSS: `::part(button)`, `::part(label)`, `::part(count)` on the cart button, `::part(spinner)`, and `::part(status)`. Slotted text or markup replaces the default label.
+
+While a button's own action runs it carries a `busy` attribute, its label hides, and a ring in `::part(spinner)` takes its place, so the button keeps its size. `gddy-buy-now` and `gddy-payment-button` stay busy after a successful redirect until the page unloads. The other buttons only disable while the cart updates; they do not spin for work they did not start. Set `--gddy-hover-brightness` and friends as usual; the ring inherits the label colour.
 
 A host design system maps its own tokens onto these once, and every element then follows the host theme, including dark mode. For a shadcn-style token set:
 

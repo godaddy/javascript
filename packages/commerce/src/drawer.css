@@ -358,6 +358,28 @@
 .gddy-primary:hover:not(:disabled) {
   filter: brightness(1.15);
 }
+.gddy-spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 8px;
+  vertical-align: -0.15em;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: gddy-spin 0.7s linear infinite;
+}
+@keyframes gddy-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gddy-spinner {
+    animation-duration: 1.5s;
+  }
+}
 .gddy-empty {
   padding: 48px 0;
   text-align: center;

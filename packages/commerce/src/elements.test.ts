@@ -39,6 +39,56 @@ describe('web component integration', () => {
     }
   );
 
+  it('shows a busy indicator only on the button whose action is running', async () => {
+    let finish!: (value: null) => void;
+    vi.spyOn(client, 'addItem').mockImplementation(
+      () =>
+        new Promise<null>(resolve => {
+          finish = resolve;
+        })
+    );
+    const element = document.createElement('gddy-add-to-cart');
+    element.setAttribute('sku-id', 'shirt');
+    const other = document.createElement('gddy-add-to-cart');
+    other.setAttribute('sku-id', 'hat');
+    document.body.append(element, other);
+    await client.ready();
+    const button = element.shadowRoot!.querySelector('button')!;
+    expect(button.querySelector('[part=spinner]')).not.toBeNull();
+    expect(element.hasAttribute('busy')).toBe(false);
+    button.click();
+    expect(element.hasAttribute('busy')).toBe(true);
+    expect(button.getAttribute('aria-busy')).toBe('true');
+    expect(button.disabled).toBe(true);
+    expect(other.hasAttribute('busy')).toBe(false);
+    button.click();
+    finish(null);
+    await vi.waitFor(() => expect(element.hasAttribute('busy')).toBe(false));
+    expect(client.addItem).toHaveBeenCalledTimes(1);
+    expect(button.getAttribute('aria-busy')).toBe('false');
+    expect(button.disabled).toBe(false);
+  });
+
+  it('keeps the indicator after a redirect until the page is restored from cache', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { assign });
+    vi.spyOn(client, 'buyNow').mockResolvedValue({
+      id: 'hosted',
+      url: 'https://checkout.example/c/hosted',
+    } as Session);
+    const element = document.createElement('gddy-buy-now');
+    element.setAttribute('sku-id', 'shirt');
+    document.body.append(element);
+    await client.ready();
+    element.shadowRoot!.querySelector('button')!.click();
+    await vi.waitFor(() => expect(assign).toHaveBeenCalled());
+    expect(element.hasAttribute('busy')).toBe(true);
+    window.dispatchEvent(
+      new PageTransitionEvent('pageshow', { persisted: true })
+    );
+    expect(element.hasAttribute('busy')).toBe(false);
+  });
+
   it('reports session creation failures without navigating', async () => {
     const assign = vi.fn();
     vi.stubGlobal('location', { assign });

@@ -14,7 +14,7 @@ const STYLE = [
   ':host{display:inline-block;font:inherit}',
   // Chrome is variable-driven so a host design system can flatten or restyle it
   // without ::part rules. Defaults reproduce the original look.
-  'button{font:inherit;font-family:var(--gddy-font,inherit);font-weight:var(--gddy-button-weight,400);cursor:pointer;',
+  'button{position:relative;font:inherit;font-family:var(--gddy-font,inherit);font-weight:var(--gddy-button-weight,400);cursor:pointer;',
   'border:var(--gddy-button-border,1px solid var(--gddy-color,#303036));border-radius:var(--gddy-radius,10px);',
   'background:var(--gddy-button-background,linear-gradient(#ffffff12,#0000000a),var(--gddy-color,#303036));',
   'color:var(--gddy-on-color,#fff);padding:var(--gddy-button-padding,.7em 1.1em);min-height:var(--gddy-button-min-height,48px);',
@@ -23,12 +23,23 @@ const STYLE = [
   'button:not(:disabled):active{filter:brightness(var(--gddy-active-brightness,.96))}',
   ':host([flat]) button{background:var(--gddy-color,#303036);box-shadow:none;border-color:var(--gddy-color,#303036)}',
   'button:disabled{opacity:.55;cursor:default}',
+  // A button doing its own work reads as active, not unavailable.
+  ':host([busy]) button:disabled{opacity:.85;cursor:progress}',
   'button:focus-visible{outline:3px solid var(--gddy-focus,#51515b);outline-offset:3px}',
   '[part=count]{margin-left:.5em;padding:0 .55em;border-radius:999px;font-size:.85em;line-height:1.7;',
   'background:var(--gddy-badge-background,var(--gddy-on-color,#fff));color:var(--gddy-badge-color,var(--gddy-color,#303036))}',
   '[part=count]:empty{display:none}',
   '[role=status]{display:block;font-size:.85em;max-width:30ch;margin-top:.3em;color:var(--gddy-error,#a31919)}',
   '[role=status]:empty{display:none}',
+  // While this button's own action runs, a ring replaces the label without
+  // changing the button's size. Inherits the label colour.
+  '[part=spinner]{position:absolute;inset:0;display:none;place-items:center}',
+  '[part=spinner]::after{content:"";width:1.1em;height:1.1em;box-sizing:border-box;border-radius:50%;',
+  'border:2px solid currentColor;border-right-color:transparent;animation:gddy-spin .7s linear infinite}',
+  ':host([busy]) [part=spinner]{display:grid}',
+  ':host([busy]) [part=label],:host([busy]) [part=count]{visibility:hidden}',
+  '@keyframes gddy-spin{to{transform:rotate(1turn)}}',
+  '@media (prefers-reduced-motion:reduce){[part=spinner]::after{animation-duration:1.5s}}',
 ].join('');
 
 abstract class CommerceButton extends ElementBase {
@@ -38,11 +49,15 @@ abstract class CommerceButton extends ElementBase {
   private button?: HTMLButtonElement;
   private countBadge?: HTMLElement;
   private status?: HTMLElement;
+  /** True while this element's own click action is running. */
+  private busy = false;
   protected client?: CommerceClient;
   /** Fallback label when the element has no text content. */
   protected abstract label: string;
   /** Whether the button is unavailable while the cart is busy or a checkout is open. */
   protected readonly waitsForCart: boolean = true;
+  /** Whether a successful action leaves the page; the indicator then stays until unload. */
+  protected readonly redirects: boolean = false;
   protected abstract activate(client: CommerceClient): Promise<unknown>;
 
   /** A count rendered in `::part(count)` and the accessible name, or null for none. */
@@ -60,10 +75,16 @@ abstract class CommerceButton extends ElementBase {
       this.button.setAttribute('part', 'button');
       const slot = document.createElement('slot');
       slot.textContent = this.label;
+      const labelWrap = document.createElement('span');
+      labelWrap.setAttribute('part', 'label');
+      labelWrap.append(slot);
       this.countBadge = document.createElement('span');
       this.countBadge.setAttribute('part', 'count');
       this.countBadge.setAttribute('aria-hidden', 'true');
-      this.button.append(slot, this.countBadge);
+      const spinner = document.createElement('span');
+      spinner.setAttribute('part', 'spinner');
+      spinner.setAttribute('aria-hidden', 'true');
+      this.button.append(labelWrap, this.countBadge, spinner);
       this.status = document.createElement('span');
       this.status.setAttribute('role', 'status');
       this.status.setAttribute('part', 'status');
@@ -73,13 +94,21 @@ abstract class CommerceButton extends ElementBase {
       root.append(style, this.button, this.status);
     }
     this.unconfigure = onCommerceConfigured(() => this.connectClient());
+    window.addEventListener('pageshow', this.onPageShow);
     this.connectClient();
   }
 
   disconnectedCallback(): void {
     this.unsubscribe?.();
     this.unconfigure?.();
+    window.removeEventListener('pageshow', this.onPageShow);
   }
+
+  /** Coming back from hosted checkout through the back/forward cache restores
+   *  the page as it was, still showing the redirect indicator. Clear it. */
+  private readonly onPageShow = (event: PageTransitionEvent): void => {
+    if (event.persisted && this.busy) this.setBusy(false);
+  };
   attributeChangedCallback(): void {
     this.renderState();
   }
@@ -102,9 +131,13 @@ abstract class CommerceButton extends ElementBase {
     const snapshot = this.client?.getSnapshot();
     this.button.disabled =
       !this.client ||
+      this.busy ||
       this.hasAttribute('disabled') ||
       (this.waitsForCart && Boolean(snapshot?.pending || snapshot?.checkout));
-    this.button.setAttribute('aria-busy', String(Boolean(snapshot?.pending)));
+    this.button.setAttribute(
+      'aria-busy',
+      String(this.busy || Boolean(snapshot?.pending))
+    );
     const count = this.badge(snapshot);
     if (this.countBadge)
       this.countBadge.textContent = count ? String(count) : '';
@@ -116,11 +149,21 @@ abstract class CommerceButton extends ElementBase {
     }
   }
 
+  private setBusy(value: boolean): void {
+    this.busy = value;
+    this.toggleAttribute('busy', value);
+    this.renderState();
+  }
+
   private async clickAction(): Promise<void> {
+    if (this.busy) return;
+    this.setBusy(true);
     try {
       if (this.status) this.status.textContent = '';
       await this.activate(this.client ?? getCommerce());
+      if (!this.redirects) this.setBusy(false);
     } catch (error) {
+      this.setBusy(false);
       this.report(error);
     }
   }
@@ -176,6 +219,7 @@ export class GddyCartButton extends CommerceButton {
 
 export class GddyBuyNow extends CommerceButton {
   protected label = 'Buy now';
+  protected readonly redirects = true;
   protected async activate(client: CommerceClient): Promise<void> {
     const session = await client.buyNow(
       this.getAttribute('sku-id') || '',
@@ -187,6 +231,7 @@ export class GddyBuyNow extends CommerceButton {
 
 export class GddyPaymentButton extends CommerceButton {
   protected label = 'Pay now';
+  protected readonly redirects = true;
   protected async activate(client: CommerceClient): Promise<void> {
     const session = await client.pay(this.getAttribute('reference') || '');
     redirectToCheckout(client, session);

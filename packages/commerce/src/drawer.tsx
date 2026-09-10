@@ -402,6 +402,7 @@ function Drawer({
                     });
                   }}
                 >
+                  {busy && <span className='gddy-spinner' aria-hidden='true' />}
                   {busy ? 'Updating…' : 'Continue to checkout'}
                 </button>
               </div>
