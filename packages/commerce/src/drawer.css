@@ -168,13 +168,9 @@
   align-items: start;
   gap: 12px;
   padding: 16px 0;
-  border-bottom: 1px solid var(--gddy-border, #e6e6e8);
 }
 .gddy-lines > li:first-child {
   padding-top: 0;
-}
-.gddy-lines > li:last-child {
-  border-bottom: 0;
 }
 .gddy-product-image {
   width: 80px;
