@@ -315,18 +315,19 @@
   overflow: auto;
   overscroll-behavior: contain;
   border-top: 1px solid var(--gddy-border, #e6e6e8);
-  padding: var(--gddy-gutter) var(--gddy-gutter) var(--gddy-space-2);
+  /* Everything below the divider sits on an 8px rhythm: 16px around each
+     block, 4px between the subtotal and its note. */
+  padding: var(--gddy-gutter);
   scrollbar-width: thin;
   scrollbar-color: var(--gddy-border, #e6e6e8) transparent;
 }
 .gddy-totals {
-  margin: 0 0 8px;
+  margin: 0 0 var(--gddy-space-1);
 }
 .gddy-totals > div {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding: 2px 0;
 }
 .gddy-totals > div:first-child {
   font-size: 16px;
@@ -340,7 +341,7 @@
   color: var(--gddy-muted, #68686f);
   font-size: 12px;
   line-height: 1.5;
-  margin: 0 0 12px;
+  margin: 0 0 var(--gddy-gutter);
 }
 .gddy-drawer .gddy-primary {
   width: 100%;
@@ -394,7 +395,8 @@
   justify-content: center;
   gap: 6px;
   flex-shrink: 0;
-  padding: var(--gddy-space-2) var(--gddy-gutter) var(--gddy-space-3);
+  /* The block above already ends in a 16px gutter. */
+  padding: 0 var(--gddy-gutter) var(--gddy-gutter);
   text-align: center;
   font-size: 10px;
   color: var(--gddy-muted, #68686f);
