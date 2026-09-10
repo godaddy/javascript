@@ -111,7 +111,7 @@ export function Cart({
   const subtotal = order?.totals?.subTotal?.value || 0;
   const shipping = order?.totals?.shippingTotal?.value || 0;
   const taxes = order?.totals?.taxTotal?.value || 0;
-  const vatIncluded = getIncludedTaxTotal(order?.taxes);
+  const includedTaxTotal = getIncludedTaxTotal(order?.taxes);
   const discount = order?.totals?.discountTotal?.value || 0;
   const total = order?.totals?.total?.value || 0;
 
@@ -124,7 +124,7 @@ export function Cart({
     total,
     tip: 0,
     taxes,
-    vatIncluded,
+    includedTaxTotal,
     enableDiscounts: false,
     enableTaxes: true,
     isTaxLoading: false,

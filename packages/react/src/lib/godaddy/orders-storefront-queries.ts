@@ -136,7 +136,6 @@ export const GetCartOrderQuery = graphql(`
         }
         ratePercentage
         included
-        additional
         exempted
       }
       shipping {

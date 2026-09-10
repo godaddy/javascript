@@ -157,6 +157,11 @@ export function CheckoutForm({
   const tipAmount = form.watch('tipAmount');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
+  const isRemovingShipping =
+    useIsMutating({
+      mutationKey: checkoutMutationKeys.removeShippingMethod(session?.id),
+    }) > 0;
+
   const isUpdatingShipping =
     useIsMutating({
       mutationKey: checkoutMutationKeys.applyShippingMethod(session?.id),
@@ -203,7 +208,7 @@ export function CheckoutForm({
   }, [dirtyFields, form, formValues, isCheckoutBusy]);
 
   const draftOrderTotalsQuery = useDraftOrderTotals();
-  const { data: vatIncluded = 0 } = useDraftOrderIncludedTaxTotal();
+  const { data: includedTaxTotal = 0 } = useDraftOrderIncludedTaxTotal();
 
   const { data: totals, isLoading: totalsLoading } = draftOrderTotalsQuery;
   validationContextRef.current.totals = totals;
@@ -555,11 +560,13 @@ export function CheckoutForm({
                                 currencyCode={currencyCode}
                                 tip={tipTotal}
                                 taxes={taxTotal}
-                                vatIncluded={vatIncluded}
+                                includedTaxTotal={includedTaxTotal}
                                 fees={feeTotal}
                                 isTaxLoading={isUpdatingTaxes}
                                 isFeeLoading={isUpdatingFees}
-                                isShippingLoading={isUpdatingShipping}
+                                isShippingLoading={
+                                  isUpdatingShipping || isRemovingShipping
+                                }
                                 isDiscountLoading={isDiscountApplying}
                                 subtotal={subtotal}
                                 discount={orderDiscount}
@@ -627,11 +634,13 @@ export function CheckoutForm({
                             currencyCode={currencyCode}
                             tip={tipTotal}
                             taxes={taxTotal}
-                            vatIncluded={vatIncluded}
+                            includedTaxTotal={includedTaxTotal}
                             fees={feeTotal}
                             isTaxLoading={isUpdatingTaxes}
                             isFeeLoading={isUpdatingFees}
-                            isShippingLoading={isUpdatingShipping}
+                            isShippingLoading={
+                              isUpdatingShipping || isRemovingShipping
+                            }
                             subtotal={subtotal}
                             discount={orderDiscount}
                             isDiscountLoading={isDiscountApplying}
@@ -662,11 +671,11 @@ export function CheckoutForm({
                     currencyCode={currencyCode}
                     tip={tipTotal}
                     taxes={taxTotal}
-                    vatIncluded={vatIncluded}
+                    includedTaxTotal={includedTaxTotal}
                     fees={feeTotal}
                     isTaxLoading={isUpdatingTaxes}
                     isFeeLoading={isUpdatingFees}
-                    isShippingLoading={isUpdatingShipping}
+                    isShippingLoading={isUpdatingShipping || isRemovingShipping}
                     subtotal={subtotal}
                     discount={orderDiscount}
                     isDiscountLoading={isDiscountApplying}

@@ -17,7 +17,7 @@ export interface DraftOrderTotalsProps {
   total?: number;
   tip?: number;
   taxes?: number;
-  vatIncluded?: number;
+  includedTaxTotal?: number;
   isTaxLoading?: boolean;
   fees?: number;
   isFeeLoading?: boolean;
@@ -73,7 +73,7 @@ export function DraftOrderTotals({
   total = 0,
   tip = 0,
   taxes = 0,
-  vatIncluded = 0,
+  includedTaxTotal = 0,
   fees = 0,
   enableDiscounts = false,
   enableTaxes = false,
@@ -157,14 +157,15 @@ export function DraftOrderTotals({
               inputInMinorUnits={inputInMinorUnits}
             />
           ))}
-        {vatIncluded > 0 ? (
-          isTaxLoading ? (
+        <Target id='checkout.summary.totals.included-taxes.before' />
+        {enableTaxes && includedTaxTotal > 0 ? (
+          isTaxLoading || isShippingLoading || isDiscountLoading ? (
             <TotalLineItemSkeleton title={t.totals.vatIncluded} />
           ) : (
             <TotalLineItem
               currencyCode={currencyCode}
               title={t.totals.vatIncluded}
-              value={vatIncluded}
+              value={includedTaxTotal}
               inputInMinorUnits={inputInMinorUnits}
             />
           )

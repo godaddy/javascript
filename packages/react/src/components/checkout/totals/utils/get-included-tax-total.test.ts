@@ -5,10 +5,10 @@ describe('getIncludedTaxTotal', () => {
   it('totals only included tax constituents', () => {
     expect(
       getIncludedTaxTotal([
-        { included: true, additional: false, amount: { value: 125 } },
-        { included: false, additional: true, amount: { value: 300 } },
-        { included: true, additional: null, amount: { value: 75 } },
-        { included: true, additional: true, amount: { value: 500 } },
+        { included: true, amount: { value: 125 } },
+        { included: false, amount: { value: 300 } },
+        { included: true, amount: { value: 75 } },
+        { included: null, amount: { value: 500 } },
       ])
     ).toBe(200);
   });

@@ -66,8 +66,7 @@ export function useDraftOrderTotals() {
 
 export function useDraftOrderIncludedTaxTotal() {
   return useDraftOrder<number>(
-    data =>
-      getIncludedTaxTotal(data.checkoutSession?.draftOrder?.taxes ?? null),
+    data => getIncludedTaxTotal(data.checkoutSession?.draftOrder?.taxes),
     'draft-order'
   );
 }

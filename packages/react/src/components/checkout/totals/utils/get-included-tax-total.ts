@@ -1,6 +1,5 @@
 interface TaxAmount {
   included?: boolean | null;
-  additional?: boolean | null;
   amount?: {
     value?: number | null;
   } | null;
@@ -12,8 +11,7 @@ export function getIncludedTaxTotal(
   return (
     taxes?.reduce(
       (total, tax) =>
-        total +
-        (tax.included && tax.additional !== true ? tax.amount?.value || 0 : 0),
+        total + (tax.included === true ? tax.amount?.value || 0 : 0),
       0
     ) ?? 0
   );
