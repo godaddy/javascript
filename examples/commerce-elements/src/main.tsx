@@ -2,6 +2,7 @@ import {
   type CommerceClient,
   type CommerceConfig,
   configureCommerce,
+  getCommerce,
   itemCount,
 } from '@godaddy/commerce';
 import {
@@ -13,6 +14,7 @@ import {
 import '@godaddy/commerce/styles.css';
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ThemePanel, useTheme } from './theme-panel';
 import './styles.css';
 
 const env = import.meta.env;
@@ -57,7 +59,14 @@ const checkout: CommerceConfig['checkout'] = {
   }),
 };
 
-const client = configureCommerce({
+// Configure once; Vite hot reloads re-run this module, so reuse the singleton.
+const client = (() => {
+  try {
+    return getCommerce();
+  } catch {
+    return null;
+  }
+})() ?? configureCommerce({
   clientId: env.VITE_GODADDY_CLIENT_ID,
   storeId: env.VITE_GODADDY_STORE_ID,
   channelId: env.VITE_GODADDY_CHANNEL_ID,
@@ -95,7 +104,9 @@ function useElementErrors() {
 function App() {
   const cart = useCart();
   const errors = useElementErrors();
+  const { theme, setTheme, css } = useTheme();
   return (
+    <div className='layout'>
     <main className='page'>
       <header className='bar'>
         <div>
@@ -119,9 +130,7 @@ function App() {
             <p className='muted mono'>{product.id}</p>
             <div className='actions'>
               <AddToCartButton skuId={product.id}>Add to cart</AddToCartButton>
-              <BuyNowButton skuId={product.id} className='ghost'>
-                Buy now
-              </BuyNowButton>
+              <BuyNowButton skuId={product.id}>Buy now</BuyNowButton>
             </div>
           </article>
         ))}
@@ -160,6 +169,8 @@ function App() {
         )}
       </section>
     </main>
+    <ThemePanel theme={theme} setTheme={setTheme} css={css} />
+    </div>
   );
 }
 

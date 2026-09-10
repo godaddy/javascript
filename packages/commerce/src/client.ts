@@ -441,15 +441,22 @@ export class CommerceClient {
         new CommerceError('CHECKOUT_ACTIVE', 'A checkout is already open')
       );
     const promise = this.track(async () => {
-      const { getAccessToken, storeId, channelId, apiHost, checkout } =
-        this.config;
-      if (!getAccessToken)
+      const {
+        getAccessToken,
+        createSession,
+        storeId,
+        channelId,
+        apiHost,
+        checkout,
+      } = this.config;
+      if (!createSession && !getAccessToken)
         throw new CommerceError(
           'OAUTH_REQUIRED',
-          'Configure getAccessToken using your existing OAuth client to enable checkout'
+          'Configure createSession (server-side) or getAccessToken using your existing OAuth client to enable checkout'
         );
-      const token = await getAccessToken();
-      if (!token)
+      // Resolve credentials before taking the cart lock so a slow callback cannot block other tabs.
+      const token = createSession ? null : await getAccessToken?.();
+      if (!createSession && !token)
         throw new CommerceError(
           'OAUTH_REQUIRED',
           'The OAuth client did not return an access token'
@@ -457,25 +464,38 @@ export class CommerceClient {
       const navigation = this.navigation();
       return this.run(async () => {
         const purchase = await input();
-        const session = await api.createCheckoutSession(
-          { ...checkout, ...purchase, storeId, channelId, ...navigation },
-          { accessToken: token, apiHost }
-        );
+        const request: SessionInput = {
+          ...checkout,
+          ...purchase,
+          storeId,
+          channelId,
+          ...navigation,
+        };
+        const session = createSession
+          ? await createSession(request)
+          : await api.createCheckoutSession(request, {
+              accessToken: token as string,
+              apiHost,
+            });
         if (!session?.id || !session.url)
           throw new CommerceError(
             'CHECKOUT_CREATE_FAILED',
             'Commerce did not return a complete checkout session'
           );
-        if (session.storeId !== storeId || session.channelId !== channelId)
+        // Server-created sessions may omit scope fields; when present they must match.
+        if (
+          (session.storeId ?? storeId) !== storeId ||
+          (session.channelId ?? channelId) !== channelId
+        )
           throw new CommerceError(
             'CHECKOUT_SCOPE_MISMATCH',
             'Checkout does not match the configured storefront'
           );
-        const complete: Session = {
+        const complete = {
           ...session,
           id: session.id,
           url: session.url,
-        };
+        } as Session;
         this.update({ checkout: complete });
         return complete;
       });

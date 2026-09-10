@@ -70,7 +70,7 @@ Configure the resolver before the CDN script loads. Amounts use integer currency
 
 ## Configuration and behavior
 
-`clientId`, `storeId`, and `channelId` are required. `apiHost` optionally selects an existing Commerce API hostname, without a scheme or path. Cart-only usage does not require `getAccessToken`; checkout does. The callback is invoked when creating a session, allowing the existing OAuth client to refresh credentials.
+`clientId`, `storeId`, and `channelId` are required. `apiHost` optionally selects an existing Commerce API hostname, without a scheme or path. Cart-only usage needs neither credential option; checkout needs one of two. `getAccessToken` returns an OAuth token and the browser calls Commerce directly; it is invoked when creating a session, allowing the existing OAuth client to refresh credentials. Alternatively, `createSession(input)` receives the complete session input and creates the session on your server, so no Commerce token reaches the browser; return the session Commerce created, at least its `id` and `url`. When `createSession` is set, `getAccessToken` is not used.
 
 `checkout` accepts existing checkout session options, including merchant shipping, pickup, tax, promotion, appearance, and navigation settings. Purchase inputs and store/channel IDs are owned by the client. Processor configuration and payment collection belong to hosted checkout; this library does not provision payment accounts or collect payment details.
 
@@ -94,7 +94,54 @@ Verify payment/order status through your existing backend/webhook workflow befor
 | `gddy:error` | Trigger, bubbling, or `window` for loader errors | `{ error }` |
 | `gddy:cart-change` | Add-to-cart trigger, bubbling | `{ cart }` after a successful addition. Use client subscriptions for all state changes. |
 
-Buttons expose `::part(button)`, `::part(status)`, and, on the cart button, `::part(count)`. Set `--gddy-color`, `--gddy-on-color`, `--gddy-radius`, and `--gddy-focus` on elements and/or the document. Hosted checkout uses the existing Commerce appearance settings. `locale` controls cart currency formatting; cart labels currently use English.
+Hosted checkout uses the existing Commerce appearance settings. `locale` controls cart currency formatting; cart labels currently use English. See Styling below for the buttons and drawer.
+
+## Styling
+
+The buttons render in shadow DOM and the drawer renders in light DOM, but both read the same CSS custom properties. Set them on `:root`, on an ancestor, or on an individual element; nothing in the package redefines them, so a host page's values always win.
+
+| Variable | Default | Applies to |
+| --- | --- | --- |
+| `--gddy-color` | `#303036` | button fill and border, drawer primary action |
+| `--gddy-on-color` | `#fff` | text on `--gddy-color` |
+| `--gddy-radius` | `10px` buttons, `6px` drawer controls | corner radius |
+| `--gddy-focus` | `#51515b` | focus-visible outline |
+| `--gddy-error` / `--gddy-error-surface` | `#a31919` / `#fff0f0` | button status text, drawer alert |
+| `--gddy-font` | inherit (buttons), system stack (drawer) | font family |
+| `--gddy-surface` / `--gddy-text` | `#fff` / `#252529` | drawer background and text |
+| `--gddy-subtle` | `#ededf0` | drawer hover fills, badges, image placeholder |
+| `--gddy-border` / `--gddy-muted` | `#e6e6e8` / `#68686f` | drawer borders, secondary text |
+| `--gddy-color-scheme` | `light` | drawer form-control color scheme |
+| `--gddy-button-background` / `--gddy-button-border` / `--gddy-button-shadow` | subtle gradient, 1px border, soft shadow | button chrome |
+| `--gddy-button-padding` / `--gddy-button-min-height` / `--gddy-button-weight` | `.7em 1.1em` / `48px` / `400` | button size and weight |
+| `--gddy-hover-brightness` / `--gddy-active-brightness` | `1.08` / `.96` | built-in hover and press feedback (`1` disables) |
+| `--gddy-badge-background` / `--gddy-badge-color` | `--gddy-on-color` / `--gddy-color` | cart button count |
+
+Add the `flat` attribute to any button (`<gddy-add-to-cart flat>`) for a solid fill with no gradient, shadow, or contrasting border. For anything else, target the parts from page CSS: `::part(button)`, `::part(count)` on the cart button, and `::part(status)`. Slotted text or markup replaces the default label.
+
+A host design system maps its own tokens onto these once, and every element then follows the host theme, including dark mode. For a shadcn-style token set:
+
+```css
+:root {
+  --gddy-color: hsl(var(--primary));
+  --gddy-on-color: hsl(var(--primary-foreground));
+  --gddy-radius: var(--radius);
+  --gddy-focus: hsl(var(--ring));
+  --gddy-error: hsl(var(--destructive));
+  --gddy-font: var(--font-sans);
+  --gddy-surface: hsl(var(--background));
+  --gddy-text: hsl(var(--foreground));
+  --gddy-subtle: hsl(var(--muted));
+  --gddy-border: hsl(var(--border));
+  --gddy-muted: hsl(var(--muted-foreground));
+  --gddy-button-shadow: none;
+  --gddy-button-background: var(--gddy-color);
+  --gddy-button-weight: 500;
+  --gddy-button-min-height: 2.5rem;
+  --gddy-button-padding: .5rem 1rem;
+}
+.dark { --gddy-color-scheme: dark; }
+```
 
 ## Optional npm and React usage
 

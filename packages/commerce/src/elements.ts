@@ -12,13 +12,20 @@ const ElementBase = (globalThis.HTMLElement || class {}) as typeof HTMLElement;
 
 const STYLE = [
   ':host{display:inline-block;font:inherit}',
-  'button{font:inherit;cursor:pointer;border:1px solid var(--gddy-color,#303036);border-radius:var(--gddy-radius,10px);',
-  'background:linear-gradient(#ffffff12,#0000000a),var(--gddy-color,#303036);color:var(--gddy-on-color,#fff);',
-  'padding:.7em 1.1em;min-height:48px;box-shadow:inset 0 1px 0 #ffffff26,0 2px 3px #18181b1a}',
+  // Chrome is variable-driven so a host design system can flatten or restyle it
+  // without ::part rules. Defaults reproduce the original look.
+  'button{font:inherit;font-family:var(--gddy-font,inherit);font-weight:var(--gddy-button-weight,400);cursor:pointer;',
+  'border:var(--gddy-button-border,1px solid var(--gddy-color,#303036));border-radius:var(--gddy-radius,10px);',
+  'background:var(--gddy-button-background,linear-gradient(#ffffff12,#0000000a),var(--gddy-color,#303036));',
+  'color:var(--gddy-on-color,#fff);padding:var(--gddy-button-padding,.7em 1.1em);min-height:var(--gddy-button-min-height,48px);',
+  'box-shadow:var(--gddy-button-shadow,inset 0 1px 0 #ffffff26,0 2px 3px #18181b1a);transition:filter .15s,background-color .15s}',
+  'button:not(:disabled):hover{filter:brightness(var(--gddy-hover-brightness,1.08))}',
+  'button:not(:disabled):active{filter:brightness(var(--gddy-active-brightness,.96))}',
+  ':host([flat]) button{background:var(--gddy-color,#303036);box-shadow:none;border-color:var(--gddy-color,#303036)}',
   'button:disabled{opacity:.55;cursor:default}',
   'button:focus-visible{outline:3px solid var(--gddy-focus,#51515b);outline-offset:3px}',
   '[part=count]{margin-left:.5em;padding:0 .55em;border-radius:999px;font-size:.85em;line-height:1.7;',
-  'background:var(--gddy-on-color,#fff);color:var(--gddy-color,#303036)}',
+  'background:var(--gddy-badge-background,var(--gddy-on-color,#fff));color:var(--gddy-badge-color,var(--gddy-color,#303036))}',
   '[part=count]:empty{display:none}',
   '[role=status]{display:block;font-size:.85em;max-width:30ch;margin-top:.3em;color:var(--gddy-error,#a31919)}',
   '[role=status]:empty{display:none}',

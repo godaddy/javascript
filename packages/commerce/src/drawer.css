@@ -9,9 +9,6 @@
   --gddy-space-1: 4px;
   --gddy-space-2: 8px;
   --gddy-space-3: 12px;
-  --gddy-gutter: 16px;
-  --gddy-border: #e6e6e8;
-  --gddy-muted: #68686f;
   position: fixed;
   inset: 0 0 0 auto;
   margin: 0;
@@ -21,17 +18,15 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
-  color: #252529;
+  background: var(--gddy-surface, #fff);
+  color: var(--gddy-text, #252529);
   font:
-    14px / 1.5 -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+    14px / 1.5
+    var(--gddy-font, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
   text-align: start;
   box-shadow: -16px 0 56px #18181b26;
   outline: none;
-  color-scheme: light;
+  color-scheme: var(--gddy-color-scheme, light);
 }
 .gddy-drawer,
 .gddy-drawer * {
@@ -41,8 +36,8 @@
   font: inherit;
 }
 .gddy-drawer ::selection {
-  background: #e4e4e8;
-  color: #252529;
+  background: var(--gddy-subtle, #ededf0);
+  color: var(--gddy-text, #252529);
 }
 .gddy-header {
   display: flex;
@@ -51,7 +46,7 @@
   flex-shrink: 0;
   gap: 16px;
   padding: var(--gddy-space-3) var(--gddy-gutter);
-  border-bottom: 1px solid var(--gddy-border);
+  border-bottom: 1px solid var(--gddy-border, #e6e6e8);
 }
 .gddy-header h2 {
   display: flex;
@@ -71,13 +66,13 @@
   height: 24px;
   padding-inline: 6px;
   border-radius: 6px;
-  background: #ededf0;
+  background: var(--gddy-subtle, #ededf0);
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-  color: #3c3c43;
+  color: var(--gddy-text, #252529);
 }
 .gddy-sr-only {
   position: absolute;
@@ -100,7 +95,7 @@
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--gddy-muted);
+  color: var(--gddy-muted, #68686f);
   width: 44px;
   height: 44px;
   cursor: pointer;
@@ -115,10 +110,10 @@
   position: relative;
 }
 .gddy-close:hover:not(:disabled)::before {
-  background: #f4f4f5;
+  background: var(--gddy-subtle, #ededf0);
 }
 .gddy-close:hover:not(:disabled) {
-  color: #252529;
+  color: var(--gddy-text, #252529);
 }
 .gddy-body {
   flex: 1;
@@ -127,14 +122,14 @@
   overscroll-behavior: contain;
   padding: var(--gddy-gutter);
   scrollbar-width: thin;
-  scrollbar-color: #b8b8bf transparent;
+  scrollbar-color: var(--gddy-border, #e6e6e8) transparent;
 }
 .gddy-drawer :where(.gddy-body, .gddy-purchase-summary) button {
   cursor: pointer;
   min-height: 44px;
   border-radius: var(--gddy-radius, 6px);
-  border: 1px solid var(--gddy-border);
-  background: #fff;
+  border: 1px solid var(--gddy-border, #e6e6e8);
+  background: var(--gddy-surface, #fff);
   color: inherit;
   padding: 8px 12px;
   font-weight: 500;
@@ -146,15 +141,15 @@
 .gddy-drawer :where(.gddy-body, .gddy-purchase-summary) input {
   min-width: 0;
   min-height: 44px;
-  border: 1px solid #d5d5da;
+  border: 1px solid var(--gddy-border, #e6e6e8);
   border-radius: var(--gddy-radius, 6px);
-  background: #fff;
-  color: #252529;
+  background: var(--gddy-surface, #fff);
+  color: var(--gddy-text, #252529);
   padding: 8px 12px;
-  caret-color: #252529;
+  caret-color: var(--gddy-text, #252529);
 }
 .gddy-drawer input::placeholder {
-  color: var(--gddy-muted);
+  color: var(--gddy-muted, #68686f);
   opacity: 1;
 }
 .gddy-drawer :is(input, button, summary):focus-visible {
@@ -171,7 +166,7 @@
   grid-template-columns: 80px minmax(0, 1fr);
   gap: 12px;
   padding: 16px 0;
-  border-bottom: 1px solid var(--gddy-border);
+  border-bottom: 1px solid var(--gddy-border, #e6e6e8);
 }
 .gddy-lines > li:first-child {
   padding-top: 0;
@@ -187,8 +182,8 @@
   place-items: center;
   overflow: hidden;
   border-radius: 6px;
-  background: #f3f3f5;
-  color: #85858d;
+  background: var(--gddy-subtle, #ededf0);
+  color: var(--gddy-muted, #68686f);
 }
 .gddy-product-image img {
   width: 100%;
@@ -227,7 +222,7 @@
   margin: 0;
   font-size: 12px;
   line-height: 16px;
-  color: var(--gddy-muted);
+  color: var(--gddy-muted, #68686f);
   overflow-wrap: anywhere;
 }
 .gddy-options > div {
@@ -261,7 +256,7 @@
   height: 28px;
   display: flex;
   align-items: center;
-  border: 1px solid #d5d5da;
+  border: 1px solid var(--gddy-border, #e6e6e8);
   border-radius: 6px;
 }
 .gddy-drawer .gddy-quantity button {
@@ -275,7 +270,7 @@
   background: transparent;
 }
 .gddy-drawer .gddy-quantity button:hover:not(:disabled) {
-  background: #f4f4f5;
+  background: var(--gddy-subtle, #ededf0);
 }
 .gddy-drawer .gddy-quantity input {
   appearance: textfield;
@@ -298,24 +293,24 @@
   min-height: 28px;
   border: 0;
   background: transparent;
-  color: var(--gddy-muted);
+  color: var(--gddy-muted, #68686f);
   text-decoration: underline;
   text-underline-offset: 3px;
   font-size: 12px;
   font-weight: 400;
 }
 .gddy-text-button:hover:not(:disabled) {
-  color: #252529;
+  color: var(--gddy-text, #252529);
 }
 .gddy-purchase-summary {
   flex-shrink: 0;
   max-height: 50dvh;
   overflow: auto;
   overscroll-behavior: contain;
-  border-top: 1px solid var(--gddy-border);
+  border-top: 1px solid var(--gddy-border, #e6e6e8);
   padding: var(--gddy-gutter) var(--gddy-gutter) var(--gddy-space-2);
   scrollbar-width: thin;
-  scrollbar-color: #b8b8bf transparent;
+  scrollbar-color: var(--gddy-border, #e6e6e8) transparent;
 }
 .gddy-totals {
   margin: 0 0 8px;
@@ -342,7 +337,7 @@
   align-items: center;
   justify-content: space-between;
   min-height: 36px;
-  color: var(--gddy-muted);
+  color: var(--gddy-muted, #68686f);
   cursor: pointer;
   list-style: none;
   font-size: 13px;
@@ -368,7 +363,7 @@
   width: 100%;
 }
 .gddy-note {
-  color: var(--gddy-muted);
+  color: var(--gddy-muted, #68686f);
   font-size: 12px;
   line-height: 1.5;
   margin: 0 0 12px;
@@ -394,7 +389,7 @@
   margin: 0;
 }
 .gddy-empty p {
-  color: var(--gddy-muted);
+  color: var(--gddy-muted, #68686f);
   margin: 8px 0 24px;
 }
 .gddy-footer {
@@ -406,7 +401,7 @@
   padding: var(--gddy-space-2) var(--gddy-gutter) var(--gddy-space-3);
   text-align: center;
   font-size: 10px;
-  color: var(--gddy-muted);
+  color: var(--gddy-muted, #68686f);
 }
 .gddy-footer-logo {
   color: #00838c;
@@ -415,8 +410,8 @@
   flex-shrink: 0;
 }
 .gddy-error {
-  color: #991b1b;
-  background: #fff0f0;
+  color: var(--gddy-error, #a31919);
+  background: var(--gddy-error-surface, #fff0f0);
   border-radius: 6px;
   padding: 12px;
 }

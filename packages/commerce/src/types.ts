@@ -20,8 +20,17 @@ export interface CommerceConfig {
   /** Host name only, for example api.ote-godaddy.com. */
   apiHost?: string;
   locale?: string;
-  /** Use the existing OAuth client. Never put a client secret in browser code. */
+  /**
+   * Use the existing OAuth client. Never put a client secret in browser code.
+   * Not needed when `createSession` is configured.
+   */
   getAccessToken?: () => Promise<string>;
+  /**
+   * Create the hosted checkout session on your own server instead of calling
+   * Commerce from the browser. Receives the complete session input; return the
+   * session Commerce created (at least its `id` and `url`).
+   */
+  createSession?: (input: SessionInput) => Promise<Partial<Session> | null>;
   /** Merchant settings obtained through the existing Commerce configuration APIs. */
   checkout?: Omit<
     SessionInput,

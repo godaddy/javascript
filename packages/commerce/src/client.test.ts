@@ -470,3 +470,60 @@ describe('hydration, locking, and navigation', () => {
     client.dispose();
   });
 });
+
+describe('server-created sessions', () => {
+  it('delegates session creation to createSession without an OAuth token', async () => {
+    const createSession = vi.fn(async () => ({
+      id: 'server-session',
+      url: 'https://checkout.example/c/server-session',
+    }));
+    const client = new CommerceClient({
+      clientId: 'client',
+      storeId: 'store',
+      channelId: 'channel',
+      checkout: { enablePromotionCodes: true },
+      createSession,
+    });
+    await client.addItem('sku-a');
+    const session = await client.checkout();
+    expect(api.createCheckoutSession).not.toHaveBeenCalled();
+    expect(createSession).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        draftOrderId: 'cart-1',
+        storeId: 'store',
+        channelId: 'channel',
+        enablePromotionCodes: true,
+        returnUrl: location.href,
+        successUrl: location.href,
+      })
+    );
+    expect(session.url).toBe('https://checkout.example/c/server-session');
+    expect(client.getSnapshot().checkout?.id).toBe('server-session');
+    client.closeCheckout();
+    client.dispose();
+  });
+
+  it('rejects a server-created session for another storefront or without a URL', async () => {
+    const other = new CommerceClient({
+      ...config,
+      getAccessToken: undefined,
+      createSession: async () => ({
+        id: 'x',
+        url: 'https://checkout.example/x',
+        storeId: 'another-store',
+      }),
+    });
+    await expect(other.buyNow('sku-a')).rejects.toMatchObject({
+      code: 'CHECKOUT_SCOPE_MISMATCH',
+    });
+    const incomplete = new CommerceClient({
+      ...config,
+      getAccessToken: undefined,
+      createSession: async () => ({ id: 'x' }),
+    });
+    await expect(incomplete.buyNow('sku-a')).rejects.toMatchObject({
+      code: 'CHECKOUT_CREATE_FAILED',
+    });
+    expect(api.createCheckoutSession).not.toHaveBeenCalled();
+  });
+});
