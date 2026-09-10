@@ -46,7 +46,6 @@
   flex-shrink: 0;
   gap: 16px;
   padding: var(--gddy-space-3) var(--gddy-gutter);
-  border-bottom: 1px solid var(--gddy-border, #e6e6e8);
 }
 .gddy-header h2 {
   display: flex;
