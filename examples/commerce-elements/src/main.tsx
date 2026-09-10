@@ -44,7 +44,6 @@ const checkout: CommerceConfig['checkout'] = {
   enablePhoneCollection: false,
   enableTaxCollection: false,
   enablePaymentMethodCollection: true,
-  enablePromotionCodes: true,
   paymentMethods: {
     card: { processor: 'godaddy', checkoutTypes: ['standard'] },
   },

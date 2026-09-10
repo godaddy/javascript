@@ -333,39 +333,6 @@
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
-.gddy-promo {
-  margin: 0 0 12px;
-}
-.gddy-promo summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 36px;
-  color: var(--gddy-muted, #68686f);
-  cursor: pointer;
-  list-style: none;
-  font-size: 13px;
-}
-.gddy-promo summary::-webkit-details-marker {
-  display: none;
-}
-.gddy-promo[open] summary svg {
-  transform: rotate(180deg);
-}
-.gddy-discount {
-  display: flex;
-  gap: 8px;
-  align-items: start;
-  padding: 4px 0 8px;
-}
-.gddy-discount label {
-  flex: 1;
-  min-width: 0;
-}
-.gddy-discount input {
-  display: block;
-  width: 100%;
-}
 .gddy-note {
   color: var(--gddy-muted, #68686f);
   font-size: 12px;

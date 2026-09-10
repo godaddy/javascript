@@ -171,7 +171,6 @@ function Drawer({
     client.getSnapshot,
     client.getServerSnapshot
   );
-  const [discount, setDiscount] = useState('');
   const [localError, setLocalError] = useState<string>();
   const busy = Boolean(snapshot.pending);
   const cart = snapshot.cart;
@@ -388,44 +387,6 @@ function Drawer({
                   </div>
                 )}
               </dl>
-              {client.config.checkout?.enablePromotionCodes && (
-                <details className='gddy-promo'>
-                  <summary>
-                    Add promo code
-                    <svg
-                      aria-hidden='true'
-                      width='16'
-                      height='16'
-                      viewBox='0 0 16 16'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='1.5'
-                    >
-                      <path d='m4 6 4 4 4-4' />
-                    </svg>
-                  </summary>
-                  <form
-                    className='gddy-discount'
-                    onSubmit={event => {
-                      event.preventDefault();
-                      void perform(() => client.applyDiscount(discount));
-                    }}
-                  >
-                    <label>
-                      <span className='gddy-sr-only'>Promo code</span>
-                      <input
-                        placeholder='Enter promo code'
-                        disabled={busy}
-                        value={discount}
-                        onChange={event => setDiscount(event.target.value)}
-                      />
-                    </label>
-                    <button disabled={busy} type='submit'>
-                      Apply
-                    </button>
-                  </form>
-                </details>
-              )}
               <div className='gddy-cart-actions'>
                 <p className='gddy-note'>
                   Shipping and taxes are confirmed at checkout.

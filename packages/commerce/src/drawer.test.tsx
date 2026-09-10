@@ -15,7 +15,6 @@ async function renderCart(image?: string, selections = false) {
     clientId: 'client',
     storeId: 'store',
     channelId: 'channel',
-    checkout: { enablePromotionCodes: true },
   });
   const cart = {
     id: 'cart',
@@ -289,7 +288,7 @@ describe('cart drawer', () => {
   it('keeps quantity and removal actions on the correct item, including decrement to zero', async () => {
     const { quantity, remove } = await renderCart();
     expect(document.querySelector('.gddy-product-image svg')).not.toBeNull();
-    expect(document.querySelector('details')?.open).toBe(false);
+    expect(document.querySelector('.gddy-promo')).toBeNull();
     await click('Increase quantity for Shirt');
     expect(quantity).toHaveBeenLastCalledWith('line-shirt', 2);
     await click('Decrease quantity for Shirt');
