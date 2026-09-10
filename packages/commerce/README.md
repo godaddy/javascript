@@ -107,6 +107,7 @@ The buttons render in shadow DOM and the drawer renders in light DOM, but both r
 | `--gddy-surface` / `--gddy-text` | `#fff` / `#252529` | drawer background and text |
 | `--gddy-subtle` | `#ededf0` | drawer hover fills, badges, image placeholder |
 | `--gddy-border` / `--gddy-muted` | `#e6e6e8` / `#68686f` | drawer borders, secondary text |
+| `--gddy-gutter` | `16px` | drawer horizontal padding (header, body, summary, footer) |
 | `--gddy-color-scheme` | `light` | drawer form-control color scheme |
 | `--gddy-button-background` / `--gddy-button-border` / `--gddy-button-shadow` | subtle gradient, 1px border, soft shadow | button chrome |
 | `--gddy-button-padding` / `--gddy-button-min-height` / `--gddy-button-weight` | `.7em 1.1em` / `48px` / `400` | button size and weight |
