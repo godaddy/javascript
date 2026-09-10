@@ -257,7 +257,10 @@
   display: flex;
   align-items: center;
   border: 1px solid var(--gddy-border, #e6e6e8);
-  border-radius: 6px;
+  /* The stepper owns the radius; inner buttons are square and clipped so the
+     hover fill follows the container instead of drawing its own shape. */
+  border-radius: min(var(--gddy-radius, 6px), 14px);
+  overflow: hidden;
 }
 .gddy-drawer .gddy-quantity button {
   display: grid;
@@ -267,6 +270,7 @@
   min-height: 26px;
   padding: 0;
   border: 0;
+  border-radius: 0;
   background: transparent;
 }
 .gddy-drawer .gddy-quantity button:hover:not(:disabled) {
@@ -404,7 +408,8 @@
   color: var(--gddy-muted, #68686f);
 }
 .gddy-footer-logo {
-  color: #00838c;
+  /* GoDaddy brand: Everyday Teal 400. Intentionally not themeable. */
+  color: #1bdbdb;
   width: 18px;
   height: 16px;
   flex-shrink: 0;
