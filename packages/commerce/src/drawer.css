@@ -164,9 +164,9 @@
 .gddy-lines > li {
   display: grid;
   grid-template-columns: 80px minmax(0, 1fr);
-  /* The thumbnail stays a square; content centers against it, so a plain line
-     sits balanced and a one-variant line (80px) fills it edge to edge. */
-  align-items: center;
+  /* The thumbnail stays a square and content hangs from the top of the row, so
+     a long title grows the row downward instead of floating the image. */
+  align-items: start;
   gap: 12px;
   padding: 16px 0;
   border-bottom: 1px solid var(--gddy-border, #e6e6e8);
@@ -212,6 +212,12 @@
   line-height: 20px;
   font-weight: 500;
   overflow-wrap: anywhere;
+  /* Two lines at most; the full name is in the title attribute and the control
+     labels, so nothing is lost when it is cut. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 .gddy-line-price {
   flex-shrink: 0;

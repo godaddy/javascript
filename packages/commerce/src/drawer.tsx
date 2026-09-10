@@ -271,7 +271,7 @@ function Drawer({
                     />
                     <div className='gddy-line-content'>
                       <div className='gddy-line-heading'>
-                        <strong>{line.name}</strong>
+                        <strong title={line.name}>{line.name}</strong>
                         <span className='gddy-line-price'>
                           {money(line.totals?.subTotal, client.config.locale)}
                         </span>
