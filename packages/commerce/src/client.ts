@@ -323,7 +323,8 @@ export class CommerceClient {
           {
             orderId,
             skuId,
-            name: sku.name,
+            // Prefer the merchant-facing label; `name` is the catalog slug.
+            name: sku.label || sku.name,
             quantity: count,
             fulfillmentMode: 'NONE',
             status: 'DRAFT',
