@@ -71,15 +71,22 @@ const client = (() => {
   channelId: env.VITE_GODADDY_CHANNEL_ID,
   apiHost,
   locale: 'en-US',
-  getAccessToken: async () => {
-    const response = await fetch('/api/commerce-token', { method: 'POST' });
+  // The server route creates the session with its OAuth client; no token
+  // reaches the page. In production the server also owns the `checkout`
+  // settings below instead of accepting them from the browser.
+  createSession: async input => {
+    const response = await fetch('/api/commerce/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
     const json = (await response.json()) as {
-      accessToken?: string;
+      id?: string;
+      url?: string;
       error?: string;
     };
-    if (!response.ok || !json.accessToken)
-      throw new Error(json.error || 'Token endpoint failed');
-    return json.accessToken;
+    if (!response.ok) throw new Error(json.error || 'Checkout route failed');
+    return json;
   },
   checkout,
 });

@@ -4,10 +4,13 @@ A plain Vite page that exercises `@godaddy/commerce` end to end against a real
 Commerce environment: `gddy-add-to-cart`, `gddy-cart-button` with the shared
 drawer, `gddy-buy-now`, and hosted checkout handoff.
 
-Cart calls need only the public storefront identifiers. Checkout needs an OAuth
-token, so `vite.config.ts` adds a dev-only `/api/commerce-token` endpoint that
-performs the client-credentials grant on the server side of Vite and returns a
-short-lived token to the page. The client secret never reaches the browser.
+Cart calls need only the public storefront identifiers. Checkout needs the
+OAuth client, so `vite.config.ts` adds a dev-only `POST /api/commerce/checkout`
+route that performs the client-credentials grant and creates the hosted session
+on the server side of Vite, returning only the session id and URL. Neither the
+client secret nor an access token ever reaches the browser. A real site owns the
+equivalent route on its own server and prices standalone payment references
+there.
 
 ## Run
 

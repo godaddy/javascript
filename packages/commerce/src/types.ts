@@ -13,6 +13,20 @@ export type Session = NonNullable<CheckoutSession> & {
 };
 export type SessionInput = CreateCheckoutSessionInputWithKebabCase;
 
+/**
+ * What `createSession` receives: the complete session input plus the
+ * application payment reference for `pay()`. The server owns store, channel,
+ * merchant settings, and pricing; treat every field as untrusted browser input.
+ */
+export type SessionRequest = SessionInput & {
+  /**
+   * Present for `pay()`. Price the charge on the server from this reference.
+   * `lineItems` is omitted unless a browser `resolvePayment` is configured, and
+   * even then the server must not trust its amounts.
+   */
+  reference?: string;
+};
+
 export interface CommerceConfig {
   clientId: string;
   storeId: string;
@@ -21,16 +35,25 @@ export interface CommerceConfig {
   apiHost?: string;
   locale?: string;
   /**
-   * Use the existing OAuth client. Never put a client secret in browser code.
-   * Not needed when `createSession` is configured.
+   * Create the hosted checkout session on your own server. This is the
+   * supported checkout path: the browser never holds a Commerce OAuth token.
+   * Receives the session request; return the session Commerce created (at
+   * least its `id` and `url`).
+   */
+  createSession?: (input: SessionRequest) => Promise<Partial<Session> | null>;
+  /**
+   * Advanced: create sessions from the browser with a token from this callback.
+   * Commerce has no shopper-scoped grant, so any token that can create a
+   * session can also act on the merchant's orders. Only use it with a
+   * short-lived, checkout-only token, and set `dangerouslyAllowBrowserToken`.
+   * Ignored when `createSession` is configured.
    */
   getAccessToken?: () => Promise<string>;
   /**
-   * Create the hosted checkout session on your own server instead of calling
-   * Commerce from the browser. Receives the complete session input; return the
-   * session Commerce created (at least its `id` and `url`).
+   * Required to use `getAccessToken`. Confirms the token is safe to expose to
+   * every visitor of the page. Do not set this to work around the check.
    */
-  createSession?: (input: SessionInput) => Promise<Partial<Session> | null>;
+  dangerouslyAllowBrowserToken?: boolean;
   /** Merchant settings obtained through the existing Commerce configuration APIs. */
   checkout?: Omit<
     SessionInput,
@@ -44,7 +67,11 @@ export interface CommerceConfig {
     returnUrl?: string;
     successUrl?: string;
   };
-  /** Resolve application-priced invoices/deposits on your server, using an application reference. */
+  /**
+   * Browser-side resolver for `pay()` when using `getAccessToken`. Not needed
+   * with `createSession`, which receives the reference and prices it on the
+   * server. A browser resolver is never a price authorization boundary.
+   */
   resolvePayment?: (reference: string) => Promise<NonCatalogPayment>;
 }
 

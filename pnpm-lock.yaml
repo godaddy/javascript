@@ -60,6 +60,9 @@ importers:
         specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
     devDependencies:
+      '@godaddy/react':
+        specifier: workspace:*
+        version: link:../../packages/react
       '@types/react':
         specifier: ^19
         version: 19.2.2

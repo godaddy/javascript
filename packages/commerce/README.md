@@ -6,7 +6,7 @@ This package is under development and has not been released. The managed CDN run
 
 ## CDN quickstart
 
-Use your existing OAuth client and merchant configuration. The token callback must return a token authorized to create checkout sessions for this store. A client ID identifies an application; it does not replace the checkout API's OAuth authorization. Never expose an OAuth client secret or an unrestricted merchant token in a storefront.
+Cart operations need only public storefront identifiers. Checkout needs your OAuth client, which stays on your server: configure `createSession` to call a same-origin route that creates the hosted session with your client credentials and returns only the session `id` and `url`. Never expose an OAuth client secret or a Commerce access token to the browser, and never build a route that returns a token to the page. Commerce has no shopper-scoped grant, so any token that can create a session can also act on the merchant's orders.
 
 ```html
 <script>
@@ -14,11 +14,17 @@ Use your existing OAuth client and merchant configuration. The token callback mu
     clientId: 'YOUR_CLIENT_ID',
     storeId: 'YOUR_STORE_ID',
     channelId: 'YOUR_CHANNEL_ID',
-    // oauthClient is your application's existing OAuth integration.
-    // Replace this adapter with the actual method exposed by your OAuth client.
-    getAccessToken: () => oauthClient.getAccessToken(),
-    // Existing Commerce hosted checkout settings.
-    checkout: merchantCheckoutSettings,
+    // Your server creates the session with its OAuth client credentials and
+    // returns { id, url }. It owns store, channel, settings, and pricing.
+    createSession: async input => {
+      const response = await fetch('/api/commerce/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      if (!response.ok) throw new Error('Checkout is unavailable');
+      return response.json();
+    },
   };
 </script>
 <script defer src="https://YOUR_CDN_DOMAIN/v1/commerce.js"></script>
@@ -46,31 +52,21 @@ All elements accept `disabled` and text content for their button label. `disable
 
 ## Standalone charges
 
-An application reference can represent a deposit, invoice, or other one-time charge. Configure a resolver using your application's existing data source:
-
-```js
-window.gddyCommerceConfig.resolvePayment = async reference => {
-  const response = await fetch(`/api/invoices/${encodeURIComponent(reference)}`);
-  if (!response.ok) throw new Error('Invoice unavailable');
-  const invoice = await response.json();
-  return {
-    name: invoice.description,
-    unitAmount: invoice.amountDue,
-    currencyCode: invoice.currencyCode,
-    quantity: 1,
-  };
-};
-```
+An application reference can represent a deposit, invoice, or other one-time charge:
 
 ```html
 <gddy-payment-button reference="INVOICE_REFERENCE">Pay invoice</gddy-payment-button>
 ```
 
-Configure the resolver before the CDN script loads. Amounts use integer currency minor units, such as `2500` for USD 25.00. The library creates an existing Commerce checkout session using `lineItemData`; it does not invent an invoice API or a new payment-request resource. The example `/api/invoices/` endpoint belongs to the adopting application. A browser resolver is not a price authorization boundary: fixed invoice amounts and payment-to-invoice reconciliation must be enforced by the application's trusted payment workflow.
+With `createSession`, the request your server receives carries `reference` and no `lineItems`. Look the reference up in your own data, build a single `lineItems` entry with `lineItemData: { name, priceData: { unitAmount, currencyCode } }`, and create the session. Amounts use integer currency minor units, such as `2500` for USD 25.00. The browser never supplies a price, so the server is the price authorization boundary; reconcile the payment to the invoice through your trusted order workflow.
+
+Only the browser-token path (`getAccessToken`) needs a browser `resolvePayment` callback, and even then it is not an authorization boundary because the shopper can call Commerce with the same token.
 
 ## Configuration and behavior
 
-`clientId`, `storeId`, and `channelId` are required. `apiHost` optionally selects an existing Commerce API hostname, without a scheme or path. Cart-only usage needs neither credential option; checkout needs one of two. `getAccessToken` returns an OAuth token and the browser calls Commerce directly; it is invoked when creating a session, allowing the existing OAuth client to refresh credentials. Alternatively, `createSession(input)` receives the complete session input and creates the session on your server, so no Commerce token reaches the browser; return the session Commerce created, at least its `id` and `url`. When `createSession` is set, `getAccessToken` is not used.
+`clientId`, `storeId`, and `channelId` are required. `apiHost` optionally selects an existing Commerce API hostname, without a scheme or path. Cart-only usage needs no credentials. Checkout uses `createSession(input)`: it receives the complete session request (`storeId`, `channelId`, `draftOrderId` or `lineItems`, `returnUrl`, `successUrl`, your `checkout` settings, and `reference` for standalone payments) and creates the session on your server, so no Commerce token reaches the browser. Treat every field as untrusted input, take store, channel, settings, and prices from server configuration, and return the session Commerce created, at least its `id` and `url`. The client rejects a returned session whose store or channel differs from its configuration.
+
+`getAccessToken` is an advanced alternative that has the browser call Commerce with a token from your callback. Because that token can act on the merchant's orders, the client refuses it unless `dangerouslyAllowBrowserToken: true` is also set, and it is ignored whenever `createSession` is configured. Use it only with a short-lived token that can do nothing but create checkout sessions.
 
 `checkout` accepts existing checkout session options, including merchant shipping, pickup, tax, promotion, appearance, and navigation settings. Purchase inputs and store/channel IDs are owned by the client. Processor configuration and payment collection belong to hosted checkout; this library does not provision payment accounts or collect payment details.
 

@@ -1,7 +1,7 @@
 import * as api from '@godaddy/react/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommerceClient } from './client';
-import type { Cart, CommerceConfig, Session } from './types';
+import type { Cart, CommerceConfig, Session, SessionRequest } from './types';
 
 vi.mock('@godaddy/react/client', () => ({
   getCartOrder: vi.fn(),
@@ -19,6 +19,7 @@ const config: CommerceConfig = {
   storeId: 'store',
   channelId: 'channel',
   getAccessToken: async () => 'oauth-token',
+  dangerouslyAllowBrowserToken: true,
 };
 let order: Cart;
 let writes: string[];
@@ -525,5 +526,99 @@ describe('server-created sessions', () => {
       code: 'CHECKOUT_CREATE_FAILED',
     });
     expect(api.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it('forwards the payment reference to createSession so the server prices it', async () => {
+    const createSession = vi.fn(async (_input: SessionRequest) => ({
+      id: 'server-session',
+      url: 'https://checkout.example/c/server-session',
+    }));
+    const client = new CommerceClient({
+      clientId: 'client',
+      storeId: 'store',
+      channelId: 'channel',
+      createSession,
+    });
+    await client.pay('invoice-123');
+    const request = createSession.mock.calls[0][0];
+    expect(request.reference).toBe('invoice-123');
+    expect(request.lineItems).toBeUndefined();
+    expect(request.draftOrderId).toBeUndefined();
+    expect(api.createCheckoutSession).not.toHaveBeenCalled();
+    client.closeCheckout();
+
+    const resolvePayment = vi.fn(async () => ({
+      name: 'Deposit',
+      unitAmount: 5000,
+      currencyCode: 'USD',
+    }));
+    const resolving = new CommerceClient({
+      clientId: 'client',
+      storeId: 'store',
+      channelId: 'channel',
+      createSession,
+      resolvePayment,
+    });
+    await resolving.pay('invoice-456');
+    expect(createSession.mock.calls[1][0]).toMatchObject({
+      reference: 'invoice-456',
+      lineItems: [{ quantity: 1, lineItemData: { name: 'Deposit' } }],
+    });
+  });
+
+  it('does not attach a reference to cart or buy-now sessions', async () => {
+    const createSession = vi.fn(async (_input: SessionRequest) =>
+      makeSession()
+    );
+    const client = new CommerceClient({
+      clientId: 'client',
+      storeId: 'store',
+      channelId: 'channel',
+      createSession,
+    });
+    await client.addItem('sku-a');
+    await client.checkout();
+    expect(createSession.mock.calls[0][0]).not.toHaveProperty('reference');
+    client.closeCheckout();
+    client.dispose();
+  });
+});
+
+describe('browser token guard', () => {
+  it('refuses getAccessToken unless the integrator opts in explicitly', () => {
+    expect(
+      () =>
+        new CommerceClient({
+          clientId: 'client',
+          storeId: 'store',
+          channelId: 'channel',
+          getAccessToken: async () => 'token',
+        })
+    ).toThrow('dangerouslyAllowBrowserToken');
+    expect(
+      () =>
+        new CommerceClient({
+          clientId: 'client',
+          storeId: 'store',
+          channelId: 'channel',
+          getAccessToken: async () => 'token',
+          dangerouslyAllowBrowserToken: true,
+        })
+    ).not.toThrow();
+  });
+
+  it('ignores getAccessToken when createSession is configured', async () => {
+    const getAccessToken = vi.fn(async () => 'token');
+    const client = new CommerceClient({
+      clientId: 'client',
+      storeId: 'store',
+      channelId: 'channel',
+      getAccessToken,
+      createSession: async () => makeSession(),
+    });
+    await client.buyNow('sku-a');
+    expect(getAccessToken).not.toHaveBeenCalled();
+    expect(api.createCheckoutSession).not.toHaveBeenCalled();
+    client.closeCheckout();
   });
 });

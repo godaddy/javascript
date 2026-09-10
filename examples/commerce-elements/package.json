@@ -16,6 +16,7 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@godaddy/react": "workspace:*",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^4.7.0",

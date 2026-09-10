@@ -18,7 +18,10 @@ const INITIAL: CommerceSnapshot = Object.freeze({
   checkout: null,
 });
 
-type Purchase = Pick<SessionInput, 'draftOrderId' | 'lineItems'>;
+type Purchase = Pick<SessionInput, 'draftOrderId' | 'lineItems'> & {
+  /** Application payment reference, forwarded to `createSession` only. */
+  reference?: string;
+};
 
 function identifier(value: string, name: string): string {
   if (typeof value !== 'string' || !value.trim())
@@ -83,6 +86,15 @@ export class CommerceClient {
       throw new CommerceError(
         'INVALID_HOST',
         'apiHost must be a host name without a path or scheme'
+      );
+    if (
+      config.getAccessToken &&
+      !config.createSession &&
+      !config.dangerouslyAllowBrowserToken
+    )
+      throw new CommerceError(
+        'BROWSER_TOKEN_NOT_ALLOWED',
+        'getAccessToken exposes a Commerce OAuth token to every visitor. Configure createSession to create sessions on your server, or set dangerouslyAllowBrowserToken if the token is short-lived and checkout-only'
       );
     this.config = Object.freeze({
       ...config,
@@ -453,7 +465,7 @@ export class CommerceClient {
       if (!createSession && !getAccessToken)
         throw new CommerceError(
           'OAUTH_REQUIRED',
-          'Configure createSession (server-side) or getAccessToken using your existing OAuth client to enable checkout'
+          'Configure createSession to create checkout sessions on your server (or, for a checkout-only token, getAccessToken with dangerouslyAllowBrowserToken)'
         );
       // Resolve credentials before taking the cart lock so a slow callback cannot block other tabs.
       const token = createSession ? null : await getAccessToken?.();
@@ -464,7 +476,7 @@ export class CommerceClient {
         );
       const navigation = this.navigation();
       return this.run(async () => {
-        const purchase = await input();
+        const { reference, ...purchase } = await input();
         const request: SessionInput = {
           ...checkout,
           ...purchase,
@@ -472,8 +484,11 @@ export class CommerceClient {
           channelId,
           ...navigation,
         };
+        // Only the server path receives the reference; Commerce itself does not accept it.
         const session = createSession
-          ? await createSession(request)
+          ? await createSession(
+              reference === undefined ? request : { ...request, reference }
+            )
           : await api.createCheckoutSession(request, {
               accessToken: token as string,
               apiHost,
@@ -534,13 +549,15 @@ export class CommerceClient {
     return this.startCheckout(
       JSON.stringify(['payment', reference]),
       async () => {
-        if (!this.config.resolvePayment)
+        const { resolvePayment, createSession } = this.config;
+        // With a server session, the server prices the reference itself.
+        if (!resolvePayment && createSession) return { reference };
+        if (!resolvePayment)
           throw new CommerceError(
             'PAYMENT_RESOLVER_REQUIRED',
-            'Configure resolvePayment for invoice or deposit payments'
+            'Configure createSession (preferred) or resolvePayment for invoice or deposit payments'
           );
-        const payment: NonCatalogPayment =
-          await this.config.resolvePayment(reference);
+        const payment: NonCatalogPayment = await resolvePayment(reference);
         identifier(payment.name, 'payment name');
         quantity(payment.quantity ?? 1);
         if (
@@ -553,6 +570,7 @@ export class CommerceClient {
             'Payment requires an integer minor-unit amount and an ISO currency code'
           );
         return {
+          reference,
           lineItems: [
             {
               quantity: payment.quantity ?? 1,
