@@ -175,9 +175,11 @@
   border-bottom: 0;
 }
 .gddy-product-image {
+  /* Stretches to the content column so its top meets the title and its bottom
+     meets the controls: 56px without variants, 80px with one variant row. */
   width: 64px;
-  height: 64px;
-  align-self: start;
+  min-height: 56px;
+  align-self: stretch;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -213,6 +215,7 @@
 }
 .gddy-line-price {
   flex-shrink: 0;
+  line-height: 20px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
