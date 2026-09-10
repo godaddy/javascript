@@ -163,7 +163,10 @@
 }
 .gddy-lines > li {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 80px minmax(0, 1fr);
+  /* The thumbnail stays a square; content centers against it, so a plain line
+     sits balanced and a one-variant line (80px) fills it edge to edge. */
+  align-items: center;
   gap: 12px;
   padding: 16px 0;
   border-bottom: 1px solid var(--gddy-border, #e6e6e8);
@@ -175,11 +178,8 @@
   border-bottom: 0;
 }
 .gddy-product-image {
-  /* Stretches to the content column so its top meets the title and its bottom
-     meets the controls: 56px without variants, 80px with one variant row. */
-  width: 64px;
-  min-height: 56px;
-  align-self: stretch;
+  width: 80px;
+  height: 80px;
   display: grid;
   place-items: center;
   overflow: hidden;
