@@ -163,7 +163,7 @@
 }
 .gddy-lines > li {
   display: grid;
-  grid-template-columns: 80px minmax(0, 1fr);
+  grid-template-columns: 64px minmax(0, 1fr);
   gap: 12px;
   padding: 16px 0;
   border-bottom: 1px solid var(--gddy-border, #e6e6e8);
@@ -175,9 +175,9 @@
   border-bottom: 0;
 }
 .gddy-product-image {
-  width: 80px;
-  min-height: 80px;
-  align-self: stretch;
+  width: 64px;
+  height: 64px;
+  align-self: start;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -192,10 +192,11 @@
 }
 .gddy-line-content {
   min-width: 0;
-  min-height: 80px;
   display: flex;
   flex-direction: column;
-  gap: var(--gddy-space-1);
+  /* Heading, optional variants, then controls. No bottom alignment, so a line
+     without variants has no dead space between the title and the stepper. */
+  gap: var(--gddy-space-2);
 }
 .gddy-line-heading {
   display: flex;
@@ -249,8 +250,6 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 4px 12px;
-  margin-top: auto;
-  padding-top: var(--gddy-space-1);
 }
 .gddy-quantity {
   height: 28px;
