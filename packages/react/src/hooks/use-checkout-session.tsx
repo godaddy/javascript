@@ -28,12 +28,15 @@ function decodeJwt(token: string): { exp: number } | null {
 
 export function useCheckoutSession(props?: CheckoutProps) {
   const { apiHost } = useGoDaddyContext();
+  const storagePrefix = props?.embedded
+    ? `godaddy-checkout:${apiHost || 'api.godaddy.com'}:${props.session?.id || ''}`
+    : 'godaddy-checkout';
   const [jwt, setJwt, removeJwt] = useSessionStorage(
-    'godaddy-checkout-jwt',
+    `${storagePrefix}-jwt`,
     ''
   );
   const [storedSessionId, setStoredSessionId, removeStoredSessionId] =
-    useSessionStorage('godaddy-checkout-session-id', '');
+    useSessionStorage(`${storagePrefix}-session-id`, '');
   const [exchangeFailed, setExchangeFailed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const refreshTimerRef = useRef<number | null>(null);
@@ -127,7 +130,7 @@ export function useCheckoutSession(props?: CheckoutProps) {
         setStoredSessionId(sessionId);
         setExchangeFailed(false);
         setIsLoading(false);
-        if (typeof window !== 'undefined') {
+        if (!props?.embedded && typeof window !== 'undefined') {
           window.history.replaceState(
             null,
             '',
@@ -162,6 +165,7 @@ export function useCheckoutSession(props?: CheckoutProps) {
     removeStoredSessionId,
     scheduleRefresh,
     apiHost,
+    props?.embedded,
   ]);
 
   useEffect(() => {

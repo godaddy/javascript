@@ -9,6 +9,11 @@
     "skills"
   ],
   "exports": {
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js",
+      "default": "./dist/client.js"
+    },
     "./package.json": "./package.json",
     "./styles.css": "./dist/index.css",
     "./styles-tailwind.css": "./dist/index-tailwind.css",
@@ -30,6 +35,7 @@
   },
   "typesVersions": {
     "*": {
+      "client": ["./dist/client.d.ts"],
       "server": [
         "./dist/server.d.ts"
       ],

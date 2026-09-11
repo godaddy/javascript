@@ -1,0 +1,19 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
+  "extends": [
+    "biome-config-godaddy/biome.json"
+  ],
+  "linter": {
+    "rules": {
+      "correctness": {
+        "useUniqueElementIds": "off"
+      }
+    }
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!**/checkout.generated.css"
+    ]
+  }
+}

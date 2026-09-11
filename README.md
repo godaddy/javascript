@@ -51,6 +51,7 @@ This monorepo contains the following packages:
 | [`eslint-config-godaddy-react-typescript`](/packages/eslint-config-godaddy-react-typescript) | ESLint configuration for React + TypeScript applications | [![npm](https://img.shields.io/npm/v/eslint-config-godaddy-react-typescript.svg)](https://www.npmjs.com/package/eslint-config-godaddy-react-typescript) |
 | [`biome-config-godaddy`](/packages/biome-config-godaddy) | Fast Rust-based alternative to ESLint and Prettier using Biome | [![npm](https://img.shields.io/npm/v/biome-config-godaddy.svg)](https://www.npmjs.com/package/biome-config-godaddy) |
 | [`@godaddy/app-connect`](/packages/app-connect) | Platform integration tools for GoDaddy apps | [![npm](https://img.shields.io/npm/v/@godaddy/app-connect.svg)](https://www.npmjs.com/package/@godaddy/app-connect) |
+| [`@godaddy/commerce`](/packages/commerce) | Managed cart and checkout web components | In development |
 | [`@godaddy/react`](/packages/react) | React components and commerce API integration | [![npm](https://img.shields.io/npm/v/@godaddy/react.svg)](https://www.npmjs.com/package/@godaddy/react) |
 
 ## Why GoDaddy JavaScript?
