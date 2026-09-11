@@ -152,6 +152,11 @@ const LazyComponents = {
       '@/components/checkout/payment/checkout-buttons/ccavenue/ccavenue'
     ).then(module => ({ default: module.CCAvenueCheckoutButton }))
   ),
+  RazorpayCheckoutButton: lazy(() =>
+    import(
+      '@/components/checkout/payment/checkout-buttons/razorpay/razorpay'
+    ).then(module => ({ default: module.RazorpayCheckoutButton }))
+  ),
 
   // Container Components
   CreditCardContainer: lazy(() =>
@@ -238,6 +243,11 @@ type PaymentComponentRegistry = {
       button: PaymentComponentKey;
     };
   };
+  [PaymentMethodType.RAZORPAY]?: {
+    [PaymentProvider.RAZORPAY]: {
+      button: PaymentComponentKey;
+    };
+  };
 };
 
 export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
@@ -306,6 +316,11 @@ export const lazyPaymentComponentRegistry: PaymentComponentRegistry = {
   [PaymentMethodType.CCAVENUE]: {
     [PaymentProvider.CCAVENUE]: {
       button: 'CCAvenueCheckoutButton',
+    },
+  },
+  [PaymentMethodType.RAZORPAY]: {
+    [PaymentProvider.RAZORPAY]: {
+      button: 'RazorpayCheckoutButton',
     },
   },
 };

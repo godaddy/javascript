@@ -87,6 +87,7 @@ export enum PaymentProvider {
   SQUARE = 'SQUARE',
   OFFLINE = 'OFFLINE',
   CCAVENUE = 'CCAVENUE',
+  RAZORPAY = 'RAZORPAY',
 }
 
 export function useConfirmCheckout() {

@@ -10,14 +10,16 @@ export function useGetSelectedPaymentMethod(
   return useMemo(() => {
     if (!paymentMethod || !session?.paymentMethods) return null;
 
-    const methodConfig = session.paymentMethods[
-      paymentMethod as PaymentMethodValue
-    ] as PaymentMethodConfig;
+    const paymentMethods = session.paymentMethods as unknown as Partial<
+      Record<PaymentMethodValue, PaymentMethodConfig>
+    >;
+    const methodConfig = paymentMethods[paymentMethod];
+    if (!methodConfig) return null;
 
     return {
       type: paymentMethod,
-      processor: methodConfig?.processor,
-      checkoutTypes: methodConfig?.checkoutTypes || [],
+      processor: methodConfig.processor,
+      checkoutTypes: methodConfig.checkoutTypes || [],
     };
   }, [paymentMethod, session?.paymentMethods]);
 }
