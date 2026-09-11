@@ -168,6 +168,7 @@ export const trTr = {
     shipping: 'Kargo',
     tip: 'Bahşiş',
     estimatedTaxes: 'Tahmini vergiler',
+    vatIncluded: 'KDV dahil',
     fees: 'Ücretler',
     totalDue: 'Ödenecek Toplam',
     orderSummary: 'Sipariş Özeti',

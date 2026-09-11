@@ -168,6 +168,7 @@ export const deDe = {
     shipping: 'Versand',
     tip: 'Trinkgeld',
     estimatedTaxes: 'Geschätzte Steuern',
+    vatIncluded: 'MwSt. enthalten',
     fees: 'Gebühren',
     totalDue: 'Gesamtbetrag',
     orderSummary: 'Bestellübersicht',
