@@ -12,32 +12,63 @@ export async function createCheckoutSession(
   input: CreateCheckoutSessionInputWithKebabCase,
   options?: CheckoutSessionOptions
 ) {
-  const CLIENT_ID = options?.auth?.clientId || '';
-  const CLIENT_SECRET = options?.auth?.clientSecret || '';
-
-  const now = Date.now() / 1000; // seconds
+  const auth = options?.auth;
+  const apiHost = getEnvVar('GODADDY_API_HOST') || 'api.godaddy.com';
 
   if (
-    !accessToken ||
-    !accessTokenExpiresAt ||
-    accessTokenExpiresAt - 60 < now // refresh 1 min before expiry
+    auth &&
+    'personalAccessToken' in auth &&
+    auth.personalAccessToken &&
+    (('clientId' in auth && auth.clientId) ||
+      ('clientSecret' in auth && auth.clientSecret))
   ) {
-    const getAccessTokenResponse = await getAccessToken({
-      clientId: CLIENT_ID,
-      clientSecret: CLIENT_SECRET,
-    });
-
-    accessToken = getAccessTokenResponse?.access_token;
-    accessTokenExpiresAt = now + (getAccessTokenResponse?.expires_in || 0);
+    throw new Error(
+      'personalAccessToken and clientId/clientSecret are mutually exclusive. Provide one or the other.'
+    );
   }
 
-  if (!accessToken) {
+  if (auth && 'personalAccessToken' in auth && !auth.personalAccessToken) {
+    throw new Error('personalAccessToken must not be empty');
+  }
+
+  let token: string | undefined;
+  let endpoint: string | undefined;
+
+  if (auth && 'personalAccessToken' in auth && auth.personalAccessToken) {
+    token = auth.personalAccessToken;
+    endpoint = `/v2/commerce/stores/${input.storeId}/checkout-subgraph`;
+  } else {
+    const CLIENT_ID = (auth && 'clientId' in auth ? auth.clientId : '') || '';
+    const CLIENT_SECRET =
+      (auth && 'clientSecret' in auth ? auth.clientSecret : '') || '';
+
+    const now = Date.now() / 1000;
+
+    if (
+      !accessToken ||
+      !accessTokenExpiresAt ||
+      accessTokenExpiresAt - 60 < now
+    ) {
+      const getAccessTokenResponse = await getAccessToken({
+        clientId: CLIENT_ID,
+        clientSecret: CLIENT_SECRET,
+      });
+
+      accessToken = getAccessTokenResponse?.access_token;
+      accessTokenExpiresAt = now + (getAccessTokenResponse?.expires_in || 0);
+    }
+
+    token = accessToken;
+  }
+
+  if (!token) {
     throw new Error('Failed to get access token');
   }
 
   return await GoDaddy.createCheckoutSession(input, {
-    accessToken,
-    apiHost: getEnvVar('GODADDY_API_HOST'),
+    accessToken: token,
+    apiHost,
+    endpoint,
   });
 }
 
