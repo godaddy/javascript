@@ -54,6 +54,14 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Check npm credentials
+        run: |
+          echo "user: $(npm whoami)"
+          echo "packages this token can access:"
+          npm access list packages "$(npm whoami)" || true
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SECRET }}
+
       - name: Publish to npm
         run: pnpm publish -r --tag ${{ inputs.tag }} --no-git-checks
         env:
