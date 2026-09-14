@@ -27,6 +27,7 @@
   "sideEffects": true,
   "scripts": {
     "build": "tsdown && node scripts/package-styles.mjs",
+    "prepublishOnly": "pnpm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "biome check ./src",
