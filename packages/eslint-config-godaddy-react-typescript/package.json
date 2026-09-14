@@ -33,11 +33,11 @@
     "eslint-plugin-react-hooks": "^5.2.0"
   },
   "peerDependencies": {
-    "eslint": "^10",
+    "eslint": "^10.2.0",
     "typescript": ">=5"
   },
   "devDependencies": {
-    "eslint": "^10.0.2"
+    "eslint": "^10.2.0"
   },
   "exports": {
     ".": "./index.js"

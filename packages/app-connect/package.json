@@ -61,13 +61,13 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
-		"@changesets/cli": "^2.29.4",
+		"@changesets/cli": "^3.0.2",
 		"@types/express": "^5.0.2",
 		"@types/node": "^22.13.1",
 		"pino-pretty": "^13.0.0",
 		"tsdown": "^0.15.6",
 		"typescript": "~5.7.3",
-		"vitest": "^4.1.2"
+		"vitest": "^5.0.0"
 	},
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org/"

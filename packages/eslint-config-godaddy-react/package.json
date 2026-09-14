@@ -27,11 +27,11 @@
     "a11y"
   ],
   "peerDependencies": {
-    "@babel/core": ">=7",
-    "eslint": "^10"
+    "@babel/core": "^8.0.0",
+    "eslint": "^10.2.0"
   },
   "dependencies": {
-    "@babel/eslint-parser": "^7.28.6",
+    "@babel/eslint-parser": "^8.0.5",
     "@eslint/compat": "^2.0.2",
     "eslint-config-godaddy": "workspace:^",
     "eslint-plugin-jsx-a11y": "^6.10.2",
@@ -39,7 +39,7 @@
     "eslint-plugin-react-hooks": "^5.2.0"
   },
   "devDependencies": {
-    "eslint": "^10.0.2"
+    "eslint": "^10.2.0"
   },
   "exports": {
     ".": "./index.js"
