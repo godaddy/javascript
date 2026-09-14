@@ -59,7 +59,7 @@ jobs:
       - name: Create Release Pull Request or Publish to npm
         if: github.event_name == 'push'
         id: changesets
-        uses: changesets/action@v1 # v1.7.0
+        uses: changesets/action@v2 # v1.7.0
         with:
           version: pnpm run version
           publish: pnpm publish -r
