@@ -1,5 +1,11 @@
 # @godaddy/react
 
+## 1.0.56
+
+### Patch Changes
+
+- 12ea9d7: feat: accept personalAccessToken as alternative auth in createCheckoutSession — routes through API Gateway; OAuth path unchanged
+
 ## 1.0.55
 
 ### Patch Changes
