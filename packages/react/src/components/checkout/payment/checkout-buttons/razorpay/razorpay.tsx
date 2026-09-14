@@ -2,8 +2,8 @@ import { LoaderCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import { encodeRazorpayPaymentToken } from '@/components/checkout/payment/utils/razorpay-payment-token';
+import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import {
   PaymentProvider,
   useConfirmCheckout,
@@ -46,10 +46,7 @@ type RazorpayOptions = {
 type RazorpayInstance = {
   open: () => void;
   close: () => void;
-  on: (
-    event: 'payment.failed',
-    handler: (response: unknown) => void
-  ) => void;
+  on: (event: 'payment.failed', handler: (response: unknown) => void) => void;
 };
 
 type RazorpayConstructor = new (options: RazorpayOptions) => RazorpayInstance;
@@ -60,12 +57,8 @@ function getRazorpayConstructor(): RazorpayConstructor | undefined {
 
 export function RazorpayCheckoutButton() {
   const { t } = useGoDaddyContext();
-  const {
-    razorpayConfig,
-    session,
-    setCheckoutErrors,
-    isConfirmingCheckout,
-  } = useCheckoutContext();
+  const { session, setCheckoutErrors, isConfirmingCheckout } =
+    useCheckoutContext();
   const form = useFormContext();
   const authorizeCheckout = useAuthorizeCheckout();
   const confirmCheckout = useConfirmCheckout();
@@ -109,7 +102,6 @@ export function RazorpayCheckoutButton() {
           paymentType: PaymentMethodType.RAZORPAY,
           paymentProvider: PaymentProvider.RAZORPAY,
         });
-        setError('');
       } catch (err: unknown) {
         if (err instanceof GraphQLErrorWithCodes) {
           setCheckoutErrors(err.codes);
@@ -152,11 +144,7 @@ export function RazorpayCheckoutButton() {
         includeCurrentFormDiff: true,
       });
       const total = latestOrder?.totals?.total;
-      if (
-        !latestOrder?.id ||
-        total?.value == null ||
-        !total.currencyCode
-      ) {
+      if (!latestOrder?.id || total?.value == null || !total.currencyCode) {
         throw new Error('Synchronized draft order is unavailable');
       }
 
@@ -173,11 +161,14 @@ export function RazorpayCheckoutButton() {
         paymentType: PaymentMethodType.RAZORPAY,
         paymentProvider: PaymentProvider.RAZORPAY,
       });
-      const orderId = authorization?.transactionRefNum;
+      const orderId = authorization?.fundingSource?.paymentReference;
+      const publicToken = authorization?.references?.find(
+        reference => reference.type === 'MERCHANT_PUBLIC_KEY'
+      )?.value;
       const Razorpay = getRazorpayConstructor();
       if (
         !orderId?.startsWith('order_') ||
-        !razorpayConfig?.publicToken ||
+        !publicToken ||
         !isRazorpayLoaded ||
         !Razorpay
       ) {
@@ -185,7 +176,7 @@ export function RazorpayCheckoutButton() {
       }
 
       const widget = new Razorpay({
-        key: razorpayConfig.publicToken,
+        key: publicToken,
         amount: total.value,
         currency: total.currencyCode,
         name: session?.storeName || undefined,
@@ -244,7 +235,7 @@ export function RazorpayCheckoutButton() {
         type='button'
         size='lg'
         className='w-full'
-        disabled={isBusy || !isRazorpayLoaded || !razorpayConfig?.publicToken}
+        disabled={isBusy || !isRazorpayLoaded}
         onClick={handleClick}
       >
         {isBusy ? (

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useCheckoutContext } from '@/components/checkout/checkout';
 
 const RAZORPAY_SDK_ID = 'razorpay-sdk';
 const RAZORPAY_SDK_URL = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -9,7 +8,9 @@ let isRazorpayScriptRequested = false;
 const listeners = new Set<(loaded: boolean, failed: boolean) => void>();
 
 function hasRazorpayConstructor() {
-  return typeof (window as Window & { Razorpay?: unknown }).Razorpay === 'function';
+  return (
+    typeof (window as Window & { Razorpay?: unknown }).Razorpay === 'function'
+  );
 }
 
 function notifyListeners(loaded: boolean, failed: boolean) {
@@ -17,7 +18,6 @@ function notifyListeners(loaded: boolean, failed: boolean) {
 }
 
 export function useLoadRazorpay() {
-  const { razorpayConfig } = useCheckoutContext();
   const [loaded, setLoaded] = useState(
     () => typeof window !== 'undefined' && hasRazorpayConstructor()
   );
@@ -41,7 +41,7 @@ export function useLoadRazorpay() {
   }, []);
 
   useEffect(() => {
-    if (!razorpayConfig?.publicToken || isRazorpayLoaded) return;
+    if (isRazorpayLoaded) return;
 
     const existingScript = document.getElementById(
       RAZORPAY_SDK_ID
@@ -81,7 +81,7 @@ export function useLoadRazorpay() {
       notifyListeners(false, true);
     };
     document.body.appendChild(script);
-  }, [razorpayConfig?.publicToken]);
+  }, []);
 
   return {
     isRazorpayLoaded: loaded,

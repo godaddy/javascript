@@ -67,13 +67,6 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
             }
           : undefined
       }
-      razorpayConfig={
-        process.env.NEXT_PUBLIC_RAZORPAY_PUBLIC_TOKEN
-          ? {
-              publicToken: process.env.NEXT_PUBLIC_RAZORPAY_PUBLIC_TOKEN,
-            }
-          : undefined
-      }
     />
   );
 }

@@ -94,10 +94,6 @@ export type CCAvenueConfig = {
   accessCodeId: string;
 };
 
-export type RazorpayConfig = {
-  publicToken: string;
-};
-
 interface CheckoutContextValue {
   elements?: CheckoutElements;
   targets?: Partial<
@@ -112,7 +108,6 @@ interface CheckoutContextValue {
   paypalConfig?: PayPalConfig;
   mercadoPagoConfig?: MercadoPagoConfig;
   ccavenueConfig?: CCAvenueConfig;
-  razorpayConfig?: RazorpayConfig;
   isConfirmingCheckout: boolean;
   setIsConfirmingCheckout: (isConfirming: boolean) => void;
   checkoutErrors?: string[] | undefined;
@@ -219,7 +214,6 @@ export interface CheckoutProps {
   paypalConfig?: PayPalConfig;
   mercadoPagoConfig?: MercadoPagoConfig;
   ccavenueConfig?: CCAvenueConfig;
-  razorpayConfig?: RazorpayConfig;
   layout?: LayoutSection[];
   direction?: 'ltr' | 'rtl';
   showStoreHours?: boolean;
@@ -245,7 +239,6 @@ export function Checkout(props: CheckoutProps) {
     paypalConfig,
     mercadoPagoConfig,
     ccavenueConfig,
-    razorpayConfig,
     isCheckoutDisabled,
   } = props;
 
@@ -340,7 +333,6 @@ export function Checkout(props: CheckoutProps) {
           mercadoPagoConfig,
           paypalConfig,
           ccavenueConfig,
-          razorpayConfig,
           requiredFields,
           isConfirmingCheckout,
           setIsConfirmingCheckout,

@@ -19,23 +19,22 @@ function buildRazorpaySession() {
 }
 
 describe('Razorpay payment method', () => {
-  it('renders the Razorpay checkout button when session and public token are configured', async () => {
-    renderCheckout({
-      session: buildRazorpaySession(),
-      checkoutProps: {
-        razorpayConfig: { publicToken: 'rzp_test_public' },
-      },
-    });
+  it('renders the Razorpay checkout button when enabled for the session', async () => {
+    renderCheckout({ session: buildRazorpaySession() });
     await waitForCheckoutReady();
 
     expect(await screen.findByTestId('mock-razorpay-button')).toBeVisible();
   });
 
-  it('hides Razorpay when the public token is unavailable', async () => {
-    renderCheckout({ session: buildRazorpaySession() });
+  it('hides Razorpay when it is not enabled for the session', async () => {
+    const session = buildCheckoutSession();
+    session.paymentMethods = {} as never;
+    renderCheckout({ session });
     await waitForCheckoutReady();
 
     expect(screen.getByText('No payment methods available')).toBeVisible();
-    expect(screen.queryByTestId('mock-razorpay-button')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('mock-razorpay-button')
+    ).not.toBeInTheDocument();
   });
 });

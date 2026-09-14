@@ -473,9 +473,25 @@ export const AuthorizeCheckoutSessionMutation = graphql(`
         authorizeCheckoutSession(input: $input) {
           ... on SaleTransaction {
             transactionRefNum
+            fundingSource {
+              paymentReference
+            }
+            references {
+              type
+              value
+              additionalLabel
+            }
           }
           ... on AuthorizeTransaction {
             transactionRefNum
+            fundingSource {
+              paymentReference
+            }
+            references {
+              type
+              value
+              additionalLabel
+            }
           }
         }
     }

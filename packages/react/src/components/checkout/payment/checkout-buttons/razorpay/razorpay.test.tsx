@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   RAZORPAY_CALLBACK_TIMEOUT_MS,
@@ -17,41 +23,31 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/components/checkout/checkout', () => ({
   useCheckoutContext: () => ({
-    razorpayConfig: { publicToken: 'rzp_test_public' },
     session: { storeName: 'Test Store' },
     setCheckoutErrors: mocks.setCheckoutErrors,
     isConfirmingCheckout: false,
   }),
 }));
 
-vi.mock(
-  '@/components/checkout/payment/utils/use-authorize-checkout',
-  () => ({
-    useAuthorizeCheckout: () => ({
-      mutateAsync: mocks.authorize,
-      isPending: false,
-    }),
-  })
-);
+vi.mock('@/components/checkout/payment/utils/use-authorize-checkout', () => ({
+  useAuthorizeCheckout: () => ({
+    mutateAsync: mocks.authorize,
+    isPending: false,
+  }),
+}));
 
 vi.mock('@/components/checkout/payment/utils/use-confirm-checkout', () => ({
   PaymentProvider: { RAZORPAY: 'RAZORPAY' },
   useConfirmCheckout: () => ({ mutateAsync: mocks.confirm }),
 }));
 
-vi.mock(
-  '@/components/checkout/payment/utils/use-flush-checkout-sync',
-  () => ({
-    useFlushCheckoutSync: () => mocks.flush,
-  })
-);
+vi.mock('@/components/checkout/payment/utils/use-flush-checkout-sync', () => ({
+  useFlushCheckoutSync: () => mocks.flush,
+}));
 
-vi.mock(
-  '@/components/checkout/payment/utils/use-is-payment-disabled',
-  () => ({
-    useIsPaymentDisabled: () => false,
-  })
-);
+vi.mock('@/components/checkout/payment/utils/use-is-payment-disabled', () => ({
+  useIsPaymentDisabled: () => false,
+}));
 
 vi.mock('@/components/checkout/payment/utils/use-load-razorpay', () => ({
   useLoadRazorpay: () => ({
@@ -112,7 +108,11 @@ describe('RazorpayCheckoutButton', () => {
       },
     });
     mocks.authorize.mockResolvedValue({
-      transactionRefNum: 'order_razorpay_123',
+      fundingSource: { paymentReference: 'order_razorpay_123' },
+      references: [
+        { type: 'ORDER', value: 'draft-order-1' },
+        { type: 'MERCHANT_PUBLIC_KEY', value: 'rzp_test_public' },
+      ],
     });
     mocks.confirm.mockResolvedValue(undefined);
 
@@ -204,6 +204,37 @@ describe('RazorpayCheckoutButton', () => {
     expect(mocks.confirm).not.toHaveBeenCalled();
     expect(screen.getByText('Error processing payment')).toBeTruthy();
   });
+
+  it.each([
+    {
+      name: 'order ID',
+      authorization: {
+        fundingSource: { paymentReference: null },
+        references: [{ type: 'MERCHANT_PUBLIC_KEY', value: 'rzp_test_public' }],
+      },
+    },
+    {
+      name: 'merchant public key',
+      authorization: {
+        fundingSource: { paymentReference: 'order_razorpay_123' },
+        references: [],
+      },
+    },
+  ])(
+    'does not open Checkout when authorize omits the $name',
+    async ({ authorization }) => {
+      mocks.authorize.mockResolvedValue(authorization);
+      render(<RazorpayCheckoutButton />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Pay now' }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Error processing payment')).toBeTruthy();
+      });
+      expect(open).not.toHaveBeenCalled();
+      expect(mocks.confirm).not.toHaveBeenCalled();
+    }
+  );
 
   it('closes Checkout when no callback arrives within two minutes', async () => {
     const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');

@@ -572,6 +572,21 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "references",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "TransactionReference"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "status",
             "type": {
               "kind": "SCALAR",
@@ -9839,6 +9854,21 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "references",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "TransactionReference"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "status",
             "type": {
               "kind": "SCALAR",
@@ -10874,6 +10904,15 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "paymentReference",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "provider",
             "type": {
               "kind": "SCALAR",
@@ -10884,6 +10923,40 @@ const introspection = {
           },
           {
             "name": "sourceType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "TransactionReference",
+        "fields": [
+          {
+            "name": "additionalLabel",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "type",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "value",
             "type": {
               "kind": "SCALAR",
               "name": "String"

@@ -108,7 +108,6 @@ export function PaymentForm(
     setCheckoutErrors,
     requiredFields,
     godaddyPaymentsConfig,
-    razorpayConfig,
   } = useCheckoutContext();
   const form = useFormContext();
   const paymentMethod = form.watch('paymentMethod');
@@ -307,10 +306,6 @@ export function PaymentForm(
         return baseCheck && googlePaySupported === true;
       }
 
-      if (key === PaymentMethodType.RAZORPAY) {
-        return baseCheck && !!razorpayConfig?.publicToken;
-      }
-
       return baseCheck;
     });
   }, [
@@ -319,7 +314,6 @@ export function PaymentForm(
     pazeSupported,
     applePaySupported,
     googlePaySupported,
-    razorpayConfig?.publicToken,
   ]);
 
   const shouldShowBilling =
@@ -477,9 +471,7 @@ export function PaymentForm(
                   {filteredPaymentMethods.map(
                     ([key, { label, icon }], index, array) => {
                       const itemMethodConfig =
-                        configuredPaymentMethods?.[
-                          key as PaymentMethodValue
-                        ];
+                        configuredPaymentMethods?.[key as PaymentMethodValue];
                       const itemMethodForm = itemMethodConfig
                         ? getPaymentMethodForm(
                             key as PaymentMethodValue,
