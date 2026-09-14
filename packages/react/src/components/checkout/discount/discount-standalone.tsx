@@ -25,13 +25,11 @@ export function DiscountStandalone({
   const isPaymentDisabled = useIsPaymentDisabled();
   const { data: draftOrder } = useDraftOrder();
 
-  // Get current discount codes from order-level, line item-level, and shipping line-level discounts
   const currentDiscountCodes = React.useMemo(() => {
     if (!draftOrder) return [];
 
     const allCodes = new Set<string>();
 
-    // Add order-level discount codes
     if (draftOrder.discounts) {
       for (const discount of draftOrder.discounts) {
         if (discount.code) {
@@ -40,7 +38,6 @@ export function DiscountStandalone({
       }
     }
 
-    // Add line item-level discount codes
     if (draftOrder.lineItems) {
       for (const lineItem of draftOrder.lineItems) {
         if (lineItem.discounts) {
@@ -53,7 +50,6 @@ export function DiscountStandalone({
       }
     }
 
-    // Add shipping line-level discount codes
     if (draftOrder.shippingLines) {
       for (const shippingLine of draftOrder.shippingLines) {
         if (shippingLine.discounts) {
@@ -69,7 +65,6 @@ export function DiscountStandalone({
     return Array.from(allCodes);
   }, [draftOrder]);
 
-  // Amounts for the success bar UI only (apply/remove still use currentDiscountCodes)
   const discountAmountsByCode = React.useMemo(() => {
     const amounts = new Map<string, { amount: number; currencyCode: string }>();
     if (!draftOrder) return amounts;
@@ -115,7 +110,6 @@ export function DiscountStandalone({
     !hasInputValue || isPaymentDisabled || isSubmitting || !!isRemovingDiscount;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Same space-stripping behavior DiscountInput used to provide
     setDiscountCode(e.target.value.replace(/\s+/g, ''));
     setFormErrors(undefined);
   };
@@ -126,8 +120,6 @@ export function DiscountStandalone({
   };
 
   const handleApply = async () => {
-    // Validation
-
     if (!discountCode.trim()) {
       setFormErrors([t.discounts.enterCodeValidation]);
       return;
@@ -135,22 +127,18 @@ export function DiscountStandalone({
 
     try {
       setIsSubmitting(true);
-      // Normalize the discount code to uppercase for consistency
       const normalizedCode = discountCode.trim();
 
-      // Check if the code already exists
       if (currentDiscountCodes.includes(normalizedCode)) {
         setFormErrors([t.discounts.alreadyApplied]);
         return;
       }
 
-      // Apply discount with current codes + new code
       const newDiscountCodes = [...currentDiscountCodes, normalizedCode];
       await applyDiscount.mutateAsync({
         discountCodes: newDiscountCodes,
       });
 
-      // Track successful discount application
       track({
         eventId: eventIds.applyCoupon,
         type: TrackingEventType.CLICK,
@@ -160,17 +148,14 @@ export function DiscountStandalone({
         },
       });
 
-      // Call the change handler if provided
       onDiscountsChange?.(newDiscountCodes);
 
-      // Reset the input
       setDiscountCode('');
       setFormErrors(undefined);
     } catch (error) {
       if (error instanceof GraphQLErrorWithCodes) {
         setFormErrors(error.codes);
 
-        // Track discount error
         track({
           eventId: eventIds.discountError,
           type: TrackingEventType.EVENT,
@@ -184,7 +169,6 @@ export function DiscountStandalone({
         setFormErrors([t.discounts.failedToApply]);
         onError?.(genericError);
 
-        // Track generic discount error
         track({
           eventId: eventIds.discountError,
           type: TrackingEventType.EVENT,
@@ -217,7 +201,6 @@ export function DiscountStandalone({
         discountCodes: newDiscountCodes,
       });
 
-      // Track discount removal
       track({
         eventId: eventIds.removeDiscount,
         type: TrackingEventType.CLICK,
@@ -233,7 +216,6 @@ export function DiscountStandalone({
       if (error instanceof GraphQLErrorWithCodes) {
         setFormErrors(error.codes);
 
-        // Track discount error
         track({
           eventId: eventIds.discountError,
           type: TrackingEventType.EVENT,
@@ -247,7 +229,6 @@ export function DiscountStandalone({
         setFormErrors([t.discounts.failedToApply]);
         onError?.(genericError);
 
-        // Track generic discount error
         track({
           eventId: eventIds.discountError,
           type: TrackingEventType.EVENT,
@@ -260,10 +241,6 @@ export function DiscountStandalone({
     }
   };
 
-  // Prefer client validation copy, then GraphQL apiErrors (same as old
-  // DiscountErrorList). Checkout-api collapses GPA failures to
-  // DISCOUNT_APPLICATION_FAILED ("Failed to apply coupon") — do not default
-  // to "isn't valid", which overstates that the code itself was invalid.
   const primaryError = (() => {
     const error = formErrors?.[0];
     if (!error) return undefined;
@@ -305,7 +282,6 @@ export function DiscountStandalone({
         </div>
       )}
 
-      {/* One coupon at a time: hide entry field while a code is applied. */}
       {currentDiscountCodes.length === 0 ? (
         <div className='flex flex-col gap-1.5'>
           <div
