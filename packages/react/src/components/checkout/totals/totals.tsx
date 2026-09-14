@@ -172,6 +172,7 @@ export function DraftOrderTotals({
 
       {enableDiscounts ? (
         <div className='mt-0'>
+          <Target id='checkout.summary.discount.before' />
           <DiscountStandalone
             initialDiscounts={[]}
             onDiscountsChange={handleDiscountsChange}
@@ -179,6 +180,7 @@ export function DraftOrderTotals({
               // Error is handled by the discount component internally
             }}
           />
+          <Target id='checkout.summary.discount.after' />
         </div>
       ) : null}
 

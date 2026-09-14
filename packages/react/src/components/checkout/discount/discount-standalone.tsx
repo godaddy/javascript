@@ -260,10 +260,6 @@ export function DiscountStandalone({
 
   return (
     <div className='flex flex-col gap-2'>
-      <label className='text-sm font-medium text-[#111111]'>
-        {t.discounts.haveACouponCode ?? enUs.discounts.haveACouponCode}
-      </label>
-
       {currentDiscountCodes.length > 0 && (
         <div className='flex flex-col gap-2'>
           {currentDiscountCodes.map(code => {
@@ -286,12 +282,12 @@ export function DiscountStandalone({
         <div className='flex flex-col gap-1.5'>
           <div
             className={cn(
-              'flex h-14 items-center justify-between rounded-md border bg-white py-2 pl-4 pr-2',
+              'flex h-12 items-center justify-between rounded-md border bg-input py-2 pl-3 pr-2',
               hasError
-                ? 'border-[#EF4444]'
+                ? 'border-destructive'
                 : isFocused || hasInputValue
-                  ? 'border-[#2563EB]'
-                  : 'border-[#D1D5DB]'
+                  ? 'border-ring ring-1 ring-ring'
+                  : 'border-border'
             )}
           >
             <input
@@ -302,23 +298,22 @@ export function DiscountStandalone({
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder={t.discounts.placeholder}
+              aria-label={t.discounts.enterCode}
               disabled={isPaymentDisabled || !!isRemovingDiscount}
               className={cn(
-                'min-w-0 flex-1 border-0 bg-transparent text-base text-[#111111] outline-none placeholder:text-[#9CA3AF] disabled:cursor-not-allowed disabled:opacity-50',
+                'min-w-0 flex-1 border-0 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
                 elements?.input
               )}
             />
 
             {hasError ? (
               <div className='flex items-center gap-4'>
-                <span className='h-6 w-px bg-[#D1D5DB]' aria-hidden='true' />
+                <span className='h-6 w-px bg-border' aria-hidden='true' />
                 <button
                   type='button'
-                  className='flex h-6 w-6 items-center justify-center text-[#111111]'
+                  className='flex h-6 w-6 items-center justify-center text-foreground'
                   onClick={handleClearInput}
-                  aria-label={
-                    t.discounts.removeCoupon ?? enUs.discounts.removeCoupon
-                  }
+                  aria-label={`Clear ${discountCode}`}
                 >
                   <X className='h-4 w-4' />
                 </button>
@@ -329,10 +324,10 @@ export function DiscountStandalone({
                 onClick={handleApply}
                 disabled={isApplyDisabled}
                 className={cn(
-                  'inline-flex h-10 shrink-0 items-center justify-center rounded-md px-6 text-sm font-semibold transition-colors',
+                  'inline-flex h-9 shrink-0 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors',
                   isApplyDisabled
-                    ? 'cursor-not-allowed bg-[#E5E7EB] text-[#9CA3AF]'
-                    : 'bg-[#2563EB] text-white hover:bg-[#2563EB]/90',
+                    ? 'cursor-not-allowed bg-muted text-muted-foreground'
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90',
                   elements?.button
                 )}
               >
@@ -346,7 +341,7 @@ export function DiscountStandalone({
           </div>
 
           {primaryError ? (
-            <p className='text-[13px] font-medium leading-4 text-[#DC2626]'>
+            <p className='text-[0.8rem] font-medium text-destructive'>
               {primaryError}
             </p>
           ) : null}

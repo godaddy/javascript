@@ -284,7 +284,7 @@ describe('Checkout discounts', () => {
     await flushPromises();
   });
 
-  it('renders the coupon label and keeps apply disabled when empty', async () => {
+  it('keeps apply disabled when the coupon field is empty', async () => {
     renderCheckout({
       sessionOverrides: {
         enableShipping: false,
@@ -295,7 +295,9 @@ describe('Checkout discounts', () => {
     await waitForCheckoutReady();
     clearOperations();
 
-    expect(screen.getAllByText(enUs.discounts.haveACouponCode).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByPlaceholderText(enUs.discounts.placeholder).length
+    ).toBeGreaterThan(0);
 
     const button = screen.getAllByRole('button', { name: /apply/i })[0];
     expect(button).toBeDisabled();

@@ -33,29 +33,28 @@ export function DiscountAppliedBar({
   return (
     <div
       className={cn(
-        'flex h-14 items-center justify-between rounded-md border border-[#22C55E] bg-[#F0FDF4] px-4'
+        'flex h-12 items-center justify-between rounded-md border border-accent bg-accent/10 px-3'
       )}
     >
       <div className='flex items-center gap-3'>
-        <span className='flex h-6 w-6 items-center justify-center rounded-full bg-[#22C55E] text-white'>
+        <span className='flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground'>
           <Check className='h-4 w-4' aria-hidden='true' />
         </span>
-        <span className='text-base font-semibold text-[#15803D]'>{code}</span>
+        <span className='text-base font-semibold text-foreground md:text-sm'>
+          {code}
+        </span>
       </div>
 
       <div className='flex items-center gap-4'>
-        <span className='text-base font-semibold text-[#15803D]'>
+        <span className='text-base font-semibold text-foreground md:text-sm'>
           – {formattedAmount}
         </span>
         {onRemove ? (
           <>
-            <span
-              className='h-6 w-px bg-[#D1D5DB]'
-              aria-hidden='true'
-            />
+            <span className='h-6 w-px bg-border' aria-hidden='true' />
             <button
               type='button'
-              className='flex h-6 w-6 items-center justify-center text-[#111111] disabled:opacity-50'
+              className='flex h-6 w-6 items-center justify-center text-foreground disabled:opacity-50'
               onClick={onRemove}
               disabled={isRemoving}
               aria-label={`Remove ${code}`}
