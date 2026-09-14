@@ -533,6 +533,6 @@ describe('Checkout free / offline orders', () => {
     expect(
       screen.queryByRole('button', { name: /complete your free order/i })
     ).not.toBeInTheDocument();
-    expect(document.body).toHaveTextContent(enUs.discounts.invalid);
+    expect(document.body).toHaveTextContent(enUs.discounts.failedToApply);
   });
 });

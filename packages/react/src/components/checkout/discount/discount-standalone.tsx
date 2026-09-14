@@ -260,16 +260,25 @@ export function DiscountStandalone({
     }
   };
 
+  // Prefer client validation copy, then GraphQL apiErrors (same as old
+  // DiscountErrorList). Checkout-api collapses GPA failures to
+  // DISCOUNT_APPLICATION_FAILED ("Failed to apply coupon") — do not default
+  // to "isn't valid", which overstates that the code itself was invalid.
   const primaryError = (() => {
     const error = formErrors?.[0];
     if (!error) return undefined;
     if (
       error === t.discounts.alreadyApplied ||
-      error === t.discounts.enterCodeValidation
+      error === t.discounts.enterCodeValidation ||
+      error === t.discounts.failedToApply
     ) {
       return error;
     }
-    return t.discounts.invalid ?? enUs.discounts.invalid;
+    return (
+      t.apiErrors?.[error as keyof typeof t.apiErrors] ||
+      t.discounts.failedToApply ||
+      enUs.discounts.failedToApply
+    );
   })();
 
   return (
@@ -296,74 +305,77 @@ export function DiscountStandalone({
         </div>
       )}
 
-      <div className='flex flex-col gap-1.5'>
-        <div
-          className={cn(
-            'flex h-14 items-center justify-between rounded-md border bg-white py-2 pl-4 pr-2',
-            hasError
-              ? 'border-[#EF4444]'
-              : isFocused || hasInputValue
-                ? 'border-[#2563EB]'
-                : 'border-[#D1D5DB]'
-          )}
-        >
-          <input
-            type='text'
-            value={discountCode}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            placeholder={t.discounts.placeholder}
-            disabled={isPaymentDisabled || !!isRemovingDiscount}
+      {/* One coupon at a time: hide entry field while a code is applied. */}
+      {currentDiscountCodes.length === 0 ? (
+        <div className='flex flex-col gap-1.5'>
+          <div
             className={cn(
-              'min-w-0 flex-1 border-0 bg-transparent text-base text-[#111111] outline-none placeholder:text-[#9CA3AF] disabled:cursor-not-allowed disabled:opacity-50',
-              elements?.input
+              'flex h-14 items-center justify-between rounded-md border bg-white py-2 pl-4 pr-2',
+              hasError
+                ? 'border-[#EF4444]'
+                : isFocused || hasInputValue
+                  ? 'border-[#2563EB]'
+                  : 'border-[#D1D5DB]'
             )}
-          />
+          >
+            <input
+              type='text'
+              value={discountCode}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder={t.discounts.placeholder}
+              disabled={isPaymentDisabled || !!isRemovingDiscount}
+              className={cn(
+                'min-w-0 flex-1 border-0 bg-transparent text-base text-[#111111] outline-none placeholder:text-[#9CA3AF] disabled:cursor-not-allowed disabled:opacity-50',
+                elements?.input
+              )}
+            />
 
-          {hasError ? (
-            <div className='flex items-center gap-4'>
-              <span className='h-6 w-px bg-[#D1D5DB]' aria-hidden='true' />
+            {hasError ? (
+              <div className='flex items-center gap-4'>
+                <span className='h-6 w-px bg-[#D1D5DB]' aria-hidden='true' />
+                <button
+                  type='button'
+                  className='flex h-6 w-6 items-center justify-center text-[#111111]'
+                  onClick={handleClearInput}
+                  aria-label={
+                    t.discounts.removeCoupon ?? enUs.discounts.removeCoupon
+                  }
+                >
+                  <X className='h-4 w-4' />
+                </button>
+              </div>
+            ) : (
               <button
                 type='button'
-                className='flex h-6 w-6 items-center justify-center text-[#111111]'
-                onClick={handleClearInput}
-                aria-label={
-                  t.discounts.removeCoupon ?? enUs.discounts.removeCoupon
-                }
+                onClick={handleApply}
+                disabled={isApplyDisabled}
+                className={cn(
+                  'inline-flex h-10 shrink-0 items-center justify-center rounded-md px-6 text-sm font-semibold transition-colors',
+                  isApplyDisabled
+                    ? 'cursor-not-allowed bg-[#E5E7EB] text-[#9CA3AF]'
+                    : 'bg-[#2563EB] text-white hover:bg-[#2563EB]/90',
+                  elements?.button
+                )}
               >
-                <X className='h-4 w-4' />
+                {isSubmitting ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : (
+                  t.discounts.apply
+                )}
               </button>
-            </div>
-          ) : (
-            <button
-              type='button'
-              onClick={handleApply}
-              disabled={isApplyDisabled}
-              className={cn(
-                'inline-flex h-10 shrink-0 items-center justify-center rounded-md px-6 text-sm font-semibold transition-colors',
-                isApplyDisabled
-                  ? 'cursor-not-allowed bg-[#E5E7EB] text-[#9CA3AF]'
-                  : 'bg-[#2563EB] text-white hover:bg-[#2563EB]/90',
-                elements?.button
-              )}
-            >
-              {isSubmitting ? (
-                <Loader2 className='h-4 w-4 animate-spin' />
-              ) : (
-                t.discounts.apply
-              )}
-            </button>
-          )}
-        </div>
+            )}
+          </div>
 
-        {primaryError ? (
-          <p className='text-[13px] font-medium leading-4 text-[#DC2626]'>
-            {primaryError}
-          </p>
-        ) : null}
-      </div>
+          {primaryError ? (
+            <p className='text-[13px] font-medium leading-4 text-[#DC2626]'>
+              {primaryError}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
