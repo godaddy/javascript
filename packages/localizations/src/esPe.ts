@@ -283,6 +283,8 @@ export const esPe = {
     DATA_SOURCES_NOT_FOUND: 'Fuentes de datos no encontradas',
     TRANSACTION_API_NOT_FOUND:
       'Fuente de datos de API de transacciones no encontrada',
+    PAYMENT_ACTION_REQUIRED:
+      'Tu pago requiere una verificación adicional. Inténtalo de nuevo o elige otro método de pago.',
     TRANSACTION_PROCESSING_FAILED: 'Error al procesar transacción',
     TRANSACTION_CREATION_FAILED: 'Error al encontrar o crear transacción',
     ORDER_OPENING_FAILED: 'Error al abrir pedido',

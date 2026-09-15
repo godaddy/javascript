@@ -279,6 +279,8 @@ export const trTr = {
     DRAFT_ORDER_RETRIEVAL_FAILED: 'Sipariş alınamadı',
     DATA_SOURCES_NOT_FOUND: 'Veri kaynakları bulunamadı',
     TRANSACTION_API_NOT_FOUND: 'İşlem API veri kaynağı bulunamadı',
+    PAYMENT_ACTION_REQUIRED:
+      'Ödemeniz için ek doğrulama gerekiyor. Lütfen tekrar deneyin veya başka bir ödeme yöntemi seçin.',
     TRANSACTION_PROCESSING_FAILED: 'İşlem işlenemedi',
     TRANSACTION_CREATION_FAILED: 'İşlem bulunamadı veya oluşturulamadı',
     ORDER_OPENING_FAILED: 'Sipariş açılamadı',

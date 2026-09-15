@@ -281,6 +281,8 @@ export const ptBr = {
     DATA_SOURCES_NOT_FOUND: 'Fontes de dados não encontradas',
     TRANSACTION_API_NOT_FOUND:
       'Fonte de dados da API de transação não encontrada',
+    PAYMENT_ACTION_REQUIRED:
+      'Seu pagamento precisa de uma verificação adicional. Tente novamente ou escolha outra forma de pagamento.',
     TRANSACTION_PROCESSING_FAILED: 'Falha ao processar transação',
     TRANSACTION_CREATION_FAILED: 'Falha ao encontrar ou criar transação',
     ORDER_OPENING_FAILED: 'Falha ao abrir pedido',

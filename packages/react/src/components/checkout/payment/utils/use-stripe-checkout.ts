@@ -16,6 +16,8 @@ import {
   GraphQLErrorWithCodes,
   getPaymentActionRequiredResult,
 } from '@/lib/graphql-with-errors';
+import { eventIds } from '@/tracking/events';
+import { TrackingEventType, track } from '@/tracking/track';
 import type {
   CalculatedAdjustments,
   CalculatedTaxes,
@@ -23,6 +25,10 @@ import type {
   ShippingMethod,
 } from '@/types';
 import { PaymentMethodType } from '@/types';
+import {
+  getStripeNextAction,
+  stripeCheckoutErrorCode,
+} from './stripe-next-action';
 
 type UseStripeCheckoutOptions = {
   mode: 'card' | 'express';
@@ -51,28 +57,6 @@ export function buildStripeExpressPaymentMethodParams(
       },
     },
   };
-}
-
-type StripeNextAction = {
-  clientSecret: string;
-};
-
-function getStripeNextAction(error: unknown): StripeNextAction | undefined {
-  const paymentResult = getPaymentActionRequiredResult(error);
-  const nextStep = paymentResult?.nextStep;
-
-  if (
-    paymentResult?.provider !== PaymentProvider.STRIPE ||
-    nextStep?.type !== 'SDK_ACTION' ||
-    nextStep.sdk !== 'STRIPE_JS' ||
-    nextStep.action !== 'HANDLE_NEXT_ACTION' ||
-    typeof nextStep.clientSecret !== 'string' ||
-    nextStep.clientSecret.length === 0
-  ) {
-    return undefined;
-  }
-
-  return { clientSecret: nextStep.clientSecret };
 }
 
 export type StripeExpressCheckoutData = {
@@ -135,7 +119,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
           });
 
           if (error) {
-            setCheckoutErrors([error.code || 'TRANSACTION_PROCESSING_FAILED']);
+            setCheckoutErrors([stripeCheckoutErrorCode(error.code)]);
             return;
           }
 
@@ -163,19 +147,34 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 return;
               }
 
+              track({
+                eventId: eventIds.paymentChallengeStarted,
+                type: TrackingEventType.EVENT,
+                properties: { provider: 'STRIPE' },
+              });
+              let challengeSucceeded = false;
               try {
                 const actionResult = await stripe.handleNextAction({
                   clientSecret: nextAction.clientSecret,
                 });
 
-                if (actionResult.error || !actionResult.paymentIntent?.id) {
+                if (
+                  actionResult.error ||
+                  !actionResult.paymentIntent?.id ||
+                  !['succeeded', 'processing', 'requires_capture'].includes(
+                    actionResult.paymentIntent.status
+                  )
+                ) {
                   setCheckoutErrors([
-                    actionResult.error?.code || 'TRANSACTION_PROCESSING_FAILED',
+                    actionResult.error
+                      ? stripeCheckoutErrorCode(actionResult.error.code)
+                      : 'AUTHORIZATION_FAILED',
                   ]);
                   setIsConfirmingCheckout(false);
                   return;
                 }
 
+                challengeSucceeded = true;
                 await confirmCheckout.mutateAsync({
                   ...confirmInput,
                   paymentToken: actionResult.paymentIntent.id,
@@ -191,6 +190,15 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                     : ['TRANSACTION_PROCESSING_FAILED']
                 );
                 setIsConfirmingCheckout(false);
+              } finally {
+                track({
+                  eventId: eventIds.paymentChallengeCompleted,
+                  type: TrackingEventType.EVENT,
+                  properties: {
+                    provider: 'STRIPE',
+                    success: challengeSucceeded,
+                  },
+                });
               }
             }
           } else {
@@ -207,7 +215,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
           });
 
           if (error) {
-            setCheckoutErrors([error.code || 'TRANSACTION_PROCESSING_FAILED']);
+            setCheckoutErrors([stripeCheckoutErrorCode(error.code)]);
             return;
           }
 
@@ -322,9 +330,12 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 ...(shippingLines ? { shippingLines } : {}),
               });
             } catch (err: unknown) {
-              if (err instanceof GraphQLErrorWithCodes) {
-                setCheckoutErrors(err.codes);
-              }
+              setCheckoutErrors(
+                err instanceof GraphQLErrorWithCodes && err.codes.length
+                  ? err.codes
+                  : ['TRANSACTION_PROCESSING_FAILED']
+              );
+              setIsConfirmingCheckout(false);
               throw err; // Re-throw so caller can handle
             }
           } else {
