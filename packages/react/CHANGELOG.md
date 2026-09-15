@@ -1,5 +1,19 @@
 # @godaddy/react
 
+## 1.0.57
+
+### Patch Changes
+
+- 60ac1da: Add line item for inclusive taxes during checkout
+- Updated dependencies [60ac1da]
+  - @godaddy/localizations@1.0.13
+
+## 1.0.56
+
+### Patch Changes
+
+- 12ea9d7: feat: accept personalAccessToken as alternative auth in createCheckoutSession — routes through API Gateway; OAuth path unchanged
+
 ## 1.0.55
 
 ### Patch Changes

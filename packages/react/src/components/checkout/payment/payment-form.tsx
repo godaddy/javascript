@@ -596,10 +596,12 @@ export function PaymentForm(
             currencyCode={props.currencyCode}
             tip={props.tip}
             taxes={props.taxes}
+            includedTaxTotal={props.includedTaxTotal}
             fees={props.fees}
             isTaxLoading={props.isTaxLoading}
             isFeeLoading={props.isFeeLoading}
             isShippingLoading={props.isShippingLoading}
+            isDiscountLoading={props.isDiscountLoading}
             subtotal={props.subtotal}
             discount={props.discount}
             shipping={props.shipping}

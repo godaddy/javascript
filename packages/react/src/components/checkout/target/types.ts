@@ -30,6 +30,7 @@ export const checkoutTargetIds = [
   'checkout.summary.totals.shipping.before',
   'checkout.summary.totals.tip.before',
   'checkout.summary.totals.taxes.before',
+  'checkout.summary.totals.included-taxes.before',
   'checkout.summary.totals.fees.before',
   'checkout.summary.totals.total-due.before',
   'checkout.summary.totals.total-due.after',

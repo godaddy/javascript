@@ -85,7 +85,11 @@ export type CreateCheckoutSessionInputWithKebabCase = Omit<
 
 export async function createCheckoutSession(
   input: CreateCheckoutSessionInputWithKebabCase,
-  { accessToken, apiHost }: { accessToken: string; apiHost?: string }
+  {
+    accessToken,
+    apiHost,
+    endpoint,
+  }: { accessToken: string; apiHost?: string; endpoint?: string }
 ): Promise<
   ResultOf<typeof CreateCheckoutSessionMutation>['createCheckoutSession']
 > {
@@ -117,7 +121,9 @@ export async function createCheckoutSession(
     }),
   };
 
-  const GODADDY_HOST = getHostByEnvironment(apiHost);
+  const GODADDY_HOST = endpoint
+    ? getApiHostByEnvironment(apiHost, endpoint)
+    : getHostByEnvironment(apiHost);
   const response = await graphqlRequestWithErrors<
     ResultOf<typeof CreateCheckoutSessionMutation>
   >(
