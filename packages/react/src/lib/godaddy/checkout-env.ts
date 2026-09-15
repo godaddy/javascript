@@ -2140,6 +2140,15 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "tips",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionTips"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "token",
             "type": {
               "kind": "SCALAR",
@@ -2969,6 +2978,80 @@ const introspection = {
           }
         ],
         "isOneOf": false
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionFee",
+        "fields": [
+          {
+            "name": "amount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "feeProgramId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "feeProgramType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "feeType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "signature",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionFeesResult",
+        "fields": [
+          {
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CheckoutSessionFee"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
       },
       {
         "kind": "OBJECT",
@@ -3994,6 +4077,242 @@ const introspection = {
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "CheckoutSessionAddressInput"
+            }
+          }
+        ],
+        "isOneOf": false
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionTips",
+        "fields": [
+          {
+            "name": "default",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionTipsDefault"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "thresholds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "CheckoutSessionTipsThreshold"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionTipsDefault",
+        "fields": [
+          {
+            "name": "amounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "percentages",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionTipsDefaultInput",
+        "inputFields": [
+          {
+            "name": "amounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
+              }
+            }
+          },
+          {
+            "name": "percentages",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
+              }
+            }
+          }
+        ],
+        "isOneOf": false
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionTipsInput",
+        "inputFields": [
+          {
+            "name": "default",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionTipsDefaultInput"
+            }
+          },
+          {
+            "name": "thresholds",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "CheckoutSessionTipsThresholdInput"
+                }
+              }
+            }
+          }
+        ],
+        "isOneOf": false
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionTipsThreshold",
+        "fields": [
+          {
+            "name": "amounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "maxSubtotal",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "minSubtotal",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "percentages",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "CheckoutSessionTipsThresholdInput",
+        "inputFields": [
+          {
+            "name": "amounts",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
+              }
+            }
+          },
+          {
+            "name": "maxSubtotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            }
+          },
+          {
+            "name": "minSubtotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            }
+          },
+          {
+            "name": "percentages",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int"
+                }
+              }
             }
           }
         ],
@@ -6335,6 +6654,46 @@ const introspection = {
         "isOneOf": false
       },
       {
+        "kind": "ENUM",
+        "name": "FeeProgramType",
+        "enumValues": [
+          {
+            "name": "CASH_DISCOUNT",
+            "isDeprecated": false
+          },
+          {
+            "name": "CONVENIENCE_FEE",
+            "isDeprecated": false
+          },
+          {
+            "name": "SERVICE_FEE",
+            "isDeprecated": false
+          },
+          {
+            "name": "SURCHARGE",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "ENUM",
+        "name": "FeeType",
+        "enumValues": [
+          {
+            "name": "FIXED",
+            "isDeprecated": false
+          },
+          {
+            "name": "HYBRID",
+            "isDeprecated": false
+          },
+          {
+            "name": "PERCENTAGE",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
         "kind": "SCALAR",
         "name": "Float"
       },
@@ -6404,6 +6763,24 @@ const introspection = {
           },
           {
             "name": "TO_GO",
+            "isDeprecated": false
+          }
+        ]
+      },
+      {
+        "kind": "ENUM",
+        "name": "FundingSourceType",
+        "enumValues": [
+          {
+            "name": "CREDIT",
+            "isDeprecated": false
+          },
+          {
+            "name": "DEBIT",
+            "isDeprecated": false
+          },
+          {
+            "name": "PREPAID",
             "isDeprecated": false
           }
         ]
@@ -7398,6 +7775,26 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "calculateCheckoutSessionFees",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionFeesResult"
+            },
+            "args": [
+              {
+                "name": "fundingSourceType",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "ENUM",
+                    "name": "FundingSourceType"
+                  }
+                }
+              }
+            ],
+            "isDeprecated": false
+          },
+          {
             "name": "calculateCheckoutSessionTaxes",
             "type": {
               "kind": "OBJECT",
@@ -7681,6 +8078,19 @@ const introspection = {
         "name": "MutationAuthorizeCheckoutSessionInput",
         "inputFields": [
           {
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TransactionFeeInput"
+                }
+              }
+            }
+          },
+          {
             "name": "paymentProvider",
             "type": {
               "kind": "NON_NULL",
@@ -7705,6 +8115,13 @@ const introspection = {
                 "kind": "SCALAR",
                 "name": "String"
               }
+            }
+          },
+          {
+            "name": "tipAmount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
             }
           }
         ],
@@ -7733,6 +8150,19 @@ const introspection = {
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "CalculatedTaxesInput"
+            }
+          },
+          {
+            "name": "fees",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TransactionFeeInput"
+                }
+              }
             }
           },
           {
@@ -7818,6 +8248,13 @@ const introspection = {
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "MoneyInput"
+            }
+          },
+          {
+            "name": "tipAmount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int"
             }
           }
         ],
@@ -8089,6 +8526,13 @@ const introspection = {
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "CheckoutSessionTaxesOptionsInput"
+            }
+          },
+          {
+            "name": "tips",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionTipsInput"
             }
           },
           {
@@ -8521,6 +8965,13 @@ const introspection = {
             "type": {
               "kind": "SCALAR",
               "name": "String"
+            }
+          },
+          {
+            "name": "tips",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionTipsInput"
             }
           },
           {
@@ -10843,6 +11294,57 @@ const introspection = {
           }
         ],
         "interfaces": []
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "TransactionFeeInput",
+        "inputFields": [
+          {
+            "name": "amount",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            }
+          },
+          {
+            "name": "feeProgramType",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "ENUM",
+                "name": "FeeProgramType"
+              }
+            }
+          },
+          {
+            "name": "feeType",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "ENUM",
+                "name": "FeeType"
+              }
+            }
+          },
+          {
+            "name": "required",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean"
+            }
+          },
+          {
+            "name": "signature",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
+        ],
+        "isOneOf": false
       },
       {
         "kind": "OBJECT",

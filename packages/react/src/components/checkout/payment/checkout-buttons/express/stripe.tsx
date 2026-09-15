@@ -691,7 +691,7 @@ export function StripeExpressCheckoutButton() {
     );
   }
 
-  const { isLoading } = useStripePaymentIntent();
+  const { isLoading } = useStripePaymentIntent({ isExpress: true });
 
   return (
     <>
