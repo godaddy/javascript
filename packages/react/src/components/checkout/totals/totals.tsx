@@ -87,6 +87,7 @@ export function DraftOrderTotals({
 }: DraftOrderTotalsProps) {
   const { t } = useGoDaddyContext();
   const formatCurrency = useFormatCurrency();
+  const isTaxesLoading = isTaxLoading || isShippingLoading || isDiscountLoading;
   const handleDiscountsChange = (discounts: string[]) => {
     // Discount changes are handled by the DiscountStandalone component
   };
@@ -147,7 +148,7 @@ export function DraftOrderTotals({
         ) : null}
         <Target id='checkout.summary.totals.taxes.before' />
         {enableTaxes &&
-          (isTaxLoading ? (
+          (isTaxesLoading ? (
             <TotalLineItemSkeleton title={t.totals.estimatedTaxes} />
           ) : (
             <TotalLineItem
@@ -158,8 +159,9 @@ export function DraftOrderTotals({
             />
           ))}
         <Target id='checkout.summary.totals.included-taxes.before' />
-        {enableTaxes && includedTaxTotal > 0 ? (
-          isTaxLoading || isShippingLoading || isDiscountLoading ? (
+        {enableTaxes &&
+          includedTaxTotal > 0 &&
+          (isTaxesLoading ? (
             <TotalLineItemSkeleton title={t.totals.vatIncluded} />
           ) : (
             <TotalLineItem
@@ -168,8 +170,7 @@ export function DraftOrderTotals({
               value={includedTaxTotal}
               inputInMinorUnits={inputInMinorUnits}
             />
-          )
-        ) : null}
+          ))}
         <Target id='checkout.summary.totals.fees.before' />
         {enableFees &&
           (isFeeLoading ? (

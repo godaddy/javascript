@@ -35,7 +35,9 @@ export function useUpdateTaxes() {
     },
     onSettled: () => {
       if (!session) return;
-      // Keep the mutation pending until totals and tax constituents refresh together.
+      // Keep totals and tax constituents in sync before mutation callers continue.
+      // This also waits for refetch retries and delays rejection of a failed tax
+      // mutation until the refetch settles.
       return queryClient.invalidateQueries({
         queryKey: checkoutQueryKeys.draftOrder(session.id),
       });

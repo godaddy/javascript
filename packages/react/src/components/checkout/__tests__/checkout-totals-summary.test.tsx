@@ -80,28 +80,16 @@ describe('Checkout totals and order summary UI', () => {
         }),
         taxes: [
           {
-            id: 'included-tax-1',
-            name: 'VAT',
             included: true,
-            exempted: false,
-            ratePercentage: '2.5',
-            amount: { value: 100, currencyCode: 'USD' },
+            amount: { value: 100 },
           },
           {
-            id: 'additive-tax',
-            name: 'Sales tax',
             included: false,
-            exempted: false,
-            ratePercentage: '5',
-            amount: { value: 456, currencyCode: 'USD' },
+            amount: { value: 456 },
           },
           {
-            id: 'included-tax-2',
-            name: 'VAT surcharge',
             included: true,
-            exempted: false,
-            ratePercentage: '0.5',
-            amount: { value: 23, currencyCode: 'USD' },
+            amount: { value: 23 },
           },
         ],
       },
@@ -119,9 +107,7 @@ describe('Checkout totals and order summary UI', () => {
       sessionOverrides: { enableTaxCollection: false },
       draftOrderOverrides: {
         totals: totals({ taxTotal: { value: 0, currencyCode: 'USD' } }),
-        taxes: [
-          { included: true, amount: { value: 123, currencyCode: 'USD' } },
-        ],
+        taxes: [{ included: true, amount: { value: 123 } }],
       },
     });
     await waitForCheckoutReady();
@@ -139,7 +125,7 @@ describe('Checkout totals and order summary UI', () => {
     async ({ included, amount }) => {
       renderCheckout({
         draftOrderOverrides: {
-          taxes: [{ included, amount: { value: amount, currencyCode: 'USD' } }],
+          taxes: [{ included, amount: { value: amount } }],
         },
       });
       await waitForCheckoutReady();
@@ -148,18 +134,12 @@ describe('Checkout totals and order summary UI', () => {
     }
   );
 
-  it.each([
-    'applyDiscount',
-    'applyShippingMethod',
-    'removeShippingMethod',
-  ] as const)(
-    'hides the previous included-tax amount during %s',
+  it.each(['applyDiscount', 'applyShippingMethod'] as const)(
+    'shows both tax rows as loading during %s',
     async mutation => {
       const { queryClient, session } = renderCheckout({
         draftOrderOverrides: {
-          taxes: [
-            { included: true, amount: { value: 123, currencyCode: 'USD' } },
-          ],
+          taxes: [{ included: true, amount: { value: 123 } }],
         },
       });
       await waitForCheckoutReady();
@@ -178,7 +158,9 @@ describe('Checkout totals and order summary UI', () => {
         .execute(undefined);
 
       await waitFor(() => {
-        for (const label of screen.getAllByText(/vat included/i)) {
+        for (const label of screen.getAllByText(
+          /vat included|estimated taxes/i
+        )) {
           const row = label.closest('.flex.justify-between');
           expect(row?.querySelector('.animate-pulse')).toBeInTheDocument();
           expect(row).not.toHaveTextContent('$1.23');
@@ -213,9 +195,7 @@ describe('Checkout totals and order summary UI', () => {
 
       const { queryClient, session, draftOrder, user } = renderCheckout({
         draftOrderOverrides: {
-          taxes: [
-            { included: true, amount: { value: 123, currencyCode: 'USD' } },
-          ],
+          taxes: [{ included: true, amount: { value: 123 } }],
         },
         checkoutProps: {
           targets: { 'checkout.form.before': () => <UpdateTaxesButton /> },
@@ -248,7 +228,7 @@ describe('Checkout totals and order summary UI', () => {
                   ? [
                       {
                         included: true,
-                        amount: { value: amount, currencyCode: 'USD' },
+                        amount: { value: amount },
                       },
                     ]
                   : [],

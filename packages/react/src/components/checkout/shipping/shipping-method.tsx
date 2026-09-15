@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
@@ -20,7 +19,6 @@ import {
 import { useApplyShippingMethod } from '@/components/checkout/shipping/utils/use-apply-shipping-method';
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
-import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -54,7 +52,6 @@ export function ShippingMethodForm() {
   const { t } = useGoDaddyContext();
   const { session, isConfirmingCheckout } = useCheckoutContext();
   const updateTaxes = useUpdateTaxes();
-  const queryClient = useQueryClient();
   const isPaymentDisabled = useIsPaymentDisabled();
 
   const { data: shippingMethodsData, isLoading: isShippingMethodsLoading } =
@@ -201,15 +198,7 @@ export function ShippingMethodForm() {
             };
           }
 
-          applyShippingMethod.mutate(buildShippingPayload(methodToApply), {
-            onSuccess: () => {
-              if (!isFulfillmentSync || !session?.id) return;
-
-              queryClient.invalidateQueries({
-                queryKey: checkoutQueryKeys.draftOrder(session.id),
-              });
-            },
-          });
+          applyShippingMethod.mutate(buildShippingPayload(methodToApply));
         } else if (session?.enableTaxCollection) {
           updateTaxes.mutate(undefined);
         }
@@ -236,8 +225,6 @@ export function ShippingMethodForm() {
     applyShippingMethod,
     updateTaxes.mutate,
     session?.enableTaxCollection,
-    queryClient,
-    session?.id,
     isPickup,
     isDraftOrderLoading,
     hasLineItemsMissingShippingFulfillment,

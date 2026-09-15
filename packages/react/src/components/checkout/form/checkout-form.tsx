@@ -157,11 +157,6 @@ export function CheckoutForm({
   const tipAmount = form.watch('tipAmount');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const isShipping = deliveryMethod === DeliveryMethods.SHIP;
-  const isRemovingShipping =
-    useIsMutating({
-      mutationKey: checkoutMutationKeys.removeShippingMethod(session?.id),
-    }) > 0;
-
   const isUpdatingShipping =
     useIsMutating({
       mutationKey: checkoutMutationKeys.applyShippingMethod(session?.id),
@@ -564,9 +559,7 @@ export function CheckoutForm({
                                 fees={feeTotal}
                                 isTaxLoading={isUpdatingTaxes}
                                 isFeeLoading={isUpdatingFees}
-                                isShippingLoading={
-                                  isUpdatingShipping || isRemovingShipping
-                                }
+                                isShippingLoading={isUpdatingShipping}
                                 isDiscountLoading={isDiscountApplying}
                                 subtotal={subtotal}
                                 discount={orderDiscount}
@@ -638,9 +631,7 @@ export function CheckoutForm({
                             fees={feeTotal}
                             isTaxLoading={isUpdatingTaxes}
                             isFeeLoading={isUpdatingFees}
-                            isShippingLoading={
-                              isUpdatingShipping || isRemovingShipping
-                            }
+                            isShippingLoading={isUpdatingShipping}
                             subtotal={subtotal}
                             discount={orderDiscount}
                             isDiscountLoading={isDiscountApplying}
@@ -675,7 +666,7 @@ export function CheckoutForm({
                     fees={feeTotal}
                     isTaxLoading={isUpdatingTaxes}
                     isFeeLoading={isUpdatingFees}
-                    isShippingLoading={isUpdatingShipping || isRemovingShipping}
+                    isShippingLoading={isUpdatingShipping}
                     subtotal={subtotal}
                     discount={orderDiscount}
                     isDiscountLoading={isDiscountApplying}
