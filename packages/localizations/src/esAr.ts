@@ -169,6 +169,7 @@ export const esAr = {
     shipping: 'Envío',
     tip: 'Propina',
     estimatedTaxes: 'Impuestos estimados',
+    vatIncluded: 'IVA incluido',
     fees: 'Cargos',
     totalDue: 'Total a Pagar',
     orderSummary: 'Resumen del Pedido',

@@ -163,6 +163,7 @@ export const zhCn = {
     shipping: '配送费',
     tip: '小费',
     estimatedTaxes: '预估税费',
+    vatIncluded: '已含增值税',
     fees: '费用',
     totalDue: '应付总计',
     orderSummary: '订单摘要',
