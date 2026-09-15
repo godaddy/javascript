@@ -38,7 +38,6 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
-		"release": "pnpm build && changeset publish",
 		"prepublishOnly": "pnpm run build"
 	},
 	"keywords": [
@@ -61,13 +60,13 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
-		"@changesets/cli": "^3.0.2",
 		"@types/express": "^5.0.2",
 		"@types/node": "^22.13.1",
 		"pino-pretty": "^13.0.0",
 		"tsdown": "^0.15.6",
 		"typescript": "~5.7.3",
-		"vitest": "^5.0.0"
+		"@vitest/coverage-v8": "5.0.0",
+		"vitest": "5.0.0"
 	},
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org/"

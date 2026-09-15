@@ -10,6 +10,7 @@ const config = [
     languageOptions: {
       globals: {
         ...globals.browser,
+        ...globals.audioWorklet,
         ...globals.mocha,
         ...globals.node
       },

@@ -18,6 +18,41 @@ npm install eslint-config-godaddy --save-dev
 
 ## Usage
 
+### Compatibility and migration
+
+The updated toolchain requires ESLint 10.2 or newer within v10 and Node
+`^22.22.2 || ^24.15.0 || >=26`. These requirements also apply to the React,
+TypeScript, and React TypeScript configurations that extend this package.
+They narrow the versions supported by the previous release and must be treated
+as breaking changes when these packages are next versioned.
+
+Use an ESM configuration (`eslint.config.mjs`, or `eslint.config.js` in a project
+with `"type": "module"`). Mocha plugin v12 uses top-level await, so loading this
+configuration with synchronous CommonJS `require()` is no longer supported.
+
+Review custom overrides when upgrading eslint-plugin-mocha to v12. These rule
+names were removed or renamed and must be removed or migrated before linting:
+
+- `mocha/no-setup-in-describe`
+- `mocha/no-skipped-tests`
+- `mocha/no-sibling-hooks`
+- `mocha/no-hooks-for-single-case`
+- `mocha/no-return-and-callback`
+- `mocha/no-async-describe`
+- `mocha/no-global-tests`
+- `mocha/no-top-level-hooks`
+- `mocha/no-empty-description`
+- `mocha/valid-test-description`
+- `mocha/valid-suite-description`
+
+See the [Mocha plugin release notes](https://github.com/lo1tuma/eslint-plugin-mocha/releases/tag/eslint-plugin-mocha%4012.0.0)
+for replacement rules and options. This configuration continues to enable
+`mocha/no-exclusive-tests` and explicitly includes AudioWorklet globals, which
+globals v17 moved out of its browser set.
+
+The React configuration no longer depends on Babel core or Babel's ESLint parser;
+it uses ESLint's default parser with JSX enabled.
+
 There are two ways to use this styleguide depending on your own tooling preference: directly using pre-included binaries or running `eslint` yourself with a custom `eslint.config.js` config.
 
 ### Define your local `eslint.config.js|mjs` and run `eslint` yourself

@@ -26,12 +26,13 @@
     "react",
     "a11y"
   ],
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26"
+  },
   "peerDependencies": {
-    "@babel/core": "^8.0.0",
     "eslint": "^10.2.0"
   },
   "dependencies": {
-    "@babel/eslint-parser": "^8.0.5",
     "@eslint/compat": "^2.0.2",
     "eslint-config-godaddy": "workspace:^",
     "eslint-plugin-jsx-a11y": "^6.10.2",
