@@ -270,6 +270,7 @@ export const zhCn = {
     DRAFT_ORDER_RETRIEVAL_FAILED: '获取订单失败',
     DATA_SOURCES_NOT_FOUND: '数据源未找到',
     TRANSACTION_API_NOT_FOUND: '交易 API 数据源未找到',
+    PAYMENT_ACTION_REQUIRED: '您的付款需要额外验证。请重试或选择其他付款方式。',
     TRANSACTION_PROCESSING_FAILED: '处理交易失败',
     TRANSACTION_CREATION_FAILED: '查找或创建交易失败',
     ORDER_OPENING_FAILED: '打开订单失败',

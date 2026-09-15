@@ -21,6 +21,7 @@ import {
   track,
 } from '@/tracking/track';
 import type { ConfirmCheckoutMutationInput } from '@/types';
+import { getStripeNextAction } from './stripe-next-action';
 
 export class CheckoutConfirmationBlockedError extends Error {
   constructor(message: string) {
@@ -267,6 +268,13 @@ export function useConfirmCheckout() {
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
+
+      if (
+        data?.paymentProvider === PaymentProvider.STRIPE &&
+        getStripeNextAction(error)
+      ) {
+        return;
+      }
 
       // Track checkout error event
       track({
