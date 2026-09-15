@@ -26,11 +26,8 @@
     "react",
     "a11y"
   ],
-  "engines": {
-    "node": "^22.22.2 || ^24.15.0 || >=26"
-  },
   "peerDependencies": {
-    "eslint": "^10.2.0"
+    "eslint": "^10"
   },
   "dependencies": {
     "@eslint/compat": "^2.0.2",
@@ -40,7 +37,7 @@
     "eslint-plugin-react-hooks": "^5.2.0"
   },
   "devDependencies": {
-    "eslint": "^10.2.0"
+    "eslint": "^10.0.2"
   },
   "exports": {
     ".": "./index.js"

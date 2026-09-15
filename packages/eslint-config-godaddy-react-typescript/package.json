@@ -32,15 +32,12 @@
     "eslint-config-godaddy-react": "workspace:^",
     "eslint-plugin-react-hooks": "^5.2.0"
   },
-  "engines": {
-    "node": "^22.22.2 || ^24.15.0 || >=26"
-  },
   "peerDependencies": {
-    "eslint": "^10.2.0",
+    "eslint": "^10",
     "typescript": ">=5"
   },
   "devDependencies": {
-    "eslint": "^10.2.0"
+    "eslint": "^10.0.2"
   },
   "exports": {
     ".": "./index.js"

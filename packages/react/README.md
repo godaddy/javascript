@@ -1,11 +1,5 @@
 # Checkout Package
 
-## Dependency compatibility
-
-The updated resolver dependency requires `react-hook-form ^7.55.0`; React Hook Form 8 is not supported.
-The bundled Zod dependency requires v3.25 or newer within v3. This narrows the previously advertised
-React Hook Form peer range and needs a breaking release when the package is next versioned.
-
 ## Checkout Session
 
 ### Creating a Checkout Session

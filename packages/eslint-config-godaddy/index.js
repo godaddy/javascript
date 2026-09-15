@@ -11,6 +11,10 @@ const config = [
       globals: {
         ...globals.browser,
         ...globals.audioWorklet,
+        // Preserve browser globals moved to the ES2027 set in globals v17.
+        AsyncDisposableStack: false,
+        DisposableStack: false,
+        SuppressedError: false,
         ...globals.mocha,
         ...globals.node
       },

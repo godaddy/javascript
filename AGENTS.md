@@ -5,7 +5,7 @@ This document is the single source of truth for how to work inside this monorepo
 Repository facts:
 - Monorepo managed by pnpm workspaces
 - ESM-only (type: "module" across repo)
-- Node 24 in CI (.nvmrc), engines ^22.22.2 || ^24.15.0 || >=26 in package.json
+- Node 24 in CI (.nvmrc), engines ^22.13.0 || ^24 || >=26 in package.json
 - Changesets for versioning and publishing
 - GitHub Actions for CI/CD
 
@@ -102,7 +102,7 @@ Common script patterns to run from root:
 Monorepo and tooling
 - pnpm workspaces: defined in pnpm-workspace.yaml (packages/*)
 - ESM throughout: "type": "module" at root and packages
-- Node: .nvmrc=24; CI uses Node 24; engines ^22.22.2 || ^24.15.0 || >=26 in root package.json; prefer Node 24 locally to match CI
+- Node: .nvmrc=24; CI uses Node 24; engines ^22.13.0 || ^24 || >=26 in root package.json; prefer Node 24 locally to match CI
 - CI: .github/workflows
   - CICD on PRs and push to main runs pnpm test
   - Release workflow uses changesets/action to version and publish
@@ -266,7 +266,7 @@ D. @godaddy/react
 - GraphQL:
   - tsconfig configures gql.tada TS plugin with schema: ./schema.graphql and tadaOutputLocation under src/lib/godaddy/graphql-env.d.ts
   - Ensure schema.graphql exists or update plugin config before relying on generated types
-- Peer deps: react, react-dom, @tanstack/react-query, react-hook-form ^7.55.0
+- Peer deps: react, react-dom, @tanstack/react-query, react-hook-form
 - Exports:
   - "." default entry and "./server" entrypoint; styles exposed via "./styles.css"
 - Scripts:
@@ -357,7 +357,7 @@ CI guardrails
 9) Appendices
 
 Node, package manager, and env
-- Node: .nvmrc=24; engines ^22.22.2 || ^24.15.0 || >=26
+- Node: .nvmrc=24; engines ^22.13.0 || ^24 || >=26
 - pnpm: 10.14.0 (see packageManager)
 - Registry: npmjs.org
 
