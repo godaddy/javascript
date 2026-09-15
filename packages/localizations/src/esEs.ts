@@ -171,6 +171,7 @@ export const esEs = {
     shipping: 'Envío',
     tip: 'Propina',
     estimatedTaxes: 'Impuestos estimados',
+    vatIncluded: 'IVA incluido',
     fees: 'Cargos',
     totalDue: 'Total a pagar',
     orderSummary: 'Resumen del pedido',

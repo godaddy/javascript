@@ -1,5 +1,11 @@
 # @godaddy/localizations
 
+## 1.0.13
+
+### Patch Changes
+
+- 60ac1da: Add line item for inclusive taxes during checkout
+
 ## 1.0.12
 
 ### Patch Changes

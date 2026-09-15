@@ -171,6 +171,7 @@ export const itIt = {
     shipping: 'Spedizione',
     tip: 'Mancia',
     estimatedTaxes: 'Tasse stimate',
+    vatIncluded: 'IVA inclusa',
     fees: 'Commissioni',
     totalDue: 'Totale Dovuto',
     orderSummary: 'Riepilogo Ordine',

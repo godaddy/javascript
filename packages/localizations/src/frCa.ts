@@ -171,6 +171,7 @@ export const frCa = {
     shipping: 'Expédition',
     tip: 'Pourboire',
     estimatedTaxes: 'Taxes estimées',
+    vatIncluded: 'TVA incluse',
     fees: 'Frais',
     totalDue: 'Total à payer',
     orderSummary: 'Résumé de la commande',

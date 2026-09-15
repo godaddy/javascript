@@ -487,6 +487,12 @@ export const DraftOrderQuery = graphql(`
                   name
                   ratePercentage
               }
+              taxes {
+                  amount {
+                      value
+                  }
+                  included
+              }
               totals {
                   discountTotal {
                       currencyCode
