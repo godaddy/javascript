@@ -17,6 +17,7 @@ export interface DraftOrderTotalsProps {
   total?: number;
   tip?: number;
   taxes?: number;
+  includedTaxTotal?: number;
   isTaxLoading?: boolean;
   fees?: number;
   isFeeLoading?: boolean;
@@ -72,6 +73,7 @@ export function DraftOrderTotals({
   total = 0,
   tip = 0,
   taxes = 0,
+  includedTaxTotal = 0,
   fees = 0,
   enableDiscounts = false,
   enableTaxes = false,
@@ -85,6 +87,7 @@ export function DraftOrderTotals({
 }: DraftOrderTotalsProps) {
   const { t } = useGoDaddyContext();
   const formatCurrency = useFormatCurrency();
+  const isTaxesLoading = isTaxLoading || isShippingLoading || isDiscountLoading;
   const handleDiscountsChange = (discounts: string[]) => {
     // Discount changes are handled by the DiscountStandalone component
   };
@@ -145,13 +148,26 @@ export function DraftOrderTotals({
         ) : null}
         <Target id='checkout.summary.totals.taxes.before' />
         {enableTaxes &&
-          (isTaxLoading ? (
+          (isTaxesLoading ? (
             <TotalLineItemSkeleton title={t.totals.estimatedTaxes} />
           ) : (
             <TotalLineItem
               currencyCode={currencyCode}
               title={t.totals.estimatedTaxes}
               value={taxes || 0}
+              inputInMinorUnits={inputInMinorUnits}
+            />
+          ))}
+        <Target id='checkout.summary.totals.included-taxes.before' />
+        {enableTaxes &&
+          includedTaxTotal > 0 &&
+          (isTaxesLoading ? (
+            <TotalLineItemSkeleton title={t.totals.vatIncluded} />
+          ) : (
+            <TotalLineItem
+              currencyCode={currencyCode}
+              title={t.totals.vatIncluded}
+              value={includedTaxTotal}
               inputInMinorUnits={inputInMinorUnits}
             />
           ))}
