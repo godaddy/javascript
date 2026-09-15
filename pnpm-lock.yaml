@@ -48,6 +48,37 @@ importers:
         specifier: ^5.8.3
         version: 5.9.2
 
+  examples/commerce-elements:
+    dependencies:
+      '@godaddy/commerce':
+        specifier: workspace:*
+        version: link:../../packages/commerce
+      react:
+        specifier: 19.2.0
+        version: 19.2.0
+      react-dom:
+        specifier: 19.2.0
+        version: 19.2.0(react@19.2.0)
+    devDependencies:
+      '@godaddy/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@types/react':
+        specifier: ^19
+        version: 19.2.2
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.2(@types/react@19.2.2)
+      '@vitejs/plugin-react':
+        specifier: ^4.7.0
+        version: 4.7.0(vite@6.4.1(@types/node@22.18.12)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6))
+      typescript:
+        specifier: ~5.7.3
+        version: 5.7.3
+      vite:
+        specifier: ^6.4.1
+        version: 6.4.1(@types/node@22.18.12)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)
+
   examples/nextjs:
     dependencies:
       '@godaddy/localizations':
@@ -148,6 +179,49 @@ importers:
       '@biomejs/biome':
         specifier: ^2.2.5
         version: 2.2.5
+
+  packages/commerce:
+    dependencies:
+      '@godaddy/react':
+        specifier: workspace:*
+        version: link:../react
+      '@radix-ui/react-dialog':
+        specifier: ^1.1.6
+        version: 1.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.3.2
+        version: 2.3.2
+      '@types/node':
+        specifier: ^22.13.1
+        version: 22.18.12
+      '@types/react':
+        specifier: ^19.0.8
+        version: 19.2.2
+      '@types/react-dom':
+        specifier: ^19.0.3
+        version: 19.2.2(@types/react@19.2.2)
+      biome-config-godaddy:
+        specifier: workspace:*
+        version: link:../biome-config-godaddy
+      jsdom:
+        specifier: ^26.0.0
+        version: 26.1.0
+      react:
+        specifier: ^19.2.0
+        version: 19.2.0
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.0(react@19.2.0)
+      tsdown:
+        specifier: ^0.15.6
+        version: 0.15.9(typescript@5.7.3)
+      typescript:
+        specifier: ~5.7.3
+        version: 5.7.3
+      vitest:
+        specifier: ^4.1.2
+        version: 4.1.2(@types/node@22.18.12)(jsdom@26.1.0)(vite@6.4.1(@types/node@22.18.12)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6))
 
   packages/eslint-config-godaddy:
     dependencies:

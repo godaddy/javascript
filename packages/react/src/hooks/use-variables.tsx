@@ -77,8 +77,11 @@ function processVariables(
  * Priority: overrideVariables > context.appearance
  * @param {GoDaddyVariables} [overrideVariables] - Optional variables that override context variables (can be camelCase or kebab-case)
  */
-export function useVariables(overrideVariables?: GoDaddyVariables) {
-  const { appearance } = useGoDaddyContext();
+export function useVariables(
+  overrideVariables?: GoDaddyVariables,
+  target?: HTMLElement
+) {
+  const { appearance, uiContainer } = useGoDaddyContext();
 
   // Context variables are already in kebab-case
   const contextVariables = appearance?.variables;
@@ -92,7 +95,7 @@ export function useVariables(overrideVariables?: GoDaddyVariables) {
   useInsertionEffect(() => {
     if (Object.keys(mergedVars).length === 0) return;
 
-    const rootStyle = document.documentElement.style;
+    const rootStyle = (target ?? uiContainer ?? document.documentElement).style;
 
     // Apply the CSS variables to the document
     for (const [key, value] of Object.entries(mergedVars)) {
@@ -109,5 +112,5 @@ export function useVariables(overrideVariables?: GoDaddyVariables) {
         rootStyle.removeProperty(`--gd-${key}`);
       }
     };
-  }, [mergedVars]);
+  }, [mergedVars, target, uiContainer]);
 }
