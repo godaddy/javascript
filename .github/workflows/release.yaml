@@ -1,9 +1,27 @@
 name: Release
 
+# Pushes to main run the normal changesets flow: open or update the
+# "Version Packages" pull request, or publish to npm when that PR lands.
+#
+# Running this workflow manually publishes a snapshot prerelease instead: every
+# package with a pending changeset on the chosen branch is versioned as
+# <next-version>-<tag>-<datetime> and published under the chosen npm dist-tag,
+# so `latest` is never touched. Both paths publish with npm trusted publishing
+# (OIDC), which is bound to this workflow file.
+#
+#   gh workflow run release.yaml --ref <branch> -f tag=rc
+
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "npm dist-tag and version suffix for the snapshot prerelease (rc, next, beta...)"
+        required: true
+        default: rc
+        type: string
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -17,6 +35,12 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
+      - name: Refuse to publish a snapshot to latest
+        if: github.event_name == 'workflow_dispatch' && inputs.tag == 'latest'
+        run: |
+          echo "Snapshot releases must not use the 'latest' dist-tag." >&2
+          exit 1
+
       - name: Checkout Repo
         uses: actions/checkout@v6 # v6.0.2
 
@@ -33,9 +57,24 @@ jobs:
         run: pnpm install --prefer-offline
 
       - name: Create Release Pull Request or Publish to npm
+        if: github.event_name == 'push'
         id: changesets
-        uses: changesets/action@v2 # v2.1.0
+        uses: changesets/action@v2 # v2.1.2
         with:
           version-script: pnpm run version
           publish-script: pnpm run release
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          create-github-releases: false
+          push-git-tags: false
+
+      - name: Apply snapshot versions
+        if: github.event_name == 'workflow_dispatch'
+        id: snapshot
+        env:
+          SNAPSHOT_TAG: ${{ inputs.tag }}
+        run: node scripts/version.js --snapshot "$SNAPSHOT_TAG"
+
+      - name: Publish snapshot to npm
+        if: github.event_name == 'workflow_dispatch' && steps.snapshot.outputs.versioned == 'true'
+        env:
+          SNAPSHOT_TAG: ${{ inputs.tag }}
+        run: pnpm publish -r --tag "$SNAPSHOT_TAG" --no-git-checks

@@ -1,12 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { ResultOf } from 'gql.tada';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import {
   checkoutMutationKeys,
   checkoutQueryKeys,
 } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
-import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
 import { updateDraftOrderTaxes } from '@/lib/godaddy/godaddy';
 
 export function useUpdateTaxes() {
@@ -35,40 +33,12 @@ export function useUpdateTaxes() {
         : await updateDraftOrderTaxes(session, destination, apiHost);
       return data;
     },
-    onSuccess: data => {
-      if (!session) return;
-
-      // Extract shippingTotal from mutation response
-      const taxesTotal = data?.calculateCheckoutSessionTaxes?.totalTaxAmount;
-
-      // Update the cached draft-order query (includes totals)
-      if (taxesTotal) {
-        queryClient.setQueryData(
-          checkoutQueryKeys.draftOrder(session.id),
-          (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
-            if (!old) return old;
-            return {
-              ...old,
-              checkoutSession: {
-                ...old.checkoutSession,
-                draftOrder: {
-                  ...old?.checkoutSession?.draftOrder,
-                  totals: {
-                    ...old?.checkoutSession?.draftOrder?.totals,
-                    taxesTotal: {
-                      ...taxesTotal,
-                    },
-                  },
-                },
-              },
-            };
-          }
-        );
-      }
-    },
     onSettled: () => {
       if (!session) return;
-      queryClient.invalidateQueries({
+      // Keep totals and tax constituents in sync before mutation callers continue.
+      // This also waits for refetch retries and delays rejection of a failed tax
+      // mutation until the refetch settles.
+      return queryClient.invalidateQueries({
         queryKey: checkoutQueryKeys.draftOrder(session.id),
       });
     },
