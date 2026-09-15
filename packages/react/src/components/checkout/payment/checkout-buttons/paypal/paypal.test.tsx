@@ -191,6 +191,34 @@ describe('PayPalCheckoutButton', () => {
     });
   });
 
+  it('sends PayPal and confirm the same tip when it changes during the flush', async () => {
+    // `createOrder` awaits the sync flush before building the request, and the
+    // tip control is still live while it settles. Snapshotting above the flush
+    // would send PayPal the new tip and record the one it replaced.
+    renderPayPalButton({ enableTips: true, tipAmount: 500 });
+    const createdOrders: Array<Record<string, unknown>> = [];
+
+    await act(async () => {
+      const created = getPayPalButtonsProps().createOrder?.(
+        {},
+        payPalActions(createdOrders)
+      );
+      form?.setValue('tipAmount', 100);
+      await created;
+    });
+
+    expect(tipMinorUnitsInOrder(createdOrders[0])).toBe(100);
+
+    await act(async () => {
+      await getPayPalButtonsProps().onApprove?.({}, payPalActions([]));
+    });
+
+    await waitFor(() => {
+      expect(confirmInput()).toBeDefined();
+    });
+    expect(confirmInput()).toMatchObject({ tipAmount: 100 });
+  });
+
   it('confirms with the selected tip when it does not change', async () => {
     renderPayPalButton({ enableTips: true, tipAmount: 500 });
     const createdOrders: Array<Record<string, unknown>> = [];

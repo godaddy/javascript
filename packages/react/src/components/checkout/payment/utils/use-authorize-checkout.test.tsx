@@ -132,6 +132,26 @@ describe('useAuthorizeCheckout', () => {
     expect((await authorizedInput())?.tipAmount).toBeUndefined();
   });
 
+  it('reports the tip it authorized so redirect providers can persist it', async () => {
+    const { result } = renderHook(() => useAuthorizeCheckout(), {
+      wrapper: wrapper({ enableTips: true, tipAmount: 500 }),
+    });
+
+    const authorized = await result.current.mutateAsync(cardFieldsInput);
+
+    expect(authorized?.authorizedTipAmount).toBe(500);
+  });
+
+  it('reports no authorized tip when tips are disabled', async () => {
+    const { result } = renderHook(() => useAuthorizeCheckout(), {
+      wrapper: wrapper({ enableTips: false, tipAmount: 500 }),
+    });
+
+    const authorized = await result.current.mutateAsync(cardFieldsInput);
+
+    expect(authorized?.authorizedTipAmount).toBeNull();
+  });
+
   it('returns the transaction used as the provider order reference', async () => {
     const { result } = renderHook(() => useAuthorizeCheckout(), {
       wrapper: wrapper({ enableTips: true, tipAmount: 500 }),

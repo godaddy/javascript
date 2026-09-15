@@ -44,7 +44,13 @@ export function useAuthorizeCheckout() {
         ? await authorizeCheckoutSession(payload, { accessToken: jwt }, apiHost)
         : await authorizeCheckoutSession(payload, session, apiHost);
 
-      return result.authorizeCheckoutSession;
+      // The tip is reported so redirect providers persist the one this call sent
+      // instead of reading the form a second time across an await.
+      return {
+        transactionRefNum:
+          result.authorizeCheckoutSession?.transactionRefNum ?? null,
+        authorizedTipAmount: payload.tipAmount ?? null,
+      };
     },
     onError: (error: unknown) => {
       const translate = (code: string) =>

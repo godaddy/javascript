@@ -155,8 +155,8 @@ describe('Checkout CCAvenue tips', () => {
     });
 
     it('does not redirect when the tip cannot be persisted', async () => {
-      // Nothing is charged yet, so refusing here is what keeps the customer from
-      // paying a tip the return leg could never record.
+      // Authorizing charges nothing, so refusing before the submit still keeps
+      // the customer from paying a tip the return leg could never record.
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         throw new Error('storage disabled');
       });
@@ -183,7 +183,6 @@ describe('Checkout CCAvenue tips', () => {
         ).toBeGreaterThan(0);
       });
       expect(submit).not.toHaveBeenCalled();
-      expect(getOperations('AuthorizeCheckoutSession')).toHaveLength(0);
     });
 
     it('still redirects when only a zero tip cannot be persisted', async () => {

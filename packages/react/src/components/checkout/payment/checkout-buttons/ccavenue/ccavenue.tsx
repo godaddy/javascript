@@ -67,23 +67,6 @@ export function CCAvenueCheckoutButton() {
       return;
     }
 
-    // Persisted before authorizing, not after: the gateway collects the
-    // tip-inclusive amount, and the confirmation on the return leg can only
-    // recover the tip from storage. Failing here costs nothing, whereas
-    // discovering it once the customer has paid would record the order for less
-    // than they were charged.
-    if (session?.enableTips && session?.id) {
-      const tipAmount = form.getValues('tipAmount') ?? 0;
-      const persisted = setRedirectTipAmount(session.id, tipAmount);
-
-      // A zero tip is persisted best-effort only — losing it changes nothing,
-      // since the API also treats a missing tip as zero.
-      if (!persisted && tipAmount > 0) {
-        setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
-        return;
-      }
-    }
-
     try {
       const resData = await authorizeCheckout.mutateAsync({
         paymentType: PaymentMethodType.CCAVENUE,
@@ -92,13 +75,30 @@ export function CCAvenueCheckoutButton() {
       });
       const transactionRefNum = resData?.transactionRefNum ?? '';
       if (!transactionRefNum) {
-        // No redirect will happen, so the tip saved above would only sit there
-        // until it expired.
+        // No redirect will happen, so a tip left from an earlier attempt would
+        // only sit there until it expired.
         if (session?.id) {
           clearRedirectTipAmount(session.id);
         }
         setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
         return;
+      }
+
+      // The tip the authorization sent, not a second read of the form, which
+      // could have moved while its flush settled. Still before the redirect:
+      // nothing is charged until the form below submits, so failing here costs
+      // nothing.
+      if (session?.enableTips && session?.id) {
+        const tipAmount = resData?.authorizedTipAmount ?? 0;
+        const persisted = setRedirectTipAmount(session.id, tipAmount);
+
+        // A zero tip is persisted best-effort only — losing it changes nothing,
+        // since the API also treats a missing tip as zero.
+        if (!persisted && tipAmount > 0) {
+          clearRedirectTipAmount(session.id);
+          setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
+          return;
+        }
       }
 
       const formEl = document.createElement('form');

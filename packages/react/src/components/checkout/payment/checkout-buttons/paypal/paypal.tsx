@@ -22,15 +22,13 @@ function PayPalButtonsWrapper() {
   const { session, setCheckoutErrors } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
-  const { payPalRequest, buildPaymentRequestsFromOrder } =
-    useBuildPaymentRequest();
+  const { buildPaymentRequestsFromOrder } = useBuildPaymentRequest();
   const confirmCheckout = useConfirmCheckout();
   const flushCheckoutSync = useFlushCheckoutSync();
   const [isPaypalDisabled, setIsPaypalDisabled] = useState<boolean>(false);
   const deliveryMethod = form.watch('deliveryMethod');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const [{ isResolved, isPending }] = usePayPalScriptReducer();
-  const tipAmount = form.watch('tipAmount') || 0;
   // PayPal's popup can stay open while the tip changes underneath, so confirm
   // sends the tip `createOrder` submitted rather than the current form value.
   const authorizedTipAmount = useRef<number | null>(null);
@@ -57,13 +55,19 @@ function PayPalButtonsWrapper() {
   };
 
   const createOrder = async (_data, actions) => {
-    authorizedTipAmount.current = session?.enableTips ? tipAmount : null;
     const { latestOrder } = await flushCheckoutSync({
       includeCurrentFormDiff: true,
     });
-    const request = latestOrder
-      ? buildPaymentRequestsFromOrder(latestOrder).payPalRequest
-      : payPalRequest;
+
+    // Below the flush, and rebuilt rather than falling back to the memoized
+    // `payPalRequest`: the tip can move while the flush settles, and these two
+    // reads share it only because no `await` separates them.
+    authorizedTipAmount.current = session?.enableTips
+      ? (form.getValues('tipAmount') ?? 0)
+      : null;
+    const request = buildPaymentRequestsFromOrder(
+      latestOrder ?? undefined
+    ).payPalRequest;
     const order = {
       ...request,
       purchase_units: request.purchase_units
