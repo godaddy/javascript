@@ -356,6 +356,8 @@ export const esPe = {
     INVALID_TIP_AMOUNT: 'Ingrese un monto de propina válido',
     TIPS_NOT_ENABLED: 'No se aceptan propinas para este pedido',
     TIP_CHARGE_FAILED: 'Pruebe otro monto de propina o elija Sin Propina',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'No se aceptan propinas en los pagos en efectivo',
   },
   storefront: {
     product: 'Producto',

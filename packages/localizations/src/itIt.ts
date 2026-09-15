@@ -373,6 +373,8 @@ export const itIt = {
     TIPS_NOT_ENABLED: 'Le mance non sono accettate per questo ordine',
     TIP_CHARGE_FAILED:
       'Prova un altro importo della mancia o scegli Nessuna Mancia',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'Le mance non sono supportate per i pagamenti offline',
   },
   storefront: {
     product: 'Prodotto',

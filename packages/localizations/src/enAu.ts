@@ -349,6 +349,8 @@ export const enAu = {
     INVALID_TIP_AMOUNT: 'Enter a valid tip amount',
     TIPS_NOT_ENABLED: 'Tips are not accepted for this order',
     TIP_CHARGE_FAILED: 'Try a different tip amount, or choose No Tip',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'Tips are not supported for offline payments',
   },
   storefront: {
     product: 'Product',

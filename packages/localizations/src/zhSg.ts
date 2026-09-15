@@ -336,6 +336,7 @@ export const zhSg = {
     INVALID_TIP_AMOUNT: '输入有效的小费金额',
     TIPS_NOT_ENABLED: '此订单不接受小费',
     TIP_CHARGE_FAILED: '请尝试其他小费金额或选择无小费',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT: '线下付款不支持小费',
   },
   storefront: {
     product: '产品',

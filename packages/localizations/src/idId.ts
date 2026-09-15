@@ -348,6 +348,8 @@ export const idId = {
     INVALID_TIP_AMOUNT: 'Masukkan jumlah tip yang valid',
     TIPS_NOT_ENABLED: 'Tip tidak diterima untuk pesanan ini',
     TIP_CHARGE_FAILED: 'Coba jumlah tip lain atau pilih Tanpa Tip',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'Tip tidak didukung untuk pembayaran offline',
   },
   storefront: {
     product: 'Produk',

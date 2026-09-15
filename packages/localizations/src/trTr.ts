@@ -349,6 +349,8 @@ export const trTr = {
     INVALID_TIP_AMOUNT: 'Geçerli bir bahşiş tutarı girin',
     TIPS_NOT_ENABLED: 'Bu sipariş için bahşiş kabul edilmiyor',
     TIP_CHARGE_FAILED: 'Farklı bir bahşiş tutarı deneyin veya Bahşiş Yok seçin',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'Çevrimdışı ödemelerde bahşiş desteklenmiyor',
   },
   storefront: {
     product: 'Ürün',

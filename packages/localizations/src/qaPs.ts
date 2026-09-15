@@ -358,6 +358,8 @@ export const qaPs = {
     INVALID_TIP_AMOUNT: '[Ëñţër â vâlîd ţîþ âmöüñţ]',
     TIPS_NOT_ENABLED: '[Ţîþš ârë ñöţ âççëþţëd för ţhîš örðër]',
     TIP_CHARGE_FAILED: '[Ţrÿ â dîffërëñţ ţîþ âmöüñţ, ör çhööšë Ñö Ţîþ]',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      '[Ţîþš ârë ñöţ šüþþörţëd för öfflîñë þâÿmëñţš]',
   },
   storefront: {
     product: '[Product]',

@@ -354,6 +354,8 @@ export const ptBr = {
     INVALID_TIP_AMOUNT: 'Digite um valor de gorjeta válido',
     TIPS_NOT_ENABLED: 'Gorjetas não são aceitas para este pedido',
     TIP_CHARGE_FAILED: 'Tente outro valor de gorjeta ou escolha Sem Gorjeta',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'Gorjetas não são aceitas em pagamentos offline',
   },
   storefront: {
     product: 'Produto',

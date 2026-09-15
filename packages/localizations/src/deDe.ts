@@ -374,6 +374,8 @@ export const deDe = {
     TIPS_NOT_ENABLED: 'Für diese Bestellung wird kein Trinkgeld akzeptiert',
     TIP_CHARGE_FAILED:
       'Anderen Trinkgeldbetrag versuchen oder Kein Trinkgeld auswählen',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'Trinkgeld ist bei Offline-Zahlungen nicht möglich',
   },
   storefront: {
     product: 'Produkt',

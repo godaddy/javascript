@@ -349,6 +349,8 @@ export const viVn = {
     INVALID_TIP_AMOUNT: 'Nhập số tiền tip hợp lệ',
     TIPS_NOT_ENABLED: 'Đơn hàng này không nhận tiền tip',
     TIP_CHARGE_FAILED: 'Hãy thử số tiền tip khác hoặc chọn Không tip',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'Không hỗ trợ tiền tip cho thanh toán ngoại tuyến',
   },
   storefront: {
     product: 'Sản phẩm',

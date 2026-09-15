@@ -357,6 +357,8 @@ export const esMx = {
     INVALID_TIP_AMOUNT: 'Ingrese una cantidad de propina válida',
     TIPS_NOT_ENABLED: 'No se aceptan propinas para este pedido',
     TIP_CHARGE_FAILED: 'Pruebe otra cantidad de propina o elija Sin Propina',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'No se aceptan propinas en los pagos fuera de línea',
   },
   storefront: {
     product: 'Producto',
