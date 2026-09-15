@@ -41,7 +41,7 @@
     "url": "https://github.com/godaddy/javascript/issues"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.5",
+    "@changesets/cli": "^3.0.2",
     "@eslint/eslintrc": "^3.3.4",
     "@eslint/js": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
