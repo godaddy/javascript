@@ -1,5 +1,5 @@
 ---
-'@godaddy/react': minor
+'@godaddy/react': patch
 '@godaddy/localizations': patch
 ---
 
