@@ -70,7 +70,7 @@ export function CheckoutFormContainer({
 
   if (!isConfirmingCheckout && !draftOrderQuery.isLoading && !order) {
     const returnUrl = session?.returnUrl;
-    if (returnUrl) {
+    if (returnUrl && !props.embedded) {
       window.location.href = returnUrl;
       return null;
     }

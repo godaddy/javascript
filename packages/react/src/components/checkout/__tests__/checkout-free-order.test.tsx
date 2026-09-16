@@ -1,5 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   advanceCheckoutDebounce,
   buildBillingAddress,
@@ -123,6 +123,44 @@ function buildPaidPickupDraftOrder() {
 }
 
 describe('Checkout free / offline orders', () => {
+  it('reports accepted embedded confirmation to its host without navigating', async () => {
+    const draftOrder = buildFreeDraftOrder({
+      billing: {
+        firstName: 'Free',
+        lastName: 'Buyer',
+        email: 'jane@example.com',
+        address: null,
+      },
+    });
+    draftOrder.lineItems = (draftOrder.lineItems ?? []).map(line => ({
+      ...line,
+      fulfillmentMode: 'PURCHASE',
+    }));
+    const session = buildCheckoutSession({
+      draftOrder,
+      enableShipping: false,
+      enableLocalPickup: false,
+      enableTaxCollection: false,
+      enableBillingAddressCollection: false,
+    });
+    const onComplete = vi.fn();
+    const onConfirmingChange = vi.fn();
+    const url = window.location.href;
+    const { user } = renderCheckout({
+      session,
+      draftOrder,
+      checkoutProps: { embedded: true, onComplete, onConfirmingChange },
+    });
+    await waitForCheckoutReady();
+    expect(onComplete).not.toHaveBeenCalled();
+    await user.click(
+      await screen.findByRole('button', { name: /complete your free order/i })
+    );
+    await waitFor(() => expect(onComplete).toHaveBeenCalledOnce());
+    expect(onConfirmingChange).toHaveBeenCalledWith(true);
+    expect(window.location.href).toBe(url);
+  });
+
   it('renders a free pickup order with names-only billing and no paid payment form', async () => {
     const draftOrder = buildFreeDraftOrder({
       billing: {

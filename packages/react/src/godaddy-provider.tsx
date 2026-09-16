@@ -75,6 +75,8 @@ interface GoDaddyContextValue {
   storeId?: string;
   channelId?: string;
   locale?: string;
+  /** Scope embedded checkout portals and appearance to this element. */
+  uiContainer?: HTMLElement;
   Link?: React.ComponentType<LinkComponentProps>;
 }
 
@@ -101,6 +103,8 @@ export interface GoDaddyProviderProps {
   storeId?: string;
   channelId?: string;
   locale?: string;
+  /** Scope embedded checkout portals and appearance to this element. */
+  uiContainer?: HTMLElement;
 
   queryClient?: QueryClient;
   Link?: React.ComponentType<LinkComponentProps>;
@@ -116,6 +120,7 @@ export function GoDaddyProvider({
   storeId,
   channelId,
   locale = 'en-US',
+  uiContainer,
   queryClient: providedQueryClient,
   Link,
   children,
@@ -197,8 +202,8 @@ export function GoDaddyProvider({
     `;
   }, [processedAppearance?.theme]);
 
-  useVariables(processedAppearance?.variables);
-  useTheme(processedAppearance?.theme);
+  useVariables(processedAppearance?.variables, uiContainer);
+  useTheme(processedAppearance?.theme, uiContainer);
 
   return (
     <godaddyContext.Provider
@@ -211,16 +216,17 @@ export function GoDaddyProvider({
         storeId,
         channelId,
         locale,
+        uiContainer,
         Link,
       }}
     >
-      {inlineStyles && (
+      {inlineStyles && !uiContainer && (
         <style
           dangerouslySetInnerHTML={{ __html: inlineStyles }}
           data-godaddy-vars
         />
       )}
-      {themeScript && (
+      {themeScript && !uiContainer && (
         <script
           dangerouslySetInnerHTML={{ __html: themeScript }}
           data-godaddy-theme

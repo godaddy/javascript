@@ -1,0 +1,434 @@
+.gddy-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  background: rgb(24 24 27 / 0.2);
+}
+.gddy-drawer {
+  /* Shared 4px spacing scale for every drawer section. */
+  --gddy-space-1: 4px;
+  --gddy-space-2: 8px;
+  --gddy-space-3: 12px;
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  z-index: 2147483001;
+  width: min(100%, 400px);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gddy-surface, #fff);
+  color: var(--gddy-text, #252529);
+  font:
+    14px / 1.5
+    var(--gddy-font, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  text-align: start;
+  box-shadow: -16px 0 56px #18181b26;
+  outline: none;
+  color-scheme: var(--gddy-color-scheme, light);
+}
+.gddy-drawer,
+.gddy-drawer * {
+  box-sizing: border-box;
+}
+.gddy-drawer :is(button, input) {
+  font: inherit;
+}
+.gddy-drawer ::selection {
+  background: var(--gddy-subtle, #ededf0);
+  color: var(--gddy-text, #252529);
+}
+.gddy-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 16px;
+  padding: var(--gddy-space-3) var(--gddy-gutter, 16px);
+}
+.gddy-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.gddy-item-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding-inline: 6px;
+  border-radius: 6px;
+  background: var(--gddy-subtle, #ededf0);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--gddy-text, #252529);
+}
+.gddy-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.gddy-close {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-right: calc(-1 * var(--gddy-gutter, 16px));
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gddy-muted, #68686f);
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+}
+.gddy-close::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 6px;
+}
+.gddy-close svg {
+  position: relative;
+}
+.gddy-close:hover:not(:disabled)::before {
+  background: var(--gddy-subtle, #ededf0);
+}
+.gddy-close:hover:not(:disabled) {
+  color: var(--gddy-text, #252529);
+}
+.gddy-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--gddy-gutter, 16px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gddy-border, #e6e6e8) transparent;
+}
+.gddy-drawer :where(.gddy-body, .gddy-purchase-summary) button {
+  cursor: pointer;
+  min-height: 44px;
+  border-radius: var(--gddy-radius, 6px);
+  border: 1px solid var(--gddy-border, #e6e6e8);
+  background: var(--gddy-surface, #fff);
+  color: inherit;
+  padding: 8px 12px;
+  font-weight: 500;
+}
+.gddy-drawer button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.gddy-drawer :where(.gddy-body, .gddy-purchase-summary) input {
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--gddy-border, #e6e6e8);
+  border-radius: var(--gddy-radius, 6px);
+  background: var(--gddy-surface, #fff);
+  color: var(--gddy-text, #252529);
+  padding: 8px 12px;
+  caret-color: var(--gddy-text, #252529);
+}
+.gddy-drawer input::placeholder {
+  color: var(--gddy-muted, #68686f);
+  opacity: 1;
+}
+.gddy-drawer :is(input, button, summary):focus-visible {
+  outline: 2px solid var(--gddy-focus, #51515b);
+  outline-offset: 3px;
+}
+.gddy-lines {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.gddy-lines > li {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  /* The thumbnail stays a square and content hangs from the top of the row, so
+     a long title grows the row downward instead of floating the image. */
+  align-items: start;
+  gap: 12px;
+  padding: 16px 0;
+}
+.gddy-lines > li:first-child {
+  padding-top: 0;
+}
+.gddy-product-image {
+  width: 80px;
+  height: 80px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--gddy-subtle, #ededf0);
+  color: var(--gddy-muted, #68686f);
+}
+.gddy-product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.gddy-line-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* Heading, optional variants, then controls. No bottom alignment, so a line
+     without variants has no dead space between the title and the stepper. */
+  gap: var(--gddy-space-2);
+}
+.gddy-line-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.gddy-line-heading strong {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  /* Two lines at most; the full name is in the title attribute and the control
+     labels, so nothing is lost when it is cut. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.gddy-line-price {
+  flex-shrink: 0;
+  line-height: 20px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.gddy-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--gddy-muted, #68686f);
+  overflow-wrap: anywhere;
+}
+.gddy-options > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  min-width: 0;
+}
+.gddy-options > div:not(:last-child)::after {
+  content: "";
+  width: 2px;
+  height: 2px;
+  align-self: center;
+  border-radius: 50%;
+  background: currentColor;
+  margin-left: 4px;
+}
+.gddy-options dt,
+.gddy-options dd {
+  margin: 0;
+}
+.gddy-line-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.gddy-quantity {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--gddy-border, #e6e6e8);
+  /* The stepper owns the radius; inner buttons are square and clipped so the
+     hover fill follows the container instead of drawing its own shape. */
+  border-radius: min(var(--gddy-radius, 6px), 14px);
+  overflow: hidden;
+}
+.gddy-drawer .gddy-quantity button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  min-height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.gddy-drawer .gddy-quantity button:hover:not(:disabled) {
+  background: var(--gddy-subtle, #ededf0);
+}
+.gddy-drawer .gddy-quantity input {
+  appearance: textfield;
+  width: 24px;
+  height: 26px;
+  min-height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.gddy-quantity input::-webkit-inner-spin-button,
+.gddy-quantity input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+.gddy-drawer .gddy-text-button {
+  padding: 0;
+  min-height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--gddy-muted, #68686f);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-size: 12px;
+  font-weight: 400;
+}
+.gddy-text-button:hover:not(:disabled) {
+  color: var(--gddy-text, #252529);
+}
+.gddy-purchase-summary {
+  flex-shrink: 0;
+  max-height: 50dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-top: 1px solid var(--gddy-border, #e6e6e8);
+  /* Everything below the divider sits on an 8px rhythm: 16px around each
+     block, 4px between the subtotal and its note. */
+  padding: var(--gddy-gutter, 16px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gddy-border, #e6e6e8) transparent;
+}
+.gddy-totals {
+  margin: 0 0 var(--gddy-space-1);
+}
+.gddy-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.gddy-totals > div:first-child {
+  font-size: 16px;
+  font-weight: 500;
+}
+.gddy-totals dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.gddy-note {
+  color: var(--gddy-muted, #68686f);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 var(--gddy-gutter, 16px);
+}
+.gddy-drawer .gddy-primary {
+  width: 100%;
+  min-height: 44px;
+  background: var(--gddy-color, #303036);
+  color: var(--gddy-on-color, #fff);
+  border-color: var(--gddy-color, #303036);
+  font-weight: 500;
+}
+.gddy-primary:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+.gddy-spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 8px;
+  vertical-align: -0.15em;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: gddy-spin 0.7s linear infinite;
+}
+@keyframes gddy-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gddy-spinner {
+    animation-duration: 1.5s;
+  }
+}
+.gddy-empty {
+  padding: 48px 0;
+  text-align: center;
+}
+.gddy-empty h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+.gddy-empty p {
+  color: var(--gddy-muted, #68686f);
+  margin: 8px 0 24px;
+}
+.gddy-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  /* The block above already ends in a 16px gutter. */
+  padding: 0 var(--gddy-gutter, 16px) var(--gddy-gutter, 16px);
+  text-align: center;
+  font-size: 10px;
+  color: var(--gddy-muted, #68686f);
+}
+.gddy-footer-logo {
+  /* GoDaddy brand: Everyday Teal 400. Intentionally not themeable. */
+  color: #1bdbdb;
+  width: 18px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.gddy-error {
+  color: var(--gddy-error, #a31919);
+  background: var(--gddy-error-surface, #fff0f0);
+  border-radius: 6px;
+  padding: 12px;
+}
+@media (max-width: 480px) {
+  .gddy-drawer input {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .gddy-drawer {
+    animation: gddy-enter 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes gddy-enter {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+}
