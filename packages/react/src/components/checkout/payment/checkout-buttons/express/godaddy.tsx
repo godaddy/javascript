@@ -402,7 +402,6 @@ export function ExpressCheckoutButton() {
   useEffect(() => {
     if (
       !isPoyntLoaded ||
-      !applicationId?.trim() ||
       !businessId ||
       !isCollectLoading ||
       !draftOrder ||
