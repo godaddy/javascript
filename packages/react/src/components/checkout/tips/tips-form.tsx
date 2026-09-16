@@ -279,7 +279,7 @@ export function TipsForm({
                     className={cn(
                       'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted bg-card',
                       isSelected
-                        ? 'border-primary ring-2 ring-primary'
+                        ? 'border-primary ring-1 ring-primary'
                         : 'active:ring'
                     )}
                     onClick={() => handleAmountSelect(amount, index)}
@@ -309,7 +309,7 @@ export function TipsForm({
                     className={cn(
                       'h-16 flex flex-col items-center justify-center gap-y-0.5 hover:bg-muted bg-card',
                       isSelected
-                        ? 'border-primary ring-2 ring-primary'
+                        ? 'border-primary ring-1 ring-primary'
                         : 'active:ring'
                     )}
                     onClick={() => handlePercentageSelect(percentage, index)}
@@ -344,7 +344,7 @@ export function TipsForm({
             'h-12 font-normal hover:bg-muted',
             !tipAmount &&
               tipPercentage === 0 &&
-              'border-primary ring-2 ring-primary'
+              'border-primary ring-1 ring-primary'
           )}
           onClick={handleNoTip}
           aria-checked={!tipAmount && tipPercentage === 0 ? 'true' : 'false'}
@@ -357,7 +357,7 @@ export function TipsForm({
           variant='outline'
           className={cn(
             'h-12 font-normal hover:bg-muted',
-            showCustomTip && 'border-primary ring-2 ring-primary'
+            showCustomTip && 'border-primary ring-1 ring-primary'
           )}
           onClick={handleCustomTip}
           aria-checked={showCustomTip ? 'true' : 'false'}
