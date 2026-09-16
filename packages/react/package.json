@@ -60,7 +60,7 @@
     "react-hook-form": ">=7"
   },
   "dependencies": {
-    "@floating-ui/react": "^0.27.8",
+    "@floating-ui/react": "^0.27.20",
     "@godaddy/localizations": "workspace:*",
     "@hookform/resolvers": "^4.0.0",
     "@paypal/react-paypal-js": "^8.8.3",
