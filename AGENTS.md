@@ -5,7 +5,7 @@ This document is the single source of truth for how to work inside this monorepo
 Repository facts:
 - Monorepo managed by pnpm workspaces
 - ESM-only (type: "module" across repo)
-- Node 24 in CI (.nvmrc), engine >=22 in package.json
+- Node 24 in CI (.nvmrc), engines ^22.13.0 || ^24 || >=26 in package.json
 - Changesets for versioning and publishing
 - GitHub Actions for CI/CD
 
@@ -22,9 +22,10 @@ Quickstart:
 Root scripts (run from repository root):
 - build: pnpm run -r build
 - lint: pnpm run -r lint
-- test: pnpm run build && pnpm run -r --parallel test
-- version: changeset version && pnpm install --prefer-offline
-- release: changeset publish
+- test: pnpm run test:release && pnpm run build && pnpm run -r --parallel test
+- test:release: node --test scripts/version.test.js
+- version: node scripts/version.js && pnpm install --prefer-offline (no-op when no changesets are pending)
+- release: changeset publish --no-git-tag (package prepublishOnly scripts build before publishing)
 - changeset: changeset
 - clean: pnpm run clean:packages && pnpm run clean:root
 - clean:packages: pnpm run -r clean
@@ -75,7 +76,6 @@ biome-config-godaddy (packages/biome-config-godaddy)
 - test: vitest run
 - test:watch: vitest
 - test:coverage: vitest run --coverage
-- release: pnpm build && changeset publish
 - prepublishOnly: pnpm build
 
 @godaddy/react (packages/react)
@@ -102,7 +102,7 @@ Common script patterns to run from root:
 Monorepo and tooling
 - pnpm workspaces: defined in pnpm-workspace.yaml (packages/*)
 - ESM throughout: "type": "module" at root and packages
-- Node: .nvmrc=24; CI uses Node 24; engines >=22 in root package.json; prefer Node 24 locally to match CI
+- Node: .nvmrc=24; CI uses Node 24; engines ^22.13.0 || ^24 || >=26 in root package.json; prefer Node 24 locally to match CI
 - CI: .github/workflows
   - CICD on PRs and push to main runs pnpm test
   - Release workflow uses changesets/action to version and publish
@@ -302,7 +302,9 @@ Typical loops
 Changesets and releases
 - Create a changeset: pnpm changeset and select affected packages
 - Versioning PR is opened automatically on main by CI (release workflow)
-- Publishing handled by CI using changesets/action with NPM_TOKEN
+- Publishing handled by CI using changesets/action v2, Changesets CLI v3, and npm trusted publishing (OIDC). GitHub Release creation and tag pushes are disabled.
+- Manual release dispatches version pending changesets as snapshots and publish under the selected npm tag. Empty snapshot requests skip versioning and publishing.
+- Versioning is centralized in scripts/version.js; app-connect has no package-level release command.
 
 CI guardrails
 - PRs and main push run pnpm test via CICD workflow
@@ -355,7 +357,7 @@ CI guardrails
 9) Appendices
 
 Node, package manager, and env
-- Node: .nvmrc=24; engines >=22
+- Node: .nvmrc=24; engines ^22.13.0 || ^24 || >=26
 - pnpm: 10.14.0 (see packageManager)
 - Registry: npmjs.org
 
