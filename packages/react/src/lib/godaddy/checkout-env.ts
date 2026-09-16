@@ -572,6 +572,21 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "references",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "TransactionReference"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "status",
             "type": {
               "kind": "SCALAR",
@@ -2986,8 +3001,11 @@ const introspection = {
           {
             "name": "amount",
             "type": {
-              "kind": "SCALAR",
-              "name": "Int"
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
             },
             "args": [],
             "isDeprecated": false
@@ -3004,8 +3022,11 @@ const introspection = {
           {
             "name": "feeProgramType",
             "type": {
-              "kind": "SCALAR",
-              "name": "String"
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "ENUM",
+                "name": "FeeProgramType"
+              }
             },
             "args": [],
             "isDeprecated": false
@@ -3013,8 +3034,11 @@ const introspection = {
           {
             "name": "feeType",
             "type": {
-              "kind": "SCALAR",
-              "name": "String"
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "ENUM",
+                "name": "FeeType"
+              }
             },
             "args": [],
             "isDeprecated": false
@@ -3035,6 +3059,18 @@ const introspection = {
         "kind": "OBJECT",
         "name": "CheckoutSessionFeesResult",
         "fields": [
+          {
+            "name": "feeTotal",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
           {
             "name": "fees",
             "type": {
@@ -3681,6 +3717,15 @@ const introspection = {
             },
             "args": [],
             "isDeprecated": false
+          },
+          {
+            "name": "razorpay",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfig"
+            },
+            "args": [],
+            "isDeprecated": false
           }
         ],
         "interfaces": []
@@ -3754,6 +3799,13 @@ const introspection = {
           },
           {
             "name": "paze",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfigInput"
+            }
+          },
+          {
+            "name": "razorpay",
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "CheckoutSessionPaymentMethodConfigInput"
@@ -6658,10 +6710,6 @@ const introspection = {
         "name": "FeeProgramType",
         "enumValues": [
           {
-            "name": "CASH_DISCOUNT",
-            "isDeprecated": false
-          },
-          {
             "name": "CONVENIENCE_FEE",
             "isDeprecated": false
           },
@@ -7784,11 +7832,39 @@ const introspection = {
               {
                 "name": "fundingSourceType",
                 "type": {
+                  "kind": "ENUM",
+                  "name": "FundingSourceType"
+                }
+              },
+              {
+                "name": "paymentProvider",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              },
+              {
+                "name": "paymentToken",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              },
+              {
+                "name": "paymentType",
+                "type": {
                   "kind": "NON_NULL",
                   "ofType": {
-                    "kind": "ENUM",
-                    "name": "FundingSourceType"
+                    "kind": "SCALAR",
+                    "name": "String"
                   }
+                }
+              },
+              {
+                "name": "tipAmount",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int"
                 }
               }
             ],
@@ -8078,16 +8154,17 @@ const introspection = {
         "name": "MutationAuthorizeCheckoutSessionInput",
         "inputFields": [
           {
-            "name": "fees",
+            "name": "expectedFeeTotal",
             "type": {
-              "kind": "LIST",
-              "ofType": {
-                "kind": "NON_NULL",
-                "ofType": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "TransactionFeeInput"
-                }
-              }
+              "kind": "SCALAR",
+              "name": "Int"
+            }
+          },
+          {
+            "name": "fundingSourceType",
+            "type": {
+              "kind": "ENUM",
+              "name": "FundingSourceType"
             }
           },
           {
@@ -8153,16 +8230,10 @@ const introspection = {
             }
           },
           {
-            "name": "fees",
+            "name": "expectedFeeTotal",
             "type": {
-              "kind": "LIST",
-              "ofType": {
-                "kind": "NON_NULL",
-                "ofType": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "TransactionFeeInput"
-                }
-              }
+              "kind": "SCALAR",
+              "name": "Int"
             }
           },
           {
@@ -8184,6 +8255,13 @@ const introspection = {
             "type": {
               "kind": "SCALAR",
               "name": "DateTime"
+            }
+          },
+          {
+            "name": "fundingSourceType",
+            "type": {
+              "kind": "ENUM",
+              "name": "FundingSourceType"
             }
           },
           {
@@ -8461,6 +8539,13 @@ const introspection = {
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "CheckoutSessionOperatingHoursMapInput"
+            }
+          },
+          {
+            "name": "owner",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
             }
           },
           {
@@ -10274,6 +10359,21 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "references",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "TransactionReference"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "status",
             "type": {
               "kind": "SCALAR",
@@ -11296,62 +11396,20 @@ const introspection = {
         "interfaces": []
       },
       {
-        "kind": "INPUT_OBJECT",
-        "name": "TransactionFeeInput",
-        "inputFields": [
-          {
-            "name": "amount",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Int"
-              }
-            }
-          },
-          {
-            "name": "feeProgramType",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "ENUM",
-                "name": "FeeProgramType"
-              }
-            }
-          },
-          {
-            "name": "feeType",
-            "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "ENUM",
-                "name": "FeeType"
-              }
-            }
-          },
-          {
-            "name": "required",
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean"
-            }
-          },
-          {
-            "name": "signature",
-            "type": {
-              "kind": "SCALAR",
-              "name": "String"
-            }
-          }
-        ],
-        "isOneOf": false
-      },
-      {
         "kind": "OBJECT",
         "name": "TransactionFundingSource",
         "fields": [
           {
             "name": "customFundingType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "paymentReference",
             "type": {
               "kind": "SCALAR",
               "name": "String"
@@ -11370,6 +11428,40 @@ const introspection = {
           },
           {
             "name": "sourceType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "TransactionReference",
+        "fields": [
+          {
+            "name": "additionalLabel",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "type",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "value",
             "type": {
               "kind": "SCALAR",
               "name": "String"
