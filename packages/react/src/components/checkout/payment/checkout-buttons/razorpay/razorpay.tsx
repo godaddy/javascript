@@ -2,6 +2,10 @@ import { LoaderCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import {
+  RazorpayLoaderProvider,
+  useRazorpayLoader,
+} from '@/components/checkout/payment/utils/razorpay-loader-context';
 import { encodeRazorpayPaymentToken } from '@/components/checkout/payment/utils/razorpay-payment-token';
 import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import {
@@ -10,7 +14,6 @@ import {
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
-import { useLoadRazorpay } from '@/components/checkout/payment/utils/use-load-razorpay';
 import { normalizePhoneForRazorpay } from '@/components/checkout/utils/checkout-transformers';
 import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -56,6 +59,14 @@ function getRazorpayConstructor(): RazorpayConstructor | undefined {
 }
 
 export function RazorpayCheckoutButton() {
+  return (
+    <RazorpayLoaderProvider>
+      <RazorpayCheckoutButtonInner />
+    </RazorpayLoaderProvider>
+  );
+}
+
+function RazorpayCheckoutButtonInner() {
   const { t } = useGoDaddyContext();
   const { session, setCheckoutErrors, isConfirmingCheckout } =
     useCheckoutContext();
@@ -64,7 +75,7 @@ export function RazorpayCheckoutButton() {
   const confirmCheckout = useConfirmCheckout();
   const flushCheckoutSync = useFlushCheckoutSync();
   const isPaymentDisabled = useIsPaymentDisabled();
-  const { isRazorpayLoaded, isRazorpayLoadFailed } = useLoadRazorpay();
+  const { isRazorpayLoaded, isRazorpayLoadFailed } = useRazorpayLoader();
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
   const [error, setError] = useState('');
   const callbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

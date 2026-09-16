@@ -37,4 +37,19 @@ describe('Razorpay payment method', () => {
       screen.queryByTestId('mock-razorpay-button')
     ).not.toBeInTheDocument();
   });
+
+  it.each([
+    ['paymentMethods is null', null],
+    ['the Razorpay config is null', { razorpay: null }],
+  ])('renders without crashing when %s', async (_label, paymentMethods) => {
+    const session = buildCheckoutSession();
+    session.paymentMethods = paymentMethods as never;
+    renderCheckout({ session });
+    await waitForCheckoutReady();
+
+    expect(screen.getByText('No payment methods available')).toBeVisible();
+    expect(
+      screen.queryByTestId('mock-razorpay-button')
+    ).not.toBeInTheDocument();
+  });
 });

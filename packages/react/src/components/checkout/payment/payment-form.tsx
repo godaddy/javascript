@@ -138,8 +138,11 @@ export function PaymentForm(
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
   const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
   const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
+  // Both the container and each individual method are nullable on the session,
+  // so the cast has to admit null on both levels.
   const configuredPaymentMethods = session?.paymentMethods as unknown as
-    | Partial<Record<PaymentMethodValue, SessionPaymentMethodConfig>>
+    | Partial<Record<PaymentMethodValue, SessionPaymentMethodConfig | null>>
+    | null
     | undefined;
 
   // Helper function to get translated payment method labels

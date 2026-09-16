@@ -121,6 +121,10 @@ export const CreateCheckoutSessionMutation = graphql(`
           processor
           checkoutTypes
         }
+        razorpay {
+          processor
+          checkoutTypes
+        }
       }
       draftOrder {
         id

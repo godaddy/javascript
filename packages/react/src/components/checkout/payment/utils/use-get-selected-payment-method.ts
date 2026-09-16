@@ -10,8 +10,10 @@ export function useGetSelectedPaymentMethod(
   return useMemo(() => {
     if (!paymentMethod || !session?.paymentMethods) return null;
 
+    // Every method on the session is individually nullable, so the cast has to
+    // admit null rather than promising a config for each configured key.
     const paymentMethods = session.paymentMethods as unknown as Partial<
-      Record<PaymentMethodValue, PaymentMethodConfig>
+      Record<PaymentMethodValue, PaymentMethodConfig | null>
     >;
     const methodConfig = paymentMethods[paymentMethod];
     if (!methodConfig) return null;

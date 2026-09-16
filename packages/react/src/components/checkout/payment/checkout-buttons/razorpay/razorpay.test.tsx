@@ -5,6 +5,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   RAZORPAY_CALLBACK_TIMEOUT_MS,
@@ -49,8 +50,9 @@ vi.mock('@/components/checkout/payment/utils/use-is-payment-disabled', () => ({
   useIsPaymentDisabled: () => false,
 }));
 
-vi.mock('@/components/checkout/payment/utils/use-load-razorpay', () => ({
-  useLoadRazorpay: () => ({
+vi.mock('@/components/checkout/payment/utils/razorpay-loader-context', () => ({
+  RazorpayLoaderProvider: ({ children }: { children: ReactNode }) => children,
+  useRazorpayLoader: () => ({
     isRazorpayLoaded: true,
     isRazorpayLoadFailed: false,
   }),
@@ -190,6 +192,37 @@ describe('RazorpayCheckoutButton', () => {
       orderId: 'order_razorpay_123',
       signature: 'signature_789',
     });
+  });
+
+  it('waits for the checkout sync to settle before authorizing', async () => {
+    let resolveFlush: ((value: unknown) => void) | undefined;
+    mocks.flush.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          resolveFlush = resolve;
+        })
+    );
+
+    render(<RazorpayCheckoutButton />);
+    fireEvent.click(screen.getByRole('button', { name: 'Pay now' }));
+
+    await waitFor(() => expect(mocks.flush).toHaveBeenCalledOnce());
+    // Authorize must see the synced totals, so it cannot start while the
+    // buyer's pending form edits are still in flight.
+    expect(mocks.authorize).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveFlush?.({
+        latestOrder: {
+          id: 'draft-order-1',
+          totals: { total: { value: 4200, currencyCode: 'INR' } },
+        },
+      });
+    });
+
+    await waitFor(() => expect(open).toHaveBeenCalledOnce());
+    expect(mocks.authorize).toHaveBeenCalledOnce();
+    expect(capturedOptions?.amount).toBe(4200);
   });
 
   it('does not confirm when Razorpay reports a failed payment', async () => {
