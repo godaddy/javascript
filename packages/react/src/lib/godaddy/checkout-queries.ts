@@ -143,6 +143,14 @@ export const GetCheckoutSessionQuery = graphql(`
                 checkoutTypes
               }
             }
+            paymentProviderConfiguration {
+              paypal {
+                clientId
+                merchantId
+                partnerAttributionId
+                disableFunding
+              }
+            }
             locations {
               id
               isDefault

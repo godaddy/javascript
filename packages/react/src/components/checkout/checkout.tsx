@@ -82,6 +82,7 @@ export type SquareConfig = {
 export type PayPalConfig = {
   clientId: string;
   merchantId?: string;
+  partnerAttributionId?: string;
   disableFunding?: Array<'credit' | 'card' | 'paylater' | 'venmo'>;
 };
 
@@ -255,6 +256,30 @@ export function Checkout(props: CheckoutProps) {
   useTheme(session?.appearance?.theme);
   useVariables(session?.appearance?.variables || props?.appearance?.variables);
 
+  // Prefer an explicitly-supplied paypalConfig prop (existing embedded
+  // checkout integrations); fall back to the session's dynamically-resolved
+  // public configuration otherwise (hosted checkout, where no prop is ever
+  // supplied). See checkout-api PR #183's "Hosted Checkout Consumption".
+  // The GraphQL-sourced value uses `null` for absent optional fields; convert
+  // those to `undefined` so the result matches PayPalConfig exactly.
+  const sessionPayPalConfig = session?.paymentProviderConfiguration?.paypal;
+  const effectivePayPalConfig: PayPalConfig | undefined =
+    paypalConfig ??
+    (sessionPayPalConfig
+      ? {
+          clientId: sessionPayPalConfig.clientId,
+          merchantId: sessionPayPalConfig.merchantId,
+          partnerAttributionId:
+            sessionPayPalConfig.partnerAttributionId ?? undefined,
+          // GraphQL exposes this as a plain string list; checkout-api
+          // validates the values against PayPalDisableFundingSchema before
+          // ever persisting them, so this narrowing is safe.
+          disableFunding: (sessionPayPalConfig.disableFunding ?? undefined) as
+            | PayPalConfig['disableFunding']
+            | undefined,
+        }
+      : undefined);
+
   const validationMessages = React.useMemo<CheckoutValidationMessages>(
     () => ({
       enterValidBillingPhone: t.validation.enterValidBillingPhone,
@@ -331,7 +356,7 @@ export function Checkout(props: CheckoutProps) {
           godaddyPaymentsConfig,
           squareConfig,
           mercadoPagoConfig,
-          paypalConfig,
+          paypalConfig: effectivePayPalConfig,
           ccavenueConfig,
           requiredFields,
           isConfirmingCheckout,
