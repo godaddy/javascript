@@ -3,7 +3,7 @@ import type {
   PaymentMethodCreateParams,
   StripeExpressCheckoutElementConfirmEvent,
 } from '@stripe/stripe-js';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
 import {
@@ -78,11 +78,17 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
   const elements = useElements();
   const confirmCheckout = useConfirmCheckout();
   const confirmExpressCheckout = useConfirmExpressCheckout();
-  const { setCheckoutErrors, setIsConfirmingCheckout } = useCheckoutContext();
+  const { session, setCheckoutErrors, setIsConfirmingCheckout } =
+    useCheckoutContext();
   const { stripePaymentMethodParams, buildPaymentRequestsFromOrder } =
     useBuildPaymentRequest();
   const flushCheckoutSync = useFlushCheckoutSync();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  // Keep a known intent until checkout finalizes; retrying with a new pm_ could charge again.
+  const pendingIntent = useRef<{
+    sessionId: string | undefined;
+    id: string;
+  } | null>(null);
 
   const handleSubmit = useCallback(
     async (
@@ -96,42 +102,50 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
         }
 
         if (mode === 'card') {
-          const cardElement = elements.getElement(CardElement);
+          if (pendingIntent.current?.sessionId !== session?.id) {
+            pendingIntent.current = null;
+          }
+          let paymentToken = pendingIntent.current?.id;
+          if (!paymentToken) {
+            const cardElement = elements.getElement(CardElement);
 
-          if (!cardElement) {
-            return;
+            if (!cardElement) {
+              return;
+            }
+
+            const latestOrder =
+              resolvedOrder ??
+              (
+                await flushCheckoutSync({
+                  includeCurrentFormDiff: true,
+                })
+              ).latestOrder;
+            const { paymentMethod, error } = await stripe.createPaymentMethod({
+              ...(latestOrder
+                ? buildPaymentRequestsFromOrder(latestOrder)
+                    .stripePaymentMethodParams
+                : stripePaymentMethodParams),
+              card: cardElement,
+              type: 'card',
+            });
+
+            if (error) {
+              setCheckoutErrors([stripeCheckoutErrorCode(error.code)]);
+              return;
+            }
+            paymentToken = paymentMethod?.id;
           }
 
-          const latestOrder =
-            resolvedOrder ??
-            (
-              await flushCheckoutSync({
-                includeCurrentFormDiff: true,
-              })
-            ).latestOrder;
-          const { paymentMethod, error } = await stripe.createPaymentMethod({
-            ...(latestOrder
-              ? buildPaymentRequestsFromOrder(latestOrder)
-                  .stripePaymentMethodParams
-              : stripePaymentMethodParams),
-            card: cardElement,
-            type: 'card',
-          });
-
-          if (error) {
-            setCheckoutErrors([stripeCheckoutErrorCode(error.code)]);
-            return;
-          }
-
-          if (paymentMethod) {
+          if (paymentToken) {
             const confirmInput = {
-              paymentToken: paymentMethod.id,
+              paymentToken,
               paymentType: PaymentMethodType.CREDIT_CARD,
               paymentProvider: PaymentProvider.STRIPE,
             };
 
             try {
               await confirmCheckout.mutateAsync(confirmInput);
+              pendingIntent.current = null;
             } catch (err: unknown) {
               const nextAction = getStripeNextAction(err);
               if (!nextAction) {
@@ -161,9 +175,12 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 if (
                   actionResult.error ||
                   !actionResult.paymentIntent?.id ||
-                  !['succeeded', 'processing', 'requires_capture'].includes(
-                    actionResult.paymentIntent.status
-                  )
+                  ![
+                    'succeeded',
+                    'processing',
+                    'requires_capture',
+                    'requires_confirmation',
+                  ].includes(actionResult.paymentIntent.status)
                 ) {
                   setCheckoutErrors([
                     actionResult.error
@@ -175,10 +192,15 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 }
 
                 challengeSucceeded = true;
+                pendingIntent.current = {
+                  sessionId: session?.id,
+                  id: actionResult.paymentIntent.id,
+                };
                 await confirmCheckout.mutateAsync({
                   ...confirmInput,
                   paymentToken: actionResult.paymentIntent.id,
                 });
+                pendingIntent.current = null;
               } catch (finalizationError: unknown) {
                 const isRepeatedActionRequired = Boolean(
                   getPaymentActionRequiredResult(finalizationError)
@@ -350,6 +372,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
     },
     [
       mode,
+      session?.id,
       stripe,
       elements,
       confirmCheckout.mutateAsync,

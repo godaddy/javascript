@@ -7,6 +7,7 @@ import type { DraftOrder } from '@/types';
 import { useStripeCheckout } from './use-stripe-checkout';
 
 const mocks = vi.hoisted(() => ({
+  sessionId: 'session-1',
   latestOrder: { id: 'latest-order' } as DraftOrder,
   flush: vi.fn(),
   buildFromOrder: vi.fn(),
@@ -72,7 +73,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
   return (
     <checkoutContext.Provider
       value={{
-        session: { id: 'session-1' } as never,
+        session: { id: mocks.sessionId } as never,
         isConfirmingCheckout: false,
         setIsConfirmingCheckout: mocks.setIsConfirmingCheckout,
         setCheckoutErrors: mocks.setCheckoutErrors,
@@ -107,6 +108,7 @@ function actionRequiredError() {
 describe('useStripeCheckout payment request resolution', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.sessionId = 'session-1';
     mocks.flush.mockResolvedValue({ latestOrder: mocks.latestOrder });
     mocks.buildFromOrder.mockReturnValue({
       stripePaymentMethodParams: {
@@ -374,7 +376,12 @@ describe('useStripeCheckout payment request resolution', () => {
     expect(mocks.setIsConfirmingCheckout).toHaveBeenCalledWith(false);
   });
 
-  it.each(['succeeded', 'processing', 'requires_capture'])(
+  it.each([
+    'succeeded',
+    'processing',
+    'requires_capture',
+    'requires_confirmation',
+  ])(
     'lets the server decide payment completion after SDK status %s',
     async status => {
       mocks.confirm.mockRejectedValueOnce(actionRequiredError());
@@ -388,8 +395,84 @@ describe('useStripeCheckout payment request resolution', () => {
         await result.current.handleSubmit();
       });
       expect(mocks.confirm).toHaveBeenCalledTimes(2);
+      expect(mocks.confirm).toHaveBeenLastCalledWith(
+        expect.objectContaining({ paymentToken: 'pi-confirmed' })
+      );
+      expect(mocks.setCheckoutErrors).not.toHaveBeenCalled();
     }
   );
+
+  it.each([
+    ['network failure', new Error('Failed to fetch')],
+    [
+      'backend failure',
+      new GraphQLErrorWithCodes([{ code: 'TRANSACTION_PROCESSING_FAILED' }]),
+    ],
+  ])(
+    'reuses the authenticated intent across retries after %s',
+    async (_, error) => {
+      mocks.confirm
+        .mockRejectedValueOnce(actionRequiredError())
+        .mockRejectedValueOnce(error)
+        .mockRejectedValueOnce(error)
+        .mockResolvedValueOnce(undefined);
+      const { result, rerender } = renderHook(
+        () => useStripeCheckout({ mode: 'card' }),
+        {
+          wrapper: Wrapper,
+        }
+      );
+
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+      expect(mocks.setIsConfirmingCheckout).toHaveBeenCalledWith(false);
+      expect(result.current.isProcessingPayment).toBe(false);
+      rerender();
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+
+      expect(
+        mocks.confirm.mock.calls.map(([input]) => input.paymentToken)
+      ).toEqual([
+        'stripe-payment-method',
+        'pi-confirmed',
+        'pi-confirmed',
+        'pi-confirmed',
+      ]);
+      expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
+      expect(mocks.handleNextAction).toHaveBeenCalledTimes(1);
+      expect(result.current.isProcessingPayment).toBe(false);
+    }
+  );
+
+  it('does not reuse an authenticated intent in another checkout session', async () => {
+    mocks.confirm
+      .mockRejectedValueOnce(actionRequiredError())
+      .mockRejectedValueOnce(new Error('Failed to fetch'));
+    const { result, rerender } = renderHook(
+      () => useStripeCheckout({ mode: 'card' }),
+      {
+        wrapper: Wrapper,
+      }
+    );
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+    mocks.sessionId = 'session-2';
+    rerender();
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+    expect(mocks.confirm).toHaveBeenLastCalledWith(
+      expect.objectContaining({ paymentToken: 'stripe-payment-method' })
+    );
+    expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(2);
+  });
 
   it('shows a localizable action-required error and unlocks express checkout', async () => {
     const error = actionRequiredError();
