@@ -18,25 +18,44 @@ vi.mock('@/components/checkout/payment/utils/use-load-mercadopago', () => ({
 // makes that wait controllable, which is the only way to hold a pay click open
 // long enough for the total to move underneath it.
 let flushGate: Promise<void> | null = null;
+// `useConfirmCheckout` is the only caller that asks for the form diff, so its
+// flush — the last window a tip change has — is gated on its own.
+let confirmFlushGate: Promise<void> | null = null;
 
 vi.mock('@/components/checkout/payment/utils/use-flush-checkout-sync', () => ({
-  useFlushCheckoutSync: () => async () => {
-    const gate = flushGate;
-    if (gate) {
-      flushGate = null;
-      await gate;
-    }
-    // The stub still has to answer with the real hook's result shape:
-    // `useConfirmCheckout` destructures `latestOrder` off it and would throw on
-    // `undefined`. No patch is sent here, and `latestOrder` left absent makes
-    // the caller fall back to the draft order already in the query cache.
-    return { patchSent: false } satisfies FlushDraftOrderSyncResult;
-  },
+  useFlushCheckoutSync:
+    () => async (options?: { includeCurrentFormDiff?: boolean }) => {
+      if (options?.includeCurrentFormDiff) {
+        const confirmGate = confirmFlushGate;
+        if (confirmGate) {
+          confirmFlushGate = null;
+          await confirmGate;
+        }
+      }
+
+      const gate = flushGate;
+      if (gate) {
+        flushGate = null;
+        await gate;
+      }
+
+      // `useConfirmCheckout` destructures `latestOrder` off this and would throw
+      // on `undefined`. Left absent, callers fall back to the cached draft order.
+      return { patchSent: false } satisfies FlushDraftOrderSyncResult;
+    },
 }));
 
 function gateNextFlush() {
   let release = () => undefined as void;
   flushGate = new Promise<void>(resolve => {
+    release = () => resolve();
+  });
+  return release;
+}
+
+function gateConfirmFlush() {
+  let release = () => undefined as void;
+  confirmFlushGate = new Promise<void>(resolve => {
     release = () => resolve();
   });
   return release;
@@ -49,6 +68,7 @@ interface BrickCall {
 
 const brickCalls: BrickCall[] = [];
 let createGate: { promise: Promise<void>; release: () => void } | null = null;
+let formDataGate: { promise: Promise<void>; release: () => void } | null = null;
 
 // Gate the next brick creation so the pending-rebuild window is observable.
 function gateNextCreate() {
@@ -58,6 +78,16 @@ function gateNextCreate() {
   });
   createGate = { promise, release };
   return createGate;
+}
+
+// Gate the next tokenization so the tip can move while it is pending.
+function gateNextFormData() {
+  let release = () => undefined as void;
+  const promise = new Promise<void>(resolve => {
+    release = () => resolve();
+  });
+  formDataGate = { promise, release };
+  return formDataGate;
 }
 
 class MercadoPagoStub {
@@ -76,9 +106,20 @@ class MercadoPagoStub {
         });
         settings?.callbacks?.onReady?.();
 
+        // One token per brick, so a token from a superseded brick is
+        // recognizable in the confirmation payload.
+        const token = `mp-token-${brickCalls.length}`;
+
         return {
           unmount: () => undefined,
-          getFormData: async () => ({ formData: { token: 'mp-token-1' } }),
+          getFormData: async () => {
+            const tokenizeGate = formDataGate;
+            if (tokenizeGate) {
+              formDataGate = null;
+              await tokenizeGate.promise;
+            }
+            return { formData: { token } };
+          },
         };
       },
     };
@@ -132,7 +173,9 @@ describe('Checkout MercadoPago tips', () => {
   beforeEach(() => {
     brickCalls.length = 0;
     createGate = null;
+    formDataGate = null;
     flushGate = null;
+    confirmFlushGate = null;
   });
 
   it('builds the brick and preference for the tip-inclusive total', async () => {
@@ -278,11 +321,94 @@ describe('Checkout MercadoPago tips', () => {
     await waitForOperation('ConfirmCheckoutSession');
 
     expect(getLastConfirmInput()).toMatchObject({
-      paymentToken: 'mp-token-1',
+      paymentToken: 'mp-token-2',
       paymentType: 'mercadopago',
       tipAmount: 500,
     });
     expect(brickCalls.at(-1)).toMatchObject({ amount: 30 });
     expect(getAuthorizeInputs().at(-1)).toMatchObject({ tipAmount: 500 });
+  });
+
+  it('discards a token tokenized for a tip that changed while it was pending', async () => {
+    const { user } = renderMercadoPagoCheckout();
+    await waitForBrickCalls(1);
+
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
+    await waitForBrickCalls(2);
+    clearOperations();
+
+    // The brick and its preference are authorized for a 500-cent tip. Holding
+    // tokenization open lets 15% land while the token is in flight: it is bound
+    // to a $30 authorization the customer is no longer paying.
+    const tokenize = gateNextFormData();
+    fireEvent.click(await screen.findByRole('button', { name: /pay now/i }));
+    await waitFor(() => {
+      expect(formDataGate).toBeNull();
+    });
+
+    await user.click(await screen.findByRole('radio', { name: /15%/ }));
+    tokenize.release();
+    await act(async () => undefined);
+
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+
+    // Rebuilt for the tip the customer actually chose.
+    await waitForBrickCalls(3);
+    expect(brickCalls.at(-1)).toMatchObject({ amount: 28.75 });
+    expect(getAuthorizeInputs().at(-1)).toMatchObject({ tipAmount: 375 });
+  });
+
+  it('discards a token tokenized for a zero tip that changed while it was pending', async () => {
+    // A zero tip is a real authorized amount: its token is just as stale once a
+    // tip lands, and the amount check cannot treat it as "no tip yet".
+    const { user } = renderMercadoPagoCheckout();
+    await waitForBrickCalls(1);
+    expect(brickCalls[0]).toMatchObject({ amount: 25 });
+    clearOperations();
+
+    const tokenize = gateNextFormData();
+    fireEvent.click(await screen.findByRole('button', { name: /pay now/i }));
+    await waitFor(() => {
+      expect(formDataGate).toBeNull();
+    });
+
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
+    tokenize.release();
+    await act(async () => undefined);
+
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+
+    await waitForBrickCalls(2);
+    expect(brickCalls.at(-1)).toMatchObject({ amount: 30 });
+    expect(getAuthorizeInputs().at(-1)).toMatchObject({ tipAmount: 500 });
+  });
+
+  it('confirms the authorized tip when the form changes during the confirm flush', async () => {
+    // The last window: the token is in hand and matched its brick, so the tip
+    // that moves inside `confirmCheckout`'s own flush must not reach the payload.
+    const { user } = renderMercadoPagoCheckout({
+      apiOverrides: {
+        errors: { confirmCheckout: new Error('confirm failed') },
+      },
+    });
+    await waitForBrickCalls(1);
+
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
+    await waitForBrickCalls(2);
+
+    const releaseConfirmFlush = gateConfirmFlush();
+    fireEvent.click(await screen.findByRole('button', { name: /pay now/i }));
+    await waitFor(() => {
+      expect(confirmFlushGate).toBeNull();
+    });
+
+    await user.click(await screen.findByRole('radio', { name: /15%/ }));
+    releaseConfirmFlush();
+
+    await waitForOperation('ConfirmCheckoutSession');
+    expect(getLastConfirmInput()).toMatchObject({
+      paymentToken: 'mp-token-2',
+      tipAmount: 500,
+    });
   });
 });
