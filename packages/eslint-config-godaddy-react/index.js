@@ -32,8 +32,7 @@ const config = [
         ecmaFeatures: {
           jsx: true,
           experimentalObjectRestSpread: true
-        },
-        requireConfigFile: false
+        }
       }
     },
     plugins: {

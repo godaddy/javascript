@@ -59,17 +59,22 @@ jobs:
       - name: Create Release Pull Request or Publish to npm
         if: github.event_name == 'push'
         id: changesets
-        uses: changesets/action@v1 # v1.7.0
+        uses: changesets/action@v2 # v2.1.2
         with:
-          version: pnpm run version
-          publish: pnpm publish -r
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          version-script: pnpm run version
+          publish-script: pnpm run release
+          create-github-releases: false
+          push-git-tags: false
 
       - name: Apply snapshot versions
         if: github.event_name == 'workflow_dispatch'
-        run: pnpm changeset version --snapshot ${{ inputs.tag }}
+        id: snapshot
+        env:
+          SNAPSHOT_TAG: ${{ inputs.tag }}
+        run: node scripts/version.js --snapshot "$SNAPSHOT_TAG"
 
       - name: Publish snapshot to npm
-        if: github.event_name == 'workflow_dispatch'
-        run: pnpm publish -r --tag ${{ inputs.tag }} --no-git-checks
+        if: github.event_name == 'workflow_dispatch' && steps.snapshot.outputs.versioned == 'true'
+        env:
+          SNAPSHOT_TAG: ${{ inputs.tag }}
+        run: pnpm publish -r --tag "$SNAPSHOT_TAG" --no-git-checks
