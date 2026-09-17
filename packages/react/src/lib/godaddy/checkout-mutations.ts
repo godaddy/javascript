@@ -126,6 +126,14 @@ export const CreateCheckoutSessionMutation = graphql(`
           checkoutTypes
         }
       }
+      paymentProviderConfiguration {
+        paypal {
+          clientId
+          merchantId
+          partnerAttributionId
+          disableFunding
+        }
+      }
       draftOrder {
         id
         statuses {

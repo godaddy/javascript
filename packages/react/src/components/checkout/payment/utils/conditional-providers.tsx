@@ -81,6 +81,12 @@ export function ConditionalPaymentProviders({
           ...(paypalConfig.merchantId?.trim()
             ? { merchantId: paypalConfig.merchantId.trim() }
             : {}),
+          ...(paypalConfig.partnerAttributionId?.trim()
+            ? {
+                dataPartnerAttributionId:
+                  paypalConfig.partnerAttributionId.trim(),
+              }
+            : {}),
           currency:
             payPalRequest?.purchase_units?.[0]?.amount?.currency_code || 'USD',
           intent: 'capture',

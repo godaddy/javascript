@@ -108,6 +108,7 @@ export function PaymentForm(
     setCheckoutErrors,
     requiredFields,
     godaddyPaymentsConfig,
+    paypalConfig,
   } = useCheckoutContext();
   const form = useFormContext();
   const paymentMethod = form.watch('paymentMethod');
@@ -287,6 +288,16 @@ export function PaymentForm(
         return baseCheck && hasGoDaddyAppId;
       }
 
+      // PayPal requires public SDK configuration (clientId at minimum) to
+      // initialize the JS SDK. Without it, the button would render a visible
+      // "configuration missing" error instead of a usable payment option.
+      if (
+        key === PaymentMethodType.PAYPAL &&
+        method?.processor === PaymentProvider.PAYPAL
+      ) {
+        return baseCheck && !!paypalConfig?.clientId?.trim();
+      }
+
       // Special handling for GoDaddy wallet payments — only show when device supports them
       if (
         key === PaymentMethodType.PAZE &&
@@ -317,6 +328,7 @@ export function PaymentForm(
     pazeSupported,
     applePaySupported,
     googlePaySupported,
+    paypalConfig?.clientId,
   ]);
 
   const shouldShowBilling =
