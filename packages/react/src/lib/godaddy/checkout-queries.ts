@@ -138,6 +138,18 @@ export const GetCheckoutSessionQuery = graphql(`
                 processor
                 checkoutTypes
               }
+              razorpay {
+                processor
+                checkoutTypes
+              }
+            }
+            paymentProviderConfiguration {
+              paypal {
+                clientId
+                merchantId
+                partnerAttributionId
+                disableFunding
+              }
             }
             locations {
               id

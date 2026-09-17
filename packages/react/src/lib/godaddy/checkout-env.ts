@@ -572,6 +572,21 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "references",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "TransactionReference"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "status",
             "type": {
               "kind": "SCALAR",
@@ -2015,6 +2030,15 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "paymentProviderConfiguration",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentProviderConfiguration"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "returnUrl",
             "type": {
               "kind": "NON_NULL",
@@ -3421,6 +3445,61 @@ const introspection = {
       },
       {
         "kind": "OBJECT",
+        "name": "CheckoutSessionPayPalProviderConfiguration",
+        "fields": [
+          {
+            "name": "clientId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "disableFunding",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "merchantId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "partnerAttributionId",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
         "name": "CheckoutSessionPaymentMethodConfig",
         "fields": [
           {
@@ -3598,6 +3677,15 @@ const introspection = {
             },
             "args": [],
             "isDeprecated": false
+          },
+          {
+            "name": "razorpay",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfig"
+            },
+            "args": [],
+            "isDeprecated": false
           }
         ],
         "interfaces": []
@@ -3675,9 +3763,32 @@ const introspection = {
               "kind": "INPUT_OBJECT",
               "name": "CheckoutSessionPaymentMethodConfigInput"
             }
+          },
+          {
+            "name": "razorpay",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "CheckoutSessionPaymentMethodConfigInput"
+            }
           }
         ],
         "isOneOf": false
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionPaymentProviderConfiguration",
+        "fields": [
+          {
+            "name": "paypal",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPayPalProviderConfiguration"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
       },
       {
         "kind": "OBJECT",
@@ -8027,6 +8138,13 @@ const introspection = {
             }
           },
           {
+            "name": "owner",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          },
+          {
             "name": "paymentMethods",
             "type": {
               "kind": "INPUT_OBJECT",
@@ -9823,6 +9941,21 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "references",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "TransactionReference"
+                }
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "status",
             "type": {
               "kind": "SCALAR",
@@ -10858,6 +10991,15 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "paymentReference",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "provider",
             "type": {
               "kind": "SCALAR",
@@ -10868,6 +11010,40 @@ const introspection = {
           },
           {
             "name": "sourceType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "TransactionReference",
+        "fields": [
+          {
+            "name": "additionalLabel",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "type",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "value",
             "type": {
               "kind": "SCALAR",
               "name": "String"

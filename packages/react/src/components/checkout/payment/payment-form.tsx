@@ -28,6 +28,7 @@ import GooglePayIcon from '@/components/checkout/payment/icons/GooglePay';
 import MercadoPagoIcon from '@/components/checkout/payment/icons/MercadoPago';
 import PayPalIcon from '@/components/checkout/payment/icons/PayPal';
 import PazeIcon from '@/components/checkout/payment/icons/Paze';
+import RazorpayIcon from '@/components/checkout/payment/icons/Razorpay';
 import {
   hasPaymentMethodButton,
   hasPaymentMethodForm,
@@ -88,6 +89,12 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   mercadopago: <MercadoPagoIcon className='h-5 w-8' />,
   offline: <Wallet className='h-5 w-5' />,
   ccavenue: <CcavenueIcon className='h-5 w-5' />,
+  razorpay: <RazorpayIcon className='h-5 w-5' />,
+};
+
+type SessionPaymentMethodConfig = {
+  processor: AvailablePaymentProviders;
+  checkoutTypes: string[];
 };
 
 export function PaymentForm(
@@ -101,6 +108,7 @@ export function PaymentForm(
     setCheckoutErrors,
     requiredFields,
     godaddyPaymentsConfig,
+    paypalConfig,
   } = useCheckoutContext();
   const form = useFormContext();
   const paymentMethod = form.watch('paymentMethod');
@@ -131,6 +139,12 @@ export function PaymentForm(
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
   const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
   const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
+  // Both the container and each individual method are nullable on the session,
+  // so the cast has to admit null on both levels.
+  const configuredPaymentMethods = session?.paymentMethods as unknown as
+    | Partial<Record<PaymentMethodValue, SessionPaymentMethodConfig | null>>
+    | null
+    | undefined;
 
   // Helper function to get translated payment method labels
   const getPaymentMethodLabel = useCallback(
@@ -154,6 +168,8 @@ export function PaymentForm(
           return t.payment.methods.mercadopago;
         case PaymentMethodType.CCAVENUE:
           return t.payment.methods.ccavenue;
+        case PaymentMethodType.RAZORPAY:
+          return t.payment.methods.razorpay;
         default:
           return key;
       }
@@ -183,6 +199,8 @@ export function PaymentForm(
           return t.payment.descriptions?.mercadopago;
         case PaymentMethodType.CCAVENUE:
           return t.payment.descriptions?.ccavenue;
+        case PaymentMethodType.RAZORPAY:
+          return t.payment.descriptions?.razorpay;
         default:
           return undefined;
       }
@@ -243,9 +261,9 @@ export function PaymentForm(
   const hasGoDaddyAppId = !!applicationId?.trim();
 
   const availablePaymentMethods = React.useMemo(() => {
-    if (!session?.paymentMethods) return [];
-    return Object.keys(session.paymentMethods).filter(key => {
-      const method = session.paymentMethods?.[key as PaymentMethodValue];
+    if (!configuredPaymentMethods) return [];
+    return Object.keys(configuredPaymentMethods).filter(key => {
+      const method = configuredPaymentMethods[key as PaymentMethodValue];
 
       const baseCheck =
         PAYMENT_METHOD_ICONS[key as PaymentMethodValue] &&
@@ -268,6 +286,16 @@ export function PaymentForm(
         method?.processor === PaymentProvider.GODADDY
       ) {
         return baseCheck && hasGoDaddyAppId;
+      }
+
+      // PayPal requires public SDK configuration (clientId at minimum) to
+      // initialize the JS SDK. Without it, the button would render a visible
+      // "configuration missing" error instead of a usable payment option.
+      if (
+        key === PaymentMethodType.PAYPAL &&
+        method?.processor === PaymentProvider.PAYPAL
+      ) {
+        return baseCheck && !!paypalConfig?.clientId?.trim();
       }
 
       // Special handling for GoDaddy wallet payments — only show when device supports them
@@ -295,11 +323,12 @@ export function PaymentForm(
       return baseCheck;
     });
   }, [
-    session,
+    configuredPaymentMethods,
     hasGoDaddyAppId,
     pazeSupported,
     applePaySupported,
     googlePaySupported,
+    paypalConfig?.clientId,
   ]);
 
   const shouldShowBilling =
@@ -457,7 +486,7 @@ export function PaymentForm(
                   {filteredPaymentMethods.map(
                     ([key, { label, icon }], index, array) => {
                       const itemMethodConfig =
-                        session?.paymentMethods?.[key as PaymentMethodValue];
+                        configuredPaymentMethods?.[key as PaymentMethodValue];
                       const itemMethodForm = itemMethodConfig
                         ? getPaymentMethodForm(
                             key as PaymentMethodValue,
