@@ -1,8 +1,24 @@
 import { Elements, useElements } from '@stripe/react-stripe-js';
-import { useEffect } from 'react';
+import {
+  createContext,
+  type RefObject,
+  useContext,
+  useEffect,
+  useRef,
+} from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
 import { useStripePaymentIntent } from '@/components/checkout/payment/utils/use-stripe-payment-intent';
+
+type PendingStripeIntent = { sessionId: string | undefined; id: string };
+const StripePaymentContext =
+  createContext<RefObject<PendingStripeIntent | null> | null>(null);
+
+export function usePendingStripeIntent() {
+  const pendingIntent = useContext(StripePaymentContext);
+  if (!pendingIntent) throw new Error('StripeProvider is required');
+  return pendingIntent;
+}
 
 function StripeElementsUpdater() {
   const elements = useElements();
@@ -20,6 +36,17 @@ function StripeElementsUpdater() {
 }
 
 export function StripeProvider({ children }: { children: React.ReactNode }) {
+  // The provider survives the checkout button being replaced with a spinner.
+  // Card and express providers each own their continuation reference.
+  const pendingIntent = useRef<PendingStripeIntent | null>(null);
+  return (
+    <StripePaymentContext.Provider value={pendingIntent}>
+      <StripeElementsProvider>{children}</StripeElementsProvider>
+    </StripePaymentContext.Provider>
+  );
+}
+
+function StripeElementsProvider({ children }: { children: React.ReactNode }) {
   const { stripeConfig } = useCheckoutContext();
 
   if (!stripeConfig?.publishableKey?.trim()) {

@@ -2,11 +2,13 @@ import { getPaymentActionRequiredResult } from '@/lib/graphql-with-errors';
 
 export function getStripeNextAction(
   error: unknown
-): { clientSecret: string } | undefined {
+): { clientSecret: string; paymentReference: string } | undefined {
   const result = getPaymentActionRequiredResult(error);
   const step = result?.nextStep;
   if (
     result?.provider !== 'STRIPE' ||
+    typeof result.paymentReference !== 'string' ||
+    !result.paymentReference.trim() ||
     step?.type !== 'SDK_ACTION' ||
     step.sdk !== 'STRIPE_JS' ||
     step.action !== 'HANDLE_NEXT_ACTION' ||
@@ -14,7 +16,10 @@ export function getStripeNextAction(
     !step.clientSecret.trim()
   )
     return undefined;
-  return { clientSecret: step.clientSecret };
+  return {
+    clientSecret: step.clientSecret,
+    paymentReference: result.paymentReference,
+  };
 }
 
 // Stripe SDK error codes are not customer-facing localization keys.

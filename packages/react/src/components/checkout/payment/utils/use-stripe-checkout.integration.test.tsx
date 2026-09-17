@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkoutContext } from '@/components/checkout/checkout';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import type { DraftOrder } from '@/types';
+import { StripeProvider } from './stripe-provider';
 import { useStripeCheckout } from './use-stripe-checkout';
 
 const mocks = vi.hoisted(() => ({
@@ -79,7 +80,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
         setCheckoutErrors: mocks.setCheckoutErrors,
       }}
     >
-      {children}
+      <StripeProvider>{children}</StripeProvider>
     </checkoutContext.Provider>
   );
 }
@@ -269,6 +270,7 @@ describe('useStripeCheckout payment request resolution', () => {
             paymentResult: {
               status: 'ACTION_REQUIRED',
               provider: 'STRIPE',
+              paymentReference: 'pi-confirmed',
               nextStep: {
                 type: 'SDK_ACTION',
                 sdk: 'STRIPE_JS',
@@ -473,6 +475,62 @@ describe('useStripeCheckout payment request resolution', () => {
     );
     expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(2);
   });
+
+  it.each(['rejected promise', 'SDK error result'])(
+    'reconciles the original intent after an SDK transport failure: %s',
+    async failure => {
+      mocks.confirm.mockRejectedValueOnce(actionRequiredError());
+      if (failure === 'rejected promise') {
+        mocks.handleNextAction.mockRejectedValueOnce(
+          new Error('Connection lost')
+        );
+      } else {
+        mocks.handleNextAction.mockResolvedValueOnce({
+          error: { type: 'api_connection_error' },
+        });
+      }
+      const { result } = renderHook(() => useStripeCheckout({ mode: 'card' }), {
+        wrapper: Wrapper,
+      });
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+      expect(mocks.setIsConfirmingCheckout).toHaveBeenCalledWith(false);
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+      expect(
+        mocks.confirm.mock.calls.map(([input]) => input.paymentToken)
+      ).toEqual(['stripe-payment-method', 'pi-confirmed']);
+      expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it.each(['requires_payment_method', 'canceled'])(
+    'allows a replacement only after Stripe reports the saved intent as %s',
+    async status => {
+      mocks.confirm.mockRejectedValueOnce(actionRequiredError());
+      mocks.handleNextAction.mockResolvedValueOnce({
+        error: {
+          code: 'payment_intent_authentication_failure',
+          payment_intent: { id: 'pi-confirmed', status },
+        },
+      });
+      const { result } = renderHook(() => useStripeCheckout({ mode: 'card' }), {
+        wrapper: Wrapper,
+      });
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+      expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(2);
+      expect(mocks.confirm).toHaveBeenLastCalledWith(
+        expect.objectContaining({ paymentToken: 'stripe-payment-method' })
+      );
+    }
+  );
 
   it('shows a localizable action-required error and unlocks express checkout', async () => {
     const error = actionRequiredError();

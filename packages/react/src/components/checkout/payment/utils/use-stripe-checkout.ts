@@ -3,7 +3,7 @@ import type {
   PaymentMethodCreateParams,
   StripeExpressCheckoutElementConfirmEvent,
 } from '@stripe/stripe-js';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
 import {
@@ -29,6 +29,7 @@ import {
   getStripeNextAction,
   stripeCheckoutErrorCode,
 } from './stripe-next-action';
+import { usePendingStripeIntent } from './stripe-provider';
 
 type UseStripeCheckoutOptions = {
   mode: 'card' | 'express';
@@ -84,11 +85,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
     useBuildPaymentRequest();
   const flushCheckoutSync = useFlushCheckoutSync();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  // Keep a known intent until checkout finalizes; retrying with a new pm_ could charge again.
-  const pendingIntent = useRef<{
-    sessionId: string | undefined;
-    id: string;
-  } | null>(null);
+  const pendingIntent = usePendingStripeIntent();
 
   const handleSubmit = useCallback(
     async (
@@ -161,6 +158,11 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 return;
               }
 
+              // Keep the reference even if the SDK loses its response after payment completes.
+              pendingIntent.current = {
+                sessionId: session?.id,
+                id: nextAction.paymentReference,
+              };
               track({
                 eventId: eventIds.paymentChallengeStarted,
                 type: TrackingEventType.EVENT,
@@ -182,6 +184,19 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                     'requires_confirmation',
                   ].includes(actionResult.paymentIntent.status)
                 ) {
+                  const intent =
+                    actionResult.paymentIntent ??
+                    actionResult.error?.payment_intent;
+                  // Only a definite unpaid outcome permits a replacement payment.
+                  // Connection errors without an intent status must keep the reference.
+                  if (
+                    intent?.id === nextAction.paymentReference &&
+                    ['requires_payment_method', 'canceled'].includes(
+                      intent.status
+                    )
+                  ) {
+                    pendingIntent.current = null;
+                  }
                   setCheckoutErrors([
                     actionResult.error
                       ? stripeCheckoutErrorCode(actionResult.error.code)
@@ -372,6 +387,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
     },
     [
       mode,
+      pendingIntent,
       session?.id,
       stripe,
       elements,
