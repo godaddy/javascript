@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useGetPoyntCollectCdn } from '@/components/checkout/payment/utils/use-poynt-collect-cdn';
+import { PaymentProvider } from '@/types';
 
 let isPoyntLoaded = false;
 let isPoyntCDNLoaded = false;
@@ -12,6 +13,9 @@ export function useLoadPoyntCollect() {
   const collectCDN = useGetPoyntCollectCdn();
   const [loaded, setLoaded] = useState(isPoyntLoaded);
   const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
+  const hasGoDaddyPaymentMethod = Object.values(
+    session?.paymentMethods ?? {}
+  ).some(method => method?.processor === PaymentProvider.GODADDY);
 
   useEffect(() => {
     // Register this component to be notified when Poynt loads
@@ -32,6 +36,7 @@ export function useLoadPoyntCollect() {
     if (
       isPoyntCDNLoaded ||
       isPoyntLoaded ||
+      !hasGoDaddyPaymentMethod ||
       !collectCDN ||
       !businessId
     ) {
@@ -49,7 +54,7 @@ export function useLoadPoyntCollect() {
     };
 
     document?.body?.appendChild(script);
-  }, [businessId, collectCDN]);
+  }, [businessId, collectCDN, hasGoDaddyPaymentMethod]);
 
   return { isPoyntLoaded: loaded };
 }
