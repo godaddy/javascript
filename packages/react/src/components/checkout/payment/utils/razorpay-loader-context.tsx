@@ -12,6 +12,8 @@ const RAZORPAY_SDK_URL = 'https://checkout.razorpay.com/v1/checkout.js';
 const MAX_LOAD_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
+type RazorpayScriptStatus = 'loading' | 'loaded' | 'failed';
+
 type RazorpayLoaderState = {
   isRazorpayLoaded: boolean;
   isRazorpayLoadFailed: boolean;
@@ -25,6 +27,39 @@ const RazorpayLoaderContext = createContext<RazorpayLoaderState>({
 function hasRazorpayConstructor() {
   return (
     typeof (window as Window & { Razorpay?: unknown }).Razorpay === 'function'
+  );
+}
+
+function setScriptStatus(
+  script: HTMLScriptElement,
+  status: RazorpayScriptStatus
+) {
+  script.dataset.status = status;
+}
+
+function getScriptStatus(
+  script: HTMLScriptElement
+): RazorpayScriptStatus | undefined {
+  const status = script.dataset.status;
+  return status === 'loading' || status === 'loaded' || status === 'failed'
+    ? status
+    : undefined;
+}
+
+function trackScriptStatus(script: HTMLScriptElement) {
+  script.addEventListener(
+    'load',
+    () => {
+      setScriptStatus(script, hasRazorpayConstructor() ? 'loaded' : 'failed');
+    },
+    { once: true }
+  );
+  script.addEventListener(
+    'error',
+    () => {
+      setScriptStatus(script, 'failed');
+    },
+    { once: true }
   );
 }
 
@@ -48,11 +83,12 @@ export function RazorpayLoaderProvider({ children }: { children: ReactNode }) {
 
     const handleLoad = () => {
       if (cancelled) return;
+      if (!hasRazorpayConstructor()) {
+        handleError();
+        return;
+      }
       retryCountRef.current = 0;
-      // A load event without the constructor means the SDK did not install
-      // itself, which is a failure rather than a usable Checkout.
-      const loaded = hasRazorpayConstructor();
-      setState({ isRazorpayLoaded: loaded, isRazorpayLoadFailed: !loaded });
+      setState({ isRazorpayLoaded: true, isRazorpayLoadFailed: false });
     };
 
     const handleError = () => {
@@ -92,14 +128,25 @@ export function RazorpayLoaderProvider({ children }: { children: ReactNode }) {
         RAZORPAY_SDK_ID
       ) as HTMLScriptElement | null;
       if (existingScript) {
-        attachListeners(existingScript);
-        return;
+        const status = getScriptStatus(existingScript);
+        if (status === 'loading') {
+          attachListeners(existingScript);
+          return;
+        }
+
+        // A completed, failed, or untracked tag cannot emit another useful
+        // event. Replace it instead of leaving a remounted provider waiting.
+        existingScript.remove();
       }
 
       const script = document.createElement('script');
       script.id = RAZORPAY_SDK_ID;
       script.src = RAZORPAY_SDK_URL;
       script.async = true;
+      setScriptStatus(script, 'loading');
+      // These listeners intentionally survive provider unmounts so the tag
+      // records its outcome for a later remount.
+      trackScriptStatus(script);
       attachListeners(script);
       document.body.appendChild(script);
     }

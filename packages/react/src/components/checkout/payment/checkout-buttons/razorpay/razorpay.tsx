@@ -1,5 +1,5 @@
 import { LoaderCircle } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import {
@@ -19,8 +19,6 @@ import { Button } from '@/components/ui/button';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { PaymentMethodType } from '@/types';
-
-export const RAZORPAY_CALLBACK_TIMEOUT_MS = 2 * 60 * 1000;
 
 type RazorpaySuccessResponse = {
   razorpay_payment_id?: string;
@@ -48,7 +46,6 @@ type RazorpayOptions = {
 
 type RazorpayInstance = {
   open: () => void;
-  close: () => void;
   on: (event: 'payment.failed', handler: (response: unknown) => void) => void;
 };
 
@@ -77,27 +74,24 @@ function RazorpayCheckoutButtonInner() {
   const isPaymentDisabled = useIsPaymentDisabled();
   const { isRazorpayLoaded, isRazorpayLoadFailed } = useRazorpayLoader();
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
+  const [isAttempting, setIsAttempting] = useState(false);
   const [error, setError] = useState('');
-  const callbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const attemptLockRef = useRef(false);
 
-  const clearCallbackTimeout = useCallback(() => {
-    if (callbackTimeoutRef.current) {
-      clearTimeout(callbackTimeoutRef.current);
-      callbackTimeoutRef.current = null;
-    }
+  const releasePaymentAttempt = useCallback(() => {
+    attemptLockRef.current = false;
+    setIsAttempting(false);
   }, []);
-
-  useEffect(() => clearCallbackTimeout, [clearCallbackTimeout]);
 
   const handlePaymentSuccess = useCallback(
     async (response: RazorpaySuccessResponse) => {
-      clearCallbackTimeout();
       const paymentId = response.razorpay_payment_id;
       const orderId = response.razorpay_order_id;
       const signature = response.razorpay_signature;
       if (!paymentId || !orderId || !signature) {
         setError(t.errors.errorProcessingPayment);
         setIsWidgetOpen(false);
+        releasePaymentAttempt();
         return;
       }
 
@@ -121,11 +115,12 @@ function RazorpayCheckoutButtonInner() {
         }
       } finally {
         setIsWidgetOpen(false);
+        releasePaymentAttempt();
       }
     },
     [
       confirmCheckout,
-      clearCallbackTimeout,
+      releasePaymentAttempt,
       setCheckoutErrors,
       t.errors.errorProcessingPayment,
     ]
@@ -136,21 +131,29 @@ function RazorpayCheckoutButtonInner() {
   }, [t.errors.errorProcessingPayment]);
 
   const handleClick = async () => {
-    if (isWidgetOpen || authorizeCheckout.isPending || isConfirmingCheckout) {
+    if (
+      attemptLockRef.current ||
+      isWidgetOpen ||
+      authorizeCheckout.isPending ||
+      isConfirmingCheckout
+    ) {
       return;
     }
-
-    const valid = await form.trigger();
-    if (!valid) {
-      const firstError = Object.keys(form.formState.errors)[0];
-      if (firstError) form.setFocus(firstError);
-      return;
-    }
-
-    setCheckoutErrors(undefined);
-    setError('');
+    attemptLockRef.current = true;
+    setIsAttempting(true);
 
     try {
+      const valid = await form.trigger();
+      if (!valid) {
+        const firstError = Object.keys(form.formState.errors)[0];
+        if (firstError) form.setFocus(firstError);
+        releasePaymentAttempt();
+        return;
+      }
+
+      setCheckoutErrors(undefined);
+      setError('');
+
       const { latestOrder } = await flushCheckoutSync({
         includeCurrentFormDiff: true,
       });
@@ -203,24 +206,18 @@ function RazorpayCheckoutButtonInner() {
         },
         modal: {
           ondismiss: () => {
-            clearCallbackTimeout();
             setIsWidgetOpen(false);
+            releasePaymentAttempt();
           },
         },
       });
       widget.on('payment.failed', handlePaymentFailure);
 
       setIsWidgetOpen(true);
-      callbackTimeoutRef.current = setTimeout(() => {
-        callbackTimeoutRef.current = null;
-        widget.close();
-        setIsWidgetOpen(false);
-        setError(t.errors.errorProcessingPayment);
-      }, RAZORPAY_CALLBACK_TIMEOUT_MS);
       widget.open();
     } catch (err: unknown) {
-      clearCallbackTimeout();
       setIsWidgetOpen(false);
+      releasePaymentAttempt();
       if (err instanceof GraphQLErrorWithCodes) {
         setCheckoutErrors(err.codes);
       } else {
@@ -231,6 +228,7 @@ function RazorpayCheckoutButtonInner() {
 
   const isBusy =
     isPaymentDisabled ||
+    isAttempting ||
     isWidgetOpen ||
     authorizeCheckout.isPending ||
     isConfirmingCheckout;

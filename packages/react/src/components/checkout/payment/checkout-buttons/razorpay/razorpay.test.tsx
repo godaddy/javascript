@@ -7,10 +7,7 @@ import {
 } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  RAZORPAY_CALLBACK_TIMEOUT_MS,
-  RazorpayCheckoutButton,
-} from './razorpay';
+import { RazorpayCheckoutButton } from './razorpay';
 
 const mocks = vi.hoisted(() => ({
   authorize: vi.fn(),
@@ -80,13 +77,15 @@ type CapturedOptions = {
     razorpay_order_id?: string;
     razorpay_signature?: string;
   }) => void;
+  modal: {
+    ondismiss: () => void;
+  };
 };
 
 describe('RazorpayCheckoutButton', () => {
   let capturedOptions: CapturedOptions | undefined;
   let paymentFailedHandler: (() => void) | undefined;
   const open = vi.fn();
-  const close = vi.fn();
   const on = vi.fn((event: string, handler: () => void) => {
     if (event === 'payment.failed') paymentFailedHandler = handler;
   });
@@ -126,7 +125,6 @@ describe('RazorpayCheckoutButton', () => {
         }
 
         open = open;
-        close = close;
         on = on;
       },
     });
@@ -225,6 +223,33 @@ describe('RazorpayCheckoutButton', () => {
     expect(capturedOptions?.amount).toBe(4200);
   });
 
+  it('allows only one payment attempt while validation is pending', async () => {
+    let resolveValidation: ((valid: boolean) => void) | undefined;
+    mocks.trigger.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          resolveValidation = resolve;
+        })
+    );
+
+    render(<RazorpayCheckoutButton />);
+    const payButton = screen.getByRole('button', { name: 'Pay now' });
+    fireEvent.click(payButton);
+    fireEvent.click(payButton);
+
+    expect(mocks.trigger).toHaveBeenCalledOnce();
+    expect(mocks.flush).not.toHaveBeenCalled();
+    expect(mocks.authorize).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveValidation?.(true);
+    });
+
+    await waitFor(() => expect(open).toHaveBeenCalledOnce());
+    expect(mocks.flush).toHaveBeenCalledOnce();
+    expect(mocks.authorize).toHaveBeenCalledOnce();
+  });
+
   it('does not confirm when Razorpay reports a failed payment', async () => {
     render(<RazorpayCheckoutButton />);
     fireEvent.click(screen.getByRole('button', { name: 'Pay now' }));
@@ -269,23 +294,16 @@ describe('RazorpayCheckoutButton', () => {
     }
   );
 
-  it('closes Checkout when no callback arrives within two minutes', async () => {
+  it('does not impose a client timeout on an active Checkout session', async () => {
     const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
     render(<RazorpayCheckoutButton />);
     fireEvent.click(screen.getByRole('button', { name: 'Pay now' }));
 
     await waitFor(() => expect(open).toHaveBeenCalledOnce());
-    const timeoutCall = setTimeoutSpy.mock.calls.find(
-      ([, delay]) => delay === RAZORPAY_CALLBACK_TIMEOUT_MS
+    expect(setTimeoutSpy).not.toHaveBeenCalledWith(
+      expect.any(Function),
+      2 * 60 * 1000
     );
-    expect(timeoutCall).toBeDefined();
-
-    act(() => {
-      (timeoutCall?.[0] as () => void)();
-    });
-
-    expect(close).toHaveBeenCalledOnce();
     expect(mocks.confirm).not.toHaveBeenCalled();
-    expect(screen.getByText('Error processing payment')).toBeTruthy();
   });
 });

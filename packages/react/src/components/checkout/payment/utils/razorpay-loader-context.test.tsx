@@ -59,7 +59,7 @@ describe('RazorpayLoaderProvider', () => {
     );
   });
 
-  it('treats a load without the Razorpay constructor as a failure', () => {
+  it('retries when the script loads without the Razorpay constructor', () => {
     render(
       <RazorpayLoaderProvider>
         <Probe />
@@ -70,9 +70,15 @@ describe('RazorpayLoaderProvider', () => {
       getScript()?.dispatchEvent(new Event('load'));
     });
 
+    expect(getScript()).toBeNull();
     expect(screen.getByTestId('probe').textContent).toBe(
-      'loaded:false failed:true'
+      'loaded:false failed:false'
     );
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(getScript()?.dataset.status).toBe('loading');
   });
 
   it('retries loading the SDK on script error before giving up', () => {
@@ -199,5 +205,54 @@ describe('RazorpayLoaderProvider', () => {
     });
 
     expect(getScript()).not.toBeNull();
+    expect(getScript()?.dataset.status).toBe('failed');
+  });
+
+  it('replaces a failed script tag when the provider remounts', () => {
+    const { unmount } = render(
+      <RazorpayLoaderProvider>
+        <Probe />
+      </RazorpayLoaderProvider>
+    );
+    const failedScript = getScript();
+    unmount();
+
+    act(() => {
+      failedScript?.dispatchEvent(new Event('error'));
+    });
+    expect(failedScript?.dataset.status).toBe('failed');
+
+    render(
+      <RazorpayLoaderProvider>
+        <Probe />
+      </RazorpayLoaderProvider>
+    );
+
+    expect(getScript()).not.toBe(failedScript);
+    expect(getScript()?.dataset.status).toBe('loading');
+  });
+
+  it('replaces a constructor-less loaded script when the provider remounts', () => {
+    const { unmount } = render(
+      <RazorpayLoaderProvider>
+        <Probe />
+      </RazorpayLoaderProvider>
+    );
+    const failedScript = getScript();
+    unmount();
+
+    act(() => {
+      failedScript?.dispatchEvent(new Event('load'));
+    });
+    expect(failedScript?.dataset.status).toBe('failed');
+
+    render(
+      <RazorpayLoaderProvider>
+        <Probe />
+      </RazorpayLoaderProvider>
+    );
+
+    expect(getScript()).not.toBe(failedScript);
+    expect(getScript()?.dataset.status).toBe('loading');
   });
 });
