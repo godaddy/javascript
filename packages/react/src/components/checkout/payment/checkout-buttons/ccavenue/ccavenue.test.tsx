@@ -27,6 +27,10 @@ vi.mock('@/components/checkout/payment/utils/use-authorize-checkout', () => ({
 
 const noop = () => undefined;
 
+// `buildCheckoutSession` gives every session the same id, so an entry written
+// under this key is one the button's own save has to contend with.
+const REDIRECT_TIP_KEY = 'godaddy-checkout-redirect-tip:checkout-session-1';
+
 let form: UseFormReturn<CheckoutFormData> | undefined;
 let sessionId = '';
 
@@ -136,7 +140,7 @@ describe('CCAvenueCheckoutButton', () => {
     // so the zero this redirect charges cannot replace it or remove it. Charging
     // nothing and confirming $5.00 is worse than not going to the gateway.
     window.sessionStorage.setItem(
-      'godaddy-checkout-redirect-tip:checkout-session-1',
+      REDIRECT_TIP_KEY,
       JSON.stringify({ tipAmount: 500, savedAt: Date.now() })
     );
     mocks.authorize.mockResolvedValue({
@@ -146,6 +150,50 @@ describe('CCAvenueCheckoutButton', () => {
     for (const method of ['setItem', 'removeItem'] as const) {
       vi.spyOn(Storage.prototype, method).mockImplementation(() => {
         throw new Error('storage disabled');
+      });
+    }
+
+    const { user } = renderCCAvenueButton({ enableTips: true, tipAmount: 0 });
+
+    await user.click(
+      await screen.findByRole('button', { name: /pay with ccavenue/i })
+    );
+
+    await waitFor(() => {
+      expect(mocks.authorize).toHaveBeenCalled();
+    });
+    expect(HTMLFormElement.prototype.submit).not.toHaveBeenCalled();
+  });
+
+  it('abandons a zero-tip redirect when another store keeps an earlier tip', async () => {
+    // An earlier attempt left $5.00 in localStorage, which has since gone
+    // read-only. sessionStorage takes the zero, so reading the tip back in this
+    // tab gives the right answer — but the gateway can return to a tab that has
+    // only localStorage to read, and confirm $5.00 against a zero charge.
+    window.localStorage.setItem(
+      REDIRECT_TIP_KEY,
+      JSON.stringify({ tipAmount: 500, savedAt: Date.now() })
+    );
+    mocks.authorize.mockResolvedValue({
+      transactionRefNum: 'enc-request-1',
+      authorizedTipAmount: 0,
+    });
+    for (const method of ['setItem', 'removeItem'] as const) {
+      const original = Storage.prototype[method] as (
+        this: Storage,
+        ...args: string[]
+      ) => void;
+
+      vi.spyOn(Storage.prototype, method).mockImplementation(function (
+        this: Storage,
+        ...args: string[]
+      ) {
+        // jsdom implements Storage as a proxy, so spying on the store object
+        // itself does nothing; `this` is what tells the two areas apart.
+        if (this === window.localStorage) {
+          throw new Error('storage disabled');
+        }
+        original.apply(this, args);
       });
     }
 

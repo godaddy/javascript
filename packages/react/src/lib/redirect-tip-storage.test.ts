@@ -51,7 +51,7 @@ describe('redirect tip storage', () => {
   });
 
   it('round-trips a tip for the session it was saved for', () => {
-    expect(setRedirectTipAmount('session-1', 500)).toBe(true);
+    expect(setRedirectTipAmount('session-1', 500)).toBe('saved');
 
     expect(getRedirectTipAmount('session-1')).toBe(500);
   });
@@ -81,7 +81,7 @@ describe('redirect tip storage', () => {
   });
 
   it('ignores a request without a session id', () => {
-    expect(setRedirectTipAmount('', 500)).toBe(false);
+    expect(setRedirectTipAmount('', 500)).toBe('lost');
 
     expect(getRedirectTipAmount('')).toBeNull();
   });
@@ -134,10 +134,10 @@ describe('redirect tip storage', () => {
       expect(getRedirectTipAmount('session-1')).toBe(500);
     });
 
-    it('reports success when only one store accepted the write', () => {
+    it('reports the tip saved when only one store accepted the write', () => {
       breakStore(window.localStorage, 'setItem');
 
-      expect(setRedirectTipAmount('session-1', 500)).toBe(true);
+      expect(setRedirectTipAmount('session-1', 500)).toBe('saved');
       expect(getRedirectTipAmount('session-1')).toBe(500);
     });
   });
@@ -149,7 +149,7 @@ describe('redirect tip storage', () => {
       // store the getter reads first — refuses the replacement.
       breakStore(window.sessionStorage, 'setItem');
 
-      expect(setRedirectTipAmount('session-1', 750)).toBe(true);
+      expect(setRedirectTipAmount('session-1', 750)).toBe('saved');
 
       // Not 500: the gateway charges 750, so that is what confirmation records.
       expect(getRedirectTipAmount('session-1')).toBe(750);
@@ -165,30 +165,45 @@ describe('redirect tip storage', () => {
       expect(window.localStorage.getItem(keyFor('session-1'))).toContain('750');
     });
 
-    it('reports failure when the stale entry cannot be dropped', () => {
+    it('reports the tip shadowed when the stale entry cannot be dropped', () => {
       setRedirectTipAmount('session-1', 500);
       // Storage gone read-only: the replacement will not go in and the entry
       // already there will not come out, so the getter stays stuck on 500.
       breakStore(window.sessionStorage, 'setItem', 'removeItem');
 
-      expect(setRedirectTipAmount('session-1', 750)).toBe(false);
+      expect(setRedirectTipAmount('session-1', 750)).toBe('shadowed');
     });
 
-    it('reports success when the store that refused the write holds nothing', () => {
+    it('reports the tip saved when the store that refused the write holds nothing', () => {
       breakStore(window.sessionStorage, 'setItem', 'removeItem');
 
       // Nothing there to shadow the write, so failing to remove it costs
       // nothing.
-      expect(setRedirectTipAmount('session-1', 750)).toBe(true);
+      expect(setRedirectTipAmount('session-1', 750)).toBe('saved');
       expect(getRedirectTipAmount('session-1')).toBe(750);
     });
 
-    it('reports failure when a stale zero would be confirmed for a real tip', () => {
+    it('reports the tip shadowed when a stale zero would be confirmed for it', () => {
       setRedirectTipAmount('session-1', 0);
       breakStore(window.sessionStorage, 'setItem', 'removeItem');
 
-      expect(setRedirectTipAmount('session-1', 750)).toBe(false);
+      expect(setRedirectTipAmount('session-1', 750)).toBe('shadowed');
       expect(getRedirectTipAmount('session-1')).toBe(0);
+    });
+
+    it('reports the tip shadowed even when this tab reads the new one', () => {
+      setRedirectTipAmount('session-1', 500);
+      // This time it is localStorage that goes read-only, so sessionStorage
+      // takes the replacement and answers with it in this tab.
+      breakStore(window.localStorage, 'setItem', 'removeItem');
+
+      expect(setRedirectTipAmount('session-1', 0)).toBe('shadowed');
+      expect(getRedirectTipAmount('session-1')).toBe(0);
+
+      // The tab the gateway returns to may not be this one, and localStorage is
+      // what the other tabs read.
+      window.sessionStorage.clear();
+      expect(getRedirectTipAmount('session-1')).toBe(500);
     });
   });
 
@@ -235,25 +250,25 @@ describe('redirect tip storage', () => {
   });
 
   describe('when storage is unavailable', () => {
-    it('reports failure rather than throwing', () => {
+    it('reports the tip lost rather than throwing', () => {
       for (const method of ['setItem', 'getItem', 'removeItem'] as const) {
         vi.spyOn(Storage.prototype, method).mockImplementation(() => {
           throw new Error('storage disabled');
         });
       }
 
-      expect(setRedirectTipAmount('session-1', 500)).toBe(false);
+      expect(setRedirectTipAmount('session-1', 500)).toBe('lost');
       expect(getRedirectTipAmount('session-1')).toBeNull();
       expect(() => clearRedirectTipAmount('session-1')).not.toThrow();
     });
 
-    it('reports failure when a write is accepted but not readable back', () => {
+    it('reports the tip lost when a write is accepted but not readable back', () => {
       // Safari with storage blocked accepts setItem and then returns null.
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(
         () => undefined
       );
 
-      expect(setRedirectTipAmount('session-1', 500)).toBe(false);
+      expect(setRedirectTipAmount('session-1', 500)).toBe('lost');
     });
   });
 });

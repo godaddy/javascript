@@ -11,6 +11,17 @@ type StoredRedirectTip = {
 };
 
 /**
+ * What a save left for the return leg to find.
+ *
+ * - `saved`: this tip, and nothing else, can be read back.
+ * - `lost`: nothing can be read back, so recovery finds no tip at all.
+ * - `shadowed`: a store still holds an earlier attempt's tip, which recovery can
+ *   return in place of this one — from a tab this save's `sessionStorage` write
+ *   never reached, so a store that took the write does not rule it out.
+ */
+export type RedirectTipSaveResult = 'saved' | 'lost' | 'shadowed';
+
+/**
  * Entries are keyed per checkout session so a later session started in the same
  * tab cannot overwrite a tip an earlier one is still waiting to confirm.
  */
@@ -131,18 +142,17 @@ function discardEntry(store: Storage, key: string): boolean {
  * inheriting the authorized one. So if this value does not survive the
  * redirect, the order is recorded for less than the customer paid.
  *
- * @returns true when the tip was written somewhere it can be read back, and no
- * store was left holding a different one. A false return means
- * `getRedirectTipAmount` cannot be trusted to return this tip after the
- * redirect, so the caller must not send the customer to a gateway that will
- * charge it.
+ * @returns what recovery will find. Anything but `saved` means
+ * `getRedirectTipAmount` cannot be trusted to return this tip after the redirect;
+ * `shadowed` means it can return a different one, which no tip amount makes safe
+ * to redirect with.
  */
 export function setRedirectTipAmount(
   sessionId: string,
   tipAmount: number
-): boolean {
+): RedirectTipSaveResult {
   if (!sessionId) {
-    return false;
+    return 'lost';
   }
 
   const key = keyFor(sessionId);
@@ -170,14 +180,19 @@ export function setRedirectTipAmount(
     }
 
     // Every store holding this tip or nothing is what makes the getter's answer
-    // this tip, whichever store and tab it reads in. One that cannot be brought
-    // to either is reported unsaved rather than confirmed in place of this tip.
+    // this tip, whichever store and tab it reads in.
     if (!discardEntry(store, key)) {
       shadowed = true;
     }
   }
 
-  return saved && !shadowed;
+  // Reported ahead of a store that did take the write: the tab the gateway
+  // returns to may be one that reads the shadow instead.
+  if (shadowed) {
+    return 'shadowed';
+  }
+
+  return saved ? 'saved' : 'lost';
 }
 
 /**
