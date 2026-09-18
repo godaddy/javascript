@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { TIP_SERVER_ERROR_TYPE } from '@/components/checkout/tips/utils/tip-field-errors';
+import { isTipWithinLimit } from '@/components/checkout/tips/utils/tip-limit';
 import {
   convertMajorToMinorUnits,
   currencyConfigs,
@@ -26,6 +27,12 @@ import { type CheckoutSession } from '@/types';
 
 interface TipsFormProps {
   subtotal: number;
+  /**
+   * Order total, tip excluded, in minor units. Presets are a proportion of the
+   * subtotal but the API bounds the tip by this, so the two disagree on a
+   * discounted order.
+   */
+  orderTotal: number;
   options?: CheckoutSession['tips'];
   currencyCode?: string;
   /** The subtotal arrives with the draft order, so it reads as 0 until then. */
@@ -67,6 +74,7 @@ const IS_DEV =
 
 export function TipsForm({
   subtotal,
+  orderTotal,
   options,
   currencyCode,
   isTotalsLoading = false,
@@ -202,22 +210,40 @@ export function TipsForm({
     ? tipPercentages
     : DEFAULT_TIP_PERCENTAGES;
 
+  // A preset the API would reject is not an option, so it is not offered — the
+  // alternative is the customer picking it and being turned away at Pay. The
+  // presets measure the subtotal while the limit measures the order total, so a
+  // discount is enough to put one out of reach. Totals still loading read as no
+  // order at all, which is not a verdict on any preset.
+  const isOffered = (amount: number) =>
+    isTotalsLoading || isTipWithinLimit(amount, orderTotal);
+
+  const offeredAmounts = tipAmounts?.filter(amount => isOffered(amount));
+  const offeredPercentages = percentagePresets.filter(percentage =>
+    isOffered(percentageToAmount(subtotal, percentage))
+  );
+
   // Percentages of a zero subtotal are all worth nothing, so the presets would be
   // $0.00 buttons that do nothing when picked; Custom Amount still tips. Fixed
   // amounts are worth what they say. A subtotal still loading keeps the presets
   // rather than flashing them in once the draft order lands.
-  const showAmountPresets = Boolean(tipAmounts?.length);
+  //
+  // Configured amounts are checked before filtering, so a merchant who set fixed
+  // amounts does not get percentages in their place once theirs are out of reach.
+  const showAmountPresets = Boolean(offeredAmounts?.length);
   const showPercentagePresets =
-    !showAmountPresets && (isTotalsLoading || subtotal > 0);
+    !tipAmounts?.length &&
+    (isTotalsLoading || subtotal > 0) &&
+    offeredPercentages.length > 0;
 
   const activeAmountIndex = resolveActiveIndex(
     selectedIndex,
-    tipAmounts,
+    offeredAmounts,
     tipAmount
   );
   const activePercentageIndex = resolveActiveIndex(
     selectedIndex,
-    percentagePresets,
+    offeredPercentages,
     tipPercentage
   );
 
@@ -245,6 +271,19 @@ export function TipsForm({
     }
   }, [subtotal]);
 
+  // A discount can put an already-picked preset out of reach. Its button is gone
+  // by then, so the amount would be charged with nothing selected for it — and
+  // rejected at Pay. A custom amount is the customer's own number, so it stays.
+  useEffect(() => {
+    const picked = formRef.current.getValues('tipAmount') || 0;
+    if (isTotalsLoading || showCustomTip) return;
+    if (isTipWithinLimit(picked, orderTotal)) return;
+
+    formRef.current.setValue('tipAmount', 0);
+    formRef.current.setValue('tipPercentage', null);
+    setSelectedIndex(null);
+  }, [tipAmount, orderTotal, isTotalsLoading, showCustomTip]);
+
   // That rejection goes stale as soon as the customer picks a different amount,
   // and react-hook-form leaves manually-set errors in place on its own.
   useEffect(() => {
@@ -263,8 +302,8 @@ export function TipsForm({
           role='radiogroup'
           aria-label={t.tips?.title || 'Tip amount'}
         >
-          {tipAmounts?.length
-            ? tipAmounts.map((amount, index) => {
+          {showAmountPresets
+            ? offeredAmounts?.map((amount, index) => {
                 const isSelected =
                   !showCustomTip &&
                   tipAmount === amount &&
@@ -295,7 +334,7 @@ export function TipsForm({
                   </Button>
                 );
               })
-            : percentagePresets.map((percentage, index) => {
+            : offeredPercentages.map((percentage, index) => {
                 const isSelected =
                   tipPercentage === percentage &&
                   index === activePercentageIndex;

@@ -21,16 +21,24 @@ type TipsOptions = ComponentProps<typeof TipsForm>['options'];
 function Harness({
   initialSubtotal,
   nextSubtotal,
+  initialOrderTotal,
+  nextOrderTotal,
   options,
   isTotalsLoading = false,
 }: {
   initialSubtotal: number;
   nextSubtotal: number;
+  /** Defaults to the subtotal, an order with nothing discounted or added. */
+  initialOrderTotal?: number;
+  nextOrderTotal?: number;
   options?: TipsOptions;
   /** The draft order landing is what moves the subtotal, so it ends the load. */
   isTotalsLoading?: boolean;
 }) {
   const [subtotal, setSubtotal] = useState(initialSubtotal);
+  const [orderTotal, setOrderTotal] = useState(
+    initialOrderTotal ?? initialSubtotal
+  );
   const [totalsLoading, setTotalsLoading] = useState(isTotalsLoading);
   const form = useForm({ defaultValues: { tipAmount: 0 } });
 
@@ -47,6 +55,7 @@ function Harness({
       <FormProvider {...form}>
         <TipsForm
           subtotal={subtotal}
+          orderTotal={orderTotal}
           options={options}
           currencyCode='USD'
           isTotalsLoading={totalsLoading}
@@ -56,6 +65,7 @@ function Harness({
           data-testid='move-subtotal'
           onClick={() => {
             setSubtotal(nextSubtotal);
+            setOrderTotal(nextOrderTotal ?? nextSubtotal);
             setTotalsLoading(false);
           }}
         >
@@ -231,5 +241,156 @@ describe('TipsForm presets on a zero subtotal', () => {
     });
 
     expect(screen.getByRole('radio', { name: /\$5\.00/ })).toBeInTheDocument();
+  });
+});
+
+describe('TipsForm presets the API would reject', () => {
+  it('offers only the presets the order total leaves room for', async () => {
+    // A $100 order discounted to $18. The presets are a proportion of the
+    // subtotal, the limit is the total, so the larger two are unpayable.
+    renderTipsForm({
+      initialSubtotal: 10000,
+      nextSubtotal: 10000,
+      initialOrderTotal: 1800,
+    });
+
+    // 18% is worth exactly the limit, which is within it.
+    expect(screen.getByRole('radio', { name: /15%/ })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /18%/ })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('radio', { name: /20%/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it('drops every default preset on a heavily discounted order', async () => {
+    // The reported case: $200 of items for $10, where 15% would submit $30
+    // against a $10 limit. Rather than three buttons that all fail at Pay, the
+    // customer is left the two that cannot.
+    const { user } = renderTipsForm({
+      initialSubtotal: 20000,
+      nextSubtotal: 20000,
+      initialOrderTotal: 1000,
+    });
+
+    expect(screen.queryByRole('radio', { name: /%/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /no tip/i })).toBeInTheDocument();
+
+    // A tip is still possible, it just cannot be one of the presets.
+    await user.click(screen.getByRole('radio', { name: /custom amount/i }));
+    const input = await screen.findByPlaceholderText('0.00');
+    await user.type(input, '5');
+    await user.tab();
+
+    expect(screen.getByTestId('tip-amount')).toHaveTextContent('500');
+  });
+
+  it('does not offer percentages in place of unpayable fixed amounts', async () => {
+    // The merchant chose fixed amounts. None of them fit, but percentages are
+    // not a substitute they asked for.
+    renderTipsForm({
+      initialSubtotal: 20000,
+      nextSubtotal: 20000,
+      initialOrderTotal: 1000,
+      options: {
+        default: { amounts: [2500, 5000, 10000], percentages: null },
+        thresholds: null,
+      },
+    });
+
+    expect(screen.queryByRole('radio', { name: /\$/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /%/ })).not.toBeInTheDocument();
+  });
+
+  it('keeps the fixed amounts that fit', async () => {
+    renderTipsForm({
+      initialSubtotal: 20000,
+      nextSubtotal: 20000,
+      initialOrderTotal: 1000,
+      options: {
+        default: { amounts: [500, 1000, 2500], percentages: null },
+        thresholds: null,
+      },
+    });
+
+    expect(screen.getByRole('radio', { name: /\$5\.00/ })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /\$10\.00/ })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('radio', { name: /\$25\.00/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it('clears a selection a discount put out of reach', async () => {
+    // 20% of $100 is $20, fine against the undiscounted order. The discount code
+    // lands afterwards and the subtotal it was worked out from does not move.
+    const { user } = renderTipsForm({
+      initialSubtotal: 10000,
+      nextSubtotal: 10000,
+      initialOrderTotal: 10000,
+      nextOrderTotal: 1600,
+    });
+
+    await user.click(screen.getByRole('radio', { name: /20%/ }));
+    expect(screen.getByTestId('tip-amount')).toHaveTextContent('2000');
+
+    await user.click(screen.getByTestId('move-subtotal'));
+
+    // The button is gone, and so is the amount it put in form state — otherwise
+    // $20 would be charged with nothing on screen selected for it.
+    expect(
+      screen.queryByRole('radio', { name: /20%/ })
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('tip-amount')).toHaveTextContent('0');
+    expect(screen.getByTestId('tip-percentage')).toHaveTextContent('null');
+
+    // Not turned into a "No tip" the customer never chose, and 15% still fits.
+    expect(screen.getByRole('radio', { name: /no tip/i })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
+    expect(screen.getByRole('radio', { name: /15%/ })).toBeInTheDocument();
+  });
+
+  it('leaves a custom amount over the limit for the API to reject', async () => {
+    // The customer typed it rather than picked it from what was offered, so it
+    // is not the UI's to withdraw.
+    const { user } = renderTipsForm({
+      initialSubtotal: 20000,
+      nextSubtotal: 20000,
+      initialOrderTotal: 1000,
+    });
+
+    await user.click(screen.getByRole('radio', { name: /custom amount/i }));
+    const input = await screen.findByPlaceholderText('0.00');
+    await user.type(input, '50');
+    await user.tab();
+
+    expect(screen.getByTestId('tip-amount')).toHaveTextContent('5000');
+  });
+
+  it('offers every preset while the totals are still loading', async () => {
+    // A total of 0 is the absence of one, not a limit of nothing.
+    renderTipsForm({
+      initialSubtotal: 10000,
+      nextSubtotal: 10000,
+      initialOrderTotal: 0,
+      nextOrderTotal: 1600,
+      isTotalsLoading: true,
+    });
+
+    expect(screen.getByRole('radio', { name: /20%/ })).toBeInTheDocument();
+  });
+
+  it('offers every preset on an order with nothing left to pay', async () => {
+    // A fully discounted order can still be tipped, so a zero total is left for
+    // the API to rule on rather than read as a limit of nothing.
+    renderTipsForm({
+      initialSubtotal: 10000,
+      nextSubtotal: 10000,
+      initialOrderTotal: 0,
+    });
+
+    expect(screen.getByRole('radio', { name: /20%/ })).toHaveTextContent(
+      '$20.00'
+    );
   });
 });

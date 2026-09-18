@@ -1,11 +1,15 @@
+import type { QueryClient } from '@tanstack/react-query';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FlushDraftOrderSyncResult } from '@/components/checkout/order/draft-order-sync-provider';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { CheckoutType, PaymentMethodType, PaymentProvider } from '@/types';
 import {
   clearOperations,
+  getCurrentDraftOrder,
   getOperations,
   renderCheckout,
+  setFeeTotal,
   waitForOperation,
 } from './checkout-test-env';
 import { getLastConfirmInput } from './checkout-test-fixtures';
@@ -163,6 +167,34 @@ function getAuthorizeInputs() {
   );
 }
 
+/**
+ * Turn a $25 order with a $5 tip into a $30 order with no tip, both in one
+ * render.
+ *
+ * The refreshed order is written straight into the query cache so it commits in
+ * the same batch as the click, which is what makes the two moves cancel out: the
+ * combined total holds still at $30, and only its parts say the brick is now
+ * authorized for a tip the customer removed.
+ */
+function removeTipAsOrderTotalRises(
+  queryClient: QueryClient,
+  sessionId: string
+) {
+  setFeeTotal(500);
+  const refreshed = getCurrentDraftOrder();
+
+  act(() => {
+    queryClient.setQueryData(
+      checkoutQueryKeys.draftOrder(sessionId),
+      (data: any) => ({
+        ...data,
+        checkoutSession: { ...data.checkoutSession, draftOrder: refreshed },
+      })
+    );
+    fireEvent.click(screen.getByRole('radio', { name: /no tip/i }));
+  });
+}
+
 async function waitForBrickCalls(count: number) {
   await waitFor(() => {
     expect(brickCalls.length).toBeGreaterThanOrEqual(count);
@@ -233,7 +265,7 @@ describe('Checkout MercadoPago tips', () => {
     ]);
   });
 
-  it('does not rebuild the brick when the tip-inclusive total is unchanged', async () => {
+  it('does not rebuild the brick when a selection leaves the tip unchanged', async () => {
     const { user } = renderMercadoPagoCheckout();
     await waitForBrickCalls(1);
     clearOperations();
@@ -248,6 +280,61 @@ describe('Checkout MercadoPago tips', () => {
     });
     expect(brickCalls).toHaveLength(1);
     expect(getOperations('AuthorizeCheckoutSession')).toHaveLength(0);
+  });
+
+  it('rebuilds the brick when an order refresh and a removed tip cancel out', async () => {
+    const { user, queryClient, session } = renderMercadoPagoCheckout();
+    await waitForBrickCalls(1);
+
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
+    await waitForBrickCalls(2);
+    expect(brickCalls.at(-1)).toMatchObject({ amount: 30 });
+    clearOperations();
+
+    removeTipAsOrderTotalRises(queryClient, session.id);
+
+    // Still $30, but now owed entirely to the order, so the preference has to be
+    // authorized again for a tip of nothing.
+    await waitForBrickCalls(3);
+    expect(brickCalls.at(-1)).toMatchObject({ amount: 30 });
+    expect(getAuthorizeInputs()).toEqual([
+      expect.objectContaining({ tipAmount: 0 }),
+    ]);
+  });
+
+  it('does not confirm a tip the customer removed as the order total rose', async () => {
+    const { user, queryClient, session } = renderMercadoPagoCheckout({
+      apiOverrides: {
+        errors: { confirmCheckout: new Error('confirm failed') },
+      },
+    });
+    await waitForBrickCalls(1);
+
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
+    await waitForBrickCalls(2);
+    clearOperations();
+
+    removeTipAsOrderTotalRises(queryClient, session.id);
+
+    // The brick authorized for the removed $5 is gone, so there is nothing to
+    // pay with until a fresh one arrives.
+    expect(screen.getByRole('button', { name: /pay now/i })).toBeDisabled();
+
+    await waitForBrickCalls(3);
+    await user.click(await screen.findByRole('button', { name: /pay now/i }));
+    await waitForOperation('ConfirmCheckoutSession');
+
+    expect(getLastConfirmInput()).toMatchObject({
+      paymentToken: 'mp-token-3',
+      paymentType: 'mercadopago',
+      tipAmount: 0,
+    });
+    // The $5 preference was never submitted against.
+    expect(
+      getOperations('ConfirmCheckoutSession').map(
+        operation => (operation.input as Record<string, unknown>).tipAmount
+      )
+    ).toEqual([0]);
   });
 
   it('does not let the customer pay while the brick is rebuilt for a new tip', async () => {

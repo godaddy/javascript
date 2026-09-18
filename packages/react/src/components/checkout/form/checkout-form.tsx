@@ -491,6 +491,7 @@ export function CheckoutForm({
                         <TipsForm
                           currencyCode={currencyCode}
                           subtotal={subtotal}
+                          orderTotal={orderTotal}
                           isTotalsLoading={totalsLoading}
                           options={session?.tips}
                         />

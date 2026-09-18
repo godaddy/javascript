@@ -22,9 +22,21 @@ let mpInstance: any = null;
 let bricksBuilderInstance: any = null;
 let brickController: any = null;
 let brickCreationPromise: Promise<any> | null = null;
-let brickAmount: number | null = null;
-// Tip the live brick's preference was authorized for; null when tips are off.
-let brickAuthorizedTipAmount: number | null = null;
+
+/**
+ * What the live brick's preference was authorized for. Kept in parts, not as
+ * their sum: $25 + a $5 tip and $30 + none total the same, and reusing the
+ * brick across that would confirm a tip the customer removed.
+ */
+interface PaymentAttempt {
+  /** Order total, tip excluded, in minor units. */
+  baseMinorUnits: number;
+  currencyCode: string;
+  /** Tip the preference was authorized for; null when tips are off. */
+  tipMinorUnits: number | null;
+}
+
+let brickAttempt: PaymentAttempt | null = null;
 let isSubmitting = false;
 
 // Rebuilds re-authorize the session, so bursts of tip changes are coalesced.
@@ -76,13 +88,23 @@ function unmountBrick() {
     // Ignore unmount errors
   }
   brickController = null;
-  brickAmount = null;
-  brickAuthorizedTipAmount = null;
+  brickAttempt = null;
 }
 
-// False once a rebuild replaced the captured brick or the total moved.
-function isAttemptCurrent(controller: any, currentAmount: number) {
-  return brickController === controller && brickAmount === currentAmount;
+function isSameAttempt(a: PaymentAttempt | null, b: PaymentAttempt | null) {
+  return (
+    a !== null &&
+    b !== null &&
+    a.baseMinorUnits === b.baseMinorUnits &&
+    a.currencyCode === b.currencyCode &&
+    a.tipMinorUnits === b.tipMinorUnits
+  );
+}
+
+// False once a rebuild replaced the captured brick, or any part of what the
+// customer is being asked to pay moved.
+function isAttemptCurrent(controller: any, current: PaymentAttempt) {
+  return brickController === controller && isSameAttempt(brickAttempt, current);
 }
 
 export function MercadoPagoCheckoutButton() {
@@ -107,15 +129,16 @@ export function MercadoPagoCheckoutButton() {
   const elementId = 'mercadopago-brick-container';
 
   const tipAmount = form.watch('tipAmount');
-  const formTipAmount = session?.enableTips ? tipAmount || 0 : 0;
+  // `null` means tips are off, which a zero tip is not.
+  const tipMinorUnits = session?.enableTips ? tipAmount || 0 : null;
   const totalMinorUnits = totals?.total?.value || 0;
   const currencyCode = totals?.total?.currencyCode || 'USD';
 
   const toAmount = useCallback(
-    (tipMinorUnits: number) => {
+    (tip: number) => {
       const rawAmount = parseFloat(
         formatCurrency({
-          amount: totalMinorUnits + tipMinorUnits,
+          amount: totalMinorUnits + tip,
           currencyCode,
           inputInMinorUnits: true,
           returnRaw: true,
@@ -126,11 +149,16 @@ export function MercadoPagoCheckoutButton() {
     [currencyCode, totalMinorUnits]
   );
 
-  // What the customer is being asked to pay; the brick is rebuilt when it moves.
-  const amount = toAmount(formTipAmount);
+  // What the customer is being asked to pay; the brick is rebuilt when any part
+  // of it moves.
+  const currentAttempt: PaymentAttempt = {
+    baseMinorUnits: totalMinorUnits,
+    currencyCode,
+    tipMinorUnits,
+  };
 
-  const amountRef = useRef(amount);
-  amountRef.current = amount;
+  const attemptRef = useRef(currentAttempt);
+  attemptRef.current = currentAttempt;
   const toAmountRef = useRef(toAmount);
   toAmountRef.current = toAmount;
 
@@ -214,8 +242,11 @@ export function MercadoPagoCheckoutButton() {
     if (canInitialize) {
       if (brickCreationPromise) {
         // Brick creation in progress, onReady/onError callbacks will handle state
-      } else if (brickController && brickAmount === amount) {
-        // Brick already exists for this amount, onReady callback will mark as ready
+      } else if (
+        brickController &&
+        isSameAttempt(brickAttempt, currentAttempt)
+      ) {
+        // Brick already exists for this attempt, onReady callback will mark as ready
         setIsBrickReady(true);
       } else {
         const isRebuild = hasBuiltBrickRef.current;
@@ -242,6 +273,10 @@ export function MercadoPagoCheckoutButton() {
 
             const { preferenceId, tipAmount: authorizedTipAmount } =
               await authorizeAttempt();
+            // Read together with the total below, which is built from them, so
+            // the attempt names the order this brick actually belongs to.
+            const { baseMinorUnits, currencyCode: attemptCurrencyCode } =
+              attemptRef.current;
             const total = toAmountRef.current(authorizedTipAmount ?? 0);
 
             const controller = await bricksBuilder.create(
@@ -293,8 +328,11 @@ export function MercadoPagoCheckoutButton() {
             );
 
             brickController = controller;
-            brickAmount = total;
-            brickAuthorizedTipAmount = authorizedTipAmount;
+            brickAttempt = {
+              baseMinorUnits,
+              currencyCode: attemptCurrencyCode,
+              tipMinorUnits: authorizedTipAmount,
+            };
           } catch (_err) {
             setError(t.errors.failedToInitializePayment);
             setIsBrickReady(false);
@@ -307,7 +345,10 @@ export function MercadoPagoCheckoutButton() {
           brickCreationPromise = renderBrick();
           brickCreationPromise.finally(() => {
             brickCreationPromise = null;
-            if (brickController && brickAmount !== amountRef.current) {
+            if (
+              brickController &&
+              !isSameAttempt(brickAttempt, attemptRef.current)
+            ) {
               setBrickRevision(revision => revision + 1);
             }
           });
@@ -341,9 +382,12 @@ export function MercadoPagoCheckoutButton() {
     isMercadoPagoLoaded,
     mercadoPagoConfig?.publicKey,
     elementId,
-    // `brickTipAmount` is deliberately absent: `amount` is derived from it, so
-    // it cannot change without changing this.
-    amount,
+    // The parts of `currentAttempt`, which is a fresh object every render. Each
+    // is listed in its own right, since a move in one can mask a move in
+    // another once they are added together.
+    totalMinorUnits,
+    currencyCode,
+    tipMinorUnits,
     brickRevision,
     t.errors.failedToInitializePayment,
   ]);
@@ -372,10 +416,11 @@ export function MercadoPagoCheckoutButton() {
     // Captured together: the token below belongs to this brick's preference,
     // which was authorized for this tip.
     const controller = brickController;
-    const authorizedTipAmount = brickAuthorizedTipAmount;
+    const authorizedTipAmount = brickAttempt?.tipMinorUnits ?? null;
 
-    if (!controller || !isAttemptCurrent(controller, amountRef.current)) {
-      // The total moved while this click awaited validation and the sync flush.
+    if (!controller || !isAttemptCurrent(controller, attemptRef.current)) {
+      // The order or the tip moved while this click awaited validation and the
+      // sync flush.
       requireFreshPaymentAttempt();
       return;
     }
@@ -384,7 +429,7 @@ export function MercadoPagoCheckoutButton() {
 
     // A tip change during tokenization rebuilds the brick against a fresh
     // authorization, leaving this token bound to a total nobody is paying.
-    if (!isAttemptCurrent(controller, amountRef.current)) {
+    if (!isAttemptCurrent(controller, attemptRef.current)) {
       requireFreshPaymentAttempt();
       return;
     }
