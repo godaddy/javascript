@@ -109,6 +109,58 @@ describe('CCAvenueCheckoutButton', () => {
     expect(HTMLFormElement.prototype.submit).toHaveBeenCalled();
   });
 
+  it('redirects for a zero tip storage would not take', async () => {
+    // Nothing to recover is fine for a zero tip: the API also treats a missing
+    // tip as zero, so private browsing does not have to fail the checkout.
+    mocks.authorize.mockResolvedValue({
+      transactionRefNum: 'enc-request-1',
+      authorizedTipAmount: 0,
+    });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage disabled');
+    });
+
+    const { user } = renderCCAvenueButton({ enableTips: true, tipAmount: 0 });
+
+    await user.click(
+      await screen.findByRole('button', { name: /pay with ccavenue/i })
+    );
+
+    await waitFor(() => {
+      expect(HTMLFormElement.prototype.submit).toHaveBeenCalled();
+    });
+  });
+
+  it('abandons the redirect when an earlier tip would be confirmed instead', async () => {
+    // An earlier attempt left $5.00 behind and storage has since gone read-only,
+    // so the zero this redirect charges cannot replace it or remove it. Charging
+    // nothing and confirming $5.00 is worse than not going to the gateway.
+    window.sessionStorage.setItem(
+      'godaddy-checkout-redirect-tip:checkout-session-1',
+      JSON.stringify({ tipAmount: 500, savedAt: Date.now() })
+    );
+    mocks.authorize.mockResolvedValue({
+      transactionRefNum: 'enc-request-1',
+      authorizedTipAmount: 0,
+    });
+    for (const method of ['setItem', 'removeItem'] as const) {
+      vi.spyOn(Storage.prototype, method).mockImplementation(() => {
+        throw new Error('storage disabled');
+      });
+    }
+
+    const { user } = renderCCAvenueButton({ enableTips: true, tipAmount: 0 });
+
+    await user.click(
+      await screen.findByRole('button', { name: /pay with ccavenue/i })
+    );
+
+    await waitFor(() => {
+      expect(mocks.authorize).toHaveBeenCalled();
+    });
+    expect(HTMLFormElement.prototype.submit).not.toHaveBeenCalled();
+  });
+
   it('does not persist a tip when tips are disabled', async () => {
     mocks.authorize.mockResolvedValue({
       transactionRefNum: 'enc-request-1',

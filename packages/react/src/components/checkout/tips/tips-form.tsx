@@ -29,8 +29,8 @@ interface TipsFormProps {
   subtotal: number;
   /**
    * Order total, tip excluded, in minor units. Presets are a proportion of the
-   * subtotal but the API bounds the tip by this, so the two disagree on a
-   * discounted order.
+   * subtotal but the API bounds the tip by this — or by a flat floor, whichever
+   * is larger — so the two disagree on a discounted order.
    */
   orderTotal: number;
   options?: CheckoutSession['tips'];
@@ -213,8 +213,9 @@ export function TipsForm({
   // A preset the API would reject is not an option, so it is not offered — the
   // alternative is the customer picking it and being turned away at Pay. The
   // presets measure the subtotal while the limit measures the order total, so a
-  // discount is enough to put one out of reach. Totals still loading read as no
-  // order at all, which is not a verdict on any preset.
+  // discount is enough to put one out of reach. Totals still loading read as a
+  // zero total, which the limit takes at face value, so no preset is judged
+  // until they land.
   const isOffered = (amount: number) =>
     isTotalsLoading || isTipWithinLimit(amount, orderTotal);
 

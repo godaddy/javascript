@@ -14,6 +14,7 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import {
   clearRedirectTipAmount,
+  getRedirectTipAmount,
   setRedirectTipAmount,
 } from '@/lib/redirect-tip-storage';
 import { cn } from '@/lib/utils';
@@ -90,14 +91,21 @@ export function CCAvenueCheckoutButton() {
       // nothing.
       if (session?.enableTips && session?.id) {
         const tipAmount = resData?.authorizedTipAmount ?? 0;
-        const persisted = setRedirectTipAmount(session.id, tipAmount);
 
-        // A zero tip is persisted best-effort only — losing it changes nothing,
-        // since the API also treats a missing tip as zero.
-        if (!persisted && tipAmount > 0) {
-          clearRedirectTipAmount(session.id);
-          setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
-          return;
+        if (!setRedirectTipAmount(session.id, tipAmount)) {
+          const recovered = getRedirectTipAmount(session.id);
+
+          // A zero tip is persisted best-effort only — losing it changes nothing,
+          // since the API also treats a missing tip as zero. Losing it to an
+          // earlier attempt's amount is not nothing: that gets confirmed instead.
+          if (
+            tipAmount > 0 ||
+            (recovered !== null && recovered !== tipAmount)
+          ) {
+            clearRedirectTipAmount(session.id);
+            setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
+            return;
+          }
         }
       }
 

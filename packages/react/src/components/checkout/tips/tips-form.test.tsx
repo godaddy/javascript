@@ -246,12 +246,12 @@ describe('TipsForm presets on a zero subtotal', () => {
 
 describe('TipsForm presets the API would reject', () => {
   it('offers only the presets the order total leaves room for', async () => {
-    // A $100 order discounted to $18. The presets are a proportion of the
-    // subtotal, the limit is the total, so the larger two are unpayable.
+    // A $200 order discounted to $36. The presets are a proportion of the
+    // subtotal, the limit is the total, so the largest is unpayable.
     renderTipsForm({
-      initialSubtotal: 10000,
-      nextSubtotal: 10000,
-      initialOrderTotal: 1800,
+      initialSubtotal: 20000,
+      nextSubtotal: 20000,
+      initialOrderTotal: 3600,
     });
 
     // 18% is worth exactly the limit, which is within it.
@@ -263,9 +263,10 @@ describe('TipsForm presets the API would reject', () => {
   });
 
   it('drops every default preset on a heavily discounted order', async () => {
-    // The reported case: $200 of items for $10, where 15% would submit $30
-    // against a $10 limit. Rather than three buttons that all fail at Pay, the
-    // customer is left the two that cannot.
+    // The reported case: $200 of items for $10, where the smallest preset would
+    // submit $30 against a limit of $20 — the floor, since it is more than the
+    // total. Rather than three buttons that all fail at Pay, the customer is
+    // left the two that cannot.
     const { user } = renderTipsForm({
       initialSubtotal: 20000,
       nextSubtotal: 20000,
@@ -320,22 +321,22 @@ describe('TipsForm presets the API would reject', () => {
   });
 
   it('clears a selection a discount put out of reach', async () => {
-    // 20% of $100 is $20, fine against the undiscounted order. The discount code
+    // 20% of $200 is $40, fine against the undiscounted order. The discount code
     // lands afterwards and the subtotal it was worked out from does not move.
     const { user } = renderTipsForm({
-      initialSubtotal: 10000,
-      nextSubtotal: 10000,
-      initialOrderTotal: 10000,
-      nextOrderTotal: 1600,
+      initialSubtotal: 20000,
+      nextSubtotal: 20000,
+      initialOrderTotal: 20000,
+      nextOrderTotal: 3200,
     });
 
     await user.click(screen.getByRole('radio', { name: /20%/ }));
-    expect(screen.getByTestId('tip-amount')).toHaveTextContent('2000');
+    expect(screen.getByTestId('tip-amount')).toHaveTextContent('4000');
 
     await user.click(screen.getByTestId('move-subtotal'));
 
     // The button is gone, and so is the amount it put in form state — otherwise
-    // $20 would be charged with nothing on screen selected for it.
+    // $40 would be charged with nothing on screen selected for it.
     expect(
       screen.queryByRole('radio', { name: /20%/ })
     ).not.toBeInTheDocument();
@@ -368,29 +369,74 @@ describe('TipsForm presets the API would reject', () => {
   });
 
   it('offers every preset while the totals are still loading', async () => {
-    // A total of 0 is the absence of one, not a limit of nothing.
+    // The total reads as 0 until the draft order lands, which the limit would
+    // otherwise take at face value and judge the presets against.
     renderTipsForm({
-      initialSubtotal: 10000,
-      nextSubtotal: 10000,
+      initialSubtotal: 20000,
+      nextSubtotal: 20000,
       initialOrderTotal: 0,
-      nextOrderTotal: 1600,
+      nextOrderTotal: 3200,
       isTotalsLoading: true,
     });
 
     expect(screen.getByRole('radio', { name: /20%/ })).toBeInTheDocument();
   });
 
-  it('offers every preset on an order with nothing left to pay', async () => {
-    // A fully discounted order can still be tipped, so a zero total is left for
-    // the API to rule on rather than read as a limit of nothing.
+  it('offers a preset within the floor on an order with nothing left to pay', async () => {
+    // A fully discounted order can still be tipped: the limit falls back to the
+    // floor, which $15 is inside.
     renderTipsForm({
       initialSubtotal: 10000,
       nextSubtotal: 10000,
       initialOrderTotal: 0,
     });
 
-    expect(screen.getByRole('radio', { name: /20%/ })).toHaveTextContent(
-      '$20.00'
+    expect(screen.getByRole('radio', { name: /15%/ })).toHaveTextContent(
+      '$15.00'
     );
+  });
+
+  it('drops a preset above the floor on an order with nothing left to pay', async () => {
+    // Nothing owed does not mean any tip goes through — the API caps a zero-total
+    // order at the floor, so a $25 preset is as unpayable here as it is anywhere.
+    renderTipsForm({
+      initialSubtotal: 10000,
+      nextSubtotal: 10000,
+      initialOrderTotal: 0,
+      options: {
+        default: { amounts: [1000, 2500], percentages: null },
+        thresholds: null,
+      },
+    });
+
+    expect(screen.getByRole('radio', { name: /\$10\.00/ })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('radio', { name: /\$25\.00/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it('clears a selection the floor puts out of reach on a zero-total order', async () => {
+    // Picked while the totals were still loading, so nothing had been judged yet.
+    const { user } = renderTipsForm({
+      initialSubtotal: 10000,
+      nextSubtotal: 10000,
+      initialOrderTotal: 0,
+      nextOrderTotal: 0,
+      isTotalsLoading: true,
+      options: {
+        default: { amounts: [2500], percentages: null },
+        thresholds: null,
+      },
+    });
+
+    await user.click(screen.getByRole('radio', { name: /\$25\.00/ }));
+    expect(screen.getByTestId('tip-amount')).toHaveTextContent('2500');
+
+    await user.click(screen.getByTestId('move-subtotal'));
+
+    expect(
+      screen.queryByRole('radio', { name: /\$25\.00/ })
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('tip-amount')).toHaveTextContent('0');
   });
 });

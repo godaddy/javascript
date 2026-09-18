@@ -13,6 +13,35 @@ function clearAll() {
   window.localStorage.clear();
 }
 
+/**
+ * Make one store reject the given writes while the other keeps working.
+ *
+ * Spying on the store object does nothing — jsdom implements Storage as a proxy,
+ * so an own property added to it is never consulted. The prototype method is what
+ * runs, and `this` is what tells the two stores apart.
+ */
+function breakStore(
+  store: Storage,
+  ...methods: ('setItem' | 'removeItem')[]
+): void {
+  for (const method of methods) {
+    const original = Storage.prototype[method] as (
+      this: Storage,
+      ...args: string[]
+    ) => void;
+
+    vi.spyOn(Storage.prototype, method).mockImplementation(function (
+      this: Storage,
+      ...args: string[]
+    ) {
+      if (this === store) {
+        throw new Error('storage full');
+      }
+      original.apply(this, args);
+    });
+  }
+}
+
 describe('redirect tip storage', () => {
   beforeEach(clearAll);
 
@@ -106,12 +135,60 @@ describe('redirect tip storage', () => {
     });
 
     it('reports success when only one store accepted the write', () => {
-      vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
-        throw new Error('storage full');
-      });
+      breakStore(window.localStorage, 'setItem');
 
       expect(setRedirectTipAmount('session-1', 500)).toBe(true);
       expect(getRedirectTipAmount('session-1')).toBe(500);
+    });
+  });
+
+  describe('when only one store takes a replacement', () => {
+    it('reads back the new tip, not the one the other store kept', () => {
+      setRedirectTipAmount('session-1', 500);
+      // The customer went back and changed the tip, and sessionStorage — the
+      // store the getter reads first — refuses the replacement.
+      breakStore(window.sessionStorage, 'setItem');
+
+      expect(setRedirectTipAmount('session-1', 750)).toBe(true);
+
+      // Not 500: the gateway charges 750, so that is what confirmation records.
+      expect(getRedirectTipAmount('session-1')).toBe(750);
+    });
+
+    it('drops the entry the store that refused the write was holding', () => {
+      setRedirectTipAmount('session-1', 500);
+      breakStore(window.sessionStorage, 'setItem');
+
+      setRedirectTipAmount('session-1', 750);
+
+      expect(window.sessionStorage.getItem(keyFor('session-1'))).toBeNull();
+      expect(window.localStorage.getItem(keyFor('session-1'))).toContain('750');
+    });
+
+    it('reports failure when the stale entry cannot be dropped', () => {
+      setRedirectTipAmount('session-1', 500);
+      // Storage gone read-only: the replacement will not go in and the entry
+      // already there will not come out, so the getter stays stuck on 500.
+      breakStore(window.sessionStorage, 'setItem', 'removeItem');
+
+      expect(setRedirectTipAmount('session-1', 750)).toBe(false);
+    });
+
+    it('reports success when the store that refused the write holds nothing', () => {
+      breakStore(window.sessionStorage, 'setItem', 'removeItem');
+
+      // Nothing there to shadow the write, so failing to remove it costs
+      // nothing.
+      expect(setRedirectTipAmount('session-1', 750)).toBe(true);
+      expect(getRedirectTipAmount('session-1')).toBe(750);
+    });
+
+    it('reports failure when a stale zero would be confirmed for a real tip', () => {
+      setRedirectTipAmount('session-1', 0);
+      breakStore(window.sessionStorage, 'setItem', 'removeItem');
+
+      expect(setRedirectTipAmount('session-1', 750)).toBe(false);
+      expect(getRedirectTipAmount('session-1')).toBe(0);
     });
   });
 

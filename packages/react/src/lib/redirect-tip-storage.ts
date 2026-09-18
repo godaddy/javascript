@@ -89,6 +89,38 @@ function pruneExpired(store: Storage): void {
 }
 
 /**
+ * Whether `key` holds exactly `payload` in this store. A store that cannot be
+ * read counts as not holding it, which is how the getter treats it too.
+ */
+function holdsPayload(store: Storage, key: string, payload: string): boolean {
+  try {
+    return store.getItem(key) === payload;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Drop this session's entry from a store that would not take the new one, and
+ * report whether it is gone. What it leaves behind otherwise is an earlier
+ * attempt's tip, which the getter would answer with in place of the new one.
+ */
+function discardEntry(store: Storage, key: string): boolean {
+  try {
+    store.removeItem(key);
+  } catch {
+    // Storage can become unwritable between the read and the remove.
+  }
+
+  try {
+    return store.getItem(key) === null;
+  } catch {
+    // An entry in a store the getter cannot read is one it never hands back.
+    return true;
+  }
+}
+
+/**
  * Save the tip a gateway redirect was authorized for.
  *
  * Redirect providers (CCAvenue) authorize on one page load and confirm on
@@ -99,9 +131,11 @@ function pruneExpired(store: Storage): void {
  * inheriting the authorized one. So if this value does not survive the
  * redirect, the order is recorded for less than the customer paid.
  *
- * @returns true when the tip was written somewhere it can be read back. A false
- * return means the tip cannot survive the redirect, so the caller must not send
- * the customer to a gateway that will charge it.
+ * @returns true when the tip was written somewhere it can be read back, and no
+ * store was left holding a different one. A false return means
+ * `getRedirectTipAmount` cannot be trusted to return this tip after the
+ * redirect, so the caller must not send the customer to a gateway that will
+ * charge it.
  */
 export function setRedirectTipAmount(
   sessionId: string,
@@ -117,27 +151,41 @@ export function setRedirectTipAmount(
     savedAt: Date.now(),
   } satisfies StoredRedirectTip);
   let saved = false;
+  let shadowed = false;
 
   for (const store of getStores()) {
     try {
       pruneExpired(store);
       store.setItem(key, payload);
-      // Read back rather than trusting setItem: with storage blocked, Safari
-      // accepts the write and then hands back null, and a quota failure can
-      // evict the entry immediately after it is accepted.
-      if (store.getItem(key) === payload) {
-        saved = true;
-      }
     } catch {
       // Storage can be unavailable (private browsing, disabled storage) or full.
     }
+
+    // Read back rather than trusting setItem: with storage blocked, Safari
+    // accepts the write and then hands back null, and a quota failure can evict
+    // the entry immediately after it is accepted.
+    if (holdsPayload(store, key, payload)) {
+      saved = true;
+      continue;
+    }
+
+    // Every store holding this tip or nothing is what makes the getter's answer
+    // this tip, whichever store and tab it reads in. One that cannot be brought
+    // to either is reported unsaved rather than confirmed in place of this tip.
+    if (!discardEntry(store, key)) {
+      shadowed = true;
+    }
   }
 
-  return saved;
+  return saved && !shadowed;
 }
 
 /**
  * Read the tip saved for `sessionId`.
+ *
+ * The first store holding a usable entry answers. That is the last tip saved only
+ * because `setRedirectTipAmount` leaves no other behind: this document was loaded
+ * by the gateway and cannot tell two entries apart itself.
  *
  * Returns null when nothing was saved for this session, the entry is too old to
  * belong to the redirect in progress, or every store is unreadable.
