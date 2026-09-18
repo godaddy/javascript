@@ -355,6 +355,12 @@ export const qaPs = {
     DEPENDENCY_ERROR:
       'موږ اوس ستاسو امر پروسس نشو کولی. مهرباني وکړئ یو شېبه انتظار وکړئ او بیا هڅه وکړئ',
     AUTHORIZATION_FAILED: '[Fâîlëd ţö âüţhörîžë þâÿmëñţ]',
+    TIP_EXCEEDS_LIMIT: '[Ţîþ îš ţöö lârgë för ţhîš örðër]',
+    INVALID_TIP_AMOUNT: '[Ëñţër â vâlîd ţîþ âmöüñţ]',
+    TIPS_NOT_ENABLED: '[Ţîþš ârë ñöţ âççëþţëd för ţhîš örðër]',
+    TIP_CHARGE_FAILED: '[Ţrÿ â dîffërëñţ ţîþ âmöüñţ, ör çhööšë Ñö Ţîþ]',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      '[Ţîþš ârë ñöţ šüþþörţëd för öfflîñë þâÿmëñţš]',
   },
   storefront: {
     product: '[Product]',
