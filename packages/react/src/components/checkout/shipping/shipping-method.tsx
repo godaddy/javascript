@@ -25,6 +25,7 @@ import { useApplyShippingMethod } from '@/components/checkout/shipping/utils/use
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
 import { checkoutMutationKeys } from '@/components/checkout/utils/query-keys';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -44,6 +45,8 @@ export function ShippingMethodForm() {
     data: shippingMethodsData,
     isError: isShippingMethodsError,
     isLoading: isShippingMethodsLoading,
+    isFetching: isShippingMethodsFetching,
+    refetch: refetchShippingMethods,
   } = useDraftOrderShippingMethods();
   const { data: shippingAddress, isLoading: isShippingAddressLoading } =
     useDraftOrderShippingAddress();
@@ -91,19 +94,22 @@ export function ShippingMethodForm() {
   useEffect(() => {
     if (isApplyingDiscount) {
       wasApplyingDiscountRef.current = true;
-      lastShippingMethodsKeyRef.current =
-        getShippingMethodsKey(shippingMethods);
-      lastProcessedStateRef.current = {
-        ...lastProcessedStateRef.current,
-        serviceCode: shippingLines?.requestedService ?? null,
-        cost: shippingLines?.amount?.value ?? null,
-        hadShippingMethods: shippingMethods.length > 0,
-      };
+      if (!isShippingMethodsFetching) {
+        lastShippingMethodsKeyRef.current =
+          getShippingMethodsKey(shippingMethods);
+        lastProcessedStateRef.current = {
+          ...lastProcessedStateRef.current,
+          serviceCode: shippingLines?.requestedService ?? null,
+          cost: shippingLines?.amount?.value ?? null,
+          hadShippingMethods: shippingMethods.length > 0,
+        };
+      }
       return;
     }
 
     if (
       isShippingMethodsLoading ||
+      isShippingMethodsFetching ||
       isDraftOrderLoading ||
       isConfirmingCheckout ||
       applyShippingMethod.isPending
@@ -258,6 +264,8 @@ export function ShippingMethodForm() {
     shippingLines,
     hasShippingAddress,
     isShippingMethodsLoading,
+    isShippingMethodsFetching,
+    isShippingMethodsError,
     form,
     applyShippingMethod,
     updateTaxes.mutate,
@@ -280,6 +288,26 @@ export function ShippingMethodForm() {
         <p className='text-sm text-center w-full'>
           {t?.shipping?.noShippingMethodAddress}
         </p>
+      </div>
+    );
+  }
+
+  if (hasShippingAddress && isShippingMethodsError) {
+    return (
+      <div className='bg-muted rounded-md p-6 flex flex-col items-center gap-2'>
+        <p role='alert' className='text-sm text-center w-full'>
+          {t.shipping.failedToLoadMethods}
+        </p>
+        <Button
+          type='button'
+          variant='link'
+          disabled={isPaymentDisabled || isConfirmingCheckout}
+          onClick={() => {
+            void refetchShippingMethods();
+          }}
+        >
+          {t.shipping.retryMethods}
+        </Button>
       </div>
     );
   }

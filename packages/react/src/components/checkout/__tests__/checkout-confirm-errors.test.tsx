@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { describe, expect, it } from 'vitest';
@@ -9,6 +9,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import {
   buildCheckoutSession,
@@ -508,7 +509,7 @@ describe('Checkout confirm errors', () => {
     const draftOrder = buildDraftOrder({ shippingLines: [] });
     const session = buildCheckoutSession({ draftOrder });
 
-    const { user } = renderCheckout({
+    const { user, queryClient } = renderCheckout({
       session,
       draftOrder,
       checkoutProps: {
@@ -521,6 +522,20 @@ describe('Checkout confirm errors', () => {
     });
     await waitForCheckoutReady();
     clearOperations();
+    setApiError('getDraftOrderShippingMethods', 'rates failed');
+    await act(async () => {
+      await queryClient.refetchQueries({
+        queryKey: checkoutQueryKeys.draftOrderShippingMethods(session.id),
+      });
+    });
+    expect(
+      queryClient
+        .getQueryCache()
+        .findAll({
+          queryKey: checkoutQueryKeys.draftOrderShippingMethods(session.id),
+        })
+        .some(query => query.state.status === 'error')
+    ).toBe(true);
 
     await user.click(
       await screen.findByRole('button', { name: /express confirm seam/i })

@@ -70,6 +70,9 @@ export const deDe = {
     noShippingMethodAddress:
       'Geben Sie Ihre Adresse ein, um verfügbare Versandmethoden zu sehen.',
     noShippingMethods: 'Keine Versandmethoden gefunden.',
+    failedToLoadMethods:
+      'Versandarten konnten nicht geladen werden. Bitte versuche es erneut.',
+    retryMethods: 'Erneut versuchen',
     phone: 'Telefonnummer',
     country: 'Land',
     selectCountry: 'Land auswählen',

@@ -66,6 +66,8 @@ export const zhCn = {
     method: '配送方式',
     noShippingMethodAddress: '请输入您的地址以查看可用的配送方式。',
     noShippingMethods: '未找到配送方式。',
+    failedToLoadMethods: '无法加载配送方式。请重试。',
+    retryMethods: '重试',
     phone: '手机号码',
     country: '国家',
     selectCountry: '选择国家',

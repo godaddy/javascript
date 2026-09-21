@@ -70,6 +70,9 @@ export const viVn = {
     noShippingMethodAddress:
       'Nhập địa chỉ của bạn để xem các phương thức vận chuyển có sẵn.',
     noShippingMethods: 'Không tìm thấy phương thức vận chuyển nào.',
+    failedToLoadMethods:
+      'Không thể tải phương thức vận chuyển. Vui lòng thử lại.',
+    retryMethods: 'Thử lại',
     phone: 'Số điện thoại',
     country: 'Quốc gia',
     selectCountry: 'Chọn quốc gia',

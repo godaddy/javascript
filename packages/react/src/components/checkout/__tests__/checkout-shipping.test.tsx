@@ -1,3 +1,4 @@
+import { enUs } from '@godaddy/localizations';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
@@ -8,6 +9,7 @@ import {
   buildDraftOrder,
   buildLineItem,
   buildShippingAddress,
+  clearApiError,
   clearOperations,
   flushPromises,
   getOperations,
@@ -460,7 +462,7 @@ describe('Checkout shipping behavior', () => {
     ).toBeInTheDocument();
   });
 
-  it('records a shipping-method fetch failure when rates are refetched', async () => {
+  it('clears shipping after an address rate-fetch failure and reapplies the default on retry', async () => {
     const { user } = renderCheckout();
     await waitForCheckoutReady();
     clearOperations();
@@ -476,6 +478,29 @@ describe('Checkout shipping behavior', () => {
     ).toMatchObject({
       destination: expect.objectContaining({ postalCode: '94016' }),
     });
+    const retry = await screen.findByRole('button', {
+      name: enUs.shipping.retryMethods,
+    });
+    await waitFor(() => expect(retry).toBeEnabled());
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod').at(-1)?.input
+    ).toEqual([]);
+    clearOperations();
+    clearApiError('getDraftOrderShippingMethods');
+    await user.click(retry);
+    await waitFor(() =>
+      expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
+        1
+      )
+    );
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod')[0].input
+    ).toEqual([expect.objectContaining({ requestedService: 'free-shipping' })]);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: enUs.shipping.retryMethods })
+      ).not.toBeInTheDocument()
+    );
   });
 
   it.each([

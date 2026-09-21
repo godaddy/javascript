@@ -1,10 +1,14 @@
 import { enUs } from '@godaddy/localizations';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
+import { getDraftOrderShippingMethods } from '@/lib/godaddy/godaddy';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
+import { CheckoutType, PaymentProvider } from '@/types';
 import {
   buildBillingAddress,
   buildShippingRates,
+  clearApiError,
   clearOperations,
   flushPromises,
   getOperations,
@@ -232,9 +236,62 @@ describe('Checkout discounts', () => {
     expect(taxIndex).toBeGreaterThan(lastDiscountIndex);
   });
 
-  it.each(['empty', 'error'] as const)(
-    'clears applied shipping once when the discount rate refresh result is %s',
-    async result => {
+  it('clears applied shipping once when the discount rate refresh returns an empty array', async () => {
+    const paidShipping = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 1000, currencyCode: 'USD' },
+      },
+    ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods: paidShipping },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 1000, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+    setShippingMethods([]);
+
+    await applyCoupon(user, 'onedollar');
+    await waitFor(() => {
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
+    });
+    await flushPromises();
+    await flushPromises();
+
+    expect(getOperations('DraftOrderShippingRates')).toHaveLength(1);
+    expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(1);
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod')[0].input
+    ).toEqual([]);
+    expect(getOperations('ApplyCheckoutSessionDiscount')).toHaveLength(2);
+    expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
+    expect(screen.queryByText('Standard')).not.toBeInTheDocument();
+    expect(document.body).toHaveTextContent(/no shipping methods found/i);
+    expect(
+      screen.queryByRole('button', { name: enUs.shipping.retryMethods })
+    ).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['error', 'same'],
+    ['null', 'same'],
+    ['error', 'changed'],
+    ['error', 'default'],
+    ['error', 'empty'],
+  ] as const)(
+    'clears shipping after a %s rate failure and recovers with %s rates',
+    async (failure, recovery) => {
       const paidShipping = buildShippingRates([
         {
           serviceCode: 'standard',
@@ -243,8 +300,29 @@ describe('Checkout discounts', () => {
           cost: { value: 1000, currencyCode: 'USD' },
         },
       ]);
-      const { user } = renderCheckout({
+      if (recovery === 'default') {
+        paidShipping.push(
+          ...buildShippingRates([
+            {
+              serviceCode: 'express',
+              carrierCode: 'carrier',
+              displayName: 'Express',
+              cost: { value: 2000, currencyCode: 'USD' },
+            },
+          ])
+        );
+      }
+      const { user, queryClient, session } = renderCheckout({
         apiOverrides: { shippingMethods: paidShipping },
+        sessionOverrides: {
+          paymentMethods: {
+            card: null as never,
+            offline: {
+              processor: PaymentProvider.OFFLINE,
+              checkoutTypes: [CheckoutType.STANDARD],
+            },
+          },
+        },
         draftOrderOverrides: {
           shippingLines: [
             {
@@ -257,31 +335,125 @@ describe('Checkout discounts', () => {
         },
       });
       await waitForCheckoutReady();
+      if (recovery === 'default') {
+        await user.click(screen.getByRole('radio', { name: /express/i }));
+        await waitFor(() => {
+          expect(queryClient.isMutating()).toBe(0);
+          expect(screen.getByRole('radio', { name: /express/i })).toBeChecked();
+        });
+      }
       clearOperations();
-      if (result === 'error') {
+      if (failure === 'error') {
         setApiError('getDraftOrderShippingMethods', 'rates failed');
       } else {
-        setShippingMethods([]);
+        vi.mocked(getDraftOrderShippingMethods).mockResolvedValueOnce({
+          checkoutSession: {
+            id: session.id,
+            storeId: session.storeId,
+            draftOrder: { id: 'order-1', calculatedShippingRates: null },
+          },
+        });
       }
-
       await applyCoupon(user, 'onedollar');
-      await waitFor(() => {
-        expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
+      const retry = await screen.findByRole('button', {
+        name: enUs.shipping.retryMethods,
       });
-      await flushPromises();
-      await flushPromises();
-
-      expect(getOperations('DraftOrderShippingRates')).toHaveLength(1);
+      await waitFor(() => expect(retry).toBeEnabled());
+      expect(
+        screen.getByText(enUs.shipping.failedToLoadMethods)
+      ).toBeInTheDocument();
       expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
         1
       );
       expect(
         getOperations('ApplyCheckoutSessionShippingMethod')[0].input
       ).toEqual([]);
-      expect(getOperations('ApplyCheckoutSessionDiscount')).toHaveLength(2);
       expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
-      expect(screen.queryByText('Standard')).not.toBeInTheDocument();
-      expect(document.body).toHaveTextContent(/no shipping methods found/i);
+      expect(
+        queryClient.getQueryData(checkoutQueryKeys.draftOrder(session.id))
+      ).toMatchObject({
+        checkoutSession: {
+          draftOrder: {
+            shippingLines: [],
+          },
+        },
+      });
+      const pay = screen.getByRole('button', { name: /complete your order/i });
+      expect(pay).toBeEnabled();
+      await user.click(pay);
+      await screen.findByText(enUs.apiErrors.MISSING_SHIPPING_INFO);
+      await waitFor(() => expect(retry).toBeEnabled());
+      expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+      // Repeated failures keep the retry action usable without clearing twice.
+      setApiError('getDraftOrderShippingMethods', 'rates still failed');
+      await user.click(retry);
+      await waitFor(() => expect(retry).toBeEnabled());
+      expect(pay).toBeEnabled();
+      expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
+        1
+      );
+      expect(
+        getOperations('ApplyCheckoutSessionShippingMethod')[0].input
+      ).toEqual([]);
+      clearApiError('getDraftOrderShippingMethods');
+      if (recovery === 'changed') {
+        setShippingMethods(
+          buildShippingRates([
+            {
+              serviceCode: 'standard',
+              carrierCode: 'carrier',
+              displayName: 'Standard',
+              cost: { value: 0, currencyCode: 'USD' },
+            },
+          ])
+        );
+      } else if (recovery === 'empty') {
+        setShippingMethods([]);
+      }
+      await user.click(retry);
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('button', { name: enUs.shipping.retryMethods })
+        ).not.toBeInTheDocument()
+      );
+      if (recovery === 'empty') {
+        expect(
+          getOperations('ApplyCheckoutSessionShippingMethod')
+        ).toHaveLength(1);
+        expect(
+          screen.getByText(enUs.shipping.noShippingMethods)
+        ).toBeInTheDocument();
+      } else {
+        await waitFor(() =>
+          expect(
+            getOperations('ApplyCheckoutSessionShippingMethod')
+          ).toHaveLength(2)
+        );
+        expect(
+          getOperations('ApplyCheckoutSessionShippingMethod')[1].input
+        ).toEqual([
+          expect.objectContaining({
+            requestedService: 'standard',
+            subTotal: {
+              value: recovery === 'changed' ? 0 : 1000,
+              currencyCode: 'USD',
+            },
+          }),
+        ]);
+        await waitFor(() => expect(pay).toBeEnabled());
+        expect(screen.getByText('Standard')).toBeInTheDocument();
+        if (recovery === 'default') {
+          expect(
+            screen.getByRole('radio', { name: /standard/i })
+          ).toBeChecked();
+          expect(
+            screen.getByRole('radio', { name: /express/i })
+          ).not.toBeChecked();
+        }
+        expect(
+          screen.queryByText(enUs.apiErrors.MISSING_SHIPPING_INFO)
+        ).not.toBeInTheDocument();
+      }
     }
   );
 
