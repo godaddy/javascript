@@ -1,8 +1,10 @@
+import type { StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js';
 import { act, renderHook } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkoutContext } from '@/components/checkout/checkout';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
+import { eventIds } from '@/tracking/events';
 import type { DraftOrder } from '@/types';
 import { StripeProvider } from './stripe-provider';
 import { CheckoutConfirmationBlockedError } from './use-confirm-checkout';
@@ -19,7 +21,13 @@ const mocks = vi.hoisted(() => ({
   confirmExpress: vi.fn(),
   setCheckoutErrors: vi.fn(),
   setIsConfirmingCheckout: vi.fn(),
+  track: vi.fn(),
   cardElement: {},
+}));
+
+vi.mock('@/tracking/track', () => ({
+  track: mocks.track,
+  TrackingEventType: { EVENT: 'event' },
 }));
 
 vi.mock('@stripe/react-stripe-js', () => ({
@@ -156,7 +164,7 @@ describe('useStripeCheckout payment request resolution', () => {
   });
 
   it.each(['card', 'express'] as const)(
-    'rejects a duplicate %s submission without affecting the active payment',
+    'ignores a duplicate %s submission without affecting the active payment',
     async mode => {
       let finish!: () => void;
       const active = new Promise<void>(resolve => {
@@ -167,28 +175,46 @@ describe('useStripeCheckout payment request resolution', () => {
       const { result } = renderHook(() => useStripeCheckout({ mode }), {
         wrapper: Wrapper,
       });
+      const expressData =
+        mode === 'express'
+          ? {
+              event: {
+                expressPaymentType: 'apple_pay',
+              } as StripeExpressCheckoutElementConfirmEvent,
+            }
+          : undefined;
       let first!: ReturnType<typeof result.current.handleSubmit>;
       await act(async () => {
-        first = result.current.handleSubmit();
+        first = result.current.handleSubmit(expressData);
       });
       expect(confirm).toHaveBeenCalledTimes(1);
 
       await act(async () => {
-        await expect(result.current.handleSubmit()).rejects.toBeInstanceOf(
-          CheckoutConfirmationBlockedError
-        );
+        await expect(
+          result.current.handleSubmit(expressData)
+        ).resolves.toBeUndefined();
       });
       expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
       expect(confirm).toHaveBeenCalledTimes(1);
       expect(result.current.isProcessingPayment).toBe(true);
       expect(mocks.setCheckoutErrors).not.toHaveBeenCalled();
       expect(mocks.setIsConfirmingCheckout).not.toHaveBeenCalled();
+      expect(mocks.track).not.toHaveBeenCalled();
 
       await act(async () => {
         finish();
         await first;
       });
       expect(result.current.isProcessingPayment).toBe(false);
+      if (mode === 'express') {
+        expect(mocks.track).toHaveBeenCalledTimes(1);
+        expect(mocks.track).toHaveBeenCalledWith(
+          expect.objectContaining({
+            eventId: eventIds.expressApplePayCompleted,
+            properties: { paymentType: 'apple_pay', provider: 'stripe' },
+          })
+        );
+      }
     }
   );
 

@@ -586,16 +586,6 @@ export function StripeExpressCheckoutForm() {
             : null,
           selectedShippingMethod: selectedShippingMethod || null,
         });
-
-        // Track successful payment
-        track({
-          eventId: eventIds.expressApplePayCompleted,
-          type: TrackingEventType.EVENT,
-          properties: {
-            paymentType: event.expressPaymentType,
-            provider: 'stripe',
-          },
-        });
       } catch (error) {
         if (isCheckoutConfirmationBlockedError(error)) return;
         // Track error

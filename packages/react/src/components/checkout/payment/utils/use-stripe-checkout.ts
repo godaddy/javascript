@@ -7,7 +7,6 @@ import { useCallback, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
 import {
-  CheckoutConfirmationBlockedError,
   isCheckoutConfirmationBlockedError,
   PaymentProvider,
   useConfirmCheckout,
@@ -95,11 +94,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
       expressData?: StripeExpressCheckoutData,
       resolvedOrder?: DraftOrder | null
     ) => {
-      if (isSubmittingRef.current) {
-        throw new CheckoutConfirmationBlockedError(
-          'Stripe payment submission is already in progress'
-        );
-      }
+      if (isSubmittingRef.current) return;
       isSubmittingRef.current = true;
       setIsProcessingPayment(true);
       try {
@@ -378,6 +373,16 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 // Include shipping lines if available
                 ...(shippingLines ? { shippingLines } : {}),
               });
+              if (event) {
+                track({
+                  eventId: eventIds.expressApplePayCompleted,
+                  type: TrackingEventType.EVENT,
+                  properties: {
+                    paymentType: event.expressPaymentType,
+                    provider: 'stripe',
+                  },
+                });
+              }
             } catch (err: unknown) {
               if (isCheckoutConfirmationBlockedError(err)) throw err;
               setCheckoutErrors(
