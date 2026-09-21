@@ -18,6 +18,7 @@ export const eventIds = {
 
   // Express checkout events
   expressCheckoutImpression: 'express_checkout.impression',
+  expressCheckoutCompleted: 'express_checkout_completed.event',
   expressApplePayImpression: 'express_apple_pay.impression',
   expressGooglePayImpression: 'express_google_pay.impression',
   expressApplePayClick: 'express_apple_pay.click',

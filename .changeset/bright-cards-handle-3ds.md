@@ -9,4 +9,4 @@ Guard Stripe submissions during validation, synchronization, and authentication 
 
 Silently ignore duplicate Stripe submissions and record express payment success only after confirmation completes.
 
-Report Stripe express completion as `express_stripe_${paymentType}_completed.event` using Stripe's payment type instead of labeling every wallet as Apple Pay.
+Report Stripe express completion with a generic event and Stripe's payment type instead of labeling every wallet as Apple Pay.

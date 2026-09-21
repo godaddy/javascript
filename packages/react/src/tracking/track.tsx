@@ -1,4 +1,3 @@
-import type { ExpressPaymentType } from '@stripe/stripe-js';
 import type React from 'react';
 import { createContext, useCallback, useContext, useReducer } from 'react';
 import { ulid } from 'ulid';
@@ -6,13 +5,9 @@ import type { EventProperties } from '@/tracking/event-properties';
 import type { eventIds } from '@/tracking/events';
 import type { $Values } from '@/types';
 
-type CheckoutEventId =
-  | $Values<typeof eventIds>
-  | `express_stripe_${ExpressPaymentType}_completed.event`;
-
 export type TrackingEventId =
-  | CheckoutEventId
-  | `godaddy.checkout.${CheckoutEventId}`;
+  | $Values<typeof eventIds>
+  | `godaddy.checkout.${$Values<typeof eventIds>}`;
 
 export enum TrackingEventType {
   IMPRESSION = 'impression',

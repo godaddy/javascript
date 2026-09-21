@@ -375,7 +375,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
               });
               if (event) {
                 track({
-                  eventId: `express_stripe_${event.expressPaymentType}_completed.event`,
+                  eventId: eventIds.expressCheckoutCompleted,
                   type: TrackingEventType.EVENT,
                   properties: {
                     paymentType: event.expressPaymentType,
