@@ -19,6 +19,7 @@ import {
   track,
 } from '@/tracking/track';
 import type { ConfirmCheckoutMutationInput } from '@/types';
+import { useConfirmCheckoutRecovery } from './use-confirm-checkout-recovery';
 
 export function useConfirmExpressCheckout() {
   const {
@@ -31,6 +32,7 @@ export function useConfirmExpressCheckout() {
   const { apiHost } = useGoDaddyContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const isPendingRef = useRef(false);
+  const confirmWithRecovery = useConfirmCheckoutRecovery();
 
   return useMutation({
     mutationFn: async (
@@ -79,17 +81,20 @@ export function useConfirmExpressCheckout() {
           },
         });
 
-        const data = jwt
-          ? await confirmCheckout(
-              confirmCheckoutInput,
-              { accessToken: jwt, sessionId: session?.id || '' },
-              apiHost
-            )
-          : await confirmCheckout(confirmCheckoutInput, session, apiHost);
+        const data = await confirmWithRecovery(async () => {
+          const result = jwt
+            ? await confirmCheckout(
+                confirmCheckoutInput,
+                { accessToken: jwt, sessionId: session?.id || '' },
+                apiHost
+              )
+            : await confirmCheckout(confirmCheckoutInput, session, apiHost);
 
-        if (!data) {
-          throw new Error('Express checkout confirmation failed');
-        }
+          if (!result) {
+            throw new Error('Express checkout confirmation failed');
+          }
+          return result;
+        });
 
         return data;
       } finally {

@@ -22,6 +22,7 @@ import {
 } from '@/tracking/track';
 import type { ConfirmCheckoutMutationInput } from '@/types';
 import { getStripeNextAction } from './stripe-next-action';
+import { useConfirmCheckoutRecovery } from './use-confirm-checkout-recovery';
 
 export class CheckoutConfirmationBlockedError extends Error {
   constructor(message: string) {
@@ -98,6 +99,7 @@ export function useConfirmCheckout() {
   const { data: order } = useDraftOrder();
   const flushCheckoutSync = useFlushCheckoutSync();
   const isPendingRef = useRef(false);
+  const confirmWithRecovery = useConfirmCheckoutRecovery();
 
   return useMutation({
     mutationFn: async (
@@ -194,27 +196,30 @@ export function useConfirmCheckout() {
           },
         });
 
-        const data = jwt
-          ? await confirmCheckout(
-              {
-                ...confirmCheckoutInput,
-                ...(isPickup ? pickUpData : {}),
-              },
-              { accessToken: jwt, sessionId: session?.id || '' },
-              apiHost
-            )
-          : await confirmCheckout(
-              {
-                ...confirmCheckoutInput,
-                ...(isPickup ? pickUpData : {}),
-              },
-              session,
-              apiHost
-            );
+        const data = await confirmWithRecovery(async () => {
+          const result = jwt
+            ? await confirmCheckout(
+                {
+                  ...confirmCheckoutInput,
+                  ...(isPickup ? pickUpData : {}),
+                },
+                { accessToken: jwt, sessionId: session?.id || '' },
+                apiHost
+              )
+            : await confirmCheckout(
+                {
+                  ...confirmCheckoutInput,
+                  ...(isPickup ? pickUpData : {}),
+                },
+                session,
+                apiHost
+              );
 
-        if (!data) {
-          throw new Error('Checkout confirmation failed');
-        }
+          if (!result) {
+            throw new Error('Checkout confirmation failed');
+          }
+          return result;
+        });
 
         return data;
       } finally {

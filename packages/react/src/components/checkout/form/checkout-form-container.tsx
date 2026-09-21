@@ -1,7 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   type CheckoutProps,
-  redirectToSuccessUrl,
   useCheckoutContext,
 } from '@/components/checkout/checkout';
 import { CheckoutSkeleton } from '@/components/checkout/checkout-skeleton';
@@ -15,6 +14,7 @@ import {
   useDraftOrderProductsMap,
   useRefreshProductsWhenLineItemsChange,
 } from '@/components/checkout/order/use-draft-order-products';
+import { usePaidOrderRedirect } from '@/components/checkout/order/use-paid-order-redirect';
 import {
   mapOrderToFormValues,
   mapSkusToItemsDisplay,
@@ -40,13 +40,7 @@ export function CheckoutFormContainer({
   const skusMap = useDraftOrderProductsMap();
 
   const { data: order } = draftOrderQuery;
-  const isPaid =
-    order?.statuses?.paymentStatus?.trim().toUpperCase() === 'PAID';
-  const showPaidOrder = isPaid && !isConfirmingCheckout;
-
-  useEffect(() => {
-    if (showPaidOrder) redirectToSuccessUrl(session?.successUrl);
-  }, [showPaidOrder, session?.successUrl]);
+  const showPaidOrder = usePaidOrderRedirect(order);
 
   const { data: lineItems } = draftOrderLineItemsQuery;
   useRefreshProductsWhenLineItemsChange(lineItems);
