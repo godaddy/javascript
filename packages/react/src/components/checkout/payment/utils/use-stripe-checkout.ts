@@ -3,10 +3,12 @@ import type {
   PaymentMethodCreateParams,
   StripeExpressCheckoutElementConfirmEvent,
 } from '@stripe/stripe-js';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
 import {
+  CheckoutConfirmationBlockedError,
+  isCheckoutConfirmationBlockedError,
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
@@ -85,6 +87,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
     useBuildPaymentRequest();
   const flushCheckoutSync = useFlushCheckoutSync();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const isSubmittingRef = useRef(false);
   const pendingIntent = usePendingStripeIntent();
 
   const handleSubmit = useCallback(
@@ -92,6 +95,12 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
       expressData?: StripeExpressCheckoutData,
       resolvedOrder?: DraftOrder | null
     ) => {
+      if (isSubmittingRef.current) {
+        throw new CheckoutConfirmationBlockedError(
+          'Stripe payment submission is already in progress'
+        );
+      }
+      isSubmittingRef.current = true;
       setIsProcessingPayment(true);
       try {
         if (!stripe || !elements) {
@@ -144,6 +153,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
               await confirmCheckout.mutateAsync(confirmInput);
               pendingIntent.current = null;
             } catch (err: unknown) {
+              if (isCheckoutConfirmationBlockedError(err)) return;
               const nextAction = getStripeNextAction(err);
               if (!nextAction) {
                 const errorCodes =
@@ -217,6 +227,8 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 });
                 pendingIntent.current = null;
               } catch (finalizationError: unknown) {
+                if (isCheckoutConfirmationBlockedError(finalizationError))
+                  return;
                 const isRepeatedActionRequired = Boolean(
                   getPaymentActionRequiredResult(finalizationError)
                 );
@@ -367,6 +379,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 ...(shippingLines ? { shippingLines } : {}),
               });
             } catch (err: unknown) {
+              if (isCheckoutConfirmationBlockedError(err)) throw err;
               setCheckoutErrors(
                 err instanceof GraphQLErrorWithCodes && err.codes.length
                   ? err.codes
@@ -382,6 +395,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
 
         return { success: false, error: `Mode not supported: ${mode}` };
       } finally {
+        isSubmittingRef.current = false;
         setIsProcessingPayment(false);
       }
     },

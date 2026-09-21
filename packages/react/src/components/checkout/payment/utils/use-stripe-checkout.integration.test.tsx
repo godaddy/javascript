@@ -5,6 +5,7 @@ import { checkoutContext } from '@/components/checkout/checkout';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import type { DraftOrder } from '@/types';
 import { StripeProvider } from './stripe-provider';
+import { CheckoutConfirmationBlockedError } from './use-confirm-checkout';
 import { useStripeCheckout } from './use-stripe-checkout';
 
 const mocks = vi.hoisted(() => ({
@@ -153,6 +154,67 @@ describe('useStripeCheckout payment request resolution', () => {
       mocks.createPaymentMethod.mock.invocationCallOrder[0]
     );
   });
+
+  it.each(['card', 'express'] as const)(
+    'rejects a duplicate %s submission without affecting the active payment',
+    async mode => {
+      let finish!: () => void;
+      const active = new Promise<void>(resolve => {
+        finish = resolve;
+      });
+      const confirm = mode === 'card' ? mocks.confirm : mocks.confirmExpress;
+      confirm.mockReturnValueOnce(active);
+      const { result } = renderHook(() => useStripeCheckout({ mode }), {
+        wrapper: Wrapper,
+      });
+      let first!: ReturnType<typeof result.current.handleSubmit>;
+      await act(async () => {
+        first = result.current.handleSubmit();
+      });
+      expect(confirm).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        await expect(result.current.handleSubmit()).rejects.toBeInstanceOf(
+          CheckoutConfirmationBlockedError
+        );
+      });
+      expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
+      expect(confirm).toHaveBeenCalledTimes(1);
+      expect(result.current.isProcessingPayment).toBe(true);
+      expect(mocks.setCheckoutErrors).not.toHaveBeenCalled();
+      expect(mocks.setIsConfirmingCheckout).not.toHaveBeenCalled();
+
+      await act(async () => {
+        finish();
+        await first;
+      });
+      expect(result.current.isProcessingPayment).toBe(false);
+    }
+  );
+
+  it.each(['card', 'express'] as const)(
+    'does not unlock checkout when a %s confirmation belongs to another submission',
+    async mode => {
+      const blocked = new CheckoutConfirmationBlockedError(
+        'Checkout confirmation is already in progress'
+      );
+      const confirm = mode === 'card' ? mocks.confirm : mocks.confirmExpress;
+      confirm.mockRejectedValueOnce(blocked);
+      const { result } = renderHook(() => useStripeCheckout({ mode }), {
+        wrapper: Wrapper,
+      });
+      await act(async () => {
+        if (mode === 'express') {
+          await expect(result.current.handleSubmit()).rejects.toBe(blocked);
+        } else {
+          await result.current.handleSubmit();
+        }
+      });
+      expect(mocks.setCheckoutErrors).not.toHaveBeenCalled();
+      expect(mocks.setIsConfirmingCheckout).not.toHaveBeenCalled();
+      expect(result.current.isProcessingPayment).toBe(false);
+    }
+  );
 
   it('handles a valid Stripe next step and retries confirmation with the PaymentIntent', async () => {
     mocks.confirm
