@@ -58,14 +58,25 @@ export function useDraftOrderShippingMethods() {
         countryCode: shippingAddress?.countryCode,
       },
     ],
-    queryFn: () =>
-      jwt
-        ? getDraftOrderShippingMethods(
+    queryFn: async () => {
+      const result = jwt
+        ? await getDraftOrderShippingMethods(
             { accessToken: jwt },
             destination,
             apiHost
           )
-        : getDraftOrderShippingMethods(session, destination, apiHost),
+        : await getDraftOrderShippingMethods(session, destination, apiHost);
+      // A null response can represent an upstream provider failure. Only an
+      // actual array (including []) is a validated shipping-rate result.
+      if (
+        !Array.isArray(
+          result?.checkoutSession?.draftOrder?.calculatedShippingRates?.rates
+        )
+      ) {
+        throw new Error('Shipping rates are unavailable');
+      }
+      return result;
+    },
     enabled: !!session?.id && hasShippingAddress,
     select: data =>
       data?.checkoutSession?.draftOrder?.calculatedShippingRates?.rates,

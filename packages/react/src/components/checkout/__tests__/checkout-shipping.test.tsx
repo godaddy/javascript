@@ -1,3 +1,4 @@
+import { enUs } from '@godaddy/localizations';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
@@ -8,6 +9,7 @@ import {
   buildDraftOrder,
   buildLineItem,
   buildShippingAddress,
+  clearApiError,
   clearOperations,
   flushPromises,
   getOperations,
@@ -20,6 +22,38 @@ import {
 } from './checkout-test-env';
 
 describe('Checkout shipping behavior', () => {
+  it.each([true, false])(
+    'preserves an existing rate and refreshes initial taxes only when enabled (%s)',
+    async enableTaxCollection => {
+      const { queryClient } = renderCheckout({
+        sessionOverrides: { enableTaxCollection },
+        draftOrderOverrides: {
+          shippingLines: [
+            {
+              requestedService: 'free-shipping',
+              requestedProvider: 'unknown',
+              name: 'Free',
+              amount: { value: 0, currencyCode: 'USD' },
+              discounts: [],
+            },
+          ],
+        },
+      });
+      await waitForCheckoutReady();
+      await waitFor(() => {
+        expect(queryClient.isMutating()).toBe(0);
+        expect(queryClient.isFetching()).toBe(0);
+      });
+
+      expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
+        0
+      );
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(
+        enableTaxCollection ? 1 : 0
+      );
+    }
+  );
+
   it('shows the no-origin-address message when shipping origin is missing', async () => {
     renderCheckout({
       sessionOverrides: { shipping: { originAddress: null } },
@@ -97,7 +131,7 @@ describe('Checkout shipping behavior', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('filters free shipping below the minimum order total and shows it once the subtotal qualifies', async () => {
+  it('shows free shipping returned by the API', async () => {
     const shippingMethods = [
       {
         serviceCode: 'free-shipping',
@@ -120,35 +154,12 @@ describe('Checkout shipping behavior', () => {
         cost: { value: 500, currencyCode: 'USD' },
       },
     ];
-    const experimental_rules = {
-      freeShipping: { enabled: true, minimumOrderTotal: 5000 },
-    };
 
-    const { unmount } = renderCheckout({
-      sessionOverrides: { experimental_rules },
-      apiOverrides: { shippingMethods },
-    });
-    await waitForCheckoutReady();
-
-    expect(
-      screen.queryByRole('radio', { name: /free/i })
-    ).not.toBeInTheDocument();
-    expect(screen.getAllByText('Paid Rate').length).toBeGreaterThan(0);
-
-    unmount();
-    renderCheckout({
-      sessionOverrides: { experimental_rules },
-      draftOrderOverrides: {
-        totals: {
-          subTotal: { value: 5000, currencyCode: 'USD' },
-          total: { value: 5000, currencyCode: 'USD' },
-        },
-      },
-      apiOverrides: { shippingMethods },
-    });
+    renderCheckout({ apiOverrides: { shippingMethods } });
     await waitForCheckoutReady();
 
     expect(screen.getByRole('radio', { name: /free/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Paid Rate').length).toBeGreaterThan(0);
   });
 
   it('renders FREE for a single zero-cost shipping method', async () => {
@@ -451,7 +462,7 @@ describe('Checkout shipping behavior', () => {
     ).toBeInTheDocument();
   });
 
-  it('records a shipping-method fetch failure when rates are refetched', async () => {
+  it('clears shipping after an address rate-fetch failure and reapplies the default on retry', async () => {
     const { user } = renderCheckout();
     await waitForCheckoutReady();
     clearOperations();
@@ -467,6 +478,29 @@ describe('Checkout shipping behavior', () => {
     ).toMatchObject({
       destination: expect.objectContaining({ postalCode: '94016' }),
     });
+    const retry = await screen.findByRole('button', {
+      name: enUs.shipping.retryMethods,
+    });
+    await waitFor(() => expect(retry).toBeEnabled());
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod').at(-1)?.input
+    ).toEqual([]);
+    clearOperations();
+    clearApiError('getDraftOrderShippingMethods');
+    await user.click(retry);
+    await waitFor(() =>
+      expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
+        1
+      )
+    );
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod')[0].input
+    ).toEqual([expect.objectContaining({ requestedService: 'free-shipping' })]);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: enUs.shipping.retryMethods })
+      ).not.toBeInTheDocument()
+    );
   });
 
   it.each([

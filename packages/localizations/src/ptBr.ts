@@ -70,6 +70,9 @@ export const ptBr = {
     noShippingMethodAddress:
       'Digite seu endereço para ver os métodos de envio disponíveis.',
     noShippingMethods: 'Nenhum método de envio encontrado.',
+    failedToLoadMethods:
+      'Não foi possível carregar as formas de envio. Tente novamente.',
+    retryMethods: 'Tentar novamente',
     phone: 'Número de Telefone',
     country: 'País',
     selectCountry: 'Selecionar país',

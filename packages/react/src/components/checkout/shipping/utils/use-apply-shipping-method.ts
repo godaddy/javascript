@@ -1,88 +1,26 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { ResultOf } from 'gql.tada';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useDiscountApply } from '@/components/checkout/discount';
+import { useApplyDiscountCore } from '@/components/checkout/discount/utils/use-apply-discount-core';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
-import {
-  checkoutMutationKeys,
-  checkoutQueryKeys,
-} from '@/components/checkout/utils/query-keys';
-import { useGoDaddyContext } from '@/godaddy-provider';
-import type { DraftOrderQuery } from '@/lib/godaddy/checkout-queries.ts';
-import { applyShippingMethod } from '@/lib/godaddy/godaddy';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
-import type { ApplyCheckoutSessionShippingMethodInput } from '@/types';
+import { useApplyShippingMethodCore } from './use-apply-shipping-method-core';
 
 export function useApplyShippingMethod() {
-  const { session, jwt, setCheckoutErrors } = useCheckoutContext();
-  const { apiHost } = useGoDaddyContext();
+  const { session, setCheckoutErrors } = useCheckoutContext();
   const { data: order } = useDraftOrder();
   const updateTaxes = useUpdateTaxes();
-  const applyDiscount = useDiscountApply();
+  const applyDiscount = useApplyDiscountCore();
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationKey: checkoutMutationKeys.applyShippingMethod(session?.id),
-    mutationFn: async (
-      shippingMethods: ApplyCheckoutSessionShippingMethodInput['input']
-    ) => {
-      if (!session) return;
-      const data = jwt
-        ? await applyShippingMethod(
-            shippingMethods,
-            { accessToken: jwt },
-            apiHost
-          )
-        : await applyShippingMethod(shippingMethods, session, apiHost);
-      return data;
-    },
-    onSuccess: async data => {
+  return useApplyShippingMethodCore({
+    onSuccess: async () => {
       setCheckoutErrors(undefined);
       if (!session) return;
 
-      // Extract shippingTotal from mutation response
-      const shippingTotal =
-        data?.applyCheckoutSessionShippingMethod?.draftOrder?.totals
-          ?.shippingTotal;
-
-      // Update the cached draft-order query (includes totals)
-      if (shippingTotal) {
-        queryClient.setQueryData(
-          checkoutQueryKeys.draftOrder(session.id),
-          (old: ResultOf<typeof DraftOrderQuery> | undefined) => {
-            if (!old) return old;
-
-            return {
-              ...old,
-              checkoutSession: {
-                ...old.checkoutSession,
-                draftOrder: {
-                  ...old?.checkoutSession?.draftOrder,
-                  shippingLines: [
-                    {
-                      ...old?.checkoutSession?.draftOrder?.shippingLines?.[0],
-                      amount: {
-                        ...shippingTotal,
-                      },
-                    },
-                  ],
-                  totals: {
-                    ...old?.checkoutSession?.draftOrder?.totals,
-                    shippingTotal: {
-                      ...shippingTotal,
-                    },
-                  },
-                },
-              },
-            };
-          }
-        );
-      }
-
       const allCodes = new Set<string>();
 
-      // Add order-level discount codes
       if (order?.discounts) {
         for (const discount of order.discounts) {
           if (discount.code) {
@@ -91,9 +29,6 @@ export function useApplyShippingMethod() {
         }
       }
 
-      // Line item-level discount codes do not need to be re-applied as they would not be affected by shipping method changes
-
-      // Add shipping line-level discount codes
       if (order?.shippingLines) {
         for (const shippingLine of order.shippingLines) {
           if (shippingLine.discounts) {
@@ -108,12 +43,11 @@ export function useApplyShippingMethod() {
 
       const discountCodes = Array.from(allCodes);
 
-      if (session?.enablePromotionCodes && discountCodes?.length) {
-        /* should re-apply discounts if they were previously applied */
-        await applyDiscount.mutateAsync({
-          discountCodes,
-        });
-      } else if (session?.enableTaxCollection) {
+      if (session.enablePromotionCodes && discountCodes.length) {
+        await applyDiscount.mutateAsync({ discountCodes });
+      }
+
+      if (session.enableTaxCollection) {
         await updateTaxes.mutateAsync(undefined);
       } else {
         await queryClient.invalidateQueries({

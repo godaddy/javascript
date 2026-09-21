@@ -70,10 +70,6 @@ export const CreateCheckoutSessionMutation = graphql(`
         }
       }
       experimental_rules {
-        freeShipping {
-          enabled
-            minimumOrderTotal
-        }
         gopay_override {
           enabled
           goPayAppId

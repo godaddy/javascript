@@ -473,7 +473,7 @@ describe('Checkout free / offline orders', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('switches to FreePaymentForm when selecting a free shipping rate makes the total zero', async () => {
+  it('switches to FreePaymentForm when the cheapest shipping rate makes the total zero', async () => {
     const draftOrder = buildDraftOrder({
       totals: {
         subTotal: { value: 0, currencyCode: 'USD' },
@@ -510,23 +510,14 @@ describe('Checkout free / offline orders', () => {
       enableShipping: true,
       enableLocalPickup: false,
       enableTaxCollection: false,
-      experimental_rules: {
-        freeShipping: { enabled: true, minimumOrderTotal: 0 },
-      },
     });
 
-    const { user } = renderCheckout({
+    renderCheckout({
       session,
       draftOrder,
       apiOverrides: { shippingMethods: buildShippingRates() },
     });
     await waitForCheckoutReady();
-    expect(
-      await screen.findByRole('button', { name: /pay now/i })
-    ).toBeInTheDocument();
-
-    clearOperations();
-    await user.click(screen.getByRole('radio', { name: /free/i }));
     await waitForOperation('ApplyCheckoutSessionShippingMethod');
 
     expect(
