@@ -375,7 +375,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
               });
               if (event) {
                 track({
-                  eventId: eventIds.expressApplePayCompleted,
+                  eventId: eventIds.expressCheckoutCompleted,
                   type: TrackingEventType.EVENT,
                   properties: {
                     paymentType: event.expressPaymentType,

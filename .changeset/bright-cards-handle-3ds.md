@@ -8,3 +8,5 @@ Support Stripe 3DS next actions returned by checkout confirmation while preservi
 Guard Stripe submissions during validation, synchronization, and authentication so a duplicate attempt cannot unlock an active payment.
 
 Silently ignore duplicate Stripe submissions and record express payment success only after confirmation completes.
+
+Report Stripe express completion with a generic event and Stripe's payment type instead of labeling every wallet as Apple Pay.

@@ -163,9 +163,14 @@ describe('useStripeCheckout payment request resolution', () => {
     );
   });
 
-  it.each(['card', 'express'] as const)(
-    'ignores a duplicate %s submission without affecting the active payment',
-    async mode => {
+  it.each([
+    ['card', undefined],
+    ['express', 'apple_pay'],
+    ['express', 'google_pay'],
+    ['express', 'link'],
+  ] as const)(
+    'ignores a duplicate %s %s submission without affecting the active payment',
+    async (mode, expressPaymentType) => {
       let finish!: () => void;
       const active = new Promise<void>(resolve => {
         finish = resolve;
@@ -179,7 +184,7 @@ describe('useStripeCheckout payment request resolution', () => {
         mode === 'express'
           ? {
               event: {
-                expressPaymentType: 'apple_pay',
+                expressPaymentType,
               } as StripeExpressCheckoutElementConfirmEvent,
             }
           : undefined;
@@ -210,8 +215,8 @@ describe('useStripeCheckout payment request resolution', () => {
         expect(mocks.track).toHaveBeenCalledTimes(1);
         expect(mocks.track).toHaveBeenCalledWith(
           expect.objectContaining({
-            eventId: eventIds.expressApplePayCompleted,
-            properties: { paymentType: 'apple_pay', provider: 'stripe' },
+            eventId: eventIds.expressCheckoutCompleted,
+            properties: { paymentType: expressPaymentType, provider: 'stripe' },
           })
         );
       }
