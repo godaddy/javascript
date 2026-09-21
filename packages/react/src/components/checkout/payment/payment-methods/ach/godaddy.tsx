@@ -177,13 +177,7 @@ export function GoDaddyACHForm() {
   const optionsRef = useRef(options);
 
   useLayoutEffect(() => {
-    if (
-      !isPoyntLoaded ||
-      !applicationId?.trim() ||
-      collect.current ||
-      !businessId
-    )
-      return;
+    if (!isPoyntLoaded || collect.current || !businessId) return;
 
     collect.current = new window.TokenizeJs({
       businessId,

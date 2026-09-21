@@ -1,7 +1,10 @@
 import { act, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import { checkoutMutationKeys } from '@/components/checkout/utils/query-keys';
+import { getDraftOrder, updateDraftOrderTaxes } from '@/lib/godaddy/godaddy';
 import {
+  buildDraftOrder,
   buildLineItem,
   renderCheckout,
   setFeeTotal,
@@ -66,7 +69,205 @@ describe('Checkout totals and order summary UI', () => {
     expect(document.body).toHaveTextContent(/estimated taxes/i);
     expect(document.body).toHaveTextContent(/fees/i);
     expect(document.body).toHaveTextContent(/total due/i);
+    expect(document.body).not.toHaveTextContent(/vat included/i);
   });
+
+  it('renders the total of included tax constituents separately from additive taxes', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        totals: totals({
+          taxTotal: { value: 456, currencyCode: 'USD' },
+        }),
+        taxes: [
+          {
+            included: true,
+            amount: { value: 100 },
+          },
+          {
+            included: false,
+            amount: { value: 456 },
+          },
+          {
+            included: true,
+            amount: { value: 23 },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(document.body).toHaveTextContent(/vat included/i);
+    for (const label of screen.getAllByText(/vat included/i)) {
+      expect(label.closest('.flex.justify-between')).toHaveTextContent('$1.23');
+    }
+  });
+
+  it('hides included taxes when tax display is disabled', async () => {
+    renderCheckout({
+      sessionOverrides: { enableTaxCollection: false },
+      draftOrderOverrides: {
+        totals: totals({ taxTotal: { value: 0, currencyCode: 'USD' } }),
+        taxes: [{ included: true, amount: { value: 123 } }],
+      },
+    });
+    await waitForCheckoutReady();
+
+    expect(document.body).not.toHaveTextContent(
+      /estimated taxes|vat included/i
+    );
+  });
+
+  it.each([
+    { included: false, amount: 123 },
+    { included: true, amount: 0 },
+  ])(
+    'hides the included-tax row for $included / $amount',
+    async ({ included, amount }) => {
+      renderCheckout({
+        draftOrderOverrides: {
+          taxes: [{ included, amount: { value: amount } }],
+        },
+      });
+      await waitForCheckoutReady();
+
+      expect(document.body).not.toHaveTextContent(/vat included/i);
+    }
+  );
+
+  it.each(['applyDiscount', 'applyShippingMethod'] as const)(
+    'shows both tax rows as loading during %s',
+    async mutation => {
+      const { queryClient, session } = renderCheckout({
+        draftOrderOverrides: {
+          taxes: [{ included: true, amount: { value: 123 } }],
+        },
+      });
+      await waitForCheckoutReady();
+      await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+
+      let finishMutation!: () => void;
+      const execution = queryClient
+        .getMutationCache()
+        .build(queryClient, {
+          mutationKey: checkoutMutationKeys[mutation](session.id),
+          mutationFn: () =>
+            new Promise<void>(resolve => {
+              finishMutation = resolve;
+            }),
+        })
+        .execute(undefined);
+
+      await waitFor(() => {
+        for (const label of screen.getAllByText(
+          /vat included|estimated taxes/i
+        )) {
+          const row = label.closest('.flex.justify-between');
+          expect(row?.querySelector('.animate-pulse')).toBeInTheDocument();
+          expect(row).not.toHaveTextContent('$1.23');
+        }
+      });
+
+      await act(async () => {
+        finishMutation();
+        await execution;
+      });
+      await waitFor(() => {
+        for (const label of screen.getAllByText(/vat included/i)) {
+          expect(label.closest('.flex.justify-between')).toHaveTextContent(
+            '$1.23'
+          );
+        }
+      });
+    }
+  );
+
+  it.each([50, 0])(
+    'keeps tax loading until a refetch returns included taxes of %i',
+    async amount => {
+      function UpdateTaxesButton() {
+        const mutation = useUpdateTaxes();
+        return (
+          <button type='button' onClick={() => mutation.mutate(undefined)}>
+            Recalculate taxes
+          </button>
+        );
+      }
+
+      const { queryClient, session, draftOrder, user } = renderCheckout({
+        draftOrderOverrides: {
+          taxes: [{ included: true, amount: { value: 123 } }],
+        },
+        checkoutProps: {
+          targets: { 'checkout.form.before': () => <UpdateTaxesButton /> },
+        },
+      });
+      await waitForCheckoutReady();
+      await waitFor(() => {
+        expect(queryClient.isMutating()).toBe(0);
+        expect(queryClient.isFetching()).toBe(0);
+      });
+
+      let finishRefetch!: () => void;
+      const refetchGate = new Promise<void>(resolve => {
+        finishRefetch = resolve;
+      });
+      vi.mocked(updateDraftOrderTaxes).mockResolvedValueOnce({
+        calculateCheckoutSessionTaxes: {
+          totalTaxAmount: { value: 0, currencyCode: 'USD' },
+        },
+      });
+      vi.mocked(getDraftOrder).mockImplementationOnce(async () => {
+        await refetchGate;
+        return {
+          checkoutSession: {
+            ...session,
+            draftOrder: buildDraftOrder({
+              ...draftOrder,
+              taxes:
+                amount > 0
+                  ? [
+                      {
+                        included: true,
+                        amount: { value: amount },
+                      },
+                    ]
+                  : [],
+              totals: totals({ taxTotal: { value: 0, currencyCode: 'USD' } }),
+            }),
+          },
+        };
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: 'Recalculate taxes' })
+      );
+      await waitFor(() => expect(queryClient.isFetching()).toBeGreaterThan(0));
+      expect(
+        queryClient.isMutating({
+          mutationKey: checkoutMutationKeys.updateDraftOrderTaxes(session.id),
+        })
+      ).toBe(1);
+      for (const label of screen.getAllByText(/vat included/i)) {
+        const row = label.closest('.flex.justify-between');
+        expect(row?.querySelector('.animate-pulse')).toBeInTheDocument();
+        expect(row).not.toHaveTextContent('$1.23');
+      }
+
+      await act(async () => {
+        finishRefetch();
+      });
+      await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+      if (amount > 0) {
+        for (const label of screen.getAllByText(/vat included/i)) {
+          const row = label.closest('.flex.justify-between');
+          expect(row).toHaveTextContent('$0.50');
+          expect(row?.querySelector('.animate-pulse')).not.toBeInTheDocument();
+        }
+      } else {
+        expect(document.body).not.toHaveTextContent(/vat included/i);
+      }
+    }
+  );
 
   it('renders loading skeleton rows for in-flight discount, shipping, tax, and fee mutations', async () => {
     const { queryClient, session } = renderCheckout({
@@ -216,7 +417,7 @@ describe('Checkout totals and order summary UI', () => {
     });
     await waitForCheckoutReady();
 
-    await user.click(await screen.findByRole('button', { name: /20%/ }));
+    await user.click(await screen.findByRole('radio', { name: /20%/ }));
 
     await waitFor(() => {
       expect(screen.getAllByText('$5.00').length).toBeGreaterThan(0);

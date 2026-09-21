@@ -1,4 +1,4 @@
-import { useIsMutating, useQueryClient } from '@tanstack/react-query';
+import { useIsMutating } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
@@ -8,6 +8,7 @@ import {
   useDraftOrderShipping,
   useDraftOrderShippingAddress,
 } from '@/components/checkout/order/use-draft-order';
+import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { ShippingMethodSkeleton } from '@/components/checkout/shipping/shipping-method-skeleton';
 import { buildShippingPayload } from '@/components/checkout/shipping/utils/build-shipping-payload';
@@ -23,10 +24,7 @@ import { sortShippingMethods } from '@/components/checkout/shipping/utils/sort-s
 import { useApplyShippingMethod } from '@/components/checkout/shipping/utils/use-apply-shipping-method';
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { useFormatCurrency } from '@/components/checkout/utils/format-currency';
-import {
-  checkoutMutationKeys,
-  checkoutQueryKeys,
-} from '@/components/checkout/utils/query-keys';
+import { checkoutMutationKeys } from '@/components/checkout/utils/query-keys';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoDaddyContext } from '@/godaddy-provider';
@@ -39,7 +37,7 @@ export function ShippingMethodForm() {
   const form = useFormContext();
   const { t } = useGoDaddyContext();
   const { session, isConfirmingCheckout } = useCheckoutContext();
-  const queryClient = useQueryClient();
+  const updateTaxes = useUpdateTaxes();
   const isPaymentDisabled = useIsPaymentDisabled();
 
   const {
@@ -186,6 +184,7 @@ export function ShippingMethodForm() {
     if (hasShippingMethods) {
       const currentFormMethod = form.getValues('shippingMethod');
       const existingMethod = currentFormMethod || currentServiceCode;
+      const isInitialSelection = lastShippingMethodsKeyRef.current === null;
       const { selectedMethod: methodToApply, methodsKey } =
         selectShippingMethod({
           shippingMethods,
@@ -233,14 +232,11 @@ export function ShippingMethodForm() {
                 shouldDirty: false,
               });
             },
-            onSuccess: () => {
-              if (!isFulfillmentSync || !session?.id) return;
-
-              queryClient.invalidateQueries({
-                queryKey: checkoutQueryKeys.draftOrder(session.id),
-              });
-            },
           });
+        } else if (session?.enableTaxCollection && isInitialSelection) {
+          // Refresh taxes for an existing shipping selection on load. Discount
+          // reconciliation already owns the tax refresh when a coupon changes.
+          updateTaxes.mutate(undefined);
         }
 
         lastProcessedStateRef.current = {
@@ -264,8 +260,8 @@ export function ShippingMethodForm() {
     isShippingMethodsLoading,
     form,
     applyShippingMethod,
-    queryClient,
-    session?.id,
+    updateTaxes.mutate,
+    session?.enableTaxCollection,
     isPickup,
     isDraftOrderLoading,
     hasLineItemsMissingShippingFulfillment,

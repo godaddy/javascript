@@ -1,23 +1,57 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import * as godaddyApi from '@/lib/godaddy/godaddy';
-import { CheckoutType, PaymentProvider } from '@/types';
+import { CheckoutType, type DraftOrderSession, PaymentProvider } from '@/types';
 import {
   advanceCheckoutDebounce,
   buildDraftOrder,
+  buildLineItem,
   buildShippingAddress,
   clearOperations,
   flushPromises,
   getOperations,
   renderCheckout,
   setApiError,
+  setCurrentDraftOrder,
   typeIntoNamedField,
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
 
 describe('Checkout shipping behavior', () => {
+  it.each([true, false])(
+    'preserves an existing rate and refreshes initial taxes only when enabled (%s)',
+    async enableTaxCollection => {
+      const { queryClient } = renderCheckout({
+        sessionOverrides: { enableTaxCollection },
+        draftOrderOverrides: {
+          shippingLines: [
+            {
+              requestedService: 'free-shipping',
+              requestedProvider: 'unknown',
+              name: 'Free',
+              amount: { value: 0, currencyCode: 'USD' },
+              discounts: [],
+            },
+          ],
+        },
+      });
+      await waitForCheckoutReady();
+      await waitFor(() => {
+        expect(queryClient.isMutating()).toBe(0);
+        expect(queryClient.isFetching()).toBe(0);
+      });
+
+      expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
+        0
+      );
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(
+        enableTaxCollection ? 1 : 0
+      );
+    }
+  );
+
   it('shows the no-origin-address message when shipping origin is missing', async () => {
     renderCheckout({
       sessionOverrides: { shipping: { originAddress: null } },
@@ -443,6 +477,96 @@ describe('Checkout shipping behavior', () => {
       destination: expect.objectContaining({ postalCode: '94016' }),
     });
   });
+
+  it.each([
+    {
+      path: 'tax recalculation',
+      enableTaxCollection: true,
+      enablePromotionCodes: false,
+    },
+    {
+      path: 'discount recalculation',
+      enableTaxCollection: true,
+      enablePromotionCodes: true,
+    },
+    {
+      path: 'direct refresh',
+      enableTaxCollection: false,
+      enablePromotionCodes: false,
+    },
+  ])(
+    'refreshes shipping fulfillment once through $path',
+    async ({ enableTaxCollection, enablePromotionCodes }) => {
+      const { queryClient, session, draftOrder } = renderCheckout({
+        sessionOverrides: { enableTaxCollection, enablePromotionCodes },
+        draftOrderOverrides: {
+          shippingLines: [
+            {
+              requestedService: 'free-shipping',
+              requestedProvider: 'unknown',
+              name: 'Free',
+              amount: { value: 0, currencyCode: 'USD' },
+              discounts: [],
+            },
+          ],
+          discounts: enablePromotionCodes
+            ? [
+                {
+                  code: 'SAVE',
+                  name: 'SAVE',
+                  amount: { value: 100, currencyCode: 'USD' },
+                },
+              ]
+            : [],
+        },
+      });
+      await waitForCheckoutReady();
+      await waitFor(() => {
+        expect(queryClient.isMutating()).toBe(0);
+        expect(queryClient.isFetching()).toBe(0);
+      });
+      clearOperations();
+
+      const orderWithNewItem = buildDraftOrder({
+        ...draftOrder,
+        lineItems: [
+          buildLineItem({ id: 'existing-item', fulfillmentMode: 'SHIP' }),
+          buildLineItem({ id: 'new-item', fulfillmentMode: 'NONE' }),
+        ],
+      });
+      setCurrentDraftOrder(orderWithNewItem);
+      await act(async () => {
+        queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+          checkoutSession: { ...session, draftOrder: orderWithNewItem },
+        });
+      });
+      await waitForOperation('ApplyCheckoutSessionShippingMethod');
+      await waitFor(() => {
+        expect(queryClient.isMutating()).toBe(0);
+        expect(queryClient.isFetching()).toBe(0);
+        const refreshed = queryClient.getQueryData<DraftOrderSession>(
+          checkoutQueryKeys.draftOrder(session.id)
+        );
+        expect(refreshed?.checkoutSession?.draftOrder?.lineItems).toEqual([
+          expect.objectContaining({
+            id: 'existing-item',
+            fulfillmentMode: 'SHIP',
+          }),
+          expect.objectContaining({ id: 'new-item', fulfillmentMode: 'SHIP' }),
+        ]);
+      });
+      expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
+        1
+      );
+      expect(getOperations('DraftOrder')).toHaveLength(1);
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(
+        enableTaxCollection ? 1 : 0
+      );
+      expect(getOperations('ApplyCheckoutSessionDiscount')).toHaveLength(
+        enablePromotionCodes ? 1 : 0
+      );
+    }
+  );
 
   it('keeps the current user-selected shipping method despite stale backend shipping line during refetch', async () => {
     const { user, queryClient, session } = renderCheckout({

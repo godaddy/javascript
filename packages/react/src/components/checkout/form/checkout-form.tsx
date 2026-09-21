@@ -25,7 +25,10 @@ import {
 import { NotesForm } from '@/components/checkout/notes/notes-form';
 import { DraftOrderSyncProvider } from '@/components/checkout/order/draft-order-sync-provider';
 import { isFreeOrderTotal } from '@/components/checkout/order/is-free-order';
-import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
+import {
+  useDraftOrderIncludedTaxTotal,
+  useDraftOrderTotals,
+} from '@/components/checkout/order/use-draft-order';
 import { BillingPolicyTransitionController } from '@/components/checkout/payment/billing-policy-transition-controller';
 import { PaymentForm } from '@/components/checkout/payment/payment-form';
 import {
@@ -200,6 +203,7 @@ export function CheckoutForm({
   }, [dirtyFields, form, formValues, isCheckoutBusy]);
 
   const draftOrderTotalsQuery = useDraftOrderTotals();
+  const { data: includedTaxTotal = 0 } = useDraftOrderIncludedTaxTotal();
 
   const { data: totals, isLoading: totalsLoading } = draftOrderTotalsQuery;
   validationContextRef.current.totals = totals;
@@ -211,11 +215,11 @@ export function CheckoutForm({
   const taxTotal = totals?.taxTotal?.value || 0;
   const feeTotal = totals?.feeTotal?.value || 0;
   const orderTotal = totals?.total?.value || 0;
-  const tipTotal = tipAmount || 0;
+  const tipTotal = session?.enableTips ? tipAmount || 0 : 0;
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
-  const isFree = isFreeOrderTotal(totals);
+  const isFree = isFreeOrderTotal(totals, tipTotal);
   const hasExpressCheckoutPaymentMethod = Object.values(
     session?.paymentMethods ?? {}
   ).some(
@@ -246,10 +250,27 @@ export function CheckoutForm({
     (isShipping && !!session?.enableShipping) || shipping > 0;
   const showTaxesLine = !!session?.enableTaxCollection || taxTotal > 0;
   const showFeesLine = feeTotal > 0;
+  // A free order has nothing to pay, so checkout picks `offline` itself. Merchants
+  // can offer `offline` for real, so once a tip makes the order payable that
+  // selection looks valid to `PaymentForm` and would leave the customer on a form
+  // that collects nothing. Clearing it lets `PaymentForm` apply its own default.
+  const didAutoSelectOffline = useRef(false);
   useEffect(() => {
-    if (!totalsLoading && isFree) {
+    if (totalsLoading) return;
+
+    if (isFree) {
       form.setValue('paymentMethod', PaymentMethodType.OFFLINE);
+      didAutoSelectOffline.current = true;
+      return;
     }
+
+    if (
+      didAutoSelectOffline.current &&
+      form.getValues('paymentMethod') === PaymentMethodType.OFFLINE
+    ) {
+      form.setValue('paymentMethod', '');
+    }
+    didAutoSelectOffline.current = false;
   }, [form, totalsLoading, isFree]);
 
   // Track checkout start impression when the component first renders
@@ -469,7 +490,10 @@ export function CheckoutForm({
                         <CheckoutSectionHeader title={t.tips?.title} />
                         <TipsForm
                           currencyCode={currencyCode}
-                          total={orderTotal}
+                          subtotal={subtotal}
+                          orderTotal={orderTotal}
+                          isTotalsLoading={totalsLoading}
+                          options={session?.tips}
                         />
                         <Target id='checkout.form.tips.after' />
                       </CheckoutSection>
@@ -551,6 +575,7 @@ export function CheckoutForm({
                                 currencyCode={currencyCode}
                                 tip={tipTotal}
                                 taxes={taxTotal}
+                                includedTaxTotal={includedTaxTotal}
                                 fees={feeTotal}
                                 isTaxLoading={isUpdatingTaxes}
                                 isFeeLoading={isUpdatingFees}
@@ -622,6 +647,7 @@ export function CheckoutForm({
                             currencyCode={currencyCode}
                             tip={tipTotal}
                             taxes={taxTotal}
+                            includedTaxTotal={includedTaxTotal}
                             fees={feeTotal}
                             isTaxLoading={isUpdatingTaxes}
                             isFeeLoading={isUpdatingFees}
@@ -656,6 +682,7 @@ export function CheckoutForm({
                     currencyCode={currencyCode}
                     tip={tipTotal}
                     taxes={taxTotal}
+                    includedTaxTotal={includedTaxTotal}
                     fees={feeTotal}
                     isTaxLoading={isUpdatingTaxes}
                     isFeeLoading={isUpdatingFees}

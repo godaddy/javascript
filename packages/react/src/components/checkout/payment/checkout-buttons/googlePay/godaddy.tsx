@@ -34,8 +34,7 @@ export function GoDaddyGooglePayCheckoutButton() {
   const [isCollectLoading, setIsCollectLoading] = useState(true);
   const [error, setError] = useState('');
   const { data: totals } = useDraftOrderTotals();
-  const { poyntStandardRequest, buildPaymentRequestsFromOrder } =
-    useBuildPaymentRequest();
+  const { buildPaymentRequestsFromOrder } = useBuildPaymentRequest();
 
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
@@ -53,8 +52,11 @@ export function GoDaddyGooglePayCheckoutButton() {
     async () => undefined
   );
 
+  // Confirm the tip the sheet was opened for, not the current form value.
+  const authorizedTipAmount = useRef<number | null>(null);
+
   const handleGooglePayClick = useCallback(async () => {
-    if (!poyntStandardRequest || isDisabled) return;
+    if (isDisabled) return;
 
     const valid = await form.trigger();
     if (!valid) {
@@ -68,9 +70,13 @@ export function GoDaddyGooglePayCheckoutButton() {
     const { latestOrder } = await flushCheckoutSync({
       includeCurrentFormDiff: true,
     });
-    const request = latestOrder
-      ? buildPaymentRequestsFromOrder(latestOrder).poyntStandardRequest
-      : poyntStandardRequest;
+    // Paired with the request below; `null` means tips off, unlike a zero tip.
+    authorizedTipAmount.current = session?.enableTips
+      ? (form.getValues('tipAmount') ?? 0)
+      : null;
+    const request = buildPaymentRequestsFromOrder(
+      latestOrder ?? undefined
+    ).poyntStandardRequest;
 
     setCheckoutErrors(undefined);
 
@@ -84,12 +90,12 @@ export function GoDaddyGooglePayCheckoutButton() {
       },
     });
   }, [
-    poyntStandardRequest,
     buildPaymentRequestsFromOrder,
     flushCheckoutSync,
     setCheckoutErrors,
     form,
     isDisabled,
+    session?.enableTips,
   ]);
 
   // Keep ref in sync so the SDK's stale onClick closure always calls the latest handler
@@ -99,7 +105,6 @@ export function GoDaddyGooglePayCheckoutButton() {
   useEffect(() => {
     if (
       !collect.current &&
-      !!applicationId?.trim() &&
       businessId &&
       isCollectLoading &&
       isPoyntLoaded &&
@@ -138,7 +143,6 @@ export function GoDaddyGooglePayCheckoutButton() {
   useEffect(() => {
     if (
       !isPoyntLoaded ||
-      !applicationId?.trim() ||
       !businessId ||
       !isCollectLoading ||
       !collect.current ||
@@ -194,6 +198,9 @@ export function GoDaddyGooglePayCheckoutButton() {
           paymentToken: nonce,
           paymentType: PaymentMethodType.CREDIT_CARD,
           paymentProvider: PaymentProvider.POYNT,
+          ...(authorizedTipAmount.current === null
+            ? {}
+            : { tipAmount: authorizedTipAmount.current }),
         };
 
         try {

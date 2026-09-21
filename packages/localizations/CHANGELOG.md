@@ -1,5 +1,17 @@
 # @godaddy/localizations
 
+## 1.0.14
+
+### Patch Changes
+
+- dff57f0: Add the missing tip `apiErrors` translations to every locale
+
+## 1.0.13
+
+### Patch Changes
+
+- 60ac1da: Add line item for inclusive taxes during checkout
+
 ## 1.0.12
 
 ### Patch Changes

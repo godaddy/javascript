@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 11.0.1
+
+### Patch Changes
+
+- 3f9dff8: Replace `FlatCompat` workaround with `eslint-plugin-react-hooks` native flat config support (`configs['recommended-latest']`), fixing an import error when used with ESLint 10.
+
 ## 11.0.0
 
 ### Major Changes

@@ -168,6 +168,7 @@ export const ptBr = {
     shipping: 'Envio',
     tip: 'Gorjeta',
     estimatedTaxes: 'Impostos estimados',
+    vatIncluded: 'IVA incluído',
     fees: 'Taxas',
     totalDue: 'Total a Pagar',
     orderSummary: 'Resumo do Pedido',
@@ -350,6 +351,12 @@ export const ptBr = {
     DEPENDENCY_ERROR:
       'Não conseguimos processar seu pedido no momento. Aguarde um momento e tente novamente',
     AUTHORIZATION_FAILED: 'Falha ao autorizar pagamento',
+    TIP_EXCEEDS_LIMIT: 'A gorjeta é muito alta para este pedido',
+    INVALID_TIP_AMOUNT: 'Digite um valor de gorjeta válido',
+    TIPS_NOT_ENABLED: 'Gorjetas não são aceitas para este pedido',
+    TIP_CHARGE_FAILED: 'Tente outro valor de gorjeta ou escolha Sem Gorjeta',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'Gorjetas não são aceitas em pagamentos offline',
   },
   storefront: {
     product: 'Produto',

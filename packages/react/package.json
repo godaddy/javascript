@@ -1,7 +1,7 @@
 {
   "name": "@godaddy/react",
   "private": false,
-  "version": "1.0.54",
+  "version": "1.0.58",
   "type": "module",
   "types": "./dist/index.d.ts",
   "files": [
@@ -51,7 +51,7 @@
     "test:coverage": "vitest run --coverage",
     "lint": "biome check ./src",
     "lint:fix": "biome check --write --unsafe ./src",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm --filter '@godaddy/react...' build"
   },
   "peerDependencies": {
     "@tanstack/react-query": ">=5",
@@ -105,7 +105,7 @@
     "react-resizable-panels": "^2.1.7",
     "tailwind-merge": "^3.0.1",
     "tailwindcss": "^4.1.4",
-    "ulid": "^3.0.0",
+    "ulid": "^3.0.2",
     "vaul": "^1.1.2",
     "zod": "^3.24.1"
   },
@@ -127,8 +127,8 @@
     "tsdown": "^0.15.6",
     "typescript": "~5.7.3",
     "vite": "^6.4.1",
-    "@vitest/coverage-v8": "4.1.2",
-    "vitest": "^4.1.2"
+    "@vitest/coverage-v8": "5.0.0",
+    "vitest": "5.0.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"

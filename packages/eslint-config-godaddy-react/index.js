@@ -1,19 +1,9 @@
 import gdConfig from 'eslint-config-godaddy';
 import react from 'eslint-plugin-react';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
-import { FlatCompat } from '@eslint/eslintrc';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// mimic CommonJS variables -- not needed if using CommonJS
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname
-});
 
 // Wrap react plugin for ESLint 10 compatibility (context.getFilename etc.)
 const reactCompat = fixupPluginRules(react);
@@ -21,10 +11,7 @@ const reactCompat = fixupPluginRules(react);
 const config = [
   ...gdConfig,
   ...fixupConfigRules([react.configs.flat.recommended]),
-  // This is needed due to react-hooks not being Flat Config compatible there is an open
-  // issue for this https://github.com/facebook/react/issues/28313 and PR for this change
-  // https://github.com/facebook/react/pull/30774
-  ...compat.extends('plugin:react-hooks/recommended'),
+  reactHooks.configs['recommended-latest'],
   jsxA11y.flatConfigs.recommended,
   {
     languageOptions: {
@@ -32,8 +19,7 @@ const config = [
         ecmaFeatures: {
           jsx: true,
           experimentalObjectRestSpread: true
-        },
-        requireConfigFile: false
+        }
       }
     },
     plugins: {

@@ -19,7 +19,7 @@ export interface TokenizeJsConfig {
   businessId: string;
   storeId?: string | null;
   channelId?: string | null;
-  applicationId: string;
+  applicationId?: string;
 }
 
 export type WalletErrorCode =
