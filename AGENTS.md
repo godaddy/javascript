@@ -275,7 +275,15 @@ D. @godaddy/react
   - Uses path alias "@/*" for src
   - If adding components, follow existing patterns in src/components/checkout/** and src/components/ui/**
 
-E. @godaddy/localizations
+E. @godaddy/commerce-storefront
+- Opinionated React storefront; fixed same-origin `/api/commerce` server contract documented in packages/commerce-storefront/docs/server-api.md.
+- Peers: React/React DOM 18 or 19, React Router 7 or 8.3+, TanStack Query 5. Host owns router/query providers; CommerceStorefront owns the cart provider and drawer.
+- Build: tsdown plus local Tailwind CLI, CSS scoping, and layer removal in declared order; styles exported as ./styles.css. Artifact tests process the output through Tailwind v3 to verify host compatibility. No host Tailwind setup or global reset.
+- Test: build first, then Vitest (behavior plus compiled artifact checks). Commands: build, typecheck, lint, test.
+- Example: examples/commerce-storefront, port 5184, development-only in-memory server; production build needs real API routes.
+- Keep credentials, merchant provisioning and platform configuration out of this client package. No dependency on the separate commerce web-component runtime.
+
+F. @godaddy/localizations
 - Purpose: Localization bundles for checkout UI
 - Structure: src/<locale>.ts with a shared object shape; exported via src/index.ts
 - Scripts: dev/build/typecheck

@@ -1,0 +1,29 @@
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+@source './*.tsx';
+
+@theme inline {
+  --color-commerce-accent: var(--commerce-accent, #171717);
+  --color-commerce-accent-hover: var(--commerce-accent-hover, #404040);
+  --color-commerce-on-accent: var(--commerce-on-accent, #fff);
+  --color-white: var(--commerce-surface, #fff);
+  --color-neutral-900: var(--commerce-text, #171717);
+  --radius-lg: var(--commerce-radius, 0.5rem);
+}
+
+@layer base {
+  .commerce-storefront { color: var(--commerce-text, #171717); font-family: inherit; line-height: 1.5; }
+  .commerce-storefront *, .commerce-storefront *::before, .commerce-storefront *::after {
+    box-sizing: border-box; border-width: 0; border-style: solid;
+  }
+  .commerce-storefront :where(h1,h2,h3,p,ul,dl,dd,fieldset) { margin: 0; padding: 0; }
+  .commerce-storefront :where(h1,h2,h3) { font-size: inherit; font-weight: inherit; }
+  .commerce-storefront :where(button,input,select) { font: inherit; color: inherit; background: transparent; border-radius: 0; }
+  .commerce-storefront :where(button) { cursor: pointer; }
+  .commerce-storefront :where(a) { color: inherit; text-decoration: inherit; }
+  .commerce-storefront :where(img) { display: block; max-width: 100%; }
+  .commerce-storefront :where(ul) { list-style: none; }
+  .commerce-inline { display: inline-block; }
+  .commerce-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border-width: 0; }
+}

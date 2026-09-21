@@ -52,6 +52,7 @@ This monorepo contains the following packages:
 | [`biome-config-godaddy`](/packages/biome-config-godaddy) | Fast Rust-based alternative to ESLint and Prettier using Biome | [![npm](https://img.shields.io/npm/v/biome-config-godaddy.svg)](https://www.npmjs.com/package/biome-config-godaddy) |
 | [`@godaddy/app-connect`](/packages/app-connect) | Platform integration tools for GoDaddy apps | [![npm](https://img.shields.io/npm/v/@godaddy/app-connect.svg)](https://www.npmjs.com/package/@godaddy/app-connect) |
 | [`@godaddy/react`](/packages/react) | React components and commerce API integration | [![npm](https://img.shields.io/npm/v/@godaddy/react.svg)](https://www.npmjs.com/package/@godaddy/react) |
+| [@godaddy/commerce-storefront](packages/commerce-storefront) | Opinionated React catalog, product, and cart templates; [consumer example](examples/commerce-storefront) | Unreleased |
 
 ## Why GoDaddy JavaScript?
 
