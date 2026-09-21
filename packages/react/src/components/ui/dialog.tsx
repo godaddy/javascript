@@ -34,10 +34,10 @@ const DialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  const { t } = useGoDaddyContext();
+  const { t, uiContainer } = useGoDaddyContext();
 
   return (
-    <DialogPortal>
+    <DialogPortal container={uiContainer}>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
