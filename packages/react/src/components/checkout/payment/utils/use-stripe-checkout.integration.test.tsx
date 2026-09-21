@@ -4,7 +4,6 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkoutContext } from '@/components/checkout/checkout';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
-import { eventIds } from '@/tracking/events';
 import type { DraftOrder } from '@/types';
 import { StripeProvider } from './stripe-provider';
 import { CheckoutConfirmationBlockedError } from './use-confirm-checkout';
@@ -215,7 +214,7 @@ describe('useStripeCheckout payment request resolution', () => {
         expect(mocks.track).toHaveBeenCalledTimes(1);
         expect(mocks.track).toHaveBeenCalledWith(
           expect.objectContaining({
-            eventId: eventIds.expressCheckoutCompleted,
+            eventId: `express_stripe_${expressPaymentType}_completed.event`,
             properties: { paymentType: expressPaymentType, provider: 'stripe' },
           })
         );
