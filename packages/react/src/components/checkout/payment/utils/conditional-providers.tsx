@@ -1,7 +1,6 @@
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { CCAvenueReturnProvider } from './ccavenue-return-provider';
-import { getApplicationId } from './get-application-id';
 import { PayPalProvider } from './paypal-provider';
 import { PoyntACHCollectProvider } from './poynt-ach-provider';
 import { PoyntCollectProvider } from './poynt-provider';
@@ -38,17 +37,10 @@ export function ConditionalPaymentProviders({
     wrappedChildren = <SquareProvider>{wrappedChildren}</SquareProvider>;
   }
 
-  // Resolve the GoDaddy application id the same way the lazy renderer does,
-  // so provider wrapping, availability gating, and form rendering all agree
-  // (e.g. when only `experimental_rules.gopay_override` supplies an app id).
-  const goDaddyApplicationId = getApplicationId(
-    session,
-    godaddyPaymentsConfig?.appId
-  );
+  // Collect requires a business ID; application IDs are optional.
   const goDaddyBusinessId =
     godaddyPaymentsConfig?.businessId || session?.businessId;
-  const hasGoDaddyConfig =
-    !!goDaddyApplicationId?.trim() && !!goDaddyBusinessId;
+  const hasGoDaddyConfig = !!goDaddyBusinessId;
 
   // Only wrap with PoyntACHCollectProvider if GoDaddy ACH is configured
   if (

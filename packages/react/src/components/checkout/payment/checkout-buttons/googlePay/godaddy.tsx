@@ -105,7 +105,6 @@ export function GoDaddyGooglePayCheckoutButton() {
   useEffect(() => {
     if (
       !collect.current &&
-      !!applicationId?.trim() &&
       businessId &&
       isCollectLoading &&
       isPoyntLoaded &&
@@ -144,7 +143,6 @@ export function GoDaddyGooglePayCheckoutButton() {
   useEffect(() => {
     if (
       !isPoyntLoaded ||
-      !applicationId?.trim() ||
       !businessId ||
       !isCollectLoading ||
       !collect.current ||

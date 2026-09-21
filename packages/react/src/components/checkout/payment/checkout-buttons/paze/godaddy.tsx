@@ -104,7 +104,6 @@ export function PazeCheckoutButton() {
   useEffect(() => {
     if (
       !collect.current &&
-      !!applicationId?.trim() &&
       businessId &&
       isCollectLoading &&
       isPoyntLoaded &&
@@ -143,7 +142,6 @@ export function PazeCheckoutButton() {
   useEffect(() => {
     if (
       !isPoyntLoaded ||
-      !applicationId?.trim() ||
       !businessId ||
       !isCollectLoading ||
       !collect.current ||
