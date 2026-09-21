@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   type CheckoutProps,
+  redirectToSuccessUrl,
   useCheckoutContext,
 } from '@/components/checkout/checkout';
 import { CheckoutSkeleton } from '@/components/checkout/checkout-skeleton';
@@ -19,6 +20,7 @@ import {
   mapSkusToItemsDisplay,
 } from '@/components/checkout/utils/checkout-transformers';
 import { getFulfillmentSummary } from '@/components/checkout/utils/fulfillment';
+import { useGoDaddyContext } from '@/godaddy-provider';
 
 interface CheckoutFormContainerProps extends Omit<CheckoutProps, 'session'> {
   validationAdapter: CheckoutValidationAdapter;
@@ -31,12 +33,21 @@ export function CheckoutFormContainer({
   ...props
 }: CheckoutFormContainerProps) {
   const { session, isConfirmingCheckout } = useCheckoutContext();
+  const { t } = useGoDaddyContext();
 
   const draftOrderQuery = useDraftOrder();
   const draftOrderLineItemsQuery = useDraftOrderLineItems();
   const skusMap = useDraftOrderProductsMap();
 
   const { data: order } = draftOrderQuery;
+  const isPaid =
+    order?.statuses?.paymentStatus?.trim().toUpperCase() === 'PAID';
+  const showPaidOrder = isPaid && !isConfirmingCheckout;
+
+  useEffect(() => {
+    if (showPaidOrder) redirectToSuccessUrl(session?.successUrl);
+  }, [showPaidOrder, session?.successUrl]);
+
   const { data: lineItems } = draftOrderLineItemsQuery;
   useRefreshProductsWhenLineItemsChange(lineItems);
 
@@ -80,6 +91,10 @@ export function CheckoutFormContainer({
     return (
       props.loadingFallback ?? <CheckoutSkeleton direction={props.direction} />
     );
+  }
+
+  if (showPaidOrder) {
+    return <div role='status'>{t.errors.paymentSuccessful}</div>;
   }
 
   return (
