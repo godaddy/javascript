@@ -114,7 +114,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
             storeName: 'Test Store',
             shipping: { originAddress: { countryCode: 'US' } },
           } as never,
-          godaddyPaymentsConfig: { appId: 'app-1', businessId: 'business-1' },
+          godaddyPaymentsConfig: { businessId: 'business-1' },
           isConfirmingCheckout: false,
           setIsConfirmingCheckout: vi.fn(),
           setCheckoutErrors: vi.fn(),
@@ -156,7 +156,7 @@ describe.each([
     start: mocks.startPazeSession,
   },
 ])('$name request resolution', ({ Component, elementId, start }) => {
-  it('starts the wallet with totals from the flushed latest order', async () => {
+  it('starts the wallet without an app ID using totals from the flushed latest order', async () => {
     render(<Component />, { wrapper: Wrapper });
 
     await waitFor(() => {
