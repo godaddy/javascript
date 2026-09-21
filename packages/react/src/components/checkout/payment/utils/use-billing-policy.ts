@@ -14,13 +14,19 @@ import type { CheckoutSession, Totals } from '@/types';
 export function resolveBillingPolicyForCheckoutState(input: {
   values: Pick<
     CheckoutFormData,
-    'paymentMethod' | 'deliveryMethod' | 'paymentUseShippingAddress'
+    | 'paymentMethod'
+    | 'deliveryMethod'
+    | 'paymentUseShippingAddress'
+    | 'tipAmount'
   >;
   session?: CheckoutSession | null;
   totals?: Totals | null;
 }): BillingPolicy {
+  // Gated here so a stale form tip can't make a tips-disabled session payable.
+  const tipAmount = input.session?.enableTips ? input.values.tipAmount : 0;
+
   return getBillingPolicy({
-    isFreeOrder: isFreeOrderTotal(input.totals),
+    isFreeOrder: isFreeOrderTotal(input.totals, tipAmount),
     deliveryMethod: input.values.deliveryMethod,
     paymentMethod: input.values.paymentMethod,
     paymentUseShippingAddress: input.values.paymentUseShippingAddress !== false,
@@ -57,6 +63,7 @@ export function useBillingPolicy(): BillingPolicy {
   const paymentMethod = form.watch('paymentMethod');
   const deliveryMethod = form.watch('deliveryMethod');
   const paymentUseShippingAddress = form.watch('paymentUseShippingAddress');
+  const tipAmount = form.watch('tipAmount');
 
   return useMemo(
     () =>
@@ -65,10 +72,18 @@ export function useBillingPolicy(): BillingPolicy {
           paymentMethod,
           deliveryMethod,
           paymentUseShippingAddress,
+          tipAmount,
         },
         session,
         totals,
       }),
-    [deliveryMethod, paymentMethod, paymentUseShippingAddress, session, totals]
+    [
+      deliveryMethod,
+      paymentMethod,
+      paymentUseShippingAddress,
+      tipAmount,
+      session,
+      totals,
+    ]
   );
 }
