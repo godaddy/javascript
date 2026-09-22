@@ -37,14 +37,14 @@
  * return a `redirectUrl` field.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '../../../../lib/commerce/cart-scope';
-import { type CommerceConfig, commerceConfigurationForResponse } from '../../../../lib/commerce/config';
+import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { type CommerceConfig, commerceConfigurationForResponse } from '@/lib/commerce/config';
 
 import {
   CommerceConfigPendingError,
   type CreateCheckoutSessionParams,
   createCheckoutSession,
-} from '../../../../lib/commerce/create-checkout-session';
+} from '@/lib/commerce/create-checkout-session';
 
 type CheckoutBody = Partial<CreateCheckoutSessionParams>;
 

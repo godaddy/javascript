@@ -4,8 +4,8 @@
  * Store/channel IDs and credentials stay server-side. Do not cache across bindings.
  */
 import type { Request, Response } from 'express';
-import { getCommerceCartScope } from '../../../../lib/commerce/cart-scope';
-import { type CommerceConfig, readCommerceConfigForResponse } from '../../../../lib/commerce/config';
+import { getCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
 
 export default async function handler(_req: Request, res: Response): Promise<void> {
   res.setHeader('Cache-Control', 'no-store');

@@ -17,8 +17,8 @@
  */
 import type { Request, Response } from 'express';
 
-import { commerceConfigurationForResponse } from '../../../../lib/commerce/config';
-import { getOrderStatus } from '../../../../lib/commerce/get-order-status';
+import { commerceConfigurationForResponse } from '@/lib/commerce/config';
+import { getOrderStatus } from '@/lib/commerce/get-order-status';
 
 export default async function handler(req: Request, res: Response): Promise<void> {
   try {

@@ -14,9 +14,9 @@
  *   read one shape.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '../../../../../../lib/commerce/cart-scope';
-import { type CommerceConfig, readCommerceConfigForResponse } from '../../../../../../lib/commerce/config';
-import { gqlRequest, storefrontHeaders } from '../../../../../../lib/commerce/gql';
+import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type ApplyDiscountCodesResult,
   type ApplyDiscountCodesVariables,
@@ -24,7 +24,7 @@ import {
   type GetCartOrderVariables,
   getCartOrderQuery,
   orderStorefrontEndpoint,
-} from '../../../../../../lib/commerce/order-subgraph';
+} from '@/lib/commerce/order-subgraph';
 
 const applyDiscountCodesMutation = `
   mutation ApplyDiscountCodes($input: ApplyDiscountCodesInput!) {

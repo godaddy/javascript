@@ -16,15 +16,15 @@
  *     and clear the persisted `draftOrderId` when that is the case.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '../../../../../lib/commerce/cart-scope';
-import { type CommerceConfig, readCommerceConfigForResponse } from '../../../../../lib/commerce/config';
-import { GraphQLErrorWithCodes, gqlRequest, storefrontHeaders } from '../../../../../lib/commerce/gql';
+import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { GraphQLErrorWithCodes, gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type GetCartOrderResult,
   type GetCartOrderVariables,
   getCartOrderQuery,
   orderStorefrontEndpoint,
-} from '../../../../../lib/commerce/order-subgraph';
+} from '@/lib/commerce/order-subgraph';
 
 function isCartNotFoundError(error: unknown): boolean {
   if (!(error instanceof GraphQLErrorWithCodes)) {

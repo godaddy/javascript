@@ -8,14 +8,14 @@
  * Response: { sku: SKU | null }
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '../../../../../lib/commerce/cart-scope';
+import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
 import {
   catalogStorefrontEndpoint,
   type SkuResult,
   type SkuVariables,
-} from '../../../../../lib/commerce/catalog-subgraph';
-import { type CommerceConfig, readCommerceConfigForResponse } from '../../../../../lib/commerce/config';
-import { gqlRequest, storefrontHeaders } from '../../../../../lib/commerce/gql';
+} from '@/lib/commerce/catalog-subgraph';
+import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 
 const skuQuery = `
   query Sku($id: String!) {

@@ -18,15 +18,15 @@
  * `data` field. Use the helpers in lib/commerce/catalog-subgraph.ts to extract view-model fields.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '../../../../lib/commerce/cart-scope';
+import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
 import {
   buildSkuGroupsVariables,
   catalogStorefrontEndpoint,
   type SkuGroupsResult,
   type SkuGroupsVariables,
-} from '../../../../lib/commerce/catalog-subgraph';
-import { type CommerceConfig, readCommerceConfigForResponse } from '../../../../lib/commerce/config';
-import { gqlRequest, storefrontHeaders } from '../../../../lib/commerce/gql';
+} from '@/lib/commerce/catalog-subgraph';
+import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 
 // Cards use group pricing/media and SKU identity/inventory for quick-add.
 // Nested SKU price money fields would exceed the catalog API's depth limit of 10.

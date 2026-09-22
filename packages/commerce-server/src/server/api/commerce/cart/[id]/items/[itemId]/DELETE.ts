@@ -11,9 +11,9 @@
  *   GET /api/commerce/cart/:id so clients only ever read one shape.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '../../../../../../../lib/commerce/cart-scope';
-import { type CommerceConfig, readCommerceConfigForResponse } from '../../../../../../../lib/commerce/config';
-import { gqlRequest, storefrontHeaders } from '../../../../../../../lib/commerce/gql';
+import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type DeleteLineItemByIdResult,
   type DeleteLineItemByIdVariables,
@@ -21,7 +21,7 @@ import {
   type GetCartOrderVariables,
   getCartOrderQuery,
   orderStorefrontEndpoint,
-} from '../../../../../../../lib/commerce/order-subgraph';
+} from '@/lib/commerce/order-subgraph';
 
 const deleteLineItemByIdMutation = `
   mutation DeleteLineItemById($id: ID!, $orderId: ID!) {
