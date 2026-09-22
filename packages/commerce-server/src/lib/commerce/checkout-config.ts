@@ -1,21 +1,10 @@
-export interface CommerceCheckoutShippingReadinessConfiguration {
-  readonly originAddressConfigured: true;
-  readonly originAddressContractVersion: 1;
+/** Shipping options accepted by the hosted checkout API. Omit to use the store's configuration. */
+export interface CommerceCheckoutShippingConfiguration {
+  readonly originAddress?: Readonly<Record<string, unknown>>;
+  readonly fulfillmentLocationId?: string;
 }
-
-/** @deprecated Existing generated apps may retain this shape until the next configuration sync. */
-export interface LegacyCommerceCheckoutShippingConfiguration {
-  readonly originAddress: Readonly<Record<string, unknown>>;
-}
-
-export type CommerceCheckoutShippingConfiguration =
-  | CommerceCheckoutShippingReadinessConfiguration
-  | LegacyCommerceCheckoutShippingConfiguration;
 
 export interface CommerceCheckoutConfiguration {
-  readonly storeId?: string;
-  readonly channelId?: string;
-  readonly currencyCode?: string;
   readonly enablePromotionCodes: boolean;
   readonly enableTaxCollection: boolean;
   readonly enableShipping: boolean;
@@ -58,5 +47,10 @@ export function parseCommerceCheckoutConfiguration(raw: string | undefined): Com
     throw new Error('Commerce config: GODADDY_CHECKOUT_CONFIGURATION.shipping must be an object.');
   }
 
-  return candidate as unknown as CommerceCheckoutConfiguration;
+  return {
+    enablePromotionCodes: candidate.enablePromotionCodes as boolean,
+    enableTaxCollection: candidate.enableTaxCollection as boolean,
+    enableShipping: candidate.enableShipping as boolean,
+    ...(shipping ? { shipping: shipping as CommerceCheckoutShippingConfiguration } : {}),
+  };
 }

@@ -20,7 +20,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path='*' element={<Navigate to='/shop' replace />} />
           </Routes>
         </main>
-        <footer>Independent React app · No app-builder runtime · No Tailwind configuration</footer>
+        <footer>Independent React app · No Tailwind configuration</footer>
       </CommerceStorefront>
     </BrowserRouter>
   </QueryClientProvider>

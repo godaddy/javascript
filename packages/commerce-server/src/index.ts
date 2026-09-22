@@ -12,7 +12,6 @@ export {
 } from './lib/commerce/config';
 export {
   type CheckoutSession,
-  CommerceConfigPendingError,
   type CreateCheckoutSessionParams,
   createCheckoutSession,
 } from './lib/commerce/create-checkout-session';

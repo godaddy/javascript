@@ -278,6 +278,7 @@ export interface GetCartOrderResult {
 
 export interface EmptyCartOrderInput {
   storeId: string;
+  owner?: string;
   channelId?: string;
   currencyCode?: string;
 }
@@ -310,12 +311,13 @@ export function buildEmptyCartOrderInput({
   storeId,
   channelId,
   currencyCode = 'USD',
+  owner,
 }: EmptyCartOrderInput): AddCartOrderInput {
   return {
     context: {
       storeId,
       channelId: channelId || '',
-      owner: 'urn:com.godaddy:airo.commerce.order',
+      ...(owner ? { owner } : {}),
     },
     totals: {
       subTotal: createMoney(0, currencyCode),

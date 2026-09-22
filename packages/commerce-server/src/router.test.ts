@@ -26,11 +26,10 @@ vi.mock('./lib/commerce/gql', async (importOriginal) => ({
 }));
 vi.mock('./lib/commerce/create-checkout-session', () => ({
   createCheckoutSession: vi.fn(),
-  CommerceConfigPendingError: class extends Error {},
 }));
 
 const binding = {
-  apiBaseUrl: 'https://api.dev-godaddy.com',
+  apiBaseUrl: 'https://api.godaddy.com',
   storeId: 'store-1',
   channelId: 'channel-1',
   currencyCode: 'USD',

@@ -41,7 +41,6 @@ import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
 import { type CommerceConfig, commerceConfigurationForResponse } from '@/lib/commerce/config';
 
 import {
-  CommerceConfigPendingError,
   type CreateCheckoutSessionParams,
   createCheckoutSession,
 } from '@/lib/commerce/create-checkout-session';
@@ -84,14 +83,6 @@ export default async function handler(req: Request, res: Response): Promise<void
 
     res.status(200).json(session);
   } catch (error) {
-    if (error instanceof CommerceConfigPendingError) {
-      res.status(503).json({
-        error: 'Commerce configuration is pending',
-        message: error.message,
-      });
-      return;
-    }
-
     res.status(500).json({
       error: 'Failed to create checkout session',
       message: error instanceof Error ? error.message : String(error),

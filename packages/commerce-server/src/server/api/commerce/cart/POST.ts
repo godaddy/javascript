@@ -98,6 +98,7 @@ export default async function handler(req: Request, res: Response): Promise<void
         input: buildEmptyCartOrderInput({
           storeId,
           channelId,
+          owner: config.owner,
           currencyCode: body.currencyCode ?? currencyCode,
         }),
       },

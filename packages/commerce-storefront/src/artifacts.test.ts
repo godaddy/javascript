@@ -26,11 +26,9 @@ it('ships CSS that scopes every document selector to a commerce surface', async 
   expect(css.toString()).toContain('var(--commerce-accent, #171717)');
 });
 
-it('ships a client package without builder configuration, metadata, server secrets or a second cart runtime', async () => {
+it('ships a client package with framework peers external and no server dependencies', async () => {
   const js = await readFile(new URL('../dist/index.js', import.meta.url), 'utf8');
-  expect(js).not.toMatch(
-    /data-dev-commerce|data-dev-source-origin|\/local\/config\.json|urn:com\.godaddy:airo|@godaddy\/commerce['"]/,
-  );
+  expect(js).not.toMatch(/node:(?:fs|crypto)|GODADDY_OAUTH_CLIENT_SECRET|@godaddy\/commerce-server/);
   expect(js).toContain('react/jsx-runtime');
   expect(js).toContain('from "react"');
   expect(js).toContain('from "@tanstack/react-query"');

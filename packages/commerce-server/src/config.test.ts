@@ -1,92 +1,110 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-const { mockReadFileSync } = vi.hoisted(() => ({
-  mockReadFileSync: vi.fn(),
-}));
-
-vi.mock('node:fs', () => ({
-  readFileSync: mockReadFileSync,
-}));
-
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createRuntimeCommerceConfiguration, readCommerceConfig } from './lib/commerce/config';
 
-function makeConfig(overrides: Record<string, string> = {}): Record<string, { VALUE: string }> {
-  return Object.fromEntries(
-    Object.entries({
-      GODADDY_OAUTH_CLIENT_ID: 'client-1',
-      GODADDY_OAUTH_CLIENT_SECRET: 'secret-1',
-      GODADDY_STORE_ID: 'store-1',
-      GODADDY_CHANNEL_ID: 'channel-1',
-      GODADDY_API_BASE_URL: 'https://api.godaddy.com',
-      GODADDY_CURRENCY_CODE: 'USD',
-      ...overrides,
-    }).map(([key, value]) => [key, { VALUE: value }]),
-  );
+function environment(): NodeJS.ProcessEnv {
+  return {
+    GODADDY_OAUTH_CLIENT_ID: 'client-1',
+    GODADDY_OAUTH_CLIENT_SECRET: 'secret-1',
+    GODADDY_STORE_ID: 'store-1',
+    GODADDY_CHANNEL_ID: 'channel-1',
+    GODADDY_CURRENCY_CODE: 'USD',
+  };
 }
 
-describe('Commerce runtime configuration', () => {
-  let currentConfig: Record<string, { VALUE: string }>;
-  let dotEnvContent: string;
+afterEach((): void => {
+  vi.unstubAllEnvs();
+});
 
-  beforeEach((): void => {
-    vi.clearAllMocks();
-    currentConfig = makeConfig();
-    dotEnvContent = '';
-    mockReadFileSync.mockImplementation((path: string): string => {
-      if (path === '/local/config.json') return JSON.stringify(currentConfig);
-      if (path === '.env') return dotEnvContent;
-      throw new Error(`ENOENT: ${path}`);
+describe('Commerce runtime configuration', () => {
+  it('defaults to production and does not select an API origin from environment variables', (): void => {
+    const config = readCommerceConfig({
+      environment: { ...environment(), GODADDY_API_BASE_URL: 'https://api.example.com' },
+    });
+    expect(config.apiBaseUrl).toBe('https://api.godaddy.com');
+    expect(config.clientSecret).toBe('secret-1');
+    expect(config).not.toHaveProperty('sourceApp');
+    expect(config).not.toHaveProperty('owner');
+  });
+
+  it('reads process.env when no environment is supplied', (): void => {
+    for (const [key, value] of Object.entries(environment())) vi.stubEnv(key, value);
+    expect(createRuntimeCommerceConfiguration().read()).toMatchObject({
+      storeId: 'store-1',
+      apiBaseUrl: 'https://api.godaddy.com',
     });
   });
 
-  it('rereads /local/config.json in the same process', (): void => {
-    expect(readCommerceConfig({ environment: {} }).storeId).toBe('store-1');
-    currentConfig = makeConfig({ GODADDY_STORE_ID: 'store-2' });
-    expect(readCommerceConfig({ environment: {} }).storeId).toBe('store-2');
+  it('rereads host environment values in the same process', (): void => {
+    const values = environment();
+    const configuration = createRuntimeCommerceConfiguration({ environment: values });
+    expect(configuration.read().storeId).toBe('store-1');
+    values.GODADDY_STORE_ID = 'store-2';
+    expect(configuration.read().storeId).toBe('store-2');
   });
 
-  it('keeps OAuth credentials restricted to platform configuration', (): void => {
-    delete currentConfig.GODADDY_OAUTH_CLIENT_SECRET;
-    expect((): void => {
-      readCommerceConfig({ environment: { GODADDY_OAUTH_CLIENT_SECRET: 'public-secret' } });
-    }).toThrow('Commerce config: GODADDY_OAUTH_CLIENT_SECRET is missing.');
+  it('accepts an explicit host-owned API origin and attribution', (): void => {
+    const configuration = createRuntimeCommerceConfiguration({
+      environment: environment(),
+      apiBaseUrl: 'https://api.example.com/',
+      sourceApp: 'merchant-site',
+      owner: 'merchant-orders',
+    });
+    expect(configuration.read()).toMatchObject({
+      apiBaseUrl: 'https://api.example.com',
+      sourceApp: 'merchant-site',
+      owner: 'merchant-orders',
+    });
   });
 
-  it('uses platform values before environment and dotenv runtime fallbacks', (): void => {
-    dotEnvContent = 'GODADDY_STORE_ID=dotenv-store\n';
-    const result = readCommerceConfig({ environment: { GODADDY_STORE_ID: 'process-store' } });
-    expect(result.storeId).toBe('store-1');
+  it.each([
+    'not a URL',
+    'http://api.example.com',
+    'https://user:secret@api.example.com',
+    'https://api.example.com/path',
+    'https://api.example.com?key=value',
+    'https://api.example.com#fragment',
+  ])('rejects an invalid API origin: %s', (apiBaseUrl): void => {
+    expect(() => readCommerceConfig({ environment: environment(), apiBaseUrl })).toThrow(
+      'apiBaseUrl must be',
+    );
   });
 
-  it('rejects API origins outside the trusted GoDaddy set', (): void => {
-    currentConfig = makeConfig({ GODADDY_API_BASE_URL: 'https://api.godaddy.com.evil.test' });
-    expect((): void => {
-      readCommerceConfig({ environment: {} });
-    }).toThrow('Commerce config: GODADDY_API_BASE_URL must be a trusted GoDaddy API origin.');
+  it.each(Object.keys(environment()))('requires the server configuration value %s', (key): void => {
+    const values = environment();
+    delete values[key];
+    expect(() => readCommerceConfig({ environment: values })).toThrow(`${key} is missing`);
   });
 
-  it('reads checkout flags from the runtime contract', (): void => {
-    currentConfig.GODADDY_CHECKOUT_CONFIGURATION = {
-      VALUE: JSON.stringify({
-        version: 1,
-        enablePromotionCodes: true,
-        enableTaxCollection: false,
-        enableShipping: true,
-        shipping: { originAddressConfigured: true, originAddressContractVersion: 1 },
-      }),
-    };
-    expect(createRuntimeCommerceConfiguration({ environment: {} }).readCheckout()).toMatchObject({
+  it('reads checkout flags and API shipping options', (): void => {
+    const values = environment();
+    const configuration = createRuntimeCommerceConfiguration({ environment: values });
+    expect(configuration.readCheckout()).toEqual({
+      enablePromotionCodes: false,
+      enableTaxCollection: false,
+      enableShipping: false,
+    });
+    values.GODADDY_CHECKOUT_CONFIGURATION = JSON.stringify({
       enablePromotionCodes: true,
       enableTaxCollection: false,
       enableShipping: true,
-      shipping: { originAddressConfigured: true, originAddressContractVersion: 1 },
+      shipping: { fulfillmentLocationId: 'location-1' },
+    });
+    expect(configuration.readCheckout()).toEqual({
+      enablePromotionCodes: true,
+      enableTaxCollection: false,
+      enableShipping: true,
+      shipping: { fulfillmentLocationId: 'location-1' },
     });
   });
 
-  it('rejects malformed checkout flags instead of silently changing checkout', (): void => {
-    currentConfig.GODADDY_CHECKOUT_CONFIGURATION = { VALUE: '{bad json' };
-    expect((): void => {
-      createRuntimeCommerceConfiguration({ environment: {} }).readCheckout();
-    }).toThrow('Commerce config: GODADDY_CHECKOUT_CONFIGURATION must be valid JSON.');
-  });
+  it.each(['{bad json', 'null', '{"enableShipping":true}'])(
+    'rejects malformed checkout configuration: %s',
+    (raw): void => {
+      expect(() =>
+        createRuntimeCommerceConfiguration({
+          environment: { ...environment(), GODADDY_CHECKOUT_CONFIGURATION: raw },
+        }).readCheckout(),
+      ).toThrow('Commerce config: GODADDY_CHECKOUT_CONFIGURATION');
+    },
+  );
 });

@@ -1,6 +1,6 @@
 # Independent commerce storefront example
 
-This React Router application consumes the compiled `@godaddy/commerce-storefront` package and its shipped CSS. It has no app-builder runtime or Tailwind dependency/configuration.
+This React Router application consumes the compiled `@godaddy/commerce-storefront` package and its shipped CSS. It runs as a standalone application without Tailwind configuration.
 
 Run from the repository root with Node 24:
 

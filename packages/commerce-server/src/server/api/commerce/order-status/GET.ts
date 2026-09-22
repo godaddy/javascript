@@ -2,9 +2,9 @@
  * GET /api/commerce/order-status?orderId=...
  *
  * Thin HTTP wrapper around `getOrderStatus()` in
- * `lib/commerce/get-order-status.ts`. The browser may call this route to poll
- * payment status after checkout. Other server-side code in the same app (e.g.
- * an appointment-booking handler in `GoDaddyCommerceProvider`) should NOT
+ * `lib/commerce/get-order-status.ts`. The browser may call this route to read
+ * order data after checkout. Other server-side code in the same app (e.g.
+ * an appointment-booking handler in a payment adapter) should NOT
  * loopback-fetch this endpoint; import `getOrderStatus` from the lib module
  * and call it in-process so the inbound request's auth context isn't stripped.
  *
@@ -12,8 +12,7 @@
  *   orderId  - GoDaddy draft order id (required)
  *
  * Response: { success: true, order: CommerceOrderStatus }
- *   order.status is the raw string from GoDaddy (e.g. "PAID", "PENDING").
- *   Client code should treat it case-insensitively.
+ *   order.status is 'unknown'; this API does not confirm settled payment.
  */
 import type { Request, Response } from 'express';
 

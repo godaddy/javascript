@@ -2,7 +2,7 @@
 
 `@godaddy/commerce-storefront` provides complete React storefront templates: a catalog, product details with variant selection, a shared cart, and a cart drawer. Applications import compiled components instead of copying and maintaining their implementation.
 
-This is an opinionated package for React applications that use React Router 7 or 8.3+, TanStack Query 5, and the documented same-origin Commerce API. It does not require app-builder, a GoDaddy hosting runtime, Tailwind in the consuming app, or the web-component commerce package.
+This is an opinionated package for React applications that use React Router 7 or 8.3+, TanStack Query 5, and the documented same-origin Commerce API. It works with the host application’s router and query provider and does not require Tailwind configuration.
 
 ## Installation
 
@@ -90,7 +90,7 @@ The first release uses English UI text and `en-US` currency formatting. Catalog 
 
 The package supports React Router 7 and React Router 8.3 or later in the 8.x series. The host still owns the router and query client; no integration API changes are needed between these versions.
 
-The package build, typecheck and 21 behavior/artifact tests passed with the app-builder dependency minimums: React Router 8.3.0, React/React DOM 19.2.7, and TanStack Query 5.95.2. The repository example also validates React Router 7. Follow each router version's own React and browser requirements.
+The repository example uses React Router 7. Follow each router version's own React and browser requirements.
 
 ## Components and hooks
 

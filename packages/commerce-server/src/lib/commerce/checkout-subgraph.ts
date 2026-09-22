@@ -14,8 +14,6 @@
 
 import type { Money } from './gql';
 
-export const AAB_CHECKOUT_SOURCE_APP = 'airo.ai.builder';
-export const AAB_CHECKOUT_OWNER = 'urn:com.godaddy:airo.commerce.order';
 /**
  * The hosted checkout page will not render a card form without this. GDC's
  * checkout GraphQL accepts a session with no payment methods and returns 200,
@@ -23,7 +21,7 @@ export const AAB_CHECKOUT_OWNER = 'urn:com.godaddy:airo.commerce.order';
  * payment methods available" with no error anywhere in the request/response
  * cycle. Do not remove this while debugging an unrelated checkout issue.
  */
-export const AAB_CHECKOUT_DEFAULT_PAYMENT_METHODS: CheckoutSessionPaymentMethodsInput = {
+export const DEFAULT_CHECKOUT_PAYMENT_METHODS: CheckoutSessionPaymentMethodsInput = {
   card: {
     processor: 'godaddy',
     checkoutTypes: ['standard'],
@@ -263,14 +261,8 @@ export interface NonCatalogCheckoutInput {
 }
 
 export type CheckoutSessionOverrides = Partial<
-  Omit<
-    CreateCheckoutSessionInput,
-    'storeId' | 'returnUrl' | 'successUrl' | 'draftOrderId' | 'lineItems' | 'sourceApp' | 'owner'
-  >
-> & {
-  sourceApp?: never;
-  owner?: never;
-};
+  Omit<CreateCheckoutSessionInput, 'storeId' | 'returnUrl' | 'successUrl' | 'draftOrderId' | 'lineItems'>
+>;
 
 function stripUndefined<T extends Record<string, unknown>>(value: T): Partial<T> {
   return Object.fromEntries(
@@ -288,15 +280,12 @@ function applyCheckoutDefaults(
     ...definedOverrides,
   };
 
-  result.sourceApp = AAB_CHECKOUT_SOURCE_APP;
-  result.owner = AAB_CHECKOUT_OWNER;
-
   // Backstop only — every caller in this file now sends paymentMethods
-  // explicitly (see AAB_CHECKOUT_DEFAULT_PAYMENT_METHODS above). Keep this for
+  // explicitly (see DEFAULT_CHECKOUT_PAYMENT_METHODS above). Keep this for
   // any other caller of these builders; do not treat it as the primary source
   // of the default.
   if (result.paymentMethods === undefined) {
-    result.paymentMethods = AAB_CHECKOUT_DEFAULT_PAYMENT_METHODS;
+    result.paymentMethods = DEFAULT_CHECKOUT_PAYMENT_METHODS;
   }
 
   if (result.enablePaymentMethodCollection === undefined) {
@@ -335,9 +324,9 @@ export function commerceApiEndpoint({ apiBaseUrl }: CommerceApiEndpointInput): s
 }
 
 export function checkoutGraphqlEndpoint({ apiBaseUrl }: CheckoutEndpointInput): string {
-  // Sibling subdomain: api.dev-godaddy.com → checkout.commerce.api.dev-godaddy.com
-  const { hostname, protocol } = new URL(apiBaseUrl);
-  return `${protocol}//checkout.commerce.${hostname}`;
+  // Checkout uses a sibling subdomain of the configured API origin.
+  const { host, protocol } = new URL(apiBaseUrl);
+  return `${protocol}//checkout.commerce.${host}`;
 }
 
 export function authorizationHeaders({ accessToken }: AuthorizationHeadersInput): HeadersInit {

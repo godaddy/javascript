@@ -4,7 +4,7 @@
  * Queries the GoDaddy order storefront subgraph for the status of a draft
  * order and normalises the result into a flat shape suitable for both the
  * `/api/commerce/order-status` HTTP route and any in-process server caller
- * (e.g. `GoDaddyCommerceProvider`).
+ * (e.g. a payment adapter).
  *
  * Uses storefront headers (`X-Store-ID` / `X-Client-ID`) — the same auth
  * path as the cart GET routes. No OAuth Bearer token is required.
