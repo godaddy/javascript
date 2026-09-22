@@ -17,10 +17,10 @@ import { PaymentMethodType } from '@/types';
 export function SquareCreditCardCheckoutButton() {
   const { t } = useGoDaddyContext();
   const { card, isLoading } = useSquare();
-  const { squarePaymentRequest, buildPaymentRequestsFromOrder } =
-    useBuildPaymentRequest();
+  const { buildPaymentRequestsFromOrder } = useBuildPaymentRequest();
   const confirmCheckout = useConfirmCheckout();
-  const { setCheckoutErrors, isConfirmingCheckout } = useCheckoutContext();
+  const { session, setCheckoutErrors, isConfirmingCheckout } =
+    useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const flushCheckoutSync = useFlushCheckoutSync();
   const form = useFormContext();
@@ -44,9 +44,15 @@ export function SquareCreditCardCheckoutButton() {
     const { latestOrder } = await flushCheckoutSync({
       includeCurrentFormDiff: true,
     });
-    const request = latestOrder
-      ? buildPaymentRequestsFromOrder(latestOrder).squarePaymentRequest
-      : squarePaymentRequest;
+    // The buyer can change the tip across the awaited `card.tokenize`, so
+    // snapshot it, build the verified amount from it, and confirm that same
+    // value. `null` means tips are off, keeping a zero tip distinct from none.
+    const tipAmount = session?.enableTips
+      ? (form.getValues('tipAmount') ?? 0)
+      : null;
+    const request = buildPaymentRequestsFromOrder(
+      latestOrder ?? undefined
+    ).squarePaymentRequest;
 
     try {
       setIsSquareDisabled(true);
@@ -57,6 +63,7 @@ export function SquareCreditCardCheckoutButton() {
           paymentToken: cardToken.token,
           paymentType: PaymentMethodType.CREDIT_CARD,
           paymentProvider: PaymentProvider.SQUARE,
+          ...(tipAmount === null ? {} : { tipAmount }),
         });
       }
     } catch (err: unknown) {
@@ -72,7 +79,7 @@ export function SquareCreditCardCheckoutButton() {
     flushCheckoutSync,
     card,
     confirmCheckout.mutateAsync,
-    squarePaymentRequest,
+    session?.enableTips,
     setCheckoutErrors,
   ]);
 
