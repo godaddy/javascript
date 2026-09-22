@@ -16,6 +16,18 @@ export const GetCheckoutSessionQuery = graphql(`
             storeName
             environment
             enableTips
+            tips {
+                default {
+                    amounts
+                    percentages
+                }
+                thresholds {
+                    minSubtotal
+                    maxSubtotal
+                    amounts
+                    percentages
+                }
+            }
             enabledLocales
             enableSurcharge
             enableLocalPickup

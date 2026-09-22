@@ -34,8 +34,7 @@ export function PazeCheckoutButton() {
   const [isCollectLoading, setIsCollectLoading] = useState(true);
   const [error, setError] = useState('');
   const { data: totals } = useDraftOrderTotals();
-  const { poyntStandardRequest, buildPaymentRequestsFromOrder } =
-    useBuildPaymentRequest();
+  const { buildPaymentRequestsFromOrder } = useBuildPaymentRequest();
 
   const currencyCode = totals?.total?.currencyCode || 'USD';
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
@@ -51,8 +50,11 @@ export function PazeCheckoutButton() {
   // Use a ref so the SDK's stale onClick closure always calls the latest handler
   const handlePazeClickRef = useRef<() => Promise<void>>(async () => undefined);
 
+  // Confirm the tip the sheet was opened for, not the current form value.
+  const authorizedTipAmount = useRef<number | null>(null);
+
   const handlePazeClick = useCallback(async () => {
-    if (!poyntStandardRequest || isDisabled) return;
+    if (isDisabled) return;
 
     const valid = await form.trigger();
     if (!valid) {
@@ -66,9 +68,13 @@ export function PazeCheckoutButton() {
     const { latestOrder } = await flushCheckoutSync({
       includeCurrentFormDiff: true,
     });
-    const request = latestOrder
-      ? buildPaymentRequestsFromOrder(latestOrder).poyntStandardRequest
-      : poyntStandardRequest;
+    // Paired with the request below; `null` means tips off, unlike a zero tip.
+    authorizedTipAmount.current = session?.enableTips
+      ? (form.getValues('tipAmount') ?? 0)
+      : null;
+    const request = buildPaymentRequestsFromOrder(
+      latestOrder ?? undefined
+    ).poyntStandardRequest;
 
     setCheckoutErrors(undefined);
 
@@ -83,12 +89,12 @@ export function PazeCheckoutButton() {
       },
     });
   }, [
-    poyntStandardRequest,
     buildPaymentRequestsFromOrder,
     flushCheckoutSync,
     setCheckoutErrors,
     form,
     isDisabled,
+    session?.enableTips,
   ]);
 
   // Keep ref in sync so the SDK's stale onClick closure always calls the latest handler
@@ -98,7 +104,6 @@ export function PazeCheckoutButton() {
   useEffect(() => {
     if (
       !collect.current &&
-      !!applicationId?.trim() &&
       businessId &&
       isCollectLoading &&
       isPoyntLoaded &&
@@ -137,7 +142,6 @@ export function PazeCheckoutButton() {
   useEffect(() => {
     if (
       !isPoyntLoaded ||
-      !applicationId?.trim() ||
       !businessId ||
       !isCollectLoading ||
       !collect.current ||
@@ -193,6 +197,9 @@ export function PazeCheckoutButton() {
           paymentToken: nonce,
           paymentType: PaymentMethodType.CREDIT_CARD,
           paymentProvider: PaymentProvider.POYNT,
+          ...(authorizedTipAmount.current === null
+            ? {}
+            : { tipAmount: authorizedTipAmount.current }),
         };
 
         try {

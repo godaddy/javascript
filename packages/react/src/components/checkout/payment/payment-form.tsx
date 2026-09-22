@@ -218,7 +218,6 @@ export function PaymentForm(
   useLayoutEffect(() => {
     if (
       !collect.current &&
-      !!applicationId?.trim() &&
       businessId &&
       isPoyntLoaded &&
       countryCode &&
@@ -258,7 +257,7 @@ export function PaymentForm(
     isPoyntLoaded,
   ]);
 
-  const hasGoDaddyAppId = !!applicationId?.trim();
+  const hasGoDaddyBusinessId = !!businessId;
 
   const availablePaymentMethods = React.useMemo(() => {
     if (!configuredPaymentMethods) return [];
@@ -271,21 +270,19 @@ export function PaymentForm(
         Array.isArray(method.checkoutTypes) &&
         method.checkoutTypes.includes(CheckoutType.STANDARD);
 
-      // GoDaddy CC/ACH require a resolvable application id (default config or
-      // gopay_override). Without it, LazyPaymentMethodRenderer returns null
-      // and the tab would render an empty form/button area.
+      // Match the business ID requirement used by Collect and its providers.
       if (
         key === PaymentMethodType.CREDIT_CARD &&
         method?.processor === PaymentProvider.GODADDY
       ) {
-        return baseCheck && hasGoDaddyAppId;
+        return baseCheck && hasGoDaddyBusinessId;
       }
 
       if (
         key === PaymentMethodType.ACH &&
         method?.processor === PaymentProvider.GODADDY
       ) {
-        return baseCheck && hasGoDaddyAppId;
+        return baseCheck && hasGoDaddyBusinessId;
       }
 
       // PayPal requires public SDK configuration (clientId at minimum) to
@@ -324,7 +321,7 @@ export function PaymentForm(
     });
   }, [
     configuredPaymentMethods,
-    hasGoDaddyAppId,
+    hasGoDaddyBusinessId,
     pazeSupported,
     applePaySupported,
     googlePaySupported,

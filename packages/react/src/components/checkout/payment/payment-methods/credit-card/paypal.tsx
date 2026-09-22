@@ -6,7 +6,7 @@ import {
   usePayPalCardFields,
   usePayPalScriptReducer,
 } from '@paypal/react-paypal-js';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { usePayPalProvider } from '@/components/checkout/payment/utils/paypal-provider';
 import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
@@ -108,6 +108,9 @@ export function PayPalCreditCardForm() {
 
   const confirmCheckout = useConfirmCheckout();
   const authorizeCheckout = useAuthorizeCheckout();
+  // Tokenisation and 3DS sit between `createOrder` and `onApprove`, so confirm
+  // sends the tip that was authorized rather than the current form value.
+  const authorizedTipAmount = useRef<number | null>(null);
 
   if (!paypalConfig?.clientId) {
     return (
@@ -125,6 +128,7 @@ export function PayPalCreditCardForm() {
           paymentProvider: PaymentProvider.PAYPAL,
           paymentToken: '',
         });
+        authorizedTipAmount.current = result?.authorizedTipAmount ?? null;
         return result?.transactionRefNum ?? '';
       }}
       onApprove={async data => {
@@ -133,6 +137,9 @@ export function PayPalCreditCardForm() {
             paymentToken: data.orderID,
             paymentType: PaymentMethodType.CREDIT_CARD,
             paymentProvider: PaymentProvider.PAYPAL,
+            ...(authorizedTipAmount.current === null
+              ? {}
+              : { tipAmount: authorizedTipAmount.current }),
           });
         } catch (error) {
           if (error instanceof GraphQLErrorWithCodes) {

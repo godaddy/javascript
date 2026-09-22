@@ -24,7 +24,7 @@ import {
 //   * PaymentForm filters wallet methods on a `supportWalletPayments` check
 //     from the Poynt SDK. Visibility is therefore gated on BOTH the session
 //     config AND the SDK's support response.
-//   * PaymentForm filters GoDaddy card/ACH on a resolvable application id.
+//   * PaymentForm filters GoDaddy card/ACH on a resolvable business id.
 //   * The accordion lists configured regular methods with labels/copy.
 //
 // What we CANNOT cover:
@@ -35,9 +35,74 @@ import {
 // ----------------------------------------------------------------------------
 
 describe('Payment method gating', () => {
-  it('filters GoDaddy card and ACH when no application id can be resolved', async () => {
+  it.each([
+    { businessId: 'business-1' },
+    { businessId: 'business-1', appId: '' },
+    undefined,
+  ])(
+    'loads GoDaddy card and ACH without an app ID: %j',
+    async godaddyPaymentsConfig => {
+      const mount = vi.spyOn(MockTokenizeJs.prototype, 'mount');
+      const tokenizeConfigs: unknown[] = [];
+      class RecordingTokenizeJs extends MockTokenizeJs {
+        constructor(config: unknown) {
+          super();
+          tokenizeConfigs.push(config);
+        }
+      }
+      vi.stubGlobal('TokenizeJs', RecordingTokenizeJs);
+
+      const { user } = renderCheckout({
+        sessionOverrides: {
+          paymentMethods: {
+            card: {
+              processor: PaymentProvider.GODADDY,
+              checkoutTypes: ['standard'],
+            },
+            ach: {
+              processor: PaymentProvider.GODADDY,
+              checkoutTypes: ['standard'],
+            },
+          },
+          experimental_rules: {
+            gopay_override: {
+              enabled: false,
+              goPayAppId: '',
+            },
+          },
+        },
+        checkoutProps: {
+          godaddyPaymentsConfig,
+        },
+      });
+      await waitForCheckoutReady();
+
+      expect(
+        await screen.findByRole('button', { name: /credit or debit card/i })
+      ).toBeInTheDocument();
+      await waitFor(() => expect(mount).toHaveBeenCalled());
+      expect(tokenizeConfigs[0]).toMatchObject({
+        businessId: 'business-1',
+        applicationId: godaddyPaymentsConfig?.appId,
+      });
+
+      mount.mockClear();
+      await user.click(screen.getByRole('button', { name: /bank account/i }));
+      await waitFor(() => expect(mount).toHaveBeenCalled());
+      expect(tokenizeConfigs.at(-1)).toMatchObject({
+        businessId: 'business-1',
+        applicationId: godaddyPaymentsConfig?.appId,
+      });
+      expect(
+        screen.queryByText('No payment methods available')
+      ).not.toBeInTheDocument();
+    }
+  );
+
+  it('filters GoDaddy card and ACH when no business ID can be resolved', async () => {
     renderCheckout({
       sessionOverrides: {
+        businessId: '',
         paymentMethods: {
           card: {
             processor: PaymentProvider.GODADDY,
@@ -48,31 +113,17 @@ describe('Payment method gating', () => {
             checkoutTypes: ['standard'],
           },
         },
-        experimental_rules: {
-          gopay_override: {
-            enabled: false,
-            goPayAppId: '',
-          },
-        },
       },
-      checkoutProps: {
-        godaddyPaymentsConfig: { businessId: 'business-1', appId: '' },
-      },
+      checkoutProps: { godaddyPaymentsConfig: { appId: 'app-1' } },
     });
     await waitForCheckoutReady();
-
     expect(
       screen.getByText('No payment methods available')
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /credit or debit card/i })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /bank account/i })
-    ).not.toBeInTheDocument();
+    expect(getTokenizeInstances()).toHaveLength(0);
   });
 
-  it('uses gopay_override to re-enable GoDaddy card and ACH without a configured app id', async () => {
+  it('passes the gopay_override application ID to Collect', async () => {
     const tokenizeArgs: unknown[][] = [];
     class RecordingTokenizeJs extends MockTokenizeJs {
       constructor(...args: unknown[]) {
@@ -233,7 +284,7 @@ describe('Standard wallet payment methods', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows Apple Pay in the accordion when configured AND the SDK reports support', async () => {
+  it('shows Apple Pay without an app ID when the SDK reports support', async () => {
     renderCheckout({
       sessionOverrides: {
         paymentMethods: {
@@ -247,6 +298,7 @@ describe('Standard wallet payment methods', () => {
           },
         },
       },
+      checkoutProps: { godaddyPaymentsConfig: undefined },
       apiOverrides: {
         walletSupport: { applePay: true },
       },
