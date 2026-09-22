@@ -31,14 +31,20 @@ function isCartNotFoundError(error: unknown): boolean {
     return false;
   }
 
-  if (error.status === 404 || error.statuses.includes(404)) {
-    return true;
-  }
+  // A transport failure or an unrelated GraphQL error must not erase a saved cart.
+  // A bare HTTP 404 can also mean the upstream endpoint itself is unavailable.
+  const isFailure = (status: number | undefined): boolean =>
+    status !== undefined && status >= 400 && status !== 404 && status !== 410;
+  if (isFailure(error.status) || error.errors.length === 0) return false;
 
-  return (
-    error.codes.some((code) => /NOT[_-]?FOUND|ORDER[_-]?NOT[_-]?FOUND/i.test(code)) ||
-    error.messages.some((message) => /not found|expired/i.test(message))
-  );
+  return error.errors.every(({ code, message, status }): boolean => {
+    if (isFailure(status)) return false;
+    if (code && /^(?:DRAFT[_-]?)?(?:ORDER|CART)[_-]?(?:NOT[_-]?FOUND|EXPIRED)$/i.test(code)) return true;
+    if (code && !/^(?:NOT[_-]?FOUND|EXPIRED)$/i.test(code)) return false;
+    return /\b(?:cart|(?:draft[ -])?order)\s+(?:(?:is|was|has)\s+)?(?:not found|expired)\b/i.test(
+      message ?? '',
+    );
+  });
 }
 
 export default async function handler(req: Request, res: Response): Promise<void> {

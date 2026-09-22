@@ -4,7 +4,7 @@ import express from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCommerceCartScope } from './lib/commerce/cart-scope';
 import { createCheckoutSession } from './lib/commerce/create-checkout-session';
-import { gqlRequest } from './lib/commerce/gql';
+import { GraphQLErrorWithCodes, gqlRequest } from './lib/commerce/gql';
 import { getCartOrderQuery, orderStatusQuery } from './lib/commerce/order-subgraph';
 import { createCommerceCatalogRouter, createGoDaddyPaymentsRouter } from './router';
 import applyDiscount from './server/api/commerce/cart/[id]/discounts/POST';
@@ -19,10 +19,10 @@ import readProduct from './server/api/commerce/products/[id]/GET';
 import readProducts from './server/api/commerce/products/GET';
 import readSku from './server/api/commerce/skus/[id]/GET';
 
-vi.mock('./lib/commerce/gql', () => ({
+vi.mock('./lib/commerce/gql', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./lib/commerce/gql')>()),
   gqlRequest: vi.fn(),
   storefrontHeaders: vi.fn(() => ({})),
-  GraphQLErrorWithCodes: class extends Error {},
 }));
 vi.mock('./lib/commerce/create-checkout-session', () => ({
   createCheckoutSession: vi.fn(),
@@ -166,10 +166,14 @@ describe('Commerce scoped routes', () => {
     ['remove', deleteItem],
     ['discount', applyDiscount],
     ['checkout', checkout],
+    ['products', readProducts],
+    ['product', readProduct],
+    ['sku', readSku],
   ] as const)('blocks a stale binding before upstream %s calls', async (_name, handler): Promise<void> => {
     const res = response();
     const req = {
       headers: { 'x-commerce-scope': 'old-binding' },
+      query: {},
       params: { id: 'cart-1', itemId: 'item-1' },
       body: {
         skuId: 'sku-1',
@@ -184,6 +188,97 @@ describe('Commerce scoped routes', () => {
     expect(res.status).toHaveBeenCalledWith(409);
     expect(gqlRequest).not.toHaveBeenCalled();
     expect(createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it.each([readProducts, readProduct, readSku])(
+    'accepts current and omitted catalog scopes',
+    async (handler): Promise<void> => {
+      for (const scope of [undefined, getCommerceCartScope(binding)]) {
+        const res = response();
+        vi.mocked(gqlRequest).mockResolvedValueOnce({});
+        await handler(
+          {
+            headers: { 'x-commerce-scope': scope },
+            params: { id: 'product-1' },
+            query: {},
+          } as unknown as Request,
+          res as unknown as Response,
+        );
+        expect(res.json).toHaveBeenCalledWith({});
+        expect(res.status).not.toHaveBeenCalled();
+      }
+      expect(gqlRequest).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it('updates only the URL cart/item and forwards only supported body fields', async (): Promise<void> => {
+    const res = response();
+    const fields = {
+      name: 'Updated product',
+      quantity: 2,
+      fulfillmentMode: 'NONE',
+      status: 'DRAFT',
+      type: 'PRODUCT',
+      details: { sku: 'sku-1' },
+    };
+    const cart = { id: 'cart-1', lineItems: [{ id: 'item-1', ...fields }] };
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ updateLineItemById: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: cart });
+    await updateItem(
+      {
+        headers: {},
+        params: { id: 'cart-1', itemId: 'item-1' },
+        body: { ...fields, id: 'other-item', orderId: 'other-cart', unitAmount: { value: 1 } },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: { id: 'item-1', orderId: 'cart-1', ...fields },
+    });
+    expect(vi.mocked(gqlRequest).mock.calls[1]?.[0].variables).toEqual({ id: 'cart-1' });
+    expect(res.json).toHaveBeenCalledWith({ cart });
+  });
+
+  it.each([
+    new GraphQLErrorWithCodes([{ code: 'UNAUTHENTICATED', message: 'Authentication token expired' }], 401),
+    new GraphQLErrorWithCodes([
+      { code: 'UNAUTHENTICATED', message: 'Authentication token expired', status: 401 },
+    ]),
+    new GraphQLErrorWithCodes([{ message: 'Session expired' }]),
+    new GraphQLErrorWithCodes([{ code: 'NOT_FOUND', message: 'Store not found' }]),
+    new GraphQLErrorWithCodes([{ message: 'GraphQL endpoint not found', status: 404 }], 404),
+    new GraphQLErrorWithCodes([{ code: 'ORDER_EXPIRED', message: 'Order expired' }], 503),
+    new GraphQLErrorWithCodes([
+      { code: 'ORDER_NOT_FOUND', message: 'Order not found' },
+      { code: 'FORBIDDEN', message: 'Access denied', status: 403 },
+    ]),
+  ])('preserves the cart on unrelated upstream failures: %s', async (error): Promise<void> => {
+    const res = response();
+    vi.mocked(gqlRequest).mockRejectedValueOnce(error);
+    await readCart(
+      { headers: {}, params: { id: 'cart-1' } } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load cart', message: error.message });
+  });
+
+  it.each([
+    new GraphQLErrorWithCodes([{ code: 'ORDER_NOT_FOUND' }], 404),
+    new GraphQLErrorWithCodes([{ code: 'CART_EXPIRED' }], 410),
+    new GraphQLErrorWithCodes([{ code: 'DRAFT_ORDER_NOT_FOUND' }]),
+    new GraphQLErrorWithCodes([{ code: 'NOT_FOUND', message: 'Order not found: cart-1' }]),
+    new GraphQLErrorWithCodes([{ message: 'Cart has expired' }]),
+  ])('clears a missing or expired cart: %s', async (error): Promise<void> => {
+    const res = response();
+    vi.mocked(gqlRequest).mockRejectedValueOnce(error);
+    await readCart(
+      { headers: {}, params: { id: 'cart-1' } } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ cart: null });
   });
 
   it.each([undefined, getCommerceCartScope(binding)])(

@@ -8,12 +8,13 @@
  * Response: { sku: SKU | null }
  */
 import type { Request, Response } from 'express';
+import { validateCommerceCartScope } from '../../../../../lib/commerce/cart-scope';
 import {
   catalogStorefrontEndpoint,
   type SkuResult,
   type SkuVariables,
 } from '../../../../../lib/commerce/catalog-subgraph';
-import { readCommerceConfigForResponse } from '../../../../../lib/commerce/config';
+import { type CommerceConfig, readCommerceConfigForResponse } from '../../../../../lib/commerce/config';
 import { gqlRequest, storefrontHeaders } from '../../../../../lib/commerce/gql';
 
 const skuQuery = `
@@ -81,7 +82,9 @@ export default async function handler(req: Request, res: Response): Promise<void
       return;
     }
 
-    const { storeId, clientId, apiBaseUrl } = readCommerceConfigForResponse(res);
+    const config: CommerceConfig = readCommerceConfigForResponse(res);
+    if (!validateCommerceCartScope(req, res, config)) return;
+    const { storeId, clientId, apiBaseUrl } = config;
 
     const data = await gqlRequest<SkuResult, SkuVariables>({
       endpoint: catalogStorefrontEndpoint({ storeId, apiBaseUrl }),

@@ -60,7 +60,12 @@ export default async function handler(req: Request, res: Response): Promise<void
         input: {
           id: itemId,
           orderId: cartId,
-          ...body,
+          name: body.name,
+          quantity: body.quantity,
+          fulfillmentMode: body.fulfillmentMode,
+          status: body.status,
+          type: body.type,
+          details: body.details,
         },
       },
       headers,

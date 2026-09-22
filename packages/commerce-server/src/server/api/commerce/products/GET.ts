@@ -18,13 +18,14 @@
  * `data` field. Use the helpers in lib/commerce/catalog-subgraph.ts to extract view-model fields.
  */
 import type { Request, Response } from 'express';
+import { validateCommerceCartScope } from '../../../../lib/commerce/cart-scope';
 import {
   buildSkuGroupsVariables,
   catalogStorefrontEndpoint,
   type SkuGroupsResult,
   type SkuGroupsVariables,
 } from '../../../../lib/commerce/catalog-subgraph';
-import { readCommerceConfigForResponse } from '../../../../lib/commerce/config';
+import { type CommerceConfig, readCommerceConfigForResponse } from '../../../../lib/commerce/config';
 import { gqlRequest, storefrontHeaders } from '../../../../lib/commerce/gql';
 
 // Cards use group pricing/media and SKU identity/inventory for quick-add.
@@ -124,7 +125,9 @@ function asNumber(value: unknown): number | undefined {
 
 export default async function handler(req: Request, res: Response): Promise<void> {
   try {
-    const { storeId, clientId, apiBaseUrl } = readCommerceConfigForResponse(res);
+    const config: CommerceConfig = readCommerceConfigForResponse(res);
+    if (!validateCommerceCartScope(req, res, config)) return;
+    const { storeId, clientId, apiBaseUrl } = config;
 
     const variables = buildSkuGroupsVariables({
       first: asNumber(req.query.first) ?? 24,

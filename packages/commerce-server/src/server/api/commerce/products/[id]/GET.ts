@@ -15,13 +15,14 @@
  * Response: { skuGroup: SKUGroup | null }
  */
 import type { Request, Response } from 'express';
+import { validateCommerceCartScope } from '../../../../../lib/commerce/cart-scope';
 import {
   buildSkuGroupVariables,
   catalogStorefrontEndpoint,
   type SkuGroupResult,
   type SkuGroupVariables,
 } from '../../../../../lib/commerce/catalog-subgraph';
-import { readCommerceConfigForResponse } from '../../../../../lib/commerce/config';
+import { type CommerceConfig, readCommerceConfigForResponse } from '../../../../../lib/commerce/config';
 import { gqlRequest, storefrontHeaders } from '../../../../../lib/commerce/gql';
 
 const skuGroupQuery = `
@@ -125,7 +126,9 @@ export default async function handler(req: Request, res: Response): Promise<void
       return;
     }
 
-    const { storeId, clientId, apiBaseUrl } = readCommerceConfigForResponse(res);
+    const config: CommerceConfig = readCommerceConfigForResponse(res);
+    if (!validateCommerceCartScope(req, res, config)) return;
+    const { storeId, clientId, apiBaseUrl } = config;
 
     const variables = buildSkuGroupVariables({
       productId,
