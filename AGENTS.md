@@ -86,6 +86,14 @@ biome-config-godaddy (packages/biome-config-godaddy)
 - typecheck: tsc --noEmit
 - test: vitest run
 
+@godaddy/commerce-server (packages/commerce-server)
+- build: tsdown
+- typecheck: tsc --noEmit
+- lint: biome check src
+- lint:fix: biome check --write src
+- test: vitest run
+- prepublishOnly: pnpm build
+
 @godaddy/localizations (packages/localizations)
 - dev: tsdown --watch
 - build: tsdown
@@ -129,6 +137,11 @@ Packages (top-level purpose)
   - React component library for checkout flows; integrates with commerce APIs
   - Uses tsdown for TS build and Tailwind CLI v4 for CSS build; Vitest for tests; Vite preview
   - Depends on @godaddy/localizations
+- @godaddy/commerce-storefront
+  - React catalog, product details, and cart components using a same-origin Commerce API
+- @godaddy/commerce-server
+  - Express 5 routers for the storefront API, hosted checkout, and order lookup
+  - Uses tsdown, Vitest, and Biome; usable independently of the storefront package
 - @godaddy/localizations
   - Localized strings for checkout components; TS build via tsdown
 
@@ -283,7 +296,16 @@ E. @godaddy/commerce-storefront
 - Example: examples/commerce-storefront, port 5184, development-only in-memory server; production build needs real API routes.
 - Keep credentials, merchant provisioning and platform configuration out of this client package. No dependency on the separate commerce web-component runtime.
 
-F. @godaddy/localizations
+F. @godaddy/commerce-server
+- Mount `createCommerceRouter()` at `/api/commerce` after `express.json()`. `createCommerceCatalogRouter()` installs config/catalog/cart routes; `createGoDaddyPaymentsRouter()` installs checkout/order-status routes.
+- Hosts can supply `CommerceConfiguration`. The default runtime reader uses `/local/config.json` with `/alloc/config.json` compatibility and environment fallbacks for non-secret binding values; OAuth credentials come from the mounted config only. Keep this package server-only.
+- Exported helpers `createCheckoutSession()` and `getOrderStatus()` support in-process server callers. Order status currently reports `unknown`; neither an order lookup nor a checkout redirect proves payment.
+- Source alias `@/*` maps to `src/*` in TypeScript and Vitest. tsdown resolves it when bundling JavaScript and declarations; consumers need no alias configuration. When changing module resolution, verify a packed consumer outside the workspace.
+- Validate supplied `X-Commerce-Scope` headers before catalog/cart/checkout calls. It guards against stale bindings and is not authorization. Hosts own authentication and authorization.
+- Cart mutations return a refreshed cart. Keep URL cart/item IDs authoritative, allowlist PATCH fields, and only clear carts for explicit missing/expired-order errors; upstream authentication or transport failures must preserve saved carts.
+- Commands: `pnpm --filter @godaddy/commerce-server build`, `typecheck`, `lint`, and `test`. See packages/commerce-server/README.md and packages/commerce-storefront/docs/server-api.md for integration details.
+
+G. @godaddy/localizations
 - Purpose: Localization bundles for checkout UI
 - Structure: src/<locale>.ts with a shared object shape; exported via src/index.ts
 - Scripts: dev/build/typecheck

@@ -53,6 +53,9 @@ This monorepo contains the following packages:
 | [`@godaddy/app-connect`](/packages/app-connect) | Platform integration tools for GoDaddy apps | [![npm](https://img.shields.io/npm/v/@godaddy/app-connect.svg)](https://www.npmjs.com/package/@godaddy/app-connect) |
 | [`@godaddy/react`](/packages/react) | React components and commerce API integration | [![npm](https://img.shields.io/npm/v/@godaddy/react.svg)](https://www.npmjs.com/package/@godaddy/react) |
 | [@godaddy/commerce-storefront](packages/commerce-storefront) | Opinionated React catalog, product, and cart templates; [consumer example](examples/commerce-storefront) | Unreleased |
+| [@godaddy/commerce-server](packages/commerce-server) | Express APIs for Commerce catalog, carts, hosted checkout, and order lookup | Unreleased |
+
+`@godaddy/commerce-server` implements the same-origin API used by `@godaddy/commerce-storefront`. The packages can also be used independently with a custom client or server; see the [server integration guide](packages/commerce-server/README.md) and [storefront API contract](packages/commerce-storefront/docs/server-api.md).
 
 ## Why GoDaddy JavaScript?
 
