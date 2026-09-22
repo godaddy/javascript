@@ -1,6 +1,6 @@
 # Server API contract
 
-The browser calls JSON endpoints under `/api/commerce` on its own origin. The consuming application provides these routes. This package contains no server credentials, platform configuration reader, merchant provisioning, or GraphQL transport.
+The browser calls JSON endpoints under `/api/commerce` on its own origin. The consuming application provides these routes. This browser package contains no server credentials, platform configuration reader, merchant provisioning, or GraphQL transport. Express applications can use the companion `@godaddy/commerce-server` package; other hosts can implement this contract directly.
 
 Server implementations can use GoDaddy Commerce APIs or their existing integration, but must return these shapes and enforce the same purchase rules. Returning a similar-looking GraphQL mutation result is insufficient: cart mutations return a complete refreshed cart.
 

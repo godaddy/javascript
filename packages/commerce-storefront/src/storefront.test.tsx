@@ -274,6 +274,8 @@ describe('shared cart', () => {
     disabled.unmount();
     const enabled = mount(undefined, '/shop', '/order-return');
     await connected(enabled);
+    act(() => enabled.context().setOpen(true));
+    expect(await screen.findByRole('button', { name: 'Proceed to Checkout' })).toBeVisible();
     await act(async () => {
       expect(await enabled.context().checkout()).toBe(false);
     });
@@ -360,6 +362,22 @@ describe('catalog and product selection', () => {
     expect(
       catalogRequests.every((call) => new Headers(call[1]?.headers).get('X-Commerce-Scope') === 'store-one'),
     ).toBe(true);
+  });
+  it('lets a host page own the single catalog h1', async () => {
+    mockApi((path) =>
+      path.endsWith('/config')
+        ? response(configuration)
+        : response({ skuGroups: { edges: [], pageInfo: {} } }),
+    );
+    const view = mount(
+      <main>
+        <h1>Products</h1>
+        <Catalog showHeader={false} />
+      </main>,
+    );
+    await connected(view);
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible();
   });
 });
 

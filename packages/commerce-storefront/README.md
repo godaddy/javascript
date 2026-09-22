@@ -45,7 +45,7 @@ export function App() {
 }
 ```
 
-Use the providers your application already has; do not create another router or query client for this package. Your server must implement the [server API contract](docs/server-api.md) before these components can load products. The host server owns store credentials, pricing validation, inventory enforcement, payment readiness, and checkout sessions.
+Use the providers your application already has; do not create another router or query client for this package. Your server must implement the [server API contract](docs/server-api.md) before these components can load products. Express hosts can mount `@godaddy/commerce-server`; custom servers can implement the contract directly. The host owns store credentials, merchant provisioning, payment readiness, and runtime configuration.
 
 ## Configuration
 
@@ -97,7 +97,7 @@ The package build, typecheck and 21 behavior/artifact tests passed with the app-
 | Export | Purpose |
 | --- | --- |
 | `CommerceStorefront` | Recommended integration: provider and one drawer |
-| `Catalog` | Six products per cursor page, with `title` and `description` props |
+| `Catalog` | Six products per cursor page, with `title`, `description`, and `showHeader` props |
 | `ProductDetails` | Reads `:productId`; validates URL option selections against catalog results |
 | `ProductCard` | Renders one `SKUGroup` with direct add or a product-details link |
 | `CartButton` | Opens the shared drawer and displays item count |
@@ -107,6 +107,8 @@ The package build, typecheck and 21 behavior/artifact tests passed with the app-
 | `CommerceProvider`, `CartDrawer` | Lower-level composition when the recommended wrapper does not fit; mount each once |
 
 The package exports TypeScript catalog/cart response types and selection/summary helpers for custom product layouts. `useCommerce` actions return `Promise<boolean>`: `false` means an operation failed or its connection became stale. Inspect `error` for active-session failures. Do not automatically retry a failed mutation: the server may have committed it before the response failed. `applyDiscount(code)` is available to custom layouts; the default drawer does not render a promotion form.
+
+`Catalog` renders its `title` as an H1 by default. When the host page owns its semantic heading, render that page H1 and pass `showHeader={false}` so the document still has exactly one H1.
 
 ## How it works
 

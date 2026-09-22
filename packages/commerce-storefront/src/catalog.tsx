@@ -105,6 +105,7 @@ function ProductCardContent({ product }: { product: SKUGroup }): ReactElement {
 export interface CatalogProps {
   title?: string;
   description?: string;
+  showHeader?: boolean;
 }
 
 export function Catalog(props: CatalogProps): ReactElement {
@@ -119,6 +120,7 @@ export function Catalog(props: CatalogProps): ReactElement {
 function CatalogContent({
   title = 'Shop all products',
   description = 'Explore the collection and find your favorites.',
+  showHeader = true,
 }: CatalogProps): ReactElement {
   const { config } = useCommerce();
   const [params, setParams] = useSearchParams();
@@ -145,10 +147,12 @@ function CatalogContent({
   const pageInfo = products.data?.skuGroups?.pageInfo;
   return (
     <section>
-      <header className='border-b border-neutral-200 pb-10 pt-4 sm:pb-14 sm:pt-8'>
-        <h1 className='max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl'>{title}</h1>
-        <p className='mt-5 max-w-xl text-base leading-7 sm:text-lg'>{description}</p>
-      </header>
+      {showHeader && (
+        <header className='border-b border-neutral-200 pb-10 pt-4 sm:pb-14 sm:pt-8'>
+          <h1 className='max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl'>{title}</h1>
+          <p className='mt-5 max-w-xl text-base leading-7 sm:text-lg'>{description}</p>
+        </header>
+      )}
       <div className='border-b border-neutral-200 py-6 sm:py-8'>
         <p className='text-sm' role='status'>
           {products.isPending

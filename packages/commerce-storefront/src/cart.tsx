@@ -297,7 +297,7 @@ export function CartDrawer(): ReactElement {
                     aria-busy={checkingOut}
                     onClick={() => void handleAction('checkout', checkout)}
                   >
-                    {checkingOut ? 'Opening checkout…' : 'Continue to checkout'}
+                    {checkingOut ? 'Opening checkout…' : 'Proceed to Checkout'}
                   </button>
                 ) : (
                   <p className='text-sm text-neutral-600'>Checkout is not available yet.</p>
