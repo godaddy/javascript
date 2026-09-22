@@ -3,16 +3,6 @@
 '@godaddy/localizations': patch
 ---
 
-Support Stripe 3DS next actions returned by checkout confirmation while preserving existing payment error behavior.
+Add Stripe 3DS verification support for card and express checkout, with localized payment errors and compatibility with existing checkout error handling.
 
-Guard Stripe submissions during validation, synchronization, and authentication so a duplicate attempt cannot unlock an active payment.
-
-Silently ignore duplicate Stripe submissions and record express payment success only after confirmation completes.
-
-Report Stripe express completion with a generic event and Stripe's payment type instead of labeling every wallet as Apple Pay.
-
-When checkout loads an already-paid order, hide payment controls and redirect to the session's success URL. Show the existing payment-success message when no success URL is configured.
-
-Refresh the order after confirmation failures before allowing another attempt, and redirect paid orders in standalone express checkout as well as standard checkout.
-
-Handle Stripe verification for express wallets and resume the original PaymentIntent while preserving wallet checkout details.
+Improve payment retry handling, prevent duplicate submissions, and recognize already-paid orders. Update express payment tracking to reflect the payment method used and successful checkout completion.

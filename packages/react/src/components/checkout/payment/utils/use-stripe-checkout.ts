@@ -124,8 +124,28 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
           paymentType: string,
           confirm: (token: string) => Promise<unknown>
         ) => {
+          const confirmPayment = async (token: string) => {
+            try {
+              await confirm(token);
+            } catch (error) {
+              // A generic confirmation failure may hide a completed payment.
+              // Only an explicit, unambiguous unpaid result permits replacement.
+              if (
+                error instanceof GraphQLErrorWithCodes &&
+                error.errors.length > 0 &&
+                error.errors.every(
+                  detail =>
+                    detail.code === 'TRANSACTION_PROCESSING_FAILED' &&
+                    detail.extensions?.transactionStatus === 'FAILED'
+                )
+              ) {
+                pendingIntent.current = null;
+              }
+              throw error;
+            }
+          };
           try {
-            await confirm(paymentToken);
+            await confirmPayment(paymentToken);
             pendingIntent.current = null;
           } catch (error) {
             if (isCheckoutConfirmationBlockedError(error)) throw error;
@@ -181,7 +201,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
               }
 
               challengeSucceeded = true;
-              await confirm(actionResult.paymentIntent.id);
+              await confirmPayment(actionResult.paymentIntent.id);
               pendingIntent.current = null;
             } finally {
               track({

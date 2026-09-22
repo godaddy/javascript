@@ -115,6 +115,157 @@ function actionRequiredError() {
   ]);
 }
 
+describe.each(['card', 'express'] as const)(
+  '%s transaction status recovery',
+  mode => {
+    const confirm = mode === 'card' ? mocks.confirm : mocks.confirmExpress;
+
+    beforeEach(() => {
+      vi.resetAllMocks();
+      mocks.sessionId = 'session-1';
+      mocks.flush.mockResolvedValue({ latestOrder: mocks.latestOrder });
+      mocks.buildFromOrder.mockReturnValue({ stripePaymentMethodParams: {} });
+      mocks.createPaymentMethod
+        .mockResolvedValueOnce({ paymentMethod: { id: 'pm_original' } })
+        .mockResolvedValue({ paymentMethod: { id: 'pm_replacement' } });
+      mocks.handleNextAction.mockResolvedValue({
+        paymentIntent: { id: 'pi-confirmed', status: 'requires_confirmation' },
+      });
+      confirm.mockResolvedValue(undefined);
+    });
+
+    async function submitFailure(
+      submit: () => Promise<unknown>,
+      error: unknown
+    ) {
+      await act(async () => {
+        if (mode === 'express') await expect(submit()).rejects.toBe(error);
+        else await submit();
+      });
+    }
+
+    it.each(['final confirmation', 'later retry'])(
+      'allows a replacement payment after FAILED during %s',
+      async stage => {
+        const failure = new GraphQLErrorWithCodes([
+          {
+            code: 'TRANSACTION_PROCESSING_FAILED',
+            extensions: { transactionStatus: 'FAILED' },
+          },
+        ]);
+        const networkError = new Error('Connection lost');
+        confirm.mockRejectedValueOnce(actionRequiredError());
+        if (stage === 'later retry')
+          confirm.mockRejectedValueOnce(networkError);
+        confirm.mockRejectedValueOnce(failure);
+        const { result } = renderHook(() => useStripeCheckout({ mode }), {
+          wrapper: Wrapper,
+        });
+
+        if (stage === 'later retry') {
+          await submitFailure(
+            () => result.current.handleSubmit(),
+            networkError
+          );
+        }
+        await submitFailure(() => result.current.handleSubmit(), failure);
+        expect(mocks.setCheckoutErrors).toHaveBeenLastCalledWith([
+          'TRANSACTION_PROCESSING_FAILED',
+        ]);
+        await act(async () => {
+          await result.current.handleSubmit();
+        });
+
+        expect(confirm.mock.calls.map(([input]) => input.paymentToken)).toEqual(
+          [
+            'pm_original',
+            'pi-confirmed',
+            ...(stage === 'later retry' ? ['pi-confirmed'] : []),
+            'pm_replacement',
+          ]
+        );
+        expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(2);
+        expect(mocks.handleNextAction).toHaveBeenCalledTimes(1);
+      }
+    );
+
+    it.each([
+      ['missing status', undefined],
+      ['pending', 'PENDING'],
+      ['initiated', 'INITIATED'],
+      ['completed', 'COMPLETED'],
+      ['voided', 'VOIDED'],
+      ['unknown status', 'UNKNOWN'],
+      ['malformed status', { status: 'FAILED' }],
+    ])('retains the intent for %s', async (_, transactionStatus) => {
+      const error = new GraphQLErrorWithCodes([
+        {
+          code: 'TRANSACTION_PROCESSING_FAILED',
+          extensions: { transactionStatus },
+        },
+      ]);
+      confirm
+        .mockRejectedValueOnce(actionRequiredError())
+        .mockRejectedValueOnce(error);
+      const { result } = renderHook(() => useStripeCheckout({ mode }), {
+        wrapper: Wrapper,
+      });
+
+      await submitFailure(() => result.current.handleSubmit(), error);
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+
+      expect(confirm.mock.calls.map(([input]) => input.paymentToken)).toEqual([
+        'pm_original',
+        'pi-confirmed',
+        'pi-confirmed',
+      ]);
+      expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      [
+        {
+          code: 'ORDER_OPENING_FAILED',
+          extensions: { transactionStatus: 'FAILED' },
+        },
+      ],
+      [
+        {
+          code: 'TRANSACTION_PROCESSING_FAILED',
+          extensions: { transactionStatus: 'FAILED' },
+        },
+        {
+          code: 'TRANSACTION_PROCESSING_FAILED',
+          extensions: { transactionStatus: 'PENDING' },
+        },
+      ],
+    ])(
+      'retains the intent for unrelated or conflicting failure metadata (%#)',
+      async (...errors) => {
+        const error = new GraphQLErrorWithCodes(errors);
+        confirm
+          .mockRejectedValueOnce(actionRequiredError())
+          .mockRejectedValueOnce(error);
+        const { result } = renderHook(() => useStripeCheckout({ mode }), {
+          wrapper: Wrapper,
+        });
+
+        await submitFailure(() => result.current.handleSubmit(), error);
+        await act(async () => {
+          await result.current.handleSubmit();
+        });
+
+        expect(confirm).toHaveBeenLastCalledWith(
+          expect.objectContaining({ paymentToken: 'pi-confirmed' })
+        );
+        expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
+      }
+    );
+  }
+);
+
 describe('useStripeCheckout payment request resolution', () => {
   beforeEach(() => {
     vi.clearAllMocks();

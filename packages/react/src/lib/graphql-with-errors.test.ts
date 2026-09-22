@@ -19,6 +19,36 @@ describe('graphqlRequestWithErrors', () => {
     requestMock.mockReset();
   });
 
+  it.each(['FAILED', 'PENDING', undefined])(
+    'preserves optional transaction status %s without changing the error code',
+    async transactionStatus => {
+      const extensions = {
+        code: 'TRANSACTION_PROCESSING_FAILED',
+        ...(transactionStatus ? { transactionStatus } : {}),
+      };
+      requestMock.mockRejectedValue(
+        new ClientError(
+          {
+            status: 200,
+            errors: [
+              new GraphQLError('Failed to process transaction', { extensions }),
+            ],
+          },
+          {
+            query: 'mutation ConfirmCheckout { confirmCheckoutSession { id } }',
+          }
+        )
+      );
+
+      await expect(
+        graphqlRequestWithErrors('https://example.test/graphql', 'query')
+      ).rejects.toMatchObject({
+        codes: ['TRANSACTION_PROCESSING_FAILED'],
+        errors: [{ code: 'TRANSACTION_PROCESSING_FAILED', extensions }],
+      });
+    }
+  );
+
   it('preserves payment action-required extensions', async () => {
     requestMock.mockRejectedValue(
       new ClientError(
