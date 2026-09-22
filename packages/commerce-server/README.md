@@ -54,4 +54,4 @@ Configure `checkoutReturnUrls` on the router using trusted deployment settings. 
 
 Without this policy, HTTP checkout returns 503 before creating a session. Invalid request destinations return 400. This applies to both router presets that expose checkout. Trusted in-process callers of `createCheckoutSession()` own their return URLs and must construct or validate them server-side.
 
-A return from hosted checkout is not proof of payment. The order-status route reports `status: 'unknown'` because the current order storefront contract does not expose settled payment status.
+A return from hosted checkout is not proof of payment. The order-status route uses the authorized Orders REST API, which supports completed orders, and returns its payment status (for example `PAID` or `PENDING`; `unknown` if absent). The server OAuth client must be granted `commerce.order:read`. The helper verifies the returned order ID, store, and channel and returns a limited summary without customer contact data. Hosts must authenticate callers and authorize access to each requested order before exposing this route.

@@ -1,31 +1,15 @@
 /**
- * Server-side `getOrderStatus` orchestrator.
- *
- * Queries the GoDaddy order storefront subgraph for the status of a draft
- * order and normalises the result into a flat shape suitable for both the
- * `/api/commerce/order-status` HTTP route and any in-process server caller
- * (e.g. a payment adapter).
- *
- * Uses storefront headers (`X-Store-ID` / `X-Client-ID`) — the same auth
- * path as the cart GET routes. No OAuth Bearer token is required.
- *
- * Server-only. Reads `clientId` and `storeId` from `readCommerceConfig()`.
- * Do not import this file from browser code.
+ * Server-only order lookup using the authorized Commerce Orders REST API.
+ * Unlike the storefront cart API, this endpoint includes completed orders.
  */
-
+import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
 import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './config';
-import { gqlRequest, storefrontHeaders } from './gql';
-import {
-  type GetOrderStatusResult,
-  type GetOrderStatusVariables,
-  orderStatusQuery,
-  orderStorefrontEndpoint,
-} from './order-subgraph';
+import type { Money } from './gql';
 
 export interface CommerceOrderStatus {
-  /** GoDaddy draft order id. */
+  /** GoDaddy order id. */
   id: string;
-  /** The order storefront API does not expose payment status; this is 'unknown'. */
+  /** Payment status reported by Commerce, or 'unknown' when it is unavailable. */
   status: string;
   /** Total amount in the currency's smallest unit (cents for USD). */
   amount: number;
@@ -35,41 +19,65 @@ export interface CommerceOrderStatus {
   createdAt?: string;
   /** ISO 8601 last-updated timestamp. */
   updatedAt?: string;
-  /** Line items on the order. */
+  /** Line item summaries, excluding private order metadata. */
   lineItems?: unknown[];
+}
+
+interface OrderResponse {
+  order?: {
+    id: string;
+    context: { storeId: string; channelId: string };
+    statuses?: { paymentStatus?: string | null };
+    totals?: { total?: Money | null };
+    createdAt?: string;
+    updatedAt?: string;
+    lineItems?: Array<{ id: string; title: string; quantity: number }>;
+  };
 }
 
 export async function getOrderStatus(
   orderId: string,
   configuration: CommerceConfiguration = createRuntimeCommerceConfiguration(),
 ): Promise<CommerceOrderStatus> {
-  if (!orderId) {
-    throw new Error('getOrderStatus: orderId is required');
+  if (typeof orderId !== 'string' || !orderId.trim() || orderId === '.' || orderId === '..') {
+    throw new Error('getOrderStatus: a valid orderId is required');
   }
 
-  const { storeId, clientId, apiBaseUrl } = configuration.read();
-
-  const data = await gqlRequest<GetOrderStatusResult, GetOrderStatusVariables>({
-    endpoint: orderStorefrontEndpoint({ apiBaseUrl }),
-    query: orderStatusQuery,
-    variables: { id: orderId },
-    headers: storefrontHeaders({ storeId, clientId }),
+  const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } = configuration.read();
+  const token = await getOAuthAccessToken({
+    clientId,
+    clientSecret,
+    apiBaseUrl,
+    scope: 'commerce.order:read',
   });
+  const response = await fetch(
+    new URL(
+      `/v1/commerce/stores/${encodeURIComponent(storeId)}/orders/${encodeURIComponent(orderId)}`,
+      apiBaseUrl,
+    ),
+    {
+      method: 'GET',
+      headers: { ...authorizationHeaders({ accessToken: token.access_token }), Accept: 'application/json' },
+      cache: 'no-store',
+    },
+  );
+  if (!response.ok) throw new Error(`Failed to load order: upstream returned ${response.status}`);
 
-  const order = data.orderById;
-  if (!order?.id) {
-    throw new Error(`Order not found: ${orderId}`);
+  const data = (await response.json()) as OrderResponse;
+  const order = data?.order;
+  if (!order?.id || order.id !== orderId) throw new Error('Order lookup did not return the requested order');
+  if (order.context?.storeId !== storeId || order.context?.channelId !== channelId) {
+    throw new Error('Order lookup returned a different store or channel');
   }
-
   const total = order.totals?.total;
 
   return {
     id: order.id,
-    status: 'unknown',
+    status: order.statuses?.paymentStatus ?? 'unknown',
     amount: total?.value ?? 0,
-    currency: total?.currencyCode ?? 'USD',
-    createdAt: order.createdAt ?? undefined,
-    updatedAt: order.updatedAt ?? undefined,
-    lineItems: (order.lineItems ?? []) as unknown[],
+    currency: total?.currencyCode ?? currencyCode,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    lineItems: (order.lineItems ?? []).map(({ id, title, quantity }) => ({ id, name: title, quantity })),
   };
 }

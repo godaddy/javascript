@@ -216,14 +216,6 @@ export interface GetCartOrderVariables {
   id: string;
 }
 
-export interface GetOrderStatusVariables {
-  id: string;
-}
-
-export interface GetOrderStatusResult {
-  orderById?: CartOrder | null;
-}
-
 export interface DeleteLineItemByIdVariables {
   id: string;
   orderId: string;
@@ -418,28 +410,6 @@ export function getCartSummaryTotals(order: CartOrder | null | undefined): CartS
 
 // Read-only receipt enrichment. The order storefront schema does not expose
 // payment status; neither this query nor cart hydration can prove payment.
-export const orderStatusQuery = `
-  query GetOrderStatus($id: ID!) {
-    orderById(id: $id) {
-      id
-      createdAt
-      updatedAt
-      totals {
-        total {
-          value
-          currencyCode
-        }
-      }
-      lineItems {
-        id
-        name
-        quantity
-        skuId
-      }
-    }
-  }
-`;
-
 // Full draft-order query — mirrored across the cart proxy routes so every
 // mutation can re-fetch the cart and return a fully-populated `CartOrder`
 // (totals, taxes, discounts) under a single canonical `orderById` key.

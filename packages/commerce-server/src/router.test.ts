@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCommerceCartScope } from './lib/commerce/cart-scope';
 import { createCheckoutSession } from './lib/commerce/create-checkout-session';
 import { GraphQLErrorWithCodes, gqlRequest } from './lib/commerce/gql';
-import { getCartOrderQuery, orderStatusQuery } from './lib/commerce/order-subgraph';
+import { getCartOrderQuery } from './lib/commerce/order-subgraph';
 import { createCommerceCatalogRouter, createGoDaddyPaymentsRouter } from './router';
 import applyDiscount from './server/api/commerce/cart/[id]/discounts/POST';
 import readCart from './server/api/commerce/cart/[id]/GET';
@@ -61,10 +61,8 @@ describe('Commerce scoped routes', () => {
     vi.clearAllMocks();
   });
 
-  it('does not query unsupported order status fields in either installation order', (): void => {
-    for (const query of [getCartOrderQuery, orderStatusQuery]) {
-      expect(query).not.toMatch(/\bstatuses\s*\{/);
-    }
+  it('does not query unsupported status fields on the storefront cart API', (): void => {
+    expect(getCartOrderQuery).not.toMatch(/\bstatuses\s*\{/);
   });
 
   it.each([readCart, addItem, updateItem, deleteItem, applyDiscount, readProduct, readSku])(

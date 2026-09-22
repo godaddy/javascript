@@ -9,10 +9,11 @@
  * and call it in-process so the inbound request's auth context isn't stripped.
  *
  * Query:
- *   orderId  - GoDaddy draft order id (required)
+ *   orderId  - GoDaddy order id (required)
  *
  * Response: { success: true, order: CommerceOrderStatus }
- *   order.status is 'unknown'; this API does not confirm settled payment.
+ *   order.status is the payment status returned by the authorized Orders API.
+ * The host must authorize the caller's access to the requested order.
  */
 import type { Request, Response } from 'express';
 

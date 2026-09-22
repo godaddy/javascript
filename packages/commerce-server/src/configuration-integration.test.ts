@@ -21,6 +21,16 @@ it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
         expect(new URLSearchParams(String(init?.body)).get('client_secret')).toBe('secret-1');
         return Response.json({ access_token: 'token', expires_in: 3600 });
       }
+      if (url.includes('/orders/')) {
+        expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer token');
+        return Response.json({
+          order: {
+            id: 'cart-1',
+            context: { storeId: 'store-1', channelId: 'channel-1' },
+            statuses: { paymentStatus: 'PAID' },
+          },
+        });
+      }
       const body = JSON.parse(String(init?.body));
       if (body.query.includes('AddCartOrder')) {
         expect(body.variables.input.context).toEqual({
@@ -116,7 +126,8 @@ it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
         `${origin}/v1/commerce/order-storefront-subgraph`,
         `${origin}/v2/oauth2/token`,
         `https://checkout.commerce.${new URL(origin).host}`,
-        `${origin}/v1/commerce/order-storefront-subgraph`,
+        `${origin}/v2/oauth2/token`,
+        `${origin}/v1/commerce/stores/store-1/orders/cart-1`,
       ]);
     } finally {
       await new Promise<void>((resolve, reject) =>
