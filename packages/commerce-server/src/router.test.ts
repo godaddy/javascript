@@ -245,6 +245,9 @@ describe('Commerce scoped routes', () => {
       { code: 'UNAUTHENTICATED', message: 'Authentication token expired', status: 401 },
     ]),
     new GraphQLErrorWithCodes([{ message: 'Session expired' }]),
+    new GraphQLErrorWithCodes([{ code: 'INTERNAL_SERVER_ERROR', message: 'Authentication token expired' }]),
+    new GraphQLErrorWithCodes([{ code: 'INTERNAL_SERVER_ERROR', message: 'Database unavailable' }]),
+    new GraphQLErrorWithCodes([{ code: 'UNAUTHENTICATED', message: 'Order not found' }]),
     new GraphQLErrorWithCodes([{ code: 'NOT_FOUND', message: 'Store not found' }]),
     new GraphQLErrorWithCodes([{ message: 'GraphQL endpoint not found', status: 404 }], 404),
     new GraphQLErrorWithCodes([{ code: 'ORDER_EXPIRED', message: 'Order expired' }], 503),
@@ -265,6 +268,7 @@ describe('Commerce scoped routes', () => {
 
   it.each([
     new GraphQLErrorWithCodes([{ code: 'ORDER_NOT_FOUND' }], 404),
+    new GraphQLErrorWithCodes([{ code: 'INTERNAL_SERVER_ERROR', message: 'Order not found' }]),
     new GraphQLErrorWithCodes([{ code: 'CART_EXPIRED' }], 410),
     new GraphQLErrorWithCodes([{ code: 'DRAFT_ORDER_NOT_FOUND' }]),
     new GraphQLErrorWithCodes([{ code: 'NOT_FOUND', message: 'Order not found: cart-1' }]),

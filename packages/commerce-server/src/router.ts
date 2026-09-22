@@ -1,4 +1,8 @@
 import { type RequestHandler, Router } from 'express';
+import {
+  type CheckoutReturnUrls,
+  createCheckoutReturnUrlValidator,
+} from './lib/commerce/checkout-return-urls';
 import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './lib/commerce/config';
 import cartDiscountPost from './server/api/commerce/cart/[id]/discounts/POST';
 import cartGet from './server/api/commerce/cart/[id]/GET';
@@ -21,6 +25,8 @@ export interface CommerceRouterFeatures {
 export interface CreateCommerceRouterOptions {
   configuration?: CommerceConfiguration;
   features?: CommerceRouterFeatures;
+  /** Required to enable browser checkout; never derived from request headers. */
+  checkoutReturnUrls?: CheckoutReturnUrls;
 }
 
 export function createCommerceRouter(options: CreateCommerceRouterOptions = {}): Router {
@@ -29,8 +35,13 @@ export function createCommerceRouter(options: CreateCommerceRouterOptions = {}):
   const catalogEnabled: boolean = options.features?.catalog ?? true;
   const paymentsEnabled: boolean = options.features?.payments ?? true;
 
+  const validateCheckoutReturnUrls = options.checkoutReturnUrls
+    ? createCheckoutReturnUrlValidator(options.checkoutReturnUrls)
+    : undefined;
+
   router.use((_req, res, next): void => {
     res.locals.commerceConfiguration = configuration;
+    res.locals.commerceCheckoutReturnUrlValidator = validateCheckoutReturnUrls;
     next();
   });
 
@@ -59,6 +70,13 @@ export function createCommerceCatalogRouter(configuration?: CommerceConfiguratio
   return createCommerceRouter({ configuration, features: { catalog: true, payments: false } });
 }
 
-export function createGoDaddyPaymentsRouter(configuration?: CommerceConfiguration): Router {
-  return createCommerceRouter({ configuration, features: { catalog: false, payments: true } });
+export function createGoDaddyPaymentsRouter(
+  configuration?: CommerceConfiguration,
+  checkoutReturnUrls?: CheckoutReturnUrls,
+): Router {
+  return createCommerceRouter({
+    configuration,
+    checkoutReturnUrls,
+    features: { catalog: false, payments: true },
+  });
 }

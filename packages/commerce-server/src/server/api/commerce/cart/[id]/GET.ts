@@ -39,6 +39,9 @@ function isCartNotFoundError(error: unknown): boolean {
 
   return error.errors.every(({ code, message, status }): boolean => {
     if (isFailure(status)) return false;
+    // Orders throws this exact message for absent or non-draft orders; Apollo
+    // supplies its generic code rather than a domain-specific not-found code.
+    if (code === 'INTERNAL_SERVER_ERROR' && message === 'Order not found') return true;
     if (code && /^(?:DRAFT[_-]?)?(?:ORDER|CART)[_-]?(?:NOT[_-]?FOUND|EXPIRED)$/i.test(code)) return true;
     if (code && !/^(?:NOT[_-]?FOUND|EXPIRED)$/i.test(code)) return false;
     return /\b(?:cart|(?:draft[ -])?order)\s+(?:(?:is|was|has)\s+)?(?:not found|expired)\b/i.test(

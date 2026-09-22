@@ -10,6 +10,10 @@ const app = express();
 app.use(express.json());
 app.use('/api/commerce', createCommerceRouter({
   configuration: createRuntimeCommerceConfiguration(),
+  checkoutReturnUrls: {
+    returnUrls: ['https://shop.example.com/shop'],
+    successUrls: ['https://shop.example.com/checkout/success'],
+  },
 }));
 ```
 
@@ -40,8 +44,14 @@ Hosts with their own configuration service can implement `CommerceConfiguration`
 
 ## Routers and helpers
 
-`createCommerceCatalogRouter(configuration)` installs catalog, public configuration, and cart routes. `createGoDaddyPaymentsRouter(configuration)` installs checkout and read-only order-status routes without requiring catalog UI. `createCommerceRouter({ configuration })` installs both by default or accepts explicit feature flags.
+`createCommerceCatalogRouter(configuration)` installs catalog, public configuration, and cart routes. `createGoDaddyPaymentsRouter(configuration, checkoutReturnUrls)` installs checkout and read-only order-status routes without requiring catalog UI. `createCommerceRouter({ configuration })` installs both by default or accepts explicit feature flags.
 
-Hosted checkout supports an existing `draftOrderId`, a direct `skuId`, or non-catalog `lineItemData`. Server callers can use `createCheckoutSession(params, configuration)` and `getOrderStatus(orderId, configuration)` without an HTTP loopback.
+The HTTP checkout route accepts an existing `draftOrderId` or a direct `skuId`; Commerce resolves catalog prices. It rejects `lineItemData`. For non-catalog charges such as fixed-price deposits, calculate the amount on the server and call `createCheckoutSession(params, configuration)` directly. Never forward browser-supplied prices to this trusted helper. Server callers can also use `getOrderStatus(orderId, configuration)` without an HTTP loopback.
+
+## Checkout return destinations
+
+Configure `checkoutReturnUrls` on the router using trusted deployment settings. Both lists contain complete absolute HTTPS URLs; scheme, origin, port, path, and configured query parameters must match. Success URLs may add a single `orderId` query parameter. Additional query parameters, fragments, credentials, relative URLs, and unlisted destinations are rejected. Configure separate cancel and success destinations as shown above; do not derive the allowlist from request headers or request bodies.
+
+Without this policy, HTTP checkout returns 503 before creating a session. Invalid request destinations return 400. This applies to both router presets that expose checkout. Trusted in-process callers of `createCheckoutSession()` own their return URLs and must construct or validate them server-side.
 
 A return from hosted checkout is not proof of payment. The order-status route reports `status: 'unknown'` because the current order storefront contract does not expose settled payment status.

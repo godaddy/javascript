@@ -12,12 +12,12 @@
  * Body:
  *   draftOrderId?  - existing cart/draft order to convert to a checkout session
  *   skuId?         - Buy Now path; checkout is built from a single line item
- *   quantity?      - quantity for Buy Now or non-catalog paths (defaults to 1)
- *   lineItemData?  - Non-catalog path; { name, priceData: { unitAmount, currencyCode } }.
- *                    Mutually exclusive with skuId and draftOrderId. No SKU or catalog
- *                    product is created. unitAmount is in the currency's smallest unit.
+ *   quantity?      - positive integer quantity for Buy Now (defaults to 1)
  *   returnUrl      - where the hosted checkout sends the shopper on cancel/back
  *   successUrl     - where the hosted checkout sends the shopper after payment
+ *
+ * Non-catalog prices are accepted only by the trusted server helper, never this route.
+ * Return destinations must match the host-configured checkoutReturnUrls policy.
  *
  * The caller is responsible for embedding `draftOrderId` (or any business
  * order id) into `successUrl` before posting, e.g.
@@ -38,6 +38,7 @@
  */
 import type { Request, Response } from 'express';
 import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import type { CheckoutReturnUrlValidator } from '@/lib/commerce/checkout-return-urls';
 import { type CommerceConfig, commerceConfigurationForResponse } from '@/lib/commerce/config';
 
 import {
@@ -53,14 +54,24 @@ export default async function handler(req: Request, res: Response): Promise<void
     const body = (req.body ?? {}) as CheckoutBody;
     const { draftOrderId, skuId, quantity, lineItemData, returnUrl, successUrl } = body;
 
-    if (!returnUrl || !successUrl) {
-      res.status(400).json({ error: 'missing returnUrl or successUrl' });
+    if (lineItemData !== undefined) {
+      res.status(400).json({ error: 'Non-catalog checkout must be created by the server.' });
       return;
     }
 
-    const checkoutSourceCount = [draftOrderId, skuId, lineItemData].filter(Boolean).length;
-    if (checkoutSourceCount !== 1) {
-      res.status(400).json({ error: 'exactly one of draftOrderId, skuId, or lineItemData is required' });
+    const checkoutSourceCount = [draftOrderId, skuId].filter(Boolean).length;
+    if (
+      checkoutSourceCount !== 1 ||
+      [draftOrderId, skuId].some(
+        (value) => value !== undefined && (typeof value !== 'string' || !value.trim()),
+      )
+    ) {
+      res.status(400).json({ error: 'exactly one non-empty draftOrderId or skuId is required' });
+      return;
+    }
+
+    if (quantity !== undefined && (!Number.isSafeInteger(quantity) || quantity < 1)) {
+      res.status(400).json({ error: 'quantity must be a positive whole number' });
       return;
     }
 
@@ -69,14 +80,24 @@ export default async function handler(req: Request, res: Response): Promise<void
       if (!validateCommerceCartScope(req, res, config)) return;
     }
 
+    const validateReturnUrls: CheckoutReturnUrlValidator | undefined =
+      res.locals.commerceCheckoutReturnUrlValidator;
+    if (!validateReturnUrls) {
+      res.status(503).json({ error: 'Checkout return destinations are not configured.' });
+      return;
+    }
+    const destinations = validateReturnUrls(returnUrl, successUrl);
+    if (!destinations) {
+      res.status(400).json({ error: 'Checkout return destinations are not allowed.' });
+      return;
+    }
+
     const session = await createCheckoutSession(
       {
         draftOrderId,
         skuId,
         quantity,
-        lineItemData,
-        returnUrl,
-        successUrl,
+        ...destinations,
       },
       configuration,
     );

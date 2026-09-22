@@ -63,7 +63,16 @@ it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
     });
     const app = express();
     app.use(express.json());
-    app.use('/api/commerce', createCommerceRouter({ configuration }));
+    app.use(
+      '/api/commerce',
+      createCommerceRouter({
+        configuration,
+        checkoutReturnUrls: {
+          returnUrls: ['https://example.com/cart'],
+          successUrls: ['https://example.com/success'],
+        },
+      }),
+    );
     const server = app.listen(0, '127.0.0.1');
     await once(server, 'listening');
     try {
@@ -109,6 +118,58 @@ it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
         `https://checkout.commerce.${new URL(origin).host}`,
         `${origin}/v1/commerce/order-storefront-subgraph`,
       ]);
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
+  },
+);
+
+it.each([
+  ['Order not found', 200, { cart: null }],
+  [
+    'Authentication token expired',
+    500,
+    { error: 'Failed to load cart', message: 'Authentication token expired' },
+  ],
+  ['Database unavailable', 500, { error: 'Failed to load cart', message: 'Database unavailable' }],
+] as const)(
+  'handles the actual Apollo error envelope for %s',
+  async (message, status, body): Promise<void> => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async (): Promise<Response> =>
+          Response.json({
+            data: { orderById: null },
+            errors: [{ message, extensions: { code: 'INTERNAL_SERVER_ERROR' } }],
+          }),
+      ),
+    );
+    const app = express();
+    app.use(
+      '/api/commerce',
+      createCommerceRouter({
+        configuration: createRuntimeCommerceConfiguration({
+          environment: {
+            GODADDY_OAUTH_CLIENT_ID: 'client-1',
+            GODADDY_OAUTH_CLIENT_SECRET: 'secret-1',
+            GODADDY_STORE_ID: 'store-1',
+            GODADDY_CHANNEL_ID: 'channel-1',
+            GODADDY_CURRENCY_CODE: 'USD',
+          },
+        }),
+      }),
+    );
+    const server = app.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
+      const response = await clientFetch(`http://127.0.0.1:${address.port}/api/commerce/cart/completed-cart`);
+      expect(response.status).toBe(status);
+      expect(await response.json()).toEqual(body);
     } finally {
       await new Promise<void>((resolve, reject) =>
         server.close((error) => (error ? reject(error) : resolve())),

@@ -3,6 +3,7 @@ export {
   type CommerceCheckoutShippingConfiguration,
   parseCommerceCheckoutConfiguration,
 } from './lib/commerce/checkout-config';
+export type { CheckoutReturnUrls } from './lib/commerce/checkout-return-urls';
 export {
   type CommerceConfig,
   type CommerceConfiguration,

@@ -174,6 +174,26 @@ describe('shared cart', () => {
       expect(view.context().error).toBeNull();
     },
   );
+  it('starts a new cart after the server reports that a completed order is no longer a draft', async () => {
+    localStorage.setItem(storageKey, 'completed-cart');
+    const api = mockApi((path, init) => {
+      if (path.endsWith('/config')) return response(configuration);
+      if (init?.method === 'POST') return response({ cart: cart('new-cart') });
+      return response({ cart: null });
+    });
+    const view = mount();
+    await connected(view);
+    expect(localStorage.getItem(storageKey)).toBeNull();
+    await act(async () => {
+      expect(await view.context().addItem(item)).toBe(true);
+    });
+    expect(localStorage.getItem(storageKey)).toBe('new-cart');
+    expect(view.context().cart?.id).toBe('new-cart');
+    expect(api.mock.calls.filter((call) => call[1]?.method === 'POST').map((call) => call[0])).toEqual([
+      '/api/commerce/cart',
+    ]);
+  });
+
   it('keeps a cart ID after hydration fails and does not create a duplicate order', async () => {
     localStorage.setItem(storageKey, 'existing');
     const api = mockApi((path) =>
