@@ -7,7 +7,6 @@ import {
   useRef,
 } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
 import { useStripePaymentIntent } from '@/components/checkout/payment/utils/use-stripe-payment-intent';
 
 type PendingStripeIntent = { sessionId: string | undefined; id: string };
@@ -20,41 +19,53 @@ export function usePendingStripeIntent() {
   return pendingIntent;
 }
 
-function StripeElementsUpdater() {
+function StripeElementsUpdater({ amount = 0 }: { amount?: number }) {
   const elements = useElements();
-  const { data: totals, isLoading: totalsLoading } = useDraftOrderTotals();
 
   useEffect(() => {
-    if (!totalsLoading && elements && (totals?.total?.value || 0) > 0) {
+    if (elements && amount > 0) {
       elements.update({
-        amount: totals?.total?.value || 0,
+        amount,
       });
     }
-  }, [elements, totalsLoading, totals?.total?.value]);
+  }, [elements, amount]);
 
   return null; // This component only updates Elements
 }
 
-export function StripeProvider({ children }: { children: React.ReactNode }) {
+export function StripeProvider({
+  children,
+  isExpress = false,
+}: {
+  children: React.ReactNode;
+  isExpress?: boolean;
+}) {
+  const { stripeConfig } = useCheckoutContext();
   // The provider survives the checkout button being replaced with a spinner.
   // Card and express providers each own their continuation reference.
   const pendingIntent = useRef<PendingStripeIntent | null>(null);
   return (
     <StripePaymentContext.Provider value={pendingIntent}>
-      <StripeElementsProvider>{children}</StripeElementsProvider>
+      {stripeConfig?.publishableKey?.trim() ? (
+        <StripeElementsProvider isExpress={isExpress}>
+          {children}
+        </StripeElementsProvider>
+      ) : (
+        children
+      )}
     </StripePaymentContext.Provider>
   );
 }
 
-function StripeElementsProvider({ children }: { children: React.ReactNode }) {
-  const { stripeConfig } = useCheckoutContext();
-
-  if (!stripeConfig?.publishableKey?.trim()) {
-    return <>{children}</>;
-  }
-
+function StripeElementsProvider({
+  children,
+  isExpress,
+}: {
+  children: React.ReactNode;
+  isExpress: boolean;
+}) {
   const { stripePromise, currency, clientSecret, isLoading, amount } =
-    useStripePaymentIntent();
+    useStripePaymentIntent({ isExpress });
 
   if (isLoading || !stripePromise || amount <= 0) {
     return null;
@@ -73,7 +84,7 @@ function StripeElementsProvider({ children }: { children: React.ReactNode }) {
           payment_method_types: ['card'],
         }}
       >
-        <StripeElementsUpdater />
+        <StripeElementsUpdater amount={amount} />
         {children}
       </Elements>
     );
@@ -81,7 +92,11 @@ function StripeElementsProvider({ children }: { children: React.ReactNode }) {
 
   if (stripePromise && clientSecret) {
     return (
-      <Elements stripe={stripePromise} options={{ clientSecret }}>
+      <Elements
+        key={clientSecret}
+        stripe={stripePromise}
+        options={{ clientSecret }}
+      >
         {children}
       </Elements>
     );

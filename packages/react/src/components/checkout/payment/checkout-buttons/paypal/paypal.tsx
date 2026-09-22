@@ -3,7 +3,7 @@ import {
   PayPalButtons,
   usePayPalScriptReducer,
 } from '@paypal/react-paypal-js';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
@@ -19,17 +19,19 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 
 function PayPalButtonsWrapper() {
-  const { setCheckoutErrors } = useCheckoutContext();
+  const { session, setCheckoutErrors } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const form = useFormContext();
-  const { payPalRequest, buildPaymentRequestsFromOrder } =
-    useBuildPaymentRequest();
+  const { buildPaymentRequestsFromOrder } = useBuildPaymentRequest();
   const confirmCheckout = useConfirmCheckout();
   const flushCheckoutSync = useFlushCheckoutSync();
   const [isPaypalDisabled, setIsPaypalDisabled] = useState<boolean>(false);
   const deliveryMethod = form.watch('deliveryMethod');
   const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const [{ isResolved, isPending }] = usePayPalScriptReducer();
+  // PayPal's popup can stay open while the tip changes underneath, so confirm
+  // sends the tip `createOrder` submitted rather than the current form value.
+  const authorizedTipAmount = useRef<number | null>(null);
 
   // PayPal onClick handler that returns Promise<boolean>
   const handleClick = async (_data, actions) => {
@@ -56,9 +58,16 @@ function PayPalButtonsWrapper() {
     const { latestOrder } = await flushCheckoutSync({
       includeCurrentFormDiff: true,
     });
-    const request = latestOrder
-      ? buildPaymentRequestsFromOrder(latestOrder).payPalRequest
-      : payPalRequest;
+
+    // Below the flush, and rebuilt rather than falling back to the memoized
+    // `payPalRequest`: the tip can move while the flush settles, and these two
+    // reads share it only because no `await` separates them.
+    authorizedTipAmount.current = session?.enableTips
+      ? (form.getValues('tipAmount') ?? 0)
+      : null;
+    const request = buildPaymentRequestsFromOrder(
+      latestOrder ?? undefined
+    ).payPalRequest;
     const order = {
       ...request,
       purchase_units: request.purchase_units
@@ -85,6 +94,9 @@ function PayPalButtonsWrapper() {
         paymentToken: `${details.id}:${details.payer.payer_id}`,
         paymentType: 'paypal',
         paymentProvider: PaymentProvider.PAYPAL,
+        ...(authorizedTipAmount.current === null
+          ? {}
+          : { tipAmount: authorizedTipAmount.current }),
       });
     } catch (err: unknown) {
       if (err instanceof GraphQLErrorWithCodes) {

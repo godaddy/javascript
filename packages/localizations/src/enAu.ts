@@ -348,6 +348,12 @@ export const enAu = {
     DEPENDENCY_ERROR:
       "We're unable to process your order right now. Please wait a moment and try again",
     AUTHORIZATION_FAILED: 'Failed to authorise payment',
+    TIP_EXCEEDS_LIMIT: 'Tip is too large for this order',
+    INVALID_TIP_AMOUNT: 'Enter a valid tip amount',
+    TIPS_NOT_ENABLED: 'Tips are not accepted for this order',
+    TIP_CHARGE_FAILED: 'Try a different tip amount, or choose No Tip',
+    TIP_NOT_SUPPORTED_FOR_OFFLINE_PAYMENT:
+      'Tips are not supported for offline payments',
   },
   storefront: {
     product: 'Product',

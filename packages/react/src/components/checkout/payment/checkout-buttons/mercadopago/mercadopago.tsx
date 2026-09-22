@@ -1,5 +1,5 @@
 import { LoaderCircle } from 'lucide-react';
-import React, { useCallback, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
@@ -22,7 +22,54 @@ let mpInstance: any = null;
 let bricksBuilderInstance: any = null;
 let brickController: any = null;
 let brickCreationPromise: Promise<any> | null = null;
+
+/**
+ * What the live brick's preference was authorized for. Kept in parts, not as
+ * their sum: $25 + a $5 tip and $30 + none total the same, and reusing the
+ * brick across that would confirm a tip the customer removed.
+ */
+interface PaymentAttempt {
+  /** Order total, tip excluded, in minor units. */
+  baseMinorUnits: number;
+  currencyCode: string;
+  /** Tip the preference was authorized for; null when tips are off. */
+  tipMinorUnits: number | null;
+}
+
+let brickAttempt: PaymentAttempt | null = null;
 let isSubmitting = false;
+
+// Rebuilds re-authorize the session, so bursts of tip changes are coalesced.
+const BRICK_REBUILD_DEBOUNCE_MS = 400;
+
+// The debounced rebuild is held at module scope alongside the brick it replaces,
+// so a pay click that lands mid-debounce can run it immediately instead of
+// waiting out the remaining delay.
+let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingRebuild: (() => void) | null = null;
+
+function cancelPendingRebuild() {
+  if (rebuildTimer) {
+    clearTimeout(rebuildTimer);
+    rebuildTimer = null;
+  }
+  pendingRebuild = null;
+}
+
+/**
+ * Start a debounced rebuild now rather than waiting out the delay.
+ *
+ * @returns true when a rebuild was pending and has been started.
+ */
+function flushPendingRebuild(): boolean {
+  if (!pendingRebuild) return false;
+
+  const startNow = pendingRebuild;
+  cancelPendingRebuild();
+  startNow();
+
+  return true;
+}
 
 function getMercadoPagoInstance(publicKey: string) {
   if (!mpInstance) {
@@ -32,10 +79,42 @@ function getMercadoPagoInstance(publicKey: string) {
   return { mpInstance, bricksBuilderInstance };
 }
 
+function unmountBrick() {
+  if (!brickController) return;
+
+  try {
+    brickController.unmount();
+  } catch (_e) {
+    // Ignore unmount errors
+  }
+  brickController = null;
+  brickAttempt = null;
+}
+
+function isSameAttempt(a: PaymentAttempt | null, b: PaymentAttempt | null) {
+  return (
+    a !== null &&
+    b !== null &&
+    a.baseMinorUnits === b.baseMinorUnits &&
+    a.currencyCode === b.currencyCode &&
+    a.tipMinorUnits === b.tipMinorUnits
+  );
+}
+
+// False once a rebuild replaced the captured brick, or any part of what the
+// customer is being asked to pay moved.
+function isAttemptCurrent(controller: any, current: PaymentAttempt) {
+  return brickController === controller && isSameAttempt(brickAttempt, current);
+}
+
 export function MercadoPagoCheckoutButton() {
   const { t } = useGoDaddyContext();
-  const { mercadoPagoConfig, setCheckoutErrors, isConfirmingCheckout } =
-    useCheckoutContext();
+  const {
+    mercadoPagoConfig,
+    setCheckoutErrors,
+    isConfirmingCheckout,
+    session,
+  } = useCheckoutContext();
   const isPaymentDisabled = useIsPaymentDisabled();
   const { data: totals } = useDraftOrderTotals();
   const form = useFormContext();
@@ -46,19 +125,68 @@ export function MercadoPagoCheckoutButton() {
 
   const [error, setError] = useState('');
   const [isBrickReady, setIsBrickReady] = useState(false);
+  const [brickRevision, setBrickRevision] = useState(0);
   const elementId = 'mercadopago-brick-container';
 
-  const getPreferenceId = async () => {
+  const tipAmount = form.watch('tipAmount');
+  // `null` means tips are off, which a zero tip is not.
+  const tipMinorUnits = session?.enableTips ? tipAmount || 0 : null;
+  const totalMinorUnits = totals?.total?.value || 0;
+  const currencyCode = totals?.total?.currencyCode || 'USD';
+
+  const toAmount = useCallback(
+    (tip: number) => {
+      const rawAmount = parseFloat(
+        formatCurrency({
+          amount: totalMinorUnits + tip,
+          currencyCode,
+          inputInMinorUnits: true,
+          returnRaw: true,
+        })
+      );
+      return Number.isFinite(rawAmount) ? rawAmount : 0;
+    },
+    [currencyCode, totalMinorUnits]
+  );
+
+  // What the customer is being asked to pay; the brick is rebuilt when any part
+  // of it moves.
+  const currentAttempt: PaymentAttempt = {
+    baseMinorUnits: totalMinorUnits,
+    currencyCode,
+    tipMinorUnits,
+  };
+
+  const attemptRef = useRef(currentAttempt);
+  attemptRef.current = currentAttempt;
+  const toAmountRef = useRef(toAmount);
+  toAmountRef.current = toAmount;
+
+  // Whether this checkout has built a brick before. Tracked per instance rather
+  // than read off `brickController`, which an earlier rebuild may have cleared.
+  const hasBuiltBrickRef = useRef(false);
+
+  // Reports the tip it sent, so the brick can be built for that exact amount.
+  const authorizeAttempt = async () => {
     const response = await authorizeCheckout.mutateAsync({
       paymentToken: '',
       paymentType: PaymentMethodType.MERCADOPAGO,
       paymentProvider: PaymentProvider.MERCADOPAGO,
     });
-    return response?.transactionRefNum;
+    return {
+      preferenceId: response?.transactionRefNum,
+      tipAmount: response?.authorizedTipAmount ?? null,
+    };
   };
 
   const handleSubmit = useCallback(
-    async ({ formData }: any) => {
+    async ({
+      formData,
+      tipAmount: authorizedTipAmount,
+    }: {
+      formData: any;
+      tipAmount: number | null;
+    }) => {
       isSubmitting = true;
 
       const valid = await form.trigger();
@@ -80,10 +208,14 @@ export function MercadoPagoCheckoutButton() {
           throw new Error('No payment token received from MercadoPago');
         }
 
+        // The authorized tip, not form state, which the awaits above let move.
         await confirmCheckout.mutateAsync({
           paymentToken,
           paymentType: PaymentMethodType.MERCADOPAGO,
           paymentProvider: PaymentProvider.MERCADOPAGO,
+          ...(authorizedTipAmount === null
+            ? {}
+            : { tipAmount: authorizedTipAmount }),
         });
         setError('');
       } catch (err: unknown) {
@@ -108,23 +240,27 @@ export function MercadoPagoCheckoutButton() {
     const canInitialize = isMercadoPagoLoaded && mercadoPagoConfig?.publicKey;
 
     if (canInitialize) {
-      if (brickController) {
-        // Brick already exists, onReady callback will mark as ready
-        setIsBrickReady(true);
-      } else if (brickCreationPromise) {
+      if (brickCreationPromise) {
         // Brick creation in progress, onReady/onError callbacks will handle state
+      } else if (
+        brickController &&
+        isSameAttempt(brickAttempt, currentAttempt)
+      ) {
+        // Brick already exists for this attempt, onReady callback will mark as ready
+        setIsBrickReady(true);
       } else {
+        const isRebuild = hasBuiltBrickRef.current;
+
+        setIsBrickReady(false);
+        unmountBrick();
+
         // Create new brick
         const renderBrick = async () => {
-          // Convert from minor units (cents) to major units
-          const total = parseFloat(
-            formatCurrency({
-              amount: totals?.total?.value || 0,
-              currencyCode: totals?.total?.currencyCode || 'USD',
-              inputInMinorUnits: true,
-              returnRaw: true,
-            })
-          );
+          // Scoped to this attempt. `brickController` is only assigned once
+          // `create` resolves, so it reads as "not ready" for the whole build —
+          // which made every rebuild reopen the window where a card validation
+          // error looked like an initialization failure.
+          let becameReady = false;
 
           try {
             const container = document.getElementById(elementId);
@@ -135,49 +271,68 @@ export function MercadoPagoCheckoutButton() {
             const { bricksBuilderInstance: bricksBuilder } =
               getMercadoPagoInstance(mercadoPagoConfig.publicKey);
 
-            const mercadoPagoPreferenceId = await getPreferenceId();
+            const { preferenceId, tipAmount: authorizedTipAmount } =
+              await authorizeAttempt();
+            // Read together with the total below, which is built from them, so
+            // the attempt names the order this brick actually belongs to.
+            const { baseMinorUnits, currencyCode: attemptCurrencyCode } =
+              attemptRef.current;
+            const total = toAmountRef.current(authorizedTipAmount ?? 0);
 
-            brickController = await bricksBuilder.create('payment', elementId, {
-              initialization: {
-                amount: total,
-                preferenceId: mercadoPagoPreferenceId,
-                payer: { email: 'dummy@testuser.com' },
-              },
-              customization: {
-                visual: {
-                  hideFormTitle: true,
-                  hidePaymentButton: true,
-                  style: { theme: 'default' },
+            const controller = await bricksBuilder.create(
+              'payment',
+              elementId,
+              {
+                initialization: {
+                  amount: total,
+                  preferenceId,
+                  payer: { email: 'dummy@testuser.com' },
                 },
-                paymentMethods: {
-                  creditCard: 'all',
-                  debitCard: 'all',
-                  maxInstallments: 1,
+                customization: {
+                  visual: {
+                    hideFormTitle: true,
+                    hidePaymentButton: true,
+                    style: { theme: 'default' },
+                  },
+                  paymentMethods: {
+                    creditCard: 'all',
+                    debitCard: 'all',
+                    maxInstallments: 1,
+                  },
                 },
-              },
-              callbacks: {
-                onReady: () => {
-                  setIsBrickReady(true);
-                  const brickContainer = document.getElementById(elementId);
-                  const formElement = brickContainer?.querySelector('form');
-                  if (formElement) {
-                    formElement.style.padding = '0';
-                    const childDiv = formElement.querySelector(':scope > div');
-                    if (childDiv instanceof HTMLElement) {
-                      childDiv.style.margin = '0';
+                callbacks: {
+                  onReady: () => {
+                    becameReady = true;
+                    setIsBrickReady(true);
+                    const brickContainer = document.getElementById(elementId);
+                    const formElement = brickContainer?.querySelector('form');
+                    if (formElement) {
+                      formElement.style.padding = '0';
+                      const childDiv =
+                        formElement.querySelector(':scope > div');
+                      if (childDiv instanceof HTMLElement) {
+                        childDiv.style.margin = '0';
+                      }
                     }
-                  }
+                  },
+                  onError: () => {
+                    // Only treat as initialization failure if the brick never became ready.
+                    // Card validation errors are handled by the brick's own UI.
+                    if (!becameReady) {
+                      setError(t.errors.failedToInitializePayment);
+                      setIsBrickReady(false);
+                    }
+                  },
                 },
-                onError: () => {
-                  // Only treat as initialization failure if the brick never became ready.
-                  // Card validation errors are handled by the brick's own UI.
-                  if (!brickController) {
-                    setError(t.errors.failedToInitializePayment);
-                    setIsBrickReady(false);
-                  }
-                },
-              },
-            });
+              }
+            );
+
+            brickController = controller;
+            brickAttempt = {
+              baseMinorUnits,
+              currencyCode: attemptCurrencyCode,
+              tipMinorUnits: authorizedTipAmount,
+            };
           } catch (_err) {
             setError(t.errors.failedToInitializePayment);
             setIsBrickReady(false);
@@ -185,31 +340,66 @@ export function MercadoPagoCheckoutButton() {
           }
         };
 
-        brickCreationPromise = renderBrick();
-        brickCreationPromise.finally(() => {
-          brickCreationPromise = null;
-        });
+        const startBrickCreation = () => {
+          hasBuiltBrickRef.current = true;
+          brickCreationPromise = renderBrick();
+          brickCreationPromise.finally(() => {
+            brickCreationPromise = null;
+            if (
+              brickController &&
+              !isSameAttempt(brickAttempt, attemptRef.current)
+            ) {
+              setBrickRevision(revision => revision + 1);
+            }
+          });
+        };
+
+        if (isRebuild) {
+          // Every rebuild authorizes the session again to get a fresh
+          // preference, so coalesce bursts of tip changes into one rebuild
+          // instead of one per tap. The button is already disabled above.
+          cancelPendingRebuild();
+          pendingRebuild = startBrickCreation;
+          rebuildTimer = setTimeout(() => {
+            cancelPendingRebuild();
+            startBrickCreation();
+          }, BRICK_REBUILD_DEBOUNCE_MS);
+        } else {
+          startBrickCreation();
+        }
       }
     }
 
     return () => {
+      cancelPendingRebuild();
       // Don't unmount if submitting (parent replaces component with loading button)
       // or if creation is in progress (React Strict Mode double-invocation)
       if (brickController && !brickCreationPromise && !isSubmitting) {
-        try {
-          brickController.unmount();
-        } catch (_e) {
-          // Ignore unmount errors
-        }
-        brickController = null;
+        unmountBrick();
       }
     };
   }, [
     isMercadoPagoLoaded,
     mercadoPagoConfig?.publicKey,
     elementId,
+    // The parts of `currentAttempt`, which is a fresh object every render. Each
+    // is listed in its own right, since a move in one can mask a move in
+    // another once they are added together.
+    totalMinorUnits,
+    currencyCode,
+    tipMinorUnits,
+    brickRevision,
     t.errors.failedToInitializePayment,
   ]);
+
+  // Rebuild empty, so there is nothing to submit on the customer's behalf, and
+  // start now rather than leaving them waiting out the debounce.
+  const requireFreshPaymentAttempt = () => {
+    setIsBrickReady(false);
+    if (!flushPendingRebuild()) {
+      setBrickRevision(revision => revision + 1);
+    }
+  };
 
   const handleClick = async () => {
     const valid = await form.trigger();
@@ -223,10 +413,28 @@ export function MercadoPagoCheckoutButton() {
 
     await flushCheckoutSync();
 
-    if (brickController) {
-      const { formData } = await brickController.getFormData();
-      await handleSubmit({ formData });
+    // Captured together: the token below belongs to this brick's preference,
+    // which was authorized for this tip.
+    const controller = brickController;
+    const authorizedTipAmount = brickAttempt?.tipMinorUnits ?? null;
+
+    if (!controller || !isAttemptCurrent(controller, attemptRef.current)) {
+      // The order or the tip moved while this click awaited validation and the
+      // sync flush.
+      requireFreshPaymentAttempt();
+      return;
     }
+
+    const { formData } = await controller.getFormData();
+
+    // A tip change during tokenization rebuilds the brick against a fresh
+    // authorization, leaving this token bound to a total nobody is paying.
+    if (!isAttemptCurrent(controller, attemptRef.current)) {
+      requireFreshPaymentAttempt();
+      return;
+    }
+
+    await handleSubmit({ formData, tipAmount: authorizedTipAmount });
   };
 
   return (

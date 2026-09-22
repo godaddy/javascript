@@ -68,4 +68,34 @@ describe('graphqlRequestWithErrors', () => {
       },
     });
   });
+  it('preserves tip input paths alongside error extensions', async () => {
+    requestMock.mockRejectedValue(
+      new ClientError(
+        {
+          status: 200,
+          errors: [
+            new GraphQLError('Invalid tip', {
+              path: ['confirmCheckoutSession'],
+              extensions: { code: 'INVALID_TIP_AMOUNT', path: ['tipAmount'] },
+            }),
+          ],
+        },
+        {
+          query:
+            'mutation ConfirmCheckout { confirmCheckoutSession { status } }',
+        }
+      )
+    );
+    await expect(
+      graphqlRequestWithErrors('https://example.test/graphql', 'query')
+    ).rejects.toMatchObject({
+      errors: [
+        {
+          code: 'INVALID_TIP_AMOUNT',
+          path: ['tipAmount'],
+          extensions: { path: ['tipAmount'] },
+        },
+      ],
+    });
+  });
 });

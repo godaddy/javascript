@@ -60,12 +60,24 @@ afterEach(() => {
 });
 
 describe('Stripe recovery through the payment spinner', () => {
-  it.each(['finalization', 'SDK transport'])(
-    'reuses the intent after %s failure and button remount',
-    async failure => {
-      const draftOrder = buildDraftOrder();
+  it.each([
+    ['finalization', false],
+    ['SDK transport', false],
+    ['finalization', true],
+    ['SDK transport', true],
+  ] as const)(
+    'reuses the intent after %s failure and button remount (tips enabled: %s)',
+    async (failure, enableTips) => {
+      const draftOrder = buildDraftOrder({
+        totals: {
+          subTotal: { value: 2500, currencyCode: 'USD' },
+          discountTotal: { value: 0, currencyCode: 'USD' },
+          total: { value: 2500, currencyCode: 'USD' },
+        },
+      });
       const session = buildCheckoutSession({
         draftOrder,
+        enableTips,
         enableShipping: false,
         enableLocalPickup: false,
         enableBillingAddressCollection: false,
@@ -80,6 +92,9 @@ describe('Stripe recovery through the payment spinner', () => {
         checkoutProps: { stripeConfig: { publishableKey: 'pk_test' } },
       });
       await waitForCheckoutReady();
+      if (enableTips) {
+        await user.click(await screen.findByRole('radio', { name: /20%/ }));
+      }
 
       const confirm = vi.mocked(godaddyApi.confirmCheckout);
       confirm.mockRejectedValueOnce(
@@ -147,6 +162,10 @@ describe('Stripe recovery through the payment spinner', () => {
           expectedTokens
         )
       );
+      for (const [input] of confirm.mock.calls) {
+        if (enableTips) expect(input.tipAmount).toBe(500);
+        else expect(input).not.toHaveProperty('tipAmount');
+      }
       expect(stripe.createPaymentMethod).toHaveBeenCalledOnce();
       expect(stripe.handleNextAction).toHaveBeenCalledOnce();
     }

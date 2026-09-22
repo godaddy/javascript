@@ -8,6 +8,7 @@ import {
 export type GraphQLErrorDetails = {
   message?: string;
   code?: string;
+  path?: string[];
   extensions?: Record<string, unknown>;
 };
 
@@ -88,6 +89,11 @@ export async function graphqlRequestWithErrors<T = any>(
         message: e.message as string,
         code: e.extensions?.code as string,
         extensions: e.extensions as Record<string, unknown> | undefined,
+        // The input path the API blamed, e.g. `['tipAmount']`. Read from
+        // `extensions` rather than the GraphQL `path`, which points at the
+        // response field. Lets a caller attach the error to that form field
+        // instead of only the checkout-wide error list.
+        path: e.extensions?.path as string[] | undefined,
       }));
       throw new GraphQLErrorWithCodes(parsedErrors);
     }

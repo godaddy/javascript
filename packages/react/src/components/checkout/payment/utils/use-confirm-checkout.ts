@@ -11,6 +11,10 @@ import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-fl
 import { buildPickupPayload } from '@/components/checkout/pickup/utils/build-pickup-payload';
 import { getPickupMode } from '@/components/checkout/pickup/utils/generate-pickup-time-slots';
 import { getShippingFulfillmentSyncKey } from '@/components/checkout/shipping/utils/should-apply-shipping-method';
+import {
+  applyTipFieldError,
+  applyTipOnlyChargeError,
+} from '@/components/checkout/tips/utils/tip-field-errors';
 import { isDigitalLineItem } from '@/components/checkout/utils/fulfillment';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
@@ -94,7 +98,7 @@ export enum PaymentProvider {
 export function useConfirmCheckout() {
   const { session, jwt, setIsConfirmingCheckout, setCheckoutErrors } =
     useCheckoutContext();
-  const { apiHost } = useGoDaddyContext();
+  const { apiHost, t } = useGoDaddyContext();
   const form = useFormContext();
   const { data: order } = useDraftOrder();
   const flushCheckoutSync = useFlushCheckoutSync();
@@ -175,6 +179,27 @@ export function useConfirmCheckout() {
                 : undefined,
             })
           : {};
+        // Destructured out so the key is omitted entirely when tips are off,
+        // rather than sent as `tipAmount: undefined` — and so a caller-supplied
+        // tip cannot ride along on the spread past that gate.
+        //
+        // A caller-supplied tip wins over form state here, unlike in
+        // `useAuthorizeCheckout` where the form overrides it. Express wallets
+        // captured their tip inside the sheet, and the CCAvenue return leg reads
+        // it from storage on a fresh document — in both cases the form is either
+        // stale or empty, so the caller is the better source.
+        const { tipAmount: suppliedTipAmount, ...inputWithoutTip } =
+          confirmCheckoutInput;
+        const payload = {
+          ...inputWithoutTip,
+          ...pickUpData,
+          ...(session.enableTips
+            ? {
+                tipAmount:
+                  suppliedTipAmount ?? form.getValues('tipAmount') ?? 0,
+              }
+            : {}),
+        };
 
         // keep for debugging
         // console.log({
@@ -199,21 +224,11 @@ export function useConfirmCheckout() {
         const data = await confirmWithRecovery(async () => {
           const result = jwt
             ? await confirmCheckout(
-                {
-                  ...confirmCheckoutInput,
-                  ...(isPickup ? pickUpData : {}),
-                },
+                payload,
                 { accessToken: jwt, sessionId: session?.id || '' },
                 apiHost
               )
-            : await confirmCheckout(
-                {
-                  ...confirmCheckoutInput,
-                  ...(isPickup ? pickUpData : {}),
-                },
-                session,
-                apiHost
-              );
+            : await confirmCheckout(payload, session, apiHost);
 
           if (!result) {
             throw new Error('Checkout confirmation failed');
@@ -279,6 +294,19 @@ export function useConfirmCheckout() {
         getStripeNextAction(error)
       ) {
         return;
+      }
+
+      const translate = (code: string) =>
+        t.apiErrors?.[code as keyof typeof t.apiErrors];
+
+      // An unattributed rejection still belongs on the tip field when the tip is
+      // the only thing being charged.
+      if (!applyTipFieldError(form, error, translate) && session?.enableTips) {
+        applyTipOnlyChargeError(
+          form,
+          order?.totals?.total?.value || 0,
+          translate
+        );
       }
 
       // Track checkout error event
