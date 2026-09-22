@@ -1,4 +1,6 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import type { StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js';
+import { useQueryClient } from '@tanstack/react-query';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
@@ -12,6 +14,29 @@ import { GoDaddyProvider } from '@/godaddy-provider';
 import { confirmCheckout, getDraftOrder } from '@/lib/godaddy/godaddy';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { PaymentMethodType } from '@/types';
+import { StripeProvider } from './stripe-provider';
+import { useStripeCheckout } from './use-stripe-checkout';
+
+const stripe = vi.hoisted(() => ({
+  createPaymentMethod: vi.fn(),
+  handleNextAction: vi.fn(),
+}));
+vi.mock('@stripe/react-stripe-js', () => ({
+  CardElement: () => null,
+  useStripe: () => stripe,
+  useElements: () => ({}),
+}));
+vi.mock('./use-build-payment-request', () => ({
+  useBuildPaymentRequest: () => ({}),
+}));
+vi.mock('./use-flush-checkout-sync', () => ({
+  useFlushCheckoutSync: () => vi.fn(),
+}));
+vi.mock('./use-confirm-checkout', async importOriginal => ({
+  ...(await importOriginal<typeof import('./use-confirm-checkout')>()),
+  useConfirmCheckout: () => ({ mutateAsync: vi.fn() }),
+}));
+
 import {
   buildCheckoutSession,
   buildDraftOrder,
@@ -49,7 +74,9 @@ function wrapper(
             setCheckoutErrors,
           }}
         >
-          {formValues ? <MaybeForm>{children}</MaybeForm> : children}
+          <StripeProvider>
+            {formValues ? <MaybeForm>{children}</MaybeForm> : children}
+          </StripeProvider>
         </checkoutContext.Provider>
       </GoDaddyProvider>
     );
@@ -231,3 +258,118 @@ describe('useConfirmExpressCheckout', () => {
     expect(getDraftOrder).not.toHaveBeenCalled();
   });
 });
+
+it('keeps express checkout locked during 3DS and allows only the matching intent to resume', async () => {
+  const session = buildCheckoutSession();
+  mockGodaddyApi({ session, draftOrder: buildDraftOrder() });
+  vi.mocked(confirmCheckout).mockRejectedValueOnce(
+    new GraphQLErrorWithCodes([
+      {
+        code: 'PAYMENT_ACTION_REQUIRED',
+        extensions: {
+          paymentResult: {
+            status: 'ACTION_REQUIRED',
+            provider: 'STRIPE',
+            paymentReference: 'pi_wallet',
+            nextStep: {
+              type: 'SDK_ACTION',
+              sdk: 'STRIPE_JS',
+              action: 'HANDLE_NEXT_ACTION',
+              clientSecret: 'pi_wallet_secret',
+            },
+          },
+        },
+      },
+    ])
+  );
+  stripe.createPaymentMethod.mockResolvedValue({
+    paymentMethod: { id: 'pm_wallet' },
+  });
+  let finishChallenge!: (value: unknown) => void;
+  stripe.handleNextAction.mockReturnValueOnce(
+    new Promise(resolve => {
+      finishChallenge = resolve;
+    })
+  );
+  const { result } = renderHook(
+    () => ({
+      payment: useStripeCheckout({ mode: 'express' }),
+      otherConfirmation: useConfirmExpressCheckout(),
+      context: useCheckoutContext(),
+    }),
+    { wrapper: wrapper(session) }
+  );
+  let submission!: ReturnType<typeof result.current.payment.handleSubmit>;
+  await act(async () => {
+    submission = result.current.payment.handleSubmit({
+      event: {
+        expressPaymentType: 'google_pay',
+      } as StripeExpressCheckoutElementConfirmEvent,
+    });
+  });
+  await waitFor(() => expect(stripe.handleNextAction).toHaveBeenCalledTimes(1));
+  expect(result.current.context.isConfirmingCheckout).toBe(true);
+  expect(result.current.context.checkoutErrors).toBeUndefined();
+  expect(getDraftOrder).not.toHaveBeenCalled();
+  expect(confirmCheckout).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    await expect(
+      result.current.otherConfirmation.mutateAsync({
+        paymentToken: 'pm_other',
+        paymentType: 'google_pay',
+        paymentProvider: PaymentProvider.STRIPE,
+      })
+    ).rejects.toThrow('Checkout confirmation is already in progress');
+  });
+  expect(result.current.context.isConfirmingCheckout).toBe(true);
+  await act(async () => {
+    finishChallenge({
+      paymentIntent: { id: 'pi_wallet', status: 'succeeded' },
+    });
+    await submission;
+  });
+  expect(confirmCheckout).toHaveBeenCalledTimes(2);
+  expect(
+    vi.mocked(confirmCheckout).mock.calls.map(([input]) => input.paymentToken)
+  ).toEqual(['pm_wallet', 'pi_wallet']);
+  expect(stripe.createPaymentMethod).toHaveBeenCalledTimes(1);
+});
+
+it.each(['query', 'mutation'])(
+  'blocks a fresh express payment during another %s',
+  async kind => {
+    const session = buildCheckoutSession();
+    mockGodaddyApi({ session, draftOrder: buildDraftOrder() });
+    const { result } = renderHook(
+      () => ({
+        confirmation: useConfirmExpressCheckout(),
+        client: useQueryClient(),
+      }),
+      { wrapper: wrapper(session) }
+    );
+    let finish!: () => void;
+    const pending = new Promise<void>(resolve => {
+      finish = resolve;
+    });
+    const work =
+      kind === 'query'
+        ? result.current.client.fetchQuery({
+            queryKey: ['other-work'],
+            queryFn: () => pending.then(() => null),
+          })
+        : result.current.client
+            .getMutationCache()
+            .build(result.current.client, { mutationFn: () => pending })
+            .execute(undefined);
+    await expect(
+      result.current.confirmation.mutateAsync({
+        paymentToken: 'pm_wallet',
+        paymentType: 'google_pay',
+        paymentProvider: PaymentProvider.STRIPE,
+      })
+    ).rejects.toThrow('Checkout is currently busy');
+    expect(confirmCheckout).not.toHaveBeenCalled();
+    finish();
+    await work;
+  }
+);

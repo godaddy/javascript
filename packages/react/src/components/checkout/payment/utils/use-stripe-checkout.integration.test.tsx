@@ -1,5 +1,5 @@
 import type { StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js';
-import { act, renderHook } from '@testing-library/react';
+import { act, render, renderHook } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkoutContext } from '@/components/checkout/checkout';
@@ -624,21 +624,333 @@ describe('useStripeCheckout payment request resolution', () => {
       );
     }
   );
+});
 
-  it('shows a localizable action-required error and unlocks express checkout', async () => {
-    const error = actionRequiredError();
+describe('Stripe express verification', () => {
+  const expressData = {
+    event: {
+      expressPaymentType: 'google_pay',
+      billingDetails: { name: 'Wallet Buyer', email: 'buyer@example.com' },
+      shippingAddress: {
+        name: 'Wallet Buyer',
+        address: {
+          line1: '123 Main St',
+          city: 'Austin',
+          state: 'TX',
+          postal_code: '78701',
+          country: 'US',
+        },
+      },
+    } as StripeExpressCheckoutElementConfirmEvent,
+    shippingTotal: { currencyCode: 'USD', value: 500 },
+    selectedShippingMethod: {
+      displayName: 'Standard',
+      carrierCode: 'carrier',
+      serviceCode: 'standard',
+      cost: null,
+      description: null,
+      features: null,
+      maxDeliveryDate: null,
+      minDeliveryDate: null,
+    },
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mocks.sessionId = 'session-1';
+    mocks.createPaymentMethod.mockResolvedValue({
+      paymentMethod: {
+        id: 'pm_wallet',
+        card: { wallet: { type: 'google_pay' } },
+      },
+    });
+    mocks.handleNextAction.mockResolvedValue({
+      paymentIntent: { id: 'pi-confirmed', status: 'succeeded' },
+    });
+    mocks.confirmExpress.mockResolvedValue(undefined);
+  });
+
+  it.each([
+    'succeeded',
+    'processing',
+    'requires_capture',
+    'requires_confirmation',
+  ])(
+    'resumes the express intent after %s and preserves the wallet payload',
+    async status => {
+      mocks.confirmExpress.mockRejectedValueOnce(actionRequiredError());
+      mocks.handleNextAction.mockResolvedValueOnce({
+        paymentIntent: { id: 'pi-confirmed', status },
+      });
+      const { result } = renderHook(
+        () => useStripeCheckout({ mode: 'express' }),
+        { wrapper: Wrapper }
+      );
+      await act(async () => {
+        await result.current.handleSubmit(expressData);
+      });
+      expect(mocks.handleNextAction).toHaveBeenCalledWith({
+        clientSecret: 'pi-secret',
+      });
+      expect(mocks.confirmExpress).toHaveBeenCalledTimes(2);
+      const initialInput = mocks.confirmExpress.mock.calls[0][0];
+      expect(initialInput).toMatchObject({
+        paymentToken: 'pm_wallet',
+        paymentType: 'google_pay',
+        paymentProvider: 'STRIPE',
+        isExpress: true,
+        billing: { email: 'buyer@example.com' },
+        shipping: { address: { addressLine1: '123 Main St' } },
+        shippingTotal: { currencyCode: 'USD', value: 500 },
+        shippingLines: [{ name: 'Standard' }],
+      });
+      expect(mocks.confirmExpress.mock.calls[1][0]).toEqual({
+        ...initialInput,
+        paymentToken: 'pi-confirmed',
+      });
+      expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
+      expect(mocks.setCheckoutErrors).not.toHaveBeenCalled();
+      expect(mocks.track).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventId: eventIds.expressCheckoutCompleted,
+          properties: { paymentType: 'google_pay', provider: 'stripe' },
+        })
+      );
+    }
+  );
+
+  it('ignores secondary submissions throughout the challenge and final confirmation', async () => {
+    mocks.confirmExpress.mockRejectedValueOnce(actionRequiredError());
+    let completeChallenge!: (value: unknown) => void;
+    mocks.handleNextAction.mockReturnValueOnce(
+      new Promise(resolve => {
+        completeChallenge = resolve;
+      })
+    );
+    let completeConfirmation!: () => void;
+    mocks.confirmExpress.mockReturnValueOnce(
+      new Promise<void>(resolve => {
+        completeConfirmation = resolve;
+      })
+    );
+    const { result } = renderHook(
+      () => useStripeCheckout({ mode: 'express' }),
+      { wrapper: Wrapper }
+    );
+    let submission!: ReturnType<typeof result.current.handleSubmit>;
+    await act(async () => {
+      submission = result.current.handleSubmit(expressData);
+    });
+    await act(async () => {
+      await result.current.handleSubmit(expressData);
+    });
+    expect(mocks.confirmExpress).toHaveBeenCalledTimes(1);
+    expect(result.current.isProcessingPayment).toBe(true);
+    await act(async () => {
+      completeChallenge({
+        paymentIntent: { id: 'pi-confirmed', status: 'succeeded' },
+      });
+    });
+    await act(async () => {
+      await result.current.handleSubmit(expressData);
+    });
+    expect(mocks.confirmExpress).toHaveBeenCalledTimes(2);
+    expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
+    expect(mocks.track).not.toHaveBeenCalledWith(
+      expect.objectContaining({ eventId: eventIds.expressCheckoutCompleted })
+    );
+    await act(async () => {
+      completeConfirmation();
+      await submission;
+    });
+    expect(result.current.isProcessingPayment).toBe(false);
+  });
+
+  it.each(['canceled', 'requires_payment_method'])(
+    'reports authentication failure and permits a new wallet attempt after %s',
+    async status => {
+      mocks.confirmExpress.mockRejectedValueOnce(actionRequiredError());
+      mocks.handleNextAction.mockResolvedValueOnce({
+        error: {
+          code: 'payment_intent_authentication_failure',
+          payment_intent: { id: 'pi-confirmed', status },
+        },
+      });
+      const { result } = renderHook(
+        () => useStripeCheckout({ mode: 'express' }),
+        { wrapper: Wrapper }
+      );
+      await act(async () => {
+        await expect(
+          result.current.handleSubmit(expressData)
+        ).rejects.toBeInstanceOf(GraphQLErrorWithCodes);
+      });
+      expect(mocks.confirmExpress).toHaveBeenCalledTimes(1);
+      expect(mocks.setCheckoutErrors).toHaveBeenCalledWith([
+        'AUTHORIZATION_FAILED',
+      ]);
+      expect(mocks.setIsConfirmingCheckout).toHaveBeenCalledWith(false);
+      expect(mocks.track).not.toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: eventIds.expressCheckoutCompleted })
+      );
+      await act(async () => {
+        await result.current.handleSubmit(expressData);
+      });
+      expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(2);
+    }
+  );
+
+  it.each(['SDK transport', 'final confirmation'])(
+    'reuses the intent after an uncertain %s failure and hook remount',
+    async stage => {
+      const failure = new Error('Connection lost');
+      mocks.confirmExpress.mockRejectedValueOnce(actionRequiredError());
+      if (stage === 'SDK transport')
+        mocks.handleNextAction.mockRejectedValueOnce(failure);
+      else mocks.confirmExpress.mockRejectedValueOnce(failure);
+      let current!: ReturnType<typeof useStripeCheckout>;
+      function Payment() {
+        current = useStripeCheckout({ mode: 'express' });
+        return null;
+      }
+      const { rerender } = render(
+        <Wrapper>
+          <Payment />
+        </Wrapper>
+      );
+      await act(async () => {
+        await expect(current.handleSubmit(expressData)).rejects.toBe(failure);
+      });
+      rerender(<Wrapper>{null}</Wrapper>);
+      rerender(
+        <Wrapper>
+          <Payment />
+        </Wrapper>
+      );
+      await act(async () => {
+        await current.handleSubmit(expressData);
+      });
+      expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
+      expect(mocks.confirmExpress).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          paymentToken: 'pi-confirmed',
+          paymentType: 'google_pay',
+        })
+      );
+    }
+  );
+
+  it.each([
+    [
+      'legacy failure',
+      new GraphQLErrorWithCodes([{ code: 'TRANSACTION_PROCESSING_FAILED' }]),
+    ],
+    [
+      'unsupported next action',
+      new GraphQLErrorWithCodes([
+        {
+          code: 'PAYMENT_ACTION_REQUIRED',
+          extensions: {
+            paymentResult: {
+              status: 'ACTION_REQUIRED',
+              provider: 'STRIPE',
+              paymentReference: 'pi-confirmed',
+              nextStep: { type: 'REDIRECT', url: 'https://example.com/verify' },
+            },
+          },
+        },
+      ]),
+    ],
+  ])('fails safely for %s without invoking the SDK', async (_, error) => {
     mocks.confirmExpress.mockRejectedValueOnce(error);
     const { result } = renderHook(
       () => useStripeCheckout({ mode: 'express' }),
       { wrapper: Wrapper }
     );
     await act(async () => {
-      await expect(result.current.handleSubmit()).rejects.toBe(error);
+      await expect(result.current.handleSubmit(expressData)).rejects.toBe(
+        error
+      );
     });
     expect(mocks.handleNextAction).not.toHaveBeenCalled();
     expect(mocks.setCheckoutErrors).toHaveBeenCalledWith([
-      'PAYMENT_ACTION_REQUIRED',
+      'TRANSACTION_PROCESSING_FAILED',
     ]);
     expect(mocks.setIsConfirmingCheckout).toHaveBeenCalledWith(false);
+  });
+
+  it('does not loop when final confirmation still requires action', async () => {
+    mocks.confirmExpress
+      .mockRejectedValueOnce(actionRequiredError())
+      .mockRejectedValueOnce(actionRequiredError());
+    const { result } = renderHook(
+      () => useStripeCheckout({ mode: 'express' }),
+      { wrapper: Wrapper }
+    );
+    await act(async () => {
+      await expect(
+        result.current.handleSubmit(expressData)
+      ).rejects.toBeInstanceOf(GraphQLErrorWithCodes);
+    });
+    expect(mocks.handleNextAction).toHaveBeenCalledTimes(1);
+    expect(mocks.confirmExpress).toHaveBeenCalledTimes(2);
+    expect(mocks.setCheckoutErrors).toHaveBeenCalledWith([
+      'TRANSACTION_PROCESSING_FAILED',
+    ]);
+    await act(async () => {
+      await result.current.handleSubmit(expressData);
+    });
+    expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
+    expect(mocks.confirmExpress).toHaveBeenLastCalledWith(
+      expect.objectContaining({ paymentToken: 'pi-confirmed' })
+    );
+  });
+
+  it('does not submit an SDK result belonging to another intent', async () => {
+    mocks.confirmExpress.mockRejectedValueOnce(actionRequiredError());
+    mocks.handleNextAction.mockResolvedValueOnce({
+      paymentIntent: { id: 'pi_other', status: 'succeeded' },
+    });
+    const { result } = renderHook(
+      () => useStripeCheckout({ mode: 'express' }),
+      { wrapper: Wrapper }
+    );
+    await act(async () => {
+      await expect(
+        result.current.handleSubmit(expressData)
+      ).rejects.toBeInstanceOf(GraphQLErrorWithCodes);
+    });
+    expect(mocks.confirmExpress).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await result.current.handleSubmit(expressData);
+    });
+    expect(mocks.confirmExpress).toHaveBeenLastCalledWith(
+      expect.objectContaining({ paymentToken: 'pi-confirmed' })
+    );
+    expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(1);
+  });
+
+  it('discards the pending express intent when the checkout session changes', async () => {
+    mocks.confirmExpress
+      .mockRejectedValueOnce(actionRequiredError())
+      .mockRejectedValueOnce(new Error('Connection lost'));
+    const { result, rerender } = renderHook(
+      () => useStripeCheckout({ mode: 'express' }),
+      { wrapper: Wrapper }
+    );
+    await act(async () => {
+      await expect(result.current.handleSubmit(expressData)).rejects.toThrow(
+        'Connection lost'
+      );
+    });
+    mocks.sessionId = 'session-2';
+    rerender();
+    await act(async () => {
+      await result.current.handleSubmit(expressData);
+    });
+    expect(mocks.createPaymentMethod).toHaveBeenCalledTimes(2);
+    expect(mocks.confirmExpress).toHaveBeenLastCalledWith(
+      expect.objectContaining({ paymentToken: 'pm_wallet' })
+    );
   });
 });

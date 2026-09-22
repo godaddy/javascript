@@ -14,3 +14,5 @@ Report Stripe express completion with a generic event and Stripe's payment type 
 When checkout loads an already-paid order, hide payment controls and redirect to the session's success URL. Show the existing payment-success message when no success URL is configured.
 
 Refresh the order after confirmation failures before allowing another attempt, and redirect paid orders in standalone express checkout as well as standard checkout.
+
+Handle Stripe verification for express wallets and resume the original PaymentIntent while preserving wallet checkout details.

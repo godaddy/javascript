@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 import {
   redirectToSuccessUrl,
@@ -9,7 +9,6 @@ import {
   isCheckoutConfirmationBlockedError,
   PaymentProvider,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
-import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { eventIds } from '@/tracking/events';
@@ -19,6 +18,7 @@ import {
   track,
 } from '@/tracking/track';
 import type { ConfirmCheckoutMutationInput } from '@/types';
+import { getStripeNextAction } from './stripe-next-action';
 import { useConfirmCheckoutRecovery } from './use-confirm-checkout-recovery';
 
 export function useConfirmExpressCheckout() {
@@ -30,8 +30,12 @@ export function useConfirmExpressCheckout() {
     setCheckoutErrors,
   } = useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
-  const isPaymentDisabled = useIsPaymentDisabled();
+  const queryClient = useQueryClient();
   const isPendingRef = useRef(false);
+  const pendingActionRef = useRef<{
+    sessionId: string;
+    paymentReference: string;
+  } | null>(null);
   const confirmWithRecovery = useConfirmCheckoutRecovery();
 
   return useMutation({
@@ -47,12 +51,20 @@ export function useConfirmExpressCheckout() {
       if (!input?.paymentType) {
         throw new Error('Express checkout payment type is unavailable');
       }
-      if (isConfirmingCheckout) {
+      const isContinuation =
+        input.paymentProvider === PaymentProvider.STRIPE &&
+        pendingActionRef.current?.sessionId === session.id &&
+        pendingActionRef.current.paymentReference === input.paymentToken;
+      if (isConfirmingCheckout && !isContinuation) {
         throw new CheckoutConfirmationBlockedError(
           'Checkout confirmation is already in progress'
         );
       }
-      if (isPaymentDisabled) {
+      // This mutation already contributes one to the live pending count.
+      // A render-time busy flag can count confirmation itself and block resumption.
+      const isOtherWorkPending =
+        queryClient.isMutating() > 1 || queryClient.isFetching() > 0;
+      if (isOtherWorkPending && !isContinuation) {
         throw new CheckoutConfirmationBlockedError(
           'Checkout is currently busy'
         );
@@ -103,6 +115,7 @@ export function useConfirmExpressCheckout() {
     },
     onSuccess: (data, input) => {
       if (!data) return;
+      pendingActionRef.current = null;
       let completedEventId: TrackingEventId | null = null;
       switch (input.paymentType) {
         case 'apple_pay':
@@ -147,6 +160,20 @@ export function useConfirmExpressCheckout() {
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
+
+      const nextAction = getStripeNextAction(error);
+      if (
+        data?.paymentProvider === PaymentProvider.STRIPE &&
+        nextAction &&
+        session?.id
+      ) {
+        pendingActionRef.current = {
+          sessionId: session.id,
+          paymentReference: nextAction.paymentReference,
+        };
+        return;
+      }
+      pendingActionRef.current = null;
 
       track({
         eventId: eventIds.checkoutError,

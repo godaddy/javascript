@@ -9,7 +9,11 @@ import {
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useStripePaymentIntent } from '@/components/checkout/payment/utils/use-stripe-payment-intent';
 
-type PendingStripeIntent = { sessionId: string | undefined; id: string };
+type PendingStripeIntent = {
+  sessionId: string | undefined;
+  id: string;
+  paymentType?: string;
+};
 const StripePaymentContext =
   createContext<RefObject<PendingStripeIntent | null> | null>(null);
 

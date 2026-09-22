@@ -32,6 +32,18 @@ import {
 } from './stripe-next-action';
 import { usePendingStripeIntent } from './stripe-provider';
 
+function confirmationErrorCodes(error: unknown): string[] {
+  if (
+    error instanceof GraphQLErrorWithCodes &&
+    error.codes.length &&
+    !getPaymentActionRequiredResult(error) &&
+    !error.codes.includes('PAYMENT_ACTION_REQUIRED')
+  ) {
+    return error.codes;
+  }
+  return ['TRANSACTION_PROCESSING_FAILED'];
+}
+
 type UseStripeCheckoutOptions = {
   mode: 'card' | 'express';
   clientSecret?: string | null;
@@ -102,10 +114,86 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
           return;
         }
 
-        if (mode === 'card') {
-          if (pendingIntent.current?.sessionId !== session?.id) {
+        if (pendingIntent.current?.sessionId !== session?.id) {
+          pendingIntent.current = null;
+        }
+
+        // Both card and express payments resume the same intent after authentication.
+        const confirmWithNextAction = async (
+          paymentToken: string,
+          paymentType: string,
+          confirm: (token: string) => Promise<unknown>
+        ) => {
+          try {
+            await confirm(paymentToken);
             pendingIntent.current = null;
+          } catch (error) {
+            if (isCheckoutConfirmationBlockedError(error)) throw error;
+            const nextAction = getStripeNextAction(error);
+            if (!nextAction) throw error;
+
+            // Keep the reference even if the SDK loses its response after payment completes.
+            pendingIntent.current = {
+              sessionId: session?.id,
+              id: nextAction.paymentReference,
+              paymentType,
+            };
+            track({
+              eventId: eventIds.paymentChallengeStarted,
+              type: TrackingEventType.EVENT,
+              properties: { provider: 'STRIPE' },
+            });
+            let challengeSucceeded = false;
+            try {
+              const actionResult = await stripe.handleNextAction({
+                clientSecret: nextAction.clientSecret,
+              });
+              if (
+                actionResult.error ||
+                actionResult.paymentIntent?.id !==
+                  nextAction.paymentReference ||
+                ![
+                  'succeeded',
+                  'processing',
+                  'requires_capture',
+                  'requires_confirmation',
+                ].includes(actionResult.paymentIntent.status)
+              ) {
+                const intent =
+                  actionResult.paymentIntent ??
+                  actionResult.error?.payment_intent;
+                // Only a definite unpaid outcome permits a replacement payment.
+                if (
+                  intent?.id === nextAction.paymentReference &&
+                  ['requires_payment_method', 'canceled'].includes(
+                    intent.status
+                  )
+                ) {
+                  pendingIntent.current = null;
+                }
+                throw new GraphQLErrorWithCodes([
+                  {
+                    code: actionResult.error
+                      ? stripeCheckoutErrorCode(actionResult.error.code)
+                      : 'AUTHORIZATION_FAILED',
+                  },
+                ]);
+              }
+
+              challengeSucceeded = true;
+              await confirm(actionResult.paymentIntent.id);
+              pendingIntent.current = null;
+            } finally {
+              track({
+                eventId: eventIds.paymentChallengeCompleted,
+                type: TrackingEventType.EVENT,
+                properties: { provider: 'STRIPE', success: challengeSucceeded },
+              });
+            }
           }
+        };
+
+        if (mode === 'card') {
           let paymentToken = pendingIntent.current?.id;
           if (!paymentToken) {
             const cardElement = elements.getElement(CardElement);
@@ -145,105 +233,19 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
             };
 
             try {
-              await confirmCheckout.mutateAsync(confirmInput);
-              pendingIntent.current = null;
-            } catch (err: unknown) {
-              if (isCheckoutConfirmationBlockedError(err)) return;
-              const nextAction = getStripeNextAction(err);
-              if (!nextAction) {
-                const errorCodes =
-                  err instanceof GraphQLErrorWithCodes ? err.codes : [];
-                setCheckoutErrors(
-                  errorCodes.length > 0 &&
-                    !errorCodes.includes('PAYMENT_ACTION_REQUIRED')
-                    ? errorCodes
-                    : ['TRANSACTION_PROCESSING_FAILED']
-                );
-                setIsConfirmingCheckout(false);
-                return;
-              }
-
-              // Keep the reference even if the SDK loses its response after payment completes.
-              pendingIntent.current = {
-                sessionId: session?.id,
-                id: nextAction.paymentReference,
-              };
-              track({
-                eventId: eventIds.paymentChallengeStarted,
-                type: TrackingEventType.EVENT,
-                properties: { provider: 'STRIPE' },
-              });
-              let challengeSucceeded = false;
-              try {
-                const actionResult = await stripe.handleNextAction({
-                  clientSecret: nextAction.clientSecret,
-                });
-
-                if (
-                  actionResult.error ||
-                  !actionResult.paymentIntent?.id ||
-                  ![
-                    'succeeded',
-                    'processing',
-                    'requires_capture',
-                    'requires_confirmation',
-                  ].includes(actionResult.paymentIntent.status)
-                ) {
-                  const intent =
-                    actionResult.paymentIntent ??
-                    actionResult.error?.payment_intent;
-                  // Only a definite unpaid outcome permits a replacement payment.
-                  // Connection errors without an intent status must keep the reference.
-                  if (
-                    intent?.id === nextAction.paymentReference &&
-                    ['requires_payment_method', 'canceled'].includes(
-                      intent.status
-                    )
-                  ) {
-                    pendingIntent.current = null;
-                  }
-                  setCheckoutErrors([
-                    actionResult.error
-                      ? stripeCheckoutErrorCode(actionResult.error.code)
-                      : 'AUTHORIZATION_FAILED',
-                  ]);
-                  setIsConfirmingCheckout(false);
-                  return;
-                }
-
-                challengeSucceeded = true;
-                pendingIntent.current = {
-                  sessionId: session?.id,
-                  id: actionResult.paymentIntent.id,
-                };
-                await confirmCheckout.mutateAsync({
-                  ...confirmInput,
-                  paymentToken: actionResult.paymentIntent.id,
-                });
-                pendingIntent.current = null;
-              } catch (finalizationError: unknown) {
-                if (isCheckoutConfirmationBlockedError(finalizationError))
-                  return;
-                const isRepeatedActionRequired = Boolean(
-                  getPaymentActionRequiredResult(finalizationError)
-                );
-                setCheckoutErrors(
-                  finalizationError instanceof GraphQLErrorWithCodes &&
-                    !isRepeatedActionRequired
-                    ? finalizationError.codes
-                    : ['TRANSACTION_PROCESSING_FAILED']
-                );
-                setIsConfirmingCheckout(false);
-              } finally {
-                track({
-                  eventId: eventIds.paymentChallengeCompleted,
-                  type: TrackingEventType.EVENT,
-                  properties: {
-                    provider: 'STRIPE',
-                    success: challengeSucceeded,
-                  },
-                });
-              }
+              await confirmWithNextAction(
+                paymentToken,
+                confirmInput.paymentType,
+                token =>
+                  confirmCheckout.mutateAsync({
+                    ...confirmInput,
+                    paymentToken: token,
+                  })
+              );
+            } catch (error) {
+              if (isCheckoutConfirmationBlockedError(error)) return;
+              setCheckoutErrors(confirmationErrorCodes(error));
+              setIsConfirmingCheckout(false);
             }
           } else {
             setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
@@ -251,28 +253,30 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
         }
 
         if (mode === 'express') {
-          const { error, paymentMethod } = await stripe.createPaymentMethod({
-            elements,
-            params: buildStripeExpressPaymentMethodParams(
-              expressData?.event.billingDetails
-            ),
-          });
-
-          if (error) {
-            setCheckoutErrors([stripeCheckoutErrorCode(error.code)]);
-            return;
+          let paymentToken = pendingIntent.current?.id;
+          let paymentType = pendingIntent.current?.paymentType;
+          if (!paymentToken) {
+            const { error, paymentMethod } = await stripe.createPaymentMethod({
+              elements,
+              params: buildStripeExpressPaymentMethodParams(
+                expressData?.event.billingDetails
+              ),
+            });
+            if (error || !paymentMethod) {
+              const code = stripeCheckoutErrorCode(error?.code);
+              setCheckoutErrors([code]);
+              throw new GraphQLErrorWithCodes([{ code }]);
+            }
+            paymentToken = paymentMethod.id;
+            paymentType = paymentMethod.card?.wallet?.type;
           }
 
-          if (paymentMethod) {
+          if (paymentToken) {
             try {
-              // Build the checkout body similar to godaddy.tsx
               const event = expressData?.event;
               const currencyCode =
                 expressData?.shippingTotal?.currencyCode || 'USD';
-
-              const walletType = paymentMethod.card?.wallet?.type;
-              const paymentType =
-                walletType || event?.expressPaymentType || 'card';
+              paymentType = paymentType || event?.expressPaymentType || 'card';
 
               // Map Stripe billing details to checkout format
               const billing = event?.billingDetails
@@ -349,8 +353,8 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                   ]
                 : undefined;
 
-              await confirmExpressCheckout.mutateAsync({
-                paymentToken: paymentMethod.id,
+              const confirmInput = {
+                paymentToken,
                 paymentType,
                 paymentProvider: PaymentProvider.STRIPE,
                 isExpress: true,
@@ -372,7 +376,13 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 ...(shipping ? { shipping } : {}),
                 // Include shipping lines if available
                 ...(shippingLines ? { shippingLines } : {}),
-              });
+              };
+              await confirmWithNextAction(paymentToken, paymentType, token =>
+                confirmExpressCheckout.mutateAsync({
+                  ...confirmInput,
+                  paymentToken: token,
+                })
+              );
               if (event) {
                 track({
                   eventId: eventIds.expressCheckoutCompleted,
@@ -385,11 +395,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
               }
             } catch (err: unknown) {
               if (isCheckoutConfirmationBlockedError(err)) throw err;
-              setCheckoutErrors(
-                err instanceof GraphQLErrorWithCodes && err.codes.length
-                  ? err.codes
-                  : ['TRANSACTION_PROCESSING_FAILED']
-              );
+              setCheckoutErrors(confirmationErrorCodes(err));
               setIsConfirmingCheckout(false);
               throw err; // Re-throw so caller can handle
             }
