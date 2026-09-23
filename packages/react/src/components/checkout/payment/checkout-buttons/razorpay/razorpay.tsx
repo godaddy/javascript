@@ -1,5 +1,5 @@
 import { LoaderCircle } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import {
@@ -77,21 +77,42 @@ function RazorpayCheckoutButtonInner() {
   const [isAttempting, setIsAttempting] = useState(false);
   const [error, setError] = useState('');
   const attemptLockRef = useRef(false);
+  const attemptIdRef = useRef(0);
+  const isMountedRef = useRef(false);
 
-  const releasePaymentAttempt = useCallback(() => {
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      attemptIdRef.current += 1;
+      attemptLockRef.current = false;
+    };
+  }, []);
+
+  const isCurrentAttempt = useCallback(
+    (attemptId: number) =>
+      isMountedRef.current && attemptIdRef.current === attemptId,
+    []
+  );
+
+  const releasePaymentAttempt = useCallback((attemptId: number) => {
+    if (!isMountedRef.current || attemptIdRef.current !== attemptId) return;
     attemptLockRef.current = false;
     setIsAttempting(false);
   }, []);
 
   const handlePaymentSuccess = useCallback(
-    async (response: RazorpaySuccessResponse) => {
+    async (response: RazorpaySuccessResponse, attemptId: number) => {
+      if (!isCurrentAttempt(attemptId)) return;
+
       const paymentId = response.razorpay_payment_id;
       const orderId = response.razorpay_order_id;
       const signature = response.razorpay_signature;
       if (!paymentId || !orderId || !signature) {
         setError(t.errors.errorProcessingPayment);
         setIsWidgetOpen(false);
-        releasePaymentAttempt();
+        releasePaymentAttempt(attemptId);
         return;
       }
 
@@ -111,15 +132,18 @@ function RazorpayCheckoutButtonInner() {
         if (err instanceof GraphQLErrorWithCodes) {
           setCheckoutErrors(err.codes);
         } else {
-          setError(t.errors.errorProcessingPayment);
+          setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
         }
       } finally {
-        setIsWidgetOpen(false);
-        releasePaymentAttempt();
+        if (isCurrentAttempt(attemptId)) {
+          setIsWidgetOpen(false);
+          releasePaymentAttempt(attemptId);
+        }
       }
     },
     [
       confirmCheckout,
+      isCurrentAttempt,
       releasePaymentAttempt,
       setCheckoutErrors,
       t.errors.errorProcessingPayment,
@@ -139,15 +163,17 @@ function RazorpayCheckoutButtonInner() {
     ) {
       return;
     }
+    const attemptId = ++attemptIdRef.current;
     attemptLockRef.current = true;
     setIsAttempting(true);
 
     try {
       const valid = await form.trigger();
+      if (!isCurrentAttempt(attemptId)) return;
       if (!valid) {
         const firstError = Object.keys(form.formState.errors)[0];
         if (firstError) form.setFocus(firstError);
-        releasePaymentAttempt();
+        releasePaymentAttempt(attemptId);
         return;
       }
 
@@ -157,6 +183,7 @@ function RazorpayCheckoutButtonInner() {
       const { latestOrder } = await flushCheckoutSync({
         includeCurrentFormDiff: true,
       });
+      if (!isCurrentAttempt(attemptId)) return;
       const total = latestOrder?.totals?.total;
       if (!latestOrder?.id || total?.value == null || !total.currencyCode) {
         throw new Error('Synchronized draft order is unavailable');
@@ -175,6 +202,7 @@ function RazorpayCheckoutButtonInner() {
         paymentType: PaymentMethodType.RAZORPAY,
         paymentProvider: PaymentProvider.RAZORPAY,
       });
+      if (!isCurrentAttempt(attemptId)) return;
       const orderId = authorization?.fundingSource?.paymentReference;
       const publicToken = authorization?.references?.find(
         reference => reference.type === 'MERCHANT_PUBLIC_KEY'
@@ -202,22 +230,26 @@ function RazorpayCheckoutButtonInner() {
           contact: buyerPhone,
         },
         handler: response => {
-          void handlePaymentSuccess(response);
+          void handlePaymentSuccess(response, attemptId);
         },
         modal: {
           ondismiss: () => {
+            if (!isCurrentAttempt(attemptId)) return;
             setIsWidgetOpen(false);
-            releasePaymentAttempt();
+            releasePaymentAttempt(attemptId);
           },
         },
       });
-      widget.on('payment.failed', handlePaymentFailure);
+      widget.on('payment.failed', () => {
+        if (isCurrentAttempt(attemptId)) handlePaymentFailure();
+      });
 
       setIsWidgetOpen(true);
       widget.open();
     } catch (err: unknown) {
+      if (!isCurrentAttempt(attemptId)) return;
       setIsWidgetOpen(false);
-      releasePaymentAttempt();
+      releasePaymentAttempt(attemptId);
       if (err instanceof GraphQLErrorWithCodes) {
         setCheckoutErrors(err.codes);
       } else {

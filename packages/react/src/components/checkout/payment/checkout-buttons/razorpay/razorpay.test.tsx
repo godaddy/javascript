@@ -192,6 +192,45 @@ describe('RazorpayCheckoutButton', () => {
     });
   });
 
+  it('preserves a transport error when confirmation unmounts the button', async () => {
+    let rejectConfirmation: ((reason: Error) => void) | undefined;
+    mocks.confirm.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectConfirmation = reject;
+        })
+    );
+    const view = render(<RazorpayCheckoutButton />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pay now' }));
+    await waitFor(() => expect(open).toHaveBeenCalledOnce());
+
+    act(() => {
+      capturedOptions?.handler({
+        razorpay_payment_id: 'pay_razorpay_456',
+        razorpay_order_id: 'order_razorpay_123',
+        razorpay_signature: 'signature_789',
+      });
+    });
+    await waitFor(() => expect(mocks.confirm).toHaveBeenCalledOnce());
+
+    // PaymentForm replaces the provider button while confirmation is pending.
+    view.unmount();
+    await act(async () => {
+      rejectConfirmation?.(new Error('Network unavailable'));
+    });
+
+    expect(mocks.setCheckoutErrors).toHaveBeenCalledWith([
+      'TRANSACTION_PROCESSING_FAILED',
+    ]);
+
+    // The checkout-level error survives when PaymentForm mounts the button again.
+    render(<RazorpayCheckoutButton />);
+    expect(mocks.setCheckoutErrors).toHaveBeenCalledWith([
+      'TRANSACTION_PROCESSING_FAILED',
+    ]);
+  });
+
   it('waits for the checkout sync to settle before authorizing', async () => {
     let resolveFlush: ((value: unknown) => void) | undefined;
     mocks.flush.mockImplementation(
@@ -248,6 +287,72 @@ describe('RazorpayCheckoutButton', () => {
     await waitFor(() => expect(open).toHaveBeenCalledOnce());
     expect(mocks.flush).toHaveBeenCalledOnce();
     expect(mocks.authorize).toHaveBeenCalledOnce();
+  });
+
+  it('does not open Checkout when authorization resolves after unmount', async () => {
+    let resolveAuthorization: ((value: unknown) => void) | undefined;
+    mocks.authorize.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          resolveAuthorization = resolve;
+        })
+    );
+    const view = render(<RazorpayCheckoutButton />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pay now' }));
+    await waitFor(() => expect(mocks.authorize).toHaveBeenCalledOnce());
+    view.unmount();
+
+    await act(async () => {
+      resolveAuthorization?.({
+        fundingSource: { paymentReference: 'order_stale_123' },
+        references: [{ type: 'MERCHANT_PUBLIC_KEY', value: 'rzp_test_stale' }],
+      });
+    });
+
+    expect(open).not.toHaveBeenCalled();
+    expect(capturedOptions).toBeUndefined();
+  });
+
+  it('keeps a remounted attempt isolated from stale authorization', async () => {
+    let resolveFirstAuthorization: ((value: unknown) => void) | undefined;
+    mocks.authorize
+      .mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            resolveFirstAuthorization = resolve;
+          })
+      )
+      .mockResolvedValueOnce({
+        fundingSource: { paymentReference: 'order_fresh_456' },
+        references: [{ type: 'MERCHANT_PUBLIC_KEY', value: 'rzp_test_fresh' }],
+      });
+    const firstView = render(<RazorpayCheckoutButton />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pay now' }));
+    await waitFor(() => expect(mocks.authorize).toHaveBeenCalledOnce());
+    firstView.unmount();
+
+    render(<RazorpayCheckoutButton />);
+    fireEvent.click(screen.getByRole('button', { name: 'Pay now' }));
+    await waitFor(() => expect(open).toHaveBeenCalledOnce());
+    expect(capturedOptions).toMatchObject({
+      key: 'rzp_test_fresh',
+      order_id: 'order_fresh_456',
+    });
+
+    await act(async () => {
+      resolveFirstAuthorization?.({
+        fundingSource: { paymentReference: 'order_stale_123' },
+        references: [{ type: 'MERCHANT_PUBLIC_KEY', value: 'rzp_test_stale' }],
+      });
+    });
+
+    expect(open).toHaveBeenCalledOnce();
+    expect(capturedOptions).toMatchObject({
+      key: 'rzp_test_fresh',
+      order_id: 'order_fresh_456',
+    });
   });
 
   it('does not confirm when Razorpay reports a failed payment', async () => {
