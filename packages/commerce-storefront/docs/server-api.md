@@ -11,13 +11,13 @@ Server implementations can use GoDaddy Commerce APIs or their existing integrati
 - Read requests use `cache: no-store`, cancellation, and a 15-second timeout. The initial cart creation/add request is also a write and is never retried automatically.
 - Return a non-2xx response with `{ "error": "A useful customer-facing message" }` for failure. HTML error pages are also handled as failures.
 - Only cart reads with HTTP 404 or 410 clear an expired saved cart. Network errors, 401/403/409/5xx, and other failures preserve the ID and block writes until hydration succeeds.
-- Resolve prices, taxes, discounts and availability on the server. Browser SKU names and quantities are input, not pricing authority. Protect mutations against CSRF as appropriate for the host application's authentication.
+- Resolve prices and availability on the server. The cart does not calculate shipping, taxes, or discounts; it explains that they are calculated at checkout. Browser SKU names and quantities are input, not pricing authority. Protect mutations against CSRF as appropriate for the host application's authentication.
 
 ## Endpoints
 
 | Method and path | Input | Successful JSON response |
 | --- | --- | --- |
-| `GET /config` | None | `{ cartScope: string, currencyCode: string }` |
+| `GET /config` | None | `{ cartScope, currencyCode }` |
 | `GET /products?first=6&after=<cursor>` | Optional opaque cursor | `{ skuGroups: Connection<SKUGroup> }` |
 | `GET /products/:id` | URI-encoded product ID | `{ skuGroup: SKUGroup \| null }` |
 | `GET /products/:id?attributeValues=blue&attributeValues=large` | Repeated selected attribute **names**, not IDs | `{ skuGroup: SKUGroup \| null }` with matching SKU connection |
@@ -33,7 +33,7 @@ Server implementations can use GoDaddy Commerce APIs or their existing integrati
 
 ## Configuration
 
-`cartScope` is a nonempty opaque identifier for the effective store/channel binding. It is not a secret. Rotate it when the binding changes so a saved cart cannot cross stores. `currencyCode` is a three-letter uppercase ISO 4217 code, for example `USD`. Money integers use that currency's smallest unit: USD 1234 is $12.34; JPY 1234 is ¥1,234.
+`cartScope` is a nonempty opaque identifier for the effective store/channel/currency binding. It is not a secret. Rotate it when that binding changes so a saved cart cannot cross stores or currencies. `currencyCode` is a three-letter uppercase ISO 4217 code, for example `USD`. Money integers use that currency's smallest unit: USD 1234 is $12.34; JPY 1234 is ¥1,234. The cart shows the draft-order subtotal and the message “Shipping, taxes, and discounts are calculated at checkout.” The message has the stable `commerce-cart-checkout-adjustments-note` class so a host can hide it without changing the component.
 
 The browser rechecks configuration on window focus when stale. Return current server configuration rather than a browser-selected store. Persisted IDs use the package-specific key documented in the README; migration from another application's storage keys belongs to that application's integration.
 

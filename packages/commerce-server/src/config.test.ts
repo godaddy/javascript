@@ -97,14 +97,20 @@ describe('Commerce runtime configuration', () => {
     });
   });
 
-  it.each(['{bad json', 'null', '{"enableShipping":true}'])(
-    'rejects malformed checkout configuration: %s',
-    (raw): void => {
-      expect(() =>
-        createRuntimeCommerceConfiguration({
-          environment: { ...environment(), GODADDY_CHECKOUT_CONFIGURATION: raw },
-        }).readCheckout(),
-      ).toThrow('Commerce config: GODADDY_CHECKOUT_CONFIGURATION');
-    },
-  );
+  it.each([
+    '{bad json',
+    'null',
+    '{"enableShipping":true}',
+    '{"enablePromotionCodes":false,"enableTaxCollection":false,"enableShipping":true,"shipping":{"originAddressConfigured":true}}',
+  ])('defaults malformed checkout configuration to disabled capabilities: %s', (raw): void => {
+    expect(
+      createRuntimeCommerceConfiguration({
+        environment: { ...environment(), GODADDY_CHECKOUT_CONFIGURATION: raw },
+      }).readCheckout(),
+    ).toEqual({
+      enablePromotionCodes: false,
+      enableTaxCollection: false,
+      enableShipping: false,
+    });
+  });
 });

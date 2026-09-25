@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import express from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCommerceCartScope } from './lib/commerce/cart-scope';
+import type { CommerceConfiguration } from './lib/commerce/config';
 import { createCheckoutSession } from './lib/commerce/create-checkout-session';
 import { GraphQLErrorWithCodes, gqlRequest } from './lib/commerce/gql';
 import { getCartOrderQuery } from './lib/commerce/order-subgraph';
@@ -36,7 +37,7 @@ const binding = {
   clientId: 'client-1',
   clientSecret: 'server-only-secret',
 };
-const configuration = {
+const configuration: CommerceConfiguration = {
   read: (): typeof binding => binding,
   readCheckout: (): { enablePromotionCodes: false; enableTaxCollection: false; enableShipping: false } => ({
     enablePromotionCodes: false,
@@ -63,6 +64,10 @@ describe('Commerce scoped routes', () => {
 
   it('does not query unsupported status fields on the storefront cart API', (): void => {
     expect(getCartOrderQuery).not.toMatch(/\bstatuses\s*\{/);
+  });
+
+  it('uses currency as part of the persisted cart binding', (): void => {
+    expect(getCommerceCartScope(binding)).not.toBe(getCommerceCartScope({ ...binding, currencyCode: 'GBP' }));
   });
 
   it.each([readCart, addItem, updateItem, deleteItem, applyDiscount, readProduct, readSku])(
@@ -100,7 +105,20 @@ describe('Commerce scoped routes', () => {
     expect(query).toContain('prices(first: 10)');
     expect(query).toContain('inventoryCounts');
     expect(query).toContain('pageInfo { hasNextPage }');
+    expect(query).toContain('attributes(first: 50, orderBy: { position: ASC })');
+    expect(query).toContain('values(first: 50, orderBy: { position: ASC })');
+    expect(query).toContain('status: { eq: "ACTIVE" }');
     expect(res.json).toHaveBeenCalledWith({ skuGroup: { id: 'product' } });
+  });
+
+  it('loads only active catalog products and active card SKUs', async (): Promise<void> => {
+    const res: ReturnType<typeof response> = response();
+    vi.mocked(gqlRequest).mockResolvedValueOnce({ skuGroups: { edges: [] } });
+    await readProducts({ query: {} } as unknown as Request, res as unknown as Response);
+    const query: string = vi.mocked(gqlRequest).mock.calls[0]?.[0].query ?? '';
+    expect(query).toContain('status: { eq: "ACTIVE" }');
+    expect(query).toContain('skus(first: 2, status: { eq: "ACTIVE" })');
+    expect(query).toContain('priceRange(status: { eq: "ACTIVE" })');
   });
 
   it.each([readProducts, readProduct, readSku])(

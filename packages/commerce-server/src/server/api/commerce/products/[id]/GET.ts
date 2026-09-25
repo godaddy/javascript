@@ -34,11 +34,11 @@ const skuGroupQuery = `
       description
       htmlDescription
       type
-      priceRange {
+      priceRange(status: { eq: "ACTIVE" }) {
         min
         max
       }
-      compareAtPriceRange {
+      compareAtPriceRange(status: { eq: "ACTIVE" }) {
         min
         max
       }
@@ -50,7 +50,7 @@ const skuGroupQuery = `
           }
         }
       }
-      attributes {
+      attributes(first: 50, orderBy: { position: ASC }) {
         edges {
           node {
             id
@@ -58,7 +58,7 @@ const skuGroupQuery = `
             label
             description
             htmlDescription
-            values(first: 50) {
+            values(first: 50, orderBy: { position: ASC }) {
               edges {
                 node {
                   id
@@ -70,7 +70,7 @@ const skuGroupQuery = `
           }
         }
       }
-      skus(attributeValues: { has: $attributeValues }, first: $first) {
+      skus(attributeValues: { has: $attributeValues }, first: $first, status: { eq: "ACTIVE" }) {
         pageInfo { hasNextPage }
         totalCount
         edges {
