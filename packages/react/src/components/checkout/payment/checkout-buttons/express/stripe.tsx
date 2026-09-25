@@ -15,6 +15,7 @@ import {
   useDraftOrder,
   useDraftOrderTotals,
 } from '@/components/checkout/order/use-draft-order';
+import { isCheckoutConfirmationBlockedError } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useStripeCheckout } from '@/components/checkout/payment/utils/use-stripe-checkout';
 import { useStripePaymentIntent } from '@/components/checkout/payment/utils/use-stripe-payment-intent';
@@ -585,17 +586,8 @@ export function StripeExpressCheckoutForm() {
             : null,
           selectedShippingMethod: selectedShippingMethod || null,
         });
-
-        // Track successful payment
-        track({
-          eventId: eventIds.expressApplePayCompleted,
-          type: TrackingEventType.EVENT,
-          properties: {
-            paymentType: event.expressPaymentType,
-            provider: 'stripe',
-          },
-        });
       } catch (error) {
+        if (isCheckoutConfirmationBlockedError(error)) return;
         // Track error
         track({
           eventId: eventIds.expressCheckoutError,

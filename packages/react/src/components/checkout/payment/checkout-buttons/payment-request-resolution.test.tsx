@@ -1,5 +1,11 @@
 import { QueryClient } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,6 +17,7 @@ import { GoDaddyProvider } from '@/godaddy-provider';
 import type { DraftOrder } from '@/types';
 import { CreditCardCheckoutButton } from './credit-card/godaddy';
 import { SquareCreditCardCheckoutButton } from './credit-card/square';
+import { StripeCreditCardCheckoutButton } from './credit-card/stripe';
 
 const mocks = vi.hoisted(() => ({
   latestOrder: { id: 'latest-order' } as DraftOrder,
@@ -19,6 +26,14 @@ const mocks = vi.hoisted(() => ({
   getNonce: vi.fn(),
   tokenize: vi.fn(),
   confirm: vi.fn(),
+  stripeSubmit: vi.fn(),
+}));
+
+vi.mock('@/components/checkout/payment/utils/use-stripe-checkout', () => ({
+  useStripeCheckout: () => ({
+    handleSubmit: mocks.stripeSubmit,
+    isProcessingPayment: false,
+  }),
 }));
 
 vi.mock('@/components/checkout/payment/utils/use-flush-checkout-sync', () => ({
@@ -150,5 +165,32 @@ describe('payment request resolution from the flushed order', () => {
     expect(mocks.confirm.mock.invocationCallOrder[0]).toBeGreaterThan(
       mocks.tokenize.mock.invocationCallOrder[0]
     );
+  });
+
+  it('locks the Stripe button before validation and the initial order flush finish', async () => {
+    let finishFlush!: (value: { latestOrder: DraftOrder }) => void;
+    mocks.flush.mockReturnValueOnce(
+      new Promise(resolve => {
+        finishFlush = resolve;
+      })
+    );
+    render(<StripeCreditCardCheckoutButton />, { wrapper: Wrapper });
+    const button = screen.getByRole('button', { name: /pay now/i });
+
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    await waitFor(() => expect(mocks.flush).toHaveBeenCalledTimes(1));
+    expect(mocks.stripeSubmit).not.toHaveBeenCalled();
+
+    await act(async () => {
+      finishFlush({ latestOrder: mocks.latestOrder });
+    });
+    expect(mocks.stripeSubmit).toHaveBeenCalledTimes(1);
+    expect(mocks.stripeSubmit).toHaveBeenCalledWith(
+      undefined,
+      mocks.latestOrder
+    );
+    expect((button as HTMLButtonElement).disabled).toBe(false);
   });
 });

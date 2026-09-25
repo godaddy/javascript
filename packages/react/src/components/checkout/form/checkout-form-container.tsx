@@ -14,11 +14,13 @@ import {
   useDraftOrderProductsMap,
   useRefreshProductsWhenLineItemsChange,
 } from '@/components/checkout/order/use-draft-order-products';
+import { usePaidOrderRedirect } from '@/components/checkout/order/use-paid-order-redirect';
 import {
   mapOrderToFormValues,
   mapSkusToItemsDisplay,
 } from '@/components/checkout/utils/checkout-transformers';
 import { getFulfillmentSummary } from '@/components/checkout/utils/fulfillment';
+import { useGoDaddyContext } from '@/godaddy-provider';
 
 interface CheckoutFormContainerProps extends Omit<CheckoutProps, 'session'> {
   validationAdapter: CheckoutValidationAdapter;
@@ -31,12 +33,15 @@ export function CheckoutFormContainer({
   ...props
 }: CheckoutFormContainerProps) {
   const { session, isConfirmingCheckout } = useCheckoutContext();
+  const { t } = useGoDaddyContext();
 
   const draftOrderQuery = useDraftOrder();
   const draftOrderLineItemsQuery = useDraftOrderLineItems();
   const skusMap = useDraftOrderProductsMap();
 
   const { data: order } = draftOrderQuery;
+  const showPaidOrder = usePaidOrderRedirect(order);
+
   const { data: lineItems } = draftOrderLineItemsQuery;
   useRefreshProductsWhenLineItemsChange(lineItems);
 
@@ -80,6 +85,10 @@ export function CheckoutFormContainer({
     return (
       props.loadingFallback ?? <CheckoutSkeleton direction={props.direction} />
     );
+  }
+
+  if (showPaidOrder) {
+    return <div role='status'>{t.errors.paymentSuccessful}</div>;
   }
 
   return (

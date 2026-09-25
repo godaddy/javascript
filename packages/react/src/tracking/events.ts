@@ -18,6 +18,7 @@ export const eventIds = {
 
   // Express checkout events
   expressCheckoutImpression: 'express_checkout.impression',
+  expressCheckoutCompleted: 'express_checkout_completed.event',
   expressApplePayImpression: 'express_apple_pay.impression',
   expressGooglePayImpression: 'express_google_pay.impression',
   expressApplePayClick: 'express_apple_pay.click',
@@ -48,6 +49,8 @@ export const eventIds = {
   selectPaymentMethod: 'select_payment_method.click',
   toggleSameAsBillingAddress: 'toggle_same_as_billing_address.click',
   paymentStart: 'payment_start.event',
+  paymentChallengeStarted: 'payment_challenge_started.event',
+  paymentChallengeCompleted: 'payment_challenge_completed.event',
 
   // Shipping events
   selectShippingMethod: 'select_shipping_method.click',

@@ -8,10 +8,12 @@ import {
   useCheckoutContext,
 } from '@/components/checkout/checkout';
 import { CheckoutSection } from '@/components/checkout/checkout-section';
+import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
+import { usePaidOrderRedirect } from '@/components/checkout/order/use-paid-order-redirect';
 import { PaymentMethodRenderer } from '@/components/checkout/payment/payment-method-renderer';
 import { ConditionalExpressProviders } from '@/components/checkout/payment/utils/conditional-providers';
 import { Target } from '@/components/checkout/target/target';
-import type { GoDaddyVariables } from '@/godaddy-provider';
+import { type GoDaddyVariables, useGoDaddyContext } from '@/godaddy-provider';
 import { type Theme, useTheme } from '@/hooks/use-theme';
 import { useVariables } from '@/hooks/use-variables';
 import { TrackingProvider } from '@/tracking/tracking-provider';
@@ -84,6 +86,22 @@ function DraftOrderExpressCheckoutButtons() {
   );
 }
 
+function ExpressCheckoutContent() {
+  const { t } = useGoDaddyContext();
+  const { data: order, isLoading } = useDraftOrder();
+  const showPaidOrder = usePaidOrderRedirect(order);
+
+  if (showPaidOrder)
+    return <div role='status'>{t.errors.paymentSuccessful}</div>;
+  if (isLoading) return null;
+
+  return (
+    <ConditionalExpressProviders>
+      <DraftOrderExpressCheckoutButtons />
+    </ConditionalExpressProviders>
+  );
+}
+
 export function DraftOrderExpressCheckout(props: ExpressCheckoutProps) {
   const {
     session,
@@ -140,9 +158,7 @@ export function DraftOrderExpressCheckout(props: ExpressCheckoutProps) {
     >
       <checkoutContext.Provider value={contextValue}>
         <CheckoutSection>
-          <ConditionalExpressProviders>
-            <DraftOrderExpressCheckoutButtons />
-          </ConditionalExpressProviders>
+          <ExpressCheckoutContent />
         </CheckoutSection>
       </checkoutContext.Provider>
     </TrackingProvider>

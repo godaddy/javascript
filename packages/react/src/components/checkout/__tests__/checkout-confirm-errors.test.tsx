@@ -1,7 +1,7 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import {
@@ -9,6 +9,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { confirmCheckout, getDraftOrder } from '@/lib/godaddy/godaddy';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import {
   buildCheckoutSession,
@@ -19,6 +20,7 @@ import {
   clearOperations,
   getOperations,
   mockGodaddyApi,
+  mockWindowLocation,
   type RenderCheckoutOptions,
   renderCheckout,
   setApiError,
@@ -344,6 +346,47 @@ describe('Checkout confirm errors', () => {
 
     // Order rejected; the success-URL redirect path is bypassed.
     expect(window.location.href).not.toContain('should-not-go-here');
+  });
+
+  it('refreshes after a lost confirmation response and redirects the paid order', async () => {
+    mockWindowLocation();
+    const successUrl = 'https://merchant.example/success';
+    const { session, user } = renderCheckoutWithConfirmSeam(
+      {
+        sessionOverrides: { ...offlineSessionOverrides(), successUrl },
+      },
+      {
+        isExpress: true,
+        paymentType: 'offline',
+        paymentProvider: PaymentProvider.OFFLINE,
+      }
+    );
+    await waitForCheckoutReady();
+    vi.mocked(confirmCheckout).mockImplementationOnce(async () => {
+      vi.mocked(getDraftOrder).mockResolvedValue({
+        checkoutSession: {
+          ...session,
+          draftOrder: buildDraftOrder({
+            statuses: { status: 'OPEN', paymentStatus: 'PAID' },
+          }),
+        },
+      });
+      throw new Error('Confirmation response lost');
+    });
+    await user.click(
+      await screen.findByRole('button', { name: /confirm seam/i })
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Payment successful'
+    );
+    expect(
+      screen.queryByRole('button', { name: /confirm seam/i })
+    ).not.toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1100);
+    });
+    expect(window.location.href).toBe(successUrl);
+    expect(confirmCheckout).toHaveBeenCalledTimes(1);
   });
 
   it('surfaces DRAFT_ORDER_UPDATE_FAILED when the in-confirm draft-order fetch fails', async () => {
