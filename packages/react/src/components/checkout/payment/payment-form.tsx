@@ -121,9 +121,27 @@ export function PaymentForm(
     paymentMethod === PaymentMethodType.ACH;
   const canOfferShippingAddressAsBilling =
     useCanOfferShippingAddressAsBilling();
-  const methodConfig = useGetSelectedPaymentMethod(
+  const rawMethodConfig = useGetSelectedPaymentMethod(
     paymentMethod as PaymentMethodValue
   );
+  // TEMP FOR TESTING — DO NOT COMMIT: mirrors the availablePaymentMethods
+  // bypass below. session.paymentMethods.paypal can be null even when PayPal
+  // is actually configured (only paymentProviderConfiguration.paypal gets
+  // resolved by discovery on a session created with explicit paymentMethods
+  // input). Without this, useGetSelectedPaymentMethod returns null for
+  // PayPal, so getCheckoutButton() bails out at `if (!methodConfig) return
+  // null` and the "Pay now" button never renders — even though PayPal is
+  // selectable in the accordion thanks to the bypass below.
+  const methodConfig =
+    rawMethodConfig ??
+    (paymentMethod === PaymentMethodType.PAYPAL &&
+    paypalConfig?.clientId?.trim()
+      ? {
+          type: PaymentMethodType.PAYPAL as PaymentMethodValue,
+          processor: PaymentProvider.PAYPAL,
+          checkoutTypes: [CheckoutType.STANDARD],
+        }
+      : null);
   const { isPoyntLoaded } = useLoadPoyntCollect();
 
   const [pazeSupported, setPazeSupported] = useState<boolean | null>(null);
@@ -264,11 +282,25 @@ export function PaymentForm(
     return Object.keys(configuredPaymentMethods).filter(key => {
       const method = configuredPaymentMethods[key as PaymentMethodValue];
 
+      // TEMP FOR TESTING — DO NOT COMMIT: session.paymentMethods.paypal can
+      // be null on a session created with explicit paymentMethods input
+      // (only paymentProviderConfiguration gets resolved by discovery in
+      // that case). Only treat a null paypal method as "standard" when real
+      // PayPal SDK config actually exists — not a blind pretend, gated on
+      // real data. (No equivalent exists for Razorpay: its public config is
+      // never delivered via paymentProviderConfiguration by design — see
+      // razorpay-resolver.ts — so there's nothing to check it against here.)
+      const isPayPalWithRealConfig =
+        key === PaymentMethodType.PAYPAL && !!paypalConfig?.clientId?.trim();
+      const effectiveCheckoutTypes =
+        method?.checkoutTypes ??
+        (isPayPalWithRealConfig ? [CheckoutType.STANDARD] : undefined);
+
       const baseCheck =
         PAYMENT_METHOD_ICONS[key as PaymentMethodValue] &&
-        method &&
-        Array.isArray(method.checkoutTypes) &&
-        method.checkoutTypes.includes(CheckoutType.STANDARD);
+        (method || isPayPalWithRealConfig) &&
+        Array.isArray(effectiveCheckoutTypes) &&
+        effectiveCheckoutTypes.includes(CheckoutType.STANDARD);
 
       // Match the business ID requirement used by Collect and its providers.
       if (
@@ -288,9 +320,11 @@ export function PaymentForm(
       // PayPal requires public SDK configuration (clientId at minimum) to
       // initialize the JS SDK. Without it, the button would render a visible
       // "configuration missing" error instead of a usable payment option.
+      // (method is null in the TEMP testing case above, so also allow
+      // through when method is missing but the key matches.)
       if (
         key === PaymentMethodType.PAYPAL &&
-        method?.processor === PaymentProvider.PAYPAL
+        (method?.processor === PaymentProvider.PAYPAL || !method)
       ) {
         return baseCheck && !!paypalConfig?.clientId?.trim();
       }
