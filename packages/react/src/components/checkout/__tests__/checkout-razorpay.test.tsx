@@ -15,6 +15,9 @@ function buildRazorpaySession() {
       checkoutTypes: ['standard'],
     },
   } as never;
+  session.paymentProviderConfiguration = {
+    razorpay: { configured: true },
+  } as never;
   return session;
 }
 

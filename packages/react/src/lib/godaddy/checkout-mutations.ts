@@ -145,6 +145,9 @@ export const CreateCheckoutSessionMutation = graphql(`
           partnerAttributionId
           disableFunding
         }
+        razorpay {
+          configured
+        }
       }
       draftOrder {
         id

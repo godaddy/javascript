@@ -86,6 +86,10 @@ export type PayPalConfig = {
   disableFunding?: Array<'credit' | 'card' | 'paylater' | 'venmo'>;
 };
 
+export type RazorpayConfig = {
+  configured: boolean;
+};
+
 export type MercadoPagoConfig = {
   publicKey: string;
   country: 'AR' | 'BR' | 'CO' | 'CL' | 'PE' | 'MX';
@@ -107,6 +111,7 @@ interface CheckoutContextValue {
   godaddyPaymentsConfig?: GodaddyPaymentsConfig;
   squareConfig?: SquareConfig;
   paypalConfig?: PayPalConfig;
+  razorpayConfig?: RazorpayConfig;
   mercadoPagoConfig?: MercadoPagoConfig;
   ccavenueConfig?: CCAvenueConfig;
   isConfirmingCheckout: boolean;
@@ -280,6 +285,12 @@ export function Checkout(props: CheckoutProps) {
         }
       : undefined);
 
+  const sessionRazorpayConfig = session?.paymentProviderConfiguration?.razorpay;
+  const effectiveRazorpayConfig: RazorpayConfig | undefined =
+    sessionRazorpayConfig
+      ? { configured: sessionRazorpayConfig.configured }
+      : undefined;
+
   const validationMessages = React.useMemo<CheckoutValidationMessages>(
     () => ({
       enterValidBillingPhone: t.validation.enterValidBillingPhone,
@@ -357,6 +368,7 @@ export function Checkout(props: CheckoutProps) {
           squareConfig,
           mercadoPagoConfig,
           paypalConfig: effectivePayPalConfig,
+          razorpayConfig: effectiveRazorpayConfig,
           ccavenueConfig,
           requiredFields,
           isConfirmingCheckout,

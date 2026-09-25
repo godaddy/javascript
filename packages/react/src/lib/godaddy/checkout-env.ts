@@ -3890,6 +3890,34 @@ const introspection = {
             },
             "args": [],
             "isDeprecated": false
+          },
+          {
+            "name": "razorpay",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionRazorpayProviderConfiguration"
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionRazorpayProviderConfiguration",
+        "fields": [
+          {
+            "name": "configured",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
           }
         ],
         "interfaces": []

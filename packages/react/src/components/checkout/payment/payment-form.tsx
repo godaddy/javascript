@@ -109,6 +109,7 @@ export function PaymentForm(
     requiredFields,
     godaddyPaymentsConfig,
     paypalConfig,
+    razorpayConfig,
   } = useCheckoutContext();
   const form = useFormContext();
   const paymentMethod = form.watch('paymentMethod');
@@ -286,10 +287,9 @@ export function PaymentForm(
       // be null on a session created with explicit paymentMethods input
       // (only paymentProviderConfiguration gets resolved by discovery in
       // that case). Only treat a null paypal method as "standard" when real
-      // PayPal SDK config actually exists — not a blind pretend, gated on
-      // real data. (No equivalent exists for Razorpay: its public config is
-      // never delivered via paymentProviderConfiguration by design — see
-      // razorpay-resolver.ts — so there's nothing to check it against here.)
+      // PayPal SDK config actually exists. (Razorpay's equivalent signal,
+      // paymentProviderConfiguration.razorpay.configured, is checked in the
+      // stable gating block below instead.)
       const isPayPalWithRealConfig =
         key === PaymentMethodType.PAYPAL && !!paypalConfig?.clientId?.trim();
       const effectiveCheckoutTypes =
@@ -329,6 +329,15 @@ export function PaymentForm(
         return baseCheck && !!paypalConfig?.clientId?.trim();
       }
 
+      // Razorpay requires checkout-api to have resolved a working merchant
+      // account before the button is offered.
+      if (
+        key === PaymentMethodType.RAZORPAY &&
+        method?.processor === PaymentProvider.RAZORPAY
+      ) {
+        return baseCheck && razorpayConfig?.configured === true;
+      }
+
       // Special handling for GoDaddy wallet payments — only show when device supports them
       if (
         key === PaymentMethodType.PAZE &&
@@ -360,6 +369,7 @@ export function PaymentForm(
     applePaySupported,
     googlePaySupported,
     paypalConfig?.clientId,
+    razorpayConfig?.configured,
   ]);
 
   const shouldShowBilling =

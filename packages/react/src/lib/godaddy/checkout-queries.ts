@@ -162,6 +162,9 @@ export const GetCheckoutSessionQuery = graphql(`
                 partnerAttributionId
                 disableFunding
               }
+              razorpay {
+                configured
+              }
             }
             locations {
               id
