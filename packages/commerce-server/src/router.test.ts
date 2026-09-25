@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import express from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCommerceCartScope } from './lib/commerce/cart-scope';
+import type { CommerceConfiguration } from './lib/commerce/config';
 import { createCheckoutSession } from './lib/commerce/create-checkout-session';
 import { GraphQLErrorWithCodes, gqlRequest } from './lib/commerce/gql';
 import { getCartOrderQuery } from './lib/commerce/order-subgraph';
@@ -36,13 +37,8 @@ const binding = {
   clientId: 'client-1',
   clientSecret: 'server-only-secret',
 };
-const configuration = {
+const configuration: CommerceConfiguration = {
   read: (): typeof binding => binding,
-  readCheckout: (): { enablePromotionCodes: false; enableTaxCollection: false; enableShipping: false } => ({
-    enablePromotionCodes: false,
-    enableTaxCollection: false,
-    enableShipping: false,
-  }),
 };
 
 function response() {
@@ -63,6 +59,10 @@ describe('Commerce scoped routes', () => {
 
   it('does not query unsupported status fields on the storefront cart API', (): void => {
     expect(getCartOrderQuery).not.toMatch(/\bstatuses\s*\{/);
+  });
+
+  it('uses currency as part of the persisted cart binding', (): void => {
+    expect(getCommerceCartScope(binding)).not.toBe(getCommerceCartScope({ ...binding, currencyCode: 'GBP' }));
   });
 
   it.each([readCart, addItem, updateItem, deleteItem, applyDiscount, readProduct, readSku])(

@@ -13,7 +13,10 @@ import { type CommerceContextValue, useCommerce } from './commerce-provider';
 import { CommerceStorefront } from './commerce-storefront';
 import { ProductDetails } from './product-details';
 
-const configuration = { cartScope: 'store-one', currencyCode: 'USD' };
+const configuration = {
+  cartScope: 'store-one',
+  currencyCode: 'USD',
+};
 const storageKey = 'godaddy:commerce-storefront:cart:store-one';
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const cart = (id = 'cart-1', quantity = 1): CartOrder => ({
@@ -108,6 +111,31 @@ describe('connection boundary', () => {
 });
 
 describe('shared cart', () => {
+  it('shows the subtotal and a hideable checkout adjustments note', async () => {
+    localStorage.setItem(storageKey, 'cart-1');
+    const draftCart: CartOrder = {
+      ...cart(),
+      totals: {
+        subTotal: { value: 1200, currencyCode: 'USD' },
+        discountTotal: { value: 0, currencyCode: 'USD' },
+        shippingTotal: { value: 0, currencyCode: 'USD' },
+        taxTotal: { value: 100, currencyCode: 'USD' },
+        total: { value: 1300, currencyCode: 'USD' },
+      },
+    };
+    mockApi((path) => (path.endsWith('/config') ? response(configuration) : response({ cart: draftCart })));
+    const view = mount();
+    await connected(view);
+    act(() => view.context().setOpen(true));
+    expect(screen.getByText('Subtotal')).toBeVisible();
+    expect(screen.getByText('$12.00')).toBeVisible();
+    expect(screen.getByText('Shipping, taxes, and discounts are calculated at checkout.')).toHaveClass(
+      'commerce-cart-checkout-adjustments-note',
+    );
+    expect(screen.queryByText('Total')).not.toBeInTheDocument();
+    expect(screen.queryByText('$1.00')).not.toBeInTheDocument();
+  });
+
   it('returns keyboard focus to the add trigger and never submits a host form', async () => {
     const submit = vi.fn((event) => event.preventDefault());
     mockApi((path) => (path.endsWith('/config') ? response(configuration) : response({ cart: cart() })));

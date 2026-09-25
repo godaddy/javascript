@@ -22,7 +22,6 @@ The default configuration reads these **server-only environment variables** on e
 - `GODADDY_OAUTH_CLIENT_ID` and `GODADDY_OAUTH_CLIENT_SECRET`
 - `GODADDY_STORE_ID` and `GODADDY_CHANNEL_ID`
 - `GODADDY_CURRENCY_CODE`
-- Optional `GODADDY_CHECKOUT_CONFIGURATION`: JSON with boolean `enablePromotionCodes`, `enableTaxCollection`, and `enableShipping` fields. All three default to false when this variable is absent. Optional `shipping` accepts the checkout API's `originAddress` or `fulfillmentLocationId`; omit it to use store configuration.
 
 The API origin defaults to `https://api.godaddy.com`. The package does not load files, provision merchants, or assign application attribution. Hosts own these concerns and any readiness checks or retries before invoking Commerce.
 
@@ -40,7 +39,7 @@ const configuration = createRuntimeCommerceConfiguration({
 
 `apiBaseUrl` controls catalog, order, and OAuth requests; checkout uses the corresponding `checkout.commerce.` subdomain. There is no built-in list of alternate environments. `sourceApp` and `owner` are optional host-owned attribution values: checkout uses both, while draft orders use `owner`. Supply values required by your Commerce integration; the package omits them by default.
 
-Hosts with their own configuration service can implement `CommerceConfiguration` directly. `read()` returns `clientId`, `clientSecret`, `storeId`, `channelId`, `currencyCode`, `apiBaseUrl`, and optional attribution. `readCheckout()` returns the checkout flags and optional shipping settings. Return validated, ready-to-use settings from one consistent binding. Both functions run on the server; credentials must never reach browser code.
+Hosts with their own configuration service can implement `CommerceConfiguration` directly. `read()` returns `clientId`, `clientSecret`, `storeId`, `channelId`, `currencyCode`, `apiBaseUrl`, and optional attribution. Return a validated, ready-to-use binding. This function runs on the server; credentials must never reach browser code.
 
 ## Routers and helpers
 

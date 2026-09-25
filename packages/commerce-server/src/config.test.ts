@@ -74,37 +74,4 @@ describe('Commerce runtime configuration', () => {
     delete values[key];
     expect(() => readCommerceConfig({ environment: values })).toThrow(`${key} is missing`);
   });
-
-  it('reads checkout flags and API shipping options', (): void => {
-    const values = environment();
-    const configuration = createRuntimeCommerceConfiguration({ environment: values });
-    expect(configuration.readCheckout()).toEqual({
-      enablePromotionCodes: false,
-      enableTaxCollection: false,
-      enableShipping: false,
-    });
-    values.GODADDY_CHECKOUT_CONFIGURATION = JSON.stringify({
-      enablePromotionCodes: true,
-      enableTaxCollection: false,
-      enableShipping: true,
-      shipping: { fulfillmentLocationId: 'location-1' },
-    });
-    expect(configuration.readCheckout()).toEqual({
-      enablePromotionCodes: true,
-      enableTaxCollection: false,
-      enableShipping: true,
-      shipping: { fulfillmentLocationId: 'location-1' },
-    });
-  });
-
-  it.each(['{bad json', 'null', '{"enableShipping":true}'])(
-    'rejects malformed checkout configuration: %s',
-    (raw): void => {
-      expect(() =>
-        createRuntimeCommerceConfiguration({
-          environment: { ...environment(), GODADDY_CHECKOUT_CONFIGURATION: raw },
-        }).readCheckout(),
-      ).toThrow('Commerce config: GODADDY_CHECKOUT_CONFIGURATION');
-    },
-  );
 });

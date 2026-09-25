@@ -1,6 +1,5 @@
 /** Server-only Commerce configuration. Hosts own secrets and deployment-specific loading. */
 import type { Response } from 'express';
-import { type CommerceCheckoutConfiguration, parseCommerceCheckoutConfiguration } from './checkout-config';
 
 const DEFAULT_API_BASE_URL = 'https://api.godaddy.com';
 
@@ -24,11 +23,10 @@ export interface CommerceConfig {
 
 export interface CommerceConfiguration {
   read(): CommerceConfig;
-  readCheckout(): CommerceCheckoutConfiguration;
 }
 
 export interface RuntimeCommerceConfigurationOptions {
-  /** Server environment containing credentials, store/channel IDs, currency, and checkout flags. */
+  /** Server environment containing credentials, store/channel IDs, and currency. */
   environment?: NodeJS.ProcessEnv;
   /** Explicit server-controlled API origin override. Defaults to production. */
   apiBaseUrl?: string;
@@ -84,8 +82,6 @@ export function createRuntimeCommerceConfiguration(
 ): CommerceConfiguration {
   return {
     read: (): CommerceConfig => readCommerceConfig(options),
-    readCheckout: (): CommerceCheckoutConfiguration =>
-      parseCommerceCheckoutConfiguration((options.environment ?? process.env).GODADDY_CHECKOUT_CONFIGURATION),
   };
 }
 
@@ -95,9 +91,7 @@ export function commerceConfigurationForResponse(res: Response): CommerceConfigu
     configuration &&
     typeof configuration === 'object' &&
     'read' in configuration &&
-    typeof configuration.read === 'function' &&
-    'readCheckout' in configuration &&
-    typeof configuration.readCheckout === 'function'
+    typeof configuration.read === 'function'
   ) {
     return configuration as CommerceConfiguration;
   }
