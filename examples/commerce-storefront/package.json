@@ -1,0 +1,24 @@
+{
+  "name": "commerce-storefront-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5184 --strictPort",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@godaddy/commerce-storefront": "workspace:*",
+    "@tanstack/react-query": "^5.66.0",
+    "react": "^19",
+    "react-dom": "^19",
+    "react-router": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "typescript": "~5.7.3",
+    "vite": "^6.4.1"
+  }
+}

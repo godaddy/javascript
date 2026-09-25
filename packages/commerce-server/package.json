@@ -1,0 +1,51 @@
+{
+  "name": "@godaddy/commerce-server",
+  "version": "0.0.0",
+  "description": "Opinionated Express server integration for GoDaddy Commerce",
+  "type": "module",
+  "license": "MIT",
+  "author": "GoDaddy.com Operating Company, LLC",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "prepublishOnly": "pnpm build"
+  },
+  "peerDependencies": {
+    "express": "^5.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.2",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.13.1",
+    "express": "^5.1.0",
+    "tsdown": "^0.15.6",
+    "typescript": "~5.7.3",
+    "vitest": "5.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/godaddy/javascript.git",
+    "directory": "packages/commerce-server"
+  }
+}
