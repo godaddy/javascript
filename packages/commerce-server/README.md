@@ -22,7 +22,7 @@ The default configuration reads these **server-only environment variables** on e
 - `GODADDY_OAUTH_CLIENT_ID` and `GODADDY_OAUTH_CLIENT_SECRET`
 - `GODADDY_STORE_ID` and `GODADDY_CHANNEL_ID`
 - `GODADDY_CURRENCY_CODE`
-- Optional `GODADDY_CHECKOUT_CONFIGURATION`: JSON with boolean `enablePromotionCodes`, `enableTaxCollection`, and `enableShipping` fields. All three default to false when this variable is absent. Optional `shipping` accepts the checkout API's `originAddress` or `fulfillmentLocationId`; omit it to use store configuration.
+- Optional `GODADDY_CHECKOUT_CONFIGURATION`: JSON with boolean `enablePromotionCodes`, `enableTaxCollection`, and `enableShipping` fields. All three default to false when this variable is absent or malformed so configuration discovery cannot prevent checkout creation. Optional `shipping` accepts the checkout API's `originAddress` or `fulfillmentLocationId`; omit it to use store configuration.
 
 See [Checkout configuration](docs/checkout-configuration.md) for the temporary build-time synchronization flow and its eventual-consistency limitation.
 

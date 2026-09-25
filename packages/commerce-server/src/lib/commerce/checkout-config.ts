@@ -23,26 +23,24 @@ export function parseCommerceCheckoutConfiguration(raw: string | undefined): Com
   let value: unknown;
   try {
     value = JSON.parse(raw);
-  } catch (error) {
-    throw new Error('Commerce config: GODADDY_CHECKOUT_CONFIGURATION must be valid JSON.', {
-      cause: error,
-    });
+  } catch {
+    return DEFAULT_CHECKOUT_CONFIGURATION;
   }
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error('Commerce config: GODADDY_CHECKOUT_CONFIGURATION must be a JSON object.');
+    return DEFAULT_CHECKOUT_CONFIGURATION;
   }
 
   const candidate = value as Record<string, unknown>;
   for (const key of ['enablePromotionCodes', 'enableTaxCollection', 'enableShipping'] as const) {
     if (typeof candidate[key] !== 'boolean') {
-      throw new Error(`Commerce config: GODADDY_CHECKOUT_CONFIGURATION.${key} must be boolean.`);
+      return DEFAULT_CHECKOUT_CONFIGURATION;
     }
   }
 
   const shipping = candidate.shipping as Record<string, unknown> | undefined;
   if (shipping !== undefined) {
     if (shipping === null || typeof shipping !== 'object' || Array.isArray(shipping)) {
-      throw new Error('Commerce config: GODADDY_CHECKOUT_CONFIGURATION.shipping must be an object.');
+      return DEFAULT_CHECKOUT_CONFIGURATION;
     }
     const hasOriginAddress =
       shipping.originAddress !== null &&
@@ -51,9 +49,7 @@ export function parseCommerceCheckoutConfiguration(raw: string | undefined): Com
     const hasFulfillmentLocationId =
       typeof shipping.fulfillmentLocationId === 'string' && shipping.fulfillmentLocationId.trim() !== '';
     if (hasOriginAddress === hasFulfillmentLocationId) {
-      throw new Error(
-        'Commerce config: GODADDY_CHECKOUT_CONFIGURATION.shipping must contain either originAddress or fulfillmentLocationId.',
-      );
+      return DEFAULT_CHECKOUT_CONFIGURATION;
     }
   }
 

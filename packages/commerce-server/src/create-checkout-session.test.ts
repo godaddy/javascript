@@ -101,6 +101,16 @@ describe('createCheckoutSession', () => {
     },
   );
 
+  it('disables optional checkout capabilities when configuration falls back to defaults', async (): Promise<void> => {
+    await createCheckoutSession(cart, configuration);
+    expect(mockGqlRequest.mock.calls[0]?.[0].variables.input).toMatchObject({
+      enablePromotionCodes: false,
+      enableTaxCollection: false,
+      enableShipping: false,
+      enableShippingAddressCollection: false,
+    });
+  });
+
   it.each(flows)('uses only host-owned attribution for %s checkout', async (_name, params): Promise<void> => {
     config = { ...config, sourceApp: 'merchant-site', owner: 'merchant-orders' };
     mockGqlRequest.mockResolvedValue(response({ sourceApp: 'merchant-site' }));

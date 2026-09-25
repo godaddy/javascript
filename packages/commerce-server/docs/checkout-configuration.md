@@ -51,6 +51,8 @@ Restoring the server reader alone does not discover merchant settings: the build
 
 The accepted stopgap is eventually consistent: a provider enabled or disabled after deployment is reflected on the next rebuild, not immediately. This is acceptable only while the Checkout API change is pending.
 
+If the MCP lookup fails, the deployment does not receive the expected flags, or the server value is malformed, checkout falls back to all optional capabilities disabled. In particular, it sends `enableShipping: false` rather than preventing checkout creation. Builders should surface the lookup problem during the build, but it must not make the deployed checkout unusable.
+
 ## Important compatibility detail
 
 The current checkout request builder applies explicit defaults of `false` for shipping, shipping-address collection, and tax collection. Removing `GODADDY_CHECKOUT_CONFIGURATION` without changing that behavior disables those features and is a regression. Also, omitting fields is not a complete substitute: Checkout API currently defaults shipping to enabled, but does not similarly enable address collection, taxes, or promotion codes.
