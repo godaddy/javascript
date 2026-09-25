@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { CommerceCheckoutConfiguration } from './lib/commerce/checkout-config';
 import type { CheckoutSessionResult, CreateCheckoutSessionResult } from './lib/commerce/checkout-subgraph';
 import type { CommerceConfig, CommerceConfiguration } from './lib/commerce/config';
 import {
@@ -25,8 +26,10 @@ const flows = [
 const nonCatalog = flows[0][1];
 const cart = flows[1][1];
 let config: CommerceConfig;
+let checkout: CommerceCheckoutConfiguration;
 const configuration: CommerceConfiguration = {
   read: vi.fn(() => config),
+  readCheckout: () => checkout,
 };
 
 function response(overrides: Partial<CheckoutSessionResult> = {}): CreateCheckoutSessionResult {
@@ -54,6 +57,7 @@ beforeEach((): void => {
     apiBaseUrl: 'https://api.godaddy.com',
     currencyCode: 'USD',
   };
+  checkout = { enablePromotionCodes: false, enableTaxCollection: false, enableShipping: false };
   vi.mocked(configuration.read).mockImplementation(() => config);
   mockGetOAuthAccessToken.mockResolvedValue({
     access_token: 'access-token',
@@ -138,6 +142,90 @@ describe('createCheckoutSession', () => {
       );
     },
   );
+
+  it.each([flows[1], flows[2]])(
+    'uses the store shipping configuration for %s checkout',
+    async (_name, params): Promise<void> => {
+      checkout = { enablePromotionCodes: true, enableTaxCollection: true, enableShipping: true };
+      mockGqlRequest.mockResolvedValue(
+        response({
+          enablePromotionCodes: true,
+          enableTaxCollection: true,
+          enableShipping: true,
+          enableShippingAddressCollection: true,
+        }),
+      );
+      await createCheckoutSession(params, configuration);
+      const input = mockGqlRequest.mock.calls[0]?.[0].variables.input;
+      expect(input).toMatchObject({
+        enablePromotionCodes: true,
+        enableTaxCollection: true,
+        enableShipping: true,
+        enableShippingAddressCollection: true,
+      });
+      expect(input).not.toHaveProperty('shipping');
+    },
+  );
+
+  it.each([
+    {
+      originAddress: {
+        addressLine1: '123 Main St',
+        adminArea1: 'AZ',
+        adminArea2: 'Tempe',
+        postalCode: '85281',
+        countryCode: 'US',
+      },
+    },
+    { fulfillmentLocationId: 'location-1' },
+  ])('passes explicit API shipping options from the host: %j', async (shipping): Promise<void> => {
+    checkout = { ...checkout, enableShipping: true, shipping };
+    mockGqlRequest.mockResolvedValue(
+      response({ enableShipping: true, enableShippingAddressCollection: true }),
+    );
+    await createCheckoutSession(cart, configuration);
+    expect(mockGqlRequest.mock.calls[0]?.[0].variables.input.shipping).toEqual(shipping);
+  });
+
+  it('does not apply shipping or promotion codes to non-catalog checkout', async (): Promise<void> => {
+    checkout = {
+      enablePromotionCodes: true,
+      enableTaxCollection: true,
+      enableShipping: true,
+      shipping: { fulfillmentLocationId: 'location-1' },
+    };
+    mockGqlRequest.mockResolvedValue(response({ enableTaxCollection: true }));
+    await createCheckoutSession(nonCatalog, configuration);
+    const input = mockGqlRequest.mock.calls[0]?.[0].variables.input;
+    expect(input).toMatchObject({
+      enableTaxCollection: true,
+      enableShipping: false,
+      enableShippingAddressCollection: false,
+    });
+    expect(input).not.toHaveProperty('enablePromotionCodes');
+    expect(input).not.toHaveProperty('shipping');
+  });
+
+  it.each([
+    'enablePromotionCodes',
+    'enableTaxCollection',
+    'enableShipping',
+    'enableShippingAddressCollection',
+  ] as const)('rejects sessions that omit configured %s', async (field): Promise<void> => {
+    checkout = { enablePromotionCodes: true, enableTaxCollection: true, enableShipping: true };
+    mockGqlRequest.mockResolvedValue(
+      response({
+        enablePromotionCodes: true,
+        enableTaxCollection: true,
+        enableShipping: true,
+        enableShippingAddressCollection: true,
+        [field]: false,
+      }),
+    );
+    await expect(createCheckoutSession(cart, configuration)).rejects.toThrow(
+      'Checkout session did not enable configured',
+    );
+  });
 
   it.each(flows)('rejects missing payment methods for %s checkout', async (_name, params): Promise<void> => {
     mockGqlRequest.mockResolvedValue(response({ paymentMethods: null }));

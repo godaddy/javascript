@@ -39,6 +39,11 @@ const binding = {
 };
 const configuration: CommerceConfiguration = {
   read: (): typeof binding => binding,
+  readCheckout: (): { enablePromotionCodes: false; enableTaxCollection: false; enableShipping: false } => ({
+    enablePromotionCodes: false,
+    enableTaxCollection: false,
+    enableShipping: false,
+  }),
 };
 
 function response() {

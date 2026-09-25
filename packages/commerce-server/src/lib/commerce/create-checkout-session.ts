@@ -156,6 +156,10 @@ const createCheckoutSessionMutation = `
   }
 `;
 
+function promotionCodesEnabled(configuration: object): boolean {
+  return 'enablePromotionCodes' in configuration && configuration.enablePromotionCodes === true;
+}
+
 export async function createCheckoutSession(
   params: CreateCheckoutSessionParams,
   configuration: CommerceConfiguration = createRuntimeCommerceConfiguration(),
@@ -181,6 +185,9 @@ export async function createCheckoutSession(
     owner,
     currencyCode: configCurrencyCode,
   } = configuration.read();
+  const checkoutConfiguration = configuration.readCheckout();
+  const enablePromotionCodes: boolean = promotionCodesEnabled(checkoutConfiguration);
+  const catalogShippingEnabled: boolean = lineItemData === undefined && checkoutConfiguration.enableShipping;
   const checkoutOAuthScope: string = 'commerce.product:read';
   const token = await getOAuthAccessToken({
     clientId,
@@ -192,7 +199,12 @@ export async function createCheckoutSession(
   const attribution = { sourceApp, owner };
   const catalogCheckoutOverrides = {
     ...attribution,
+    enablePromotionCodes,
+    enableTaxCollection: checkoutConfiguration.enableTaxCollection,
+    enableShipping: checkoutConfiguration.enableShipping,
+    enableShippingAddressCollection: checkoutConfiguration.enableShipping,
     paymentMethods: DEFAULT_CHECKOUT_PAYMENT_METHODS,
+    shipping: catalogShippingEnabled ? checkoutConfiguration.shipping : undefined,
   };
 
   const resolvedLineItemData: typeof lineItemData =
@@ -229,6 +241,7 @@ export async function createCheckoutSession(
           },
           {
             ...attribution,
+            enableTaxCollection: checkoutConfiguration.enableTaxCollection,
             paymentMethods: DEFAULT_CHECKOUT_PAYMENT_METHODS,
           },
         )
@@ -265,6 +278,21 @@ export async function createCheckoutSession(
     throw new Error(
       `Checkout session binding mismatch: expected store ${storeId} and channel ${channelId}, received store ${session.storeId ?? 'missing'} and channel ${session.channelId ?? 'missing'}`,
     );
+  }
+
+  const expectedShipping = lineItemData === undefined && checkoutConfiguration.enableShipping;
+  const expectedPromotionCodes: boolean = lineItemData === undefined && enablePromotionCodes;
+  if (expectedPromotionCodes && session.enablePromotionCodes !== true) {
+    throw new Error('Checkout session did not enable configured promotion codes');
+  }
+  if (checkoutConfiguration.enableTaxCollection && session.enableTaxCollection !== true) {
+    throw new Error('Checkout session did not enable configured tax collection');
+  }
+  if (
+    expectedShipping &&
+    (session.enableShipping !== true || session.enableShippingAddressCollection !== true)
+  ) {
+    throw new Error('Checkout session did not enable configured shipping and address collection');
   }
 
   if (!session.paymentMethods?.card?.processor) {
