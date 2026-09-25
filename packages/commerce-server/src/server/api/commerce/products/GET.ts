@@ -32,7 +32,14 @@ import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 // Nested SKU price money fields would exceed the catalog API's depth limit of 10.
 const skuGroupsQuery = `
   query SkuGroups($first: Int, $after: String, $id: SKUGroupIdsFilter, $listId: ListIdFilter, $label: LabelFilter) {
-    skuGroups(first: $first, after: $after, id: $id, listId: $listId, label: $label) {
+    skuGroups(
+      first: $first
+      after: $after
+      id: $id
+      listId: $listId
+      label: $label
+      status: { eq: "ACTIVE" }
+    ) {
       edges {
         cursor
         node {
@@ -42,11 +49,11 @@ const skuGroupsQuery = `
           description
           htmlDescription
           type
-          priceRange {
+          priceRange(status: { eq: "ACTIVE" }) {
             min
             max
           }
-          compareAtPriceRange {
+          compareAtPriceRange(status: { eq: "ACTIVE" }) {
             min
             max
           }
@@ -58,7 +65,7 @@ const skuGroupsQuery = `
               }
             }
           }
-          attributes {
+          attributes(first: 50, orderBy: { position: ASC }) {
             edges {
               node {
                 id
@@ -66,7 +73,7 @@ const skuGroupsQuery = `
                 label
                 description
                 htmlDescription
-                values(first: 50) {
+                values(first: 50, orderBy: { position: ASC }) {
                   edges {
                     node {
                       id
@@ -78,7 +85,7 @@ const skuGroupsQuery = `
               }
             }
           }
-          skus(first: 2) {
+          skus(first: 2, status: { eq: "ACTIVE" }) {
             pageInfo { hasNextPage }
             totalCount
             edges {

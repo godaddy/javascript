@@ -331,6 +331,50 @@ const group: SKUGroup = {
   skus: { totalCount: 2, edges: [] },
 };
 describe('catalog and product selection', () => {
+  it('purchases a one-SKU product without requiring variant configuration', async () => {
+    const simpleProduct: SKUGroup = {
+      id: 'mug',
+      label: 'Studio mug',
+      description: 'A ceramic mug.',
+      priceRange: { min: 2400, max: 2400 },
+      attributes: { edges: [], totalCount: 0 },
+      skus: {
+        totalCount: 1,
+        pageInfo: { hasNextPage: false },
+        edges: [
+          {
+            node: {
+              id: 'mug-sku',
+              prices: { edges: [{ node: { value: { value: 2400, currencyCode: 'USD' } } }] },
+              inventoryCounts: { edges: [{ node: { type: 'AVAILABLE', quantity: 8 } }] },
+            },
+          },
+        ],
+      },
+    };
+    const api = mockApi((path, init) => {
+      if (path.endsWith('/config')) return response(configuration);
+      if (init?.method === 'POST') return response({ cart: cart() }, 201);
+      return response({ skuGroup: simpleProduct });
+    });
+    const view = mount(
+      <Routes>
+        <Route path='/products/:productId' element={<ProductDetails />} />
+      </Routes>,
+      '/products/mug',
+    );
+    await connected(view);
+    expect(await screen.findByTestId('product-price')).toHaveTextContent('$24.00');
+    const add = screen.getByRole('button', { name: 'Add to cart' });
+    expect(add).toBeEnabled();
+    await userEvent.click(add);
+    await waitFor(() => expect(api.mock.calls.some((call) => call[1]?.method === 'POST')).toBe(true));
+    const request = api.mock.calls.find((call) => call[1]?.method === 'POST');
+    expect(JSON.parse(String(request?.[1]?.body))).toEqual({
+      lineItems: [{ skuId: 'mug-sku', name: 'Studio mug', quantity: 1 }],
+    });
+  });
+
   it('waits for verified attribute names and blocks sold-out variants', async () => {
     const api = mockApi((path) => {
       if (path.endsWith('/config')) return response(configuration);

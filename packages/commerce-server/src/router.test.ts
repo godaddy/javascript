@@ -100,7 +100,20 @@ describe('Commerce scoped routes', () => {
     expect(query).toContain('prices(first: 10)');
     expect(query).toContain('inventoryCounts');
     expect(query).toContain('pageInfo { hasNextPage }');
+    expect(query).toContain('attributes(first: 50, orderBy: { position: ASC })');
+    expect(query).toContain('values(first: 50, orderBy: { position: ASC })');
+    expect(query).toContain('status: { eq: "ACTIVE" }');
     expect(res.json).toHaveBeenCalledWith({ skuGroup: { id: 'product' } });
+  });
+
+  it('loads only active catalog products and active card SKUs', async (): Promise<void> => {
+    const res: ReturnType<typeof response> = response();
+    vi.mocked(gqlRequest).mockResolvedValueOnce({ skuGroups: { edges: [] } });
+    await readProducts({ query: {} } as unknown as Request, res as unknown as Response);
+    const query: string = vi.mocked(gqlRequest).mock.calls[0]?.[0].query ?? '';
+    expect(query).toContain('status: { eq: "ACTIVE" }');
+    expect(query).toContain('skus(first: 2, status: { eq: "ACTIVE" })');
+    expect(query).toContain('priceRange(status: { eq: "ACTIVE" })');
   });
 
   it.each([readProducts, readProduct, readSku])(
