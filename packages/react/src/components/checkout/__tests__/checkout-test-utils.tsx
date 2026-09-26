@@ -954,6 +954,16 @@ export function mockGodaddyApi(options: MockGodaddyApiOptions) {
     return {
       authorizeCheckoutSession: {
         transactionRefNum: 'transaction-ref-1',
+        fundingSource: {
+          paymentReference: 'order_razorpay_123',
+        },
+        references: [
+          {
+            type: 'MERCHANT_PUBLIC_KEY',
+            value: 'rzp_test_public',
+            additionalLabel: null,
+          },
+        ],
       },
     };
   });
