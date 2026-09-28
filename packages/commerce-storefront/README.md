@@ -1,6 +1,6 @@
 # Commerce storefront
 
-`@godaddy/commerce-storefront` provides complete React storefront templates: a catalog, product details with variant selection, a shared cart, and a cart drawer. Applications import compiled components instead of copying and maintaining their implementation.
+`@godaddy/gd-commerce-storefront` provides complete React storefront templates: a catalog, product details with variant selection, a shared cart, and a cart drawer. Applications import compiled components instead of copying and maintaining their implementation.
 
 This is an opinionated package for React applications that use React Router 7 or 8.3+, TanStack Query 5, and the documented same-origin Commerce API. It works with the host application’s router and query provider and does not require Tailwind configuration.
 
@@ -9,7 +9,7 @@ This is an opinionated package for React applications that use React Router 7 or
 This package is not published yet. Use the local workspace example while reviewing this branch. After the first release, install it with:
 
 ```sh
-pnpm add @godaddy/commerce-storefront @tanstack/react-query react react-dom react-router
+pnpm add @godaddy/gd-commerce-storefront @tanstack/react-query react react-dom react-router
 ```
 
 Import the stylesheet once. Mount `CommerceStorefront` once inside your application's existing router and query provider. It owns the commerce state and renders one cart drawer. Keep your header and page routes inside it so cart buttons share that state.
@@ -21,8 +21,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import {
   Catalog, CartButton, CommerceStorefront, ProductDetails,
-} from '@godaddy/commerce-storefront';
-import '@godaddy/commerce-storefront/styles.css';
+} from '@godaddy/gd-commerce-storefront';
+import '@godaddy/gd-commerce-storefront/styles.css';
 
 const client = new QueryClient();
 
@@ -45,7 +45,7 @@ export function App() {
 }
 ```
 
-Use the providers your application already has; do not create another router or query client for this package. Your server must implement the [server API contract](docs/server-api.md) before these components can load products. Express hosts can mount `@godaddy/commerce-server`; custom servers can implement the contract directly. The host owns store credentials, merchant provisioning, payment readiness, and runtime configuration.
+Use the providers your application already has; do not create another router or query client for this package. Your server must implement the [server API contract](docs/server-api.md) before these components can load products. Express hosts can mount `@godaddy/gd-commerce-server`; custom servers can implement the contract directly. The host owns store credentials, merchant provisioning, payment readiness, and runtime configuration.
 
 ## Configuration
 
@@ -129,10 +129,10 @@ From the repository root, with Node 24:
 
 ```sh
 pnpm install
-pnpm --filter @godaddy/commerce-storefront build
-pnpm --filter @godaddy/commerce-storefront typecheck
-pnpm --filter @godaddy/commerce-storefront lint
-pnpm --filter @godaddy/commerce-storefront test
+pnpm --filter @godaddy/gd-commerce-storefront build
+pnpm --filter @godaddy/gd-commerce-storefront typecheck
+pnpm --filter @godaddy/gd-commerce-storefront lint
+pnpm --filter @godaddy/gd-commerce-storefront test
 pnpm --filter commerce-storefront-example build
 pnpm --filter commerce-storefront-example dev
 ```

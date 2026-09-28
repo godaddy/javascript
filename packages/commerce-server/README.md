@@ -1,10 +1,10 @@
-# @godaddy/commerce-server
+# @godaddy/gd-commerce-server
 
 An opinionated Express router for GoDaddy Commerce catalog, cart, and hosted checkout APIs.
 
 ```ts
 import express from 'express';
-import { createCommerceRouter, createRuntimeCommerceConfiguration } from '@godaddy/commerce-server';
+import { createCommerceRouter, createRuntimeCommerceConfiguration } from '@godaddy/gd-commerce-server';
 
 const app = express();
 app.use(express.json());

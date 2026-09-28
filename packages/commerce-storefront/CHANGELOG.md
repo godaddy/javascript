@@ -1,4 +1,4 @@
-# @godaddy/commerce-storefront
+# @godaddy/gd-commerce-storefront
 
 ## 0.1.0
 

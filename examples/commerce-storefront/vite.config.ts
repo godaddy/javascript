@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { defineConfig, type Plugin } from 'vite';
-import type { CartOrder, SKU, SKUGroup } from '@godaddy/commerce-storefront';
+import type { CartOrder, SKU, SKUGroup } from '@godaddy/gd-commerce-storefront';
 
 const money = (value: number) => ({ value, currencyCode: 'USD' });
 const sku = (id: string, price: number, quantity = 20): SKU => ({

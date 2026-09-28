@@ -1,6 +1,6 @@
 # Server API contract
 
-The browser calls JSON endpoints under `/api/commerce` on its own origin. The consuming application provides these routes. This browser package contains no server credentials, platform configuration reader, merchant provisioning, or GraphQL transport. Express applications can use the companion `@godaddy/commerce-server` package; other hosts can implement this contract directly.
+The browser calls JSON endpoints under `/api/commerce` on its own origin. The consuming application provides these routes. This browser package contains no server credentials, platform configuration reader, merchant provisioning, or GraphQL transport. Express applications can use the companion `@godaddy/gd-commerce-server` package; other hosts can implement this contract directly.
 
 Server implementations can use GoDaddy Commerce APIs or their existing integration, but must return these shapes and enforce the same purchase rules. Returning a similar-looking GraphQL mutation result is insufficient: cart mutations return a complete refreshed cart.
 
@@ -96,6 +96,6 @@ Optional totals include `shippingTotal`, `taxTotal`, and `discountTotal`. Option
 
 The client refreshes the cart before checkout and sends its ID, an absolute catalog `returnUrl`, and an absolute `successUrl` with `orderId` appended. The server must verify the cart's binding, contents, merchant readiness, and allowed return origins/paths before creating a session. Return an HTTPS checkout URL. The client rejects missing or non-HTTPS URLs and performs a browser navigation to the returned URL.
 
-When using `@godaddy/commerce-server`, configure the router's `checkoutReturnUrls.returnUrls` with the absolute catalog return URL and `checkoutReturnUrls.successUrls` with the absolute success-page URL. The package matches these exact destinations and permits an additional `orderId` parameter on success URLs. Missing policy disables HTTP checkout. Public HTTP requests accept only cart or SKU checkout; non-catalog amounts belong in a trusted server handler.
+When using `@godaddy/gd-commerce-server`, configure the router's `checkoutReturnUrls.returnUrls` with the absolute catalog return URL and `checkoutReturnUrls.successUrls` with the absolute success-page URL. The package matches these exact destinations and permits an additional `orderId` parameter on success URLs. Missing policy disables HTTP checkout. Public HTTP requests accept only cart or SKU checkout; non-catalog amounts belong in a trusted server handler.
 
 Do not treat `checkoutSuccessPath`, a client-provided URL, the redirect itself, or a draft-order response as proof that payment succeeded. Verify payment using the checkout/payment service or trusted webhook state. Expire or reject paid/closed drafts on subsequent cart reads so returning customers cannot reuse a completed cart.

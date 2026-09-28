@@ -53,7 +53,7 @@ importers:
 
   examples/commerce-storefront:
     dependencies:
-      '@godaddy/commerce-storefront':
+      '@godaddy/gd-commerce-storefront':
         specifier: workspace:*
         version: link:../../packages/commerce-storefront
       '@tanstack/react-query':

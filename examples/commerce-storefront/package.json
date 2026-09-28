@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@godaddy/commerce-storefront": "workspace:*",
+    "@godaddy/gd-commerce-storefront": "workspace:*",
     "@tanstack/react-query": "^5.66.0",
     "react": "^19",
     "react-dom": "^19",

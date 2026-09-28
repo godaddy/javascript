@@ -1,4 +1,4 @@
-# @godaddy/commerce-server
+# @godaddy/gd-commerce-server
 
 ## 0.1.0
 
