@@ -403,6 +403,33 @@ describe('catalog and product selection', () => {
     });
   });
 
+  it('shows an inactive product without offering an Add to Cart button', async () => {
+    const inactiveProduct: SKUGroup = {
+      id: 'retired-mug',
+      status: 'INACTIVE',
+      label: 'Retired mug',
+      attributes: { edges: [], totalCount: 0 },
+      skus: {
+        totalCount: 1,
+        pageInfo: { hasNextPage: false },
+        edges: [{ node: { id: 'retired-mug-sku' } }],
+      },
+    };
+    mockApi((path) =>
+      path.endsWith('/config') ? response(configuration) : response({ skuGroup: inactiveProduct }),
+    );
+    const view = mount(
+      <Routes>
+        <Route path='/products/:productId' element={<ProductDetails />} />
+      </Routes>,
+      '/products/retired-mug',
+    );
+    await connected(view);
+    expect(await screen.findByRole('heading', { name: 'Retired mug' })).toBeVisible();
+    expect(screen.getByText('This product is no longer available.')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Add to cart' })).not.toBeInTheDocument();
+  });
+
   it('waits for verified attribute names and blocks sold-out variants', async () => {
     const api = mockApi((path) => {
       if (path.endsWith('/config')) return response(configuration);
