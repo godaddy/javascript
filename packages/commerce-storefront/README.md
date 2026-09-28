@@ -1,6 +1,6 @@
 # Commerce storefront
 
-`@godaddy/commerce-storefront` provides complete React storefront templates: a catalog, product details with variant selection, a shared cart, and a cart drawer. Applications import compiled components instead of copying and maintaining their implementation.
+`@godaddy/gd-commerce-storefront` provides complete React storefront templates: a catalog, product details with variant selection, a shared cart, and a cart drawer. Applications import compiled components instead of copying and maintaining their implementation.
 
 This is an opinionated package for React applications that use React Router 7 or 8.3+, TanStack Query 5, and the documented same-origin Commerce API. It works with the host application’s router and query provider and does not require Tailwind configuration.
 
@@ -9,7 +9,7 @@ This is an opinionated package for React applications that use React Router 7 or
 This package is not published yet. Use the local workspace example while reviewing this branch. After the first release, install it with:
 
 ```sh
-pnpm add @godaddy/commerce-storefront @tanstack/react-query react react-dom react-router
+pnpm add @godaddy/gd-commerce-storefront @tanstack/react-query react react-dom react-router
 ```
 
 Import the stylesheet once. Mount `CommerceStorefront` once inside your application's existing router and query provider. It owns the commerce state and renders one cart drawer. Keep your header and page routes inside it so cart buttons share that state.
@@ -21,8 +21,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import {
   Catalog, CartButton, CommerceStorefront, ProductDetails,
-} from '@godaddy/commerce-storefront';
-import '@godaddy/commerce-storefront/styles.css';
+} from '@godaddy/gd-commerce-storefront';
+import '@godaddy/gd-commerce-storefront/styles.css';
 
 const client = new QueryClient();
 
@@ -45,7 +45,7 @@ export function App() {
 }
 ```
 
-Use the providers your application already has; do not create another router or query client for this package. Your server must implement the [server API contract](docs/server-api.md) before these components can load products. Express hosts can mount `@godaddy/commerce-server`; custom servers can implement the contract directly. The host owns store credentials, merchant provisioning, payment readiness, and runtime configuration.
+Use the providers your application already has; do not create another router or query client for this package. Your server must implement the [server API contract](docs/server-api.md) before these components can load products. Express hosts can mount `@godaddy/gd-commerce-server`; custom servers can implement the contract directly. The host owns store credentials, merchant provisioning, payment readiness, and runtime configuration.
 
 ## Configuration
 
@@ -58,7 +58,7 @@ Use the providers your application already has; do not create another router or 
 
 Provide root-relative paths without a trailing slash. Enable `checkoutSuccessPath` only after your server supports checkout and validates merchant readiness. Mount a corresponding return page. A redirect back from checkout is **not proof of payment**; that page must obtain authoritative payment status from your server. This package does not provide a payment receipt page or merchant onboarding.
 
-`GET /api/commerce/config` supplies the currency and opaque cart scope. The scope must change when the store/channel binding changes. Applications do not pass store IDs or credentials into the browser package. One storefront binding is supported per page and query client.
+`GET /api/commerce/config` supplies the currency and opaque cart scope. The scope must change when the store, channel, or currency binding changes. The draft-order cart displays its subtotal and explains that shipping, taxes, and discounts are calculated at checkout. The explanation has the stable `commerce-cart-checkout-adjustments-note` class so applications can hide it when needed. The cart does not create a checkout session or calculate adjustments. Applications do not pass store IDs or credentials into the browser package. One storefront binding is supported per page and query client.
 
 A connection failure leaves the surrounding application and its state mounted. Catalog and product surfaces show the connection error and retry action. Custom integrations can render `CommerceStatus` or inspect `useCommerce().connection`.
 
@@ -129,10 +129,10 @@ From the repository root, with Node 24:
 
 ```sh
 pnpm install
-pnpm --filter @godaddy/commerce-storefront build
-pnpm --filter @godaddy/commerce-storefront typecheck
-pnpm --filter @godaddy/commerce-storefront lint
-pnpm --filter @godaddy/commerce-storefront test
+pnpm --filter @godaddy/gd-commerce-storefront build
+pnpm --filter @godaddy/gd-commerce-storefront typecheck
+pnpm --filter @godaddy/gd-commerce-storefront lint
+pnpm --filter @godaddy/gd-commerce-storefront test
 pnpm --filter commerce-storefront-example build
 pnpm --filter commerce-storefront-example dev
 ```

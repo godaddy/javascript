@@ -3,12 +3,12 @@ import { createHash } from 'node:crypto';
 import type { Request, Response } from 'express';
 import type { CommerceConfig } from './config';
 
-type CartBinding = Pick<CommerceConfig, 'apiBaseUrl' | 'storeId' | 'channelId'>;
+type CartBinding = Pick<CommerceConfig, 'apiBaseUrl' | 'storeId' | 'channelId' | 'currencyCode'>;
 
 /** Public cache/storage scope, not an authorization credential. */
 export function getCommerceCartScope(config: CartBinding): string {
   return createHash('sha256')
-    .update(JSON.stringify([config.apiBaseUrl, config.storeId, config.channelId]))
+    .update(JSON.stringify([config.apiBaseUrl, config.storeId, config.channelId, config.currencyCode]))
     .digest('hex')
     .slice(0, 32);
 }

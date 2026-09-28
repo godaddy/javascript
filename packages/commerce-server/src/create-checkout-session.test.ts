@@ -101,6 +101,16 @@ describe('createCheckoutSession', () => {
     },
   );
 
+  it('disables optional checkout capabilities when configuration falls back to defaults', async (): Promise<void> => {
+    await createCheckoutSession(cart, configuration);
+    expect(mockGqlRequest.mock.calls[0]?.[0].variables.input).toMatchObject({
+      enablePromotionCodes: false,
+      enableTaxCollection: false,
+      enableShipping: false,
+      enableShippingAddressCollection: false,
+    });
+  });
+
   it.each(flows)('uses only host-owned attribution for %s checkout', async (_name, params): Promise<void> => {
     config = { ...config, sourceApp: 'merchant-site', owner: 'merchant-orders' };
     mockGqlRequest.mockResolvedValue(response({ sourceApp: 'merchant-site' }));
@@ -142,13 +152,6 @@ describe('createCheckoutSession', () => {
       );
     },
   );
-
-  it.each(flows)('rejects missing payment methods for %s checkout', async (_name, params): Promise<void> => {
-    mockGqlRequest.mockResolvedValue(response({ paymentMethods: null }));
-    await expect(createCheckoutSession(params, configuration)).rejects.toThrow(
-      'Checkout session did not configure payment methods.',
-    );
-  });
 
   it.each([flows[1], flows[2]])(
     'uses the store shipping configuration for %s checkout',
@@ -231,6 +234,13 @@ describe('createCheckoutSession', () => {
     );
     await expect(createCheckoutSession(cart, configuration)).rejects.toThrow(
       'Checkout session did not enable configured',
+    );
+  });
+
+  it.each(flows)('rejects missing payment methods for %s checkout', async (_name, params): Promise<void> => {
+    mockGqlRequest.mockResolvedValue(response({ paymentMethods: null }));
+    await expect(createCheckoutSession(params, configuration)).rejects.toThrow(
+      'Checkout session did not configure payment methods.',
     );
   });
 

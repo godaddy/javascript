@@ -45,7 +45,7 @@ it('passes shipped CSS through Tailwind v3 without losing package styles', async
   const result = await postcss([tailwindV3({ content: [{ raw: '<main>Host application</main>' }] })]).process(
     css,
     {
-      from: 'node_modules/@godaddy/commerce-storefront/dist/styles.css',
+      from: 'node_modules/@godaddy/gd-commerce-storefront/dist/styles.css',
     },
   );
   expect(result.css).not.toMatch(/@(?:layer|tailwind|apply|theme|source)\b/);

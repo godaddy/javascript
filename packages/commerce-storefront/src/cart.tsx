@@ -263,31 +263,16 @@ export function CartDrawer(): ReactElement {
             {items.length > 0 && (
               <div className='border-t border-neutral-200 p-6'>
                 <dl className='space-y-2 text-sm'>
-                  {(
-                    [
-                      ['Subtotal', cart?.totals?.subTotal, summary.subtotal],
-                      ['Shipping', cart?.totals?.shippingTotal, summary.shipping],
-                      ['Tax', cart?.totals?.taxTotal, summary.taxes],
-                    ] as const
-                  ).map(
-                    ([label, amount, value]) =>
-                      typeof amount?.value === 'number' && (
-                        <div key={label} className='flex justify-between'>
-                          <dt>{label}</dt>
-                          <dd>{money(value, amount.currencyCode ?? currency)}</dd>
-                        </div>
-                      ),
+                  {typeof cart?.totals?.subTotal?.value === 'number' && (
+                    <div className='flex justify-between'>
+                      <dt>Subtotal</dt>
+                      <dd>{money(summary.subtotal, cart.totals.subTotal.currencyCode ?? currency)}</dd>
+                    </div>
                   )}
-                  <div className='flex justify-between border-t border-neutral-200 pt-3 text-lg font-semibold'>
-                    <dt>Total</dt>
-                    <dd data-testid='cart-total'>
-                      {typeof cart?.totals?.total?.value === 'number'
-                        ? money(summary.total, currency)
-                        : 'Unavailable'}
-                    </dd>
-                  </div>
                 </dl>
-                <p className='my-3 text-xs text-neutral-600'>Shipping and taxes may change at checkout.</p>
+                <p className='commerce-cart-checkout-adjustments-note mt-3 text-sm text-neutral-600'>
+                  Shipping, taxes, and discounts are calculated at checkout.
+                </p>
                 {config.checkoutSuccessPath ? (
                   <button
                     type='button'

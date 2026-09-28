@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router';
-import { Catalog, CartButton, CommerceStorefront, ProductDetails } from '@godaddy/commerce-storefront';
-import '@godaddy/commerce-storefront/styles.css';
+import { Catalog, CartButton, CommerceStorefront, ProductDetails } from '@godaddy/gd-commerce-storefront';
+import '@godaddy/gd-commerce-storefront/styles.css';
 import './styles.css';
 
 const client = new QueryClient();

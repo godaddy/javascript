@@ -1,5 +1,5 @@
 {
-  "name": "@godaddy/commerce-server",
+  "name": "@godaddy/gd-commerce-server",
   "version": "0.1.0",
   "description": "Opinionated Express server integration for GoDaddy Commerce",
   "type": "module",

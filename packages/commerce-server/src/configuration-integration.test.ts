@@ -91,7 +91,10 @@ it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
       const base = `http://127.0.0.1:${address.port}/api/commerce`;
       const configResponse = await clientFetch(`${base}/config`);
       const publicConfig = await configResponse.json();
-      expect(publicConfig).toEqual({ cartScope: expect.any(String), currencyCode: 'USD' });
+      expect(publicConfig).toEqual({
+        cartScope: expect.any(String),
+        currencyCode: 'USD',
+      });
       const headers = { 'Content-Type': 'application/json', 'X-Commerce-Scope': publicConfig.cartScope };
       expect((await clientFetch(`${base}/products`, { headers })).status).toBe(200);
       expect(

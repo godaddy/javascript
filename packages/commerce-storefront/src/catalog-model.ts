@@ -54,6 +54,7 @@ export type SKUGroupSKU = SKU;
 
 export interface SKUGroup {
   id?: string | null;
+  status?: string | null;
   name?: string | null;
   label?: string | null;
   description?: string | null;
