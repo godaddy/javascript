@@ -82,7 +82,9 @@ A connection failure leaves the surrounding application and its state mounted. C
 </CommerceStorefront>
 ```
 
-The stylesheet includes all required utilities and scopes them to the package's surfaces. The build removes CSS layer wrappers in their declared order, so the exported CSS can pass through a host Tailwind v3 PostCSS pipeline without `@tailwind` directives. Import it directly; consumers do not need to copy or rewrite the CSS. It does not add a global reset or require dependency scanning by a host Tailwind build. The `theme` prop reaches the drawer even though it is portalled into `document.body`. Keep text, controls and focus indicators accessible when changing colors. Utility class names and internal markup are not a customization API.
+The stylesheet includes all required utilities and scopes them to the package's surfaces. The build removes CSS layer wrappers in their declared order, so the exported CSS can pass through a host Tailwind v3 PostCSS pipeline without `@tailwind` directives. Import it directly; consumers do not need to copy or rewrite the CSS. It does not add a global reset or require dependency scanning by a host Tailwind build. The `theme` prop reaches the drawer even though it is portalled into `document.body`. Surfaces pair `--commerce-surface` with `--commerce-text`; muted text and borders adapt to that pair. Descendants inherit the surface text and body font instead of global heading styles. Keep text, controls and focus indicators accessible when changing colors. Utility class names and internal markup are not a customization API.
+
+`AddToCartButton` requires a SKU price in the configured currency. Catalog cards pass `priceAvailable` from the group's price range because the catalog list omits nested SKU prices. Missing prices disable purchase; a selected variant never falls back to another variant's price.
 
 The first release uses English UI text and `en-US` currency formatting. Catalog title and description are configurable. Full localization and arbitrary component slots are outside this initial API.
 

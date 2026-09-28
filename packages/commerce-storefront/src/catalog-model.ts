@@ -94,6 +94,20 @@ export interface SKU {
   attributeValues?: Connection<SKUAttributeValue> | null;
 }
 
+export function getSkuPrice(sku: SKU, currencyCode: string): SKUPrice | null {
+  return (
+    sku.prices?.edges?.find((edge) => {
+      const money = edge?.node?.value;
+      return (
+        money?.currencyCode === currencyCode &&
+        typeof money.value === 'number' &&
+        Number.isFinite(money.value) &&
+        money.value >= 0
+      );
+    })?.node ?? null
+  );
+}
+
 export interface StringInFilter {
   in: string[];
 }

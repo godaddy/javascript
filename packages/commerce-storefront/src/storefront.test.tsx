@@ -7,8 +7,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { ApiError, CartIdStorage, money, request } from './api';
 import { AddToCartButton, CartButton } from './cart';
 import { addToCart, type CartOrder } from './cart-model';
-import { Catalog } from './catalog';
-import type { SKUGroup } from './catalog-model';
+import { Catalog, ProductCard } from './catalog';
+import type { SKU, SKUGroup } from './catalog-model';
 import { type CommerceContextValue, useCommerce } from './commerce-provider';
 import { CommerceStorefront } from './commerce-storefront';
 import { ProductDetails } from './product-details';
@@ -141,7 +141,13 @@ describe('shared cart', () => {
     mockApi((path) => (path.endsWith('/config') ? response(configuration) : response({ cart: cart() })));
     const view = mount(
       <form onSubmit={submit}>
-        <AddToCartButton sku={{ id: 'sku-1' }} name='Mug' />
+        <AddToCartButton
+          sku={{
+            id: 'sku-1',
+            prices: { edges: [{ node: { value: { value: 1200, currencyCode: 'USD' } } }] },
+          }}
+          name='Mug'
+        />
         <CartButton />
       </form>,
     );
@@ -359,6 +365,99 @@ const group: SKUGroup = {
   skus: { totalCount: 2, edges: [] },
 };
 describe('catalog and product selection', () => {
+  it.each([
+    undefined,
+    null,
+    { edges: [] },
+    { edges: [{ node: { value: { value: 1200, currencyCode: 'CAD' } } }] },
+  ])('blocks unpriced SKUs without creating a cart: %j', async (prices: SKU['prices']): Promise<void> => {
+    const api = mockApi(() => response(configuration));
+    const view = mount(<AddToCartButton sku={{ id: 'sku-1', prices }} name='Product' />);
+    await connected(view);
+    const button = screen.getByRole('button', { name: 'Price unavailable' });
+    expect(button).toBeDisabled();
+    await userEvent.click(button);
+    expect(api.mock.calls.some((call) => call[1]?.method === 'POST')).toBe(false);
+  });
+
+  it.each([null, 0, 1200])(
+    'uses group pricing for catalog quick-add: %s',
+    async (min: number | null): Promise<void> => {
+      const api = mockApi((path) =>
+        path.endsWith('/config') ? response(configuration) : response({ cart: cart() }),
+      );
+      const view = mount(
+        <ProductCard
+          product={{
+            id: 'product',
+            label: 'Product',
+            priceRange: { min, max: min },
+            skus: { totalCount: 1, edges: [{ node: { id: 'sku-1' } }] },
+          }}
+        />,
+      );
+      await connected(view);
+      const button = screen.getByRole('button', { name: min === null ? 'Price unavailable' : 'Add to cart' });
+      if (min === null) expect(button).toBeDisabled();
+      else expect(button).toBeEnabled();
+      await userEvent.click(button);
+      expect(api.mock.calls.some((call) => call[1]?.method === 'POST')).toBe(min !== null);
+    },
+  );
+
+  it('does not present another variant price as the selected SKU price', async (): Promise<void> => {
+    mockApi((path) =>
+      path.endsWith('/config')
+        ? response(configuration)
+        : response({
+            skuGroup: {
+              id: 'product',
+              label: 'Product',
+              priceRange: { min: 1200 },
+              skus: { totalCount: 1, edges: [{ node: { id: 'sku-1', prices: { edges: [] } } }] },
+            },
+          }),
+    );
+    const view = mount(
+      <Routes>
+        <Route path='/products/:productId' element={<ProductDetails />} />
+      </Routes>,
+      '/products/product',
+    );
+    await connected(view);
+    expect(await screen.findByTestId('product-price')).toHaveTextContent('Price unavailable');
+    expect(screen.getByRole('button', { name: 'Price unavailable' })).toBeDisabled();
+  });
+
+  it('selects the price in the store currency, including a zero price', async (): Promise<void> => {
+    const prices: SKU['prices'] = {
+      edges: [
+        { node: { value: { value: 1200, currencyCode: 'CAD' } } },
+        { node: { value: { value: 0, currencyCode: 'USD' } } },
+      ],
+    };
+    mockApi((path) =>
+      path.endsWith('/config')
+        ? response(configuration)
+        : response({
+            skuGroup: {
+              id: 'product',
+              label: 'Product',
+              skus: { totalCount: 1, edges: [{ node: { id: 'sku-1', prices } }] },
+            },
+          }),
+    );
+    const view = mount(
+      <Routes>
+        <Route path='/products/:productId' element={<ProductDetails />} />
+      </Routes>,
+      '/products/product',
+    );
+    await connected(view);
+    expect(await screen.findByTestId('product-price')).toHaveTextContent('$0.00');
+    expect(screen.getByRole('button', { name: 'Add to cart' })).toBeEnabled();
+  });
+
   it('purchases a one-SKU product without requiring variant configuration', async () => {
     const simpleProduct: SKUGroup = {
       id: 'mug',
