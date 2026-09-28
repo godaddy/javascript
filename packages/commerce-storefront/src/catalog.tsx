@@ -88,11 +88,7 @@ function ProductCardContent({ product }: { product: SKUGroup }): ReactElement {
             </p>
             <div className='max-w-full'>
               {!hasVariants && selectedSku ? (
-                <AddToCartButton
-                  sku={selectedSku}
-                  name={name}
-                  priceAvailable={typeof min === 'number' && Number.isFinite(min) && min >= 0}
-                />
+                <AddToCartButton sku={selectedSku} name={name} />
               ) : (
                 <Link className={buttonClass} to={href}>
                   {hasVariants ? 'Choose options' : 'View product'}

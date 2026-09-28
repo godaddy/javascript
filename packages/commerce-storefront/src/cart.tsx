@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { money } from './api';
 import { type CartSummaryTotals, getCartSummaryTotals } from './cart-model';
 import type { SKU } from './catalog-model';
-import { getAvailableInventoryQuantity, getSkuPrice } from './catalog-model';
+import { getAvailableInventoryQuantity } from './catalog-model';
 import { useCommerce } from './commerce-provider';
 import { StorefrontSurface } from './storefront-surface';
 
@@ -36,21 +36,16 @@ export function AddToCartButton({
   sku,
   name,
   quantity = 1,
-  priceAvailable,
 }: {
   sku: SKU;
   name: string;
   quantity?: number;
-  /** Catalog cards have group pricing instead of nested SKU prices. */
-  priceAvailable?: boolean;
 }): ReactElement {
-  const { addItem, pending, hydrating, error, open, connection, config } = useCommerce();
+  const { addItem, pending, hydrating, error, open, connection } = useCommerce();
   const [adding, setAdding] = useState<boolean>(false);
   const available: number | null = getAvailableInventoryQuantity(sku);
-  const priced: boolean = priceAvailable ?? getSkuPrice(sku, config.currencyCode) !== null;
   const disabled: boolean =
     connection !== 'ready' ||
-    !priced ||
     !sku.id ||
     adding ||
     hydrating ||
@@ -77,13 +72,7 @@ export function AddToCartButton({
         aria-busy={adding}
         onClick={() => void handleAdd()}
       >
-        {!priced
-          ? 'Price unavailable'
-          : available === 0
-            ? 'Out of stock'
-            : adding
-              ? 'Adding…'
-              : 'Add to cart'}
+        {available === 0 ? 'Out of stock' : adding ? 'Adding…' : 'Add to cart'}
       </button>
       {error && !open && (
         <p role='alert' className='mt-3 bg-white text-sm text-red-700'>

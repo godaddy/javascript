@@ -10,7 +10,6 @@ import {
   getLabeledSkuOptions,
   getProductAttributes,
   getSingleMatchedSku,
-  getSkuPrice,
   type SKU,
   type SkuGroupResult,
 } from './catalog-model';
@@ -81,7 +80,7 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
     ? (explicitSku ?? getSingleMatchedSku(attributes.length ? matched.data?.skuGroup : group))
     : null;
   const skuId: string | null = selectedSku?.id ?? null;
-  const skuPrice = selectedSku ? getSkuPrice(selectedSku, config.currencyCode) : null;
+  const skuPrice = selectedSku?.prices?.edges?.find((edge) => edge?.node?.value)?.node;
   const selectedImages: string[] = getImageUrls(selectedSku);
   const images: string[] = [...new Set(selectedImages.length ? selectedImages : getImageUrls(group))];
   const available: number | null = getAvailableInventoryQuantity(selectedSku);
@@ -157,7 +156,7 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
           >
             {skuPrice?.value?.value != null
               ? money(skuPrice.value.value, skuPrice.value.currencyCode ?? config.currencyCode)
-              : !selectedSku && group.priceRange?.min != null
+              : group.priceRange?.min != null
                 ? `From ${money(group.priceRange.min, config.currencyCode)}`
                 : 'Price unavailable'}
             {skuPrice?.compareAtValue?.value != null &&
