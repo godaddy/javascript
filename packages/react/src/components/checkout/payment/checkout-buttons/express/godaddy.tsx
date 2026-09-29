@@ -542,6 +542,20 @@ export function ExpressCheckoutButton() {
       // Start with the base line items
       const baseLineItems = [...poyntExpressRequest.lineItems];
 
+      // Refetch shipping methods so rates reflect the coupon change (e.g. free-shipping discounts)
+      let refreshedShippingMethods: Awaited<
+        ReturnType<typeof getSortedShippingMethods>
+      > = [];
+      if (shippingAddress) {
+        try {
+          refreshedShippingMethods = await getSortedShippingMethods({
+            shippingAddress,
+          });
+        } catch (_shippingError) {
+          refreshedShippingMethods = [];
+        }
+      }
+
       if (!couponCode) {
         // User removed the coupon code - clear refs
         appliedCouponCodeRef.current = null;
@@ -828,6 +842,16 @@ export function ExpressCheckoutButton() {
             },
           };
         }
+      }
+
+      // Include the refreshed shipping methods so the wallet reflects rates for the current coupon state
+      if (!updatedOrder.error && refreshedShippingMethods.length) {
+        updatedOrder.shippingMethods = refreshedShippingMethods.map(method => ({
+          id: method.id || '',
+          label: method.label,
+          detail: method.detail,
+          amount: method.displayAmount,
+        }));
       }
 
       // Update the wallet with the new order information

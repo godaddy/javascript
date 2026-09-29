@@ -97,23 +97,55 @@ export function StripeExpressCheckoutForm() {
       if (!couponCode) {
         appliedCouponCodeRef.current = null;
         calculatedAdjustmentsRef.current = null;
-        return;
+      } else {
+        try {
+          const result = await getPriceAdjustments.mutateAsync({
+            discountCodes: [couponCode],
+          });
+
+          if (requestId !== couponSyncRequestRef.current) return;
+
+          appliedCouponCodeRef.current = result ? couponCode : null;
+          calculatedAdjustmentsRef.current = result ?? null;
+        } catch {
+          if (requestId !== couponSyncRequestRef.current) return;
+
+          appliedCouponCodeRef.current = null;
+          calculatedAdjustmentsRef.current = null;
+        }
       }
 
+      // Refetch shipping methods so rates reflect the coupon change (add or
+      // remove) once a shipping address is known.
+      if (!shippingAddress) return;
+
       try {
-        const result = await getPriceAdjustments.mutateAsync({
-          discountCodes: [couponCode],
-        });
+        const shippingMethodsData =
+          await getShippingMethodsByAddress.mutateAsync({
+            countryCode: shippingAddress.country || 'US',
+            postalCode: shippingAddress.postal_code || '',
+            adminArea2: shippingAddress.city || '',
+            adminArea1: shippingAddress.state || '',
+          });
 
         if (requestId !== couponSyncRequestRef.current) return;
 
-        appliedCouponCodeRef.current = result ? couponCode : null;
-        calculatedAdjustmentsRef.current = result ?? null;
+        setShippingMethods(shippingMethodsData || null);
+
+        const defaultMethod = sortShippingMethods(shippingMethodsData || [])[0];
+
+        if (defaultMethod) {
+          setSelectedShippingRate({
+            id:
+              defaultMethod.displayName?.replace(/\s+/g, '-')?.toLowerCase() ||
+              'shipping',
+            amount: defaultMethod.cost?.value || 0,
+            displayName: defaultMethod.displayName || t.totals.shipping,
+            deliveryEstimate: defaultMethod.description || undefined,
+          });
+        }
       } catch {
         if (requestId !== couponSyncRequestRef.current) return;
-
-        appliedCouponCodeRef.current = null;
-        calculatedAdjustmentsRef.current = null;
       }
     };
 

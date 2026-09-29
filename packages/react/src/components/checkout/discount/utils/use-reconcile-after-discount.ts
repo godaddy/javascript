@@ -13,13 +13,14 @@ import {
 import { useApplyShippingMethodCore } from '@/components/checkout/shipping/utils/use-apply-shipping-method-core';
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
+import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import {
   type ApplyDiscountVariables,
   useApplyDiscountCore,
 } from './use-apply-discount-core';
 
 export function useReconcileAfterDiscount() {
-  const { session } = useCheckoutContext();
+  const { session, setCheckoutErrors } = useCheckoutContext();
   const form = useFormContext();
   const queryClient = useQueryClient();
   const updateTaxes = useUpdateTaxes();
@@ -60,9 +61,49 @@ export function useReconcileAfterDiscount() {
           previousMethodsKey: getShippingMethodsKey(previousShippingMethods),
         });
 
-        await applyShippingMethod.mutateAsync(
-          selectedMethod ? buildShippingPayload(selectedMethod) : []
-        );
+        try {
+          await applyShippingMethod.mutateAsync(
+            selectedMethod ? buildShippingPayload(selectedMethod) : []
+          );
+        } catch (error) {
+          if (
+            error instanceof GraphQLErrorWithCodes &&
+            error.codes.length > 0
+          ) {
+            setCheckoutErrors(error.codes);
+          } else {
+            setCheckoutErrors(['SHIPPING_METHOD_APPLICATION_FAILED']);
+          }
+
+          // The failed reapplication left the order's shipping line stale
+          // (possibly no longer valid, e.g. a coupon that granted it is gone).
+          // Clear it server-side so the order itself is no longer stale,
+          // rather than just invalidating caches around unchanged data. If the
+          // failed attempt was already a clear (no selectedMethod), retrying
+          // the identical call would just duplicate the request for no gain.
+          if (selectedMethod) {
+            try {
+              await applyShippingMethod.mutateAsync([]);
+              form.setValue('shippingMethod', '', { shouldDirty: false });
+            } catch {
+              // Clearing failed too; fall through to invalidation below so
+              // mounted views still refresh against whatever the server has.
+            }
+          }
+
+          // Invalidate after the clear settles so the refetch it triggers
+          // picks up the now-actually-empty shippingLines instead of racing
+          // ahead of the clear and re-caching the stale line.
+          await queryClient.invalidateQueries({
+            queryKey: checkoutQueryKeys.draftOrder(session.id),
+          });
+          await queryClient.invalidateQueries({
+            queryKey: checkoutQueryKeys.draftOrderShippingMethods(session.id),
+          });
+          return;
+        }
+
+        setCheckoutErrors(undefined);
         form.setValue('shippingMethod', selectedMethod?.serviceCode ?? '', {
           shouldDirty: false,
         });

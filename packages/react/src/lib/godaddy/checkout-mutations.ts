@@ -365,6 +365,7 @@ export const ApplyCheckoutSessionDiscountMutation = graphql(`
             }
           }
           shippingLines {
+            id
             discounts {
               id
               amount {

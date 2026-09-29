@@ -496,17 +496,135 @@ describe('Checkout discounts', () => {
 
     await applyCoupon(user, 'onedollar');
     await waitFor(() => {
+      // 1: initial standard apply on mount, 2: failed reapplication attempt,
+      // 3: the failed attempt's own clear-shipping fallback (which also fails
+      // here since setApiError blanket-fails every applyShippingMethod call).
       expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
-        2
+        3
       );
     });
     await flushPromises();
     await flushPromises();
 
-    expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(2);
+    expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(3);
     expect(screen.getByRole('radio', { name: /standard/i })).toBeChecked();
     expect(screen.getByRole('radio', { name: /free/i })).not.toBeChecked();
     expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
+
+    await screen.findByText(enUs.apiErrors.SHIPPING_METHOD_APPLICATION_FAILED);
+
+    // The failed reapplication invalidates the draft order and shipping-rate
+    // queries so the next render re-evaluates reconciliation against fresh data.
+    await waitFor(() => {
+      expect(getOperations('DraftOrder').length).toBeGreaterThan(0);
+      expect(getOperations('DraftOrderShippingRates').length).toBeGreaterThan(
+        1
+      );
+    });
+  });
+
+  it('clears SHIPPING_METHOD_APPLICATION_FAILED once reconciliation succeeds again', async () => {
+    const paidShipping = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 1000, currencyCode: 'USD' },
+      },
+    ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods: paidShipping },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 1000, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+    setApiError('applyShippingMethod', 'apply failed');
+    setShippingMethods([
+      ...paidShipping,
+      ...buildShippingRates([
+        {
+          serviceCode: 'free',
+          carrierCode: 'carrier',
+          displayName: 'Free',
+          cost: { value: 0, currencyCode: 'USD' },
+        },
+      ]),
+    ]);
+
+    await applyCoupon(user, 'onedollar');
+    await screen.findByText(enUs.apiErrors.SHIPPING_METHOD_APPLICATION_FAILED);
+
+    clearApiError('applyShippingMethod');
+    await user.click(screen.getByRole('radio', { name: /free/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText(enUs.apiErrors.SHIPPING_METHOD_APPLICATION_FAILED)
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('radio', { name: /free/i })).toBeChecked();
+  });
+
+  it('surfaces specific error codes from a failed shipping reapplication', async () => {
+    const paidShipping = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 1000, currencyCode: 'USD' },
+      },
+    ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods: paidShipping },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 1000, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+    setApiError(
+      'applyShippingMethod',
+      new GraphQLErrorWithCodes([
+        {
+          message: 'shipping method not found',
+          code: 'SHIPPING_METHOD_NOT_FOUND',
+        },
+      ])
+    );
+    setShippingMethods([
+      ...paidShipping,
+      ...buildShippingRates([
+        {
+          serviceCode: 'free',
+          carrierCode: 'carrier',
+          displayName: 'Free',
+          cost: { value: 0, currencyCode: 'USD' },
+        },
+      ]),
+    ]);
+
+    await applyCoupon(user, 'onedollar');
+
+    await screen.findByText(enUs.apiErrors.SHIPPING_METHOD_NOT_FOUND);
+    expect(
+      screen.queryByText(enUs.apiErrors.SHIPPING_METHOD_APPLICATION_FAILED)
+    ).not.toBeInTheDocument();
   });
 
   it.each(['empty', 'replacement'] as const)(
@@ -557,9 +675,15 @@ describe('Checkout discounts', () => {
 
       await applyCoupon(user, 'onedollar');
       await waitFor(() => {
+        // 1: initial standard apply on mount, 2: failed reapplication attempt.
+        // 'empty' has no method to select, so the reapplication attempt was
+        // already a clear ([]); the fallback clear is skipped as redundant.
+        // 'replacement' selects a method, so the failure triggers a distinct
+        // clear-shipping fallback call (3), which also fails here since
+        // setApiError blanket-fails every applyShippingMethod call.
         expect(
           getOperations('ApplyCheckoutSessionShippingMethod')
-        ).toHaveLength(2);
+        ).toHaveLength(result === 'empty' ? 2 : 3);
       });
       await flushPromises();
       await flushPromises();

@@ -49,14 +49,7 @@ export function useRemoveShippingMethod() {
                 ...old.checkoutSession,
                 draftOrder: {
                   ...old?.checkoutSession?.draftOrder,
-                  shippingLines: [
-                    {
-                      ...old?.checkoutSession?.draftOrder?.shippingLines?.[0],
-                      amount: {
-                        ...shippingTotal,
-                      },
-                    },
-                  ],
+                  shippingLines: [],
                   totals: {
                     ...old?.checkoutSession?.draftOrder?.totals,
                     shippingTotal: {

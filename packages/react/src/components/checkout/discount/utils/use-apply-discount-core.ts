@@ -81,8 +81,10 @@ export function updateDiscountCache(
               };
             }),
             shippingLines:
-              currentOrder.shippingLines?.map((currentShippingLine, index) => {
-                const updatedShippingLine = updatedOrder.shippingLines?.[index];
+              currentOrder.shippingLines?.map(currentShippingLine => {
+                const updatedShippingLine = updatedOrder.shippingLines?.find(
+                  shippingLine => shippingLine.id === currentShippingLine.id
+                );
 
                 if (!updatedShippingLine) {
                   return discountCodes?.length
