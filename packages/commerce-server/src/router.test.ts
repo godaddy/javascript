@@ -105,7 +105,8 @@ describe('Commerce scoped routes', () => {
     expect(query).toContain('prices(first: 10)');
     expect(query).toContain('inventoryCounts');
     expect(query).toContain('pageInfo { hasNextPage }');
-    expect(query).toMatch(/skuGroup\(id: \$id\) \{\s+id\s+status/);
+    expect(query).toMatch(/skuGroup\(id: \$id\) \{\s+id\s+name/);
+    expect(query).not.toMatch(/^\s+status\s*$/m);
     expect(query).toContain('attributes(first: 50, orderBy: { position: ASC })');
     expect(query).toContain('values(first: 50, orderBy: { position: ASC })');
     expect(query).toContain('status: { eq: "ACTIVE" }');

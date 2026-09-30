@@ -29,7 +29,6 @@ const skuGroupQuery = `
   query SkuGroup($id: String!, $first: Int, $attributeValues: [String!] = []) {
     skuGroup(id: $id) {
       id
-      status
       name
       label
       description
