@@ -46,7 +46,6 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
       }),
   });
   const group = product.data?.skuGroup;
-  const productUnavailable: boolean = group?.status != null && group.status !== 'ACTIVE';
   const attributes = getProductAttributes(group);
   const skuOptions: SKU[] = getLabeledSkuOptions(group);
   const explicitSku: SKU | undefined = skuOptions.find((sku: SKU): boolean => sku.id === params.get('sku'));
@@ -273,26 +272,19 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
                     onChange={(event) => setQuantity(event.target.valueAsNumber)}
                   />
                 </div>
-                {productUnavailable ? (
-                  <p className='text-sm'>This product is no longer available.</p>
-                ) : (
-                  <AddToCartButton sku={selectedSku} name={name} quantity={quantity} />
-                )}
+                <AddToCartButton sku={selectedSku} name={name} quantity={quantity} />
               </>
             )}
-            {!selectedSku &&
-              (productUnavailable ? (
-                <p className='text-sm'>This product is no longer available.</p>
-              ) : (
-                <button
-                  type='button'
-                  className={`${buttonClass} w-full`}
-                  disabled
-                  aria-describedby={!complete ? `${fieldId}-variant-guidance` : undefined}
-                >
-                  Add to cart
-                </button>
-              ))}
+            {!selectedSku && (
+              <button
+                type='button'
+                className={`${buttonClass} w-full`}
+                disabled
+                aria-describedby={!complete ? `${fieldId}-variant-guidance` : undefined}
+              >
+                Add to cart
+              </button>
+            )}
           </div>
         </div>
       </div>

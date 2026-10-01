@@ -18,15 +18,19 @@ it('serves variant product details without querying SKUGroup.status', async (): 
     if (/^\s+status\s*$/m.test(query)) {
       return Response.json({ errors: [{ message: 'Cannot query field "status" on type "SKUGroup".' }] });
     }
-    expect(variables.id).toBe('shirt');
+    expect(query).toContain(
+      'activeSkuGroups: skuGroups(id: { in: [$id] }, status: { eq: "ACTIVE" }, first: 1)',
+    );
+    expect(['shirt', 'archived-shirt']).toContain(variables.id);
     const skus = [
       { id: 'shirt-red', label: 'Red shirt' },
       { id: 'shirt-blue', label: 'Blue shirt' },
     ];
     return Response.json({
       data: {
+        activeSkuGroups: { edges: variables.id === 'shirt' ? [{ node: { id: 'shirt' } }] : [] },
         skuGroup: {
-          id: 'shirt',
+          id: variables.id,
           label: 'Shirt',
           attributes: {
             edges: [
@@ -89,7 +93,10 @@ it('serves variant product details without querying SKUGroup.status', async (): 
     expect((await selected.json()).skuGroup.skus.edges).toEqual([
       { node: { id: 'shirt-blue', label: 'Blue shirt' } },
     ]);
-    expect(upstream).toHaveBeenCalledTimes(2);
+    const archived = await clientFetch(`${url.replace('/shirt', '/archived-shirt')}?attributeValues=blue`);
+    expect(archived.status).toBe(404);
+    expect(await archived.json()).toEqual({ error: 'Product not found' });
+    expect(upstream).toHaveBeenCalledTimes(3);
   } finally {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),

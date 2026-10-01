@@ -90,7 +90,10 @@ describe('Commerce scoped routes', () => {
 
   it('includes selected SKU data and preserves attribute-value name filters', async (): Promise<void> => {
     const res: ReturnType<typeof response> = response();
-    vi.mocked(gqlRequest).mockResolvedValueOnce({ skuGroup: { id: 'product' } });
+    vi.mocked(gqlRequest).mockResolvedValueOnce({
+      activeSkuGroups: { edges: [{ node: { id: 'product' } }] },
+      skuGroup: { id: 'product' },
+    });
     await readProduct(
       {
         params: { id: 'product' },
@@ -105,6 +108,9 @@ describe('Commerce scoped routes', () => {
     expect(query).toContain('prices(first: 10)');
     expect(query).toContain('inventoryCounts');
     expect(query).toContain('pageInfo { hasNextPage }');
+    expect(query).toContain(
+      'activeSkuGroups: skuGroups(id: { in: [$id] }, status: { eq: "ACTIVE" }, first: 1)',
+    );
     expect(query).toMatch(/skuGroup\(id: \$id\) \{\s+id\s+name/);
     expect(query).not.toMatch(/^\s+status\s*$/m);
     expect(query).toContain('attributes(first: 50, orderBy: { position: ASC })');
@@ -212,7 +218,12 @@ describe('Commerce scoped routes', () => {
     async (handler): Promise<void> => {
       for (const scope of [undefined, getCommerceCartScope(binding)]) {
         const res = response();
-        vi.mocked(gqlRequest).mockResolvedValueOnce({});
+        const product = { skuGroup: { id: 'product-1' } };
+        vi.mocked(gqlRequest).mockResolvedValueOnce(
+          handler === readProduct
+            ? { ...product, activeSkuGroups: { edges: [{ node: { id: 'product-1' } }] } }
+            : {},
+        );
         await handler(
           {
             headers: { 'x-commerce-scope': scope },
@@ -221,7 +232,7 @@ describe('Commerce scoped routes', () => {
           } as unknown as Request,
           res as unknown as Response,
         );
-        expect(res.json).toHaveBeenCalledWith({});
+        expect(res.json).toHaveBeenCalledWith(handler === readProduct ? product : {});
         expect(res.status).not.toHaveBeenCalled();
       }
       expect(gqlRequest).toHaveBeenCalledTimes(2);

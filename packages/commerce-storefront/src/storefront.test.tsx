@@ -403,20 +403,9 @@ describe('catalog and product selection', () => {
     });
   });
 
-  it('shows an inactive product without offering an Add to Cart button', async () => {
-    const inactiveProduct: SKUGroup = {
-      id: 'retired-mug',
-      status: 'INACTIVE',
-      label: 'Retired mug',
-      attributes: { edges: [], totalCount: 0 },
-      skus: {
-        totalCount: 1,
-        pageInfo: { hasNextPage: false },
-        edges: [{ node: { id: 'retired-mug-sku' } }],
-      },
-    };
+  it('shows an unavailable message for a product excluded by the server', async () => {
     mockApi((path) =>
-      path.endsWith('/config') ? response(configuration) : response({ skuGroup: inactiveProduct }),
+      path.endsWith('/config') ? response(configuration) : response({ error: 'Product not found' }, 404),
     );
     const view = mount(
       <Routes>
@@ -425,8 +414,7 @@ describe('catalog and product selection', () => {
       '/products/retired-mug',
     );
     await connected(view);
-    expect(await screen.findByRole('heading', { name: 'Retired mug' })).toBeVisible();
-    expect(screen.getByText('This product is no longer available.')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Product unavailable' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Add to cart' })).not.toBeInTheDocument();
   });
 

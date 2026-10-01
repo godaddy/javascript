@@ -2,6 +2,7 @@
  * GET /api/commerce/products/:id
  *
  * Proxy for the catalog `skuGroup` query — single-product (PDP) detail.
+ * Only ACTIVE groups appear on a product page, matching the catalog list.
  * Re-call this route after the user picks attribute values to narrow the
  * SKU set (pass `?attributeValues=red&attributeValues=large`). Use the
  * `getSingleMatchedSku` helper returns the selected SKU, including price,
@@ -12,7 +13,7 @@
  *                      (from getProductAttributes), never its `id`.
  *   skuGroupFirst   - max SKUs to return before any attribute is picked (default 50)
  *
- * Response: { skuGroup: SKUGroup | null }
+ * Response: { skuGroup: SKUGroup } for an active product, otherwise 404.
  */
 import type { Request, Response } from 'express';
 import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
@@ -20,13 +21,19 @@ import {
   buildSkuGroupVariables,
   catalogStorefrontEndpoint,
   type SkuGroupResult,
+  type SkuGroupsResult,
   type SkuGroupVariables,
 } from '@/lib/commerce/catalog-subgraph';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 
+type ProductDetailsResult = SkuGroupResult & { activeSkuGroups?: SkuGroupsResult['skuGroups'] };
+
 const skuGroupQuery = `
   query SkuGroup($id: String!, $first: Int, $attributeValues: [String!] = []) {
+    activeSkuGroups: skuGroups(id: { in: [$id] }, status: { eq: "ACTIVE" }, first: 1) {
+      edges { node { id } }
+    }
     skuGroup(id: $id) {
       id
       name
@@ -136,14 +143,19 @@ export default async function handler(req: Request, res: Response): Promise<void
       skuGroupFirst: asNumber(req.query.skuGroupFirst),
     });
 
-    const data = await gqlRequest<SkuGroupResult, SkuGroupVariables>({
+    const data = await gqlRequest<ProductDetailsResult, SkuGroupVariables>({
       endpoint: catalogStorefrontEndpoint({ storeId, apiBaseUrl }),
       query: skuGroupQuery,
       variables,
       headers: storefrontHeaders({ storeId, clientId }),
     });
 
-    res.json(data);
+    if (!data.skuGroup || !data.activeSkuGroups?.edges?.some((edge) => edge?.node?.id === productId)) {
+      res.status(404).json({ error: 'Product not found' });
+      return;
+    }
+
+    res.json({ skuGroup: data.skuGroup });
   } catch (error) {
     res.status(500).json({
       error: 'Failed to load product',

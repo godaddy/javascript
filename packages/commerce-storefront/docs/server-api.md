@@ -31,6 +31,8 @@ Server implementations can use GoDaddy Commerce APIs or their existing integrati
 
 `/checkout` is required only when checkout is enabled. `/discounts` is needed if the host uses `applyDiscount`. The standard catalog/detail/cart flow uses the other routes. All product/cart IDs in request paths are encoded.
 
+The companion `@godaddy/gd-commerce-server` returns 404 from product details when the group is missing or excluded by the catalog's ACTIVE filter, including direct links to inactive products.
+
 ## Configuration
 
 `cartScope` is a nonempty opaque identifier for the effective store/channel/currency binding. It is not a secret. Rotate it when that binding changes so a saved cart cannot cross stores or currencies. `currencyCode` is a three-letter uppercase ISO 4217 code, for example `USD`. Money integers use that currency's smallest unit: USD 1234 is $12.34; JPY 1234 is ¥1,234. The cart shows the draft-order subtotal and the message “Shipping, taxes, and discounts are calculated at checkout.” The message has the stable `commerce-cart-checkout-adjustments-note` class so a host can hide it without changing the component.
