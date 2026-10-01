@@ -1,6 +1,6 @@
 {
   "name": "@godaddy/gd-commerce-storefront",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Opinionated React storefront templates for GoDaddy Commerce",
   "type": "module",
   "license": "MIT",
