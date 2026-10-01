@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { type ReactElement, useId, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { message, money, request } from './api';
+import { ApiError, message, money, request } from './api';
 import { AddToCartButton, buttonClass, inputClass } from './cart';
 import { ProductImage } from './catalog';
 import {
@@ -45,8 +45,9 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
         headers: { 'X-Commerce-Scope': config.cartScope },
       }),
   });
+  const productNotFound: boolean =
+    product.isError && product.error instanceof ApiError && product.error.status === 404;
   const group = product.data?.skuGroup;
-  const productUnavailable: boolean = group?.status != null && group.status !== 'ACTIVE';
   const attributes = getProductAttributes(group);
   const skuOptions: SKU[] = getLabeledSkuOptions(group);
   const explicitSku: SKU | undefined = skuOptions.find((sku: SKU): boolean => sku.id === params.get('sku'));
@@ -94,7 +95,7 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
     setImageIndex(0);
   };
   if (product.isPending) return <p role='status'>Loading product…</p>;
-  if (product.isError)
+  if (product.isError && !productNotFound)
     return (
       <div role='alert'>
         <h1 className='text-2xl font-semibold'>Product unavailable</h1>
@@ -104,7 +105,7 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
         </button>
       </div>
     );
-  if (!group)
+  if (productNotFound || !group)
     return (
       <div>
         <h1 className='text-2xl font-semibold'>Product not found</h1>
@@ -273,26 +274,19 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
                     onChange={(event) => setQuantity(event.target.valueAsNumber)}
                   />
                 </div>
-                {productUnavailable ? (
-                  <p className='text-sm'>This product is no longer available.</p>
-                ) : (
-                  <AddToCartButton sku={selectedSku} name={name} quantity={quantity} />
-                )}
+                <AddToCartButton sku={selectedSku} name={name} quantity={quantity} />
               </>
             )}
-            {!selectedSku &&
-              (productUnavailable ? (
-                <p className='text-sm'>This product is no longer available.</p>
-              ) : (
-                <button
-                  type='button'
-                  className={`${buttonClass} w-full`}
-                  disabled
-                  aria-describedby={!complete ? `${fieldId}-variant-guidance` : undefined}
-                >
-                  Add to cart
-                </button>
-              ))}
+            {!selectedSku && (
+              <button
+                type='button'
+                className={`${buttonClass} w-full`}
+                disabled
+                aria-describedby={!complete ? `${fieldId}-variant-guidance` : undefined}
+              >
+                Add to cart
+              </button>
+            )}
           </div>
         </div>
       </div>

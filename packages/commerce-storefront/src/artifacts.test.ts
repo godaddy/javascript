@@ -28,7 +28,7 @@ it('ships CSS that scopes every document selector to a commerce surface', async 
 
 it('ships a client package with framework peers external and no server dependencies', async () => {
   const js = await readFile(new URL('../dist/index.js', import.meta.url), 'utf8');
-  expect(js).not.toMatch(/node:(?:fs|crypto)|GODADDY_OAUTH_CLIENT_SECRET|@godaddy\/commerce-server/);
+  expect(js).not.toMatch(/node:(?:fs|crypto)|GODADDY_OAUTH_CLIENT_SECRET|@godaddy\/gd-commerce-server/);
   expect(js).toContain('react/jsx-runtime');
   expect(js).toContain('from "react"');
   expect(js).toContain('from "@tanstack/react-query"');
@@ -36,6 +36,28 @@ it('ships a client package with framework peers external and no server dependenc
   expect(pkg.files).not.toContain('src');
   expect(pkg.sideEffects).toContain('**/*.css');
   expect(pkg.exports['./styles.css']).toBe('./dist/styles.css');
+});
+
+it('pairs surface colors and resets host descendant typography before applying utilities', async () => {
+  const css = postcss.parse(await readFile(new URL('../dist/styles.css', import.meta.url), 'utf8'));
+  const declarations: Record<string, string> = {};
+  css.walkRules('.commerce-storefront', (rule) => {
+    rule.walkDecls((declaration) => {
+      declarations[declaration.prop] = declaration.value;
+    });
+  });
+  expect(declarations.color).toBe('var(--commerce-text, #171717)');
+  expect(declarations['background-color']).toBe('var(--commerce-surface, #fff)');
+  const resets: Record<string, string> = {};
+  css.walkRules('.commerce-storefront :where(*)', (rule) => {
+    rule.walkDecls((declaration) => {
+      resets[declaration.prop] = declaration.value;
+    });
+  });
+  expect(resets).toMatchObject({ color: 'inherit', 'font-family': 'inherit' });
+  expect(css.toString().indexOf('.commerce-storefront :where(*)')).toBeLessThan(
+    css.toString().indexOf('.commerce-storefront .text-commerce-on-accent'),
+  );
 });
 
 // Vite processes dependency CSS separately through the host's PostCSS plugins.
