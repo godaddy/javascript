@@ -3,17 +3,21 @@ import {
   redirectToSuccessUrl,
   useCheckoutContext,
 } from '@/components/checkout/checkout';
-import type { DraftOrder } from '@/types';
+import {
+  isCheckoutComplete,
+  useCheckoutOrderStatus,
+} from './use-checkout-order-status';
 
-export function usePaidOrderRedirect(order: DraftOrder | null | undefined) {
+// draftOrder is null once an order is paid, so completion comes from orderStatus.
+export function usePaidOrderRedirect() {
   const { session, isConfirmingCheckout } = useCheckoutContext();
-  const isPaid =
-    order?.statuses?.paymentStatus?.trim().toUpperCase() === 'PAID';
-  const showPaidOrder = isPaid && !isConfirmingCheckout;
+  const { data: orderStatus, isLoading } = useCheckoutOrderStatus();
+  const showPaidOrder =
+    isCheckoutComplete(orderStatus) && !isConfirmingCheckout;
 
   useEffect(() => {
     if (showPaidOrder) redirectToSuccessUrl(session?.successUrl);
   }, [showPaidOrder, session?.successUrl]);
 
-  return showPaidOrder;
+  return { showPaidOrder, isLoadingOrderStatus: isLoading };
 }

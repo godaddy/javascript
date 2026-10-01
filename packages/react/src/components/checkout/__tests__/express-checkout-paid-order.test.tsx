@@ -4,13 +4,14 @@ import { DraftOrderExpressCheckout } from '@/components/checkout/express-checkou
 import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useConfirmExpressCheckout } from '@/components/checkout/payment/utils/use-confirm-express-checkout';
 import { GoDaddyProvider } from '@/godaddy-provider';
-import { confirmCheckout, getDraftOrder } from '@/lib/godaddy/godaddy';
+import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import {
   buildCheckoutSession,
   buildDraftOrder,
   createTestQueryClient,
   mockGodaddyApi,
   mockWindowLocation,
+  setCurrentDraftOrder,
 } from './checkout-test-env';
 
 vi.mock('@/components/checkout/payment/payment-method-renderer', () => ({
@@ -69,14 +70,12 @@ describe('Standalone express paid-order recovery', () => {
           name: 'Express pay',
         });
         vi.mocked(confirmCheckout).mockImplementationOnce(async () => {
-          vi.mocked(getDraftOrder).mockResolvedValue({
-            checkoutSession: {
-              ...session,
-              draftOrder: buildDraftOrder({
-                statuses: { status: 'OPEN', paymentStatus: 'PAID' },
-              }),
-            },
-          });
+          // The payment landed even though its response was lost.
+          setCurrentDraftOrder(
+            buildDraftOrder({
+              statuses: { status: 'OPEN', paymentStatus: 'PAID' },
+            })
+          );
           throw new Error('Confirmation response lost');
         });
         fireEvent.click(button);

@@ -11,7 +11,7 @@ import {
 import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useConfirmExpressCheckout } from '@/components/checkout/payment/utils/use-confirm-express-checkout';
 import { GoDaddyProvider } from '@/godaddy-provider';
-import { confirmCheckout, getDraftOrder } from '@/lib/godaddy/godaddy';
+import { confirmCheckout, getCheckoutOrderStatus } from '@/lib/godaddy/godaddy';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { PaymentMethodType } from '@/types';
 import { StripeProvider } from './stripe-provider';
@@ -198,8 +198,8 @@ describe('useConfirmExpressCheckout', () => {
     mockGodaddyApi({ session, draftOrder: buildDraftOrder() });
     const error = new Error('Confirmation response lost');
     vi.mocked(confirmCheckout).mockRejectedValueOnce(error);
-    let rejectLookup!: (error: Error) => void;
-    vi.mocked(getDraftOrder).mockImplementationOnce(
+    let rejectLookup!: (reason: Error) => void;
+    vi.mocked(getCheckoutOrderStatus).mockImplementationOnce(
       () =>
         new Promise((_resolve, reject) => {
           rejectLookup = reject;
@@ -219,7 +219,9 @@ describe('useConfirmExpressCheckout', () => {
         paymentProvider: PaymentProvider.POYNT,
       })
       .catch(caught => caught);
-    await waitFor(() => expect(getDraftOrder).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(getCheckoutOrderStatus).toHaveBeenCalledTimes(1)
+    );
     expect(result.current.context.isConfirmingCheckout).toBe(true);
     rejectLookup(new Error('Status lookup failed'));
     expect(await outcome).toBe(error);
@@ -255,7 +257,7 @@ describe('useConfirmExpressCheckout', () => {
         paymentProvider: PaymentProvider.STRIPE,
       })
     ).rejects.toBe(error);
-    expect(getDraftOrder).not.toHaveBeenCalled();
+    expect(getCheckoutOrderStatus).not.toHaveBeenCalled();
   });
 });
 
@@ -310,7 +312,7 @@ it('keeps express checkout locked during 3DS and allows only the matching intent
   await waitFor(() => expect(stripe.handleNextAction).toHaveBeenCalledTimes(1));
   expect(result.current.context.isConfirmingCheckout).toBe(true);
   expect(result.current.context.checkoutErrors).toBeUndefined();
-  expect(getDraftOrder).not.toHaveBeenCalled();
+  expect(getCheckoutOrderStatus).not.toHaveBeenCalled();
   expect(confirmCheckout).toHaveBeenCalledTimes(1);
   await act(async () => {
     await expect(

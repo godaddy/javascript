@@ -1,8 +1,7 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import {
-  buildDraftOrder,
   getOperations,
   mockWindowLocation,
   renderCheckout,
@@ -56,7 +55,76 @@ describe('Checkout paid-order recovery', () => {
     ).not.toBeInTheDocument();
   });
 
-  it.each(['UNPAID', 'PENDING'])(
+  it('sends a paid order to the success URL rather than the return URL', async () => {
+    const successUrl = 'https://merchant.example/success';
+    renderCheckout({
+      sessionOverrides: {
+        successUrl,
+        returnUrl: 'https://merchant.example/cart',
+      },
+      draftOrderOverrides: {
+        statuses: { status: 'OPEN', paymentStatus: 'PAID' },
+      },
+    });
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Payment successful'
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1100);
+    });
+    expect(window.location.href).toBe(successUrl);
+  });
+
+  it.each([
+    {
+      name: 'the API cannot report order status',
+      statuses: { status: 'OPEN', paymentStatus: 'PAID' },
+      errors: { getCheckoutOrderStatus: new Error('Cannot query field') },
+    },
+    {
+      name: 'the order was canceled',
+      statuses: { status: 'CANCELED', paymentStatus: 'PAID' },
+      errors: {},
+    },
+  ])(
+    'falls back to the return URL without a draft order when $name',
+    async ({ statuses, errors }) => {
+      const returnUrl = 'https://merchant.example/cart';
+      renderCheckout({
+        sessionOverrides: {
+          successUrl: 'https://merchant.example/success',
+          returnUrl,
+        },
+        draftOrderOverrides: { statuses },
+        apiOverrides: { errors },
+      });
+
+      await waitFor(() => expect(window.location.href).toBe(returnUrl));
+      expect(screen.queryByText('Payment successful')).not.toBeInTheDocument();
+    }
+  );
+
+  it('redirects an offline order whose payment is PENDING', async () => {
+    const successUrl = 'https://merchant.example/success';
+    renderCheckout({
+      sessionOverrides: { successUrl },
+      draftOrderOverrides: {
+        statuses: { status: 'OPEN', paymentStatus: 'PENDING' },
+      },
+    });
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Payment successful'
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1100);
+    });
+    expect(window.location.href).toBe(successUrl);
+    expect(getOperations('ConfirmCheckoutSession')).toHaveLength(0);
+  });
+
+  it.each(['UNPAID', 'PARTIALLY_PAID'])(
     'does not redirect an order whose payment status is %s',
     async paymentStatus => {
       const initialUrl = window.location.href;
@@ -73,7 +141,7 @@ describe('Checkout paid-order recovery', () => {
     }
   );
 
-  it('uses the loaded order status when the session snapshot is still unpaid', async () => {
+  it('redirects when a refreshed order status becomes paid', async () => {
     const successUrl = 'https://merchant.example/success';
     const { queryClient, session } = renderCheckout({
       sessionOverrides: { successUrl },
@@ -81,12 +149,10 @@ describe('Checkout paid-order recovery', () => {
     });
     await waitForCheckoutReady();
     act(() => {
-      queryClient.setQueryData(checkoutQueryKeys.draftOrder(session.id), {
+      queryClient.setQueryData(checkoutQueryKeys.orderStatus(session.id), {
         checkoutSession: {
-          ...session,
-          draftOrder: buildDraftOrder({
-            statuses: { status: 'OPEN', paymentStatus: 'PAID' },
-          }),
+          id: session.id,
+          orderStatus: { status: 'OPEN', paymentStatus: 'PAID' },
         },
       });
     });

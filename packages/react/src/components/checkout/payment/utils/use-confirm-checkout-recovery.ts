@@ -2,11 +2,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { useGoDaddyContext } from '@/godaddy-provider';
-import { getDraftOrder } from '@/lib/godaddy/godaddy';
+import { getCheckoutOrderStatus } from '@/lib/godaddy/godaddy';
 import { getPaymentActionRequiredResult } from '@/lib/graphql-with-errors';
 
 // A failed confirmation response does not prove that payment failed. Refresh
-// the authoritative order before callers unlock checkout and offer another try.
+// the authoritative order status before callers unlock checkout and offer another
+// try; a completed order then redirects through usePaidOrderRedirect.
 export function useConfirmCheckoutRecovery() {
   const queryClient = useQueryClient();
   const { session, jwt } = useCheckoutContext();
@@ -20,15 +21,15 @@ export function useConfirmCheckoutRecovery() {
     } catch (error) {
       if (session?.id && !getPaymentActionRequiredResult(error)) {
         try {
-          const queryKey = checkoutQueryKeys.draftOrder(session.id);
+          const queryKey = checkoutQueryKeys.orderStatus(session.id);
           // Discard reads started before confirmation; they may still say unpaid.
           await queryClient.cancelQueries({ queryKey, exact: true });
           await queryClient.fetchQuery({
             queryKey,
             queryFn: () =>
               jwt
-                ? getDraftOrder({ accessToken: jwt }, apiHost)
-                : getDraftOrder(session, apiHost),
+                ? getCheckoutOrderStatus({ accessToken: jwt }, apiHost)
+                : getCheckoutOrderStatus(session, apiHost),
             staleTime: 0,
             retry: false,
           });

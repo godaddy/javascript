@@ -29,6 +29,7 @@ import { CheckoutType, PaymentMethodType, PaymentProvider } from '@/types';
 export type OperationName =
   | 'CheckoutSession'
   | 'DraftOrder'
+  | 'CheckoutOrderStatus'
   | 'DraftOrderSkus'
   | 'DraftOrderShippingRates'
   | 'UpdateCheckoutSessionDraftOrder'
@@ -64,6 +65,7 @@ export type MockGodaddyApiErrorKey =
   | 'refreshCheckoutToken'
   | 'getAddressMatches'
   | 'getDraftOrder'
+  | 'getCheckoutOrderStatus'
   | 'updateDraftOrder'
   | 'updateDraftOrderTaxes'
   | 'applyShippingMethod'
@@ -564,12 +566,37 @@ function mergeDraftOrderPatch(input: Record<string, unknown>) {
   state.session = { ...state.session, draftOrder: state.draftOrder };
 }
 
+// Mirrors checkout-api's assertMutable: draftOrder is null once the order is
+// completed, canceled, paid, or awaiting an offline (PENDING) payment.
+function isMutableOrder(draftOrder: DraftOrder) {
+  const status = draftOrder.statuses?.status?.toUpperCase();
+  const paymentStatus = draftOrder.statuses?.paymentStatus?.toUpperCase();
+  return (
+    status !== 'COMPLETED' &&
+    status !== 'CANCELED' &&
+    paymentStatus !== 'PAID' &&
+    paymentStatus !== 'PENDING'
+  );
+}
+
 function makeDraftOrderResponse() {
   if (!state) throw new Error('mockGodaddyApi must be called first');
   return {
     checkoutSession: {
       ...state.session,
-      draftOrder: state.draftOrder,
+      draftOrder: isMutableOrder(state.draftOrder) ? state.draftOrder : null,
+    },
+  };
+}
+
+function makeOrderStatusResponse() {
+  if (!state) throw new Error('mockGodaddyApi must be called first');
+  const { status = null, paymentStatus = null } =
+    state.draftOrder.statuses ?? {};
+  return {
+    checkoutSession: {
+      id: state.session.id,
+      orderStatus: { status, paymentStatus },
     },
   };
 }
@@ -759,6 +786,13 @@ export function mockGodaddyApi(options: MockGodaddyApiOptions) {
     await maybeDelay();
     maybeThrow('getDraftOrder');
     return makeDraftOrderResponse();
+  });
+
+  mockedGodaddyApi.getCheckoutOrderStatus.mockImplementation(async () => {
+    record('CheckoutOrderStatus');
+    await maybeDelay();
+    maybeThrow('getCheckoutOrderStatus');
+    return makeOrderStatusResponse();
   });
 
   mockedGodaddyApi.getProductsFromOrderSkus.mockImplementation(async () => {
