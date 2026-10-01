@@ -55,6 +55,32 @@ describe('Checkout paid-order recovery', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('only looks up order status when the draft order is unavailable', async () => {
+    renderCheckout({
+      draftOrderOverrides: { statuses: { paymentStatus: 'UNPAID' } },
+    });
+    await waitForCheckoutReady();
+    act(() => {
+      window.dispatchEvent(new Event('focus'));
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1100);
+    });
+    expect(getOperations('CheckoutOrderStatus')).toHaveLength(0);
+  });
+
+  it('looks up order status once for a paid order', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        statuses: { status: 'OPEN', paymentStatus: 'PAID' },
+      },
+    });
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Payment successful'
+    );
+    expect(getOperations('CheckoutOrderStatus')).toHaveLength(1);
+  });
+
   it('sends a paid order to the success URL rather than the return URL', async () => {
     const successUrl = 'https://merchant.example/success';
     renderCheckout({

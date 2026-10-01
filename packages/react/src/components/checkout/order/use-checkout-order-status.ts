@@ -20,7 +20,7 @@ export function isCheckoutComplete(orderStatus: OrderStatus | undefined) {
   );
 }
 
-export function useCheckoutOrderStatus() {
+export function useCheckoutOrderStatus({ enabled }: { enabled: boolean }) {
   const { session, jwt } = useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
 
@@ -30,12 +30,16 @@ export function useCheckoutOrderStatus() {
       jwt
         ? getCheckoutOrderStatus({ accessToken: jwt }, apiHost)
         : getCheckoutOrderStatus(session, apiHost),
-    enabled: !!session?.id,
+    // Callers enable this only when it can matter; confirmation recovery fills
+    // the same cache entry directly with fetchQuery.
+    enabled: enabled && !!session?.id,
     staleTime: 5_000,
     select: data => data.checkoutSession?.orderStatus ?? null,
     // An API without orderStatus fails validation; retrying cannot help, and a
     // failed lookup only means checkout is not known to be complete.
     retry: false,
-    refetchOnWindowFocus: 'always',
+    // A focus refetch would count as in-flight work and block an express
+    // confirmation started right after a wallet sheet closes.
+    refetchOnWindowFocus: false,
   });
 }

@@ -587,7 +587,15 @@ export function StripeExpressCheckoutForm() {
           selectedShippingMethod: selectedShippingMethod || null,
         });
       } catch (error) {
-        if (isCheckoutConfirmationBlockedError(error)) return;
+        // A blocked confirmation is not a payment error, but the wallet sheet
+        // still waits for an outcome, so it must be told the payment failed.
+        if (isCheckoutConfirmationBlockedError(error)) {
+          event.paymentFailed({
+            reason: 'fail',
+            message: t.errors.errorProcessingPayment,
+          });
+          return;
+        }
         // Track error
         track({
           eventId: eventIds.expressCheckoutError,

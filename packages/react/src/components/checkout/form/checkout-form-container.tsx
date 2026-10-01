@@ -40,7 +40,10 @@ export function CheckoutFormContainer({
   const skusMap = useDraftOrderProductsMap();
 
   const { data: order } = draftOrderQuery;
-  const { showPaidOrder, isLoadingOrderStatus } = usePaidOrderRedirect();
+  const { showPaidOrder, isLoadingOrderStatus } = usePaidOrderRedirect({
+    order,
+    isDraftOrderLoading: draftOrderQuery.isLoading,
+  });
 
   const { data: lineItems } = draftOrderLineItemsQuery;
   useRefreshProductsWhenLineItemsChange(lineItems);

@@ -89,7 +89,10 @@ function DraftOrderExpressCheckoutButtons() {
 function ExpressCheckoutContent() {
   const { t } = useGoDaddyContext();
   const { data: order, isLoading } = useDraftOrder();
-  const { showPaidOrder, isLoadingOrderStatus } = usePaidOrderRedirect();
+  const { showPaidOrder, isLoadingOrderStatus } = usePaidOrderRedirect({
+    order,
+    isDraftOrderLoading: isLoading,
+  });
 
   if (showPaidOrder)
     return <div role='status'>{t.errors.paymentSuccessful}</div>;
