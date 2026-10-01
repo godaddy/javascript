@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { type ReactElement, useId, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { message, money, request } from './api';
+import { ApiError, message, money, request } from './api';
 import { AddToCartButton, buttonClass, inputClass } from './cart';
 import { ProductImage } from './catalog';
 import {
@@ -45,6 +45,8 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
         headers: { 'X-Commerce-Scope': config.cartScope },
       }),
   });
+  const productNotFound: boolean =
+    product.isError && product.error instanceof ApiError && product.error.status === 404;
   const group = product.data?.skuGroup;
   const attributes = getProductAttributes(group);
   const skuOptions: SKU[] = getLabeledSkuOptions(group);
@@ -93,7 +95,7 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
     setImageIndex(0);
   };
   if (product.isPending) return <p role='status'>Loading product…</p>;
-  if (product.isError)
+  if (product.isError && !productNotFound)
     return (
       <div role='alert'>
         <h1 className='text-2xl font-semibold'>Product unavailable</h1>
@@ -103,7 +105,7 @@ function ProductDetailsContent({ productId }: { productId: string }): ReactEleme
         </button>
       </div>
     );
-  if (!group)
+  if (productNotFound || !group)
     return (
       <div>
         <h1 className='text-2xl font-semibold'>Product not found</h1>

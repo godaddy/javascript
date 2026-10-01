@@ -403,7 +403,7 @@ describe('catalog and product selection', () => {
     });
   });
 
-  it('shows an unavailable message for a product excluded by the server', async () => {
+  it('shows the not-found page without a retry for a product excluded by the server', async () => {
     mockApi((path) =>
       path.endsWith('/config') ? response(configuration) : response({ error: 'Product not found' }, 404),
     );
@@ -414,7 +414,9 @@ describe('catalog and product selection', () => {
       '/products/retired-mug',
     );
     await connected(view);
-    expect(await screen.findByRole('heading', { name: 'Product unavailable' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Product not found' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Back to shop' })).toHaveAttribute('href', '/shop');
+    expect(screen.queryByRole('button', { name: 'Retry product' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add to cart' })).not.toBeInTheDocument();
   });
 
