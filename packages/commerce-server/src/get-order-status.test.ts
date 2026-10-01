@@ -2,7 +2,7 @@ import { once } from 'node:events';
 import express from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRuntimeCommerceConfiguration } from './lib/commerce/config';
-import { getOrderStatus } from './lib/commerce/get-order-status';
+import { getOrderStatus, InvalidOrderIdError, OrderNotFoundError } from './lib/commerce/get-order-status';
 import { createGoDaddyPaymentsRouter } from './router';
 
 const clientFetch = globalThis.fetch;
@@ -126,20 +126,42 @@ describe('authorized order lookup', () => {
     },
   );
 
+  it.each([undefined, { ...order, context: undefined }])(
+    'rejects an incomplete order response',
+    async (result): Promise<void> => {
+      upstream
+        .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
+        .mockResolvedValueOnce(Response.json({ order: result }));
+      const lookup = getOrderStatus(order.id, configuration);
+      await expect(lookup).rejects.toThrow('Order lookup did not return the requested order');
+      await expect(lookup).rejects.not.toBeInstanceOf(OrderNotFoundError);
+    },
+  );
+
   it.each([
-    undefined,
     { ...order, id: 'another-order' },
     { ...order, context: { ...order.context, storeId: 'another-store' } },
     { ...order, context: { ...order.context, channelId: 'another-channel' } },
-    { ...order, context: undefined },
-  ])('rejects missing or mismatched order bindings', async (result): Promise<void> => {
+  ])(
+    'reports an order bound to another order, store, or channel as not found',
+    async (result): Promise<void> => {
+      upstream
+        .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
+        .mockResolvedValueOnce(Response.json({ order: result }));
+      await expect(getOrderStatus(order.id, configuration)).rejects.toBeInstanceOf(OrderNotFoundError);
+    },
+  );
+
+  it('reports an upstream 404 as not found without exposing its body', async (): Promise<void> => {
     upstream
       .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
-      .mockResolvedValueOnce(Response.json({ order: result }));
-    await expect(getOrderStatus(order.id, configuration)).rejects.toThrow('Order lookup');
+      .mockResolvedValueOnce(new Response('Private upstream details', { status: 404 }));
+    const lookup = getOrderStatus(order.id, configuration);
+    await expect(lookup).rejects.toBeInstanceOf(OrderNotFoundError);
+    await expect(lookup).rejects.toThrow(/^Order not found$/);
   });
 
-  it.each([401, 403, 404, 500])(
+  it.each([401, 403, 500])(
     'preserves an upstream order lookup failure (%i) without exposing its body',
     async (status): Promise<void> => {
       upstream
@@ -157,11 +179,87 @@ describe('authorized order lookup', () => {
     expect(upstream).toHaveBeenCalledTimes(1);
   });
 
-  it.each(['', ' ', '.', '..'])(
+  it.each(['', ' ', '.', '..', ' completed-order', 'completed-order\n'])(
     'rejects invalid order ID %j before requesting credentials',
     async (id): Promise<void> => {
-      await expect(getOrderStatus(id, configuration)).rejects.toThrow('a valid orderId is required');
+      const lookup = getOrderStatus(id, configuration);
+      await expect(lookup).rejects.toBeInstanceOf(InvalidOrderIdError);
+      await expect(lookup).rejects.toThrow('a valid orderId is required');
       expect(upstream).not.toHaveBeenCalled();
     },
   );
+});
+
+describe('order-status route', () => {
+  async function requestOrderStatus(query: string): Promise<{ status: number; body: unknown }> {
+    const app = express();
+    app.use('/api/commerce', createGoDaddyPaymentsRouter(configuration));
+    const server = app.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
+      const response = await clientFetch(
+        `http://127.0.0.1:${address.port}/api/commerce/order-status${query}`,
+      );
+      return { status: response.status, body: await response.json() };
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
+  }
+
+  it.each([
+    '',
+    '?orderId=',
+    '?orderId=%20',
+    '?orderId=.',
+    '?orderId=..',
+    '?orderId=%20cart-1',
+    '?orderId=a&orderId=b',
+  ])(
+    'returns 400 for invalid order ID query %j without an upstream request',
+    async (query): Promise<void> => {
+      await expect(requestOrderStatus(query)).resolves.toEqual({
+        status: 400,
+        body: { success: false, error: 'missing or invalid orderId query parameter' },
+      });
+      expect(upstream).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ['an upstream 404', new Response('Private upstream details', { status: 404 })],
+    [
+      'another store',
+      Response.json({ order: { ...order, context: { ...order.context, storeId: 'another-store' } } }),
+    ],
+  ])('returns 404 for %s', async (_case, orderResponse): Promise<void> => {
+    upstream
+      .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
+      .mockResolvedValueOnce(orderResponse);
+    await expect(requestOrderStatus(`?orderId=${order.id}`)).resolves.toEqual({
+      status: 404,
+      body: { success: false, error: 'Order not found' },
+    });
+  });
+
+  it.each([
+    ['a denied token', [new Response('Invalid scope', { status: 403 })]],
+    [
+      'an upstream 500',
+      [
+        Response.json({ access_token: 'order-token' }),
+        new Response('Private upstream details', { status: 500 }),
+      ],
+    ],
+    ['an incomplete order', [Response.json({ access_token: 'order-token' }), Response.json({})]],
+  ])('returns 500 for %s', async (_case, responses): Promise<void> => {
+    for (const response of responses) upstream.mockResolvedValueOnce(response);
+    const result = await requestOrderStatus(`?orderId=${order.id}`);
+    expect(result.status).toBe(500);
+    expect(result.body).toMatchObject({ success: false, error: 'Failed to get order status' });
+    expect(JSON.stringify(result.body)).not.toContain('Private upstream details');
+  });
 });
