@@ -1,5 +1,11 @@
 # @godaddy/gd-commerce-storefront
 
+## 0.1.2
+
+### Patch Changes
+
+- b9f3415: Default storefront wrappers to transparent backgrounds and inherited text colors so they blend into the host theme, while preserving explicit commerce theme overrides.
+
 ## 0.1.1
 
 ### Patch Changes
