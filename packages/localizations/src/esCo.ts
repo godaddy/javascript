@@ -70,6 +70,9 @@ export const esCo = {
     noShippingMethodAddress:
       'Ingresa tu dirección para ver los métodos de envío disponibles.',
     noShippingMethods: 'No se encontraron métodos de envío.',
+    failedToLoadMethods:
+      'No se pudieron cargar los métodos de envío. Inténtalo de nuevo.',
+    retryMethods: 'Intentar de nuevo',
     phone: 'Número de teléfono',
     country: 'País',
     selectCountry: 'Seleccionar país',
