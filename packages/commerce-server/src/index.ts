@@ -19,6 +19,8 @@ export {
 export {
   type CommerceOrderStatus,
   getOrderStatus,
+  InvalidOrderIdError,
+  OrderNotFoundError,
 } from './lib/commerce/get-order-status';
 export {
   type CommerceRouterFeatures,

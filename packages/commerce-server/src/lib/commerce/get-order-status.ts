@@ -23,6 +23,20 @@ export interface CommerceOrderStatus {
   lineItems?: unknown[];
 }
 
+export class InvalidOrderIdError extends Error {
+  constructor() {
+    super('getOrderStatus: a valid orderId is required');
+    this.name = 'InvalidOrderIdError';
+  }
+}
+
+export class OrderNotFoundError extends Error {
+  constructor() {
+    super('Order not found');
+    this.name = 'OrderNotFoundError';
+  }
+}
+
 interface OrderResponse {
   order?: {
     id: string;
@@ -39,8 +53,15 @@ export async function getOrderStatus(
   orderId: string,
   configuration: CommerceConfiguration = createRuntimeCommerceConfiguration(),
 ): Promise<CommerceOrderStatus> {
-  if (typeof orderId !== 'string' || !orderId.trim() || orderId === '.' || orderId === '..') {
-    throw new Error('getOrderStatus: a valid orderId is required');
+  // `.` and `..` survive encodeURIComponent and would resolve the URL to the store resource.
+  if (
+    typeof orderId !== 'string' ||
+    !orderId ||
+    orderId !== orderId.trim() ||
+    orderId === '.' ||
+    orderId === '..'
+  ) {
+    throw new InvalidOrderIdError();
   }
 
   const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } = configuration.read();
@@ -61,13 +82,15 @@ export async function getOrderStatus(
       cache: 'no-store',
     },
   );
+  if (response.status === 404) throw new OrderNotFoundError();
   if (!response.ok) throw new Error(`Failed to load order: upstream returned ${response.status}`);
 
   const data = (await response.json()) as OrderResponse;
   const order = data?.order;
-  if (!order?.id || order.id !== orderId) throw new Error('Order lookup did not return the requested order');
-  if (order.context?.storeId !== storeId || order.context?.channelId !== channelId) {
-    throw new Error('Order lookup returned a different store or channel');
+  if (!order?.id || !order.context) throw new Error('Order lookup did not return the requested order');
+  // Report an order bound to another store or channel as missing so the route doesn't reveal it exists.
+  if (order.id !== orderId || order.context.storeId !== storeId || order.context.channelId !== channelId) {
+    throw new OrderNotFoundError();
   }
   const total = order.totals?.total;
 
