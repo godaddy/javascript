@@ -2021,6 +2021,27 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "orderId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "orderStatus",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrderStatuses"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "paymentMethods",
             "type": {
               "kind": "OBJECT",
@@ -9752,7 +9773,15 @@ const introspection = {
               "kind": "OBJECT",
               "name": "CheckoutSession"
             },
-            "args": [],
+            "args": [
+              {
+                "name": "id",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "ID"
+                }
+              }
+            ],
             "isDeprecated": false
           },
           {

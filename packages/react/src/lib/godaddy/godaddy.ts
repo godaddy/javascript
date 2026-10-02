@@ -57,6 +57,7 @@ import {
 } from './checkout-mutations.ts';
 import {
   AddressMatchesQuery,
+  CheckoutOrderStatusQuery,
   DraftOrderPriceAdjustmentsQuery,
   DraftOrderQuery,
   DraftOrderShippingRatesQuery,
@@ -305,6 +306,47 @@ export function getDraftOrder(
   return graphqlRequestWithErrors<ResultOf<typeof DraftOrderQuery>>(
     GODADDY_HOST,
     DraftOrderQuery,
+    undefined,
+    {
+      'x-session-token': `${session.token}`,
+      'x-session-id': session.id,
+      'x-store-id': session.storeId,
+    }
+  );
+}
+
+export function getCheckoutOrderStatus(
+  sessionOrAuth:
+    | CheckoutSession
+    | undefined
+    | null
+    | { accessToken: string | undefined },
+  apiHost?: string
+): Promise<ResultOf<typeof CheckoutOrderStatusQuery>> {
+  const GODADDY_HOST = getHostByEnvironment(apiHost);
+
+  if (sessionOrAuth && 'accessToken' in sessionOrAuth) {
+    if (!sessionOrAuth.accessToken) {
+      throw new Error('No access token provided');
+    }
+    return graphqlRequestWithErrors<ResultOf<typeof CheckoutOrderStatusQuery>>(
+      GODADDY_HOST,
+      CheckoutOrderStatusQuery,
+      undefined,
+      {
+        Authorization: `Bearer ${sessionOrAuth.accessToken}`,
+      }
+    );
+  }
+
+  const session = sessionOrAuth;
+  if (!session?.token || !session?.id) {
+    throw new Error('No session token or ID provided');
+  }
+
+  return graphqlRequestWithErrors<ResultOf<typeof CheckoutOrderStatusQuery>>(
+    GODADDY_HOST,
+    CheckoutOrderStatusQuery,
     undefined,
     {
       'x-session-token': `${session.token}`,

@@ -14,11 +14,13 @@ import {
   useDraftOrderProductsMap,
   useRefreshProductsWhenLineItemsChange,
 } from '@/components/checkout/order/use-draft-order-products';
+import { usePaidOrderRedirect } from '@/components/checkout/order/use-paid-order-redirect';
 import {
   mapOrderToFormValues,
   mapSkusToItemsDisplay,
 } from '@/components/checkout/utils/checkout-transformers';
 import { getFulfillmentSummary } from '@/components/checkout/utils/fulfillment';
+import { useGoDaddyContext } from '@/godaddy-provider';
 
 interface CheckoutFormContainerProps extends Omit<CheckoutProps, 'session'> {
   validationAdapter: CheckoutValidationAdapter;
@@ -31,12 +33,18 @@ export function CheckoutFormContainer({
   ...props
 }: CheckoutFormContainerProps) {
   const { session, isConfirmingCheckout } = useCheckoutContext();
+  const { t } = useGoDaddyContext();
 
   const draftOrderQuery = useDraftOrder();
   const draftOrderLineItemsQuery = useDraftOrderLineItems();
   const skusMap = useDraftOrderProductsMap();
 
   const { data: order } = draftOrderQuery;
+  const { showPaidOrder, isLoadingOrderStatus } = usePaidOrderRedirect({
+    order,
+    isDraftOrderLoading: draftOrderQuery.isLoading,
+  });
+
   const { data: lineItems } = draftOrderLineItemsQuery;
   useRefreshProductsWhenLineItemsChange(lineItems);
 
@@ -68,7 +76,18 @@ export function CheckoutFormContainer({
     ]
   );
 
-  if (!isConfirmingCheckout && !draftOrderQuery.isLoading && !order) {
+  // A paid or pending order has no draftOrder, so check completion before
+  // treating a missing order as abandoned and returning to the merchant.
+  if (showPaidOrder) {
+    return <div role='status'>{t.errors.paymentSuccessful}</div>;
+  }
+
+  if (
+    !isConfirmingCheckout &&
+    !draftOrderQuery.isLoading &&
+    !order &&
+    !isLoadingOrderStatus
+  ) {
     const returnUrl = session?.returnUrl;
     if (returnUrl) {
       window.location.href = returnUrl;
@@ -76,7 +95,12 @@ export function CheckoutFormContainer({
     }
   }
 
-  if (props.isLoading || draftOrderQuery.isLoading || isLoadingJWT) {
+  if (
+    props.isLoading ||
+    draftOrderQuery.isLoading ||
+    isLoadingJWT ||
+    (!order && isLoadingOrderStatus)
+  ) {
     return (
       props.loadingFallback ?? <CheckoutSkeleton direction={props.direction} />
     );

@@ -7,6 +7,7 @@ vi.mock('@/lib/godaddy/godaddy', () => ({
   getCheckoutSession: vi.fn(),
   getAddressMatches: vi.fn(),
   getDraftOrder: vi.fn(),
+  getCheckoutOrderStatus: vi.fn(),
   getDraftOrderTaxes: vi.fn(),
   verifyAddress: vi.fn(),
   updateDraftOrder: vi.fn(),
