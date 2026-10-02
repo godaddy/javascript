@@ -54,7 +54,7 @@ Use the providers your application already has; do not create another router or 
 | `catalogPath` | `/shop` | Same-origin catalog route |
 | `productPath` | `/products` | Same-origin prefix for product links; register `${productPath}/:productId` |
 | `checkoutSuccessPath` | unset | Same-origin return route; enables checkout UI only when supplied |
-| `theme` | neutral palette | CSS custom properties applied to storefront surfaces and the portalled drawer |
+| `theme` | inherited text and transparent wrappers; neutral control palette | CSS custom properties applied to storefront surfaces and the portalled drawer |
 
 Provide root-relative paths without a trailing slash. Enable `checkoutSuccessPath` only after your server supports checkout and validates merchant readiness. Mount a corresponding return page. A redirect back from checkout is **not proof of payment**; that page must obtain authoritative payment status from your server. This package does not provide a payment receipt page or merchant onboarding.
 
@@ -82,7 +82,9 @@ A connection failure leaves the surrounding application and its state mounted. C
 </CommerceStorefront>
 ```
 
-The stylesheet includes all required utilities and scopes them to the package's surfaces. The build removes CSS layer wrappers in their declared order, so the exported CSS can pass through a host Tailwind v3 PostCSS pipeline without `@tailwind` directives. Import it directly; consumers do not need to copy or rewrite the CSS. It does not add a global reset or require dependency scanning by a host Tailwind build. The `theme` prop reaches the drawer even though it is portalled into `document.body`. Surfaces pair `--commerce-surface` with `--commerce-text`; muted text and borders adapt to that pair. Descendants inherit the surface text and body font instead of global heading styles. Keep text, controls and focus indicators accessible when changing colors. Utility class names and internal markup are not a customization API.
+The stylesheet includes all required utilities and scopes them to the package's surfaces. The build removes CSS layer wrappers in their declared order, so the exported CSS can pass through a host Tailwind v3 PostCSS pipeline without `@tailwind` directives. Import it directly; consumers do not need to copy or rewrite the CSS. It does not add a global reset or require dependency scanning by a host Tailwind build. The `theme` prop reaches the drawer even though it is portalled into `document.body`.
+
+By default, `.commerce-storefront` wrappers have transparent backgrounds and inherit the host's text color. Set `--commerce-surface` and `--commerce-text` to explicitly color those wrappers. Controls, muted text, borders, and the drawer retain their neutral palette defaults; set both variables to adapt them to a dark theme. Descendants inherit the surface text and body font instead of global heading styles. Keep text, controls and focus indicators accessible when changing colors. Utility class names and internal markup are not a customization API.
 
 The first release uses English UI text and `en-US` currency formatting. Catalog title and description are configurable. Full localization and arbitrary component slots are outside this initial API.
 
