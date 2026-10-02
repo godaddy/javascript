@@ -38,7 +38,7 @@ it('ships a client package with framework peers external and no server dependenc
   expect(pkg.exports['./styles.css']).toBe('./dist/styles.css');
 });
 
-it('pairs surface colors and resets host descendant typography before applying utilities', async () => {
+it('defaults to host text and transparent surfaces before applying utilities', async () => {
   const css = postcss.parse(await readFile(new URL('../dist/styles.css', import.meta.url), 'utf8'));
   const declarations: Record<string, string> = {};
   css.walkRules('.commerce-storefront', (rule) => {
@@ -46,8 +46,8 @@ it('pairs surface colors and resets host descendant typography before applying u
       declarations[declaration.prop] = declaration.value;
     });
   });
-  expect(declarations.color).toBe('var(--commerce-text, #171717)');
-  expect(declarations['background-color']).toBe('var(--commerce-surface, #fff)');
+  expect(declarations.color).toBe('var(--commerce-text, inherit)');
+  expect(declarations['background-color']).toBe('var(--commerce-surface, transparent)');
   const resets: Record<string, string> = {};
   css.walkRules('.commerce-storefront :where(*)', (rule) => {
     rule.walkDecls((declaration) => {
