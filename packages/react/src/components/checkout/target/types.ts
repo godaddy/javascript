@@ -35,6 +35,8 @@ export const checkoutTargetIds = [
   'checkout.summary.totals.total-due.before',
   'checkout.summary.totals.total-due.after',
   'checkout.summary.totals.after',
+  'checkout.summary.discount.before',
+  'checkout.summary.discount.after',
   'checkout.summary.after',
 ] as const;
 
