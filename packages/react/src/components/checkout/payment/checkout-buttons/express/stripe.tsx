@@ -10,7 +10,7 @@ import type {
 } from '@stripe/stripe-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { getDraftOrderDiscountCodes } from '@/components/checkout/discount/utils/get-draft-order-discount-codes';
+import { getHighestValueDraftOrderDiscountCode } from '@/components/checkout/discount/utils/get-draft-order-discount-codes';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
   useDraftOrder,
@@ -80,78 +80,50 @@ export function StripeExpressCheckoutForm() {
   const calculatedAdjustmentsRef = useRef<CalculatedAdjustments | null>(null);
   const couponSyncRequestRef = useRef(0);
 
-  const draftOrderDiscountCodes = useMemo(
-    () => getDraftOrderDiscountCodes(draftOrder),
+  const primaryDiscountCode = useMemo(
+    () => getHighestValueDraftOrderDiscountCode(draftOrder),
     [draftOrder]
   );
-  const discountCodesKey = JSON.stringify(draftOrderDiscountCodes);
+  // Adjustments depend on the subtotal too, e.g. a percentage discount.
+  const couponSyncKey = JSON.stringify([
+    primaryDiscountCode ?? null,
+    totals?.subTotal?.value ?? null,
+  ]);
   const hasDraftOrder = Boolean(draftOrder);
 
   useEffect(() => {
     if (!hasDraftOrder) return;
 
     const requestId = ++couponSyncRequestRef.current;
-    const couponCode = draftOrderDiscountCodes[0];
+    const couponCode = primaryDiscountCode;
 
     const syncPriceAdjustments = async () => {
       if (!couponCode) {
         appliedCouponCodeRef.current = null;
         calculatedAdjustmentsRef.current = null;
-      } else {
-        try {
-          const result = await getPriceAdjustments.mutateAsync({
-            discountCodes: [couponCode],
-          });
-
-          if (requestId !== couponSyncRequestRef.current) return;
-
-          appliedCouponCodeRef.current = result ? couponCode : null;
-          calculatedAdjustmentsRef.current = result ?? null;
-        } catch {
-          if (requestId !== couponSyncRequestRef.current) return;
-
-          appliedCouponCodeRef.current = null;
-          calculatedAdjustmentsRef.current = null;
-        }
+        return;
       }
 
-      // Refetch shipping methods so rates reflect the coupon change (add or
-      // remove) once a shipping address is known.
-      if (!shippingAddress) return;
-
       try {
-        const shippingMethodsData =
-          await getShippingMethodsByAddress.mutateAsync({
-            countryCode: shippingAddress.country || 'US',
-            postalCode: shippingAddress.postal_code || '',
-            adminArea2: shippingAddress.city || '',
-            adminArea1: shippingAddress.state || '',
-          });
+        const result = await getPriceAdjustments.mutateAsync({
+          discountCodes: [couponCode],
+        });
 
         if (requestId !== couponSyncRequestRef.current) return;
 
-        setShippingMethods(shippingMethodsData || null);
-
-        const defaultMethod = sortShippingMethods(shippingMethodsData || [])[0];
-
-        if (defaultMethod) {
-          setSelectedShippingRate({
-            id:
-              defaultMethod.displayName?.replace(/\s+/g, '-')?.toLowerCase() ||
-              'shipping',
-            amount: defaultMethod.cost?.value || 0,
-            displayName: defaultMethod.displayName || t.totals.shipping,
-            deliveryEstimate: defaultMethod.description || undefined,
-          });
-        }
+        appliedCouponCodeRef.current = result ? couponCode : null;
+        calculatedAdjustmentsRef.current = result ?? null;
       } catch {
         if (requestId !== couponSyncRequestRef.current) return;
+
+        appliedCouponCodeRef.current = null;
+        calculatedAdjustmentsRef.current = null;
       }
     };
 
     syncPriceAdjustments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasDraftOrder, discountCodesKey]);
+  }, [hasDraftOrder, couponSyncKey]);
 
   // Calculate taxes for express checkout
   const calculateExpressTaxes = useCallback(

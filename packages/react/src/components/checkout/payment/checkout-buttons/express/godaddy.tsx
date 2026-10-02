@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { getDraftOrderDiscountCodes } from '@/components/checkout/discount/utils/get-draft-order-discount-codes';
+import { getHighestValueDraftOrderDiscountCode } from '@/components/checkout/discount/utils/get-draft-order-discount-codes';
 import { useGetPriceAdjustments } from '@/components/checkout/discount/utils/use-get-price-adjustments';
 import {
   useDraftOrder,
@@ -304,20 +304,24 @@ export function ExpressCheckoutButton() {
   >('idle');
   const [couponSyncRevision, setCouponSyncRevision] = useState(0);
 
-  const draftOrderDiscountCodes = useMemo(
-    () => getDraftOrderDiscountCodes(draftOrder),
+  const primaryDiscountCode = useMemo(
+    () => getHighestValueDraftOrderDiscountCode(draftOrder),
     [draftOrder]
   );
-  const discountCodesKey = JSON.stringify(draftOrderDiscountCodes);
+  // Adjustments depend on the subtotal too, e.g. a percentage discount.
+  const couponSyncKey = JSON.stringify([
+    primaryDiscountCode ?? null,
+    totals?.subTotal?.value ?? null,
+  ]);
   const hasDraftOrder = Boolean(draftOrder);
   const areCouponAdjustmentsReady =
-    draftOrderDiscountCodes.length === 0 || couponFetchStatus === 'done';
+    !primaryDiscountCode || couponFetchStatus === 'done';
 
   useEffect(() => {
     if (!hasDraftOrder) return;
 
     const requestId = ++couponSyncRequestRef.current;
-    const couponCode = draftOrderDiscountCodes[0];
+    const couponCode = primaryDiscountCode;
     setCouponFetchStatus('fetching');
 
     const syncPriceAdjustments = async () => {
@@ -350,7 +354,7 @@ export function ExpressCheckoutButton() {
 
     syncPriceAdjustments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasDraftOrder, discountCodesKey, couponSyncRevision]);
+  }, [hasDraftOrder, couponSyncKey, couponSyncRevision]);
 
   // Initialize the TokenizeJs instance when the component mounts
   // But only after price adjustments have been fetched

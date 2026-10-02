@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { ShippingLines, ShippingMethod } from '@/types';
-import { requiresShippingReconciliation } from './requires-shipping-reconciliation';
+import {
+  requiresShippingReconciliation,
+  selectShippingMethod,
+} from './requires-shipping-reconciliation';
 
 function shippingMethod(serviceCode: string, cost: number): ShippingMethod {
   return {
@@ -104,5 +107,86 @@ describe('requiresShippingReconciliation', () => {
         selectedServiceCode: null,
       })
     ).toBe(false);
+  });
+});
+
+describe('selectShippingMethod', () => {
+  const standard = shippingMethod('standard', 500);
+  const express = shippingMethod('express', 2000);
+
+  it('keeps an offered method on first load even when it is not the cheapest', () => {
+    expect(
+      selectShippingMethod({
+        shippingMethods: [standard, express],
+        currentServiceCode: 'express',
+        previousShippingMethods: null,
+      })
+    ).toMatchObject({ selectedMethod: express, autoSelected: false });
+  });
+
+  it("keeps the customer's choice when rates are repriced", () => {
+    expect(
+      selectShippingMethod({
+        shippingMethods: [
+          shippingMethod('standard', 600),
+          shippingMethod('express', 2100),
+        ],
+        currentServiceCode: 'express',
+        previousShippingMethods: [standard, express],
+        isAutoSelected: false,
+      })
+    ).toMatchObject({
+      selectedMethod: { serviceCode: 'express' },
+      autoSelected: false,
+    });
+  });
+
+  it('moves an automatic selection to the cheapest method when rates change', () => {
+    expect(
+      selectShippingMethod({
+        shippingMethods: [shippingMethod('standard', 2500), express],
+        currentServiceCode: 'standard',
+        previousShippingMethods: [standard, express],
+        isAutoSelected: true,
+      })
+    ).toMatchObject({
+      selectedMethod: { serviceCode: 'express' },
+      autoSelected: true,
+    });
+  });
+
+  it('keeps an automatic selection while the rates are unchanged', () => {
+    expect(
+      selectShippingMethod({
+        shippingMethods: [standard, express],
+        currentServiceCode: 'express',
+        previousShippingMethods: [standard, express],
+        isAutoSelected: true,
+      })
+    ).toMatchObject({ selectedMethod: express, autoSelected: true });
+  });
+
+  it("switches a customer's choice to free shipping when it newly appears", () => {
+    const free = shippingMethod('free', 0);
+
+    expect(
+      selectShippingMethod({
+        shippingMethods: [standard, express, free],
+        currentServiceCode: 'express',
+        previousShippingMethods: [standard, express],
+        isAutoSelected: false,
+      })
+    ).toMatchObject({ selectedMethod: free, autoSelected: true });
+  });
+
+  it('falls back to the cheapest method when the current one is gone', () => {
+    expect(
+      selectShippingMethod({
+        shippingMethods: [standard],
+        currentServiceCode: 'express',
+        previousShippingMethods: [standard, express],
+        isAutoSelected: false,
+      })
+    ).toMatchObject({ selectedMethod: standard, autoSelected: true });
   });
 });

@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { getDraftOrderDiscountCodes } from '@/components/checkout/discount/utils/get-draft-order-discount-codes';
 import { useApplyDiscountCore } from '@/components/checkout/discount/utils/use-apply-discount-core';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
@@ -19,29 +20,9 @@ export function useApplyShippingMethod() {
       setCheckoutErrors(undefined);
       if (!session) return;
 
-      const allCodes = new Set<string>();
-
-      if (order?.discounts) {
-        for (const discount of order.discounts) {
-          if (discount.code) {
-            allCodes.add(discount.code);
-          }
-        }
-      }
-
-      if (order?.shippingLines) {
-        for (const shippingLine of order.shippingLines) {
-          if (shippingLine.discounts) {
-            for (const discount of shippingLine.discounts) {
-              if (discount.code) {
-                allCodes.add(discount.code);
-              }
-            }
-          }
-        }
-      }
-
-      const discountCodes = Array.from(allCodes);
+      // Applying discounts replaces the order's full code list, so include
+      // line-item codes too or they are dropped.
+      const discountCodes = getDraftOrderDiscountCodes(order);
 
       if (session.enablePromotionCodes && discountCodes.length) {
         await applyDiscount.mutateAsync({ discountCodes });

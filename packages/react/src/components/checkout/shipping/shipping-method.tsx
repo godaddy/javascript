@@ -12,10 +12,7 @@ import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { ShippingMethodSkeleton } from '@/components/checkout/shipping/shipping-method-skeleton';
 import { buildShippingPayload } from '@/components/checkout/shipping/utils/build-shipping-payload';
-import {
-  getShippingMethodsKey,
-  selectShippingMethod,
-} from '@/components/checkout/shipping/utils/requires-shipping-reconciliation';
+import { selectShippingMethod } from '@/components/checkout/shipping/utils/requires-shipping-reconciliation';
 import {
   getShippingFulfillmentSyncKey,
   shouldApplyShippingMethod,
@@ -32,6 +29,7 @@ import { useGoDaddyContext } from '@/godaddy-provider';
 import { cn } from '@/lib/utils';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
+import type { ShippingMethod } from '@/types';
 
 export function ShippingMethodForm() {
   const formatCurrency = useFormatCurrency();
@@ -71,7 +69,7 @@ export function ShippingMethodForm() {
     useIsMutating({
       mutationKey: checkoutMutationKeys.applyDiscount(session?.id),
     }) > 0;
-  const lastShippingMethodsKeyRef = useRef<string | null>(null);
+  const lastShippingMethodsRef = useRef<ShippingMethod[] | null>(null);
   const wasApplyingDiscountRef = useRef(false);
 
   // Track the last processed state to avoid duplicate API calls
@@ -95,8 +93,7 @@ export function ShippingMethodForm() {
     if (isApplyingDiscount) {
       wasApplyingDiscountRef.current = true;
       if (!isShippingMethodsFetching) {
-        lastShippingMethodsKeyRef.current =
-          getShippingMethodsKey(shippingMethods);
+        lastShippingMethodsRef.current = shippingMethods;
         lastProcessedStateRef.current = {
           ...lastProcessedStateRef.current,
           serviceCode: shippingLines?.requestedService ?? null,
@@ -134,7 +131,7 @@ export function ShippingMethodForm() {
 
     // Case 1: No shipping methods available - clear shipping and set fulfillment to SHIP
     if (!hasShippingMethods && hasShippingAddress) {
-      lastShippingMethodsKeyRef.current = getShippingMethodsKey([]);
+      lastShippingMethodsRef.current = [];
 
       if (discountJustSettled && !currentServiceCode) {
         lastProcessedStateRef.current = {
@@ -190,14 +187,18 @@ export function ShippingMethodForm() {
     if (hasShippingMethods) {
       const currentFormMethod = form.getValues('shippingMethod');
       const existingMethod = currentFormMethod || currentServiceCode;
-      const isInitialSelection = lastShippingMethodsKeyRef.current === null;
-      const { selectedMethod: methodToApply, methodsKey } =
+      const isInitialSelection = lastShippingMethodsRef.current === null;
+      const previousAutoSelected = Boolean(
+        form.getValues('shippingMethodAutoSelected')
+      );
+      const { selectedMethod: methodToApply, autoSelected } =
         selectShippingMethod({
           shippingMethods,
           currentServiceCode: existingMethod,
-          previousMethodsKey: lastShippingMethodsKeyRef.current,
+          previousShippingMethods: lastShippingMethodsRef.current,
+          isAutoSelected: previousAutoSelected,
         });
-      lastShippingMethodsKeyRef.current = methodsKey;
+      lastShippingMethodsRef.current = shippingMethods;
 
       if (!methodToApply) return;
       // Check if we've already processed this exact state. If cart contents
@@ -215,6 +216,9 @@ export function ShippingMethodForm() {
 
       if (!alreadyProcessed) {
         form.setValue('shippingMethod', methodToApply.serviceCode, {
+          shouldDirty: false,
+        });
+        form.setValue('shippingMethodAutoSelected', autoSelected, {
           shouldDirty: false,
         });
 
@@ -237,6 +241,13 @@ export function ShippingMethodForm() {
               form.setValue('shippingMethod', previousShippingMethod, {
                 shouldDirty: false,
               });
+              form.setValue(
+                'shippingMethodAutoSelected',
+                previousAutoSelected,
+                {
+                  shouldDirty: false,
+                }
+              );
             },
           });
         } else if (session?.enableTaxCollection && isInitialSelection) {
@@ -339,11 +350,13 @@ export function ShippingMethodForm() {
     }
 
     const previousValue = form.getValues('shippingMethod');
+    const previousAutoSelected = form.getValues('shippingMethodAutoSelected');
     const previousProcessedState = lastProcessedStateRef.current;
     form.setValue('shippingMethod', value, {
       shouldDirty: true,
       shouldValidate: true,
     });
+    form.setValue('shippingMethodAutoSelected', false);
 
     const method = shippingMethods?.find(m => m.serviceCode === value);
 
@@ -378,6 +391,7 @@ export function ShippingMethodForm() {
         .mutateAsync(buildShippingPayload(method))
         .catch(() => {
           form.setValue('shippingMethod', previousValue);
+          form.setValue('shippingMethodAutoSelected', previousAutoSelected);
           lastProcessedStateRef.current = previousProcessedState;
         });
     }

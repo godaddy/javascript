@@ -54,6 +54,31 @@ describe('Checkout shipping behavior', () => {
     }
   );
 
+  it('keeps a saved shipping method on load when a cheaper rate is offered', async () => {
+    const { queryClient } = renderCheckout({
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'weight-based',
+            requestedProvider: 'unknown',
+            name: 'Weight Based',
+            amount: { value: 100, currencyCode: 'USD' },
+            discounts: [],
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    await waitFor(() => {
+      expect(queryClient.isMutating()).toBe(0);
+      expect(queryClient.isFetching()).toBe(0);
+    });
+
+    expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(0);
+    expect(screen.getByRole('radio', { name: /weight based/i })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /free/i })).not.toBeChecked();
+  });
+
   it('shows the no-origin-address message when shipping origin is missing', async () => {
     renderCheckout({
       sessionOverrides: { shipping: { originAddress: null } },

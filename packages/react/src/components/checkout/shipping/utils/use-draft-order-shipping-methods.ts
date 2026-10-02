@@ -78,6 +78,8 @@ export function useDraftOrderShippingMethods() {
       return result;
     },
     enabled: !!session?.id && hasShippingAddress,
+    // The failure UI offers a manual retry; don't stack automatic retries on it.
+    retry: false,
     select: data =>
       data?.checkoutSession?.draftOrder?.calculatedShippingRates?.rates,
   });

@@ -6,7 +6,6 @@ import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import { buildShippingPayload } from '@/components/checkout/shipping/utils/build-shipping-payload';
 import {
-  getShippingMethodsKey,
   requiresShippingReconciliation,
   selectShippingMethod,
 } from '@/components/checkout/shipping/utils/requires-shipping-reconciliation';
@@ -44,21 +43,26 @@ export function useReconcileAfterDiscount() {
       const previousShippingMethods = shippingMethodsQuery.data ?? [];
       const { data, isError } = await shippingMethodsQuery.refetch();
       const refreshedMethods = isError ? [] : (data ?? []);
+      const isAutoSelected = Boolean(
+        form.getValues('shippingMethodAutoSelected')
+      );
       const shippingRequiresReconciliation = requiresShippingReconciliation({
         shippingMethods: refreshedMethods,
         previousShippingMethods,
         currentShippingLine: draftOrder?.shippingLines?.[0],
         selectedServiceCode: form.getValues('shippingMethod'),
+        isAutoSelected,
       });
 
       if (shippingRequiresReconciliation) {
         const currentServiceCode =
           form.getValues('shippingMethod') ||
           draftOrder?.shippingLines?.[0]?.requestedService;
-        const { selectedMethod } = selectShippingMethod({
+        const { selectedMethod, autoSelected } = selectShippingMethod({
           shippingMethods: refreshedMethods,
           currentServiceCode,
-          previousMethodsKey: getShippingMethodsKey(previousShippingMethods),
+          previousShippingMethods,
+          isAutoSelected,
         });
 
         try {
@@ -105,6 +109,9 @@ export function useReconcileAfterDiscount() {
 
         setCheckoutErrors(undefined);
         form.setValue('shippingMethod', selectedMethod?.serviceCode ?? '', {
+          shouldDirty: false,
+        });
+        form.setValue('shippingMethodAutoSelected', autoSelected, {
           shouldDirty: false,
         });
 

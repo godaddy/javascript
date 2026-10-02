@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ResultOf } from 'gql.tada';
 import { useCheckoutContext } from '@/components/checkout/checkout';
-import { useDiscountApply } from '@/components/checkout/discount';
+import { getDraftOrderDiscountCodes } from '@/components/checkout/discount/utils/get-draft-order-discount-codes';
+import { useApplyDiscountCore } from '@/components/checkout/discount/utils/use-apply-discount-core';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import {
   checkoutMutationKeys,
@@ -17,7 +18,9 @@ export function useRemoveShippingMethod() {
   const { apiHost } = useGoDaddyContext();
   const queryClient = useQueryClient();
   const { data: order } = useDraftOrder();
-  const applyDiscount = useDiscountApply();
+  // The core mutation skips shipping reconciliation, which could otherwise
+  // re-apply a shipping method right after it is removed.
+  const applyDiscount = useApplyDiscountCore();
 
   return useMutation({
     mutationKey: checkoutMutationKeys.removeShippingMethod(session?.id),
@@ -63,55 +66,15 @@ export function useRemoveShippingMethod() {
         );
       }
 
-      const allCodes = new Set<string>();
+      const discountCodes = getDraftOrderDiscountCodes(order);
 
-      // Add order-level discount codes
-      if (order?.discounts) {
-        for (const discount of order.discounts) {
-          if (discount.code) {
-            allCodes.add(discount.code);
-          }
-        }
+      if (session.enablePromotionCodes && discountCodes.length) {
+        await applyDiscount.mutateAsync({ discountCodes });
       }
 
-      // Add line item-level discount codes
-      if (order?.lineItems) {
-        for (const lineItem of order.lineItems) {
-          if (lineItem?.discounts) {
-            for (const discount of lineItem.discounts) {
-              if (discount.code) {
-                allCodes.add(discount.code);
-              }
-            }
-          }
-        }
-      }
-
-      // Add shipping line-level discount codes
-      if (order?.shippingLines) {
-        for (const shippingLine of order.shippingLines) {
-          if (shippingLine.discounts) {
-            for (const discount of shippingLine.discounts) {
-              if (discount.code) {
-                allCodes.add(discount.code);
-              }
-            }
-          }
-        }
-      }
-
-      const discountCodes = Array.from(allCodes);
-
-      if (session?.enablePromotionCodes && discountCodes?.length) {
-        /* should re-apply discounts if they were previously applied */
-        await applyDiscount.mutateAsync({
-          discountCodes,
-        });
-      } else {
-        await queryClient.invalidateQueries({
-          queryKey: checkoutQueryKeys.draftOrder(session.id),
-        });
-      }
+      await queryClient.invalidateQueries({
+        queryKey: checkoutQueryKeys.draftOrder(session.id),
+      });
     },
   });
 }

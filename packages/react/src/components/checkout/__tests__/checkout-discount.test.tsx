@@ -14,6 +14,7 @@ import {
   getOperations,
   renderCheckout,
   setApiError,
+  setApiErrorOnce,
   setShippingMethods,
   waitForCheckoutReady,
   waitForOperation,
@@ -703,6 +704,199 @@ describe('Checkout discounts', () => {
       }
     }
   );
+
+  it("keeps the customer's chosen method when a coupon reprices the rates", async () => {
+    const rates = (standardCost: number, expressCost: number) =>
+      buildShippingRates([
+        {
+          serviceCode: 'standard',
+          carrierCode: 'carrier',
+          displayName: 'Standard',
+          cost: { value: standardCost, currencyCode: 'USD' },
+        },
+        {
+          serviceCode: 'express',
+          carrierCode: 'carrier',
+          displayName: 'Express',
+          cost: { value: expressCost, currencyCode: 'USD' },
+        },
+      ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods: rates(500, 2000) },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 500, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+
+    await user.click(screen.getByRole('radio', { name: /express/i }));
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    await flushPromises();
+    clearOperations();
+
+    setShippingMethods(rates(400, 1900));
+    await applyCoupon(user, 'onedollar');
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    await flushPromises();
+
+    const applied = getOperations('ApplyCheckoutSessionShippingMethod');
+    expect(applied.at(-1)?.input).toEqual([
+      expect.objectContaining({
+        requestedService: 'express',
+        subTotal: { value: 1900, currencyCode: 'USD' },
+      }),
+    ]);
+    expect(screen.getByRole('radio', { name: /express/i })).toBeChecked();
+  });
+
+  it('clears the stale shipping line when reapplication fails, then reapplies on the next render', async () => {
+    const paidShipping = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 1000, currencyCode: 'USD' },
+      },
+    ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods: paidShipping },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 1000, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+    setApiErrorOnce('applyShippingMethod', 'apply failed');
+    setShippingMethods([
+      ...paidShipping,
+      ...buildShippingRates([
+        {
+          serviceCode: 'free',
+          carrierCode: 'carrier',
+          displayName: 'Free',
+          cost: { value: 0, currencyCode: 'USD' },
+        },
+      ]),
+    ]);
+
+    await applyCoupon(user, 'onedollar');
+
+    await waitFor(() => {
+      expect(
+        getOperations('ApplyCheckoutSessionShippingMethod').map(operation =>
+          (operation.input as Array<{ requestedService: string }>).map(
+            line => line.requestedService
+          )
+        )
+      ).toEqual([['free'], [], ['free']]);
+    });
+    await flushPromises();
+
+    expect(screen.getByRole('radio', { name: /free/i })).toBeChecked();
+    expect(
+      screen.queryByText(enUs.apiErrors.SHIPPING_METHOD_APPLICATION_FAILED)
+    ).not.toBeInTheDocument();
+  });
+
+  it('reapplies line-item discount codes when the shipping method changes', async () => {
+    const shippingMethods = buildShippingRates([
+      {
+        serviceCode: 'flat-rate',
+        carrierCode: 'carrier',
+        displayName: 'Flat Rate',
+        cost: { value: 10, currencyCode: 'USD' },
+      },
+      {
+        serviceCode: 'premium-rate',
+        carrierCode: 'carrier',
+        displayName: 'Premium Rate',
+        cost: { value: 100, currencyCode: 'USD' },
+      },
+    ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods },
+      draftOrderOverrides: {
+        discounts: [{ code: 'order10' }],
+        lineItems: [{ id: 'line-item-1', discounts: [{ code: 'lineitem10' }] }],
+        shippingLines: [
+          {
+            requestedService: 'flat-rate',
+            requestedProvider: 'carrier',
+            name: 'Flat Rate',
+            amount: { value: 10, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    await flushPromises();
+    clearOperations();
+
+    await user.click(screen.getByRole('radio', { name: /premium rate/i }));
+    await waitForOperation('ApplyCheckoutSessionDiscount');
+
+    expect(getOperations('ApplyCheckoutSessionDiscount')[0].input).toEqual({
+      discountCodes: expect.arrayContaining(['order10', 'lineitem10']),
+    });
+  });
+
+  it('keeps treating a method as automatic after a failed customer change', async () => {
+    const rates = (cheapCost: number, otherCost: number) =>
+      buildShippingRates([
+        {
+          serviceCode: 'cheap',
+          carrierCode: 'carrier',
+          displayName: 'Cheap',
+          cost: { value: cheapCost, currencyCode: 'USD' },
+        },
+        {
+          serviceCode: 'other',
+          carrierCode: 'carrier',
+          displayName: 'Other',
+          cost: { value: otherCost, currencyCode: 'USD' },
+        },
+      ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods: rates(100, 500) },
+      draftOrderOverrides: { shippingLines: [] },
+    });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    await flushPromises();
+    expect(screen.getByRole('radio', { name: /cheap/i })).toBeChecked();
+
+    setApiErrorOnce('applyShippingMethod', 'apply failed');
+    await user.click(screen.getByRole('radio', { name: /other/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('radio', { name: /cheap/i })).toBeChecked();
+    });
+    await flushPromises();
+    clearOperations();
+
+    // "Cheap" is still an automatic pick, so a repricing moves it to the
+    // new cheapest method instead of keeping it like a customer choice.
+    setShippingMethods(rates(600, 500));
+    await applyCoupon(user, 'onedollar');
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod').at(-1)?.input
+    ).toEqual([expect.objectContaining({ requestedService: 'other' })]);
+  });
 
   it('applies a newly available free method before calculating taxes', async () => {
     const paidShipping = buildShippingRates([

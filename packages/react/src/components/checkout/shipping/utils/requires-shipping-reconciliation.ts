@@ -4,7 +4,9 @@ import { sortShippingMethods } from './sort-shipping-methods';
 interface SelectShippingMethodParams {
   shippingMethods: ShippingMethod[];
   currentServiceCode?: string | null;
-  previousMethodsKey?: string | null;
+  // null means there is no earlier rate set to compare against (first load).
+  previousShippingMethods?: ShippingMethod[] | null;
+  isAutoSelected?: boolean;
 }
 
 interface RequiresShippingReconciliationParams {
@@ -12,6 +14,11 @@ interface RequiresShippingReconciliationParams {
   previousShippingMethods?: ShippingMethod[];
   currentShippingLine?: ShippingLines | null;
   selectedServiceCode?: string | null;
+  isAutoSelected?: boolean;
+}
+
+function isFreeShippingMethod(method: ShippingMethod) {
+  return method.cost?.value === 0;
 }
 
 export function getShippingMethodsKey(shippingMethods: ShippingMethod[]) {
@@ -27,18 +34,40 @@ export function getShippingMethodsKey(shippingMethods: ShippingMethod[]) {
 export function selectShippingMethod({
   shippingMethods,
   currentServiceCode,
-  previousMethodsKey,
+  previousShippingMethods = null,
+  isAutoSelected = false,
 }: SelectShippingMethodParams) {
   const availableMethods = sortShippingMethods(shippingMethods);
   const methodsKey = getShippingMethodsKey(availableMethods);
-  const methodsChanged = methodsKey !== previousMethodsKey;
-  const selectedMethod = methodsChanged
-    ? availableMethods[0]
-    : availableMethods.find(
-        method => method.serviceCode === currentServiceCode
-      ) || availableMethods[0];
+  const cheapestMethod = availableMethods[0];
+  const currentMethod = currentServiceCode
+    ? availableMethods.find(method => method.serviceCode === currentServiceCode)
+    : undefined;
 
-  return { selectedMethod, methodsKey };
+  if (!currentMethod) {
+    return { selectedMethod: cheapestMethod, methodsKey, autoSelected: true };
+  }
+
+  if (previousShippingMethods) {
+    const freeShippingNewlyAvailable =
+      !previousShippingMethods.some(isFreeShippingMethod) &&
+      availableMethods.some(isFreeShippingMethod);
+    const methodsChanged =
+      methodsKey !== getShippingMethodsKey(previousShippingMethods);
+
+    if (
+      (freeShippingNewlyAvailable && !isFreeShippingMethod(currentMethod)) ||
+      (isAutoSelected && methodsChanged)
+    ) {
+      return { selectedMethod: cheapestMethod, methodsKey, autoSelected: true };
+    }
+  }
+
+  return {
+    selectedMethod: currentMethod,
+    methodsKey,
+    autoSelected: isAutoSelected,
+  };
 }
 
 export function requiresShippingReconciliation({
@@ -46,13 +75,15 @@ export function requiresShippingReconciliation({
   previousShippingMethods = [],
   currentShippingLine,
   selectedServiceCode,
+  isAutoSelected,
 }: RequiresShippingReconciliationParams) {
   const currentServiceCode =
     selectedServiceCode || currentShippingLine?.requestedService;
   const { selectedMethod } = selectShippingMethod({
     shippingMethods,
     currentServiceCode,
-    previousMethodsKey: getShippingMethodsKey(previousShippingMethods),
+    previousShippingMethods,
+    isAutoSelected,
   });
 
   return selectedMethod
