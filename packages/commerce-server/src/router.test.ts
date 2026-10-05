@@ -177,12 +177,16 @@ describe('Commerce scoped routes', () => {
         throw new Error('Missing channel');
       },
     };
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     await configHandler({} as Request, res as unknown as Response);
     expect(res.status).toHaveBeenCalledWith(503);
     expect(res.json).toHaveBeenCalledWith({
-      error: expect.any(String),
-      message: 'Missing channel',
+      error: 'Commerce configuration is unavailable. Complete the store connection before continuing.',
+      code: 'not_configured',
+      correlationId: expect.any(String),
     });
+    const [, context] = consoleError.mock.calls[0] ?? [];
+    expect((context as { error: Error }).error.cause).toEqual(new Error('Missing channel'));
   });
 
   it.each([
@@ -296,9 +300,16 @@ describe('Commerce scoped routes', () => {
       { headers: {}, params: { id: 'cart-1' } } as unknown as Request,
       res as unknown as Response,
     );
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load cart' });
-    expect(consoleError).toHaveBeenCalledWith('commerce-server: Failed to load cart', error);
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Failed to load cart',
+      code: expect.stringMatching(/^upstream_(?:error|unauthorized)$/),
+      correlationId: expect.any(String),
+    });
+    expect(consoleError).toHaveBeenCalledWith(
+      'commerce-server: Failed to load cart',
+      expect.objectContaining({ httpStatus: 502, error }),
+    );
   });
 
   it.each([
@@ -369,10 +380,10 @@ describe('Commerce scoped routes', () => {
     ['discounts', applyDiscount, 'Failed to apply discount codes'],
     ['checkout', checkout, 'Failed to create checkout session'],
   ] as const)(
-    'returns a generic 500 and logs the detail for %s',
+    'returns a generic 500 and logs the detail of an unexpected error for %s',
     async (_name, handler, label): Promise<void> => {
       const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const failure = new Error('GraphQL request failed: 502 secret-upstream-detail');
+      const failure = new Error('secret internal detail');
       vi.mocked(gqlRequest).mockRejectedValue(failure);
       vi.mocked(createCheckoutSession).mockRejectedValue(failure);
       const res = response();
@@ -390,10 +401,101 @@ describe('Commerce scoped routes', () => {
       await handler(req, res as unknown as Response);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledTimes(1);
-      expect(res.json).toHaveBeenCalledWith({ error: label });
-      expect(consoleError).toHaveBeenCalledWith(`commerce-server: ${label}`, failure);
+      expect(res.json).toHaveBeenCalledWith({
+        error: label,
+        code: 'internal_error',
+        correlationId: expect.any(String),
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        `commerce-server: ${label}`,
+        expect.objectContaining({ httpStatus: 500, code: 'internal_error', error: failure }),
+      );
     },
   );
+
+  it.each([
+    ['products', readProducts, 'Failed to load products'],
+    ['product', readProduct, 'Failed to load product'],
+    ['sku', readSku, 'Failed to load sku'],
+    ['create cart', createCart, 'Failed to create cart'],
+    ['read cart', readCart, 'Failed to load cart'],
+    ['add item', addItem, 'Failed to add line item'],
+    ['update item', updateItem, 'Failed to update line item'],
+    ['delete item', deleteItem, 'Failed to delete line item'],
+    ['discounts', applyDiscount, 'Failed to apply discount codes'],
+    ['checkout', checkout, 'Failed to create checkout session'],
+  ] as const)(
+    'returns 502 without upstream detail for an upstream failure in %s',
+    async (_name, handler, label): Promise<void> => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const failure = new GraphQLErrorWithCodes(
+        [{ message: 'secret-upstream-detail', code: 'INTERNAL_SERVER_ERROR' }],
+        500,
+      );
+      vi.mocked(gqlRequest).mockRejectedValue(failure);
+      vi.mocked(createCheckoutSession).mockRejectedValue(failure);
+      const res = response();
+      (res.locals as Record<string, unknown>).commerceCheckoutReturnUrlValidator = (
+        returnUrl?: string,
+        successUrl?: string,
+      ) => ({ returnUrl, successUrl });
+      const req = {
+        ...scopedRequest,
+        body: {
+          ...(scopedRequest.body as object),
+          ...(handler === checkout ? { lineItems: undefined, skuId: 'sku-1' } : {}),
+        },
+      } as unknown as Request;
+      await handler(req, res as unknown as Response);
+      expect(res.status).toHaveBeenCalledWith(502);
+      expect(res.json).toHaveBeenCalledWith({
+        error: label,
+        code: 'upstream_error',
+        correlationId: expect.any(String),
+      });
+      expect(JSON.stringify(vi.mocked(res.json).mock.calls)).not.toContain('secret-upstream-detail');
+      expect(consoleError).toHaveBeenCalledWith(
+        `commerce-server: ${label}`,
+        expect.objectContaining({
+          httpStatus: 502,
+          details: expect.objectContaining({ upstreamStatus: 500, upstreamCodes: ['INTERNAL_SERVER_ERROR'] }),
+        }),
+      );
+    },
+  );
+
+  it.each([
+    ['add item', addItem],
+    ['update item', updateItem],
+    ['delete item', deleteItem],
+    ['discounts', applyDiscount],
+  ] as const)(
+    'returns 404 when %s targets a missing or completed cart',
+    async (_name, handler): Promise<void> => {
+      vi.mocked(gqlRequest).mockRejectedValueOnce(
+        new GraphQLErrorWithCodes([{ code: 'INTERNAL_SERVER_ERROR', message: 'Order not found' }]),
+      );
+      const res = response();
+      await handler(scopedRequest, res as unknown as Response);
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        error: 'Cart not found',
+        code: 'not_found',
+        correlationId: expect.any(String),
+      });
+    },
+  );
+
+  it('reports an upstream 401 as upstream_unauthorized, not a caller authentication failure', async (): Promise<void> => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(gqlRequest).mockRejectedValueOnce(
+      new GraphQLErrorWithCodes([{ code: 'UNAUTHENTICATED', message: 'Bad client' }], 401),
+    );
+    const res = response();
+    await readProducts(scopedRequest, res as unknown as Response);
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'upstream_unauthorized' }));
+  });
 });
 
 describe('Commerce router mounting', (): void => {
@@ -435,5 +537,63 @@ describe('Commerce router mounting', (): void => {
         });
       });
     }
+  });
+
+  async function requestThroughRouter(
+    router: express.Router,
+    path: string,
+    headers: Record<string, string> = {},
+  ): Promise<globalThis.Response> {
+    const app = express();
+    app.use('/api/commerce', router);
+    const server = app.listen(0);
+    try {
+      const address = server.address() as AddressInfo;
+      return await fetch(`http://127.0.0.1:${address.port}/api/commerce${path}`, { headers });
+    } finally {
+      await new Promise<void>((resolve, reject): void => {
+        server.close((error?: Error): void => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+    }
+  }
+
+  const failingConfiguration: CommerceConfiguration = {
+    ...configuration,
+    read: (): never => {
+      throw new Error('secret config detail');
+    },
+  };
+
+  it('logs failures through the host logger with the response correlation id', async (): Promise<void> => {
+    const logger = { error: vi.fn() };
+    const result = await requestThroughRouter(
+      createCommerceCatalogRouter(failingConfiguration, { logger }),
+      '/products',
+    );
+    const body = (await result.json()) as { correlationId: string };
+    expect(result.status).toBe(503);
+    expect(result.headers.get('x-correlation-id')).toBe(body.correlationId);
+    expect(JSON.stringify(body)).not.toContain('secret config detail');
+    expect(logger.error).toHaveBeenCalledWith(
+      'commerce-server: Failed to load products',
+      expect.objectContaining({ correlationId: body.correlationId, httpStatus: 503, code: 'not_configured' }),
+    );
+  });
+
+  it.each([
+    ['a valid host id', 'edge-123', 'edge-123'],
+    ['an id with unsafe characters', 'id with spaces; level=error', undefined],
+  ])('uses %s from getCorrelationId when it is safe', async (_case, supplied, expected): Promise<void> => {
+    const result = await requestThroughRouter(
+      createCommerceCatalogRouter(configuration, { getCorrelationId: (req) => req.get('x-request-id') }),
+      '/config',
+      { 'x-request-id': supplied },
+    );
+    const correlationId = result.headers.get('x-correlation-id');
+    if (expected) expect(correlationId).toBe(expected);
+    else expect(correlationId).toMatch(/^[0-9a-f-]{36}$/);
   });
 });

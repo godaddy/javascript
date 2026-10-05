@@ -18,16 +18,16 @@
  * `data` field. Use the helpers in lib/commerce/catalog-subgraph.ts to extract view-model fields.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
 import {
   buildSkuGroupsVariables,
   catalogStorefrontEndpoint,
   type SkuGroupsResult,
   type SkuGroupsVariables,
 } from '@/lib/commerce/catalog-subgraph';
+import { commerceRoute } from '@/lib/commerce/commerce-route';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
-import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 // Cards use group pricing/media and SKU identity/inventory for quick-add.
 // Nested SKU price money fields would exceed the catalog API's depth limit of 10.
@@ -131,29 +131,27 @@ function asNumber(value: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export default async function handler(req: Request, res: Response): Promise<void> {
-  try {
-    const config: CommerceConfig = readCommerceConfigForResponse(res);
-    if (!validateCommerceCartScope(req, res, config)) return;
-    const { storeId, clientId, apiBaseUrl } = config;
+async function listProducts(req: Request, res: Response): Promise<void> {
+  const config: CommerceConfig = readCommerceConfigForResponse(res);
+  assertCommerceCartScope(req, config);
+  const { storeId, clientId, apiBaseUrl } = config;
 
-    const variables = buildSkuGroupsVariables({
-      first: asNumber(req.query.first) ?? 24,
-      after: typeof req.query.after === 'string' ? req.query.after : undefined,
-      searchQuery: typeof req.query.searchQuery === 'string' ? req.query.searchQuery : undefined,
-      productIds: asStringArray(req.query.productIds),
-      categoryIds: asStringArray(req.query.categoryIds),
-    });
+  const variables = buildSkuGroupsVariables({
+    first: asNumber(req.query.first) ?? 24,
+    after: typeof req.query.after === 'string' ? req.query.after : undefined,
+    searchQuery: typeof req.query.searchQuery === 'string' ? req.query.searchQuery : undefined,
+    productIds: asStringArray(req.query.productIds),
+    categoryIds: asStringArray(req.query.categoryIds),
+  });
 
-    const data = await gqlRequest<SkuGroupsResult, SkuGroupsVariables>({
-      endpoint: catalogStorefrontEndpoint({ storeId, apiBaseUrl }),
-      query: skuGroupsQuery,
-      variables,
-      headers: storefrontHeaders({ storeId, clientId }),
-    });
+  const data = await gqlRequest<SkuGroupsResult, SkuGroupsVariables>({
+    endpoint: catalogStorefrontEndpoint({ storeId, apiBaseUrl }),
+    query: skuGroupsQuery,
+    variables,
+    headers: storefrontHeaders({ storeId, clientId }),
+  });
 
-    res.json(data);
-  } catch (error) {
-    respondWithFailure(res, 'Failed to load products', error);
-  }
+  res.json(data);
 }
+
+export default commerceRoute('Failed to load products', listProducts);

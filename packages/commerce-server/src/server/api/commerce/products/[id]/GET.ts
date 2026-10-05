@@ -16,7 +16,7 @@
  * Response: { skuGroup: SKUGroup } for an active product, otherwise 404.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
 import {
   buildSkuGroupVariables,
   catalogStorefrontEndpoint,
@@ -24,9 +24,10 @@ import {
   type SkuGroupsResult,
   type SkuGroupVariables,
 } from '@/lib/commerce/catalog-subgraph';
+import { commerceRoute } from '@/lib/commerce/commerce-route';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { InvalidRequestError, NotFoundError } from '@/lib/commerce/errors';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
-import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 type ProductDetailsResult = SkuGroupResult & { activeSkuGroups?: SkuGroupsResult['skuGroups'] };
 
@@ -126,38 +127,34 @@ function asNumber(value: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export default async function handler(req: Request, res: Response): Promise<void> {
-  try {
-    const productId: unknown = req.params.id;
-    if (typeof productId !== 'string' || !productId) {
-      res.status(400).json({ error: 'Missing product id' });
-      return;
-    }
-
-    const config: CommerceConfig = readCommerceConfigForResponse(res);
-    if (!validateCommerceCartScope(req, res, config)) return;
-    const { storeId, clientId, apiBaseUrl } = config;
-
-    const variables = buildSkuGroupVariables({
-      productId,
-      selectedAttributeValues: asStringArray(req.query.attributeValues),
-      skuGroupFirst: asNumber(req.query.skuGroupFirst),
-    });
-
-    const data = await gqlRequest<ProductDetailsResult, SkuGroupVariables>({
-      endpoint: catalogStorefrontEndpoint({ storeId, apiBaseUrl }),
-      query: skuGroupQuery,
-      variables,
-      headers: storefrontHeaders({ storeId, clientId }),
-    });
-
-    if (!data.skuGroup || !data.activeSkuGroups?.edges?.some((edge) => edge?.node?.id === productId)) {
-      res.status(404).json({ error: 'Product not found' });
-      return;
-    }
-
-    res.json({ skuGroup: data.skuGroup });
-  } catch (error) {
-    respondWithFailure(res, 'Failed to load product', error);
+async function readProduct(req: Request, res: Response): Promise<void> {
+  const productId: unknown = req.params.id;
+  if (typeof productId !== 'string' || !productId) {
+    throw new InvalidRequestError('Missing product id');
   }
+
+  const config: CommerceConfig = readCommerceConfigForResponse(res);
+  assertCommerceCartScope(req, config);
+  const { storeId, clientId, apiBaseUrl } = config;
+
+  const variables = buildSkuGroupVariables({
+    productId,
+    selectedAttributeValues: asStringArray(req.query.attributeValues),
+    skuGroupFirst: asNumber(req.query.skuGroupFirst),
+  });
+
+  const data = await gqlRequest<ProductDetailsResult, SkuGroupVariables>({
+    endpoint: catalogStorefrontEndpoint({ storeId, apiBaseUrl }),
+    query: skuGroupQuery,
+    variables,
+    headers: storefrontHeaders({ storeId, clientId }),
+  });
+
+  if (!data.skuGroup || !data.activeSkuGroups?.edges?.some((edge) => edge?.node?.id === productId)) {
+    throw new NotFoundError('Product not found');
+  }
+
+  res.json({ skuGroup: data.skuGroup });
 }
+
+export default commerceRoute('Failed to load product', readProduct);

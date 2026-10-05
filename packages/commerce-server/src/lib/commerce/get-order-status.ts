@@ -4,6 +4,7 @@
  */
 import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
 import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './config';
+import { InvalidRequestError, NotFoundError, UpstreamError } from './errors';
 import type { Money } from './gql';
 
 /** `CommerceOrderStatus.status` when the Orders API reports no payment status. */
@@ -26,14 +27,16 @@ export interface CommerceOrderStatus {
   lineItems?: unknown[];
 }
 
-export class InvalidOrderIdError extends Error {
+export class InvalidOrderIdError extends InvalidRequestError {
   constructor() {
-    super('getOrderStatus: a valid orderId is required');
+    super('missing or invalid orderId query parameter', {
+      message: 'getOrderStatus: a valid orderId is required',
+    });
     this.name = 'InvalidOrderIdError';
   }
 }
 
-export class OrderNotFoundError extends Error {
+export class OrderNotFoundError extends NotFoundError {
   constructor() {
     super('Order not found');
     this.name = 'OrderNotFoundError';
@@ -74,23 +77,39 @@ export async function getOrderStatus(
     apiBaseUrl,
     scope: 'commerce.order:read',
   });
-  const response = await fetch(
-    new URL(
-      `/v1/commerce/stores/${encodeURIComponent(storeId)}/orders/${encodeURIComponent(orderId)}`,
-      apiBaseUrl,
-    ),
-    {
-      method: 'GET',
-      headers: { ...authorizationHeaders({ accessToken: token.access_token }), Accept: 'application/json' },
-      cache: 'no-store',
-    },
-  );
+  let response: Response;
+  try {
+    response = await fetch(
+      new URL(
+        `/v1/commerce/stores/${encodeURIComponent(storeId)}/orders/${encodeURIComponent(orderId)}`,
+        apiBaseUrl,
+      ),
+      {
+        method: 'GET',
+        headers: { ...authorizationHeaders({ accessToken: token.access_token }), Accept: 'application/json' },
+        cache: 'no-store',
+      },
+    );
+  } catch (cause) {
+    throw new UpstreamError('Order lookup could not reach Commerce', { cause });
+  }
   if (response.status === 404) throw new OrderNotFoundError();
-  if (!response.ok) throw new Error(`Failed to load order: upstream returned ${response.status}`);
+  if (!response.ok) {
+    throw new UpstreamError(`Failed to load order: upstream returned ${response.status}`, {
+      unauthorized: response.status === 401 || response.status === 403,
+      details: { upstreamStatus: response.status },
+    });
+  }
 
-  const data = (await response.json()) as OrderResponse;
+  let data: OrderResponse;
+  try {
+    data = (await response.json()) as OrderResponse;
+  } catch (cause) {
+    throw new UpstreamError('Order lookup returned a non-JSON response', { cause });
+  }
   const order = data?.order;
-  if (!order?.id || !order.context) throw new Error('Order lookup did not return the requested order');
+  if (!order?.id || !order.context)
+    throw new UpstreamError('Order lookup did not return the requested order');
   // Report an order bound to another store or channel as missing so the route doesn't reveal it exists.
   if (order.id !== orderId || order.context.storeId !== storeId || order.context.channelId !== channelId) {
     throw new OrderNotFoundError();

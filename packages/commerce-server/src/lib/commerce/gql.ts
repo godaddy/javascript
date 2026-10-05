@@ -6,6 +6,8 @@
  * isomorphic and safe to import from anywhere.
  */
 
+import { UpstreamError } from './errors';
+
 export type GraphQLVariables = Record<string, unknown>;
 
 export interface GraphQLResponseError {
@@ -32,13 +34,14 @@ export interface GqlRequestOptions<TVariables extends object = GraphQLVariables>
   fetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
+/** `status` is the upstream HTTP status; the route responds with `httpStatus` (502) unless mapped. */
 export class GraphQLErrorWithCodes<
   T extends { message?: string; code?: string; status?: number } = {
     message?: string;
     code?: string;
     status?: number;
   },
-> extends Error {
+> extends UpstreamError {
   constructor(
     public errors: T[],
     public status?: number,
@@ -51,7 +54,14 @@ export class GraphQLErrorWithCodes<
             .filter(Boolean)
             .join('; ');
 
-    super(errorMessage);
+    super(errorMessage, {
+      unauthorized: status === 401 || status === 403,
+      details: {
+        upstreamStatus: status,
+        upstreamCodes: errors.map((error) => error.code).filter(Boolean),
+        upstreamStatuses: errors.map((error) => error.status).filter((value) => typeof value === 'number'),
+      },
+    });
     this.name = 'GraphQLErrorWithCodes';
   }
 
@@ -99,12 +109,17 @@ export async function gqlRequest<TData, TVariables extends object = GraphQLVaria
   requestHeaders.set('Content-Type', 'application/json');
 
   const requestFetch = fetchImplementation ?? fetch;
-  const response = await requestFetch(endpoint, {
-    method: 'POST',
-    headers: requestHeaders,
-    body: JSON.stringify({ query, variables: variables ?? {} }),
-    cache: 'no-store',
-  });
+  let response: Response;
+  try {
+    response = await requestFetch(endpoint, {
+      method: 'POST',
+      headers: requestHeaders,
+      body: JSON.stringify({ query, variables: variables ?? {} }),
+      cache: 'no-store',
+    });
+  } catch (cause) {
+    throw new UpstreamError('GraphQL request could not reach Commerce', { cause, details: { endpoint } });
+  }
 
   let result: GraphQLResponse<TData>;
 
@@ -149,7 +164,7 @@ export async function gqlRequest<TData, TVariables extends object = GraphQLVaria
   }
 
   if (result.data === undefined) {
-    throw new Error('GraphQL response did not include data');
+    throw new UpstreamError('GraphQL response did not include data', { details: { endpoint } });
   }
 
   return result.data;

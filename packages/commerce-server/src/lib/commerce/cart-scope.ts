@@ -1,7 +1,8 @@
 // SERVER ONLY: uses node:crypto. Browser code receives cartScope from GET /api/commerce/config.
 import { createHash } from 'node:crypto';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import type { CommerceConfig } from './config';
+import { ScopeMismatchError } from './errors';
 
 type CartBinding = Pick<CommerceConfig, 'apiBaseUrl' | 'storeId' | 'channelId' | 'currencyCode'>;
 
@@ -14,9 +15,8 @@ export function getCommerceCartScope(config: CartBinding): string {
 }
 
 /** Existing custom clients may omit the header; managed components always send it. */
-export function validateCommerceCartScope(req: Request, res: Response, config: CartBinding): boolean {
+export function assertCommerceCartScope(req: Request, config: CartBinding): void {
   const suppliedScope: string | string[] | undefined = req.headers?.['x-commerce-scope'];
-  if (suppliedScope === undefined || suppliedScope === getCommerceCartScope(config)) return true;
-  res.status(409).json({ error: 'The connected store changed. Reload the page before continuing.' });
-  return false;
+  if (suppliedScope === undefined || suppliedScope === getCommerceCartScope(config)) return;
+  throw new ScopeMismatchError();
 }

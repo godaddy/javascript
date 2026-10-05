@@ -26,6 +26,7 @@ import {
   getOAuthAccessToken,
 } from './checkout-subgraph';
 import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './config';
+import { InvalidRequestError, UpstreamError } from './errors';
 import { gqlRequest } from './gql';
 
 export interface CreateCheckoutSessionParams {
@@ -167,12 +168,14 @@ export async function createCheckoutSession(
   const { draftOrderId, skuId, quantity, lineItemData, returnUrl, successUrl } = params;
 
   if (!returnUrl || !successUrl) {
-    throw new Error('createCheckoutSession: returnUrl and successUrl are required');
+    throw new InvalidRequestError('createCheckoutSession: returnUrl and successUrl are required');
   }
 
   const checkoutSourceCount = [draftOrderId, skuId, lineItemData].filter(Boolean).length;
   if (checkoutSourceCount !== 1) {
-    throw new Error('createCheckoutSession: exactly one of draftOrderId, skuId, or lineItemData is required');
+    throw new InvalidRequestError(
+      'createCheckoutSession: exactly one of draftOrderId, skuId, or lineItemData is required',
+    );
   }
 
   const {
@@ -266,16 +269,21 @@ export async function createCheckoutSession(
       headers: authorizationHeaders({ accessToken: token.access_token }),
     });
   } catch (error) {
-    throw new Error('Commerce checkout session could not be created', { cause: error });
+    // Not classified further: the cart-not-found rule is evidenced for the order storefront only.
+    throw new UpstreamError('Commerce checkout session could not be created', {
+      cause: error,
+      unauthorized: error instanceof UpstreamError && error.code === 'upstream_unauthorized',
+      details: error instanceof UpstreamError ? error.details : undefined,
+    });
   }
 
   const session = result.createCheckoutSession;
   if (!session?.url || !session.id) {
-    throw new Error('Checkout session was not created');
+    throw new UpstreamError('Checkout session was not created');
   }
 
   if (session.storeId !== storeId || session.channelId !== channelId) {
-    throw new Error(
+    throw new UpstreamError(
       `Checkout session binding mismatch: expected store ${storeId} and channel ${channelId}, received store ${session.storeId ?? 'missing'} and channel ${session.channelId ?? 'missing'}`,
     );
   }
@@ -283,20 +291,20 @@ export async function createCheckoutSession(
   const expectedShipping = lineItemData === undefined && checkoutConfiguration.enableShipping;
   const expectedPromotionCodes: boolean = lineItemData === undefined && enablePromotionCodes;
   if (expectedPromotionCodes && session.enablePromotionCodes !== true) {
-    throw new Error('Checkout session did not enable configured promotion codes');
+    throw new UpstreamError('Checkout session did not enable configured promotion codes');
   }
   if (checkoutConfiguration.enableTaxCollection && session.enableTaxCollection !== true) {
-    throw new Error('Checkout session did not enable configured tax collection');
+    throw new UpstreamError('Checkout session did not enable configured tax collection');
   }
   if (
     expectedShipping &&
     (session.enableShipping !== true || session.enableShippingAddressCollection !== true)
   ) {
-    throw new Error('Checkout session did not enable configured shipping and address collection');
+    throw new UpstreamError('Checkout session did not enable configured shipping and address collection');
   }
 
   if (!session.paymentMethods?.card?.processor) {
-    throw new Error('Checkout session did not configure payment methods.');
+    throw new UpstreamError('Checkout session did not configure payment methods.');
   }
 
   return {

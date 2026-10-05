@@ -202,7 +202,10 @@ describe('order-status route', () => {
       const response = await clientFetch(
         `http://127.0.0.1:${address.port}/api/commerce/order-status${query}`,
       );
-      return { status: response.status, body: await response.json() };
+      const body = (await response.json()) as Record<string, unknown>;
+      expect(body.correlationId).toBe(response.headers.get('x-correlation-id'));
+      const { correlationId: _correlationId, ...stable } = body;
+      return { status: response.status, body: stable };
     } finally {
       await new Promise<void>((resolve, reject) =>
         server.close((error) => (error ? reject(error) : resolve())),
@@ -223,7 +226,11 @@ describe('order-status route', () => {
     async (query): Promise<void> => {
       await expect(requestOrderStatus(query)).resolves.toEqual({
         status: 400,
-        body: { success: false, error: 'missing or invalid orderId query parameter' },
+        body: {
+          success: false,
+          error: 'missing or invalid orderId query parameter',
+          code: 'invalid_request',
+        },
       });
       expect(upstream).not.toHaveBeenCalled();
     },
@@ -241,29 +248,72 @@ describe('order-status route', () => {
       .mockResolvedValueOnce(orderResponse);
     await expect(requestOrderStatus(`?orderId=${order.id}`)).resolves.toEqual({
       status: 404,
-      body: { success: false, error: 'Order not found' },
+      body: { success: false, error: 'Order not found', code: 'not_found' },
     });
   });
 
   it.each([
-    ['a denied token', [new Response('Invalid scope', { status: 403 })]],
+    [
+      'a token denied the order-read scope',
+      'upstream_unauthorized',
+      [new Response('Invalid scope', { status: 403 })],
+    ],
     [
       'an upstream 500',
+      'upstream_error',
       [
         Response.json({ access_token: 'order-token' }),
         new Response('Private upstream details', { status: 500 }),
       ],
     ],
-    ['an incomplete order', [Response.json({ access_token: 'order-token' }), Response.json({})]],
+    [
+      'an incomplete order',
+      'upstream_error',
+      [Response.json({ access_token: 'order-token' }), Response.json({})],
+    ],
   ])(
-    'returns a generic 500 for %s and logs the detail server-side',
-    async (_case, responses): Promise<void> => {
+    'returns a generic 502 for %s and logs the detail server-side',
+    async (_case, code, responses): Promise<void> => {
       const log = vi.spyOn(console, 'error').mockImplementation((): void => {});
       for (const response of responses) upstream.mockResolvedValueOnce(response);
       const result = await requestOrderStatus(`?orderId=${order.id}`);
-      expect(result).toEqual({ status: 500, body: { success: false, error: 'Failed to get order status' } });
-      expect(log).toHaveBeenCalledWith('order-status: failed to get order status', expect.any(Error));
+      expect(result).toEqual({
+        status: 502,
+        body: { success: false, error: 'Failed to get order status', code },
+      });
+      expect(log).toHaveBeenCalledWith(
+        'commerce-server: Failed to get order status',
+        expect.objectContaining({ httpStatus: 502, code, error: expect.any(Error) }),
+      );
       log.mockRestore();
     },
   );
+
+  it('returns 503 when Commerce is not configured', async (): Promise<void> => {
+    const log = vi.spyOn(console, 'error').mockImplementation((): void => {});
+    vi.stubEnv('GODADDY_STORE_ID', '');
+    const app = express();
+    app.use(
+      '/api/commerce',
+      createGoDaddyPaymentsRouter(createRuntimeCommerceConfiguration({ environment: {} })),
+    );
+    const server = app.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
+      const response = await clientFetch(
+        `http://127.0.0.1:${address.port}/api/commerce/order-status?orderId=o-1`,
+      );
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({ success: false, code: 'not_configured' });
+      expect(upstream).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+      log.mockRestore();
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
+  });
 });

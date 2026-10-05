@@ -14,8 +14,10 @@
  *   read one shape.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { commerceRoute } from '@/lib/commerce/commerce-route';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { InvalidRequestError } from '@/lib/commerce/errors';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type ApplyDiscountCodesResult,
@@ -25,7 +27,6 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
-import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 const applyDiscountCodesMutation = `
   mutation ApplyDiscountCodes($input: ApplyDiscountCodesInput!) {
@@ -39,46 +40,42 @@ interface ApplyDiscountsBody {
   discountCodes?: unknown;
 }
 
-export default async function handler(req: Request, res: Response): Promise<void> {
-  try {
-    const cartId: unknown = req.params.id;
-    if (typeof cartId !== 'string' || !cartId) {
-      res.status(400).json({ error: 'Missing cart id' });
-      return;
-    }
-
-    const body = (req.body ?? {}) as ApplyDiscountsBody;
-    const codes = Array.isArray(body.discountCodes)
-      ? body.discountCodes.filter((code): code is string => typeof code === 'string' && code.length > 0)
-      : [];
-
-    if (codes.length === 0) {
-      res.status(400).json({ error: 'discountCodes must be a non-empty string array' });
-      return;
-    }
-
-    const config: CommerceConfig = readCommerceConfigForResponse(res);
-    if (!validateCommerceCartScope(req, res, config)) return;
-    const { storeId, clientId, apiBaseUrl } = config;
-    const endpoint = orderStorefrontEndpoint({ apiBaseUrl });
-    const headers = storefrontHeaders({ storeId, clientId });
-
-    await gqlRequest<ApplyDiscountCodesResult, ApplyDiscountCodesVariables>({
-      endpoint,
-      query: applyDiscountCodesMutation,
-      variables: { input: { orderId: cartId, discountCodes: codes } },
-      headers,
-    });
-
-    const hydrated = await gqlRequest<GetCartOrderResult, GetCartOrderVariables>({
-      endpoint,
-      query: getCartOrderQuery,
-      variables: { id: cartId },
-      headers,
-    });
-
-    res.json({ cart: hydrated.orderById ?? null });
-  } catch (error) {
-    respondWithFailure(res, 'Failed to apply discount codes', error);
+async function applyDiscountCodes(req: Request, res: Response): Promise<void> {
+  const cartId: unknown = req.params.id;
+  if (typeof cartId !== 'string' || !cartId) {
+    throw new InvalidRequestError('Missing cart id');
   }
+
+  const body = (req.body ?? {}) as ApplyDiscountsBody;
+  const codes = Array.isArray(body.discountCodes)
+    ? body.discountCodes.filter((code): code is string => typeof code === 'string' && code.length > 0)
+    : [];
+
+  if (codes.length === 0) {
+    throw new InvalidRequestError('discountCodes must be a non-empty string array');
+  }
+
+  const config: CommerceConfig = readCommerceConfigForResponse(res);
+  assertCommerceCartScope(req, config);
+  const { storeId, clientId, apiBaseUrl } = config;
+  const endpoint = orderStorefrontEndpoint({ apiBaseUrl });
+  const headers = storefrontHeaders({ storeId, clientId });
+
+  await gqlRequest<ApplyDiscountCodesResult, ApplyDiscountCodesVariables>({
+    endpoint,
+    query: applyDiscountCodesMutation,
+    variables: { input: { orderId: cartId, discountCodes: codes } },
+    headers,
+  });
+
+  const hydrated = await gqlRequest<GetCartOrderResult, GetCartOrderVariables>({
+    endpoint,
+    query: getCartOrderQuery,
+    variables: { id: cartId },
+    headers,
+  });
+
+  res.json({ cart: hydrated.orderById ?? null });
 }
+
+export default commerceRoute('Failed to apply discount codes', applyDiscountCodes);

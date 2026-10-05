@@ -1,5 +1,16 @@
 ---
-'@godaddy/gd-commerce-server': patch
+'@godaddy/gd-commerce-server': minor
 ---
 
-Stop returning the internal error message in 500 responses from the catalog, cart, and checkout routes. These routes now respond with only `{ "error": "<label>" }` and log the underlying error server-side with `console.error`. Hosts that read `message` from these responses should log server-side instead.
+Standardize route error handling. Every failure now responds with `{ error, code, correlationId }` and an `X-Correlation-Id` header, and no longer includes internal error text in a `message` field.
+
+Status codes now reflect the cause:
+
+- 502 for Commerce failures, including rejected OAuth credentials (`upstream_unauthorized`); previously 500.
+- 503 for missing or unreadable configuration on every route; previously 500 everywhere except `/config`.
+- 404 for cart writes against a missing, expired, or completed cart; previously 500.
+- 500 only for unexpected errors.
+
+Hosts can pass `logger` and `getCorrelationId` to the router factories to receive failure detail and reuse their own request ids. In-process helpers throw exported `CommerceError` subclasses. `validateCommerceCartScope` was internal and is replaced by a throwing `assertCommerceCartScope`.
+
+Hosts that read `message` or check for status 500 should switch to `code` and server-side logs.

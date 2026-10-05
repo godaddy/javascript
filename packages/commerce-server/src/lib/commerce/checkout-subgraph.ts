@@ -12,6 +12,7 @@
  * - Existing custom cart: convert your cart into lineItems, then post to the route.
  */
 
+import { CommerceNotConfiguredError, UpstreamError } from './errors';
 import type { Money } from './gql';
 
 /**
@@ -343,7 +344,7 @@ export async function getOAuthAccessToken({
   fetch: fetchImplementation,
 }: OAuthTokenInput): Promise<OAuthTokenResponse> {
   if (!clientId || !clientSecret) {
-    throw new Error('clientId and clientSecret are required');
+    throw new CommerceNotConfiguredError('clientId and clientSecret are required');
   }
 
   const requestFetch = fetchImplementation ?? fetch;
@@ -353,20 +354,32 @@ export async function getOAuthAccessToken({
   body.append('client_secret', clientSecret);
   body.append('scope', scope);
 
-  const response = await requestFetch(new URL('/v2/oauth2/token', apiBaseUrl).toString(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: body.toString(),
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to get access token: ${response.status} ${response.statusText}`);
+  let response: Response;
+  try {
+    response = await requestFetch(new URL('/v2/oauth2/token', apiBaseUrl).toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: body.toString(),
+      cache: 'no-store',
+    });
+  } catch (cause) {
+    throw new UpstreamError('Access token request could not reach Commerce', { cause, details: { scope } });
   }
 
-  return (await response.json()) as OAuthTokenResponse;
+  if (!response.ok) {
+    throw new UpstreamError(`Failed to get access token: ${response.status} ${response.statusText}`, {
+      unauthorized: response.status === 400 || response.status === 401 || response.status === 403,
+      details: { upstreamStatus: response.status, scope },
+    });
+  }
+
+  try {
+    return (await response.json()) as OAuthTokenResponse;
+  } catch (cause) {
+    throw new UpstreamError('Access token response was not JSON', { cause, details: { scope } });
+  }
 }
 
 export function buildBuyNowCheckoutInput(

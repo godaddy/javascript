@@ -14,8 +14,10 @@
  *   clients only ever read one shape.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { commerceRoute } from '@/lib/commerce/commerce-route';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { InvalidRequestError } from '@/lib/commerce/errors';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type GetCartOrderResult,
@@ -26,7 +28,6 @@ import {
   type UpdateLineItemByIdResult,
   type UpdateLineItemByIdVariables,
 } from '@/lib/commerce/order-subgraph';
-import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 const updateLineItemByIdMutation = `
   mutation UpdateLineItemById($input: UpdateLineItemByIdInput!) {
@@ -38,49 +39,46 @@ const updateLineItemByIdMutation = `
 
 type UpdateLineItemBody = Omit<UpdateLineItemByIdInput, 'id' | 'orderId'>;
 
-export default async function handler(req: Request, res: Response): Promise<void> {
-  try {
-    const cartId: unknown = req.params.id;
-    const itemId: unknown = req.params.itemId;
-    if (typeof cartId !== 'string' || !cartId || typeof itemId !== 'string' || !itemId) {
-      res.status(400).json({ error: 'Missing cart id or item id' });
-      return;
-    }
-
-    const body = (req.body ?? {}) as UpdateLineItemBody;
-    const config: CommerceConfig = readCommerceConfigForResponse(res);
-    if (!validateCommerceCartScope(req, res, config)) return;
-    const { storeId, clientId, apiBaseUrl } = config;
-    const endpoint = orderStorefrontEndpoint({ apiBaseUrl });
-    const headers = storefrontHeaders({ storeId, clientId });
-
-    await gqlRequest<UpdateLineItemByIdResult, UpdateLineItemByIdVariables>({
-      endpoint,
-      query: updateLineItemByIdMutation,
-      variables: {
-        input: {
-          id: itemId,
-          orderId: cartId,
-          name: body.name,
-          quantity: body.quantity,
-          fulfillmentMode: body.fulfillmentMode,
-          status: body.status,
-          type: body.type,
-          details: body.details,
-        },
-      },
-      headers,
-    });
-
-    const hydrated = await gqlRequest<GetCartOrderResult, GetCartOrderVariables>({
-      endpoint,
-      query: getCartOrderQuery,
-      variables: { id: cartId },
-      headers,
-    });
-
-    res.json({ cart: hydrated.orderById ?? null });
-  } catch (error) {
-    respondWithFailure(res, 'Failed to update line item', error);
+async function updateLineItem(req: Request, res: Response): Promise<void> {
+  const cartId: unknown = req.params.id;
+  const itemId: unknown = req.params.itemId;
+  if (typeof cartId !== 'string' || !cartId || typeof itemId !== 'string' || !itemId) {
+    throw new InvalidRequestError('Missing cart id or item id');
   }
+
+  const body = (req.body ?? {}) as UpdateLineItemBody;
+  const config: CommerceConfig = readCommerceConfigForResponse(res);
+  assertCommerceCartScope(req, config);
+  const { storeId, clientId, apiBaseUrl } = config;
+  const endpoint = orderStorefrontEndpoint({ apiBaseUrl });
+  const headers = storefrontHeaders({ storeId, clientId });
+
+  await gqlRequest<UpdateLineItemByIdResult, UpdateLineItemByIdVariables>({
+    endpoint,
+    query: updateLineItemByIdMutation,
+    variables: {
+      input: {
+        id: itemId,
+        orderId: cartId,
+        name: body.name,
+        quantity: body.quantity,
+        fulfillmentMode: body.fulfillmentMode,
+        status: body.status,
+        type: body.type,
+        details: body.details,
+      },
+    },
+    headers,
+  });
+
+  const hydrated = await gqlRequest<GetCartOrderResult, GetCartOrderVariables>({
+    endpoint,
+    query: getCartOrderQuery,
+    variables: { id: cartId },
+    headers,
+  });
+
+  res.json({ cart: hydrated.orderById ?? null });
 }
+
+export default commerceRoute('Failed to update line item', updateLineItem);

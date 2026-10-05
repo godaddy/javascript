@@ -56,4 +56,31 @@ Configure `checkoutReturnUrls` on the router using trusted deployment settings. 
 
 Without this policy, HTTP checkout returns 503 before creating a session. Invalid request destinations return 400. This applies to both router presets that expose checkout. Trusted in-process callers of `createCheckoutSession()` own their return URLs and must construct or validate them server-side.
 
-A return from hosted checkout is not proof of payment. The order-status route uses the authorized Orders REST API, which supports completed orders, and returns its payment status (for example `PAID` or `PENDING`; the exported `ORDER_STATUS_UNKNOWN`, `'unknown'`, if absent). Show it only as display enrichment and never present an unconfirmed payment as paid. The server OAuth client must be granted `commerce.order:read`. The helper verifies the returned order ID, store, and channel and returns a limited summary without customer contact data. The route returns 400 for a missing, blank, padded, `.`, or `..` order ID (padded IDs are rejected, not trimmed) and 404 when the Orders API has no such order or the order belongs to another store or channel. Credential and other upstream failures return 500 with a generic body; the detail is logged server-side with `console.error`. In-process callers can check for the exported `InvalidOrderIdError` and `OrderNotFoundError`. Hosts must authenticate callers and authorize access to each requested order before exposing this route.
+A return from hosted checkout is not proof of payment. The order-status route uses the authorized Orders REST API, which supports completed orders, and returns its payment status (for example `PAID` or `PENDING`; the exported `ORDER_STATUS_UNKNOWN`, `'unknown'`, if absent). Show it only as display enrichment and never present an unconfirmed payment as paid. The server OAuth client must be granted `commerce.order:read`. The helper verifies the returned order ID, store, and channel and returns a limited summary without customer contact data. The route returns 400 for a missing, blank, padded, `.`, or `..` order ID (padded IDs are rejected, not trimmed) and 404 when the Orders API has no such order or the order belongs to another store or channel. Token and other Commerce failures return 502 and unreadable configuration returns 503 (see [Errors](#errors)). In-process callers can check for the exported `InvalidOrderIdError` and `OrderNotFoundError`. Hosts must authenticate callers and authorize access to each requested order before exposing this route.
+
+## Errors
+
+Every route reports failures the same way. The body is `{ "error": "<customer-facing message>", "code": "<code>", "correlationId": "<id>" }` (order-status also includes `success: false`), and every response carries the same id in an `X-Correlation-Id` header. Bodies never contain upstream messages, configuration details, or credentials.
+
+| Status | `code` | Meaning |
+| --- | --- | --- |
+| 400 | `invalid_request` | Missing or invalid input. |
+| 404 | `not_found` | Missing order or product, or a cart write against a missing, expired, or completed cart. Cart reads keep returning `200 { "cart": null }`. |
+| 409 | `scope_mismatch` | `X-Commerce-Scope` no longer matches the configured store binding. |
+| 502 | `upstream_unauthorized` | Commerce rejected this server's OAuth client or requested scope. It concerns server credentials, not the caller, so it is never reported as 401/403. |
+| 502 | `upstream_error` | Commerce failed, returned an unexpected response, or could not be reached. |
+| 503 | `not_configured` | Configuration is missing or unreadable, or checkout return URLs are not configured. |
+| 500 | `internal_error` | An unexpected error in this package. |
+
+Upstream errors without a specific mapping stay 502; business errors such as invalid discount codes are not yet distinguished. 5xx detail, including upstream status and GraphQL error codes, goes to the logger:
+
+```ts
+createCommerceRouter({
+  configuration,
+  logger: { error: (message, context) => log.error(context, message) },
+  // Use the host's request id when its edge sets one; unsafe or missing ids fall back to a UUID.
+  getCorrelationId: (req) => req.get('x-request-id'),
+});
+```
+
+`createCommerceCatalogRouter` and `createGoDaddyPaymentsRouter` accept the same `{ logger, getCorrelationId }` as their last argument. The logger defaults to `console.error`. In-process helpers throw the exported `CommerceError` subclasses (`InvalidRequestError`, `NotFoundError`, `CommerceNotConfiguredError`, `UpstreamError`).

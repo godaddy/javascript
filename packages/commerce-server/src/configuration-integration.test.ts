@@ -96,7 +96,11 @@ it('serves variant product details without querying SKUGroup.status', async (): 
     ]);
     const archived = await clientFetch(`${url.replace('/shirt', '/archived-shirt')}?attributeValues=blue`);
     expect(archived.status).toBe(404);
-    expect(await archived.json()).toEqual({ error: 'Product not found' });
+    expect(await archived.json()).toEqual({
+      error: 'Product not found',
+      code: 'not_found',
+      correlationId: archived.headers.get('x-correlation-id'),
+    });
     expect(upstream).toHaveBeenCalledTimes(3);
   } finally {
     await new Promise<void>((resolve, reject) =>
@@ -238,8 +242,8 @@ it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
 
 it.each([
   ['Order not found', 200, { cart: null }],
-  ['Authentication token expired', 500, { error: 'Failed to load cart' }],
-  ['Database unavailable', 500, { error: 'Failed to load cart' }],
+  ['Authentication token expired', 502, { error: 'Failed to load cart', code: 'upstream_error' }],
+  ['Database unavailable', 502, { error: 'Failed to load cart', code: 'upstream_error' }],
 ] as const)(
   'handles the actual Apollo error envelope for %s',
   async (message, status, body): Promise<void> => {
@@ -276,11 +280,15 @@ it.each([
       if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
       const response = await clientFetch(`http://127.0.0.1:${address.port}/api/commerce/cart/completed-cart`);
       expect(response.status).toBe(status);
-      expect(await response.json()).toEqual(body);
-      if (status === 500) {
+      const correlationId = response.headers.get('x-correlation-id');
+      expect(await response.json()).toEqual(status === 200 ? body : { ...body, correlationId });
+      if (status === 502) {
         expect(consoleError).toHaveBeenCalledWith(
           'commerce-server: Failed to load cart',
-          expect.objectContaining({ message: expect.stringContaining(message) }),
+          expect.objectContaining({
+            correlationId,
+            error: expect.objectContaining({ message: expect.stringContaining(message) }),
+          }),
         );
       }
     } finally {
