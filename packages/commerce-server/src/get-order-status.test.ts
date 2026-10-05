@@ -255,11 +255,15 @@ describe('order-status route', () => {
       ],
     ],
     ['an incomplete order', [Response.json({ access_token: 'order-token' }), Response.json({})]],
-  ])('returns 500 for %s', async (_case, responses): Promise<void> => {
-    for (const response of responses) upstream.mockResolvedValueOnce(response);
-    const result = await requestOrderStatus(`?orderId=${order.id}`);
-    expect(result.status).toBe(500);
-    expect(result.body).toMatchObject({ success: false, error: 'Failed to get order status' });
-    expect(JSON.stringify(result.body)).not.toContain('Private upstream details');
-  });
+  ])(
+    'returns a generic 500 for %s and logs the detail server-side',
+    async (_case, responses): Promise<void> => {
+      const log = vi.spyOn(console, 'error').mockImplementation((): void => {});
+      for (const response of responses) upstream.mockResolvedValueOnce(response);
+      const result = await requestOrderStatus(`?orderId=${order.id}`);
+      expect(result).toEqual({ status: 500, body: { success: false, error: 'Failed to get order status' } });
+      expect(log).toHaveBeenCalledWith('order-status: failed to get order status', expect.any(Error));
+      log.mockRestore();
+    },
+  );
 });

@@ -6,10 +6,13 @@ import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
 import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './config';
 import type { Money } from './gql';
 
+/** `CommerceOrderStatus.status` when the Orders API reports no payment status. */
+export const ORDER_STATUS_UNKNOWN = 'unknown';
+
 export interface CommerceOrderStatus {
   /** GoDaddy order id. */
   id: string;
-  /** Payment status reported by Commerce, or 'unknown' when it is unavailable. */
+  /** Payment status reported by Commerce (e.g. `PAID`, `PENDING`), or `ORDER_STATUS_UNKNOWN`. */
   status: string;
   /** Total amount in the currency's smallest unit (cents for USD). */
   amount: number;
@@ -96,7 +99,7 @@ export async function getOrderStatus(
 
   return {
     id: order.id,
-    status: order.statuses?.paymentStatus ?? 'unknown',
+    status: order.statuses?.paymentStatus ?? ORDER_STATUS_UNKNOWN,
     amount: total?.value ?? 0,
     currency: total?.currencyCode ?? currencyCode,
     createdAt: order.createdAt,

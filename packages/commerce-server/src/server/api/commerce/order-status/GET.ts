@@ -45,10 +45,8 @@ export default async function handler(req: Request, res: Response): Promise<void
       res.status(404).json({ success: false, error: 'Order not found' });
       return;
     }
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get order status',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    // The detail can name upstream statuses, credentials, or configuration, so it stays server-side.
+    console.error('order-status: failed to get order status', error);
+    res.status(500).json({ success: false, error: 'Failed to get order status' });
   }
 }
