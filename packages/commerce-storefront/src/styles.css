@@ -19,7 +19,7 @@
 }
 
 @layer base {
-  .commerce-storefront { color: var(--commerce-text, inherit); background-color: var(--commerce-surface, transparent); font-family: inherit; line-height: 1.5; }
+  .commerce-storefront { color: var(--commerce-text, inherit); font-family: inherit; line-height: 1.5; }
   .commerce-storefront :where(*) { color: inherit; font-family: inherit; }
   .commerce-storefront *, .commerce-storefront *::before, .commerce-storefront *::after {
     box-sizing: border-box; border-width: 0; border-style: solid;
