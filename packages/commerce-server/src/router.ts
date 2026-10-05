@@ -4,10 +4,10 @@ import {
   createCheckoutReturnUrlValidator,
 } from './lib/commerce/checkout-return-urls';
 import {
-  type CommerceCorrelationIdResolver,
   type CommerceLogger,
+  type CommerceRequestIdResolver,
   consoleCommerceLogger,
-  resolveCorrelationId,
+  resolveRequestId,
 } from './lib/commerce/commerce-route';
 import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './lib/commerce/config';
 import cartDiscountPost from './server/api/commerce/cart/[id]/discounts/POST';
@@ -28,7 +28,7 @@ export interface CommerceRouterFeatures {
   payments?: boolean;
 }
 
-/** Where failure detail is logged and how each request's correlation id is chosen. */
+/** Where failure detail is logged and how each request's id is chosen. */
 export interface CommerceRouterObservabilityOptions {
   /** Receives 5xx failure detail. Defaults to `console.error`. */
   logger?: CommerceLogger;
@@ -36,7 +36,7 @@ export interface CommerceRouterObservabilityOptions {
    * Returns the host's id for the request, for example `(req) => req.get('x-request-id')` when
    * the host's edge sets that header. Invalid or missing ids fall back to a random UUID.
    */
-  getCorrelationId?: CommerceCorrelationIdResolver;
+  getRequestId?: CommerceRequestIdResolver;
 }
 
 export interface CreateCommerceRouterOptions extends CommerceRouterObservabilityOptions {
@@ -59,8 +59,8 @@ export function createCommerceRouter(options: CreateCommerceRouterOptions = {}):
     : undefined;
 
   router.use((req, res, next): void => {
-    const correlationId: string = resolveCorrelationId(req, options.getCorrelationId);
-    res.locals.commerceCorrelationId = correlationId;
+    const requestId: string = resolveRequestId(req, options.getRequestId);
+    res.locals.commerceRequestId = requestId;
     res.locals.commerceLogger = logger;
     res.locals.commerceConfiguration = configuration;
     res.locals.commerceCheckoutReturnUrlValidator = validateCheckoutReturnUrls;

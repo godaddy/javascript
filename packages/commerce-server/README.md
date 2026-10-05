@@ -60,7 +60,7 @@ A return from hosted checkout is not proof of payment. The order-status route us
 
 ## Errors
 
-Every route reports failures the same way. The body is `{ "error": "<customer-facing message>", "code": "<code>", "correlationId": "<id>" }` (order-status also includes `success: false`). The same id is passed to the logger. Bodies never contain upstream messages, configuration details, or credentials.
+Every route reports failures the same way. The body is `{ "error": "<customer-facing message>", "code": "<code>", "requestId": "<id>" }` (order-status also includes `success: false`). The same id is passed to the logger. Bodies never contain upstream messages, configuration details, or credentials.
 
 | Status | `code` | Meaning |
 | --- | --- | --- |
@@ -79,8 +79,8 @@ createCommerceRouter({
   configuration,
   logger: { error: (message, context) => log.error(context, message) },
   // Use the host's request id when its edge sets one; unsafe or missing ids fall back to a UUID.
-  getCorrelationId: (req) => req.get('x-request-id'),
+  getRequestId: (req) => req.get('x-request-id'),
 });
 ```
 
-`createCommerceCatalogRouter` and `createGoDaddyPaymentsRouter` accept the same `{ logger, getCorrelationId }` as their last argument. The logger defaults to `console.error`. In-process helpers throw the exported `CommerceError` subclasses (`InvalidRequestError`, `NotFoundError`, `CommerceNotConfiguredError`, `UpstreamError`).
+`createCommerceCatalogRouter` and `createGoDaddyPaymentsRouter` accept the same `{ logger, getRequestId }` as their last argument. The logger defaults to `console.error`. In-process helpers throw the exported `CommerceError` subclasses (`InvalidRequestError`, `NotFoundError`, `CommerceNotConfiguredError`, `UpstreamError`).

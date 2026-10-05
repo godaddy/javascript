@@ -99,7 +99,7 @@ it('serves variant product details without querying SKUGroup.status', async (): 
     expect(await archived.json()).toEqual({
       error: 'Product not found',
       code: 'not_found',
-      correlationId: expect.any(String),
+      requestId: expect.any(String),
     });
     expect(upstream).toHaveBeenCalledTimes(3);
   } finally {
@@ -280,14 +280,14 @@ it.each([
       if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
       const response = await clientFetch(`http://127.0.0.1:${address.port}/api/commerce/cart/completed-cart`);
       expect(response.status).toBe(status);
-      const json = (await response.json()) as { correlationId?: string };
-      const correlationId = json.correlationId;
-      expect(json).toEqual(status === 200 ? body : { ...body, correlationId: expect.any(String) });
+      const json = (await response.json()) as { requestId?: string };
+      const requestId = json.requestId;
+      expect(json).toEqual(status === 200 ? body : { ...body, requestId: expect.any(String) });
       if (status === 502) {
         expect(consoleError).toHaveBeenCalledWith(
           'commerce-server: Failed to load cart',
           expect.objectContaining({
-            correlationId,
+            requestId,
             error: expect.objectContaining({ message: expect.stringContaining(message) }),
           }),
         );

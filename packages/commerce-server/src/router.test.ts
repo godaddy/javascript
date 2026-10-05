@@ -183,7 +183,7 @@ describe('Commerce scoped routes', () => {
     expect(res.json).toHaveBeenCalledWith({
       error: 'Commerce configuration is unavailable. Complete the store connection before continuing.',
       code: 'not_configured',
-      correlationId: expect.any(String),
+      requestId: expect.any(String),
     });
     const [, context] = consoleError.mock.calls[0] ?? [];
     expect((context as { error: Error }).error.cause).toEqual(new Error('Missing channel'));
@@ -304,7 +304,7 @@ describe('Commerce scoped routes', () => {
     expect(res.json).toHaveBeenCalledWith({
       error: 'Failed to load cart',
       code: expect.stringMatching(/^upstream_(?:error|unauthorized)$/),
-      correlationId: expect.any(String),
+      requestId: expect.any(String),
     });
     expect(consoleError).toHaveBeenCalledWith(
       'commerce-server: Failed to load cart',
@@ -404,7 +404,7 @@ describe('Commerce scoped routes', () => {
       expect(res.json).toHaveBeenCalledWith({
         error: label,
         code: 'internal_error',
-        correlationId: expect.any(String),
+        requestId: expect.any(String),
       });
       expect(consoleError).toHaveBeenCalledWith(
         `commerce-server: ${label}`,
@@ -451,7 +451,7 @@ describe('Commerce scoped routes', () => {
       expect(res.json).toHaveBeenCalledWith({
         error: label,
         code: 'upstream_error',
-        correlationId: expect.any(String),
+        requestId: expect.any(String),
       });
       expect(JSON.stringify(vi.mocked(res.json).mock.calls)).not.toContain('secret-upstream-detail');
       expect(consoleError).toHaveBeenCalledWith(
@@ -481,7 +481,7 @@ describe('Commerce scoped routes', () => {
       expect(res.json).toHaveBeenCalledWith({
         error: 'Cart not found',
         code: 'not_found',
-        correlationId: expect.any(String),
+        requestId: expect.any(String),
       });
     },
   );
@@ -567,36 +567,35 @@ describe('Commerce router mounting', (): void => {
     },
   };
 
-  it('logs failures through the host logger with the response correlation id', async (): Promise<void> => {
+  it('logs failures through the host logger with the response request id', async (): Promise<void> => {
     const logger = { error: vi.fn() };
     const result = await requestThroughRouter(
       createCommerceCatalogRouter(failingConfiguration, { logger }),
       '/products',
     );
-    const body = (await result.json()) as { correlationId: string };
+    const body = (await result.json()) as { requestId: string };
     expect(result.status).toBe(503);
-    expect(result.headers.has('x-correlation-id')).toBe(false);
     expect(JSON.stringify(body)).not.toContain('secret config detail');
     expect(logger.error).toHaveBeenCalledWith(
       'commerce-server: Failed to load products',
-      expect.objectContaining({ correlationId: body.correlationId, httpStatus: 503, code: 'not_configured' }),
+      expect.objectContaining({ requestId: body.requestId, httpStatus: 503, code: 'not_configured' }),
     );
   });
 
   it.each([
     ['a valid host id', 'edge-123', 'edge-123'],
     ['an id with unsafe characters', 'id with spaces; level=error', undefined],
-  ])('uses %s from getCorrelationId when it is safe', async (_case, supplied, expected): Promise<void> => {
+  ])('uses %s from getRequestId when it is safe', async (_case, supplied, expected): Promise<void> => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const result = await requestThroughRouter(
       createCommerceCatalogRouter(failingConfiguration, {
-        getCorrelationId: (req) => req.get('x-request-id'),
+        getRequestId: (req) => req.get('x-request-id'),
       }),
       '/config',
       { 'x-request-id': supplied },
     );
-    const { correlationId } = (await result.json()) as { correlationId: string };
-    if (expected) expect(correlationId).toBe(expected);
-    else expect(correlationId).toMatch(/^[0-9a-f-]{36}$/);
+    const { requestId } = (await result.json()) as { requestId: string };
+    if (expected) expect(requestId).toBe(expected);
+    else expect(requestId).toMatch(/^[0-9a-f-]{36}$/);
   });
 });

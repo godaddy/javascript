@@ -19,7 +19,7 @@
  *   502 Commerce or token failure (`code: upstream_error | upstream_unauthorized`)
  *   503 Commerce is not configured
  *   500 unexpected server failure
- * Failure bodies are { success: false, error, code, correlationId }.
+ * Failure bodies are { success: false, error, code, requestId }.
  * The host must authorize the caller's access to the requested order.
  */
 import type { Request, Response } from 'express';

@@ -5,9 +5,9 @@ export {
 } from './lib/commerce/checkout-config';
 export type { CheckoutReturnUrls } from './lib/commerce/checkout-return-urls';
 export type {
-  CommerceCorrelationIdResolver,
   CommerceErrorLogContext,
   CommerceLogger,
+  CommerceRequestIdResolver,
 } from './lib/commerce/commerce-route';
 export {
   type CommerceConfig,

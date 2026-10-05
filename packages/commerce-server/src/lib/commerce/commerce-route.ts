@@ -5,7 +5,7 @@ import { CommerceError, type CommerceErrorCode, UpstreamError } from './errors';
 import { classifyUpstreamError } from './upstream-errors';
 
 export interface CommerceErrorLogContext {
-  correlationId: string;
+  requestId: string;
   method: string;
   path: string;
   httpStatus: number;
@@ -24,22 +24,22 @@ export const consoleCommerceLogger: CommerceLogger = {
 };
 
 /** Returns the host's id for this request (for example one set by its load balancer), if any. */
-export type CommerceCorrelationIdResolver = (req: Request) => string | undefined;
+export type CommerceRequestIdResolver = (req: Request) => string | undefined;
 
 // Ids are echoed into logs and response bodies, so reject anything that could forge either.
-const CORRELATION_ID_PATTERN = /^[A-Za-z0-9._:-]{1,128}$/;
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]{1,128}$/;
 
-export function resolveCorrelationId(req: Request, resolver?: CommerceCorrelationIdResolver): string {
+export function resolveRequestId(req: Request, resolver?: CommerceRequestIdResolver): string {
   const supplied = resolver?.(req);
-  return supplied && CORRELATION_ID_PATTERN.test(supplied) ? supplied : randomUUID();
+  return supplied && REQUEST_ID_PATTERN.test(supplied) ? supplied : randomUUID();
 }
 
-function correlationIdFor(req: Request, res: Response): string {
-  const existing: unknown = res.locals.commerceCorrelationId;
+function requestIdFor(req: Request, res: Response): string {
+  const existing: unknown = res.locals.commerceRequestId;
   if (typeof existing === 'string') return existing;
-  const correlationId = resolveCorrelationId(req);
-  res.locals.commerceCorrelationId = correlationId;
-  return correlationId;
+  const requestId = resolveRequestId(req);
+  res.locals.commerceRequestId = requestId;
+  return requestId;
 }
 
 function loggerFor(res: Response): CommerceLogger {
@@ -69,11 +69,11 @@ export function sendCommerceError(
         : undefined;
   const httpStatus = resolved?.httpStatus ?? 500;
   const code: CommerceErrorCode = resolved?.code ?? 'internal_error';
-  const correlationId = correlationIdFor(req, res);
+  const requestId = requestIdFor(req, res);
 
   if (httpStatus >= 500) {
     loggerFor(res).error(`commerce-server: ${label}`, {
-      correlationId,
+      requestId,
       method: req.method,
       path: req.path,
       httpStatus,
@@ -84,13 +84,11 @@ export function sendCommerceError(
   }
 
   if (res.headersSent) return;
-  res
-    .status(httpStatus)
-    .json({ ...failureFields, error: resolved?.publicMessage ?? label, code, correlationId });
+  res.status(httpStatus).json({ ...failureFields, error: resolved?.publicMessage ?? label, code, requestId });
 }
 
 export interface CommerceRouteOptions {
-  /** Fields every failure body carries in addition to `error`, `code`, and `correlationId`. */
+  /** Fields every failure body carries in addition to `error`, `code`, and `requestId`. */
   failureFields?: Record<string, unknown>;
 }
 
