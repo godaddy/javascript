@@ -41,6 +41,7 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
+import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 const addCartOrderMutation = `
   mutation AddCartOrder($input: AddDraftOrderInput!) {
@@ -135,9 +136,6 @@ export default async function handler(req: Request, res: Response): Promise<void
 
     res.status(201).json({ cart: hydrated.orderById ?? null });
   } catch (error) {
-    res.status(500).json({
-      error: 'Failed to create cart',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    respondWithFailure(res, 'Failed to create cart', error);
   }
 }

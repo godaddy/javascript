@@ -7,6 +7,7 @@ import { createCommerceRouter } from './router';
 const clientFetch = globalThis.fetch;
 afterEach((): void => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 it('serves variant product details without querying SKUGroup.status', async (): Promise<void> => {
@@ -237,15 +238,12 @@ it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
 
 it.each([
   ['Order not found', 200, { cart: null }],
-  [
-    'Authentication token expired',
-    500,
-    { error: 'Failed to load cart', message: 'Authentication token expired' },
-  ],
-  ['Database unavailable', 500, { error: 'Failed to load cart', message: 'Database unavailable' }],
+  ['Authentication token expired', 500, { error: 'Failed to load cart' }],
+  ['Database unavailable', 500, { error: 'Failed to load cart' }],
 ] as const)(
   'handles the actual Apollo error envelope for %s',
   async (message, status, body): Promise<void> => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.stubGlobal(
       'fetch',
       vi.fn(
@@ -279,6 +277,12 @@ it.each([
       const response = await clientFetch(`http://127.0.0.1:${address.port}/api/commerce/cart/completed-cart`);
       expect(response.status).toBe(status);
       expect(await response.json()).toEqual(body);
+      if (status === 500) {
+        expect(consoleError).toHaveBeenCalledWith(
+          'commerce-server: Failed to load cart',
+          expect.objectContaining({ message: expect.stringContaining(message) }),
+        );
+      }
     } finally {
       await new Promise<void>((resolve, reject) =>
         server.close((error) => (error ? reject(error) : resolve())),

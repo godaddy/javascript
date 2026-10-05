@@ -45,6 +45,7 @@ import {
   type CreateCheckoutSessionParams,
   createCheckoutSession,
 } from '@/lib/commerce/create-checkout-session';
+import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 type CheckoutBody = Partial<CreateCheckoutSessionParams>;
 
@@ -104,9 +105,6 @@ export default async function handler(req: Request, res: Response): Promise<void
 
     res.status(200).json(session);
   } catch (error) {
-    res.status(500).json({
-      error: 'Failed to create checkout session',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    respondWithFailure(res, 'Failed to create checkout session', error);
   }
 }

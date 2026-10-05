@@ -27,6 +27,7 @@ import {
 } from '@/lib/commerce/catalog-subgraph';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
+import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 // Cards use group pricing/media and SKU identity/inventory for quick-add.
 // Nested SKU price money fields would exceed the catalog API's depth limit of 10.
@@ -153,9 +154,6 @@ export default async function handler(req: Request, res: Response): Promise<void
 
     res.json(data);
   } catch (error) {
-    res.status(500).json({
-      error: 'Failed to load products',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    respondWithFailure(res, 'Failed to load products', error);
   }
 }

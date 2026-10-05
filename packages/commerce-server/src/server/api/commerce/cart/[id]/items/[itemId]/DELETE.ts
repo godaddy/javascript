@@ -22,6 +22,7 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
+import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 const deleteLineItemByIdMutation = `
   mutation DeleteLineItemById($id: ID!, $orderId: ID!) {
@@ -60,9 +61,6 @@ export default async function handler(req: Request, res: Response): Promise<void
 
     res.json({ cart: hydrated.orderById ?? null });
   } catch (error) {
-    res.status(500).json({
-      error: 'Failed to delete line item',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    respondWithFailure(res, 'Failed to delete line item', error);
   }
 }

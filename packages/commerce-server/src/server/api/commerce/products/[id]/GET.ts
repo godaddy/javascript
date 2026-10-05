@@ -26,6 +26,7 @@ import {
 } from '@/lib/commerce/catalog-subgraph';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
+import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 type ProductDetailsResult = SkuGroupResult & { activeSkuGroups?: SkuGroupsResult['skuGroups'] };
 
@@ -157,9 +158,6 @@ export default async function handler(req: Request, res: Response): Promise<void
 
     res.json({ skuGroup: data.skuGroup });
   } catch (error) {
-    res.status(500).json({
-      error: 'Failed to load product',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    respondWithFailure(res, 'Failed to load product', error);
   }
 }

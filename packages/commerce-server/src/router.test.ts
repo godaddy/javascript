@@ -1,7 +1,7 @@
 import type { AddressInfo } from 'node:net';
 import type { Request, Response } from 'express';
 import express from 'express';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCommerceCartScope } from './lib/commerce/cart-scope';
 import type { CommerceConfiguration } from './lib/commerce/config';
 import { createCheckoutSession } from './lib/commerce/create-checkout-session';
@@ -60,6 +60,10 @@ function response() {
 describe('Commerce scoped routes', () => {
   beforeEach((): void => {
     vi.clearAllMocks();
+  });
+
+  afterEach((): void => {
+    vi.restoreAllMocks();
   });
 
   it('does not query unsupported status fields on the storefront cart API', (): void => {
@@ -285,6 +289,7 @@ describe('Commerce scoped routes', () => {
       { code: 'FORBIDDEN', message: 'Access denied', status: 403 },
     ]),
   ])('preserves the cart on unrelated upstream failures: %s', async (error): Promise<void> => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = response();
     vi.mocked(gqlRequest).mockRejectedValueOnce(error);
     await readCart(
@@ -292,7 +297,8 @@ describe('Commerce scoped routes', () => {
       res as unknown as Response,
     );
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load cart', message: error.message });
+    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load cart' });
+    expect(consoleError).toHaveBeenCalledWith('commerce-server: Failed to load cart', error);
   });
 
   it.each([
@@ -335,6 +341,57 @@ describe('Commerce scoped routes', () => {
       expect(res.json).toHaveBeenCalledWith({
         cart: { id: 'cart-1', lineItems: [{ skuId: 'sku-1', quantity: 1 }] },
       });
+    },
+  );
+
+  const scopedRequest = {
+    headers: {},
+    query: {},
+    params: { id: 'id-1', itemId: 'item-1' },
+    body: {
+      skuId: 'sku-1',
+      name: 'Product',
+      quantity: 1,
+      discountCodes: ['PROMO'],
+      lineItems: [{ skuId: 'sku-1', name: 'Product', quantity: 1 }],
+    },
+  } as unknown as Request;
+
+  it.each([
+    ['products', readProducts, 'Failed to load products'],
+    ['product', readProduct, 'Failed to load product'],
+    ['sku', readSku, 'Failed to load sku'],
+    ['create cart', createCart, 'Failed to create cart'],
+    ['read cart', readCart, 'Failed to load cart'],
+    ['add item', addItem, 'Failed to add line item'],
+    ['update item', updateItem, 'Failed to update line item'],
+    ['delete item', deleteItem, 'Failed to delete line item'],
+    ['discounts', applyDiscount, 'Failed to apply discount codes'],
+    ['checkout', checkout, 'Failed to create checkout session'],
+  ] as const)(
+    'returns a generic 500 and logs the detail for %s',
+    async (_name, handler, label): Promise<void> => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const failure = new Error('GraphQL request failed: 502 secret-upstream-detail');
+      vi.mocked(gqlRequest).mockRejectedValue(failure);
+      vi.mocked(createCheckoutSession).mockRejectedValue(failure);
+      const res = response();
+      (res.locals as Record<string, unknown>).commerceCheckoutReturnUrlValidator = (
+        returnUrl?: string,
+        successUrl?: string,
+      ) => ({ returnUrl, successUrl });
+      const req = {
+        ...scopedRequest,
+        body: {
+          ...(scopedRequest.body as object),
+          ...(handler === checkout ? { lineItems: undefined, skuId: 'sku-1' } : {}),
+        },
+      } as unknown as Request;
+      await handler(req, res as unknown as Response);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledTimes(1);
+      expect(res.json).toHaveBeenCalledWith({ error: label });
+      expect(consoleError).toHaveBeenCalledWith(`commerce-server: ${label}`, failure);
     },
   );
 });

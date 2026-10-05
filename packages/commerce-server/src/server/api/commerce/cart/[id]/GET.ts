@@ -25,6 +25,7 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
+import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 function isCartNotFoundError(error: unknown): boolean {
   if (!(error instanceof GraphQLErrorWithCodes)) {
@@ -79,9 +80,6 @@ export default async function handler(req: Request, res: Response): Promise<void
       return;
     }
 
-    res.status(500).json({
-      error: 'Failed to load cart',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    respondWithFailure(res, 'Failed to load cart', error);
   }
 }

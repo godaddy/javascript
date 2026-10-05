@@ -16,6 +16,7 @@ import {
 } from '@/lib/commerce/catalog-subgraph';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
+import { respondWithFailure } from '@/lib/commerce/route-failure';
 
 const skuQuery = `
   query Sku($id: String!) {
@@ -95,9 +96,6 @@ export default async function handler(req: Request, res: Response): Promise<void
 
     res.json(data);
   } catch (error) {
-    res.status(500).json({
-      error: 'Failed to load sku',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    respondWithFailure(res, 'Failed to load sku', error);
   }
 }
