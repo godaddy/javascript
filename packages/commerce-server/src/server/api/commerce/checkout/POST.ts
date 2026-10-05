@@ -32,7 +32,8 @@
  *
  * Response: { url, id, draftOrderId, storeId, channelId, businessId,
  * storeName, sourceApp } from the created checkout session. The route returns
- * 500 if checkout-api does not preserve the configured store/channel binding.
+ * 502 (`upstream_error`) if checkout-api does not preserve the configured
+ * store/channel binding or the requested checkout settings.
  * Browser callers should redirect to `response.url`; this route does not
  * return a `redirectUrl` field.
  */
