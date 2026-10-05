@@ -4,11 +4,10 @@ export {
   parseCommerceCheckoutConfiguration,
 } from './lib/commerce/checkout-config';
 export type { CheckoutReturnUrls } from './lib/commerce/checkout-return-urls';
-export {
-  CORRELATION_ID_HEADER,
-  type CommerceCorrelationIdResolver,
-  type CommerceErrorLogContext,
-  type CommerceLogger,
+export type {
+  CommerceCorrelationIdResolver,
+  CommerceErrorLogContext,
+  CommerceLogger,
 } from './lib/commerce/commerce-route';
 export {
   type CommerceConfig,

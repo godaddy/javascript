@@ -4,7 +4,6 @@ import {
   createCheckoutReturnUrlValidator,
 } from './lib/commerce/checkout-return-urls';
 import {
-  CORRELATION_ID_HEADER,
   type CommerceCorrelationIdResolver,
   type CommerceLogger,
   consoleCommerceLogger,
@@ -63,7 +62,6 @@ export function createCommerceRouter(options: CreateCommerceRouterOptions = {}):
     const correlationId: string = resolveCorrelationId(req, options.getCorrelationId);
     res.locals.commerceCorrelationId = correlationId;
     res.locals.commerceLogger = logger;
-    res.setHeader(CORRELATION_ID_HEADER, correlationId);
     res.locals.commerceConfiguration = configuration;
     res.locals.commerceCheckoutReturnUrlValidator = validateCheckoutReturnUrls;
     next();

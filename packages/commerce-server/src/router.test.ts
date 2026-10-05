@@ -575,7 +575,7 @@ describe('Commerce router mounting', (): void => {
     );
     const body = (await result.json()) as { correlationId: string };
     expect(result.status).toBe(503);
-    expect(result.headers.get('x-correlation-id')).toBe(body.correlationId);
+    expect(result.headers.has('x-correlation-id')).toBe(false);
     expect(JSON.stringify(body)).not.toContain('secret config detail');
     expect(logger.error).toHaveBeenCalledWith(
       'commerce-server: Failed to load products',
@@ -587,12 +587,15 @@ describe('Commerce router mounting', (): void => {
     ['a valid host id', 'edge-123', 'edge-123'],
     ['an id with unsafe characters', 'id with spaces; level=error', undefined],
   ])('uses %s from getCorrelationId when it is safe', async (_case, supplied, expected): Promise<void> => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     const result = await requestThroughRouter(
-      createCommerceCatalogRouter(configuration, { getCorrelationId: (req) => req.get('x-request-id') }),
+      createCommerceCatalogRouter(failingConfiguration, {
+        getCorrelationId: (req) => req.get('x-request-id'),
+      }),
       '/config',
       { 'x-request-id': supplied },
     );
-    const correlationId = result.headers.get('x-correlation-id');
+    const { correlationId } = (await result.json()) as { correlationId: string };
     if (expected) expect(correlationId).toBe(expected);
     else expect(correlationId).toMatch(/^[0-9a-f-]{36}$/);
   });

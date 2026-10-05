@@ -203,7 +203,7 @@ describe('order-status route', () => {
         `http://127.0.0.1:${address.port}/api/commerce/order-status${query}`,
       );
       const body = (await response.json()) as Record<string, unknown>;
-      expect(body.correlationId).toBe(response.headers.get('x-correlation-id'));
+      expect(body.correlationId).toEqual(expect.any(String));
       const { correlationId: _correlationId, ...stable } = body;
       return { status: response.status, body: stable };
     } finally {

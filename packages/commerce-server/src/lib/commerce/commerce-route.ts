@@ -26,9 +26,7 @@ export const consoleCommerceLogger: CommerceLogger = {
 /** Returns the host's id for this request (for example one set by its load balancer), if any. */
 export type CommerceCorrelationIdResolver = (req: Request) => string | undefined;
 
-export const CORRELATION_ID_HEADER = 'X-Correlation-Id';
-
-// Ids are echoed into logs and a response header, so reject anything that could forge either.
+// Ids are echoed into logs and response bodies, so reject anything that could forge either.
 const CORRELATION_ID_PATTERN = /^[A-Za-z0-9._:-]{1,128}$/;
 
 export function resolveCorrelationId(req: Request, resolver?: CommerceCorrelationIdResolver): string {
@@ -41,7 +39,6 @@ function correlationIdFor(req: Request, res: Response): string {
   if (typeof existing === 'string') return existing;
   const correlationId = resolveCorrelationId(req);
   res.locals.commerceCorrelationId = correlationId;
-  if (!res.headersSent) res.setHeader(CORRELATION_ID_HEADER, correlationId);
   return correlationId;
 }
 

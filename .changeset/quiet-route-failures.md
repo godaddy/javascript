@@ -2,7 +2,7 @@
 '@godaddy/gd-commerce-server': minor
 ---
 
-Standardize route error handling. Every failure now responds with `{ error, code, correlationId }` and an `X-Correlation-Id` header, and no longer includes internal error text in a `message` field.
+Standardize route error handling. Every failure now responds with `{ error, code, correlationId }` and no longer includes internal error text in a `message` field.
 
 Status codes now reflect the cause:
 

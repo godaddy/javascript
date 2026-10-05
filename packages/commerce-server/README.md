@@ -60,7 +60,7 @@ A return from hosted checkout is not proof of payment. The order-status route us
 
 ## Errors
 
-Every route reports failures the same way. The body is `{ "error": "<customer-facing message>", "code": "<code>", "correlationId": "<id>" }` (order-status also includes `success: false`), and every response carries the same id in an `X-Correlation-Id` header. Bodies never contain upstream messages, configuration details, or credentials.
+Every route reports failures the same way. The body is `{ "error": "<customer-facing message>", "code": "<code>", "correlationId": "<id>" }` (order-status also includes `success: false`). The same id is passed to the logger. Bodies never contain upstream messages, configuration details, or credentials.
 
 | Status | `code` | Meaning |
 | --- | --- | --- |
