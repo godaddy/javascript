@@ -14,7 +14,7 @@
  * Responses:
  *   200 { success: true, order: CommerceOrderStatus }
  *       order.status is the payment status returned by the authorized Orders API.
- *   400 missing, blank, padded, `.` or `..` orderId
+ *   400 missing, blank, padded, `.` or `..` orderId, or one the Orders API rejects as malformed
  *   404 no order with that id in the configured store and channel
  *   500 credential, upstream, or configuration failure
  * The host must authorize the caller's access to the requested order.

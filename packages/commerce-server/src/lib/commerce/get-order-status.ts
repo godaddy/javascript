@@ -56,6 +56,17 @@ function isBindingId(value: unknown): value is string {
   return typeof value === 'string' && value !== '';
 }
 
+async function readErrorCode(response: Response): Promise<string | null> {
+  try {
+    const body: unknown = await response.json();
+    return body && typeof body === 'object' && 'code' in body && typeof body.code === 'string'
+      ? body.code
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getOrderStatus(
   orderId: string,
   configuration: CommerceConfiguration = createRuntimeCommerceConfiguration(),
@@ -90,13 +101,14 @@ export async function getOrderStatus(
     },
   );
   if (!response.ok) {
+    // The Orders API reports a missing order as 404 NOT_FOUND and an ID it can't decode as 422
+    // VALIDATION_FAILED. A 404 without that code comes from an unrouted path or base URL.
+    const code =
+      response.status === 404 || response.status === 422 ? await readErrorCode(response) : undefined;
     // Unread bodies can hold pooled connections while callers poll.
-    await response.body?.cancel();
-    if (response.status === 404) {
-      // The Orders API doesn't distinguish a missing order from a wrong store or base URL, so log for diagnosis.
-      console.warn(`getOrderStatus: Orders API returned 404 for store ${storeId}`);
-      throw new OrderNotFoundError();
-    }
+    if (code === undefined) await response.body?.cancel();
+    if (response.status === 404 && code === 'NOT_FOUND') throw new OrderNotFoundError();
+    if (response.status === 422 && code === 'VALIDATION_FAILED') throw new InvalidOrderIdError();
     throw new Error(`Failed to load order: upstream returned ${response.status}`);
   }
 
