@@ -22,14 +22,20 @@
 import type { Request, Response } from 'express';
 
 import { commerceConfigurationForResponse } from '@/lib/commerce/config';
-import { getOrderStatus, InvalidOrderIdError, OrderNotFoundError } from '@/lib/commerce/get-order-status';
+import { getOrderStatus } from '@/lib/commerce/get-order-status';
 
 const invalidOrderIdBody = { success: false, error: 'missing or invalid orderId query parameter' };
+
+// Matched by name, not instanceof, so errors still match when a host has several copies of this package.
+function hasErrorName(error: unknown, name: string): boolean {
+  return error instanceof Error && error.name === name;
+}
 
 export default async function handler(req: Request, res: Response): Promise<void> {
   try {
     const { orderId } = req.query;
-    if (!orderId || typeof orderId !== 'string') {
+    // getOrderStatus validates string IDs; only repeated or nested query values need rejecting here.
+    if (typeof orderId !== 'string') {
       res.status(400).json(invalidOrderIdBody);
       return;
     }
@@ -37,11 +43,11 @@ export default async function handler(req: Request, res: Response): Promise<void
     const order = await getOrderStatus(orderId, commerceConfigurationForResponse(res));
     res.status(200).json({ success: true, order });
   } catch (error) {
-    if (error instanceof InvalidOrderIdError) {
+    if (hasErrorName(error, 'InvalidOrderIdError')) {
       res.status(400).json(invalidOrderIdBody);
       return;
     }
-    if (error instanceof OrderNotFoundError) {
+    if (hasErrorName(error, 'OrderNotFoundError')) {
       res.status(404).json({ success: false, error: 'Order not found' });
       return;
     }

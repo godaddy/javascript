@@ -52,6 +52,7 @@ beforeEach((): void => {
 });
 afterEach((): void => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('authorized order lookup', () => {
@@ -133,7 +134,10 @@ describe('authorized order lookup', () => {
     { ...order, context: { channelId: order.context.channelId } },
     { ...order, context: { storeId: order.context.storeId } },
     { ...order, context: { ...order.context, storeId: '' } },
-  ])('rejects an incomplete order response', async (result): Promise<void> => {
+    { ...order, id: undefined },
+    { ...order, id: 42 },
+    { ...order, id: 'another-order' },
+  ])('rejects an incomplete or mismatched order response', async (result): Promise<void> => {
     upstream
       .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
       .mockResolvedValueOnce(Response.json({ order: result }));
@@ -143,37 +147,39 @@ describe('authorized order lookup', () => {
   });
 
   it.each([
-    { ...order, id: 'another-order' },
     { ...order, context: { ...order.context, storeId: 'another-store' } },
     { ...order, context: { ...order.context, channelId: 'another-channel' } },
-  ])(
-    'reports an order bound to another order, store, or channel as not found',
-    async (result): Promise<void> => {
-      upstream
-        .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
-        .mockResolvedValueOnce(Response.json({ order: result }));
-      await expect(getOrderStatus(order.id, configuration)).rejects.toBeInstanceOf(OrderNotFoundError);
-    },
-  );
+  ])('reports an order bound to another store or channel as not found', async (result): Promise<void> => {
+    upstream
+      .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
+      .mockResolvedValueOnce(Response.json({ order: result }));
+    await expect(getOrderStatus(order.id, configuration)).rejects.toBeInstanceOf(OrderNotFoundError);
+  });
 
-  it('reports an upstream 404 as not found without exposing its body', async (): Promise<void> => {
+  it('reports an upstream 404 as not found, logs it, and releases the body', async (): Promise<void> => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation((): void => {});
+    const cancel = vi.spyOn(ReadableStream.prototype, 'cancel');
     upstream
       .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
       .mockResolvedValueOnce(new Response('Private upstream details', { status: 404 }));
     const lookup = getOrderStatus(order.id, configuration);
     await expect(lookup).rejects.toBeInstanceOf(OrderNotFoundError);
     await expect(lookup).rejects.toThrow(/^Order not found$/);
+    expect(warn).toHaveBeenCalledWith('getOrderStatus: Orders API returned 404 for store store-1');
+    expect(cancel).toHaveBeenCalledTimes(1);
   });
 
   it.each([401, 403, 500])(
     'preserves an upstream order lookup failure (%i) without exposing its body',
     async (status): Promise<void> => {
+      const cancel = vi.spyOn(ReadableStream.prototype, 'cancel');
       upstream
         .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
         .mockResolvedValueOnce(new Response('Private upstream details', { status }));
       await expect(getOrderStatus(order.id, configuration)).rejects.toThrow(
         `Failed to load order: upstream returned ${status}`,
       );
+      expect(cancel).toHaveBeenCalledTimes(1);
     },
   );
 
@@ -240,6 +246,7 @@ describe('order-status route', () => {
       Response.json({ order: { ...order, context: { ...order.context, storeId: 'another-store' } } }),
     ],
   ])('returns 404 for %s', async (_case, orderResponse): Promise<void> => {
+    vi.spyOn(console, 'warn').mockImplementation((): void => {});
     upstream
       .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
       .mockResolvedValueOnce(orderResponse);
@@ -266,6 +273,13 @@ describe('order-status route', () => {
         Response.json({ order: { ...order, context: { channelId: order.context.channelId } } }),
       ],
     ],
+    [
+      'a different order ID',
+      [
+        Response.json({ access_token: 'order-token' }),
+        Response.json({ order: { ...order, id: 'another-order' } }),
+      ],
+    ],
   ])(
     'returns a generic 500 for %s and logs the detail server-side',
     async (_case, responses): Promise<void> => {
@@ -274,7 +288,30 @@ describe('order-status route', () => {
       const result = await requestOrderStatus(`?orderId=${order.id}`);
       expect(result).toEqual({ status: 500, body: { success: false, error: 'Failed to get order status' } });
       expect(log).toHaveBeenCalledWith('order-status: failed to get order status', expect.any(Error));
-      log.mockRestore();
     },
   );
+});
+
+describe('order-status route with another copy of the package', () => {
+  afterEach((): void => {
+    vi.doUnmock('@/lib/commerce/get-order-status');
+    vi.resetModules();
+  });
+
+  it.each([
+    ['InvalidOrderIdError', 400, 'missing or invalid orderId query parameter'],
+    ['OrderNotFoundError', 404, 'Order not found'],
+  ])('matches a %s thrown by a different class by name', async (name, status, error): Promise<void> => {
+    vi.resetModules();
+    vi.doMock('@/lib/commerce/get-order-status', () => ({
+      getOrderStatus: async (): Promise<never> => {
+        throw Object.assign(new Error('from another copy'), { name });
+      },
+    }));
+    const { default: handler } = await import('./server/api/commerce/order-status/GET');
+    const res = { locals: {}, status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    await handler({ query: { orderId: order.id } } as never, res as never);
+    expect(res.status).toHaveBeenCalledWith(status);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error });
+  });
 });

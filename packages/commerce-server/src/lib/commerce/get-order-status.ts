@@ -89,18 +89,32 @@ export async function getOrderStatus(
       cache: 'no-store',
     },
   );
-  if (response.status === 404) throw new OrderNotFoundError();
-  if (!response.ok) throw new Error(`Failed to load order: upstream returned ${response.status}`);
+  if (!response.ok) {
+    // Unread bodies can hold pooled connections while callers poll.
+    await response.body?.cancel();
+    if (response.status === 404) {
+      // The Orders API doesn't distinguish a missing order from a wrong store or base URL, so log for diagnosis.
+      console.warn(`getOrderStatus: Orders API returned 404 for store ${storeId}`);
+      throw new OrderNotFoundError();
+    }
+    throw new Error(`Failed to load order: upstream returned ${response.status}`);
+  }
 
   const data = (await response.json()) as OrderResponse;
   const order = data?.order;
   const context = order?.context;
   // A binding missing either field is a malformed upstream response, not proof of another store or channel.
-  if (!order?.id || !isBindingId(context?.storeId) || !isBindingId(context?.channelId)) {
+  // So is a different order id: the lookup was by id, so it means upstream returned the wrong record.
+  if (
+    !isBindingId(order?.id) ||
+    order.id !== orderId ||
+    !isBindingId(context?.storeId) ||
+    !isBindingId(context?.channelId)
+  ) {
     throw new Error('Order lookup did not return the requested order');
   }
   // Report an order bound to another store or channel as missing so the route doesn't reveal it exists.
-  if (order.id !== orderId || context.storeId !== storeId || context.channelId !== channelId) {
+  if (context.storeId !== storeId || context.channelId !== channelId) {
     throw new OrderNotFoundError();
   }
   const total = order.totals?.total;
