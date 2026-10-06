@@ -27,6 +27,7 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
+import { classifyCartUpstreamError } from '@/lib/commerce/upstream-errors';
 
 const applyDiscountCodesMutation = `
   mutation ApplyDiscountCodes($input: ApplyDiscountCodesInput!) {
@@ -78,4 +79,6 @@ async function applyDiscountCodes(req: Request, res: Response): Promise<void> {
   res.json({ cart: hydrated.orderById ?? null });
 }
 
-export default commerceRoute('Failed to apply discount codes', applyDiscountCodes);
+export default commerceRoute('Failed to apply discount codes', applyDiscountCodes, {
+  classifyUpstreamError: classifyCartUpstreamError,
+});

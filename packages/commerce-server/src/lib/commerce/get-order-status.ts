@@ -3,7 +3,11 @@
  * Unlike the storefront cart API, this endpoint includes completed orders.
  */
 import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
-import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './config';
+import {
+  type CommerceConfiguration,
+  createRuntimeCommerceConfiguration,
+  guardCommerceConfiguration,
+} from './config';
 import { InvalidRequestError, NotFoundError, UpstreamError } from './errors';
 import type { Money } from './gql';
 
@@ -85,7 +89,8 @@ export async function getOrderStatus(
     throw new InvalidOrderIdError();
   }
 
-  const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } = configuration.read();
+  const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } =
+    guardCommerceConfiguration(configuration).read();
   const token = await getOAuthAccessToken({
     clientId,
     clientSecret,
@@ -104,7 +109,10 @@ export async function getOrderStatus(
       cache: 'no-store',
     });
   } catch (cause) {
-    throw new UpstreamError('Order lookup could not reach Commerce', { cause });
+    throw new UpstreamError('Order lookup could not reach Commerce', {
+      cause,
+      details: { endpoint: endpoint.href },
+    });
   }
   if (!response.ok) {
     // The Orders API reports a missing order as 404 NOT_FOUND and an ID it can't decode as 422
@@ -117,7 +125,7 @@ export async function getOrderStatus(
     if (response.status === 422 && code === 'VALIDATION_FAILED') throw new InvalidOrderIdError();
     throw new UpstreamError(`Failed to load order: upstream returned ${response.status}`, {
       unauthorized: response.status === 401 || response.status === 403,
-      details: { upstreamStatus: response.status },
+      details: { endpoint: endpoint.href, upstreamStatus: response.status, upstreamCode: code ?? undefined },
     });
   }
 
@@ -125,7 +133,10 @@ export async function getOrderStatus(
   try {
     data = (await response.json()) as OrderResponse;
   } catch (cause) {
-    throw new UpstreamError('Order lookup returned a non-JSON response', { cause });
+    throw new UpstreamError('Order lookup returned a non-JSON response', {
+      cause,
+      details: { endpoint: endpoint.href },
+    });
   }
   const order = data?.order;
   const context = order?.context;
@@ -137,7 +148,9 @@ export async function getOrderStatus(
     !isBindingId(context?.storeId) ||
     !isBindingId(context?.channelId)
   ) {
-    throw new UpstreamError('Order lookup did not return the requested order');
+    throw new UpstreamError('Order lookup did not return the requested order', {
+      details: { endpoint: endpoint.href },
+    });
   }
   // Report an order bound to another store or channel as missing so the route doesn't reveal it exists.
   if (context.storeId !== storeId || context.channelId !== channelId) {

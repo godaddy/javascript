@@ -28,6 +28,7 @@ import {
   type UpdateLineItemByIdResult,
   type UpdateLineItemByIdVariables,
 } from '@/lib/commerce/order-subgraph';
+import { classifyCartUpstreamError } from '@/lib/commerce/upstream-errors';
 
 const updateLineItemByIdMutation = `
   mutation UpdateLineItemById($input: UpdateLineItemByIdInput!) {
@@ -81,4 +82,6 @@ async function updateLineItem(req: Request, res: Response): Promise<void> {
   res.json({ cart: hydrated.orderById ?? null });
 }
 
-export default commerceRoute('Failed to update line item', updateLineItem);
+export default commerceRoute('Failed to update line item', updateLineItem, {
+  classifyUpstreamError: classifyCartUpstreamError,
+});

@@ -486,6 +486,25 @@ describe('Commerce scoped routes', () => {
     },
   );
 
+  // The cart-not-found rule only applies to routes acting on an existing saved cart.
+  it.each([
+    ['products', readProducts, []],
+    ['create cart (adding the first item)', createCart, [{ addDraftOrder: { id: 'cart-new' } }]],
+  ] as const)(
+    'returns 502, not cart not found, when %s receives "Order not found"',
+    async (_name, handler, before): Promise<void> => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      for (const result of before) vi.mocked(gqlRequest).mockResolvedValueOnce(result);
+      vi.mocked(gqlRequest).mockRejectedValueOnce(
+        new GraphQLErrorWithCodes([{ code: 'INTERNAL_SERVER_ERROR', message: 'Order not found' }]),
+      );
+      const res = response();
+      await handler(scopedRequest, res as unknown as Response);
+      expect(res.status).toHaveBeenCalledWith(502);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'upstream_error' }));
+    },
+  );
+
   it('reports a mixed not-found and embedded 403 as upstream_unauthorized without clearing the cart', async (): Promise<void> => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(gqlRequest).mockRejectedValueOnce(
@@ -621,6 +640,29 @@ describe('Commerce router mounting', (): void => {
       'commerce-server: Failed to load products (host logger failed)',
       expect.objectContaining({ httpStatus: 503, loggerError }),
     );
+  });
+
+  it('falls back to a generated id when getRequestId throws', async (): Promise<void> => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const result = await requestThroughRouter(
+      createCommerceCatalogRouter(failingConfiguration, {
+        getRequestId: (req): string => (req.get('x-request-id') as string).trim(),
+      }),
+      '/config',
+    );
+    expect(result.status).toBe(503);
+    const { requestId } = (await result.json()) as { requestId: string };
+    expect(requestId).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it('does not resolve a request id for a successful request', async (): Promise<void> => {
+    const getRequestId = vi.fn((): string => 'edge-123');
+    const result = await requestThroughRouter(
+      createCommerceCatalogRouter(configuration, { getRequestId }),
+      '/config',
+    );
+    expect(result.status).toBe(200);
+    expect(getRequestId).not.toHaveBeenCalled();
   });
 
   it.each([

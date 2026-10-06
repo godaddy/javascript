@@ -30,6 +30,7 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
+import { classifyCartUpstreamError } from '@/lib/commerce/upstream-errors';
 
 const addLineItemBySkuIdMutation = `
   mutation AddLineItemBySkuId($input: AddLineItemInput!) {
@@ -82,4 +83,6 @@ async function addLineItem(req: Request, res: Response): Promise<void> {
   res.status(201).json({ cart: hydrated.orderById ?? null });
 }
 
-export default commerceRoute('Failed to add line item', addLineItem);
+export default commerceRoute('Failed to add line item', addLineItem, {
+  classifyUpstreamError: classifyCartUpstreamError,
+});

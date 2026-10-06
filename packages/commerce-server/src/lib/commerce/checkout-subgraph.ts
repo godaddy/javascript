@@ -336,6 +336,26 @@ export function authorizationHeaders({ accessToken }: AuthorizationHeadersInput)
   };
 }
 
+// RFC 6749 §5.2 errors that mean this server's client or its granted scope was rejected. Other 400s
+// (e.g. `invalid_request`, `unsupported_grant_type`) are a malformed request, not bad credentials.
+const UNAUTHORIZED_OAUTH_ERRORS: ReadonlySet<string> = new Set([
+  'invalid_client',
+  'invalid_grant',
+  'unauthorized_client',
+  'invalid_scope',
+]);
+
+async function readOAuthError(response: Response): Promise<string | undefined> {
+  try {
+    const body: unknown = await response.json();
+    return body && typeof body === 'object' && 'error' in body && typeof body.error === 'string'
+      ? body.error
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function getOAuthAccessToken({
   clientId,
   clientSecret,
@@ -369,9 +389,13 @@ export async function getOAuthAccessToken({
   }
 
   if (!response.ok) {
+    const oauthError = response.status === 400 ? await readOAuthError(response) : undefined;
     throw new UpstreamError(`Failed to get access token: ${response.status} ${response.statusText}`, {
-      unauthorized: response.status === 400 || response.status === 401 || response.status === 403,
-      details: { upstreamStatus: response.status, scope },
+      unauthorized:
+        response.status === 401 ||
+        response.status === 403 ||
+        (oauthError !== undefined && UNAUTHORIZED_OAUTH_ERRORS.has(oauthError)),
+      details: { upstreamStatus: response.status, scope, oauthError },
     });
   }
 

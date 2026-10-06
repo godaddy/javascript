@@ -105,22 +105,27 @@ function readOrNotConfigured<T>(read: () => T): T {
   }
 }
 
-export function commerceConfigurationForResponse(res: Response): CommerceConfiguration {
-  const supplied: unknown = res.locals.commerceConfiguration;
-  const configuration: CommerceConfiguration =
-    supplied &&
-    typeof supplied === 'object' &&
-    'read' in supplied &&
-    typeof supplied.read === 'function' &&
-    'readCheckout' in supplied &&
-    typeof supplied.readCheckout === 'function'
-      ? (supplied as CommerceConfiguration)
-      : createRuntimeCommerceConfiguration();
+/** Wraps a configuration so routes and in-process helpers report read failures the same way. */
+export function guardCommerceConfiguration(configuration: CommerceConfiguration): CommerceConfiguration {
   return {
     read: (): CommerceConfig => readOrNotConfigured(() => configuration.read()),
     readCheckout: (): CommerceCheckoutConfiguration =>
       readOrNotConfigured(() => configuration.readCheckout()),
   };
+}
+
+export function commerceConfigurationForResponse(res: Response): CommerceConfiguration {
+  const supplied: unknown = res.locals.commerceConfiguration;
+  return guardCommerceConfiguration(
+    supplied &&
+      typeof supplied === 'object' &&
+      'read' in supplied &&
+      typeof supplied.read === 'function' &&
+      'readCheckout' in supplied &&
+      typeof supplied.readCheckout === 'function'
+      ? (supplied as CommerceConfiguration)
+      : createRuntimeCommerceConfiguration(),
+  );
 }
 
 export function readCommerceConfigForResponse(res: Response): CommerceConfig {

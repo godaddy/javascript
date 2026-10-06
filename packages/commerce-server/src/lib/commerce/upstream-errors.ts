@@ -1,5 +1,7 @@
 /**
  * Known upstream failures that mean something more specific than "Commerce failed" (502).
+ * Routes opt in through `commerceRoute`'s `classifyUpstreamError`, so a rule only applies where
+ * its evidence does.
  *
  * Add a rule only with evidence of how Commerce reports the case, plus a test. Unmatched
  * upstream errors stay 502; the server log carries their codes and statuses so new rules can
@@ -37,7 +39,7 @@ interface UpstreamErrorRule {
   toError(error: UpstreamError): CommerceError;
 }
 
-const UPSTREAM_ERROR_RULES: readonly UpstreamErrorRule[] = [
+const CART_UPSTREAM_ERROR_RULES: readonly UpstreamErrorRule[] = [
   {
     // A completed (paid) draft is reported the same way, so this is "no longer a usable cart".
     matches: isCartNotFoundError,
@@ -45,6 +47,7 @@ const UPSTREAM_ERROR_RULES: readonly UpstreamErrorRule[] = [
   },
 ];
 
-export function classifyUpstreamError(error: UpstreamError): CommerceError {
-  return UPSTREAM_ERROR_RULES.find((rule) => rule.matches(error))?.toError(error) ?? error;
+/** For routes acting on an existing saved cart (`/cart/:id`); creating a cart has none to miss. */
+export function classifyCartUpstreamError(error: UpstreamError): CommerceError {
+  return CART_UPSTREAM_ERROR_RULES.find((rule) => rule.matches(error))?.toError(error) ?? error;
 }

@@ -219,6 +219,19 @@ describe('authorized order lookup', () => {
     expect(upstream).toHaveBeenCalledTimes(1);
   });
 
+  it('reports a host configuration that throws as not configured', async (): Promise<void> => {
+    const cause = new Error('secrets file missing');
+    const failing = {
+      read: (): never => {
+        throw cause;
+      },
+      readCheckout: configuration.readCheckout,
+    };
+    const error = await getOrderStatus(order.id, failing).catch((thrown: unknown) => thrown);
+    expect(error).toMatchObject({ code: 'not_configured', httpStatus: 503, cause });
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
   it.each(['', ' ', '.', '..', ' completed-order', 'completed-order\n'])(
     'rejects invalid order ID %j before requesting credentials',
     async (id): Promise<void> => {
@@ -308,6 +321,22 @@ describe('order-status route', () => {
       'upstream_unauthorized',
       [new Response('Invalid scope', { status: 403 })],
     ],
+    [
+      'an OAuth invalid_scope rejection',
+      'upstream_unauthorized',
+      [Response.json({ error: 'invalid_scope' }, { status: 400 })],
+    ],
+    [
+      'an OAuth invalid_client rejection',
+      'upstream_unauthorized',
+      [Response.json({ error: 'invalid_client' }, { status: 400 })],
+    ],
+    [
+      'a malformed OAuth request',
+      'upstream_error',
+      [Response.json({ error: 'invalid_request' }, { status: 400 })],
+    ],
+    ['a non-JSON OAuth 400', 'upstream_error', [new Response('Bad Request', { status: 400 })]],
     [
       'an upstream 500',
       'upstream_error',

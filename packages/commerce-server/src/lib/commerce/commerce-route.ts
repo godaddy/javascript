@@ -2,7 +2,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Request, Response } from 'express';
 import { CommerceError, type CommerceErrorCode, UpstreamError } from './errors';
-import { classifyUpstreamError } from './upstream-errors';
 
 export interface CommerceErrorLogContext {
   requestId: string;
@@ -29,24 +28,33 @@ export type CommerceRequestIdResolver = (req: Request) => string | undefined;
 // Ids are echoed into logs and response bodies, so reject anything that could forge either.
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]{1,128}$/;
 
+/** What `createCommerceRouter` stores in `res.locals` for its routes. */
+export interface CommerceObservabilityLocals {
+  commerceLogger?: CommerceLogger;
+  commerceRequestIdResolver?: CommerceRequestIdResolver;
+  commerceRequestId?: string;
+}
+
+function observabilityLocals(res: Response): CommerceObservabilityLocals {
+  return res.locals as CommerceObservabilityLocals;
+}
+
 export function resolveRequestId(req: Request, resolver?: CommerceRequestIdResolver): string {
-  const supplied = resolver?.(req);
-  return supplied && REQUEST_ID_PATTERN.test(supplied) ? supplied : randomUUID();
+  let supplied: string | undefined;
+  // A failing host resolver must not prevent the failure response.
+  try {
+    supplied = resolver?.(req);
+  } catch {
+    supplied = undefined;
+  }
+  return typeof supplied === 'string' && REQUEST_ID_PATTERN.test(supplied) ? supplied : randomUUID();
 }
 
+// Resolved only when a failure body needs it, and at most once per request.
 function requestIdFor(req: Request, res: Response): string {
-  const existing: unknown = res.locals.commerceRequestId;
-  if (typeof existing === 'string') return existing;
-  const requestId = resolveRequestId(req);
-  res.locals.commerceRequestId = requestId;
-  return requestId;
-}
-
-function loggerFor(res: Response): CommerceLogger {
-  const logger: unknown = res.locals.commerceLogger;
-  return logger && typeof logger === 'object' && 'error' in logger && typeof logger.error === 'function'
-    ? (logger as CommerceLogger)
-    : consoleCommerceLogger;
+  const locals = observabilityLocals(res);
+  locals.commerceRequestId ??= resolveRequestId(req, locals.commerceRequestIdResolver);
+  return locals.commerceRequestId;
 }
 
 /**
@@ -59,11 +67,11 @@ export function sendCommerceError(
   res: Response,
   label: string,
   error: unknown,
-  failureFields: Record<string, unknown> = {},
+  { failureFields = {}, classifyUpstreamError }: CommerceRouteOptions = {},
 ): void {
   const resolved: CommerceError | undefined =
     error instanceof UpstreamError
-      ? classifyUpstreamError(error)
+      ? (classifyUpstreamError?.(error) ?? error)
       : error instanceof CommerceError
         ? error
         : undefined;
@@ -81,9 +89,12 @@ export function sendCommerceError(
       ...(resolved?.details ? { details: resolved.details } : {}),
       error,
     };
-    // A failing host logger must not prevent the failure response.
+    // A failing or invalid host logger must not prevent the failure response.
     try {
-      loggerFor(res).error(`commerce-server: ${label}`, context);
+      (observabilityLocals(res).commerceLogger ?? consoleCommerceLogger).error(
+        `commerce-server: ${label}`,
+        context,
+      );
     } catch (loggerError) {
       console.error(`commerce-server: ${label} (host logger failed)`, { ...context, loggerError });
     }
@@ -96,6 +107,11 @@ export function sendCommerceError(
 export interface CommerceRouteOptions {
   /** Fields every failure body carries in addition to `error`, `code`, and `requestId`. */
   failureFields?: Record<string, unknown>;
+  /**
+   * Turns a specific upstream signal into a more precise error. Unclassified upstream failures
+   * are 502. Only routes whose evidence supports a rule should pass one.
+   */
+  classifyUpstreamError?: (error: UpstreamError) => CommerceError;
 }
 
 /** Wraps a route so thrown errors are answered by `sendCommerceError` with the route's label. */
@@ -108,7 +124,7 @@ export function commerceRoute(
     try {
       await handler(req, res);
     } catch (error) {
-      sendCommerceError(req, res, label, error, options.failureFields);
+      sendCommerceError(req, res, label, error, options);
     }
   };
 }

@@ -27,7 +27,7 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
-import { isCartNotFoundError } from '@/lib/commerce/upstream-errors';
+import { classifyCartUpstreamError, isCartNotFoundError } from '@/lib/commerce/upstream-errors';
 
 async function readCart(req: Request, res: Response): Promise<void> {
   const cartId: unknown = req.params.id;
@@ -61,4 +61,6 @@ async function readCart(req: Request, res: Response): Promise<void> {
   res.json({ cart: data.orderById ?? null });
 }
 
-export default commerceRoute('Failed to load cart', readCart);
+export default commerceRoute('Failed to load cart', readCart, {
+  classifyUpstreamError: classifyCartUpstreamError,
+});

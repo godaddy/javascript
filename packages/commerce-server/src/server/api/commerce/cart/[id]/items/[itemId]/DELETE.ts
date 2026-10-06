@@ -24,6 +24,7 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
+import { classifyCartUpstreamError } from '@/lib/commerce/upstream-errors';
 
 const deleteLineItemByIdMutation = `
   mutation DeleteLineItemById($id: ID!, $orderId: ID!) {
@@ -61,4 +62,6 @@ async function deleteLineItem(req: Request, res: Response): Promise<void> {
   res.json({ cart: hydrated.orderById ?? null });
 }
 
-export default commerceRoute('Failed to delete line item', deleteLineItem);
+export default commerceRoute('Failed to delete line item', deleteLineItem, {
+  classifyUpstreamError: classifyCartUpstreamError,
+});

@@ -25,7 +25,11 @@ import {
   DEFAULT_CHECKOUT_PAYMENT_METHODS,
   getOAuthAccessToken,
 } from './checkout-subgraph';
-import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './config';
+import {
+  type CommerceConfiguration,
+  createRuntimeCommerceConfiguration,
+  guardCommerceConfiguration,
+} from './config';
 import { InvalidRequestError, UpstreamError } from './errors';
 import { gqlRequest } from './gql';
 
@@ -178,6 +182,7 @@ export async function createCheckoutSession(
     );
   }
 
+  const guardedConfiguration = guardCommerceConfiguration(configuration);
   const {
     storeId,
     channelId,
@@ -187,8 +192,8 @@ export async function createCheckoutSession(
     sourceApp,
     owner,
     currencyCode: configCurrencyCode,
-  } = configuration.read();
-  const checkoutConfiguration = configuration.readCheckout();
+  } = guardedConfiguration.read();
+  const checkoutConfiguration = guardedConfiguration.readCheckout();
   const enablePromotionCodes: boolean = promotionCodesEnabled(checkoutConfiguration);
   const catalogShippingEnabled: boolean = lineItemData === undefined && checkoutConfiguration.enableShipping;
   const checkoutOAuthScope: string = 'commerce.product:read';

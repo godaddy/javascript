@@ -5,9 +5,9 @@ import {
 } from './lib/commerce/checkout-return-urls';
 import {
   type CommerceLogger,
+  type CommerceObservabilityLocals,
   type CommerceRequestIdResolver,
   consoleCommerceLogger,
-  resolveRequestId,
 } from './lib/commerce/commerce-route';
 import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './lib/commerce/config';
 import cartDiscountPost from './server/api/commerce/cart/[id]/discounts/POST';
@@ -58,10 +58,12 @@ export function createCommerceRouter(options: CreateCommerceRouterOptions = {}):
     ? createCheckoutReturnUrlValidator(options.checkoutReturnUrls)
     : undefined;
 
-  router.use((req, res, next): void => {
-    const requestId: string = resolveRequestId(req, options.getRequestId);
-    res.locals.commerceRequestId = requestId;
-    res.locals.commerceLogger = logger;
+  router.use((_req, res, next): void => {
+    const observability: CommerceObservabilityLocals = {
+      commerceLogger: logger,
+      commerceRequestIdResolver: options.getRequestId,
+    };
+    Object.assign(res.locals, observability);
     res.locals.commerceConfiguration = configuration;
     res.locals.commerceCheckoutReturnUrlValidator = validateCheckoutReturnUrls;
     next();
