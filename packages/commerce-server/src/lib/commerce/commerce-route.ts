@@ -72,7 +72,7 @@ export function sendCommerceError(
   const requestId = requestIdFor(req, res);
 
   if (httpStatus >= 500) {
-    loggerFor(res).error(`commerce-server: ${label}`, {
+    const context: CommerceErrorLogContext = {
       requestId,
       method: req.method,
       path: req.path,
@@ -80,7 +80,13 @@ export function sendCommerceError(
       code,
       ...(resolved?.details ? { details: resolved.details } : {}),
       error,
-    });
+    };
+    // A failing host logger must not prevent the failure response.
+    try {
+      loggerFor(res).error(`commerce-server: ${label}`, context);
+    } catch (loggerError) {
+      console.error(`commerce-server: ${label} (host logger failed)`, { ...context, loggerError });
+    }
   }
 
   if (res.headersSent) return;

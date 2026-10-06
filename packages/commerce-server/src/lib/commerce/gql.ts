@@ -54,8 +54,11 @@ export class GraphQLErrorWithCodes<
             .filter(Boolean)
             .join('; ');
 
+    // Commerce can report auth failures inside an HTTP 200 body via `extensions.(http.)status`.
     super(errorMessage, {
-      unauthorized: status === 401 || status === 403,
+      unauthorized: [status, ...errors.map((error) => error.status)].some(
+        (value) => value === 401 || value === 403,
+      ),
       details: {
         upstreamStatus: status,
         upstreamCodes: errors.map((error) => error.code).filter(Boolean),

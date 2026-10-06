@@ -299,3 +299,52 @@ it.each([
     }
   },
 );
+
+it.each([
+  ['extensions.http.status', { code: 'UNAUTHENTICATED', http: { status: 401 } }],
+  ['extensions.status', { code: 'FORBIDDEN', status: 403 }],
+])(
+  'reports an auth failure in an HTTP 200 GraphQL body (%s) as upstream_unauthorized',
+  async (_case, extensions): Promise<void> => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async (): Promise<Response> =>
+          Response.json({ data: { orderById: null }, errors: [{ message: 'Unauthorized', extensions }] }),
+      ),
+    );
+    const app = express();
+    app.use(
+      '/api/commerce',
+      createCommerceRouter({
+        configuration: createRuntimeCommerceConfiguration({
+          environment: {
+            GODADDY_OAUTH_CLIENT_ID: 'client-1',
+            GODADDY_OAUTH_CLIENT_SECRET: 'secret-1',
+            GODADDY_STORE_ID: 'store-1',
+            GODADDY_CHANNEL_ID: 'channel-1',
+            GODADDY_CURRENCY_CODE: 'USD',
+          },
+        }),
+      }),
+    );
+    const server = app.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
+      const response = await clientFetch(`http://127.0.0.1:${address.port}/api/commerce/cart/cart-1`);
+      expect(response.status).toBe(502);
+      expect(await response.json()).toEqual({
+        error: 'Failed to load cart',
+        code: 'upstream_unauthorized',
+        requestId: expect.any(String),
+      });
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
+  },
+);

@@ -486,6 +486,23 @@ describe('Commerce scoped routes', () => {
     },
   );
 
+  it('reports a mixed not-found and embedded 403 as upstream_unauthorized without clearing the cart', async (): Promise<void> => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(gqlRequest).mockRejectedValueOnce(
+      new GraphQLErrorWithCodes([
+        { code: 'ORDER_NOT_FOUND', message: 'Order not found' },
+        { code: 'FORBIDDEN', message: 'Access denied', status: 403 },
+      ]),
+    );
+    const res = response();
+    await readCart(
+      { headers: {}, params: { id: 'cart-1' } } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'upstream_unauthorized' }));
+  });
+
   it('reports an upstream 401 as upstream_unauthorized, not a caller authentication failure', async (): Promise<void> => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(gqlRequest).mockRejectedValueOnce(
@@ -579,6 +596,30 @@ describe('Commerce router mounting', (): void => {
     expect(logger.error).toHaveBeenCalledWith(
       'commerce-server: Failed to load products',
       expect.objectContaining({ requestId: body.requestId, httpStatus: 503, code: 'not_configured' }),
+    );
+  });
+
+  it('still sends the standard failure body when the host logger throws', async (): Promise<void> => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const loggerError = new Error('logger down');
+    const logger = {
+      error: (): never => {
+        throw loggerError;
+      },
+    };
+    const result = await requestThroughRouter(
+      createCommerceCatalogRouter(failingConfiguration, { logger }),
+      '/products',
+    );
+    expect(result.status).toBe(503);
+    await expect(result.json()).resolves.toEqual({
+      error: 'Commerce configuration is unavailable. Complete the store connection before continuing.',
+      code: 'not_configured',
+      requestId: expect.any(String),
+    });
+    expect(consoleError).toHaveBeenCalledWith(
+      'commerce-server: Failed to load products (host logger failed)',
+      expect.objectContaining({ httpStatus: 503, loggerError }),
     );
   });
 
