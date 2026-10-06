@@ -55,6 +55,21 @@ interface OrderResponse {
   };
 }
 
+function isBindingId(value: unknown): value is string {
+  return typeof value === 'string' && value !== '';
+}
+
+async function readErrorCode(response: Response): Promise<string | null> {
+  try {
+    const body: unknown = await response.json();
+    return body && typeof body === 'object' && 'code' in body && typeof body.code === 'string'
+      ? body.code
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getOrderStatus(
   orderId: string,
   configuration: CommerceConfiguration = createRuntimeCommerceConfiguration(),
@@ -77,24 +92,29 @@ export async function getOrderStatus(
     apiBaseUrl,
     scope: 'commerce.order:read',
   });
+  const endpoint = new URL(
+    `/v1/commerce/stores/${encodeURIComponent(storeId)}/orders/${encodeURIComponent(orderId)}`,
+    apiBaseUrl,
+  );
   let response: Response;
   try {
-    response = await fetch(
-      new URL(
-        `/v1/commerce/stores/${encodeURIComponent(storeId)}/orders/${encodeURIComponent(orderId)}`,
-        apiBaseUrl,
-      ),
-      {
-        method: 'GET',
-        headers: { ...authorizationHeaders({ accessToken: token.access_token }), Accept: 'application/json' },
-        cache: 'no-store',
-      },
-    );
+    response = await fetch(endpoint, {
+      method: 'GET',
+      headers: { ...authorizationHeaders({ accessToken: token.access_token }), Accept: 'application/json' },
+      cache: 'no-store',
+    });
   } catch (cause) {
     throw new UpstreamError('Order lookup could not reach Commerce', { cause });
   }
-  if (response.status === 404) throw new OrderNotFoundError();
   if (!response.ok) {
+    // The Orders API reports a missing order as 404 NOT_FOUND and an ID it can't decode as 422
+    // VALIDATION_FAILED. A 404 without that code comes from an unrouted path or base URL.
+    const code =
+      response.status === 404 || response.status === 422 ? await readErrorCode(response) : undefined;
+    // Unread bodies can hold pooled connections while callers poll.
+    if (code === undefined) await response.body?.cancel();
+    if (response.status === 404 && code === 'NOT_FOUND') throw new OrderNotFoundError();
+    if (response.status === 422 && code === 'VALIDATION_FAILED') throw new InvalidOrderIdError();
     throw new UpstreamError(`Failed to load order: upstream returned ${response.status}`, {
       unauthorized: response.status === 401 || response.status === 403,
       details: { upstreamStatus: response.status },
@@ -108,10 +128,19 @@ export async function getOrderStatus(
     throw new UpstreamError('Order lookup returned a non-JSON response', { cause });
   }
   const order = data?.order;
-  if (!order?.id || !order.context)
+  const context = order?.context;
+  // A binding missing either field is a malformed upstream response, not proof of another store or channel.
+  // So is a different order id: the lookup was by id, so it means upstream returned the wrong record.
+  if (
+    !isBindingId(order?.id) ||
+    order.id !== orderId ||
+    !isBindingId(context?.storeId) ||
+    !isBindingId(context?.channelId)
+  ) {
     throw new UpstreamError('Order lookup did not return the requested order');
+  }
   // Report an order bound to another store or channel as missing so the route doesn't reveal it exists.
-  if (order.id !== orderId || order.context.storeId !== storeId || order.context.channelId !== channelId) {
+  if (context.storeId !== storeId || context.channelId !== channelId) {
     throw new OrderNotFoundError();
   }
   const total = order.totals?.total;

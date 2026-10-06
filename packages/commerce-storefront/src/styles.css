@@ -19,7 +19,7 @@
 }
 
 @layer base {
-  .commerce-storefront { color: var(--commerce-text, inherit); background-color: var(--commerce-surface, transparent); font-family: inherit; line-height: 1.5; }
+  .commerce-storefront { color: var(--commerce-text, inherit); font-family: inherit; line-height: 1.5; }
   .commerce-storefront :where(*) { color: inherit; font-family: inherit; }
   .commerce-storefront *, .commerce-storefront *::before, .commerce-storefront *::after {
     box-sizing: border-box; border-width: 0; border-style: solid;
@@ -31,6 +31,6 @@
   .commerce-storefront :where(a) { color: inherit; text-decoration: inherit; }
   .commerce-storefront :where(img) { display: block; max-width: 100%; }
   .commerce-storefront :where(ul) { list-style: none; }
-  .commerce-inline { display: inline-block; background-color: transparent; }
+  .commerce-inline { display: inline-block; }
   .commerce-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border-width: 0; }
 }

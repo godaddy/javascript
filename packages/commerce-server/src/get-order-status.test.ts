@@ -34,6 +34,17 @@ const summary = {
   updatedAt: order.updatedAt,
   lineItems: [{ id: 'line-1', name: 'Mug', quantity: 1 }],
 };
+// Bodies the Orders API's REST error handler sends for a missing order and an undecodable ID.
+const ordersApiNotFound = (): Response =>
+  Response.json(
+    { code: 'NOT_FOUND', message: 'Order not found. Possible reasons: invalid orderId, storeID mismatch.' },
+    { status: 404 },
+  );
+const ordersApiInvalidId = (): Response =>
+  Response.json(
+    { code: 'VALIDATION_FAILED', message: 'Invalid global ID: completed-order' },
+    { status: 422 },
+  );
 let upstream: ReturnType<typeof vi.fn<typeof fetch>>;
 
 beforeEach((): void => {
@@ -52,6 +63,7 @@ beforeEach((): void => {
 });
 afterEach((): void => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('authorized order lookup', () => {
@@ -126,50 +138,78 @@ describe('authorized order lookup', () => {
     },
   );
 
-  it.each([undefined, { ...order, context: undefined }])(
-    'rejects an incomplete order response',
-    async (result): Promise<void> => {
-      upstream
-        .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
-        .mockResolvedValueOnce(Response.json({ order: result }));
-      const lookup = getOrderStatus(order.id, configuration);
-      await expect(lookup).rejects.toThrow('Order lookup did not return the requested order');
-      await expect(lookup).rejects.not.toBeInstanceOf(OrderNotFoundError);
-    },
-  );
-
   it.each([
+    undefined,
+    { ...order, context: undefined },
+    { ...order, context: {} },
+    { ...order, context: { channelId: order.context.channelId } },
+    { ...order, context: { storeId: order.context.storeId } },
+    { ...order, context: { ...order.context, storeId: '' } },
+    { ...order, id: undefined },
+    { ...order, id: 42 },
     { ...order, id: 'another-order' },
-    { ...order, context: { ...order.context, storeId: 'another-store' } },
-    { ...order, context: { ...order.context, channelId: 'another-channel' } },
-  ])(
-    'reports an order bound to another order, store, or channel as not found',
-    async (result): Promise<void> => {
-      upstream
-        .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
-        .mockResolvedValueOnce(Response.json({ order: result }));
-      await expect(getOrderStatus(order.id, configuration)).rejects.toBeInstanceOf(OrderNotFoundError);
-    },
-  );
-
-  it('reports an upstream 404 as not found without exposing its body', async (): Promise<void> => {
+  ])('rejects an incomplete or mismatched order response', async (result): Promise<void> => {
     upstream
       .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
-      .mockResolvedValueOnce(new Response('Private upstream details', { status: 404 }));
+      .mockResolvedValueOnce(Response.json({ order: result }));
+    const lookup = getOrderStatus(order.id, configuration);
+    await expect(lookup).rejects.toThrow('Order lookup did not return the requested order');
+    await expect(lookup).rejects.not.toBeInstanceOf(OrderNotFoundError);
+  });
+
+  it.each([
+    { ...order, context: { ...order.context, storeId: 'another-store' } },
+    { ...order, context: { ...order.context, channelId: 'another-channel' } },
+  ])('reports an order bound to another store or channel as not found', async (result): Promise<void> => {
+    upstream
+      .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
+      .mockResolvedValueOnce(Response.json({ order: result }));
+    await expect(getOrderStatus(order.id, configuration)).rejects.toBeInstanceOf(OrderNotFoundError);
+  });
+
+  it('reports an Orders API NOT_FOUND as not found without exposing its body', async (): Promise<void> => {
+    upstream
+      .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
+      .mockResolvedValueOnce(ordersApiNotFound());
     const lookup = getOrderStatus(order.id, configuration);
     await expect(lookup).rejects.toBeInstanceOf(OrderNotFoundError);
     await expect(lookup).rejects.toThrow(/^Order not found$/);
   });
 
+  it('reports an Orders API VALIDATION_FAILED for the order ID as an invalid order ID', async (): Promise<void> => {
+    upstream
+      .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
+      .mockResolvedValueOnce(ordersApiInvalidId());
+    await expect(getOrderStatus(order.id, configuration)).rejects.toBeInstanceOf(InvalidOrderIdError);
+  });
+
+  it.each([
+    ['an HTML 404 from an unrouted path', new Response('<pre>Cannot GET /v1/x</pre>', { status: 404 })],
+    ['a JSON 404 without a code', Response.json({ message: 'Not Found' }, { status: 404 })],
+    ['a 404 with another code', Response.json({ code: 'ROUTE_NOT_FOUND' }, { status: 404 })],
+    ['a 422 with another code', Response.json({ code: 'CONFLICT' }, { status: 422 })],
+    ['a non-JSON 422', new Response('Unprocessable', { status: 422 })],
+  ])('treats %s as an upstream failure', async (_case, failure): Promise<void> => {
+    upstream
+      .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
+      .mockResolvedValueOnce(failure);
+    const lookup = getOrderStatus(order.id, configuration);
+    await expect(lookup).rejects.toThrow(`Failed to load order: upstream returned ${failure.status}`);
+    await expect(lookup).rejects.not.toBeInstanceOf(OrderNotFoundError);
+    await expect(lookup).rejects.not.toBeInstanceOf(InvalidOrderIdError);
+  });
+
   it.each([401, 403, 500])(
     'preserves an upstream order lookup failure (%i) without exposing its body',
     async (status): Promise<void> => {
+      const cancel = vi.spyOn(ReadableStream.prototype, 'cancel');
       upstream
         .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
         .mockResolvedValueOnce(new Response('Private upstream details', { status }));
       await expect(getOrderStatus(order.id, configuration)).rejects.toThrow(
         `Failed to load order: upstream returned ${status}`,
       );
+      expect(cancel).toHaveBeenCalledTimes(1);
     },
   );
 
@@ -236,8 +276,18 @@ describe('order-status route', () => {
     },
   );
 
+  it('returns 400 when the Orders API rejects the order ID format', async (): Promise<void> => {
+    upstream
+      .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
+      .mockResolvedValueOnce(ordersApiInvalidId());
+    await expect(requestOrderStatus(`?orderId=${order.id}`)).resolves.toEqual({
+      status: 400,
+      body: { success: false, error: 'missing or invalid orderId query parameter', code: 'invalid_request' },
+    });
+  });
+
   it.each([
-    ['an upstream 404', new Response('Private upstream details', { status: 404 })],
+    ['an Orders API NOT_FOUND', ordersApiNotFound()],
     [
       'another store',
       Response.json({ order: { ...order, context: { ...order.context, storeId: 'another-store' } } }),
@@ -271,6 +321,30 @@ describe('order-status route', () => {
       'upstream_error',
       [Response.json({ access_token: 'order-token' }), Response.json({})],
     ],
+    [
+      'an order missing its store binding',
+      'upstream_error',
+      [
+        Response.json({ access_token: 'order-token' }),
+        Response.json({ order: { ...order, context: { channelId: order.context.channelId } } }),
+      ],
+    ],
+    [
+      'a 404 from an unrouted path',
+      'upstream_error',
+      [
+        Response.json({ access_token: 'order-token' }),
+        new Response('<pre>Cannot GET /v1/x</pre>', { status: 404 }),
+      ],
+    ],
+    [
+      'a different order ID',
+      'upstream_error',
+      [
+        Response.json({ access_token: 'order-token' }),
+        Response.json({ order: { ...order, id: 'another-order' } }),
+      ],
+    ],
   ])(
     'returns a generic 502 for %s and logs the detail server-side',
     async (_case, code, responses): Promise<void> => {
@@ -285,7 +359,6 @@ describe('order-status route', () => {
         'commerce-server: Failed to get order status',
         expect.objectContaining({ httpStatus: 502, code, error: expect.any(Error) }),
       );
-      log.mockRestore();
     },
   );
 
