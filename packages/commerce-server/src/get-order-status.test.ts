@@ -126,17 +126,21 @@ describe('authorized order lookup', () => {
     },
   );
 
-  it.each([undefined, { ...order, context: undefined }])(
-    'rejects an incomplete order response',
-    async (result): Promise<void> => {
-      upstream
-        .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
-        .mockResolvedValueOnce(Response.json({ order: result }));
-      const lookup = getOrderStatus(order.id, configuration);
-      await expect(lookup).rejects.toThrow('Order lookup did not return the requested order');
-      await expect(lookup).rejects.not.toBeInstanceOf(OrderNotFoundError);
-    },
-  );
+  it.each([
+    undefined,
+    { ...order, context: undefined },
+    { ...order, context: {} },
+    { ...order, context: { channelId: order.context.channelId } },
+    { ...order, context: { storeId: order.context.storeId } },
+    { ...order, context: { ...order.context, storeId: '' } },
+  ])('rejects an incomplete order response', async (result): Promise<void> => {
+    upstream
+      .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
+      .mockResolvedValueOnce(Response.json({ order: result }));
+    const lookup = getOrderStatus(order.id, configuration);
+    await expect(lookup).rejects.toThrow('Order lookup did not return the requested order');
+    await expect(lookup).rejects.not.toBeInstanceOf(OrderNotFoundError);
+  });
 
   it.each([
     { ...order, id: 'another-order' },
@@ -255,6 +259,13 @@ describe('order-status route', () => {
       ],
     ],
     ['an incomplete order', [Response.json({ access_token: 'order-token' }), Response.json({})]],
+    [
+      'an order missing its store binding',
+      [
+        Response.json({ access_token: 'order-token' }),
+        Response.json({ order: { ...order, context: { channelId: order.context.channelId } } }),
+      ],
+    ],
   ])(
     'returns a generic 500 for %s and logs the detail server-side',
     async (_case, responses): Promise<void> => {

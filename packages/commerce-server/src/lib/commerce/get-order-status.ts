@@ -52,6 +52,10 @@ interface OrderResponse {
   };
 }
 
+function isBindingId(value: unknown): value is string {
+  return typeof value === 'string' && value !== '';
+}
+
 export async function getOrderStatus(
   orderId: string,
   configuration: CommerceConfiguration = createRuntimeCommerceConfiguration(),
@@ -90,9 +94,13 @@ export async function getOrderStatus(
 
   const data = (await response.json()) as OrderResponse;
   const order = data?.order;
-  if (!order?.id || !order.context) throw new Error('Order lookup did not return the requested order');
+  const context = order?.context;
+  // A binding missing either field is a malformed upstream response, not proof of another store or channel.
+  if (!order?.id || !isBindingId(context?.storeId) || !isBindingId(context?.channelId)) {
+    throw new Error('Order lookup did not return the requested order');
+  }
   // Report an order bound to another store or channel as missing so the route doesn't reveal it exists.
-  if (order.id !== orderId || order.context.storeId !== storeId || order.context.channelId !== channelId) {
+  if (order.id !== orderId || context.storeId !== storeId || context.channelId !== channelId) {
     throw new OrderNotFoundError();
   }
   const total = order.totals?.total;
