@@ -255,13 +255,13 @@ describe('createCheckoutSession', () => {
     ]);
   });
 
-  it('returns host configuration errors immediately without OAuth or checkout requests', async (): Promise<void> => {
+  it('reports host configuration errors as not configured without OAuth or checkout requests', async (): Promise<void> => {
+    const cause = new Error('Host configuration unavailable');
     vi.mocked(configuration.read).mockImplementation(() => {
-      throw new Error('Host configuration unavailable');
+      throw cause;
     });
-    await expect(createCheckoutSession(cart, configuration)).rejects.toThrow(
-      'Host configuration unavailable',
-    );
+    const error = await createCheckoutSession(cart, configuration).catch((thrown: unknown) => thrown);
+    expect(error).toMatchObject({ code: 'not_configured', httpStatus: 503, cause });
     expect(configuration.read).toHaveBeenCalledTimes(1);
     expect(mockGetOAuthAccessToken).not.toHaveBeenCalled();
     expect(mockGqlRequest).not.toHaveBeenCalled();

@@ -3,6 +3,12 @@ import {
   type CheckoutReturnUrls,
   createCheckoutReturnUrlValidator,
 } from './lib/commerce/checkout-return-urls';
+import {
+  type CommerceLogger,
+  type CommerceObservabilityLocals,
+  type CommerceRequestIdResolver,
+  consoleCommerceLogger,
+} from './lib/commerce/commerce-route';
 import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './lib/commerce/config';
 import cartDiscountPost from './server/api/commerce/cart/[id]/discounts/POST';
 import cartGet from './server/api/commerce/cart/[id]/GET';
@@ -22,7 +28,18 @@ export interface CommerceRouterFeatures {
   payments?: boolean;
 }
 
-export interface CreateCommerceRouterOptions {
+/** Where failure detail is logged and how each request's id is chosen. */
+export interface CommerceRouterObservabilityOptions {
+  /** Receives 5xx failure detail. Defaults to `console.error`. */
+  logger?: CommerceLogger;
+  /**
+   * Returns the host's id for the request, for example `(req) => req.get('x-request-id')` when
+   * the host's edge sets that header. Invalid or missing ids fall back to a random UUID.
+   */
+  getRequestId?: CommerceRequestIdResolver;
+}
+
+export interface CreateCommerceRouterOptions extends CommerceRouterObservabilityOptions {
   configuration?: CommerceConfiguration;
   features?: CommerceRouterFeatures;
   /** Required to enable browser checkout; never derived from request headers. */
@@ -35,11 +52,18 @@ export function createCommerceRouter(options: CreateCommerceRouterOptions = {}):
   const catalogEnabled: boolean = options.features?.catalog ?? true;
   const paymentsEnabled: boolean = options.features?.payments ?? true;
 
+  const logger: CommerceLogger = options.logger ?? consoleCommerceLogger;
+
   const validateCheckoutReturnUrls = options.checkoutReturnUrls
     ? createCheckoutReturnUrlValidator(options.checkoutReturnUrls)
     : undefined;
 
   router.use((_req, res, next): void => {
+    const observability: CommerceObservabilityLocals = {
+      commerceLogger: logger,
+      commerceRequestIdResolver: options.getRequestId,
+    };
+    Object.assign(res.locals, observability);
     res.locals.commerceConfiguration = configuration;
     res.locals.commerceCheckoutReturnUrlValidator = validateCheckoutReturnUrls;
     next();
@@ -66,15 +90,24 @@ export function createCommerceRouter(options: CreateCommerceRouterOptions = {}):
   return router;
 }
 
-export function createCommerceCatalogRouter(configuration?: CommerceConfiguration): Router {
-  return createCommerceRouter({ configuration, features: { catalog: true, payments: false } });
+export function createCommerceCatalogRouter(
+  configuration?: CommerceConfiguration,
+  observability: CommerceRouterObservabilityOptions = {},
+): Router {
+  return createCommerceRouter({
+    ...observability,
+    configuration,
+    features: { catalog: true, payments: false },
+  });
 }
 
 export function createGoDaddyPaymentsRouter(
   configuration?: CommerceConfiguration,
   checkoutReturnUrls?: CheckoutReturnUrls,
+  observability: CommerceRouterObservabilityOptions = {},
 ): Router {
   return createCommerceRouter({
+    ...observability,
     configuration,
     checkoutReturnUrls,
     features: { catalog: false, payments: true },

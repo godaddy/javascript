@@ -7,6 +7,7 @@ import { createCommerceRouter } from './router';
 const clientFetch = globalThis.fetch;
 afterEach((): void => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 it('serves variant product details without querying SKUGroup.status', async (): Promise<void> => {
@@ -95,7 +96,11 @@ it('serves variant product details without querying SKUGroup.status', async (): 
     ]);
     const archived = await clientFetch(`${url.replace('/shirt', '/archived-shirt')}?attributeValues=blue`);
     expect(archived.status).toBe(404);
-    expect(await archived.json()).toEqual({ error: 'Product not found' });
+    expect(await archived.json()).toEqual({
+      error: 'Product not found',
+      code: 'not_found',
+      requestId: expect.any(String),
+    });
     expect(upstream).toHaveBeenCalledTimes(3);
   } finally {
     await new Promise<void>((resolve, reject) =>
@@ -237,15 +242,12 @@ it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
 
 it.each([
   ['Order not found', 200, { cart: null }],
-  [
-    'Authentication token expired',
-    500,
-    { error: 'Failed to load cart', message: 'Authentication token expired' },
-  ],
-  ['Database unavailable', 500, { error: 'Failed to load cart', message: 'Database unavailable' }],
+  ['Authentication token expired', 502, { error: 'Failed to load cart', code: 'upstream_error' }],
+  ['Database unavailable', 502, { error: 'Failed to load cart', code: 'upstream_error' }],
 ] as const)(
   'handles the actual Apollo error envelope for %s',
   async (message, status, body): Promise<void> => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.stubGlobal(
       'fetch',
       vi.fn(
@@ -278,7 +280,67 @@ it.each([
       if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
       const response = await clientFetch(`http://127.0.0.1:${address.port}/api/commerce/cart/completed-cart`);
       expect(response.status).toBe(status);
-      expect(await response.json()).toEqual(body);
+      const json = (await response.json()) as { requestId?: string };
+      const requestId = json.requestId;
+      expect(json).toEqual(status === 200 ? body : { ...body, requestId: expect.any(String) });
+      if (status === 502) {
+        expect(consoleError).toHaveBeenCalledWith(
+          'commerce-server: Failed to load cart',
+          expect.objectContaining({
+            requestId,
+            error: expect.objectContaining({ message: expect.stringContaining(message) }),
+          }),
+        );
+      }
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
+  },
+);
+
+it.each([
+  ['extensions.http.status', { code: 'UNAUTHENTICATED', http: { status: 401 } }],
+  ['extensions.status', { code: 'FORBIDDEN', status: 403 }],
+])(
+  'reports an auth failure in an HTTP 200 GraphQL body (%s) as upstream_unauthorized',
+  async (_case, extensions): Promise<void> => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async (): Promise<Response> =>
+          Response.json({ data: { orderById: null }, errors: [{ message: 'Unauthorized', extensions }] }),
+      ),
+    );
+    const app = express();
+    app.use(
+      '/api/commerce',
+      createCommerceRouter({
+        configuration: createRuntimeCommerceConfiguration({
+          environment: {
+            GODADDY_OAUTH_CLIENT_ID: 'client-1',
+            GODADDY_OAUTH_CLIENT_SECRET: 'secret-1',
+            GODADDY_STORE_ID: 'store-1',
+            GODADDY_CHANNEL_ID: 'channel-1',
+            GODADDY_CURRENCY_CODE: 'USD',
+          },
+        }),
+      }),
+    );
+    const server = app.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
+      const response = await clientFetch(`http://127.0.0.1:${address.port}/api/commerce/cart/cart-1`);
+      expect(response.status).toBe(502);
+      expect(await response.json()).toEqual({
+        error: 'Failed to load cart',
+        code: 'upstream_unauthorized',
+        requestId: expect.any(String),
+      });
     } finally {
       await new Promise<void>((resolve, reject) =>
         server.close((error) => (error ? reject(error) : resolve())),

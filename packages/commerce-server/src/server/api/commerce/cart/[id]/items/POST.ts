@@ -15,8 +15,10 @@
  *   GET /api/commerce/cart/:id so clients only ever read one shape.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { commerceRoute } from '@/lib/commerce/commerce-route';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { InvalidRequestError } from '@/lib/commerce/errors';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type AddLineItemBySkuIdResult,
@@ -28,6 +30,7 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
+import { classifyCartUpstreamError } from '@/lib/commerce/upstream-errors';
 
 const addLineItemBySkuIdMutation = `
   mutation AddLineItemBySkuId($input: AddLineItemInput!) {
@@ -37,54 +40,49 @@ const addLineItemBySkuIdMutation = `
   }
 `;
 
-export default async function handler(req: Request, res: Response): Promise<void> {
-  try {
-    const cartId: unknown = req.params.id;
-    if (typeof cartId !== 'string' || !cartId) {
-      res.status(400).json({ error: 'Missing cart id' });
-      return;
-    }
-
-    const body = (req.body ?? {}) as Partial<AddToCartItemInput>;
-    if (!body.skuId || !body.name || typeof body.quantity !== 'number') {
-      res.status(400).json({ error: 'Missing required fields: skuId, name, quantity' });
-      return;
-    }
-
-    const config: CommerceConfig = readCommerceConfigForResponse(res);
-    if (!validateCommerceCartScope(req, res, config)) return;
-    const { storeId, clientId, apiBaseUrl } = config;
-    const endpoint = orderStorefrontEndpoint({ apiBaseUrl });
-    const headers = storefrontHeaders({ storeId, clientId });
-
-    // Mutation only returns the new CartLineItem (no order totals). Discard
-    // it and re-fetch the full cart so the response matches the shape of
-    // GET /api/commerce/cart/:id.
-    await gqlRequest<AddLineItemBySkuIdResult, AddLineItemBySkuIdVariables>({
-      endpoint,
-      query: addLineItemBySkuIdMutation,
-      variables: {
-        input: buildAddLineItemBySkuIdInput(cartId, {
-          skuId: body.skuId,
-          name: body.name,
-          quantity: body.quantity,
-        }),
-      },
-      headers,
-    });
-
-    const hydrated = await gqlRequest<GetCartOrderResult, GetCartOrderVariables>({
-      endpoint,
-      query: getCartOrderQuery,
-      variables: { id: cartId },
-      headers,
-    });
-
-    res.status(201).json({ cart: hydrated.orderById ?? null });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to add line item',
-      message: error instanceof Error ? error.message : String(error),
-    });
+async function addLineItem(req: Request, res: Response): Promise<void> {
+  const cartId: unknown = req.params.id;
+  if (typeof cartId !== 'string' || !cartId) {
+    throw new InvalidRequestError('Missing cart id');
   }
+
+  const body = (req.body ?? {}) as Partial<AddToCartItemInput>;
+  if (!body.skuId || !body.name || typeof body.quantity !== 'number') {
+    throw new InvalidRequestError('Missing required fields: skuId, name, quantity');
+  }
+
+  const config: CommerceConfig = readCommerceConfigForResponse(res);
+  assertCommerceCartScope(req, config);
+  const { storeId, clientId, apiBaseUrl } = config;
+  const endpoint = orderStorefrontEndpoint({ apiBaseUrl });
+  const headers = storefrontHeaders({ storeId, clientId });
+
+  // Mutation only returns the new CartLineItem (no order totals). Discard
+  // it and re-fetch the full cart so the response matches the shape of
+  // GET /api/commerce/cart/:id.
+  await gqlRequest<AddLineItemBySkuIdResult, AddLineItemBySkuIdVariables>({
+    endpoint,
+    query: addLineItemBySkuIdMutation,
+    variables: {
+      input: buildAddLineItemBySkuIdInput(cartId, {
+        skuId: body.skuId,
+        name: body.name,
+        quantity: body.quantity,
+      }),
+    },
+    headers,
+  });
+
+  const hydrated = await gqlRequest<GetCartOrderResult, GetCartOrderVariables>({
+    endpoint,
+    query: getCartOrderQuery,
+    variables: { id: cartId },
+    headers,
+  });
+
+  res.status(201).json({ cart: hydrated.orderById ?? null });
 }
+
+export default commerceRoute('Failed to add line item', addLineItem, {
+  classifyUpstreamError: classifyCartUpstreamError,
+});

@@ -25,8 +25,10 @@
  *   GraphQL field names like `addDraftOrder` or `orderById`.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { commerceRoute } from '@/lib/commerce/commerce-route';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { InvalidRequestError, UpstreamError } from '@/lib/commerce/errors';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type AddCartOrderResult,
@@ -63,81 +65,74 @@ interface CreateCartBody {
   lineItems?: AddToCartItemInput[];
 }
 
-export default async function handler(req: Request, res: Response): Promise<void> {
-  try {
-    const body = (req.body ?? {}) as CreateCartBody;
-    const initialItems = Array.isArray(body.lineItems) ? body.lineItems : [];
+async function createCart(req: Request, res: Response): Promise<void> {
+  const body = (req.body ?? {}) as CreateCartBody;
+  const initialItems = Array.isArray(body.lineItems) ? body.lineItems : [];
 
-    // Validate all items BEFORE creating the cart so a bad payload can't
-    // produce an orphaned cart (cart created, item add fails, client never
-    // gets the id). Mirrors the validation in POST /api/commerce/cart/:id/items.
-    for (const item of initialItems) {
-      if (!item.skuId || !item.name || typeof item.quantity !== 'number') {
-        res.status(400).json({
-          error: 'Each lineItem must have skuId, a non-empty name, and a numeric quantity',
-        });
-        return;
-      }
+  // Validate all items BEFORE creating the cart so a bad payload can't
+  // produce an orphaned cart (cart created, item add fails, client never
+  // gets the id). Mirrors the validation in POST /api/commerce/cart/:id/items.
+  for (const item of initialItems) {
+    if (!item.skuId || !item.name || typeof item.quantity !== 'number') {
+      throw new InvalidRequestError(
+        'Each lineItem must have skuId, a non-empty name, and a numeric quantity',
+      );
     }
+  }
 
-    const config: CommerceConfig = readCommerceConfigForResponse(res);
-    if (!validateCommerceCartScope(req, res, config)) return;
-    const { storeId, channelId, clientId, apiBaseUrl, currencyCode } = config;
+  const config: CommerceConfig = readCommerceConfigForResponse(res);
+  assertCommerceCartScope(req, config);
+  const { storeId, channelId, clientId, apiBaseUrl, currencyCode } = config;
 
-    const endpoint = orderStorefrontEndpoint({ apiBaseUrl });
-    const headers = storefrontHeaders({ storeId, clientId });
+  const endpoint = orderStorefrontEndpoint({ apiBaseUrl });
+  const headers = storefrontHeaders({ storeId, clientId });
 
-    // Step 1: create an EMPTY cart. Do not pass `lineItems` here — the
-    // `addDraftOrder` mutation expects `CreateDraftLineItemInput` (with
-    // server-priced `totals` + `unitAmount`), which the client cannot
-    // produce. SKU-based adds must go through `addLineItemBySkuId`.
-    const created = await gqlRequest<AddCartOrderResult, AddCartOrderVariables>({
+  // Step 1: create an EMPTY cart. Do not pass `lineItems` here — the
+  // `addDraftOrder` mutation expects `CreateDraftLineItemInput` (with
+  // server-priced `totals` + `unitAmount`), which the client cannot
+  // produce. SKU-based adds must go through `addLineItemBySkuId`.
+  const created = await gqlRequest<AddCartOrderResult, AddCartOrderVariables>({
+    endpoint,
+    query: addCartOrderMutation,
+    variables: {
+      input: buildEmptyCartOrderInput({
+        storeId,
+        channelId,
+        owner: config.owner,
+        currencyCode: body.currencyCode ?? currencyCode,
+      }),
+    },
+    headers,
+  });
+
+  const newCartId = created.addDraftOrder?.id;
+  if (!newCartId) {
+    throw new UpstreamError('addDraftOrder response did not include a cart id');
+  }
+
+  // Step 2: append each initial SKU one-by-one via `addLineItemBySkuId`.
+  // Sequential, not parallel — same-cart line item adds are not safe to
+  // race on the server side.
+  for (const item of initialItems) {
+    await gqlRequest<AddLineItemBySkuIdResult, AddLineItemBySkuIdVariables>({
       endpoint,
-      query: addCartOrderMutation,
-      variables: {
-        input: buildEmptyCartOrderInput({
-          storeId,
-          channelId,
-          owner: config.owner,
-          currencyCode: body.currencyCode ?? currencyCode,
-        }),
-      },
+      query: addLineItemBySkuIdMutation,
+      variables: { input: buildAddLineItemBySkuIdInput(newCartId, item) },
       headers,
-    });
-
-    const newCartId = created.addDraftOrder?.id;
-    if (!newCartId) {
-      res.status(500).json({ error: 'Failed to create cart: missing id in mutation response' });
-      return;
-    }
-
-    // Step 2: append each initial SKU one-by-one via `addLineItemBySkuId`.
-    // Sequential, not parallel — same-cart line item adds are not safe to
-    // race on the server side.
-    for (const item of initialItems) {
-      await gqlRequest<AddLineItemBySkuIdResult, AddLineItemBySkuIdVariables>({
-        endpoint,
-        query: addLineItemBySkuIdMutation,
-        variables: { input: buildAddLineItemBySkuIdInput(newCartId, item) },
-        headers,
-      });
-    }
-
-    // Step 3: re-hydrate the cart and return it under the canonical `cart`
-    // key. Clients always read `data.cart` regardless of which cart route
-    // they called.
-    const hydrated = await gqlRequest<GetCartOrderResult, GetCartOrderVariables>({
-      endpoint,
-      query: getCartOrderQuery,
-      variables: { id: newCartId },
-      headers,
-    });
-
-    res.status(201).json({ cart: hydrated.orderById ?? null });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to create cart',
-      message: error instanceof Error ? error.message : String(error),
     });
   }
+
+  // Step 3: re-hydrate the cart and return it under the canonical `cart`
+  // key. Clients always read `data.cart` regardless of which cart route
+  // they called.
+  const hydrated = await gqlRequest<GetCartOrderResult, GetCartOrderVariables>({
+    endpoint,
+    query: getCartOrderQuery,
+    variables: { id: newCartId },
+    headers,
+  });
+
+  res.status(201).json({ cart: hydrated.orderById ?? null });
 }
+
+export default commerceRoute('Failed to create cart', createCart);

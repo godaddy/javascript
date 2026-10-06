@@ -32,81 +32,73 @@
  *
  * Response: { url, id, draftOrderId, storeId, channelId, businessId,
  * storeName, sourceApp } from the created checkout session. The route returns
- * 500 if checkout-api does not preserve the configured store/channel binding.
+ * 502 (`upstream_error`) if checkout-api does not preserve the configured
+ * store/channel binding or the requested checkout settings.
  * Browser callers should redirect to `response.url`; this route does not
  * return a `redirectUrl` field.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
 import type { CheckoutReturnUrlValidator } from '@/lib/commerce/checkout-return-urls';
+import { commerceRoute } from '@/lib/commerce/commerce-route';
 import { type CommerceConfig, commerceConfigurationForResponse } from '@/lib/commerce/config';
-
 import {
   type CreateCheckoutSessionParams,
   createCheckoutSession,
 } from '@/lib/commerce/create-checkout-session';
+import { CommerceNotConfiguredError, InvalidRequestError } from '@/lib/commerce/errors';
 
 type CheckoutBody = Partial<CreateCheckoutSessionParams>;
 
-export default async function handler(req: Request, res: Response): Promise<void> {
-  try {
-    const configuration = commerceConfigurationForResponse(res);
-    const body = (req.body ?? {}) as CheckoutBody;
-    const { draftOrderId, skuId, quantity, lineItemData, returnUrl, successUrl } = body;
+async function createCheckout(req: Request, res: Response): Promise<void> {
+  const configuration = commerceConfigurationForResponse(res);
+  const body = (req.body ?? {}) as CheckoutBody;
+  const { draftOrderId, skuId, quantity, lineItemData, returnUrl, successUrl } = body;
 
-    if (lineItemData !== undefined) {
-      res.status(400).json({ error: 'Non-catalog checkout must be created by the server.' });
-      return;
-    }
+  if (lineItemData !== undefined) {
+    throw new InvalidRequestError('Non-catalog checkout must be created by the server.');
+  }
 
-    const checkoutSourceCount = [draftOrderId, skuId].filter(Boolean).length;
-    if (
-      checkoutSourceCount !== 1 ||
-      [draftOrderId, skuId].some(
-        (value) => value !== undefined && (typeof value !== 'string' || !value.trim()),
-      )
-    ) {
-      res.status(400).json({ error: 'exactly one non-empty draftOrderId or skuId is required' });
-      return;
-    }
+  const checkoutSourceCount = [draftOrderId, skuId].filter(Boolean).length;
+  if (
+    checkoutSourceCount !== 1 ||
+    [draftOrderId, skuId].some((value) => value !== undefined && (typeof value !== 'string' || !value.trim()))
+  ) {
+    throw new InvalidRequestError('exactly one non-empty draftOrderId or skuId is required');
+  }
 
-    if (quantity !== undefined && (!Number.isSafeInteger(quantity) || quantity < 1)) {
-      res.status(400).json({ error: 'quantity must be a positive whole number' });
-      return;
-    }
+  if (quantity !== undefined && (!Number.isSafeInteger(quantity) || quantity < 1)) {
+    throw new InvalidRequestError('quantity must be a positive whole number');
+  }
 
-    if (req.headers?.['x-commerce-scope'] !== undefined) {
-      const config: CommerceConfig = configuration.read();
-      if (!validateCommerceCartScope(req, res, config)) return;
-    }
+  if (req.headers?.['x-commerce-scope'] !== undefined) {
+    const config: CommerceConfig = configuration.read();
+    assertCommerceCartScope(req, config);
+  }
 
-    const validateReturnUrls: CheckoutReturnUrlValidator | undefined =
-      res.locals.commerceCheckoutReturnUrlValidator;
-    if (!validateReturnUrls) {
-      res.status(503).json({ error: 'Checkout return destinations are not configured.' });
-      return;
-    }
-    const destinations = validateReturnUrls(returnUrl, successUrl);
-    if (!destinations) {
-      res.status(400).json({ error: 'Checkout return destinations are not allowed.' });
-      return;
-    }
-
-    const session = await createCheckoutSession(
-      {
-        draftOrderId,
-        skuId,
-        quantity,
-        ...destinations,
-      },
-      configuration,
-    );
-
-    res.status(200).json(session);
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to create checkout session',
-      message: error instanceof Error ? error.message : String(error),
+  const validateReturnUrls: CheckoutReturnUrlValidator | undefined =
+    res.locals.commerceCheckoutReturnUrlValidator;
+  if (!validateReturnUrls) {
+    throw new CommerceNotConfiguredError('Checkout return URLs are not configured on the router.', {
+      publicMessage: 'Checkout return destinations are not configured.',
     });
   }
+  const destinations = validateReturnUrls(returnUrl, successUrl);
+  if (!destinations) {
+    throw new InvalidRequestError('Checkout return destinations are not allowed.');
+  }
+
+  const session = await createCheckoutSession(
+    {
+      draftOrderId,
+      skuId,
+      quantity,
+      ...destinations,
+    },
+    configuration,
+  );
+
+  res.status(200).json(session);
 }
+
+export default commerceRoute('Failed to create checkout session', createCheckout);
