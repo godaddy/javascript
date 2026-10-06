@@ -21,6 +21,24 @@ function isFreeShippingMethod(method: ShippingMethod) {
   return method.cost?.value === 0;
 }
 
+// An automatic pick is never customer-edited, so form hydration can briefly
+// reset it to a stale order value; the order's line is the source of truth.
+export function getCurrentShippingServiceCode({
+  formServiceCode,
+  shippingLineServiceCode,
+  isAutoSelected,
+}: {
+  formServiceCode?: string | null;
+  shippingLineServiceCode?: string | null;
+  isAutoSelected?: boolean;
+}) {
+  return (
+    (isAutoSelected
+      ? shippingLineServiceCode || formServiceCode
+      : formServiceCode || shippingLineServiceCode) || null
+  );
+}
+
 export function getShippingMethodsKey(shippingMethods: ShippingMethod[]) {
   return JSON.stringify(
     sortShippingMethods(shippingMethods).map(method => ({

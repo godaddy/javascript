@@ -9,6 +9,7 @@ import {
   buildDraftOrder,
   buildLineItem,
   buildShippingAddress,
+  buildShippingRates,
   clearApiError,
   clearOperations,
   flushPromises,
@@ -16,6 +17,7 @@ import {
   renderCheckout,
   setApiError,
   setCurrentDraftOrder,
+  setShippingMethods,
   typeIntoNamedField,
   waitForCheckoutReady,
   waitForOperation,
@@ -77,6 +79,115 @@ describe('Checkout shipping behavior', () => {
     expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(0);
     expect(screen.getByRole('radio', { name: /weight based/i })).toBeChecked();
     expect(screen.getByRole('radio', { name: /free/i })).not.toBeChecked();
+  });
+
+  it('moves an automatic selection to the new cheapest rate when the address reprices it', async () => {
+    const rates = (standard: number, express: number) =>
+      buildShippingRates([
+        {
+          serviceCode: 'standard',
+          carrierCode: 'carrier',
+          displayName: 'Standard',
+          cost: { value: standard, currencyCode: 'USD' },
+        },
+        {
+          serviceCode: 'express',
+          carrierCode: 'carrier',
+          displayName: 'Express',
+          cost: { value: express, currencyCode: 'USD' },
+        },
+      ]);
+    const { user, queryClient } = renderCheckout({
+      apiOverrides: { shippingMethods: rates(500, 2000) },
+      draftOrderOverrides: { shippingLines: [] },
+    });
+    await waitForCheckoutReady();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(screen.getByRole('radio', { name: /standard/i })).toBeChecked();
+    clearOperations();
+
+    // Express is now the cheapest rate for the new address.
+    setShippingMethods(rates(2500, 2000));
+    const postal = document.querySelector(
+      'input[name="shippingPostalCode"]'
+    ) as HTMLInputElement;
+    await user.clear(postal);
+    await user.type(postal, '94016');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    await waitForOperation('DraftOrderShippingRates', 1, 6000);
+    await waitFor(() => {
+      expect(queryClient.isMutating()).toBe(0);
+      expect(queryClient.isFetching()).toBe(0);
+    });
+    await flushPromises();
+
+    const applied = getOperations('ApplyCheckoutSessionShippingMethod');
+    expect(applied.at(-1)?.input).toEqual([
+      expect.objectContaining({ requestedService: 'express' }),
+    ]);
+    expect(applied.length).toBeLessThanOrEqual(2);
+    expect(screen.getByRole('radio', { name: /express/i })).toBeChecked();
+  });
+
+  it('switches a saved method to newly available free shipping after an address edit without looping', async () => {
+    const paidRates = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 500, currencyCode: 'USD' },
+      },
+    ]);
+    const { user, queryClient } = renderCheckout({
+      apiOverrides: { shippingMethods: paidRates },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 500, currencyCode: 'USD' },
+            discounts: [],
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    clearOperations();
+
+    setShippingMethods([
+      ...paidRates,
+      ...buildShippingRates([
+        {
+          serviceCode: 'free',
+          carrierCode: 'carrier',
+          displayName: 'Free',
+          cost: { value: 0, currencyCode: 'USD' },
+        },
+      ]),
+    ]);
+    const postal = document.querySelector(
+      'input[name="shippingPostalCode"]'
+    ) as HTMLInputElement;
+    await user.clear(postal);
+    await user.type(postal, '94016');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    await waitForOperation('DraftOrderShippingRates', 1, 6000);
+    await waitFor(() => {
+      expect(queryClient.isMutating()).toBe(0);
+      expect(queryClient.isFetching()).toBe(0);
+    });
+    await flushPromises();
+
+    const applied = getOperations('ApplyCheckoutSessionShippingMethod');
+    expect(applied.at(-1)?.input).toEqual([
+      expect.objectContaining({ requestedService: 'free' }),
+    ]);
+    expect(applied.length).toBeLessThanOrEqual(2);
+    expect(screen.getByRole('radio', { name: /free/i })).toBeChecked();
   });
 
   it('shows the no-origin-address message when shipping origin is missing', async () => {

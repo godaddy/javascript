@@ -16,8 +16,8 @@ describe('getDraftOrderDiscountCodes', () => {
     } as DraftOrder;
 
     expect(getDraftOrderDiscountCodes(draftOrder)).toEqual([
-      'line',
       'order',
+      'line',
       'shared',
       'shipping',
     ]);

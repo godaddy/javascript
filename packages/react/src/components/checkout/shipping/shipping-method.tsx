@@ -12,7 +12,10 @@ import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { ShippingMethodSkeleton } from '@/components/checkout/shipping/shipping-method-skeleton';
 import { buildShippingPayload } from '@/components/checkout/shipping/utils/build-shipping-payload';
-import { selectShippingMethod } from '@/components/checkout/shipping/utils/requires-shipping-reconciliation';
+import {
+  getCurrentShippingServiceCode,
+  selectShippingMethod,
+} from '@/components/checkout/shipping/utils/requires-shipping-reconciliation';
 import {
   getShippingFulfillmentSyncKey,
   shouldApplyShippingMethod,
@@ -186,11 +189,15 @@ export function ShippingMethodForm() {
     // Case 2: Shipping methods available - apply or re-apply as needed
     if (hasShippingMethods) {
       const currentFormMethod = form.getValues('shippingMethod');
-      const existingMethod = currentFormMethod || currentServiceCode;
-      const isInitialSelection = lastShippingMethodsRef.current === null;
       const previousAutoSelected = Boolean(
         form.getValues('shippingMethodAutoSelected')
       );
+      const existingMethod = getCurrentShippingServiceCode({
+        formServiceCode: currentFormMethod,
+        shippingLineServiceCode: currentServiceCode,
+        isAutoSelected: previousAutoSelected,
+      });
+      const isInitialSelection = lastShippingMethodsRef.current === null;
       const { selectedMethod: methodToApply, autoSelected } =
         selectShippingMethod({
           shippingMethods,

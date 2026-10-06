@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ShippingLines, ShippingMethod } from '@/types';
 import {
+  getCurrentShippingServiceCode,
   requiresShippingReconciliation,
   selectShippingMethod,
 } from './requires-shipping-reconciliation';
@@ -188,5 +189,45 @@ describe('selectShippingMethod', () => {
         isAutoSelected: false,
       })
     ).toMatchObject({ selectedMethod: standard, autoSelected: true });
+  });
+});
+
+describe('getCurrentShippingServiceCode', () => {
+  it("prefers the form value for a customer's choice", () => {
+    expect(
+      getCurrentShippingServiceCode({
+        formServiceCode: 'express',
+        shippingLineServiceCode: 'standard',
+        isAutoSelected: false,
+      })
+    ).toBe('express');
+  });
+
+  it("prefers the order's shipping line for an automatic pick", () => {
+    expect(
+      getCurrentShippingServiceCode({
+        formServiceCode: 'standard',
+        shippingLineServiceCode: 'express',
+        isAutoSelected: true,
+      })
+    ).toBe('express');
+  });
+
+  it('falls back to whichever value is set', () => {
+    expect(
+      getCurrentShippingServiceCode({
+        formServiceCode: '',
+        shippingLineServiceCode: 'standard',
+        isAutoSelected: false,
+      })
+    ).toBe('standard');
+    expect(
+      getCurrentShippingServiceCode({
+        formServiceCode: 'standard',
+        shippingLineServiceCode: null,
+        isAutoSelected: true,
+      })
+    ).toBe('standard');
+    expect(getCurrentShippingServiceCode({})).toBeNull();
   });
 });

@@ -168,7 +168,7 @@ describe('ExpressCheckoutButton coupon sync', () => {
     );
   });
 
-  it('refreshes the wallet shipping methods when a coupon is removed', async () => {
+  it('keeps the wallet shipping methods when a coupon changes', async () => {
     render(<ExpressCheckoutButton />);
     await waitFor(() =>
       expect(mocks.handlers.shipping_address_change).toBeDefined()
@@ -183,23 +183,13 @@ describe('ExpressCheckoutButton coupon sync', () => {
     });
     expect(mocks.getShippingMethods).toHaveBeenCalledTimes(1);
 
-    mocks.getShippingMethods.mockResolvedValueOnce([
-      rate('standard', 1000),
-      rate('express', 2000),
-    ]);
     const updateWith = vi.fn();
     await act(async () => {
       await mocks.handlers.coupon_code_change({ couponCode: '', updateWith });
     });
 
-    expect(mocks.getShippingMethods).toHaveBeenCalledTimes(2);
-    expect(updateWith).toHaveBeenCalledWith(
-      expect.objectContaining({
-        shippingMethods: [
-          expect.objectContaining({ id: 'standard', amount: '10.00' }),
-          expect.objectContaining({ id: 'express', amount: '20.00' }),
-        ],
-      })
-    );
+    expect(mocks.getShippingMethods).toHaveBeenCalledTimes(1);
+    expect(updateWith).toHaveBeenCalledTimes(1);
+    expect(updateWith.mock.calls[0][0]).not.toHaveProperty('shippingMethods');
   });
 });

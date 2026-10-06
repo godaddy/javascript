@@ -21,7 +21,7 @@ export function getDraftOrderDiscountCodes(
     }
   }
 
-  return Array.from(codes).sort();
+  return Array.from(codes);
 }
 
 // Express wallets accept a single coupon, so use the one worth the most.

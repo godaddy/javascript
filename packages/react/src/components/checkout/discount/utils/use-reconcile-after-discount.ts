@@ -6,6 +6,7 @@ import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useUpdateTaxes } from '@/components/checkout/order/use-update-taxes';
 import { buildShippingPayload } from '@/components/checkout/shipping/utils/build-shipping-payload';
 import {
+  getCurrentShippingServiceCode,
   requiresShippingReconciliation,
   selectShippingMethod,
 } from '@/components/checkout/shipping/utils/requires-shipping-reconciliation';
@@ -42,22 +43,29 @@ export function useReconcileAfterDiscount() {
     if (deliveryMethod === DeliveryMethods.SHIP && hasShippingDestination) {
       const previousShippingMethods = shippingMethodsQuery.data ?? [];
       const { data, isError } = await shippingMethodsQuery.refetch();
+      // A failed refresh is treated as "no rates": the coupon may have changed
+      // what the saved line should cost, so the line is cleared rather than kept
+      // unverified. Confirm's shipping guard then blocks payment from the real
+      // order state until the customer retries and a method is re-applied.
       const refreshedMethods = isError ? [] : (data ?? []);
       const isAutoSelected = Boolean(
         form.getValues('shippingMethodAutoSelected')
       );
+      const currentServiceCode = getCurrentShippingServiceCode({
+        formServiceCode: form.getValues('shippingMethod'),
+        shippingLineServiceCode:
+          draftOrder?.shippingLines?.[0]?.requestedService,
+        isAutoSelected,
+      });
       const shippingRequiresReconciliation = requiresShippingReconciliation({
         shippingMethods: refreshedMethods,
         previousShippingMethods,
         currentShippingLine: draftOrder?.shippingLines?.[0],
-        selectedServiceCode: form.getValues('shippingMethod'),
+        selectedServiceCode: currentServiceCode,
         isAutoSelected,
       });
 
       if (shippingRequiresReconciliation) {
-        const currentServiceCode =
-          form.getValues('shippingMethod') ||
-          draftOrder?.shippingLines?.[0]?.requestedService;
         const { selectedMethod, autoSelected } = selectShippingMethod({
           shippingMethods: refreshedMethods,
           currentServiceCode,
