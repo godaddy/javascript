@@ -145,9 +145,9 @@ Build before testing: artifact tests check the compiled JavaScript and shipped C
 
 [MIT](LICENSE.md).
 
-### Reusable site templates
+### Before a store is connected
 
-A template can mount the same components before a store is connected:
+A site can mount the same components before it has a connected store:
 
 ```tsx
 <CommerceStorefront theme={theme}>
@@ -156,33 +156,31 @@ A template can mount the same components before a store is connected:
 </CommerceStorefront>
 ```
 
-`Catalog.sampleProducts` defaults to `false`. It permits six internal examples (Product 1–6,
-$10–$60 USD) **only** when `/api/commerce/config` reports authoritative `state: 'unbound'`.
-The prop may remain after activation. Connecting a store changes the server state; the
-components automatically switch to real products without an agent rewriting the component
-tree or changing props. Real empty catalogs and errors never fall back to samples.
+`Catalog.sampleProducts` defaults to `false`. It allows six built-in sample products
+(Product 1–6, $10–$60 USD) **only** when `/api/commerce/config` reports `state: 'unbound'`.
+When a store is connected, the server reports a different state and the components show real
+products. You do not need to change props or the component tree. The prop has no effect while
+a store is connected. Real empty catalogs and errors never fall back to samples.
 
-The sample cart supports adding, changing quantities (1–999), removing items, and an example
-subtotal. It uses the existing drawer and theme, survives navigation under the shared provider,
-and resets on reload, unmount, or loss of verified unbound state. No live cart storage,
-product/cart/checkout requests, or upstream Commerce calls are used. Configuration reads
-remain necessary. Sample entries have no SKU or draft-order shape and are never transferred
-to a real cart. Checkout is unavailable, including direct `useCommerce().checkout()` calls.
+The sample cart supports adding items, changing quantities (1–999), removing items, and an
+example subtotal. It uses the existing drawer and theme, keeps its items during navigation under
+the shared provider, and resets on reload, unmount, or any change away from `unbound`. It uses no
+live cart storage and makes no product, cart, checkout, or upstream Commerce requests.
+Configuration reads continue. Sample entries are not SKUs or draft orders and never move into a
+real cart. Checkout is unavailable, including direct `useCommerce().checkout()` calls.
 
 `useCommerce().connection` now includes `unbound` and `connecting` in addition to `loading`,
-`ready`, and `error`. Only `ready` represents usable live Commerce. The public `cart` and live
-mutation methods retain their live-only semantics; sample cart data is internal. A catalog
-without `sampleProducts`, and direct product-detail visits, display the unconnected state.
-Sample grids and drawers expose `data-commerce-source="sample"` for readiness checks.
+`ready`, and `error`. Only `ready` means a usable store connection. The public `cart` and live
+mutation methods apply only to the connected store; sample cart data is internal. A catalog
+without `sampleProducts`, and direct product-detail visits, show the unconnected state.
+Sample grids and drawers have the attribute `data-commerce-source="sample"`.
 
-The provider reads configuration on mount/focus and every five seconds while visible and
-unbound/connecting. The first failed refresh suspends samples and clears the sample cart;
-recovery can resume an empty demo. Polling stops after ready; focus and explicit retry remain
-available. Hosts must publish uncached authoritative state and must never infer unbound from
-missing credentials, outages, or failed reads. A connected site may return to unbound only
-through a verified intentional unbinding operation. This is a host lifecycle responsibility.
+The provider reads configuration on mount and focus, and every five seconds while the page is
+visible and the state is `unbound` or `connecting`. The first failed refresh hides samples and
+clears the sample cart; a later `unbound` response starts an empty sample cart. Polling stops
+when the state is `ready`; focus and explicit retry still refresh configuration.
 
-Install a compatible server package and host state adapter before using sample templates.
-Old successful config responses remain supported; old or unknown hosts never implicitly
-permit samples. Template archives carry UI and dependencies, not author credentials, binding
-state, saved carts, or checkout settings. See the [server contract](docs/server-api.md).
+Use a server that reports connection state before you enable `sampleProducts`. Successful
+config responses without `state` still mean ready. A server that does not report `unbound`
+never shows samples. See the [server contract](docs/server-api.md) for the host's
+responsibilities.

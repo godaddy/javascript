@@ -40,7 +40,7 @@ import type { Request, Response } from 'express';
 import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
 import type { CheckoutReturnUrlValidator } from '@/lib/commerce/checkout-return-urls';
 import {
-  assertCommerceBindingReady,
+  assertCommerceConnectionReady,
   type CommerceConfig,
   commerceConfigurationForResponse,
 } from '@/lib/commerce/config';
@@ -80,7 +80,7 @@ export default async function handler(req: Request, res: Response): Promise<void
     }
 
     if (req.headers?.['x-commerce-scope'] !== undefined) {
-      assertCommerceBindingReady(configuration);
+      assertCommerceConnectionReady(configuration);
       const config: CommerceConfig = configuration.read();
       if (!validateCommerceCartScope(req, res, config)) return;
     }

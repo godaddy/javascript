@@ -26,7 +26,7 @@ import {
   getOAuthAccessToken,
 } from './checkout-subgraph';
 import {
-  assertCommerceBindingReady,
+  assertCommerceConnectionReady,
   type CommerceConfiguration,
   createRuntimeCommerceConfiguration,
 } from './config';
@@ -179,7 +179,7 @@ export async function createCheckoutSession(
     throw new Error('createCheckoutSession: exactly one of draftOrderId, skuId, or lineItemData is required');
   }
 
-  assertCommerceBindingReady(configuration);
+  assertCommerceConnectionReady(configuration);
   const {
     storeId,
     channelId,

@@ -11,12 +11,12 @@ export default async function handler(_req: Request, res: Response): Promise<voi
   res.setHeader('Cache-Control', 'no-store');
   try {
     const configuration = commerceConfigurationForResponse(res);
-    const state = configuration.readBindingState?.();
+    const state = configuration.readConnectionState?.();
     if (state === 'unbound' || state === 'connecting') {
       res.json({ state });
       return;
     }
-    if (state !== undefined && state !== 'ready') throw new Error('Invalid Commerce binding state.');
+    if (state !== undefined && state !== 'ready') throw new Error('Invalid Commerce connection state.');
     const config: CommerceConfig = configuration.read();
     res.json({
       ...(state === 'ready' ? { state } : {}),

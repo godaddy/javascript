@@ -4,7 +4,7 @@
  */
 import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
 import {
-  assertCommerceBindingReady,
+  assertCommerceConnectionReady,
   type CommerceConfiguration,
   createRuntimeCommerceConfiguration,
 } from './config';
@@ -47,7 +47,7 @@ export async function getOrderStatus(
     throw new Error('getOrderStatus: a valid orderId is required');
   }
 
-  assertCommerceBindingReady(configuration);
+  assertCommerceConnectionReady(configuration);
   const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } = configuration.read();
   const token = await getOAuthAccessToken({
     clientId,
