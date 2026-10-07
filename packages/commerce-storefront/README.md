@@ -185,5 +185,4 @@ through a verified intentional unbinding operation. This is a host lifecycle res
 Install a compatible server package and host state adapter before using sample templates.
 Old successful config responses remain supported; old or unknown hosts never implicitly
 permit samples. Template archives carry UI and dependencies, not author credentials, binding
-state, saved carts, or checkout settings. See [server contract](docs/server-api.md) and the
-[local template example](../../examples/commerce-storefront/README.md).
+state, saved carts, or checkout settings. See the [server contract](docs/server-api.md).
