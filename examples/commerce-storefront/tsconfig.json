@@ -11,10 +11,7 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "esModuleInterop": true,
-    "types": [
-      "vite/client"
-    ]
+    "esModuleInterop": true
   },
   "include": [
     "*.ts",

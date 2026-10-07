@@ -162,7 +162,7 @@ export function CartDrawer(): ReactElement {
             <div className='flex items-start justify-between border-b border-neutral-200 p-6'>
               <div>
                 <Dialog.Title className='text-2xl font-semibold'>
-                  {isSample ? 'Sample cart — checkout unavailable' : 'Your cart'}
+                  {isSample ? 'Sample cart' : 'Your cart'}
                 </Dialog.Title>
                 <Dialog.Description className='mt-1 text-sm text-neutral-600'>
                   {isSample
@@ -322,7 +322,9 @@ export function CartDrawer(): ReactElement {
                   </p>
                 )}
                 {isSample ? (
-                  <p className='text-sm text-neutral-600'>Example total in USD. Checkout unavailable.</p>
+                  <p className='text-sm text-neutral-600'>
+                    Example total in USD. Checkout is not set up yet.
+                  </p>
                 ) : config.checkoutSuccessPath ? (
                   <button
                     type='button'
