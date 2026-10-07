@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode, useState } from 'react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
+import { Link, MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError, CartIdStorage, money, request } from './api';
 import { AddToCartButton, CartButton } from './cart';
@@ -40,7 +40,7 @@ function mockApi(handler: (path: string, init?: RequestInit) => Response | Promi
   return fn;
 }
 function mount(children?: ReactNode, path = '/shop', checkoutSuccessPath?: string) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const client = new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } });
   let context: CommerceContextValue;
   function Observe() {
     context = useCommerce();
@@ -257,7 +257,11 @@ describe('shared cart', () => {
       await Promise.resolve();
     });
     act(() => {
-      view.client.setQueryData(['commerce', 'configuration'], { ...configuration, cartScope: 'store-two' });
+      view.client.setQueryData(['commerce', 'configuration'], {
+        state: 'ready',
+        ...configuration,
+        cartScope: 'store-two',
+      });
     });
     await connected(view);
     await act(async () => {
@@ -293,7 +297,7 @@ describe('shared cart', () => {
     });
     await waitFor(() => expect(view.context().connection).toBe('error'));
     act(() => {
-      view.client.setQueryData(['commerce', 'configuration'], configuration);
+      view.client.setQueryData(['commerce', 'configuration'], { state: 'ready', ...configuration });
     });
     await connected(view);
     await act(async () => {
@@ -528,5 +532,235 @@ describe('storage and transport', () => {
     expect(money(1234, 'USD')).toBe('$12.34');
     expect(money(1234, 'JPY')).toBe('¥1,234');
     expect(money(1234, 'KWD')).toContain('1.234');
+  });
+});
+
+describe('template samples', () => {
+  it('shares six internal samples and a local cart without live requests or storage', async () => {
+    const api = mockApi(() => response({ state: 'unbound' }));
+    const read = vi.spyOn(Storage.prototype, 'getItem');
+    const write = vi.spyOn(Storage.prototype, 'setItem');
+    const remove = vi.spyOn(Storage.prototype, 'removeItem');
+    const view = mount(
+      <>
+        <CartButton />
+        <Catalog sampleProducts />
+        <Catalog sampleProducts showHeader={false} />
+      </>,
+      '/shop',
+      '/thanks',
+    );
+    await screen.findAllByRole('button', { name: 'Add Product 1 to sample cart' });
+    expect(screen.getAllByRole('button', { name: /to sample cart/ })).toHaveLength(12);
+    expect(view.context().connection).toBe('unbound');
+    expect(view.context().cart).toBeNull();
+    const buttons = screen.getAllByRole('button', { name: 'Add Product 1 to sample cart' });
+    await userEvent.click(buttons[0]);
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-commerce-source', 'sample');
+    await userEvent.keyboard('{Escape}');
+    expect(buttons[0]).toHaveFocus();
+    await userEvent.click(buttons[1]);
+    const drawer = screen.getByRole('dialog');
+    expect(within(drawer).getAllByTestId('cart-item')).toHaveLength(1);
+    expect(within(drawer).getAllByText('$20.00')).toHaveLength(2);
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Increase quantity of Product 1' }));
+    expect(within(drawer).getAllByText('$30.00')).toHaveLength(2);
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Decrease quantity of Product 1' }));
+    expect(within(drawer).getAllByText('$20.00')).toHaveLength(2);
+    expect(within(drawer).queryByRole('button', { name: /Proceed to Checkout/ })).not.toBeInTheDocument();
+    expect(await view.context().checkout()).toBe(false);
+    expect(await view.context().addItem(item)).toBe(false);
+    expect(await view.context().changeQuantity('sample-1', 2)).toBe(false);
+    expect(await view.context().applyDiscount('TEST')).toBe(false);
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Remove Product 1' }));
+    expect(within(drawer).getByText('Your cart is empty')).toBeVisible();
+    expect(api.mock.calls.every(([path]) => String(path).endsWith('/config'))).toBe(true);
+    expect(read).not.toHaveBeenCalled();
+    expect(write).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { state: 'connecting' },
+    { state: 'unknown' },
+    {},
+    { state: 'ready' },
+    { state: 'unbound', ...configuration },
+  ])('does not infer samples from %j', async (config) => {
+    const api = mockApi(() => response(config));
+    const view = mount(
+      <>
+        <Catalog sampleProducts />
+        <CartButton />
+      </>,
+    );
+    await waitFor(() => expect(view.context().connection).not.toBe('loading'));
+    expect(screen.queryByText('Product 1')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Cart/ })).toBeDisabled();
+    expect(api).toHaveBeenCalledTimes(1);
+  });
+
+  it('requires catalog opt-in and keeps unbound product details inert', async () => {
+    const api = mockApi(() => response({ state: 'unbound' }));
+    mount(
+      <>
+        <Catalog />
+        <Routes>
+          <Route path='/products/:productId' element={<ProductDetails />} />
+        </Routes>
+      </>,
+      '/products/sample-1',
+    );
+    expect(await screen.findAllByText('Connect a store to show products.')).toHaveLength(2);
+    expect(screen.queryByText('Product 1')).not.toBeInTheDocument();
+    expect(api).toHaveBeenCalledTimes(1);
+  });
+
+  it('automatically activates an empty live catalog without prop edits and discards sample items', async () => {
+    let config: unknown = { state: 'unbound' };
+    const api = mockApi((path) =>
+      path.endsWith('/config') ? response(config) : response({ skuGroups: { edges: [] } }),
+    );
+    const view = mount(
+      <>
+        <CartButton />
+        <Catalog sampleProducts />
+      </>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Add Product 1 to sample cart' }));
+    config = { state: 'ready', ...configuration };
+    await act(async () => {
+      await view.client.refetchQueries({ queryKey: ['commerce', 'configuration'] });
+    });
+    expect(await screen.findByText('No products available.')).toBeVisible();
+    expect(document.querySelector('[data-commerce-source="sample"]')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Cart 0' })).toBeEnabled();
+    expect(view.context().cart).toBeNull();
+    expect(api.mock.calls.some(([path]) => String(path).includes('/cart'))).toBe(false);
+    expect(api.mock.calls.some(([, options]) => options?.body?.toString().includes('sample-'))).toBe(false);
+  });
+
+  it('suspends samples on the first failed config refresh and recovers with an empty sample cart', async () => {
+    const api = mockApi(() => response({ state: 'unbound' }));
+    const view = mount(
+      <>
+        <CartButton />
+        <Catalog sampleProducts />
+      </>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Add Product 1 to sample cart' }));
+    api.mockResolvedValue(response({ error: 'Host state unavailable' }, 503));
+    const before = api.mock.calls.length;
+    await act(async () => {
+      await view.client.refetchQueries({ queryKey: ['commerce', 'configuration'] });
+    });
+    expect(await screen.findByText('Host state unavailable')).toBeVisible();
+    expect(view.context().connection).toBe('error');
+    expect(api.mock.calls.length).toBe(before + 1);
+    expect(document.querySelector('[data-commerce-source="sample"]')).toBeNull();
+    api.mockResolvedValue(response({ state: 'unbound' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Cart 0' })).toBeEnabled());
+  });
+
+  it('polls for binding changes without a page reload', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    try {
+      let config: unknown = { state: 'unbound' };
+      const api = mockApi((path) =>
+        path.endsWith('/config') ? response(config) : response({ skuGroups: { edges: [] } }),
+      );
+      const view = mount(<Catalog sampleProducts />);
+      await screen.findByRole('button', { name: 'Add Product 1 to sample cart' });
+      config = { state: 'connecting' };
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5_000);
+      });
+      await waitFor(() => expect(view.context().connection).toBe('connecting'));
+      expect(screen.queryByText('Product 1')).toBeNull();
+      config = { state: 'ready', ...configuration };
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5_000);
+      });
+      await screen.findByText('No products available.');
+      const count = api.mock.calls.length;
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15_000);
+      });
+      expect(api).toHaveBeenCalledTimes(count);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('template lifetime boundaries', () => {
+  it('preserves samples across routed pages but resets when the storefront is remounted', async () => {
+    mockApi(() => response({ state: 'unbound' }));
+    const shell = (
+      <>
+        <CartButton />
+        <Link to='/about'>About</Link>
+        <Link to='/shop'>Shop</Link>
+        <Routes>
+          <Route path='/shop' element={<Catalog sampleProducts />} />
+          <Route path='/about' element={<p>About page</p>} />
+        </Routes>
+      </>
+    );
+    const view = mount(shell);
+    await userEvent.click(await screen.findByRole('button', { name: 'Add Product 1 to sample cart' }));
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(screen.getByRole('link', { name: 'About' }));
+    expect(screen.getByText('About page')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Cart 1' })).toBeEnabled();
+    await userEvent.click(screen.getByRole('link', { name: 'Shop' }));
+    expect(screen.getByRole('button', { name: 'Cart 1' })).toBeEnabled();
+    view.unmount();
+    mount(shell);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Cart 0' })).toBeEnabled());
+  });
+
+  it('never restores samples for a failed live catalog or lost connected configuration', async () => {
+    let config: Response = response({ state: 'ready', ...configuration });
+    mockApi((path) =>
+      path.endsWith('/config') ? config.clone() : response({ error: 'Catalog unavailable' }, 503),
+    );
+    const view = mount(<Catalog sampleProducts />);
+    expect(await screen.findByText('Catalog unavailable')).toBeVisible();
+    expect(document.querySelector('[data-commerce-source="sample"]')).toBeNull();
+    config = response({ error: 'Configuration lost' }, 503);
+    await act(async () => {
+      await view.client.refetchQueries({ queryKey: ['commerce', 'configuration'] });
+    });
+    expect(await screen.findByText('Configuration lost')).toBeVisible();
+    expect(document.querySelector('[data-commerce-source="sample"]')).toBeNull();
+  });
+
+  it('ignores an older unbound config response after a newer ready response', async () => {
+    const old = deferred<Response>();
+    let reads = 0;
+    mockApi((path) => {
+      if (!path.endsWith('/config')) return response({ skuGroups: { edges: [] } });
+      reads++;
+      if (reads === 1) return response({ state: 'unbound' });
+      if (reads === 2) return old.promise;
+      return response({ state: 'ready', ...configuration });
+    });
+    const view = mount(<Catalog sampleProducts />);
+    await screen.findByText('Product 1');
+    act(() => {
+      void view.client.refetchQueries({ queryKey: ['commerce', 'configuration'] });
+    });
+    await waitFor(() => expect(reads).toBe(2));
+    await act(async () => {
+      await view.client.refetchQueries({ queryKey: ['commerce', 'configuration'] });
+    });
+    expect(await screen.findByText('No products available.')).toBeVisible();
+    await act(async () => {
+      old.resolve(response({ state: 'unbound' }));
+    });
+    expect(view.context().connection).toBe('ready');
+    expect(document.querySelector('[data-commerce-source="sample"]')).toBeNull();
   });
 });

@@ -144,3 +144,46 @@ Build before testing: artifact tests check the compiled JavaScript and shipped C
 ## License
 
 [MIT](LICENSE.md).
+
+### Reusable site templates
+
+A template can mount the same components before a store is connected:
+
+```tsx
+<CommerceStorefront theme={theme}>
+  <Header><CartButton /></Header>
+  <Catalog sampleProducts />
+</CommerceStorefront>
+```
+
+`Catalog.sampleProducts` defaults to `false`. It permits six internal examples (Product 1–6,
+$10–$60 USD) **only** when `/api/commerce/config` reports authoritative `state: 'unbound'`.
+The prop may remain after activation. Connecting a store changes the server state; the
+components automatically switch to real products without an agent rewriting the component
+tree or changing props. Real empty catalogs and errors never fall back to samples.
+
+The sample cart supports adding, changing quantities (1–999), removing items, and an example
+subtotal. It uses the existing drawer and theme, survives navigation under the shared provider,
+and resets on reload, unmount, or loss of verified unbound state. No live cart storage,
+product/cart/checkout requests, or upstream Commerce calls are used. Configuration reads
+remain necessary. Sample entries have no SKU or draft-order shape and are never transferred
+to a real cart. Checkout is unavailable, including direct `useCommerce().checkout()` calls.
+
+`useCommerce().connection` now includes `unbound` and `connecting` in addition to `loading`,
+`ready`, and `error`. Only `ready` represents usable live Commerce. The public `cart` and live
+mutation methods retain their live-only semantics; sample cart data is internal. A catalog
+without `sampleProducts`, and direct product-detail visits, display the unconnected state.
+Sample grids and drawers expose `data-commerce-source="sample"` for readiness checks.
+
+The provider reads configuration on mount/focus and every five seconds while visible and
+unbound/connecting. The first failed refresh suspends samples and clears the sample cart;
+recovery can resume an empty demo. Polling stops after ready; focus and explicit retry remain
+available. Hosts must publish uncached authoritative state and must never infer unbound from
+missing credentials, outages, or failed reads. A connected site may return to unbound only
+through a verified intentional unbinding operation. This is a host lifecycle responsibility.
+
+Install a compatible server package and host state adapter before using sample templates.
+Old successful config responses remain supported; old or unknown hosts never implicitly
+permit samples. Template archives carry UI and dependencies, not author credentials, binding
+state, saved carts, or checkout settings. See [server contract](docs/server-api.md) and the
+[local template example](../../examples/commerce-storefront/README.md).

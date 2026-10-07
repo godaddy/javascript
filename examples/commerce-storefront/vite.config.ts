@@ -1,3 +1,5 @@
+import express from 'express';
+import { createCommerceCatalogRouter, type CommerceConfiguration } from '@godaddy/gd-commerce-server';
 import { randomUUID } from 'node:crypto';
 import { defineConfig, type Plugin } from 'vite';
 import type { CartOrder, SKU, SKUGroup } from '@godaddy/gd-commerce-storefront';
@@ -18,20 +20,46 @@ const products: SKUGroup[] = [
 // Demonstration only. This is neither a production server nor a Commerce API emulator.
 function demoApi(): Plugin {
   const carts = new Map<string, CartOrder>();
+  let state: 'unbound' | 'connecting' | 'error' | 'live' | 'live-empty' = 'unbound';
+  const configuration: CommerceConfiguration = {
+    readBindingState: () => {
+      if (state === 'error') throw new Error('Development host state unavailable.');
+      return state === 'live' || state === 'live-empty' ? 'ready' : state;
+    },
+    // Development-only values. Live demo catalog/cart routes below never contact this origin.
+    read: () => ({ clientId: 'local-example', clientSecret: 'not-a-secret', storeId: 'local-example', channelId: 'local-example', currencyCode: 'USD', apiBaseUrl: 'https://example.invalid' }),
+    readCheckout: () => ({ enablePromotionCodes: false, enableTaxCollection: false, enableShipping: false }),
+  };
+  const router = createCommerceCatalogRouter(configuration);
   return { name: 'storefront-demo-api', configureServer(server) {
+    const app = express();
+    app.post('/__demo/commerce-state', express.json(), (req, res) => {
+      const next = req.body?.state;
+      if (!['unbound', 'connecting', 'error', 'live', 'live-empty'].includes(next)) {
+        res.status(400).json({ error: 'Unknown demo state.' });
+        return;
+      }
+      state = next;
+      carts.clear();
+      res.json({ state });
+    });
+    app.use('/api/commerce', (req, res, next) => {
+      if (req.path === '/config' || (state !== 'live' && state !== 'live-empty')) router(req, res, next);
+      else next();
+    });
+    server.middlewares.use(app);
     server.middlewares.use('/api/commerce', async (req, res, next) => {
       try {
         const url = new URL(req.url ?? '/', 'http://localhost');
         const send = (value: unknown, status = 200) => { res.statusCode = status; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(value)); };
-        if (url.pathname === '/config') return send({ cartScope: 'demo-v1', currencyCode: 'USD' });
-        if (url.pathname === '/products') return send({ skuGroups: { edges: products.map(node => ({ node })), pageInfo: { hasNextPage: false } } });
+        if (url.pathname === '/products') return send({ skuGroups: { edges: state === 'live-empty' ? [] : products.map(node => ({ node })), pageInfo: { hasNextPage: false } } });
         if (url.pathname.startsWith('/products/')) {
           const product = products.find(item => item.id === url.pathname.split('/')[2]);
           const color = url.searchParams.get('attributeValues');
           return send({ skuGroup: product && color ? { ...product, skus: { edges: color === 'blue' ? [{ node: blue }] : color === 'clay' ? [{ node: clay }] : [], totalCount: 1 } } : product ?? null });
         }
         if (!url.pathname.startsWith('/cart')) return next();
-        if (req.headers['x-commerce-scope'] !== 'demo-v1') return send({ error: 'Store changed. Reload the page.' }, 409);
+        if (!req.headers['x-commerce-scope']) return send({ error: 'Store changed. Reload the page.' }, 409);
         let body = '';
         for await (const chunk of req) body += chunk;
         const input = body ? JSON.parse(body) : {};

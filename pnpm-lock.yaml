@@ -69,6 +69,12 @@ importers:
         specifier: ^7.0.0
         version: 7.18.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
     devDependencies:
+      '@godaddy/gd-commerce-server':
+        specifier: workspace:*
+        version: link:../../packages/commerce-server
+      '@types/express':
+        specifier: ^5.0.3
+        version: 5.0.3
       '@types/node':
         specifier: ^22.13.1
         version: 22.18.12
@@ -78,6 +84,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.3
         version: 19.2.2(@types/react@19.2.2)
+      express:
+        specifier: ^5.1.0
+        version: 5.2.1
       typescript:
         specifier: ~5.7.3
         version: 5.7.3
