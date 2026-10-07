@@ -381,7 +381,7 @@ describe('Commerce router mounting', (): void => {
   });
 });
 
-describe('authoritative template binding state', () => {
+describe('host-reported connection state', () => {
   it.each(['unbound', 'connecting'] as const)(
     'reports %s without credentials or upstream calls',
     async (state) => {
@@ -389,7 +389,7 @@ describe('authoritative template binding state', () => {
       const read = vi.fn(() => {
         throw new Error('No credentials');
       });
-      res.locals.commerceConfiguration = { ...configuration, read, readBindingState: () => state };
+      res.locals.commerceConfiguration = { ...configuration, read, readConnectionState: () => state };
       await configHandler({} as Request, res as unknown as Response);
       expect(res.json).toHaveBeenCalledWith({ state });
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
@@ -397,10 +397,10 @@ describe('authoritative template binding state', () => {
     },
   );
 
-  it('retains legacy config and validates an explicitly ready binding', async () => {
+  it('retains legacy config and validates an explicitly ready connection', async () => {
     for (const state of [undefined, 'ready'] as const) {
       const res = response();
-      res.locals.commerceConfiguration = { ...configuration, readBindingState: () => state };
+      res.locals.commerceConfiguration = { ...configuration, readConnectionState: () => state };
       await configHandler({} as Request, res as unknown as Response);
       expect(res.json).toHaveBeenCalledWith({
         ...(state ? { state } : {}),
@@ -411,7 +411,7 @@ describe('authoritative template binding state', () => {
     const res = response();
     res.locals.commerceConfiguration = {
       ...configuration,
-      readBindingState: () => 'ready',
+      readConnectionState: () => 'ready',
       read: () => {
         throw new Error('Lost configuration');
       },
@@ -424,7 +424,7 @@ describe('authoritative template binding state', () => {
     const res = response();
     res.locals.commerceConfiguration = {
       ...configuration,
-      readBindingState: () => {
+      readConnectionState: () => {
         if (state === 'throws') throw new Error('Host read failed');
         return state as 'ready';
       },
@@ -447,7 +447,7 @@ describe('authoritative template binding state', () => {
   ])('blocks nonready handlers even with leftover credentials', async (handler) => {
     vi.clearAllMocks();
     const res = response();
-    res.locals.commerceConfiguration = { ...configuration, readBindingState: () => 'connecting' };
+    res.locals.commerceConfiguration = { ...configuration, readConnectionState: () => 'connecting' };
     await handler(
       {
         headers: {},

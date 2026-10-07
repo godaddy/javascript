@@ -535,7 +535,7 @@ describe('storage and transport', () => {
   });
 });
 
-describe('template samples', () => {
+describe('sample products before a store is connected', () => {
   it('shares six internal samples and a local cart without live requests or storage', async () => {
     const api = mockApi(() => response({ state: 'unbound' }));
     const read = vi.spyOn(Storage.prototype, 'getItem');
@@ -694,7 +694,7 @@ describe('template samples', () => {
   });
 });
 
-describe('template lifetime boundaries', () => {
+describe('connection state transitions', () => {
   it('preserves samples across routed pages but resets when the storefront is remounted', async () => {
     mockApi(() => response({ state: 'unbound' }));
     const shell = (

@@ -102,34 +102,34 @@ When using `@godaddy/gd-commerce-server`, configure the router's `checkoutReturn
 
 Do not treat `checkoutSuccessPath`, a client-provided URL, the redirect itself, or a draft-order response as proof that payment succeeded. Verify payment using the checkout/payment service or trusted webhook state. Expire or reject paid/closed drafts on subsequent cart reads so returning customers cannot reuse a completed cart.
 
-## Authoritative template state
+## Connection state
 
-New hosts may return one of these uncached config responses:
+A host may return one of these uncached config responses:
 
 ```json
 { "state": "unbound" }
 { "state": "connecting" }
-{ "state": "ready", "cartScope": "opaque-binding-scope", "currencyCode": "USD" }
+{ "state": "ready", "cartScope": "opaque-cart-scope", "currencyCode": "USD" }
 ```
 
-Only an explicit `unbound` response permits `Catalog sampleProducts`. `connecting` suspends
-all catalog/cart actions. Loading, malformed state, HTTP errors, and missing routes do not
-permit samples. A successful legacy `{ cartScope, currencyCode }` response still means ready.
+Only an explicit `unbound` response allows `Catalog sampleProducts`. `connecting` suspends all
+catalog and cart actions. Loading, malformed state, HTTP errors, and missing routes never allow
+samples. A successful `{ cartScope, currencyCode }` response without `state` still means ready.
 
-`@godaddy/gd-commerce-server` accepts optional synchronous
-`CommerceConfiguration.readBindingState(): 'unbound' | 'connecting' | 'ready' | undefined`.
-Return `undefined` to retain legacy config reading. Return `unbound` only after an authoritative
-host check proves absence of a binding; throw on uncertainty/read failure. Nonready config
-responses require no credentials. `ready` still requires `read()` to succeed. Data/checkout
-handlers reject nonready state even if old credentials remain. Never ship fixed `unbound`
-state in a copied template or derive it from absent environment variables.
+`@godaddy/gd-commerce-server` accepts an optional synchronous
+`CommerceConfiguration.readConnectionState(): 'unbound' | 'connecting' | 'ready' | undefined`.
+Return `undefined` to keep the existing config behavior. Return `unbound` only when the host has
+confirmed that no store is connected. Throw when the state is unknown or cannot be read.
+`unbound` and `connecting` responses need no credentials. `ready` still requires `read()` to
+succeed. Data and checkout handlers reject any state other than `ready`, even if credentials
+remain. Do not infer `unbound` from missing credentials or configuration.
 
-Hosts own lifecycle projection: publish connecting before setup, ready only after durable
-binding and runtime projection succeed, and keep failures nonready. After connection, a
-missing configuration must never restore samples. Only verified intentional unbinding can
-authorize unbound again. Configuration changes must be visible to subsequent requests.
+The host owns the connection lifecycle. Report `ready` only when the store connection is
+complete, and keep failures in a state other than `unbound`. After a store connects, missing
+configuration must never bring samples back. Report `unbound` again only after the store is
+deliberately disconnected. State changes must be visible to the next request.
 
-The storefront polls every five seconds while visible and unbound/connecting and refreshes
-on mount/focus. Failed refreshes immediately revoke sample eligibility (without automatic
-request retries). Aborted configuration queries cannot overwrite newer responses.
-Release server and client support before adopting the template prop; no new endpoint is required.
+The storefront polls every five seconds while the page is visible and the state is `unbound` or
+`connecting`, and refreshes on mount and focus. A failed refresh immediately hides samples, without
+automatic request retries. Aborted configuration requests cannot overwrite newer responses.
+Release server and client support before using the `sampleProducts` prop. No new endpoint is required.
