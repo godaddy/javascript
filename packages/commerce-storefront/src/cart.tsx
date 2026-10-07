@@ -6,6 +6,7 @@ import { type CartSummaryTotals, getCartSummaryTotals } from './cart-model';
 import type { SKU } from './catalog-model';
 import { getAvailableInventoryQuantity } from './catalog-model';
 import { useCommerce } from './commerce-provider';
+import { useSampleCart } from './sample-cart';
 import { StorefrontSurface } from './storefront-surface';
 
 export const buttonClass: string =
@@ -15,13 +16,17 @@ export const inputClass: string =
 
 export function CartButton(): ReactElement {
   const { cart, setOpen, open, connection } = useCommerce();
-  const count: number = cart?.lineItems?.reduce((total, item) => total + (item.quantity ?? 0), 0) ?? 0;
+  const sample = useSampleCart();
+  const count: number =
+    connection === 'unbound'
+      ? sample.items.reduce((total, item) => total + item.quantity, 0)
+      : (cart?.lineItems?.reduce((total, item) => total + (item.quantity ?? 0), 0) ?? 0);
   return (
     <StorefrontSurface className='commerce-inline'>
       <button
         type='button'
         className={buttonClass}
-        disabled={connection !== 'ready'}
+        disabled={connection !== 'ready' && connection !== 'unbound'}
         aria-haspopup='dialog'
         aria-expanded={open}
         onClick={() => setOpen(true)}
@@ -86,6 +91,7 @@ export function AddToCartButton({
 export function CartDrawer(): ReactElement {
   const {
     config,
+    connection,
     cart,
     open,
     setOpen,
@@ -94,17 +100,43 @@ export function CartDrawer(): ReactElement {
     hydrating,
     error,
     storageWarning,
-    changeQuantity,
-    removeItem,
+    changeQuantity: changeLiveQuantity,
+    removeItem: removeLiveItem,
     refresh,
     checkout,
   } = useCommerce();
+  const sample = useSampleCart();
+  const isSample = connection === 'unbound';
+  const changeQuantity = isSample ? sample.changeQuantity : changeLiveQuantity;
+  const removeItem = isSample ? sample.remove : removeLiveItem;
   const [drawerAction, setDrawerAction] = useState<string | null>(null);
   const checkingOut: boolean = drawerAction === 'checkout';
   const locked: boolean = pending || hydrating || drawerAction !== null;
-  const items = cart?.lineItems ?? [];
+  // Shared presentation only: sample entries never become draft orders or live mutation inputs.
+  const items = isSample
+    ? sample.items.map((item) => ({
+        id: item.key,
+        name: item.name,
+        quantity: item.quantity,
+        image: undefined,
+        options: undefined,
+        subtotal: item.price * item.quantity,
+        currency: 'USD',
+      }))
+    : (cart?.lineItems ?? []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        image: item.details?.productAssetUrl,
+        options: item.details?.selectedOptions,
+        subtotal: item.totals?.subTotal?.value,
+        currency: item.totals?.subTotal?.currencyCode,
+      }));
   const summary: CartSummaryTotals = getCartSummaryTotals(cart);
-  const currency: string = cart?.totals?.total?.currencyCode ?? config.currencyCode;
+  const currency: string = isSample ? 'USD' : (cart?.totals?.total?.currencyCode ?? config.currencyCode);
+  const subtotal = isSample
+    ? sample.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    : summary.subtotal;
   async function handleAction(action: string, operation: () => Promise<boolean>): Promise<void> {
     if (locked) return;
     setDrawerAction(action);
@@ -120,6 +152,7 @@ export function CartDrawer(): ReactElement {
         <StorefrontSurface>
           <Dialog.Overlay className='fixed inset-0 z-40 bg-neutral-950/40' />
           <Dialog.Content
+            data-commerce-source={isSample ? 'sample' : undefined}
             className='fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col bg-white text-neutral-900 shadow-xl'
             onCloseAutoFocus={(event) => {
               event.preventDefault();
@@ -128,9 +161,13 @@ export function CartDrawer(): ReactElement {
           >
             <div className='flex items-start justify-between border-b border-neutral-200 p-6'>
               <div>
-                <Dialog.Title className='text-2xl font-semibold'>Your cart</Dialog.Title>
+                <Dialog.Title className='text-2xl font-semibold'>
+                  {isSample ? 'Sample cart — checkout unavailable' : 'Your cart'}
+                </Dialog.Title>
                 <Dialog.Description className='mt-1 text-sm text-neutral-600'>
-                  Review your items before checkout.
+                  {isSample
+                    ? 'Example products and prices in USD. Nothing can be purchased.'
+                    : 'Review your items before checkout.'}
                 </Dialog.Description>
               </div>
               <Dialog.Close
@@ -165,7 +202,11 @@ export function CartDrawer(): ReactElement {
               {!hydrating && !items.length && (
                 <div className='py-16 text-center'>
                   <p className='text-xl font-medium'>Your cart is empty</p>
-                  <p className='mt-2 text-neutral-600'>Find something you love in the shop.</p>
+                  <p className='mt-2 text-neutral-600'>
+                    {isSample
+                      ? 'Add a sample product to try the cart.'
+                      : 'Find something you love in the shop.'}
+                  </p>
                   <Link
                     className={`${buttonClass} mt-6`}
                     to={config.catalogPath}
@@ -179,16 +220,16 @@ export function CartDrawer(): ReactElement {
                 {items.map((item) => (
                   <li key={item.id} className='py-5 first:pt-0' data-testid='cart-item'>
                     <div className='flex gap-4'>
-                      {item.details?.productAssetUrl && (
+                      {item.image && (
                         <img
-                          src={item.details.productAssetUrl}
+                          src={item.image}
                           alt=''
                           className='h-20 w-20 rounded-lg bg-neutral-100 object-cover'
                         />
                       )}
                       <div className='min-w-0 flex-1'>
                         <h3 className='font-semibold'>{item.name}</h3>
-                        {item.details?.selectedOptions?.map((option) => (
+                        {item.options?.map((option) => (
                           <p
                             key={`${option.attribute}:${option.values?.join(',')}`}
                             className='text-sm text-neutral-600'
@@ -197,8 +238,8 @@ export function CartDrawer(): ReactElement {
                           </p>
                         ))}
                         <p className='mt-1 text-sm'>
-                          {typeof item.totals?.subTotal?.value === 'number'
-                            ? money(item.totals.subTotal.value, item.totals.subTotal.currencyCode ?? currency)
+                          {typeof item.subtotal === 'number'
+                            ? money(item.subtotal, item.currency ?? currency)
                             : 'Price unavailable'}
                         </p>
                       </div>
@@ -263,17 +304,26 @@ export function CartDrawer(): ReactElement {
             {items.length > 0 && (
               <div className='border-t border-neutral-200 p-6'>
                 <dl className='space-y-2 text-sm'>
-                  {typeof cart?.totals?.subTotal?.value === 'number' && (
+                  {(isSample || typeof cart?.totals?.subTotal?.value === 'number') && (
                     <div className='flex justify-between'>
-                      <dt>Subtotal</dt>
-                      <dd>{money(summary.subtotal, cart.totals.subTotal.currencyCode ?? currency)}</dd>
+                      <dt>{isSample ? 'Sample subtotal' : 'Subtotal'}</dt>
+                      <dd>
+                        {money(
+                          subtotal,
+                          isSample ? 'USD' : (cart?.totals?.subTotal?.currencyCode ?? currency),
+                        )}
+                      </dd>
                     </div>
                   )}
                 </dl>
-                <p className='commerce-cart-checkout-adjustments-note mt-3 text-sm text-neutral-600'>
-                  Shipping, taxes, and discounts are calculated at checkout.
-                </p>
-                {config.checkoutSuccessPath ? (
+                {!isSample && (
+                  <p className='commerce-cart-checkout-adjustments-note mt-3 text-sm text-neutral-600'>
+                    Shipping, taxes, and discounts are calculated at checkout.
+                  </p>
+                )}
+                {isSample ? (
+                  <p className='text-sm text-neutral-600'>Example total in USD. Checkout unavailable.</p>
+                ) : config.checkoutSuccessPath ? (
                   <button
                     type='button'
                     className={`${buttonClass} w-full`}

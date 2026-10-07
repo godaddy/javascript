@@ -12,12 +12,13 @@ import {
 } from 'react';
 import { ApiError, CartIdStorage, checkedFetch, message, request, type StorefrontConfig } from './api';
 import { type AddToCartItemInput, addToCart, type CartOrder } from './cart-model';
+import { SampleCartProvider } from './sample-cart';
 
 interface CartResponse {
   cart: CartOrder | null;
 }
 export interface CommerceContextValue {
-  connection: 'loading' | 'ready' | 'error';
+  connection: 'loading' | 'unbound' | 'connecting' | 'ready' | 'error';
   connectionError: string | null;
   retryConnection: () => void;
   theme: StorefrontTheme;
@@ -68,12 +69,20 @@ export interface CommerceProviderProps {
   checkoutSuccessPath?: string;
 }
 
-async function loadConfig(
-  signal: AbortSignal,
-): Promise<Pick<StorefrontConfig, 'cartScope' | 'currencyCode'>> {
-  const config = await request<Pick<StorefrontConfig, 'cartScope' | 'currencyCode'>>('/config', { signal });
+type PublicConfiguration =
+  | { state: 'unbound' | 'connecting' }
+  | ({ state: 'ready' } & Pick<StorefrontConfig, 'cartScope' | 'currencyCode'>);
+
+async function loadConfig(signal: AbortSignal): Promise<PublicConfiguration> {
+  const config = await request<Record<string, unknown>>('/config', { signal });
+  if (config?.state === 'unbound' || config?.state === 'connecting') {
+    if ('cartScope' in config || 'currencyCode' in config)
+      throw new Error('The store returned invalid configuration.');
+    return { state: config.state };
+  }
   if (
     !config ||
+    (config.state !== undefined && config.state !== 'ready') ||
     typeof config.cartScope !== 'string' ||
     !config.cartScope.trim() ||
     typeof config.currencyCode !== 'string' ||
@@ -81,7 +90,7 @@ async function loadConfig(
   ) {
     throw new Error('The store returned invalid configuration.');
   }
-  return config;
+  return { state: 'ready', cartScope: config.cartScope, currencyCode: config.currencyCode };
 }
 
 export function CommerceProvider({
@@ -96,19 +105,24 @@ export function CommerceProvider({
     queryKey: ['commerce', 'configuration'],
     queryFn: ({ signal }) => loadConfig(signal),
     staleTime: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    // Errors after an unbound response also need recovery; stale data never grants eligibility.
+    refetchInterval: (query) =>
+      query.state.data?.state === 'unbound' || query.state.data?.state === 'connecting' ? 5_000 : false,
+    refetchIntervalInBackground: false,
   });
   return (
     <BoundCommerceProvider
       config={{
         cartScope: '',
         currencyCode: 'USD',
-        ...config.data,
+        ...(config.data?.state === 'ready' ? config.data : {}),
         catalogPath,
         productPath,
         checkoutSuccessPath,
       }}
-      connection={config.isError ? 'error' : config.data ? 'ready' : 'loading'}
+      connection={config.isError ? 'error' : (config.data?.state ?? 'loading')}
       connectionError={config.isError ? message(config.error) : null}
       retryConnection={() => {
         void config.refetch();
@@ -138,7 +152,7 @@ function BoundCommerceProvider({
   const storageKey: string = `godaddy:commerce-storefront:cart:${config.cartScope}`;
   const cartIdStorage = useMemo(() => new CartIdStorage(storageKey), [storageKey]);
   const ready = connection === 'ready';
-  const session = useMemo(() => ({ cartIdStorage, ready }), [cartIdStorage, ready]);
+  const session = useMemo(() => ({ cartIdStorage, connection }), [cartIdStorage, connection]);
   const currentSession = useRef(session);
   currentSession.current = session;
   const readyRef = useRef(ready);
@@ -256,6 +270,7 @@ function BoundCommerceProvider({
     setOpen(false);
     setError(null);
     setStorageWarning(null);
+    setAnnouncement('');
     setPending(false);
     setHydrating(ready);
     if (ready) void refresh();
@@ -272,7 +287,7 @@ function BoundCommerceProvider({
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('focus', onFocus);
     };
-  }, [cartIdStorage, ready]);
+  }, [cartIdStorage, connection]);
 
   function addItem(item: AddToCartItemInput): Promise<boolean> {
     rememberOpener();
@@ -406,7 +421,17 @@ function BoundCommerceProvider({
         checkout,
       }}
     >
-      {children}
+      <SampleCartProvider
+        enabled={connection === 'unbound'}
+        announce={setAnnouncement}
+        onAdd={(name) => {
+          rememberOpener();
+          setAnnouncement(`${name} added to your sample cart.`);
+          setOpen(true);
+        }}
+      >
+        {children}
+      </SampleCartProvider>
       <span className='commerce-sr-only' role='status' aria-live='polite'>
         {announcement}
       </span>

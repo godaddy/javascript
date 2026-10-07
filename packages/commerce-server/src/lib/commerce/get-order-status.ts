@@ -3,7 +3,11 @@
  * Unlike the storefront cart API, this endpoint includes completed orders.
  */
 import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
-import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './config';
+import {
+  assertCommerceBindingReady,
+  type CommerceConfiguration,
+  createRuntimeCommerceConfiguration,
+} from './config';
 import type { Money } from './gql';
 
 export interface CommerceOrderStatus {
@@ -43,6 +47,7 @@ export async function getOrderStatus(
     throw new Error('getOrderStatus: a valid orderId is required');
   }
 
+  assertCommerceBindingReady(configuration);
   const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } = configuration.read();
   const token = await getOAuthAccessToken({
     clientId,

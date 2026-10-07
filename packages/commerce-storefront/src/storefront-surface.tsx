@@ -21,7 +21,9 @@ export function CommerceStatus(): ReactElement | null {
   if (connection === 'ready') return null;
   return (
     <StorefrontSurface>
-      {connection === 'loading' ? (
+      {connection === 'unbound' ? (
+        <p role='status'>Connect a store to show products.</p>
+      ) : connection === 'loading' || connection === 'connecting' ? (
         <p role='status'>Connecting to the store…</p>
       ) : (
         <div role='alert'>

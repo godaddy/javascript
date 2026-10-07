@@ -25,7 +25,11 @@ import {
   DEFAULT_CHECKOUT_PAYMENT_METHODS,
   getOAuthAccessToken,
 } from './checkout-subgraph';
-import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './config';
+import {
+  assertCommerceBindingReady,
+  type CommerceConfiguration,
+  createRuntimeCommerceConfiguration,
+} from './config';
 import { gqlRequest } from './gql';
 
 export interface CreateCheckoutSessionParams {
@@ -175,6 +179,7 @@ export async function createCheckoutSession(
     throw new Error('createCheckoutSession: exactly one of draftOrderId, skuId, or lineItemData is required');
   }
 
+  assertCommerceBindingReady(configuration);
   const {
     storeId,
     channelId,

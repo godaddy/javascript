@@ -101,3 +101,35 @@ The client refreshes the cart before checkout and sends its ID, an absolute cata
 When using `@godaddy/gd-commerce-server`, configure the router's `checkoutReturnUrls.returnUrls` with the absolute catalog return URL and `checkoutReturnUrls.successUrls` with the absolute success-page URL. The package matches these exact destinations and permits an additional `orderId` parameter on success URLs. Missing policy disables HTTP checkout. Public HTTP requests accept only cart or SKU checkout; non-catalog amounts belong in a trusted server handler.
 
 Do not treat `checkoutSuccessPath`, a client-provided URL, the redirect itself, or a draft-order response as proof that payment succeeded. Verify payment using the checkout/payment service or trusted webhook state. Expire or reject paid/closed drafts on subsequent cart reads so returning customers cannot reuse a completed cart.
+
+## Authoritative template state
+
+New hosts may return one of these uncached config responses:
+
+```json
+{ "state": "unbound" }
+{ "state": "connecting" }
+{ "state": "ready", "cartScope": "opaque-binding-scope", "currencyCode": "USD" }
+```
+
+Only an explicit `unbound` response permits `Catalog sampleProducts`. `connecting` suspends
+all catalog/cart actions. Loading, malformed state, HTTP errors, and missing routes do not
+permit samples. A successful legacy `{ cartScope, currencyCode }` response still means ready.
+
+`@godaddy/gd-commerce-server` accepts optional synchronous
+`CommerceConfiguration.readBindingState(): 'unbound' | 'connecting' | 'ready' | undefined`.
+Return `undefined` to retain legacy config reading. Return `unbound` only after an authoritative
+host check proves absence of a binding; throw on uncertainty/read failure. Nonready config
+responses require no credentials. `ready` still requires `read()` to succeed. Data/checkout
+handlers reject nonready state even if old credentials remain. Never ship fixed `unbound`
+state in a copied template or derive it from absent environment variables.
+
+Hosts own lifecycle projection: publish connecting before setup, ready only after durable
+binding and runtime projection succeed, and keep failures nonready. After connection, a
+missing configuration must never restore samples. Only verified intentional unbinding can
+authorize unbound again. Configuration changes must be visible to subsequent requests.
+
+The storefront polls every five seconds while visible and unbound/connecting and refreshes
+on mount/focus. Failed refreshes immediately revoke sample eligibility (without automatic
+request retries). Aborted configuration queries cannot overwrite newer responses.
+Release server and client support before adopting the template prop; no new endpoint is required.

@@ -380,3 +380,85 @@ describe('Commerce router mounting', (): void => {
     }
   });
 });
+
+describe('authoritative template binding state', () => {
+  it.each(['unbound', 'connecting'] as const)(
+    'reports %s without credentials or upstream calls',
+    async (state) => {
+      const res = response();
+      const read = vi.fn(() => {
+        throw new Error('No credentials');
+      });
+      res.locals.commerceConfiguration = { ...configuration, read, readBindingState: () => state };
+      await configHandler({} as Request, res as unknown as Response);
+      expect(res.json).toHaveBeenCalledWith({ state });
+      expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+      expect(read).not.toHaveBeenCalled();
+    },
+  );
+
+  it('retains legacy config and validates an explicitly ready binding', async () => {
+    for (const state of [undefined, 'ready'] as const) {
+      const res = response();
+      res.locals.commerceConfiguration = { ...configuration, readBindingState: () => state };
+      await configHandler({} as Request, res as unknown as Response);
+      expect(res.json).toHaveBeenCalledWith({
+        ...(state ? { state } : {}),
+        cartScope: getCommerceCartScope(binding),
+        currencyCode: 'USD',
+      });
+    }
+    const res = response();
+    res.locals.commerceConfiguration = {
+      ...configuration,
+      readBindingState: () => 'ready',
+      read: () => {
+        throw new Error('Lost configuration');
+      },
+    };
+    await configHandler({} as Request, res as unknown as Response);
+    expect(res.status).toHaveBeenCalledWith(503);
+  });
+
+  it.each(['invalid', 'throws'])('rejects %s host state rather than granting samples', async (state) => {
+    const res = response();
+    res.locals.commerceConfiguration = {
+      ...configuration,
+      readBindingState: () => {
+        if (state === 'throws') throw new Error('Host read failed');
+        return state as 'ready';
+      },
+    };
+    await configHandler({} as Request, res as unknown as Response);
+    expect(res.status).toHaveBeenCalledWith(503);
+  });
+
+  it.each([
+    createCart,
+    readCart,
+    addItem,
+    updateItem,
+    deleteItem,
+    applyDiscount,
+    checkout,
+    readProducts,
+    readProduct,
+    readSku,
+  ])('blocks nonready handlers even with leftover credentials', async (handler) => {
+    vi.clearAllMocks();
+    const res = response();
+    res.locals.commerceConfiguration = { ...configuration, readBindingState: () => 'connecting' };
+    await handler(
+      {
+        headers: {},
+        query: {},
+        params: { id: 'cart-1', itemId: 'item-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1 },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalled();
+    expect(gqlRequest).not.toHaveBeenCalled();
+    expect(createCheckoutSession).not.toHaveBeenCalled();
+  });
+});

@@ -57,3 +57,23 @@ Configure `checkoutReturnUrls` on the router using trusted deployment settings. 
 Without this policy, HTTP checkout returns 503 before creating a session. Invalid request destinations return 400. This applies to both router presets that expose checkout. Trusted in-process callers of `createCheckoutSession()` own their return URLs and must construct or validate them server-side.
 
 A return from hosted checkout is not proof of payment. The order-status route uses the authorized Orders REST API, which supports completed orders, and returns its payment status (for example `PAID` or `PENDING`; `unknown` if absent). The server OAuth client must be granted `commerce.order:read`. The helper verifies the returned order ID, store, and channel and returns a limited summary without customer contact data. Hosts must authenticate callers and authorize access to each requested order before exposing this route.
+
+### Host-authorized template samples
+
+Hosts that support reusable store templates can implement the optional synchronous
+`CommerceConfiguration.readBindingState()` method. Its return type is exported as
+`CommerceBindingState` (`unbound | connecting | ready`), with `undefined` preserving legacy
+behavior. Unknown or failed host reads must throw. The default environment configuration does
+not infer binding absence from missing credentials.
+
+`GET /config` returns `{ state: 'unbound' }` or `{ state: 'connecting' }` without reading store
+credentials. `ready` includes the usual opaque `cartScope` and `currencyCode` after `read()`
+succeeds. Absent state support retains the existing successful response shape. All responses
+are uncached; malformed state or unavailable configuration returns 503. Data/checkout route
+reads and in-process checkout/order helpers reject nonready state before upstream calls.
+
+The host must project authoritative lifecycle state into each destination runtime, including
+connecting before setup and ready after successful durable binding. Lost configuration is an
+error; never use it as evidence of unbound. After a successful binding, only verified intentional
+unbinding may restore unbound. The client package owns generic sample products and a local
+cart; this server never creates sample Commerce records or simulates checkout.
