@@ -111,6 +111,19 @@ export function PaymentForm(
     paypalConfig,
     razorpayConfig,
   } = useCheckoutContext();
+  // TEMP FOR TESTING — DO NOT COMMIT: force credit-card to resolve as
+  // PayPal's Advanced Card Payments instead of whatever the session actually
+  // configured (normally GoDaddy Payments), to test PayPalCreditCardForm /
+  // PayPalCreditCardCheckoutButton. Mutates the shared session object in
+  // place so both the availability filter below (configuredPaymentMethods)
+  // and useGetSelectedPaymentMethod's own independent useCheckoutContext()
+  // read the same override.
+  if (session?.paymentMethods?.card) {
+    session.paymentMethods.card = {
+      ...session.paymentMethods.card,
+      processor: PaymentProvider.PAYPAL,
+    };
+  }
   const form = useFormContext();
   const paymentMethod = form.watch('paymentMethod');
   const deliveryMethod = form.watch('deliveryMethod');
