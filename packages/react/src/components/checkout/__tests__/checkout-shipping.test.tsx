@@ -1,3 +1,4 @@
+import { enUs } from '@godaddy/localizations';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
@@ -8,18 +9,187 @@ import {
   buildDraftOrder,
   buildLineItem,
   buildShippingAddress,
+  buildShippingRates,
+  clearApiError,
   clearOperations,
   flushPromises,
   getOperations,
   renderCheckout,
   setApiError,
   setCurrentDraftOrder,
+  setShippingMethods,
   typeIntoNamedField,
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
 
 describe('Checkout shipping behavior', () => {
+  it.each([true, false])(
+    'preserves an existing rate and refreshes initial taxes only when enabled (%s)',
+    async enableTaxCollection => {
+      const { queryClient } = renderCheckout({
+        sessionOverrides: { enableTaxCollection },
+        draftOrderOverrides: {
+          shippingLines: [
+            {
+              requestedService: 'free-shipping',
+              requestedProvider: 'unknown',
+              name: 'Free',
+              amount: { value: 0, currencyCode: 'USD' },
+              discounts: [],
+            },
+          ],
+        },
+      });
+      await waitForCheckoutReady();
+      await waitFor(() => {
+        expect(queryClient.isMutating()).toBe(0);
+        expect(queryClient.isFetching()).toBe(0);
+      });
+
+      expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
+        0
+      );
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(
+        enableTaxCollection ? 1 : 0
+      );
+    }
+  );
+
+  it('keeps a saved shipping method on load when a cheaper rate is offered', async () => {
+    const { queryClient } = renderCheckout({
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'weight-based',
+            requestedProvider: 'unknown',
+            name: 'Weight Based',
+            amount: { value: 100, currencyCode: 'USD' },
+            discounts: [],
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    await waitFor(() => {
+      expect(queryClient.isMutating()).toBe(0);
+      expect(queryClient.isFetching()).toBe(0);
+    });
+
+    expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(0);
+    expect(screen.getByRole('radio', { name: /weight based/i })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /free/i })).not.toBeChecked();
+  });
+
+  it('moves an automatic selection to the new cheapest rate when the address reprices it', async () => {
+    const rates = (standard: number, express: number) =>
+      buildShippingRates([
+        {
+          serviceCode: 'standard',
+          carrierCode: 'carrier',
+          displayName: 'Standard',
+          cost: { value: standard, currencyCode: 'USD' },
+        },
+        {
+          serviceCode: 'express',
+          carrierCode: 'carrier',
+          displayName: 'Express',
+          cost: { value: express, currencyCode: 'USD' },
+        },
+      ]);
+    const { user, queryClient } = renderCheckout({
+      apiOverrides: { shippingMethods: rates(500, 2000) },
+      draftOrderOverrides: { shippingLines: [] },
+    });
+    await waitForCheckoutReady();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(screen.getByRole('radio', { name: /standard/i })).toBeChecked();
+    clearOperations();
+
+    // Express is now the cheapest rate for the new address.
+    setShippingMethods(rates(2500, 2000));
+    const postal = document.querySelector(
+      'input[name="shippingPostalCode"]'
+    ) as HTMLInputElement;
+    await user.clear(postal);
+    await user.type(postal, '94016');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    await waitForOperation('DraftOrderShippingRates', 1, 6000);
+    await waitFor(() => {
+      expect(queryClient.isMutating()).toBe(0);
+      expect(queryClient.isFetching()).toBe(0);
+    });
+    await flushPromises();
+
+    const applied = getOperations('ApplyCheckoutSessionShippingMethod');
+    expect(applied.at(-1)?.input).toEqual([
+      expect.objectContaining({ requestedService: 'express' }),
+    ]);
+    expect(applied.length).toBeLessThanOrEqual(2);
+    expect(screen.getByRole('radio', { name: /express/i })).toBeChecked();
+  });
+
+  it('switches a saved method to newly available free shipping after an address edit without looping', async () => {
+    const paidRates = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 500, currencyCode: 'USD' },
+      },
+    ]);
+    const { user, queryClient } = renderCheckout({
+      apiOverrides: { shippingMethods: paidRates },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 500, currencyCode: 'USD' },
+            discounts: [],
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    clearOperations();
+
+    setShippingMethods([
+      ...paidRates,
+      ...buildShippingRates([
+        {
+          serviceCode: 'free',
+          carrierCode: 'carrier',
+          displayName: 'Free',
+          cost: { value: 0, currencyCode: 'USD' },
+        },
+      ]),
+    ]);
+    const postal = document.querySelector(
+      'input[name="shippingPostalCode"]'
+    ) as HTMLInputElement;
+    await user.clear(postal);
+    await user.type(postal, '94016');
+    await advanceCheckoutDebounce();
+    await waitForOperation('UpdateCheckoutSessionDraftOrder');
+    await waitForOperation('DraftOrderShippingRates', 1, 6000);
+    await waitFor(() => {
+      expect(queryClient.isMutating()).toBe(0);
+      expect(queryClient.isFetching()).toBe(0);
+    });
+    await flushPromises();
+
+    const applied = getOperations('ApplyCheckoutSessionShippingMethod');
+    expect(applied.at(-1)?.input).toEqual([
+      expect.objectContaining({ requestedService: 'free' }),
+    ]);
+    expect(applied.length).toBeLessThanOrEqual(2);
+    expect(screen.getByRole('radio', { name: /free/i })).toBeChecked();
+  });
+
   it('shows the no-origin-address message when shipping origin is missing', async () => {
     renderCheckout({
       sessionOverrides: { shipping: { originAddress: null } },
@@ -97,7 +267,7 @@ describe('Checkout shipping behavior', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('filters free shipping below the minimum order total and shows it once the subtotal qualifies', async () => {
+  it('shows free shipping returned by the API', async () => {
     const shippingMethods = [
       {
         serviceCode: 'free-shipping',
@@ -120,35 +290,12 @@ describe('Checkout shipping behavior', () => {
         cost: { value: 500, currencyCode: 'USD' },
       },
     ];
-    const experimental_rules = {
-      freeShipping: { enabled: true, minimumOrderTotal: 5000 },
-    };
 
-    const { unmount } = renderCheckout({
-      sessionOverrides: { experimental_rules },
-      apiOverrides: { shippingMethods },
-    });
-    await waitForCheckoutReady();
-
-    expect(
-      screen.queryByRole('radio', { name: /free/i })
-    ).not.toBeInTheDocument();
-    expect(screen.getAllByText('Paid Rate').length).toBeGreaterThan(0);
-
-    unmount();
-    renderCheckout({
-      sessionOverrides: { experimental_rules },
-      draftOrderOverrides: {
-        totals: {
-          subTotal: { value: 5000, currencyCode: 'USD' },
-          total: { value: 5000, currencyCode: 'USD' },
-        },
-      },
-      apiOverrides: { shippingMethods },
-    });
+    renderCheckout({ apiOverrides: { shippingMethods } });
     await waitForCheckoutReady();
 
     expect(screen.getByRole('radio', { name: /free/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Paid Rate').length).toBeGreaterThan(0);
   });
 
   it('renders FREE for a single zero-cost shipping method', async () => {
@@ -451,7 +598,7 @@ describe('Checkout shipping behavior', () => {
     ).toBeInTheDocument();
   });
 
-  it('records a shipping-method fetch failure when rates are refetched', async () => {
+  it('clears shipping after an address rate-fetch failure and reapplies the default on retry', async () => {
     const { user } = renderCheckout();
     await waitForCheckoutReady();
     clearOperations();
@@ -467,6 +614,29 @@ describe('Checkout shipping behavior', () => {
     ).toMatchObject({
       destination: expect.objectContaining({ postalCode: '94016' }),
     });
+    const retry = await screen.findByRole('button', {
+      name: enUs.shipping.retryMethods,
+    });
+    await waitFor(() => expect(retry).toBeEnabled());
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod').at(-1)?.input
+    ).toEqual([]);
+    clearOperations();
+    clearApiError('getDraftOrderShippingMethods');
+    await user.click(retry);
+    await waitFor(() =>
+      expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(
+        1
+      )
+    );
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod')[0].input
+    ).toEqual([expect.objectContaining({ requestedService: 'free-shipping' })]);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: enUs.shipping.retryMethods })
+      ).not.toBeInTheDocument()
+    );
   });
 
   it.each([

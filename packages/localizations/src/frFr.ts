@@ -70,6 +70,9 @@ export const frFr = {
     noShippingMethodAddress:
       'Entrez votre adresse pour voir les méthodes de livraison disponibles.',
     noShippingMethods: "Aucune méthode d'expédition trouvée.",
+    failedToLoadMethods:
+      'Impossible de charger les modes de livraison. Veuillez réessayer.',
+    retryMethods: 'Réessayer',
     phone: 'Numéro de téléphone',
     country: 'Pays',
     selectCountry: 'Sélectionner un pays',
