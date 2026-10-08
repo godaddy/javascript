@@ -177,7 +177,9 @@ Sample grids and drawers have the attribute `data-commerce-source="sample"`.
 
 The provider reads configuration on mount and focus, and every five seconds while the page is
 visible and the state is `unbound` or `connecting`. The first failed refresh hides samples and
-clears the sample cart; a later `unbound` response starts an empty sample cart. Polling stops
+clears the sample cart; a later `unbound` response starts an empty sample cart. While
+connecting, refresh failures keep the connecting state for up to 60 seconds before showing
+the error. Polling stops
 when the state is `ready`; focus and explicit retry still refresh configuration.
 
 Use a server that reports connection state before you enable `sampleProducts`. Successful

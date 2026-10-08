@@ -73,6 +73,8 @@ type PublicConfiguration =
   | { state: 'unbound' | 'connecting' }
   | ({ state: 'ready' } & Pick<StorefrontConfig, 'cartScope' | 'currencyCode'>);
 
+const CONNECTING_FAILURE_GRACE_MS = 60_000;
+
 async function loadConfig(signal: AbortSignal): Promise<PublicConfiguration> {
   const config = await request<Record<string, unknown>>('/config', { signal });
   if (config?.state === 'unbound' || config?.state === 'connecting') {
@@ -112,6 +114,14 @@ export function CommerceProvider({
       query.state.data?.state === 'unbound' || query.state.data?.state === 'connecting' ? 5_000 : false,
     refetchIntervalInBackground: false,
   });
+  // Hosts may restart while connecting a store. Keep the connecting state through brief
+  // refresh failures; it never shows samples, and polling continues until the grace ends.
+  const holdConnecting: boolean =
+    config.isError &&
+    config.data?.state === 'connecting' &&
+    config.errorUpdatedAt - config.dataUpdatedAt < CONNECTING_FAILURE_GRACE_MS;
+  let connection: CommerceContextValue['connection'] = config.data?.state ?? 'loading';
+  if (config.isError) connection = holdConnecting ? 'connecting' : 'error';
   return (
     <BoundCommerceProvider
       config={{
@@ -122,8 +132,8 @@ export function CommerceProvider({
         productPath,
         checkoutSuccessPath,
       }}
-      connection={config.isError ? 'error' : (config.data?.state ?? 'loading')}
-      connectionError={config.isError ? message(config.error) : null}
+      connection={connection}
+      connectionError={connection === 'error' ? message(config.error) : null}
       retryConnection={() => {
         void config.refetch();
       }}

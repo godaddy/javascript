@@ -663,6 +663,37 @@ describe('sample products before a store is connected', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Cart 0' })).toBeEnabled());
   });
 
+  it('keeps connecting through a brief host restart, then reports a lasting failure', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    try {
+      let config = () => response({ state: 'connecting' });
+      mockApi((path) => (path.endsWith('/config') ? config() : response({ skuGroups: { edges: [] } })));
+      const view = mount(<Catalog sampleProducts />);
+      await vi.waitFor(() => expect(view.context().connection).toBe('connecting'));
+      config = () => response({ error: 'Restarting' }, 503);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5_000);
+      });
+      expect(view.context().connection).toBe('connecting');
+      expect(view.context().connectionError).toBeNull();
+      expect(screen.getByText('Connecting to the store…')).toBeVisible();
+      expect(screen.queryByText('Restarting')).toBeNull();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000);
+      });
+      await vi.waitFor(() => expect(view.context().connection).toBe('error'));
+      expect(screen.getByText('Restarting')).toBeVisible();
+      expect(document.querySelector('[data-commerce-source="sample"]')).toBeNull();
+      config = () => response({ state: 'ready', ...configuration });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5_000);
+      });
+      await screen.findByText('No products available.');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('polls for binding changes without a page reload', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     try {

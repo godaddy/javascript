@@ -127,9 +127,14 @@ remain. Do not infer `unbound` from missing credentials or configuration.
 The host owns the connection lifecycle. Report `ready` only when the store connection is
 complete, and keep failures in a state other than `unbound`. After a store connects, missing
 configuration must never bring samples back. Report `unbound` again only after the store is
-deliberately disconnected. State changes must be visible to the next request.
+deliberately disconnected. State changes must be visible to the next request. Pages switch to
+live data only when the deployed server reports a new state. If a host's deployments read
+state from deployment configuration, a deployed site keeps showing samples until that
+configuration is updated, for example by publishing again.
 
 The storefront polls every five seconds while the page is visible and the state is `unbound` or
 `connecting`, and refreshes on mount and focus. A failed refresh immediately hides samples, without
-automatic request retries. Aborted configuration requests cannot overwrite newer responses.
+automatic request retries. While the last response was `connecting`, refresh failures keep the
+connecting state for up to 60 seconds, so a host restart during connection does not flash an
+error. Polling continues, and a longer failure reports the error. Aborted configuration requests cannot overwrite newer responses.
 Release server and client support before using the `sampleProducts` prop. No new endpoint is required.
