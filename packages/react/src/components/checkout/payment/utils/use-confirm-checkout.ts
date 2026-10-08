@@ -25,6 +25,8 @@ import {
   track,
 } from '@/tracking/track';
 import type { ConfirmCheckoutMutationInput } from '@/types';
+import { getStripeNextAction } from './stripe-next-action';
+import { useConfirmCheckoutRecovery } from './use-confirm-checkout-recovery';
 
 export class CheckoutConfirmationBlockedError extends Error {
   constructor(message: string) {
@@ -101,6 +103,7 @@ export function useConfirmCheckout() {
   const { data: order } = useDraftOrder();
   const flushCheckoutSync = useFlushCheckoutSync();
   const isPendingRef = useRef(false);
+  const confirmWithRecovery = useConfirmCheckoutRecovery();
 
   return useMutation({
     mutationFn: async (
@@ -218,17 +221,20 @@ export function useConfirmCheckout() {
           },
         });
 
-        const data = jwt
-          ? await confirmCheckout(
-              payload,
-              { accessToken: jwt, sessionId: session?.id || '' },
-              apiHost
-            )
-          : await confirmCheckout(payload, session, apiHost);
+        const data = await confirmWithRecovery(async () => {
+          const result = jwt
+            ? await confirmCheckout(
+                payload,
+                { accessToken: jwt, sessionId: session?.id || '' },
+                apiHost
+              )
+            : await confirmCheckout(payload, session, apiHost);
 
-        if (!data) {
-          throw new Error('Checkout confirmation failed');
-        }
+          if (!result) {
+            throw new Error('Checkout confirmation failed');
+          }
+          return result;
+        });
 
         return data;
       } finally {
@@ -282,6 +288,13 @@ export function useConfirmCheckout() {
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
+
+      if (
+        data?.paymentProvider === PaymentProvider.STRIPE &&
+        getStripeNextAction(error)
+      ) {
+        return;
+      }
 
       const translate = (code: string) =>
         t.apiErrors?.[code as keyof typeof t.apiErrors];

@@ -293,6 +293,8 @@ export const frFr = {
     DATA_SOURCES_NOT_FOUND: 'Sources de données non trouvées',
     TRANSACTION_API_NOT_FOUND:
       "Source de données de l'API de transaction non trouvée",
+    PAYMENT_ACTION_REQUIRED:
+      'Votre paiement nécessite une vérification supplémentaire. Réessayez ou choisissez un autre moyen de paiement.',
     TRANSACTION_PROCESSING_FAILED: 'Échec du traitement de la transaction',
     TRANSACTION_CREATION_FAILED:
       'Échec de la recherche ou de la création de la transaction',
