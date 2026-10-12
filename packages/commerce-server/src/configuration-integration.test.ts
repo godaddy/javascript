@@ -9,6 +9,101 @@ afterEach((): void => {
   vi.unstubAllGlobals();
 });
 
+it('serves variant product details without querying SKUGroup.status', async (): Promise<void> => {
+  const upstream = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const { query, variables } = JSON.parse(String(init?.body)) as {
+      query: string;
+      variables: { id: string; attributeValues: string[] };
+    };
+    if (/^\s+status\s*$/m.test(query)) {
+      return Response.json({ errors: [{ message: 'Cannot query field "status" on type "SKUGroup".' }] });
+    }
+    expect(query).toContain(
+      'activeSkuGroups: skuGroups(id: { in: [$id] }, status: { eq: "ACTIVE" }, first: 1)',
+    );
+    expect(['shirt', 'archived-shirt']).toContain(variables.id);
+    const skus = [
+      { id: 'shirt-red', label: 'Red shirt' },
+      { id: 'shirt-blue', label: 'Blue shirt' },
+    ];
+    return Response.json({
+      data: {
+        activeSkuGroups: { edges: variables.id === 'shirt' ? [{ node: { id: 'shirt' } }] : [] },
+        skuGroup: {
+          id: variables.id,
+          label: 'Shirt',
+          attributes: {
+            edges: [
+              {
+                node: {
+                  name: 'color',
+                  label: 'Color',
+                  values: {
+                    edges: [
+                      { node: { name: 'red', label: 'Red' } },
+                      { node: { name: 'blue', label: 'Blue' } },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+          skus: {
+            edges: skus
+              .filter(
+                (sku) =>
+                  variables.attributeValues.length === 0 ||
+                  variables.attributeValues.includes(sku.id.slice(6)),
+              )
+              .map((node) => ({ node })),
+          },
+        },
+      },
+    });
+  });
+  vi.stubGlobal('fetch', upstream);
+  const app = express();
+  app.use(
+    '/api/commerce',
+    createCommerceRouter({
+      configuration: createRuntimeCommerceConfiguration({
+        environment: {
+          GODADDY_OAUTH_CLIENT_ID: 'client-1',
+          GODADDY_OAUTH_CLIENT_SECRET: 'secret-1',
+          GODADDY_STORE_ID: 'store-1',
+          GODADDY_CHANNEL_ID: 'channel-1',
+          GODADDY_CURRENCY_CODE: 'USD',
+        },
+      }),
+    }),
+  );
+  const server = app.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  try {
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
+    const url = `http://127.0.0.1:${address.port}/api/commerce/products/shirt`;
+    const product = await clientFetch(url);
+    expect(product.status).toBe(200);
+    expect(
+      (await product.json()).skuGroup.skus.edges.map(({ node }: { node: { id: string } }) => node.id),
+    ).toEqual(['shirt-red', 'shirt-blue']);
+    const selected = await clientFetch(`${url}?attributeValues=blue`);
+    expect(selected.status).toBe(200);
+    expect((await selected.json()).skuGroup.skus.edges).toEqual([
+      { node: { id: 'shirt-blue', label: 'Blue shirt' } },
+    ]);
+    const archived = await clientFetch(`${url.replace('/shirt', '/archived-shirt')}?attributeValues=blue`);
+    expect(archived.status).toBe(404);
+    expect(await archived.json()).toEqual({ error: 'Product not found' });
+    expect(upstream).toHaveBeenCalledTimes(3);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+});
+
 it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
   'uses host configuration throughout the router with API override %s',
   async (apiBaseUrl): Promise<void> => {

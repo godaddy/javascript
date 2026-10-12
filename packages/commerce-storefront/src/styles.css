@@ -9,11 +9,18 @@
   --color-commerce-on-accent: var(--commerce-on-accent, #fff);
   --color-white: var(--commerce-surface, #fff);
   --color-neutral-900: var(--commerce-text, #171717);
+  --color-neutral-100: color-mix(in srgb, var(--commerce-text, #171717) 5%, var(--commerce-surface, #fff));
+  --color-neutral-200: color-mix(in srgb, var(--commerce-text, #171717) 15%, var(--commerce-surface, #fff));
+  --color-neutral-300: color-mix(in srgb, var(--commerce-text, #171717) 25%, var(--commerce-surface, #fff));
+  --color-neutral-400: color-mix(in srgb, var(--commerce-text, #171717) 55%, var(--commerce-surface, #fff));
+  --color-neutral-600: color-mix(in srgb, var(--commerce-text, #171717) 75%, var(--commerce-surface, #fff));
+  --color-neutral-700: color-mix(in srgb, var(--commerce-text, #171717) 85%, var(--commerce-surface, #fff));
   --radius-lg: var(--commerce-radius, 0.5rem);
 }
 
 @layer base {
-  .commerce-storefront { color: var(--commerce-text, #171717); font-family: inherit; line-height: 1.5; }
+  .commerce-storefront { color: var(--commerce-text, inherit); background-color: var(--commerce-surface, transparent); font-family: inherit; line-height: 1.5; }
+  .commerce-storefront :where(*) { color: inherit; font-family: inherit; }
   .commerce-storefront *, .commerce-storefront *::before, .commerce-storefront *::after {
     box-sizing: border-box; border-width: 0; border-style: solid;
   }
@@ -24,6 +31,6 @@
   .commerce-storefront :where(a) { color: inherit; text-decoration: inherit; }
   .commerce-storefront :where(img) { display: block; max-width: 100%; }
   .commerce-storefront :where(ul) { list-style: none; }
-  .commerce-inline { display: inline-block; }
+  .commerce-inline { display: inline-block; background-color: transparent; }
   .commerce-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border-width: 0; }
 }
