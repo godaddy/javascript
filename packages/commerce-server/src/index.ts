@@ -7,6 +7,7 @@ export type { CheckoutReturnUrls } from './lib/commerce/checkout-return-urls';
 export {
   type CommerceConfig,
   type CommerceConfiguration,
+  type CommerceConnectionState,
   createRuntimeCommerceConfiguration,
   type RuntimeCommerceConfigurationOptions,
   readCommerceConfig,
