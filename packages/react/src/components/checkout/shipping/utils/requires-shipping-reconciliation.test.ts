@@ -180,6 +180,35 @@ describe('selectShippingMethod', () => {
     ).toMatchObject({ selectedMethod: free, autoSelected: true });
   });
 
+  it('detects free shipping by price, not by name or provider', () => {
+    const misleadinglyNamed = {
+      ...shippingMethod('free-shipping', 700),
+      displayName: 'Free Shipping',
+      carrierCode: 'free',
+    };
+    const zeroCostGround = shippingMethod('ground', 0);
+
+    // A paid method named "free" is not free shipping.
+    expect(
+      selectShippingMethod({
+        shippingMethods: [standard, express, misleadinglyNamed],
+        currentServiceCode: 'express',
+        previousShippingMethods: [standard, express],
+        isAutoSelected: false,
+      })
+    ).toMatchObject({ selectedMethod: express, autoSelected: false });
+
+    // A $0 method with an ordinary name is.
+    expect(
+      selectShippingMethod({
+        shippingMethods: [standard, express, zeroCostGround],
+        currentServiceCode: 'express',
+        previousShippingMethods: [standard, express],
+        isAutoSelected: false,
+      })
+    ).toMatchObject({ selectedMethod: zeroCostGround, autoSelected: true });
+  });
+
   it('falls back to the cheapest method when the current one is gone', () => {
     expect(
       selectShippingMethod({
