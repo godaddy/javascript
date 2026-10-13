@@ -20,5 +20,33 @@ export {
   useCommerce,
 } from './commerce-provider';
 export { CommerceStorefront } from './commerce-storefront';
-export { ProductDetails } from './product-details';
+export {
+  ProductDetails,
+  ProductDetailsBackLink,
+  ProductDetailsDescription,
+  ProductDetailsGallery,
+  ProductDetailsPrice,
+  ProductDetailsTitle,
+} from './product-details';
+export {
+  ProductDetailsRoot,
+  type ProductDetailsRootProps,
+  type ProductDetailsState,
+  type ProductOptionState,
+  type ProductOptionValueState,
+  type ProductPartProps,
+  type PurchaseStatus,
+  useProductDetails,
+  useProductOption,
+} from './product-details-context';
+export {
+  ProductAddToCart,
+  ProductAvailability,
+  ProductOption,
+  type ProductOptionProps,
+  ProductOptions,
+  ProductPurchase,
+  ProductPurchaseStatus,
+  ProductQuantity,
+} from './product-purchase';
 export { CommerceStatus } from './storefront-surface';

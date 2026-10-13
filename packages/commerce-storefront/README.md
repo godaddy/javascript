@@ -84,9 +84,9 @@ A connection failure leaves the surrounding application and its state mounted. C
 
 The stylesheet includes all required utilities and scopes them to the package's surfaces. The build removes CSS layer wrappers in their declared order, so the exported CSS can pass through a host Tailwind v3 PostCSS pipeline without `@tailwind` directives. Import it directly; consumers do not need to copy or rewrite the CSS. It does not add a global reset or require dependency scanning by a host Tailwind build. The `theme` prop reaches the drawer even though it is portalled into `document.body`.
 
-By default, `.commerce-storefront` wrappers do not paint a background and inherit the host's text color. Set page and section backgrounds on the host application's layout elements. `--commerce-surface` colors controls and the opaque cart drawer, and supplies the base for muted colors; it does not color component wrappers. Set `--commerce-surface` and `--commerce-text` together to adapt controls and the drawer to a dark theme. Avoid setting wrapper backgrounds through CSS or the `theme` prop's `background`, `backgroundColor`, or `backgroundImage` properties, which can still override the transparent default. Descendants inherit the surface text and body font instead of global heading styles. Keep text, controls and focus indicators accessible when changing colors. Utility class names and internal markup are not a customization API.
+By default, `.commerce-storefront` wrappers do not paint a background and inherit the host's text color. Set page and section backgrounds on the host application's layout elements. `--commerce-surface` colors controls and the opaque cart drawer, and supplies the base for muted colors; it does not color component wrappers. Set `--commerce-surface` and `--commerce-text` together to adapt controls and the drawer to a dark theme. Avoid setting wrapper backgrounds through CSS or the `theme` prop's `background`, `backgroundColor`, or `backgroundImage` properties, which can still override the transparent default. Descendants inherit the surface text and body font instead of global heading styles. Keep text, controls and focus indicators accessible when changing colors. Internal utility class names and markup are not a customization API; use the [product parts](#custom-product-layouts) to change a product page's layout.
 
-The first release uses English UI text and `en-US` currency formatting. Catalog title and description are configurable. Full localization and arbitrary component slots are outside this initial API.
+The first release uses English UI text and `en-US` currency formatting. Catalog title and description are configurable. Full localization is outside this initial API.
 
 ## Compatibility
 
@@ -101,6 +101,7 @@ The repository example uses React Router 7. Follow each router version's own Rea
 | `CommerceStorefront` | Recommended integration: provider and one drawer |
 | `Catalog` | Six products per cursor page, with `title`, `description`, and `showHeader` props |
 | `ProductDetails` | Reads `:productId`; validates URL option selections against catalog results |
+| `ProductDetailsRoot` and product parts | Build a [custom product layout](#custom-product-layouts) with the same rules as `ProductDetails` |
 | `ProductCard` | Renders one `SKUGroup` with direct add or a product-details link |
 | `CartButton` | Opens the shared drawer and displays item count |
 | `AddToCartButton` | Adds a verified `sku`, `name`, and optional integer `quantity` |
@@ -111,6 +112,63 @@ The repository example uses React Router 7. Follow each router version's own Rea
 The package exports TypeScript catalog/cart response types and selection/summary helpers for custom product layouts. `useCommerce` actions return `Promise<boolean>`: `false` means an operation failed or its connection became stale. Inspect `error` for active-session failures. Do not automatically retry a failed mutation: the server may have committed it before the response failed. `applyDiscount(code)` is available to custom layouts; the default drawer does not render a promotion form.
 
 `Catalog` renders its `title` as an H1 by default. When the host page owns its semantic heading, render that page H1 and pass `showHeader={false}` so the document still has exactly one H1.
+
+## Custom product layouts
+
+`ProductDetails` is the recommended product page. When its layout does not fit, compose the same parts inside `ProductDetailsRoot`. The root loads the route's `:productId` and shows the connection, loading, error and not-found states itself, so parts render only once the product exists. This is the packaged layout, written out:
+
+```tsx
+import {
+  ProductDetailsBackLink, ProductDetailsDescription, ProductDetailsGallery, ProductDetailsPrice,
+  ProductDetailsRoot, ProductDetailsTitle, ProductPurchase,
+} from '@godaddy/gd-commerce-storefront';
+
+<ProductDetailsRoot>
+  <ProductDetailsBackLink />
+  <ProductDetailsGallery />
+  <ProductDetailsTitle />
+  <ProductDetailsPrice />
+  <ProductDetailsDescription />
+  <ProductPurchase />
+</ProductDetailsRoot>
+```
+
+Add your own elements between parts, reorder them, or leave out display parts. `ProductPurchase` renders the purchase parts below in order. Replace it with individual parts to place options apart from the add button:
+
+| Part | Renders |
+| --- | --- |
+| `ProductOptions` | A select for every attribute, or the SKU list for products without attributes |
+| `ProductOption` | A select for one attribute, by `attribute` name; nothing when the product lacks it |
+| `ProductPurchaseStatus` | The one message explaining why the selection is not purchasable yet; nothing when ready |
+| `ProductAvailability`, `ProductQuantity` | Stock and quantity for the verified SKU; nothing before verification |
+| `ProductAddToCart` | Adds the verified SKU and quantity; while disabled, its accessible description gives the reason |
+
+Parts read state from the root and take no product, SKU, price or quantity props. Whatever the layout, only a server-verified SKU can be added, and changing a selection resets the quantity and image. Every part throws if it is rendered outside `ProductDetailsRoot`. If a layout cannot select every attribute a product requires, a console warning names the missing ones. Products without attributes but with several SKUs need `ProductOptions` or `ProductPurchase`.
+
+Every part accepts `className`, which is added to the part's outer element. The packaged layout sets spacing and grid placement this way, so your classes can control margins, width and position. Package styles are scoped under `.commerce-storefront` and win over unscoped host classes for the properties a part already sets, such as its font size.
+
+Two hooks support custom parts inside the root:
+
+- `useProductDetails()` returns read-only `product`, `name`, `selectedSku`, `quantity`, `availableQuantity`, `images` and `status` (`incomplete`, `checking`, `variant-error`, `unavailable`, `not-purchasable` or `ready`). `selectedSku` is set only when `status` is `ready`.
+- `useProductOption(attribute)` returns `{ name, label, selected, values, select }` for building swatches or buttons, or `null` when the product has no such attribute. `select(value)` accepts only that attribute's value names, or `null` to clear. Other values are ignored. A hook-based control counts toward the layout check.
+
+```tsx
+function ColorSwatches() {
+  const color = useProductOption('color');
+  if (!color) return null;
+  return (
+    <div role='group' aria-label={color.label}>
+      {color.values.map((value) => (
+        <button key={value.name} type='button' aria-pressed={value.selected} onClick={() => color.select(value.name)}>
+          {value.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+```
+
+Parts are flat named exports, not properties such as `ProductDetails.Title`, so each one is an ordinary module export.
 
 ## How it works
 
