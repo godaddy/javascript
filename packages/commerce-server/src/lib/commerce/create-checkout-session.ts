@@ -26,6 +26,7 @@ import {
   getOAuthAccessToken,
 } from './checkout-subgraph';
 import {
+  assertCommerceConnectionReady,
   type CommerceConfiguration,
   createRuntimeCommerceConfiguration,
   guardCommerceConfiguration,
@@ -183,6 +184,7 @@ export async function createCheckoutSession(
   }
 
   const guardedConfiguration = guardCommerceConfiguration(configuration);
+  assertCommerceConnectionReady(guardedConfiguration);
   const {
     storeId,
     channelId,

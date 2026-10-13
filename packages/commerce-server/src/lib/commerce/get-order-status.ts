@@ -4,6 +4,7 @@
  */
 import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
 import {
+  assertCommerceConnectionReady,
   type CommerceConfiguration,
   createRuntimeCommerceConfiguration,
   guardCommerceConfiguration,
@@ -89,8 +90,10 @@ export async function getOrderStatus(
     throw new InvalidOrderIdError();
   }
 
+  const guardedConfiguration = guardCommerceConfiguration(configuration);
+  assertCommerceConnectionReady(guardedConfiguration);
   const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } =
-    guardCommerceConfiguration(configuration).read();
+    guardedConfiguration.read();
   const token = await getOAuthAccessToken({
     clientId,
     clientSecret,

@@ -12,6 +12,7 @@ import {
   type SkuGroupsResult,
 } from './catalog-model';
 import { useCommerce } from './commerce-provider';
+import { sampleProducts, useSampleCart } from './sample-cart';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 export function ProductImage({
@@ -106,13 +107,21 @@ export interface CatalogProps {
   title?: string;
   description?: string;
   showHeader?: boolean;
+  /** Permit built-in examples only while the host confirms this site is unbound. */
+  sampleProducts?: boolean;
 }
 
 export function Catalog(props: CatalogProps): ReactElement {
   const { connection } = useCommerce();
   return (
     <StorefrontSurface>
-      {connection === 'ready' ? <CatalogContent {...props} /> : <CommerceStatus />}
+      {connection === 'ready' ? (
+        <CatalogContent {...props} />
+      ) : connection === 'unbound' && props.sampleProducts ? (
+        <SampleCatalog {...props} />
+      ) : (
+        <CommerceStatus />
+      )}
     </StorefrontSurface>
   );
 }
@@ -215,6 +224,55 @@ function CatalogContent({
           </button>
         )}
       </nav>
+    </section>
+  );
+}
+
+function SampleCatalog({
+  title = 'Shop all products',
+  description = 'Explore the collection and find your favorites.',
+  showHeader = true,
+}: CatalogProps): ReactElement {
+  const { add } = useSampleCart();
+  return (
+    <section data-commerce-source='sample'>
+      {showHeader && (
+        <header className='border-b border-neutral-200 pb-10 pt-4 sm:pb-14 sm:pt-8'>
+          <h1 className='max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl'>{title}</h1>
+          <p className='mt-5 max-w-xl text-base leading-7 sm:text-lg'>{description}</p>
+        </header>
+      )}
+      <p className='border-b border-neutral-200 py-6 text-sm' role='status'>
+        Sample products · Example prices in USD
+      </p>
+      <div className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 lg:py-10'>
+        {sampleProducts.map((product) => (
+          <article
+            key={product.key}
+            className='flex min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200'
+          >
+            <div aria-hidden='true' className='flex aspect-square items-center justify-center bg-neutral-100'>
+              <div className='h-20 w-20 rounded-lg border border-neutral-300' />
+            </div>
+            <div className='flex flex-1 flex-col p-6'>
+              <h2 className='break-words text-2xl font-semibold leading-tight'>{product.name}</h2>
+              <div className='mt-auto pt-6'>
+                <div className='flex flex-wrap items-end justify-between gap-4 border-t border-neutral-200 pt-5'>
+                  <p className='text-lg font-semibold leading-7'>{money(product.price, 'USD')}</p>
+                  <button
+                    type='button'
+                    className={buttonClass}
+                    aria-label={`Add ${product.name} to sample cart`}
+                    onClick={() => add(product.key)}
+                  >
+                    Add to cart
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
