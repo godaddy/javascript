@@ -3,7 +3,11 @@
  * Unlike the storefront cart API, this endpoint includes completed orders.
  */
 import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
-import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './config';
+import {
+  assertCommerceConnectionReady,
+  type CommerceConfiguration,
+  createRuntimeCommerceConfiguration,
+} from './config';
 import type { Money } from './gql';
 
 /** `CommerceOrderStatus.status` when the Orders API reports no payment status. */
@@ -82,6 +86,7 @@ export async function getOrderStatus(
     throw new InvalidOrderIdError();
   }
 
+  assertCommerceConnectionReady(configuration);
   const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } = configuration.read();
   const token = await getOAuthAccessToken({
     clientId,

@@ -22,7 +22,11 @@ export interface CommerceConfig {
   owner?: string;
 }
 
+export type CommerceConnectionState = 'unbound' | 'connecting' | 'ready';
+
 export interface CommerceConfiguration {
+  /** Authoritative host state. Missing support preserves legacy live/error behavior. */
+  readConnectionState?(): CommerceConnectionState | undefined;
   read(): CommerceConfig;
   readCheckout(): CommerceCheckoutConfiguration;
 }
@@ -105,5 +109,17 @@ export function commerceConfigurationForResponse(res: Response): CommerceConfigu
 }
 
 export function readCommerceConfigForResponse(res: Response): CommerceConfig {
-  return commerceConfigurationForResponse(res).read();
+  const configuration = commerceConfigurationForResponse(res);
+  assertCommerceConnectionReady(configuration);
+  return configuration.read();
+}
+
+/** Nonready and invalid connection states must never use leftover credentials. */
+export function assertCommerceConnectionReady(configuration: CommerceConfiguration): void {
+  const state = configuration.readConnectionState?.();
+  if (state !== undefined && state !== 'ready') {
+    throw new Error(
+      'Commerce store connection is not ready. Complete the store connection before continuing.',
+    );
+  }
 }

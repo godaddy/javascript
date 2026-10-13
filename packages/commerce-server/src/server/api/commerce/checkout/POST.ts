@@ -39,7 +39,11 @@
 import type { Request, Response } from 'express';
 import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
 import type { CheckoutReturnUrlValidator } from '@/lib/commerce/checkout-return-urls';
-import { type CommerceConfig, commerceConfigurationForResponse } from '@/lib/commerce/config';
+import {
+  assertCommerceConnectionReady,
+  type CommerceConfig,
+  commerceConfigurationForResponse,
+} from '@/lib/commerce/config';
 
 import {
   type CreateCheckoutSessionParams,
@@ -76,6 +80,7 @@ export default async function handler(req: Request, res: Response): Promise<void
     }
 
     if (req.headers?.['x-commerce-scope'] !== undefined) {
+      assertCommerceConnectionReady(configuration);
       const config: CommerceConfig = configuration.read();
       if (!validateCommerceCartScope(req, res, config)) return;
     }

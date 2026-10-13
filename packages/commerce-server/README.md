@@ -57,3 +57,24 @@ Configure `checkoutReturnUrls` on the router using trusted deployment settings. 
 Without this policy, HTTP checkout returns 503 before creating a session. Invalid request destinations return 400. This applies to both router presets that expose checkout. Trusted in-process callers of `createCheckoutSession()` own their return URLs and must construct or validate them server-side.
 
 A return from hosted checkout is not proof of payment. The order-status route uses the authorized Orders REST API, which supports completed orders, and returns its payment status (for example `PAID` or `PENDING`; the exported `ORDER_STATUS_UNKNOWN`, `'unknown'`, if absent). Show it only as display enrichment and never present an unconfirmed payment as paid. The server OAuth client must be granted `commerce.order:read`. The helper verifies the returned order ID, store, and channel and returns a limited summary without customer contact data. The route returns 400 for a missing, blank, padded, `.`, or `..` order ID (padded IDs are rejected, not trimmed) or one the Orders API rejects as malformed (422 `VALIDATION_FAILED`), and 404 when the Orders API reports the order missing (404 `NOT_FOUND`) or the order belongs to another store or channel. A 404 without that code, such as from a misconfigured API base URL, is treated as an upstream failure. Credential and other upstream failures, including a response for a different order ID, return 500 with a generic body; the detail is logged server-side with `console.error`. In-process callers can identify the exported `InvalidOrderIdError` and `OrderNotFoundError` by `error.name`; prefer that to `instanceof`, which fails when a host has more than one copy of this package. Hosts must authenticate callers and authorize access to each requested order before exposing this route.
+
+### Connection state
+
+Hosts can implement the optional synchronous `CommerceConfiguration.readConnectionState()`
+method. Its return type is exported as `CommerceConnectionState` (`unbound | connecting | ready`).
+Returning `undefined` keeps the existing behavior. Throw when the state is unknown or cannot be
+read. The default environment configuration does not implement this method, so missing
+credentials never count as `unbound`.
+
+`GET /config` returns `{ state: 'unbound' }` or `{ state: 'connecting' }` without reading store
+credentials. `ready` includes the usual opaque `cartScope` and `currencyCode` after `read()`
+succeeds. Without this method, the successful response shape is unchanged. All responses are
+uncached; a malformed state or unavailable configuration returns 503. Data and checkout routes,
+and the in-process checkout and order helpers, reject any state other than `ready` before
+upstream calls.
+
+The host owns the connection lifecycle. Report `ready` only after the store connection is
+complete. Lost configuration is an error, never evidence of `unbound`. After a store connects,
+report `unbound` again only after it is deliberately disconnected. The storefront package owns
+the generic sample products and local sample cart; this server never creates sample Commerce
+records or simulates checkout.
