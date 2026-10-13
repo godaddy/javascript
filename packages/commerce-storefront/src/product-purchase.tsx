@@ -24,7 +24,7 @@ export function ProductPurchase({ className }: ProductPartProps): ReactElement {
   useProductDetailsInternal('ProductPurchase');
   return (
     <div className={cx('space-y-6', className)}>
-      <ProductOptions />
+      <OptionControls />
       <ProductPurchaseStatus />
       <ProductAvailability />
       <ProductQuantity />
@@ -39,11 +39,21 @@ export function ProductOptions({ className }: ProductPartProps): ReactElement | 
   if (attributes.length === 0 && skuOptions.length === 0) return null;
   return (
     <div className={cx('space-y-6', className)}>
+      <OptionControls />
+    </div>
+  );
+}
+
+// Unwrapped so the packaged layout keeps the controls as direct children of its own spacing container.
+function OptionControls(): ReactElement {
+  const { attributes, skuOptions } = useProductDetailsInternal('ProductOptions');
+  return (
+    <>
       {attributes.map((attribute) => (
         <ProductOption key={attribute.id || attribute.name} attribute={attribute.name} />
       ))}
       {skuOptions.length > 0 && <SkuOption />}
-    </div>
+    </>
   );
 }
 
