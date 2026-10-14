@@ -98,9 +98,11 @@ export function createRuntimeCommerceConfiguration(
   };
 }
 
-// Host-supplied configurations may throw plain errors (for example a missing secrets file);
-// any failure to read configuration is reported as "not configured", never as a server bug.
-function readOrNotConfigured<T>(read: () => T): T {
+// The functions below are the only code that calls host configuration methods, so every caller gets
+// the same readiness check and error translation. Host configurations may throw plain errors (for
+// example a missing secrets file); any failure to read configuration is reported as "not
+// configured", never as a server bug.
+function fromHost<T>(read: () => T): T {
   try {
     return read();
   } catch (cause) {
@@ -109,46 +111,56 @@ function readOrNotConfigured<T>(read: () => T): T {
   }
 }
 
-/** Wraps a configuration so routes and in-process helpers report read failures the same way. */
-export function guardCommerceConfiguration(configuration: CommerceConfiguration): CommerceConfiguration {
-  const { readConnectionState } = configuration;
-  return {
-    ...(readConnectionState
-      ? { readConnectionState: () => readOrNotConfigured(() => readConnectionState.call(configuration)) }
-      : {}),
-    read: (): CommerceConfig => readOrNotConfigured(() => configuration.read()),
-    readCheckout: (): CommerceCheckoutConfiguration =>
-      readOrNotConfigured(() => configuration.readCheckout()),
-  };
+const CONNECTION_STATES: ReadonlySet<unknown> = new Set<CommerceConnectionState>([
+  'unbound',
+  'connecting',
+  'ready',
+]);
+
+/** The host-reported connection state, or `undefined` when the host does not report one. */
+export function readCommerceConnectionState(
+  configuration: CommerceConfiguration,
+): CommerceConnectionState | undefined {
+  const state: unknown = fromHost(() => configuration.readConnectionState?.());
+  if (state !== undefined && !CONNECTION_STATES.has(state)) {
+    throw new CommerceNotConfiguredError('Invalid Commerce connection state.');
+  }
+  return state as CommerceConnectionState | undefined;
 }
 
-export function commerceConfigurationForResponse(res: Response): CommerceConfiguration {
-  const supplied: unknown = res.locals.commerceConfiguration;
-  return guardCommerceConfiguration(
-    supplied &&
-      typeof supplied === 'object' &&
-      'read' in supplied &&
-      typeof supplied.read === 'function' &&
-      'readCheckout' in supplied &&
-      typeof supplied.readCheckout === 'function'
-      ? (supplied as CommerceConfiguration)
-      : createRuntimeCommerceConfiguration(),
-  );
-}
-
-export function readCommerceConfigForResponse(res: Response): CommerceConfig {
-  const configuration = commerceConfigurationForResponse(res);
-  assertCommerceConnectionReady(configuration);
-  return configuration.read();
-}
-
-/** Nonready and invalid connection states must never use leftover credentials. */
-export function assertCommerceConnectionReady(configuration: CommerceConfiguration): void {
-  const state = configuration.readConnectionState?.();
-  if (state !== undefined && state !== 'ready') {
+/** Nonready connection states must never use leftover credentials. */
+function assertCommerceConnectionReady(configuration: CommerceConfiguration): void {
+  const state = readCommerceConnectionState(configuration);
+  if (state === 'unbound' || state === 'connecting') {
     // Logged as connectionState so a dedicated code can be split out if hosts need one.
     throw new CommerceNotConfiguredError('Commerce store connection is not ready.', {
       details: { connectionState: state },
     });
   }
+}
+
+export function readReadyCommerceConfig(configuration: CommerceConfiguration): CommerceConfig {
+  assertCommerceConnectionReady(configuration);
+  return fromHost(() => configuration.read());
+}
+
+export function readReadyCheckoutConfig(configuration: CommerceConfiguration): CommerceCheckoutConfiguration {
+  assertCommerceConnectionReady(configuration);
+  return fromHost(() => configuration.readCheckout());
+}
+
+export function commerceConfigurationForResponse(res: Response): CommerceConfiguration {
+  const supplied: unknown = res.locals.commerceConfiguration;
+  return supplied &&
+    typeof supplied === 'object' &&
+    'read' in supplied &&
+    typeof supplied.read === 'function' &&
+    'readCheckout' in supplied &&
+    typeof supplied.readCheckout === 'function'
+    ? (supplied as CommerceConfiguration)
+    : createRuntimeCommerceConfiguration();
+}
+
+export function readCommerceConfigForResponse(res: Response): CommerceConfig {
+  return readReadyCommerceConfig(commerceConfigurationForResponse(res));
 }

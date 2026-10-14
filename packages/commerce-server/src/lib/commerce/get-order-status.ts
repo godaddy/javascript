@@ -4,10 +4,9 @@
  */
 import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
 import {
-  assertCommerceConnectionReady,
   type CommerceConfiguration,
   createRuntimeCommerceConfiguration,
-  guardCommerceConfiguration,
+  readReadyCommerceConfig,
 } from './config';
 import { InvalidRequestError, NotFoundError, UpstreamError } from './errors';
 import type { Money } from './gql';
@@ -90,10 +89,8 @@ export async function getOrderStatus(
     throw new InvalidOrderIdError();
   }
 
-  const guardedConfiguration = guardCommerceConfiguration(configuration);
-  assertCommerceConnectionReady(guardedConfiguration);
   const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } =
-    guardedConfiguration.read();
+    readReadyCommerceConfig(configuration);
   const token = await getOAuthAccessToken({
     clientId,
     clientSecret,

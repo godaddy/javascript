@@ -42,9 +42,9 @@ import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
 import type { CheckoutReturnUrlValidator } from '@/lib/commerce/checkout-return-urls';
 import { commerceRoute } from '@/lib/commerce/commerce-route';
 import {
-  assertCommerceConnectionReady,
   type CommerceConfig,
   commerceConfigurationForResponse,
+  readReadyCommerceConfig,
 } from '@/lib/commerce/config';
 import {
   type CreateCheckoutSessionParams,
@@ -76,8 +76,7 @@ async function createCheckout(req: Request, res: Response): Promise<void> {
   }
 
   if (req.headers?.['x-commerce-scope'] !== undefined) {
-    assertCommerceConnectionReady(configuration);
-    const config: CommerceConfig = configuration.read();
+    const config: CommerceConfig = readReadyCommerceConfig(configuration);
     assertCommerceCartScope(req, config);
   }
 
