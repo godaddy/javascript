@@ -1,12 +1,12 @@
 import type { ReactElement } from 'react';
 import { Link } from 'react-router';
 import { money } from './api';
-import { ProductImage } from './catalog';
 import { useCommerce } from './commerce-provider';
+import { partClass } from './part';
+import { ProductImage } from './product-card';
 import {
   type ProductDetailsPartProps,
   ProductDetailsRoot,
-  partClass,
   useProductDetailsInternal,
 } from './product-details-context';
 import { ProductDetailsPurchase } from './product-purchase';

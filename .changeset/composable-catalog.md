@@ -1,0 +1,5 @@
+---
+"@godaddy/gd-commerce-storefront": minor
+---
+
+Add composable catalog and product card parts. `CatalogRoot` with `CatalogHeader`, `CatalogSummary`, `CatalogProducts` and `CatalogPagination` builds custom catalog layouts. `ProductCardRoot` with `ProductCardImage`, `ProductCardTitle`, `ProductCardDescription`, `ProductCardPrice` and `ProductCardAction` builds custom cards, either as the card template inside `CatalogProducts` or for a product the host already has. `useProductCard` reads card state. Card parts take no product, SKU or price props, so a direct add is still offered only for a product with one SKU and no options, and samples add only to the sample cart. `Catalog` and `ProductCard` are now composed from these parts. Live catalogs and cards are visually unchanged. The sample catalog's summary row now uses the live catalog's padding, 32px instead of 24px above and below from the `sm` breakpoint. Markup changes: each part has a wrapper `<div>`, catalog cards are now direct children of the grid instead of each having its own surface wrapper, and the sample summary text is a `<p>` inside a `<div>`.

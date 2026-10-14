@@ -2,7 +2,19 @@ export { ApiError, money, type StorefrontConfig } from './api';
 export { AddToCartButton, CartButton, CartDrawer } from './cart';
 export type * from './cart-model';
 export { getCartSummaryTotals } from './cart-model';
-export { Catalog, type CatalogProps, ProductCard } from './catalog';
+export {
+  Catalog,
+  CatalogHeader,
+  type CatalogHeaderProps,
+  CatalogPagination,
+  type CatalogPartProps,
+  CatalogProducts,
+  type CatalogProductsProps,
+  type CatalogProps,
+  CatalogRoot,
+  type CatalogRootProps,
+  CatalogSummary,
+} from './catalog';
 export type * from './catalog-model';
 export {
   getAvailableInventoryQuantity,
@@ -20,6 +32,19 @@ export {
   useCommerce,
 } from './commerce-provider';
 export { CommerceStorefront } from './commerce-storefront';
+export {
+  ProductCard,
+  ProductCardAction,
+  ProductCardDescription,
+  ProductCardImage,
+  type ProductCardPartProps,
+  ProductCardPrice,
+  ProductCardRoot,
+  type ProductCardRootProps,
+  type ProductCardState,
+  ProductCardTitle,
+  useProductCard,
+} from './product-card';
 export {
   ProductDetails,
   ProductDetailsBackLink,
