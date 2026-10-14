@@ -7,6 +7,7 @@
  */
 
 import { UpstreamError } from './errors';
+import { fetchUpstream } from './upstream-http';
 
 export type GraphQLVariables = Record<string, unknown>;
 
@@ -111,18 +112,17 @@ export async function gqlRequest<TData, TVariables extends object = GraphQLVaria
   requestHeaders.set('Accept', 'application/json');
   requestHeaders.set('Content-Type', 'application/json');
 
-  const requestFetch = fetchImplementation ?? fetch;
-  let response: Response;
-  try {
-    response = await requestFetch(endpoint, {
+  const response = await fetchUpstream(
+    endpoint,
+    {
       method: 'POST',
       headers: requestHeaders,
       body: JSON.stringify({ query, variables: variables ?? {} }),
       cache: 'no-store',
-    });
-  } catch (cause) {
-    throw new UpstreamError('GraphQL request could not reach Commerce', { cause, details: { endpoint } });
-  }
+    },
+    { operation: 'GraphQL request', details: { endpoint } },
+    fetchImplementation,
+  );
 
   let result: GraphQLResponse<TData>;
 

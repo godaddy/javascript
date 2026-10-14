@@ -12,8 +12,9 @@
  * - Existing custom cart: convert your cart into lineItems, then post to the route.
  */
 
-import { CommerceNotConfiguredError, UpstreamError } from './errors';
+import { CommerceNotConfiguredError } from './errors';
 import type { Money } from './gql';
+import { fetchUpstream, readUpstreamJson, type UpstreamRequest, upstreamStatusError } from './upstream-http';
 
 /**
  * The hosted checkout page will not render a card form without this. GDC's
@@ -367,43 +368,41 @@ export async function getOAuthAccessToken({
     throw new CommerceNotConfiguredError('clientId and clientSecret are required');
   }
 
-  const requestFetch = fetchImplementation ?? fetch;
   const body = new URLSearchParams();
   body.append('grant_type', 'client_credentials');
   body.append('client_id', clientId);
   body.append('client_secret', clientSecret);
   body.append('scope', scope);
 
-  let response: Response;
-  try {
-    response = await requestFetch(new URL('/v2/oauth2/token', apiBaseUrl).toString(), {
+  const endpoint = new URL('/v2/oauth2/token', apiBaseUrl);
+  const request: UpstreamRequest = {
+    operation: 'Access token request',
+    details: { endpoint: endpoint.href, scope },
+  };
+  const response = await fetchUpstream(
+    endpoint,
+    {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: body.toString(),
       cache: 'no-store',
-    });
-  } catch (cause) {
-    throw new UpstreamError('Access token request could not reach Commerce', { cause, details: { scope } });
-  }
+    },
+    request,
+    fetchImplementation,
+  );
 
   if (!response.ok) {
     const oauthError = response.status === 400 ? await readOAuthError(response) : undefined;
-    throw new UpstreamError(`Failed to get access token: ${response.status} ${response.statusText}`, {
-      unauthorized:
-        response.status === 401 ||
-        response.status === 403 ||
-        (oauthError !== undefined && UNAUTHORIZED_OAUTH_ERRORS.has(oauthError)),
-      details: { upstreamStatus: response.status, scope, oauthError },
-    });
+    throw await upstreamStatusError(
+      response,
+      { ...request, details: { ...request.details, oauthError } },
+      { unauthorized: oauthError !== undefined && UNAUTHORIZED_OAUTH_ERRORS.has(oauthError) },
+    );
   }
 
-  try {
-    return (await response.json()) as OAuthTokenResponse;
-  } catch (cause) {
-    throw new UpstreamError('Access token response was not JSON', { cause, details: { scope } });
-  }
+  return readUpstreamJson<OAuthTokenResponse>(response, request);
 }
 
 export function buildBuyNowCheckoutInput(

@@ -194,7 +194,7 @@ describe('authorized order lookup', () => {
       .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
       .mockResolvedValueOnce(failure);
     const lookup = getOrderStatus(order.id, configuration);
-    await expect(lookup).rejects.toThrow(`Failed to load order: upstream returned ${failure.status}`);
+    await expect(lookup).rejects.toThrow(`Order lookup failed: upstream returned ${failure.status}`);
     await expect(lookup).rejects.not.toBeInstanceOf(OrderNotFoundError);
     await expect(lookup).rejects.not.toBeInstanceOf(InvalidOrderIdError);
   });
@@ -207,7 +207,7 @@ describe('authorized order lookup', () => {
         .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
         .mockResolvedValueOnce(new Response('Private upstream details', { status }));
       await expect(getOrderStatus(order.id, configuration)).rejects.toThrow(
-        `Failed to load order: upstream returned ${status}`,
+        `Order lookup failed: upstream returned ${status}`,
       );
       expect(cancel).toHaveBeenCalledTimes(1);
     },
@@ -215,7 +215,9 @@ describe('authorized order lookup', () => {
 
   it('does not query orders when the order-read scope is denied', async (): Promise<void> => {
     upstream.mockResolvedValueOnce(new Response('Invalid scope', { status: 403 }));
-    await expect(getOrderStatus(order.id, configuration)).rejects.toThrow('Failed to get access token: 403');
+    await expect(getOrderStatus(order.id, configuration)).rejects.toThrow(
+      'Access token request failed: upstream returned 403',
+    );
     expect(upstream).toHaveBeenCalledTimes(1);
   });
 

@@ -10,6 +10,7 @@ import {
 } from './config';
 import { InvalidRequestError, NotFoundError, UpstreamError } from './errors';
 import type { Money } from './gql';
+import { fetchUpstream, readUpstreamJson, type UpstreamRequest, upstreamStatusError } from './upstream-http';
 
 /** `CommerceOrderStatus.status` when the Orders API reports no payment status. */
 export const ORDER_STATUS_UNKNOWN = 'unknown';
@@ -101,43 +102,30 @@ export async function getOrderStatus(
     `/v1/commerce/stores/${encodeURIComponent(storeId)}/orders/${encodeURIComponent(orderId)}`,
     apiBaseUrl,
   );
-  let response: Response;
-  try {
-    response = await fetch(endpoint, {
+  const request: UpstreamRequest = { operation: 'Order lookup', details: { endpoint: endpoint.href } };
+  const response = await fetchUpstream(
+    endpoint,
+    {
       method: 'GET',
       headers: { ...authorizationHeaders({ accessToken: token.access_token }), Accept: 'application/json' },
       cache: 'no-store',
-    });
-  } catch (cause) {
-    throw new UpstreamError('Order lookup could not reach Commerce', {
-      cause,
-      details: { endpoint: endpoint.href },
-    });
-  }
+    },
+    request,
+  );
   if (!response.ok) {
     // The Orders API reports a missing order as 404 NOT_FOUND and an ID it can't decode as 422
     // VALIDATION_FAILED. A 404 without that code comes from an unrouted path or base URL.
     const code =
       response.status === 404 || response.status === 422 ? await readErrorCode(response) : undefined;
-    // Unread bodies can hold pooled connections while callers poll.
-    if (code === undefined) await response.body?.cancel();
     if (response.status === 404 && code === 'NOT_FOUND') throw new OrderNotFoundError();
     if (response.status === 422 && code === 'VALIDATION_FAILED') throw new InvalidOrderIdError();
-    throw new UpstreamError(`Failed to load order: upstream returned ${response.status}`, {
-      unauthorized: response.status === 401 || response.status === 403,
-      details: { endpoint: endpoint.href, upstreamStatus: response.status, upstreamCode: code ?? undefined },
+    throw await upstreamStatusError(response, {
+      ...request,
+      details: { ...request.details, upstreamCode: code ?? undefined },
     });
   }
 
-  let data: OrderResponse;
-  try {
-    data = (await response.json()) as OrderResponse;
-  } catch (cause) {
-    throw new UpstreamError('Order lookup returned a non-JSON response', {
-      cause,
-      details: { endpoint: endpoint.href },
-    });
-  }
+  const data = await readUpstreamJson<OrderResponse>(response, request);
   const order = data?.order;
   const context = order?.context;
   // A binding missing either field is a malformed upstream response, not proof of another store or channel.
