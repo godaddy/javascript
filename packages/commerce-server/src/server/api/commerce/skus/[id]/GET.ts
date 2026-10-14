@@ -8,13 +8,15 @@
  * Response: { sku: SKU | null }
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
 import {
   catalogStorefrontEndpoint,
   type SkuResult,
   type SkuVariables,
 } from '@/lib/commerce/catalog-subgraph';
+import { commerceRoute } from '@/lib/commerce/commerce-route';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { InvalidRequestError } from '@/lib/commerce/errors';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 
 const skuQuery = `
@@ -74,30 +76,24 @@ const skuQuery = `
   }
 `;
 
-export default async function handler(req: Request, res: Response): Promise<void> {
-  try {
-    const skuId: unknown = req.params.id;
-    if (typeof skuId !== 'string' || !skuId) {
-      res.status(400).json({ error: 'Missing sku id' });
-      return;
-    }
-
-    const config: CommerceConfig = readCommerceConfigForResponse(res);
-    if (!validateCommerceCartScope(req, res, config)) return;
-    const { storeId, clientId, apiBaseUrl } = config;
-
-    const data = await gqlRequest<SkuResult, SkuVariables>({
-      endpoint: catalogStorefrontEndpoint({ storeId, apiBaseUrl }),
-      query: skuQuery,
-      variables: { id: skuId },
-      headers: storefrontHeaders({ storeId, clientId }),
-    });
-
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to load sku',
-      message: error instanceof Error ? error.message : String(error),
-    });
+async function readSku(req: Request, res: Response): Promise<void> {
+  const skuId: unknown = req.params.id;
+  if (typeof skuId !== 'string' || !skuId) {
+    throw new InvalidRequestError('Missing sku id');
   }
+
+  const config: CommerceConfig = readCommerceConfigForResponse(res);
+  assertCommerceCartScope(req, config);
+  const { storeId, clientId, apiBaseUrl } = config;
+
+  const data = await gqlRequest<SkuResult, SkuVariables>({
+    endpoint: catalogStorefrontEndpoint({ storeId, apiBaseUrl }),
+    query: skuQuery,
+    variables: { id: skuId },
+    headers: storefrontHeaders({ storeId, clientId }),
+  });
+
+  res.json(data);
 }
+
+export default commerceRoute('Failed to load sku', readSku);

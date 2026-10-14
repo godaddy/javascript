@@ -4,16 +4,21 @@
  */
 import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
 import {
-  assertCommerceConnectionReady,
   type CommerceConfiguration,
   createRuntimeCommerceConfiguration,
+  readReadyCommerceConfig,
 } from './config';
+import { InvalidRequestError, NotFoundError, UpstreamError } from './errors';
 import type { Money } from './gql';
+import { fetchUpstream, readUpstreamJson, type UpstreamRequest, upstreamStatusError } from './upstream-http';
+
+/** `CommerceOrderStatus.status` when the Orders API reports no payment status. */
+export const ORDER_STATUS_UNKNOWN = 'unknown';
 
 export interface CommerceOrderStatus {
   /** GoDaddy order id. */
   id: string;
-  /** Payment status reported by Commerce, or 'unknown' when it is unavailable. */
+  /** Payment status reported by Commerce (e.g. `PAID`, `PENDING`), or `ORDER_STATUS_UNKNOWN`. */
   status: string;
   /** Total amount in the currency's smallest unit (cents for USD). */
   amount: number;
@@ -25,6 +30,22 @@ export interface CommerceOrderStatus {
   updatedAt?: string;
   /** Line item summaries, excluding private order metadata. */
   lineItems?: unknown[];
+}
+
+export class InvalidOrderIdError extends InvalidRequestError {
+  constructor() {
+    super('missing or invalid orderId query parameter', {
+      message: 'getOrderStatus: a valid orderId is required',
+    });
+    this.name = 'InvalidOrderIdError';
+  }
+}
+
+export class OrderNotFoundError extends NotFoundError {
+  constructor() {
+    super('Order not found');
+    this.name = 'OrderNotFoundError';
+  }
 }
 
 interface OrderResponse {
@@ -39,46 +60,95 @@ interface OrderResponse {
   };
 }
 
+function isBindingId(value: unknown): value is string {
+  return typeof value === 'string' && value !== '';
+}
+
+async function readErrorCode(response: Response): Promise<string | null> {
+  try {
+    const body: unknown = await response.json();
+    return body && typeof body === 'object' && 'code' in body && typeof body.code === 'string'
+      ? body.code
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getOrderStatus(
   orderId: string,
   configuration: CommerceConfiguration = createRuntimeCommerceConfiguration(),
 ): Promise<CommerceOrderStatus> {
-  if (typeof orderId !== 'string' || !orderId.trim() || orderId === '.' || orderId === '..') {
-    throw new Error('getOrderStatus: a valid orderId is required');
+  // `.` and `..` survive encodeURIComponent and would resolve the URL to the store resource.
+  if (
+    typeof orderId !== 'string' ||
+    !orderId ||
+    orderId !== orderId.trim() ||
+    orderId === '.' ||
+    orderId === '..'
+  ) {
+    throw new InvalidOrderIdError();
   }
 
-  assertCommerceConnectionReady(configuration);
-  const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } = configuration.read();
+  const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } =
+    readReadyCommerceConfig(configuration);
   const token = await getOAuthAccessToken({
     clientId,
     clientSecret,
     apiBaseUrl,
     scope: 'commerce.order:read',
   });
-  const response = await fetch(
-    new URL(
-      `/v1/commerce/stores/${encodeURIComponent(storeId)}/orders/${encodeURIComponent(orderId)}`,
-      apiBaseUrl,
-    ),
+  const endpoint = new URL(
+    `/v1/commerce/stores/${encodeURIComponent(storeId)}/orders/${encodeURIComponent(orderId)}`,
+    apiBaseUrl,
+  );
+  const request: UpstreamRequest = { operation: 'Order lookup', details: { endpoint: endpoint.href } };
+  const response = await fetchUpstream(
+    endpoint,
     {
       method: 'GET',
       headers: { ...authorizationHeaders({ accessToken: token.access_token }), Accept: 'application/json' },
       cache: 'no-store',
     },
+    request,
   );
-  if (!response.ok) throw new Error(`Failed to load order: upstream returned ${response.status}`);
+  if (!response.ok) {
+    // The Orders API reports a missing order as 404 NOT_FOUND and an ID it can't decode as 422
+    // VALIDATION_FAILED. A 404 without that code comes from an unrouted path or base URL.
+    const code =
+      response.status === 404 || response.status === 422 ? await readErrorCode(response) : undefined;
+    if (response.status === 404 && code === 'NOT_FOUND') throw new OrderNotFoundError();
+    if (response.status === 422 && code === 'VALIDATION_FAILED') throw new InvalidOrderIdError();
+    throw await upstreamStatusError(response, {
+      ...request,
+      details: { ...request.details, upstreamCode: code ?? undefined },
+    });
+  }
 
-  const data = (await response.json()) as OrderResponse;
+  const data = await readUpstreamJson<OrderResponse>(response, request);
   const order = data?.order;
-  if (!order?.id || order.id !== orderId) throw new Error('Order lookup did not return the requested order');
-  if (order.context?.storeId !== storeId || order.context?.channelId !== channelId) {
-    throw new Error('Order lookup returned a different store or channel');
+  const context = order?.context;
+  // A binding missing either field is a malformed upstream response, not proof of another store or channel.
+  // So is a different order id: the lookup was by id, so it means upstream returned the wrong record.
+  if (
+    !isBindingId(order?.id) ||
+    order.id !== orderId ||
+    !isBindingId(context?.storeId) ||
+    !isBindingId(context?.channelId)
+  ) {
+    throw new UpstreamError('Order lookup did not return the requested order', {
+      details: { endpoint: endpoint.href },
+    });
+  }
+  // Report an order bound to another store or channel as missing so the route doesn't reveal it exists.
+  if (context.storeId !== storeId || context.channelId !== channelId) {
+    throw new OrderNotFoundError();
   }
   const total = order.totals?.total;
 
   return {
     id: order.id,
-    status: order.statuses?.paymentStatus ?? 'unknown',
+    status: order.statuses?.paymentStatus ?? ORDER_STATUS_UNKNOWN,
     amount: total?.value ?? 0,
     currency: total?.currencyCode ?? currencyCode,
     createdAt: order.createdAt,
