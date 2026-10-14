@@ -90,7 +90,7 @@ Every route reports failures the same way. The body is `{ "error": "<customer-fa
 | 409 | `scope_mismatch` | `X-Commerce-Scope` no longer matches the configured store binding. |
 | 502 | `upstream_unauthorized` | Commerce rejected this server's OAuth client or requested scope (HTTP 401/403, or an OAuth 400 with `invalid_client`, `invalid_grant`, `unauthorized_client`, or `invalid_scope`). It concerns server credentials, not the caller, so it is never reported as 401/403. |
 | 502 | `upstream_error` | Commerce failed, returned an unexpected response, or could not be reached. |
-| 503 | `not_configured` | Configuration is missing or unreadable, or checkout return URLs are not configured. |
+| 503 | `not_configured` | Configuration is missing or unreadable, the host reports a connection state other than `ready`, or checkout return URLs are not configured. |
 | 500 | `internal_error` | An unexpected error in this package. |
 
 Upstream errors without a specific mapping stay 502; business errors such as invalid discount codes are not yet distinguished. 5xx detail, including upstream status and GraphQL error codes, goes to the logger:

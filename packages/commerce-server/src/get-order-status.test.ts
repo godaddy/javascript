@@ -232,6 +232,25 @@ describe('authorized order lookup', () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 
+  it.each(['unbound', 'connecting'] as const)(
+    'reports a %s connection as not configured without reading credentials',
+    async (state): Promise<void> => {
+      const read = vi.fn(configuration.read);
+      const error = await getOrderStatus(order.id, {
+        ...configuration,
+        read,
+        readConnectionState: () => state,
+      }).catch((thrown: unknown) => thrown);
+      expect(error).toMatchObject({
+        code: 'not_configured',
+        httpStatus: 503,
+        details: { connectionState: state },
+      });
+      expect(read).not.toHaveBeenCalled();
+      expect(upstream).not.toHaveBeenCalled();
+    },
+  );
+
   it.each(['', ' ', '.', '..', ' completed-order', 'completed-order\n'])(
     'rejects invalid order ID %j before requesting credentials',
     async (id): Promise<void> => {

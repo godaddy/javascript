@@ -755,11 +755,12 @@ describe('host-reported connection state', () => {
         headers: {},
         query: {},
         params: { id: 'cart-1', itemId: 'item-1' },
-        body: { skuId: 'sku-1', name: 'Product', quantity: 1 },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, discountCodes: ['SAVE10'] },
       } as unknown as Request,
       res as unknown as Response,
     );
-    expect(res.status).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'not_configured' }));
     expect(gqlRequest).not.toHaveBeenCalled();
     expect(createCheckoutSession).not.toHaveBeenCalled();
   });

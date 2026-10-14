@@ -146,8 +146,9 @@ export function readCommerceConfigForResponse(res: Response): CommerceConfig {
 export function assertCommerceConnectionReady(configuration: CommerceConfiguration): void {
   const state = configuration.readConnectionState?.();
   if (state !== undefined && state !== 'ready') {
-    throw new Error(
-      'Commerce store connection is not ready. Complete the store connection before continuing.',
-    );
+    // Logged as connectionState so a dedicated code can be split out if hosts need one.
+    throw new CommerceNotConfiguredError('Commerce store connection is not ready.', {
+      details: { connectionState: state },
+    });
   }
 }
