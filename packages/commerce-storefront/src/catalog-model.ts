@@ -215,10 +215,13 @@ export function getAvailableInventoryQuantity(
   return edges.find((edge) => edge?.node?.type === 'AVAILABLE')?.node?.quantity ?? 0;
 }
 
+// The catalog API still returns `PHOTO` for media created before the `IMAGE` type.
+const imageMediaTypes: ReadonlySet<string> = new Set(['IMAGE', 'PHOTO']);
+
 export function getImageUrls(item: MediaObjectContainer | null | undefined): string[] {
   return (
     item?.mediaObjects?.edges
-      ?.filter((edge) => edge?.node?.type === 'IMAGE' && edge.node.url)
+      ?.filter((edge) => imageMediaTypes.has(edge?.node?.type ?? '') && edge?.node?.url)
       .map((edge) => edge?.node?.url)
       .filter((url): url is string => Boolean(url)) ?? []
   );

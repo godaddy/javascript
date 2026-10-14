@@ -20,9 +20,12 @@
 
 @layer base {
   .commerce-storefront { color: var(--commerce-text, inherit); font-family: inherit; line-height: 1.5; }
-  .commerce-storefront :where(*) { color: inherit; font-family: inherit; }
-  .commerce-storefront *, .commerce-storefront *::before, .commerce-storefront *::after {
-    box-sizing: border-box; border-width: 0; border-style: solid;
+  /* A part's outer element (.commerce-part) receives host classes. These unlayered resets would beat a host's
+     layered utilities, so they skip it; a plain div needs neither reset. */
+  .commerce-storefront :where(*:not(.commerce-part)) { color: inherit; font-family: inherit; }
+  .commerce-storefront *, .commerce-storefront *::before, .commerce-storefront *::after { box-sizing: border-box; }
+  .commerce-storefront :where(*:not(.commerce-part)), .commerce-storefront *::before, .commerce-storefront *::after {
+    border-width: 0; border-style: solid;
   }
   .commerce-storefront :where(h1,h2,h3,p,ul,dl,dd,fieldset) { margin: 0; padding: 0; }
   .commerce-storefront :where(h1,h2,h3) { font-size: inherit; font-weight: inherit; }
