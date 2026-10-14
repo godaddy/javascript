@@ -29,24 +29,24 @@ export {
   ProductDetailsTitle,
 } from './product-details';
 export {
+  type ProductDetailsOptionState,
+  type ProductDetailsOptionValueState,
+  type ProductDetailsPartProps,
   ProductDetailsRoot,
   type ProductDetailsRootProps,
   type ProductDetailsState,
-  type ProductOptionState,
-  type ProductOptionValueState,
-  type ProductPartProps,
-  type PurchaseStatus,
+  type ProductDetailsStatus,
   useProductDetails,
-  useProductOption,
+  useProductDetailsOption,
 } from './product-details-context';
 export {
-  ProductAddToCart,
-  ProductAvailability,
-  ProductOption,
-  type ProductOptionProps,
-  ProductOptions,
-  ProductPurchase,
-  ProductPurchaseStatus,
-  ProductQuantity,
+  ProductDetailsAddToCart,
+  ProductDetailsAvailability,
+  ProductDetailsOption,
+  type ProductDetailsOptionProps,
+  ProductDetailsOptions,
+  ProductDetailsPurchase,
+  ProductDetailsPurchaseStatus,
+  ProductDetailsQuantity,
 } from './product-purchase';
 export { CommerceStatus } from './storefront-surface';

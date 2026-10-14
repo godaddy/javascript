@@ -4,12 +4,12 @@ import { money } from './api';
 import { ProductImage } from './catalog';
 import { useCommerce } from './commerce-provider';
 import {
-  cx,
+  type ProductDetailsPartProps,
   ProductDetailsRoot,
-  type ProductPartProps,
+  partClass,
   useProductDetailsInternal,
 } from './product-details-context';
-import { ProductPurchase } from './product-purchase';
+import { ProductDetailsPurchase } from './product-purchase';
 
 /** The packaged product page for `${productPath}/:productId`. Compose the parts for a custom layout. */
 export function ProductDetails(): ReactElement {
@@ -22,34 +22,33 @@ export function ProductDetails(): ReactElement {
           <ProductDetailsTitle />
           <ProductDetailsPrice className='mt-6' />
           <ProductDetailsDescription className='my-8' />
-          <ProductPurchase className='border-t border-neutral-200 pt-8' />
+          <ProductDetailsPurchase className='border-t border-neutral-200 pt-8' />
         </div>
       </div>
     </ProductDetailsRoot>
   );
 }
 
-export function ProductDetailsBackLink({ className }: ProductPartProps): ReactElement {
+export function ProductDetailsBackLink({ className }: ProductDetailsPartProps): ReactElement {
   useProductDetailsInternal('ProductDetailsBackLink');
   const { config } = useCommerce();
   return (
-    <Link
-      className={cx(
-        'inline-flex min-h-11 items-center text-sm text-inherit underline underline-offset-4 focus-visible:outline focus-visible:outline-2',
-        className,
-      )}
-      to={config.catalogPath}
-    >
-      ← Back to shop
-    </Link>
+    <div className={partClass(className)}>
+      <Link
+        className='inline-flex min-h-11 items-center text-sm text-inherit underline underline-offset-4 focus-visible:outline focus-visible:outline-2'
+        to={config.catalogPath}
+      >
+        ← Back to shop
+      </Link>
+    </div>
   );
 }
 
 /** Main image with thumbnails; the selected SKU's images replace the product's when present. */
-export function ProductDetailsGallery({ className }: ProductPartProps): ReactElement {
+export function ProductDetailsGallery({ className }: ProductDetailsPartProps): ReactElement {
   const { images, imageIndex, setImageIndex, name } = useProductDetailsInternal('ProductDetailsGallery');
   return (
-    <div className={className}>
+    <div className={partClass(className)}>
       <div className='aspect-square overflow-hidden rounded-lg'>
         <ProductImage key={images[imageIndex]} url={images[imageIndex]} name={name} />
       </div>
@@ -74,21 +73,23 @@ export function ProductDetailsGallery({ className }: ProductPartProps): ReactEle
 }
 
 /** The product name as the page's H1. */
-export function ProductDetailsTitle({ className }: ProductPartProps): ReactElement {
+export function ProductDetailsTitle({ className }: ProductDetailsPartProps): ReactElement {
   const { name } = useProductDetailsInternal('ProductDetailsTitle');
   return (
-    <h1 className={cx('break-words text-4xl font-semibold leading-tight sm:text-5xl', className)}>{name}</h1>
+    <div className={partClass(className)}>
+      <h1 className='break-words text-4xl font-semibold leading-tight sm:text-5xl'>{name}</h1>
+    </div>
   );
 }
 
 /** The verified SKU's price and compare-at price, or the product's starting price. */
-export function ProductDetailsPrice({ className }: ProductPartProps): ReactElement {
+export function ProductDetailsPrice({ className }: ProductDetailsPartProps): ReactElement {
   const { price, product } = useProductDetailsInternal('ProductDetailsPrice');
   const { config } = useCommerce();
   return (
     <div
       aria-live='polite'
-      className={cx('flex flex-wrap items-baseline gap-x-3 gap-y-1 text-2xl font-medium', className)}
+      className={partClass('flex flex-wrap items-baseline gap-x-3 gap-y-1 text-2xl font-medium', className)}
       data-testid='product-price'
     >
       {price?.value?.value != null
@@ -108,11 +109,13 @@ export function ProductDetailsPrice({ className }: ProductPartProps): ReactEleme
 }
 
 /** The verified SKU's description, or the product's. */
-export function ProductDetailsDescription({ className }: ProductPartProps): ReactElement {
+export function ProductDetailsDescription({ className }: ProductDetailsPartProps): ReactElement {
   const { selectedSku, product } = useProductDetailsInternal('ProductDetailsDescription');
   return (
-    <p className={cx('whitespace-pre-line text-base leading-7', className)}>
-      {selectedSku?.description ?? product.description}
-    </p>
+    <div className={partClass(className)}>
+      <p className='whitespace-pre-line text-base leading-7'>
+        {selectedSku?.description ?? product.description}
+      </p>
+    </div>
   );
 }

@@ -57,13 +57,13 @@ it('inherits host text without painting wrappers while retaining opaque themed c
   });
   expect(controlDeclarations['background-color']).toBe('var(--commerce-surface, #fff)');
   const resets: Record<string, string> = {};
-  css.walkRules('.commerce-storefront :where(*)', (rule) => {
+  css.walkRules('.commerce-storefront :where(*:not(.commerce-part))', (rule) => {
     rule.walkDecls((declaration) => {
       resets[declaration.prop] = declaration.value;
     });
   });
   expect(resets).toMatchObject({ color: 'inherit', 'font-family': 'inherit' });
-  expect(css.toString().indexOf('.commerce-storefront :where(*)')).toBeLessThan(
+  expect(css.toString().indexOf('.commerce-storefront :where(*:not(.commerce-part))')).toBeLessThan(
     css.toString().indexOf('.commerce-storefront .text-commerce-on-accent'),
   );
 });
