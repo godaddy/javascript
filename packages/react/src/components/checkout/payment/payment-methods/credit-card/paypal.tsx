@@ -129,7 +129,14 @@ export function PayPalCreditCardForm() {
           paymentToken: '',
         });
         authorizedTipAmount.current = result?.authorizedTipAmount ?? null;
-        return result?.transactionRefNum ?? '';
+        // Card Fields require the PayPal order id from INIT authorize
+        // (`fundingSource.paymentReference`). `transactionRefNum` is an
+        // optional commerce idempotency key and is often null.
+        const orderId = result?.fundingSource?.paymentReference;
+        if (!orderId) {
+          throw new Error('PayPal order id missing from authorize response');
+        }
+        return orderId;
       }}
       onApprove={async data => {
         try {
