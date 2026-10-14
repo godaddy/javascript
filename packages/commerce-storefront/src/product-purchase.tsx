@@ -1,17 +1,17 @@
-import type { ReactElement } from 'react';
+import { type ReactElement, type ReactNode, useId } from 'react';
 import { message } from './api';
 import { AddToCartButton, buttonClass, inputClass } from './cart';
 import type { SKU } from './catalog-model';
 import {
-  cx,
-  type ProductPartProps,
-  type PurchaseStatus,
+  type ProductDetailsPartProps,
+  type ProductDetailsStatus,
+  partClass,
   useProductDetailsInternal,
-  useProductOption,
+  useProductDetailsOption,
   useSkuOptionRegistration,
 } from './product-details-context';
 
-const disabledReasons: Record<Exclude<PurchaseStatus, 'ready'>, string> = {
+const disabledReasons: Record<Exclude<ProductDetailsStatus, 'ready'>, string> = {
   incomplete: 'Select all options to add this item to your cart.',
   checking: 'Checking this variant…',
   'variant-error': 'Availability for this selection could not be checked.',
@@ -19,26 +19,31 @@ const disabledReasons: Record<Exclude<PurchaseStatus, 'ready'>, string> = {
   'not-purchasable': 'This product is not currently available to purchase.',
 };
 
+// In 0.2.0 the purchase area's option fieldsets and text messages were bare <fieldset>/<p> children of
+// `space-y-6`, and the package reset's `margin: 0` outranked that zero-specificity rule, so they had no gap.
+// Their wrappers now take the gap, so the packaged layout cancels it on those parts to stay visually identical.
+const flush = 'mb-0';
+
 /** The packaged purchase area: options, status, availability, quantity, and add to cart. */
-export function ProductPurchase({ className }: ProductPartProps): ReactElement {
-  useProductDetailsInternal('ProductPurchase');
+export function ProductDetailsPurchase({ className }: ProductDetailsPartProps): ReactElement {
+  useProductDetailsInternal('ProductDetailsPurchase');
   return (
-    <div className={cx('space-y-6', className)}>
+    <div className={partClass('space-y-6', className)}>
       <OptionControls />
-      <ProductPurchaseStatus />
-      <ProductAvailability />
-      <ProductQuantity />
-      <ProductAddToCart />
+      <PurchaseStatusMessage textClassName={flush} />
+      <ProductDetailsAvailability className={flush} />
+      <ProductDetailsQuantity />
+      <ProductDetailsAddToCart />
     </div>
   );
 }
 
 /** A select for every product attribute, or the SKU list for products without attributes. */
-export function ProductOptions({ className }: ProductPartProps): ReactElement | null {
-  const { attributes, skuOptions } = useProductDetailsInternal('ProductOptions');
+export function ProductDetailsOptions({ className }: ProductDetailsPartProps): ReactElement | null {
+  const { attributes, skuOptions } = useProductDetailsInternal('ProductDetailsOptions');
   if (attributes.length === 0 && skuOptions.length === 0) return null;
   return (
-    <div className={cx('space-y-6', className)}>
+    <div className={partClass('space-y-6', className)}>
       <OptionControls />
     </div>
   );
@@ -46,11 +51,15 @@ export function ProductOptions({ className }: ProductPartProps): ReactElement | 
 
 // Unwrapped so the packaged layout keeps the controls as direct children of its own spacing container.
 function OptionControls(): ReactElement {
-  const { attributes, skuOptions } = useProductDetailsInternal('ProductOptions');
+  const { attributes, skuOptions } = useProductDetailsInternal('ProductDetailsOptions');
   return (
     <>
       {attributes.map((attribute) => (
-        <ProductOption key={attribute.id || attribute.name} attribute={attribute.name} />
+        <ProductDetailsOption
+          key={attribute.id || attribute.name}
+          attribute={attribute.name}
+          className={flush}
+        />
       ))}
       {skuOptions.length > 0 && <SkuOption />}
     </>
@@ -58,15 +67,16 @@ function OptionControls(): ReactElement {
 }
 
 function SkuOption(): ReactElement {
-  const { fieldId, skuOptions, explicitSkuId, selectSku } = useProductDetailsInternal('ProductOptions');
+  const { skuOptions, explicitSkuId, selectSku } = useProductDetailsInternal('ProductDetailsOptions');
+  const id = useId();
   useSkuOptionRegistration();
   return (
     <div>
-      <label htmlFor={`${fieldId}-sku-option`} className='mb-2 block font-medium'>
+      <label htmlFor={id} className='mb-2 block font-medium'>
         Option
       </label>
       <select
-        id={`${fieldId}-sku-option`}
+        id={id}
         className={`${inputClass} w-full`}
         value={explicitSkuId}
         onChange={(event) => selectSku(event.target.value)}
@@ -82,100 +92,116 @@ function SkuOption(): ReactElement {
   );
 }
 
-export interface ProductOptionProps extends ProductPartProps {
+export interface ProductDetailsOptionProps extends ProductDetailsPartProps {
   /** The attribute `name`, such as `color`. Renders nothing when the product has no such attribute. */
   attribute: string;
 }
 
-/** A select for one product attribute. Use `useProductOption` for swatches or other custom controls. */
-export function ProductOption({ attribute, className }: ProductOptionProps): ReactElement | null {
-  const option = useProductOption(attribute);
+/** A select for one product attribute. Use `useProductDetailsOption` for swatches or other custom controls. */
+export function ProductDetailsOption({
+  attribute,
+  className,
+}: ProductDetailsOptionProps): ReactElement | null {
+  const option = useProductDetailsOption(attribute);
   if (!option) return null;
   return (
-    <fieldset className={className}>
-      <legend className='mb-2 font-medium'>{option.label}</legend>
-      <select
-        className={`${inputClass} w-full`}
-        aria-label={option.label}
-        value={option.selected ?? ''}
-        onChange={(event) => option.select(event.target.value || null)}
-      >
-        <option value=''>Select {option.label.toLowerCase()}</option>
-        {option.values.map((value) => (
-          <option key={value.name} value={value.name}>
-            {value.label}
-          </option>
-        ))}
-      </select>
-    </fieldset>
+    <div className={partClass(className)}>
+      <fieldset>
+        <legend className='mb-2 font-medium'>{option.label}</legend>
+        <select
+          className={`${inputClass} w-full`}
+          aria-label={option.label}
+          value={option.selected ?? ''}
+          onChange={(event) => option.select(event.target.value || null)}
+        >
+          <option value=''>Select {option.label.toLowerCase()}</option>
+          {option.values.map((value) => (
+            <option key={value.name} value={value.name}>
+              {value.label}
+            </option>
+          ))}
+        </select>
+      </fieldset>
+    </div>
   );
 }
 
 /** The single message explaining why the selection is not yet purchasable. Renders nothing when ready. */
-export function ProductPurchaseStatus({ className }: ProductPartProps): ReactElement | null {
-  const { status, variantError, retryVariant } = useProductDetailsInternal('ProductPurchaseStatus');
+export function ProductDetailsPurchaseStatus({ className }: ProductDetailsPartProps): ReactElement | null {
+  return <PurchaseStatusMessage className={className} />;
+}
+
+function PurchaseStatusMessage({
+  className,
+  textClassName,
+}: ProductDetailsPartProps & { textClassName?: string }): ReactElement | null {
+  const { status, variantError, retryVariant } = useProductDetailsInternal('ProductDetailsPurchaseStatus');
+  const part = (children: ReactNode, partClassName?: string): ReactElement => (
+    <div className={partClass(partClassName, className)}>{children}</div>
+  );
   switch (status) {
     case 'ready':
       return null;
     case 'variant-error':
-      return (
-        <div role='alert' className={cx('text-red-700', className)}>
+      return part(
+        <div role='alert' className='text-red-700'>
           <p>{message(variantError)}</p>
           <button type='button' className='min-h-11 bg-white text-red-700 underline' onClick={retryVariant}>
             Retry availability
           </button>
-        </div>
+        </div>,
       );
     case 'unavailable':
-      return (
-        <p role='status' className={cx('text-sm text-red-700', className)}>
+      return part(
+        <p role='status' className='text-sm text-red-700'>
           {disabledReasons[status]}
-        </p>
+        </p>,
+        textClassName,
       );
     case 'not-purchasable':
-      return <p className={cx('text-sm', className)}>{disabledReasons[status]}</p>;
+      return part(<p className='text-sm'>{disabledReasons[status]}</p>, textClassName);
     case 'checking':
-      return (
-        <p role='status' className={className}>
-          {disabledReasons[status]}
-        </p>
-      );
+      return part(<p role='status'>{disabledReasons[status]}</p>, textClassName);
     case 'incomplete':
-      return (
-        <p role='status' className={cx('text-sm', className)}>
+      return part(
+        <p role='status' className='text-sm'>
           {disabledReasons[status]}
-        </p>
+        </p>,
+        textClassName,
       );
   }
 }
 
 /** Stock for the verified SKU. Renders nothing until a SKU is verified. */
-export function ProductAvailability({ className }: ProductPartProps): ReactElement | null {
-  const { selectedSku, availableQuantity } = useProductDetailsInternal('ProductAvailability');
+export function ProductDetailsAvailability({ className }: ProductDetailsPartProps): ReactElement | null {
+  const { selectedSku, availableQuantity } = useProductDetailsInternal('ProductDetailsAvailability');
   if (!selectedSku) return null;
   return (
-    <p className={cx('text-sm', className)} aria-live='polite'>
-      {availableQuantity === null
-        ? 'Available to order'
-        : availableQuantity === 0
-          ? 'This variant is out of stock'
-          : `${availableQuantity} available`}
-    </p>
+    <div className={partClass(className)}>
+      <p className='text-sm' aria-live='polite'>
+        {availableQuantity === null
+          ? 'Available to order'
+          : availableQuantity === 0
+            ? 'This variant is out of stock'
+            : `${availableQuantity} available`}
+      </p>
+    </div>
   );
 }
 
 /** Quantity for the verified SKU. Renders nothing until a SKU is verified. */
-export function ProductQuantity({ className }: ProductPartProps): ReactElement | null {
-  const { fieldId, selectedSku, availableQuantity, quantity, setQuantity } =
-    useProductDetailsInternal('ProductQuantity');
+export function ProductDetailsQuantity({ className }: ProductDetailsPartProps): ReactElement | null {
+  const { selectedSku, availableQuantity, quantity, setQuantity } =
+    useProductDetailsInternal('ProductDetailsQuantity');
+  const id = useId();
   if (!selectedSku) return null;
   return (
-    <div className={className}>
-      <label htmlFor={`${fieldId}-quantity`} className='mb-2 block font-medium'>
+    <div className={partClass(className)}>
+      <label htmlFor={id} className='mb-2 block font-medium'>
         Quantity
       </label>
       <input
-        id={`${fieldId}-quantity`}
+        id={id}
         type='number'
         min={1}
         max={availableQuantity ?? undefined}
@@ -189,23 +215,19 @@ export function ProductQuantity({ className }: ProductPartProps): ReactElement |
 }
 
 /** Adds the verified SKU and quantity. While disabled, its accessible description says why. */
-export function ProductAddToCart({ className }: ProductPartProps): ReactElement {
-  const { fieldId, selectedSku, name, quantity, status } = useProductDetailsInternal('ProductAddToCart');
+export function ProductDetailsAddToCart({ className }: ProductDetailsPartProps): ReactElement {
+  const { selectedSku, name, quantity, status } = useProductDetailsInternal('ProductDetailsAddToCart');
+  const reasonId = useId();
   return (
-    <div className={className}>
+    <div className={partClass(className)}>
       {selectedSku ? (
         <AddToCartButton sku={selectedSku} name={name} quantity={quantity} />
       ) : (
         <>
-          <button
-            type='button'
-            className={`${buttonClass} w-full`}
-            disabled
-            aria-describedby={`${fieldId}-purchase-reason`}
-          >
+          <button type='button' className={`${buttonClass} w-full`} disabled aria-describedby={reasonId}>
             Add to cart
           </button>
-          <span id={`${fieldId}-purchase-reason`} hidden>
+          <span id={reasonId} hidden>
             {status === 'ready' ? '' : disabledReasons[status]}
           </span>
         </>

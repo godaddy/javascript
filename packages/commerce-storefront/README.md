@@ -120,41 +120,49 @@ The package exports TypeScript catalog/cart response types and selection/summary
 ```tsx
 import {
   ProductDetailsBackLink, ProductDetailsDescription, ProductDetailsGallery, ProductDetailsPrice,
-  ProductDetailsRoot, ProductDetailsTitle, ProductPurchase,
+  ProductDetailsPurchase, ProductDetailsRoot, ProductDetailsTitle,
 } from '@godaddy/gd-commerce-storefront';
 
 <ProductDetailsRoot>
-  <ProductDetailsBackLink />
-  <ProductDetailsGallery />
-  <ProductDetailsTitle />
-  <ProductDetailsPrice />
-  <ProductDetailsDescription />
-  <ProductPurchase />
+  <ProductDetailsBackLink className='mb-8 sm:mb-10' />
+  <div className='grid items-start gap-8 lg:grid-cols-12 lg:gap-12'>
+    <ProductDetailsGallery className='min-w-0 lg:col-span-7' />
+    <div className='min-w-0 lg:col-span-5 lg:py-4'>
+      <ProductDetailsTitle />
+      <ProductDetailsPrice className='mt-6' />
+      <ProductDetailsDescription className='my-8' />
+      <ProductDetailsPurchase className='border-t border-neutral-200 pt-8' />
+    </div>
+  </div>
 </ProductDetailsRoot>
 ```
 
-Add your own elements between parts, reorder them, or leave out display parts. `ProductPurchase` renders the purchase parts below in order. Replace it with individual parts to place options apart from the add button:
+The grid, spacing and border classes come from your own stylesheet in a custom layout. Without them, the parts stack in one column with no space between them.
+
+Add your own elements between parts, reorder them, or leave out display parts. `ProductDetailsPurchase` renders the purchase parts below in order. Replace it with individual parts to place options apart from the add button:
 
 | Part | Renders |
 | --- | --- |
-| `ProductOptions` | A select for every attribute, or the SKU list for products without attributes |
-| `ProductOption` | A select for one attribute, by `attribute` name; nothing when the product lacks it |
-| `ProductPurchaseStatus` | The one message explaining why the selection is not purchasable yet; nothing when ready |
-| `ProductAvailability`, `ProductQuantity` | Stock and quantity for the verified SKU; nothing before verification |
-| `ProductAddToCart` | Adds the verified SKU and quantity; while disabled, its accessible description gives the reason |
+| `ProductDetailsOptions` | A select for every attribute, or the SKU list for products without attributes |
+| `ProductDetailsOption` | A select for one attribute, by `attribute` name; nothing when the product lacks it |
+| `ProductDetailsPurchaseStatus` | The one message explaining why the selection is not purchasable yet; nothing when ready |
+| `ProductDetailsAvailability`, `ProductDetailsQuantity` | Stock and quantity for the verified SKU; nothing before verification |
+| `ProductDetailsAddToCart` | Adds the verified SKU and quantity; before a SKU is verified, its accessible description gives the reason |
 
-Parts read state from the root and take no product, SKU, price or quantity props. Whatever the layout, only a server-verified SKU can be added, and changing a selection resets the quantity and image. Every part throws if it is rendered outside `ProductDetailsRoot`. If a layout cannot select every attribute a product requires, a console warning names the missing ones. Products without attributes but with several SKUs need `ProductOptions` or `ProductPurchase`.
+Every part is named `ProductDetails*` because it works only inside `ProductDetailsRoot`. `AddToCartButton` is the standalone button for a SKU you already have.
 
-Every part accepts `className`, which is added to the part's outer element. The packaged layout sets spacing and grid placement this way, so your classes can control margins, width and position. Package styles are scoped under `.commerce-storefront` and win over unscoped host classes for the properties a part already sets, such as its font size.
+Parts read state from the root and take no product, SKU, price or quantity props. Whatever the layout, only a server-verified SKU can be added, and changing a selection resets the quantity and image. Every part throws if it is rendered outside `ProductDetailsRoot`. In development builds, if no control is rendered for an attribute the product requires, a console warning names the missing ones. A control that mounts later, such as one in a closed accordion, can trigger it; the product becomes purchasable once the control renders. Products without attributes but with several SKUs need `ProductDetailsOptions` or `ProductDetailsPurchase`. Parts can be rendered more than once, such as in a sticky mobile purchase bar; each copy gets its own element IDs.
+
+Every part accepts `className`, which is added to the part's outer element, a wrapper the package's CSS reset leaves alone. Host classes there control margin, padding, border, color, width and grid placement, including layered utilities such as Tailwind v4's. The packaged layout sets its spacing and grid placement this way. Elements inside the part, such as the title's `<h1>`, keep the package's own styles: a host font size on `ProductDetailsTitle` does not change the heading's size, but a host color does reach it, because the heading inherits its color.
 
 Two hooks support custom parts inside the root:
 
 - `useProductDetails()` returns read-only `product`, `name`, `selectedSku`, `quantity`, `availableQuantity`, `images` and `status` (`incomplete`, `checking`, `variant-error`, `unavailable`, `not-purchasable` or `ready`). `selectedSku` is set only when `status` is `ready`.
-- `useProductOption(attribute)` returns `{ name, label, selected, values, select }` for building swatches or buttons, or `null` when the product has no such attribute. `select(value)` accepts only that attribute's value names, or `null` to clear. Other values are ignored. A hook-based control counts toward the layout check.
+- `useProductDetailsOption(attribute)` returns `{ name, label, selected, values, select }` for building swatches or buttons, or `null` when the product has no such attribute. `select(value)` accepts only that attribute's value names, or `null` to clear. Other values are ignored. A hook-based control counts toward the layout check.
 
 ```tsx
 function ColorSwatches() {
-  const color = useProductOption('color');
+  const color = useProductDetailsOption('color');
   if (!color) return null;
   return (
     <div role='group' aria-label={color.label}>

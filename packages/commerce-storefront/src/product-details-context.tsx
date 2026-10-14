@@ -6,7 +6,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useId,
   useRef,
   useState,
 } from 'react';
@@ -29,7 +28,7 @@ import { useCommerce } from './commerce-provider';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 /** Where the shopper is in choosing a purchasable SKU. Only `ready` has a verified `selectedSku`. */
-export type PurchaseStatus =
+export type ProductDetailsStatus =
   | 'incomplete'
   | 'checking'
   | 'variant-error'
@@ -46,12 +45,11 @@ export interface ProductDetailsState {
   readonly quantity: number;
   /** `null` means inventory is not tracked; `0` means sold out. */
   readonly availableQuantity: number | null;
-  readonly status: PurchaseStatus;
+  readonly status: ProductDetailsStatus;
   readonly images: readonly string[];
 }
 
 interface ProductDetailsInternal extends ProductDetailsState {
-  fieldId: string;
   attributes: StorefrontProductAttribute[];
   selections: string[];
   skuOptions: SKU[];
@@ -68,11 +66,14 @@ interface ProductDetailsInternal extends ProductDetailsState {
 }
 
 /** Props shared by every product part. `className` is added to the part's outer element. */
-export interface ProductPartProps {
+export interface ProductDetailsPartProps {
   className?: string;
 }
 
 export const cx = (...classes: Array<string | undefined>): string => classes.filter(Boolean).join(' ');
+
+/** Classes for the element that receives a part's `className`. The package CSS reset skips `commerce-part`. */
+export const partClass = (...classes: Array<string | undefined>): string => cx('commerce-part', ...classes);
 
 const ProductDetailsContext = createContext<ProductDetailsInternal | null>(null);
 
@@ -89,17 +90,17 @@ export function useProductDetails(): ProductDetailsState {
   return { product, name, selectedSku, quantity, availableQuantity, status, images };
 }
 
-export interface ProductOptionValueState {
+export interface ProductDetailsOptionValueState {
   readonly name: string;
   readonly label: string;
   readonly selected: boolean;
 }
 
-export interface ProductOptionState {
+export interface ProductDetailsOptionState {
   readonly name: string;
   readonly label: string;
   readonly selected: string | null;
-  readonly values: readonly ProductOptionValueState[];
+  readonly values: readonly ProductDetailsOptionValueState[];
   /** Accepts only this attribute's own value names, or `null` to clear. Other values are ignored. */
   readonly select: (value: string | null) => void;
 }
@@ -108,8 +109,9 @@ export interface ProductOptionState {
  * Build a custom control for one product attribute. Returns `null` when the product has no such attribute.
  * A selection is never purchasable until the server verifies it.
  */
-export function useProductOption(attribute: string): ProductOptionState | null {
-  const { attributes, selections, selectOption, register } = useProductDetailsInternal('useProductOption');
+export function useProductDetailsOption(attribute: string): ProductDetailsOptionState | null {
+  const { attributes, selections, selectOption, register } =
+    useProductDetailsInternal('useProductDetailsOption');
   useEffect(() => register(`attribute:${attribute}`), [attribute, register]);
   const index: number = attributes.findIndex((candidate) => candidate.name === attribute);
   const match: StorefrontProductAttribute | undefined = attributes[index];
@@ -133,7 +135,7 @@ export function useProductOption(attribute: string): ProductOptionState | null {
 
 /** Register the explicit SKU control so the layout check knows SKU-list products can be completed. */
 export function useSkuOptionRegistration(): void {
-  const { register } = useProductDetailsInternal('ProductOptions');
+  const { register } = useProductDetailsInternal('ProductDetailsOptions');
   useEffect(() => register('sku'), [register]);
 }
 
@@ -166,7 +168,6 @@ function ProductDetailsLoader({
   children,
 }: ProductDetailsRootProps & { productId: string }): ReactElement {
   const { config } = useCommerce();
-  const fieldId = useId();
   const [params, setParams] = useSearchParams();
   const [quantity, setQuantity] = useState<number>(1);
   const [imageIndex, setImageIndex] = useState<number>(0);
@@ -214,7 +215,7 @@ function ProductDetailsLoader({
   const selectedSku: SKU | null = selectionVerified
     ? (explicitSku ?? getSingleMatchedSku(attributes.length ? matched.data?.skuGroup : group))
     : null;
-  const status: PurchaseStatus = !complete
+  const status: ProductDetailsStatus = !complete
     ? 'incomplete'
     : matched.isError && !matched.isFetching
       ? 'variant-error'
@@ -249,17 +250,21 @@ function ProductDetailsLoader({
     ...attributes.map((attribute) => `attribute:${attribute.name}`),
     ...(skuOptions.length ? ['sku'] : []),
   ].join('\n');
-  // Parent effects run after child effects, so every mounted control has registered by now.
+  // Parent effects run after child effects, so every mounted control has registered by now. Controls can mount
+  // later (accordions, tabs, sheets), so the warning describes the current render only. Development builds only,
+  // like the peer query library's own checks.
   useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
     const missing: string[] = requiredControls
       .split('\n')
       .filter((control) => control && !registered.current.has(control));
     if (missing.length === 0) return;
     console.warn(
-      `[gd-commerce-storefront] This product layout cannot select ${missing
-        .map((control) => (control === 'sku' ? 'a SKU option' : `"${control.slice('attribute:'.length)}"`))
-        .join(', ')}, so it can never be added to the cart. Render <ProductOptions />, ` +
-        `<ProductOption attribute='…' /> for each attribute, or <ProductPurchase />.`,
+      `[gd-commerce-storefront] No control for ${missing
+        .map((control) => (control === 'sku' ? 'the SKU option' : `"${control.slice('attribute:'.length)}"`))
+        .join(', ')} is rendered right now, so this product cannot be added to the cart until one is. ` +
+        `Render <ProductDetailsOptions />, <ProductDetailsOption attribute='…' /> for each attribute, ` +
+        `or <ProductDetailsPurchase />, or ignore this if the control mounts later.`,
     );
   }, [requiredControls]);
   if (product.isPending) return <p role='status'>Loading product…</p>;
@@ -290,7 +295,6 @@ function ProductDetailsLoader({
     availableQuantity: getAvailableInventoryQuantity(selectedSku),
     status,
     images,
-    fieldId,
     attributes,
     selections,
     skuOptions,
@@ -312,7 +316,7 @@ function ProductDetailsLoader({
   };
   return (
     <ProductDetailsContext.Provider value={value}>
-      <article className={className}>{children}</article>
+      <article className={partClass(className)}>{children}</article>
     </ProductDetailsContext.Provider>
   );
 }

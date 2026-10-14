@@ -1,19 +1,30 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import postcss from 'postcss';
 import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import type { SKU, SKUGroup } from './catalog-model';
 import { CommerceStorefront } from './commerce-storefront';
-import { ProductDetailsTitle } from './product-details';
-import { ProductDetailsRoot, useProductDetails, useProductOption } from './product-details-context';
 import {
-  ProductAddToCart,
-  ProductOption,
-  ProductPurchase,
-  ProductPurchaseStatus,
-  ProductQuantity,
+  ProductDetailsBackLink,
+  ProductDetailsDescription,
+  ProductDetailsGallery,
+  ProductDetailsPrice,
+  ProductDetailsTitle,
+} from './product-details';
+import { ProductDetailsRoot, useProductDetails, useProductDetailsOption } from './product-details-context';
+import {
+  ProductDetailsAddToCart,
+  ProductDetailsAvailability,
+  ProductDetailsOption,
+  ProductDetailsOptions,
+  ProductDetailsPurchase,
+  ProductDetailsPurchaseStatus,
+  ProductDetailsQuantity,
 } from './product-purchase';
 
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
@@ -40,8 +51,16 @@ const shirt: SKUGroup = {
   },
   skus: { totalCount: 4, edges: [] },
 };
+const poster: SKUGroup = {
+  id: 'poster',
+  label: 'Poster',
+  skus: {
+    totalCount: 2,
+    edges: ['small', 'large'].map((size) => ({ node: { ...sku(`poster-${size}`, 3), label: size } })),
+  },
+};
 
-function mockApi() {
+function mockApi(group: SKUGroup = shirt) {
   const fn = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(String(input), 'https://host.test');
     if (url.pathname.endsWith('/config'))
@@ -52,8 +71,8 @@ function mockApi() {
     return Promise.resolve(
       response({
         skuGroup: selected.length
-          ? { ...shirt, skus: { totalCount: 1, edges: [{ node: sku(`sku-${selected.join('-')}`, 5) }] } }
-          : shirt,
+          ? { ...group, skus: { totalCount: 1, edges: [{ node: sku(`sku-${selected.join('-')}`, 5) }] } }
+          : group,
       }),
     );
   });
@@ -61,10 +80,10 @@ function mockApi() {
   return fn;
 }
 
-function mount(layout: ReactNode) {
+function mount(layout: ReactNode, path = '/products/shirt') {
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } })}>
-      <MemoryRouter initialEntries={['/products/shirt']}>
+      <MemoryRouter initialEntries={[path]}>
         <CommerceStorefront>
           <Routes>
             <Route path='/products/:productId' element={layout} />
@@ -76,7 +95,7 @@ function mount(layout: ReactNode) {
 }
 
 function Swatches({ attribute }: { attribute: string }): ReactElement | null {
-  const option = useProductOption(attribute);
+  const option = useProductDetailsOption(attribute);
   if (!option) return null;
   return (
     <div role='group' aria-label={option.label}>
@@ -110,14 +129,14 @@ describe('composable product details', () => {
         <ProductDetailsTitle className='host-title' />
         <Swatches attribute='color' />
         <p>Size guide</p>
-        <ProductOption attribute='size' />
+        <ProductDetailsOption attribute='size' />
         <SelectedSku />
-        <ProductQuantity />
-        <ProductAddToCart />
+        <ProductDetailsQuantity />
+        <ProductDetailsAddToCart />
       </ProductDetailsRoot>,
     );
     const title = await screen.findByRole('heading', { level: 1, name: 'Shirt' });
-    expect(title).toHaveClass('host-title');
+    expect(title.parentElement).toHaveClass('host-title');
     expect(title.closest('article')).toHaveClass('host-article');
     const add = screen.getByRole('button', { name: 'Add to cart' });
     expect(add).toBeDisabled();
@@ -146,9 +165,9 @@ describe('composable product details', () => {
     mount(
       <ProductDetailsRoot>
         <Swatches attribute='color' />
-        <ProductOption attribute='size' />
-        <ProductQuantity />
-        <ProductPurchaseStatus />
+        <ProductDetailsOption attribute='size' />
+        <ProductDetailsQuantity />
+        <ProductDetailsPurchaseStatus />
       </ProductDetailsRoot>,
     );
     await userEvent.click(await screen.findByRole('button', { name: 'BLUE' }));
@@ -165,12 +184,13 @@ describe('composable product details', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     mount(
       <ProductDetailsRoot>
-        <ProductOption attribute='color' />
-        <ProductAddToCart />
+        <ProductDetailsOption attribute='color' />
+        <ProductDetailsAddToCart />
       </ProductDetailsRoot>,
     );
     await screen.findByRole('combobox', { name: 'Color' });
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('cannot select "size"'));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('No control for "size" is rendered right now'));
+    expect(warn.mock.calls.join('')).not.toMatch(/never/);
     expect(warn.mock.calls.join('')).not.toContain('"color"');
   });
 
@@ -179,7 +199,7 @@ describe('composable product details', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     mount(
       <ProductDetailsRoot>
-        <ProductPurchase />
+        <ProductDetailsPurchase />
       </ProductDetailsRoot>,
     );
     await screen.findByRole('combobox', { name: 'Size' });
@@ -188,15 +208,137 @@ describe('composable product details', () => {
 
   it('names the missing root when a part is rendered outside ProductDetailsRoot', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(<ProductAddToCart />)).toThrow(
-      'ProductAddToCart must be rendered inside <ProductDetailsRoot>.',
+    expect(() => render(<ProductDetailsAddToCart />)).toThrow(
+      'ProductDetailsAddToCart must be rendered inside <ProductDetailsRoot>.',
     );
     function Orphan(): null {
-      useProductOption('color');
+      useProductDetailsOption('color');
       return null;
     }
     expect(() => render(<Orphan />)).toThrow(
-      'useProductOption must be rendered inside <ProductDetailsRoot>.',
+      'useProductDetailsOption must be rendered inside <ProductDetailsRoot>.',
     );
+  });
+  it('keeps IDs unique and labels attached when purchase parts render twice', async () => {
+    mockApi();
+    const ids = (): string[] => [...document.querySelectorAll('[id]')].map((element) => element.id);
+    const unique = (): void => expect(new Set(ids()).size).toBe(ids().length);
+    mount(
+      <ProductDetailsRoot>
+        <ProductDetailsPurchase />
+        <div data-testid='sticky'>
+          <ProductDetailsQuantity />
+          <ProductDetailsAddToCart />
+        </div>
+      </ProductDetailsRoot>,
+    );
+    const [first, second] = await screen.findAllByRole('button', { name: 'Add to cart' });
+    unique();
+    expect(first).toHaveAccessibleDescription('Select all options to add this item to your cart.');
+    expect(second).toHaveAccessibleDescription('Select all options to add this item to your cart.');
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Color' }), 'blue');
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Size' }), 'm');
+    const quantities = await screen.findAllByRole('spinbutton', { name: 'Quantity' });
+    expect(quantities).toHaveLength(2);
+    unique();
+  });
+
+  it('keeps the SKU list ID unique when the options render twice', async () => {
+    mockApi(poster);
+    mount(
+      <ProductDetailsRoot>
+        <ProductDetailsOptions />
+        <ProductDetailsOptions />
+      </ProductDetailsRoot>,
+      '/products/poster',
+    );
+    const lists = await screen.findAllByRole('combobox', { name: 'Option' });
+    expect(lists).toHaveLength(2);
+    expect(lists[0]?.id).not.toBe(lists[1]?.id);
+  });
+
+  // Package CSS ships unlayered, and unlayered rules beat a host's layered utilities (Tailwind v4) whatever
+  // their specificity. So no package rule may set these properties on the element that receives a host class.
+  it('puts host classes on an element that no package rule styles', async () => {
+    mockApi();
+    const rules: Array<{ selector: string; properties: string[] }> = [];
+    postcss.parse(readFileSync(join(process.cwd(), 'dist/styles.css'), 'utf8')).walkRules((rule) => {
+      if (rule.parent?.type === 'rule') return;
+      // Only direct declarations: nested rules such as space-y-* style children, not this element.
+      const properties: string[] = [];
+      rule.each((node) => {
+        if (node.type === 'decl') properties.push(node.prop);
+      });
+      for (const selector of rule.selectors)
+        if (!selector.includes('::')) rules.push({ selector, properties });
+    });
+    const hostProperties =
+      /^(margin|padding|border-(width|style|top|right|bottom|left)|border$|color$|font-family$)/;
+    const conflicts = (element: Element): string[] =>
+      rules.flatMap(({ selector, properties }) => {
+        let matches = false;
+        try {
+          matches = element.matches(selector);
+        } catch {}
+        return matches
+          ? properties.filter((property) => hostProperties.test(property)).map((p) => `${selector} ${p}`)
+          : [];
+      });
+    const parts: Array<[string, ReactElement]> = [
+      ['BackLink', <ProductDetailsBackLink key='a' className='host' />],
+      ['Gallery', <ProductDetailsGallery key='b' className='host' />],
+      ['Title', <ProductDetailsTitle key='c' className='host' />],
+      ['Price', <ProductDetailsPrice key='d' className='host' />],
+      ['Description', <ProductDetailsDescription key='e' className='host' />],
+      ['Purchase', <ProductDetailsPurchase key='f' className='host' />],
+      ['Options', <ProductDetailsOptions key='g' className='host' />],
+      ['Option', <ProductDetailsOption key='h' attribute='size' className='host' />],
+      ['PurchaseStatus', <ProductDetailsPurchaseStatus key='i' className='host' />],
+      ['AddToCart', <ProductDetailsAddToCart key='j' className='host' />],
+    ];
+    mount(
+      <ProductDetailsRoot className='host'>
+        {parts.map(([name, part]) => (
+          <section key={name} data-part={name}>
+            {part}
+          </section>
+        ))}
+        <section data-part='Ready'>
+          <Swatches attribute='color' />
+          <ProductDetailsAvailability className='host' />
+          <ProductDetailsQuantity className='host' />
+        </section>
+      </ProductDetailsRoot>,
+    );
+    const expectNoConflicts = (count: number): void => {
+      const hosts = [...document.querySelectorAll('.host')];
+      expect(hosts).toHaveLength(count);
+      for (const host of hosts) {
+        const part = host.closest('[data-part]')?.getAttribute('data-part') ?? 'Root';
+        expect({ part, conflicts: conflicts(host) }).toEqual({ part, conflicts: [] });
+      }
+    };
+    await screen.findByRole('heading', { level: 1, name: 'Shirt' });
+    // Every part plus the root; the status message shows until the selection is ready.
+    expectNoConflicts(parts.length + 1);
+    await userEvent.click(screen.getByRole('button', { name: 'BLUE' }));
+    await userEvent.selectOptions(screen.getAllByRole('combobox', { name: 'Size' })[0] as HTMLElement, 'm');
+    await screen.findAllByRole('spinbutton', { name: 'Quantity' });
+    // The status message is gone; availability and quantity appear.
+    expectNoConflicts(parts.length + 1 - 1 + 2);
+  });
+
+  it('does not run the layout check in production builds', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    mockApi();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mount(
+      <ProductDetailsRoot>
+        <ProductDetailsOption attribute='color' />
+      </ProductDetailsRoot>,
+    );
+    await screen.findByRole('combobox', { name: 'Color' });
+    expect(warn).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
   });
 });
