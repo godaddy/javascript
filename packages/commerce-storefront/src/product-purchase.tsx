@@ -2,10 +2,10 @@ import { type ReactElement, type ReactNode, useId } from 'react';
 import { message } from './api';
 import { AddToCartButton, buttonClass, inputClass } from './cart';
 import type { SKU } from './catalog-model';
+import { partClass } from './part';
 import {
   type ProductDetailsPartProps,
   type ProductDetailsStatus,
-  partClass,
   useProductDetailsInternal,
   useProductDetailsOption,
   useSkuOptionRegistration,

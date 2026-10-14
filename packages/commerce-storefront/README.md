@@ -100,9 +100,10 @@ The repository example uses React Router 7. Follow each router version's own Rea
 | --- | --- |
 | `CommerceStorefront` | Recommended integration: provider and one drawer |
 | `Catalog` | Six products per cursor page, with `title`, `description`, and `showHeader` props |
+| `CatalogRoot` and catalog parts | Build a [custom catalog or card layout](#custom-catalog-layouts) with the same rules as `Catalog` |
 | `ProductDetails` | Reads `:productId`; validates URL option selections against catalog results |
 | `ProductDetailsRoot` and product parts | Build a [custom product layout](#custom-product-layouts) with the same rules as `ProductDetails` |
-| `ProductCard` | Renders one `SKUGroup` with direct add or a product-details link |
+| `ProductCard` | Renders one `SKUGroup` with direct add or a product-details link; `ProductCardRoot` and card parts customize it |
 | `CartButton` | Opens the shared drawer and displays item count |
 | `AddToCartButton` | Adds a verified `sku`, `name`, and optional integer `quantity` |
 | `CommerceStatus` | Connection progress/error/retry for custom layouts |
@@ -177,6 +178,54 @@ function ColorSwatches() {
 ```
 
 Parts are flat named exports, not properties such as `ProductDetails.Title`, so each one is an ordinary module export.
+
+## Custom catalog layouts
+
+`Catalog` is the recommended catalog. When its layout or its cards do not fit, compose the same parts inside `CatalogRoot`. The root loads one cursor page of six products, or the built-in samples when `sampleProducts` is set and no store is connected, and shows the connection state itself. This is the packaged catalog, written out with its packaged card:
+
+```tsx
+import {
+  CatalogHeader, CatalogPagination, CatalogProducts, CatalogRoot, CatalogSummary, ProductCardAction,
+  ProductCardDescription, ProductCardImage, ProductCardPrice, ProductCardRoot, ProductCardTitle,
+} from '@godaddy/gd-commerce-storefront';
+
+<CatalogRoot sampleProducts>
+  <CatalogHeader className='border-b border-neutral-200 pb-10 pt-4 sm:pb-14 sm:pt-8' />
+  <CatalogSummary className='border-b border-neutral-200 py-6 sm:py-8' />
+  <CatalogProducts className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 lg:py-10'>
+    <ProductCardRoot className='flex min-w-0 flex-col self-start overflow-hidden rounded-lg border border-neutral-200'>
+      <ProductCardImage />
+      <div className='flex flex-1 flex-col p-6'>
+        <ProductCardTitle />
+        <ProductCardDescription className='mt-3' />
+        <div className='mt-auto pt-6'>
+          <div className='flex flex-wrap items-end justify-between gap-4 border-t border-neutral-200 pt-5'>
+            <ProductCardPrice className='min-w-0 flex-1' />
+            <ProductCardAction className='max-w-full' />
+          </div>
+        </div>
+      </div>
+    </ProductCardRoot>
+  </CatalogProducts>
+  <CatalogPagination className='border-t border-neutral-200 pt-6' />
+</CatalogRoot>
+```
+
+As with product layouts, the grid, spacing and border classes come from your own stylesheet in a custom layout. Without them, the cards stack in one column.
+
+| Part | Renders |
+| --- | --- |
+| `CatalogHeader` | The `title` as the page's H1 and a `description`; leave it out when the host page owns the H1 |
+| `CatalogSummary` | The loading, failure or product-count status line |
+| `CatalogProducts` | One card per product. Its children are the card, rendered once for each product; without children, the packaged card |
+| `CatalogPagination` | First-page and next-page buttons; nothing for samples |
+| `ProductCardImage`, `ProductCardTitle` | The first image and the name as an H2, each linked to the product page |
+| `ProductCardDescription`, `ProductCardPrice` | Up to three lines of description (nothing without one), and the price or price range |
+| `ProductCardAction` | Adds the product directly only when it has one SKU and no options; otherwise links to the product page to choose |
+
+`className` on `CatalogProducts` goes on the element whose direct children are the cards, so a host grid places them, and `className` on `ProductCardRoot` goes on each card, so classes such as `col-span-2` work. The loading placeholder (three cards, one to three columns), the error with its retry button, and the empty message render just before that element, whatever the layout. Card parts take no product, SKU or price props. Inside `CatalogProducts`, `ProductCardRoot` takes no `product` prop either and throws if it gets one, so a card always shows the product it is rendered for. Samples use the same card: they show a placeholder image, no description and no links, and add only to the sample cart. Card and catalog parts throw if they are rendered outside their root. The packaged card's `self-start` keeps each card at its own height, as in earlier releases; leave it out for cards that fill their grid row.
+
+For a product the host already has, such as a featured product, use `ProductCard` or `ProductCardRoot` with a `product` prop outside the catalog. `useProductCard()` returns read-only `product` (`null` for samples), `name`, `href` (`null` for samples) and `isSample` for building custom card parts. Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
 
 ## How it works
 

@@ -15,6 +15,7 @@ export const sampleProducts = Array.from({ length: 6 }, (_, index) => ({
   name: `Product ${index + 1}`,
   price: (index + 1) * 1_000,
 }));
+export type SampleProduct = (typeof sampleProducts)[number];
 
 interface SampleCartValue {
   items: { key: string; name: string; price: number; quantity: number }[];

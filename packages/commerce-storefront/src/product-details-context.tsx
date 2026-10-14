@@ -25,6 +25,7 @@ import {
   type StorefrontProductAttribute,
 } from './catalog-model';
 import { useCommerce } from './commerce-provider';
+import { partClass } from './part';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 /** Where the shopper is in choosing a purchasable SKU. Only `ready` has a verified `selectedSku`. */
@@ -69,11 +70,6 @@ interface ProductDetailsInternal extends ProductDetailsState {
 export interface ProductDetailsPartProps {
   className?: string;
 }
-
-export const cx = (...classes: Array<string | undefined>): string => classes.filter(Boolean).join(' ');
-
-/** Classes for the element that receives a part's `className`. The package CSS reset skips `commerce-part`. */
-export const partClass = (...classes: Array<string | undefined>): string => cx('commerce-part', ...classes);
 
 const ProductDetailsContext = createContext<ProductDetailsInternal | null>(null);
 
