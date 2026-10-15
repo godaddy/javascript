@@ -219,7 +219,7 @@ As with product layouts, the grid, spacing and border classes come from your own
 | `CatalogSummary` | The loading, failure or product-count status line |
 | `CatalogProducts` | One card per product. Its children are the card, rendered once for each product; without children, the packaged card |
 | `CatalogPagination` | First-page and next-page buttons; nothing for samples |
-| `ProductCardImage`, `ProductCardTitle` | The first image and the name as an H2, each linked to the product page |
+| `ProductCardImage`, `ProductCardTitle` | The first image and the name as an H2, each linked to the product page. With a title in the card, keyboard and screen reader users get only the title link; without one, the image link takes its place |
 | `ProductCardDescription`, `ProductCardPrice` | Up to three lines of description (nothing without one), and the price or price range |
 | `ProductCardAction` | Adds the product directly only when it has one SKU and no options; otherwise links to the product page to choose |
 
