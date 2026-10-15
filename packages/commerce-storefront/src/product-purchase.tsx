@@ -1,4 +1,4 @@
-import { type ReactElement, useId } from 'react';
+import { type ComponentProps, type ReactElement, useId } from 'react';
 import { message } from './api';
 import { AddToCartButton, buttonClass, inputClass } from './cart';
 import type { SKU } from './catalog-model';
@@ -59,6 +59,31 @@ function OptionControls(): ReactElement {
   );
 }
 
+// The native arrow sits against the border and ignores padding, so draw our own 12px in from the edge.
+function Select({ children, ...props }: Omit<ComponentProps<'select'>, 'className'>): ReactElement {
+  return (
+    <div className='relative'>
+      <select className={`${inputClass} w-full appearance-none pr-10`} {...props}>
+        {children}
+      </select>
+      <svg
+        aria-hidden='true'
+        viewBox='0 0 16 16'
+        className='pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-600'
+      >
+        <path
+          d='M4 6l4 4 4-4'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
+      </svg>
+    </div>
+  );
+}
+
 function SkuOption(): ReactElement {
   const { skuOptions, explicitSkuId, selectSku } = useProductDetailsInternal('ProductDetailsOptions');
   const id = useId();
@@ -68,19 +93,14 @@ function SkuOption(): ReactElement {
       <label htmlFor={id} className='mb-2 block font-medium'>
         Option
       </label>
-      <select
-        id={id}
-        className={`${inputClass} w-full`}
-        value={explicitSkuId}
-        onChange={(event) => selectSku(event.target.value)}
-      >
+      <Select id={id} value={explicitSkuId} onChange={(event) => selectSku(event.target.value)}>
         <option value=''>Select an option</option>
         {skuOptions.map((sku: SKU) => (
           <option key={sku.id} value={sku.id ?? ''}>
             {sku.label?.trim() || sku.name?.trim()}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   );
 }
@@ -101,8 +121,7 @@ export function ProductDetailsOption({
     <div className={partClass(className)}>
       <fieldset>
         <legend className='mb-2 font-medium'>{option.label}</legend>
-        <select
-          className={`${inputClass} w-full`}
+        <Select
           aria-label={option.label}
           value={option.selected ?? ''}
           onChange={(event) => option.select(event.target.value || null)}
@@ -113,7 +132,7 @@ export function ProductDetailsOption({
               {value.label}
             </option>
           ))}
-        </select>
+        </Select>
       </fieldset>
     </div>
   );
