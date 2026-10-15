@@ -178,9 +178,10 @@ export function ShippingMethodForm() {
         userSelectedServiceCode
           ? shippingMethods.find(m => m.serviceCode === userSelectedServiceCode)
           : undefined;
-      const freeMethod: ShippingMethod | undefined = shippingMethods.find(
-        m => m.cost?.value === 0
-      );
+      const freeMethod: ShippingMethod | undefined =
+        matchedMethod?.cost?.value === 0
+          ? matchedMethod
+          : shippingMethods.find(m => m.cost?.value === 0);
 
       const methodToApply =
         userSelectedMethod || freeMethod || matchedMethod || firstMethod;
@@ -214,7 +215,15 @@ export function ShippingMethodForm() {
             };
           }
 
-          applyShippingMethod.mutate(buildShippingPayload(methodToApply));
+          // On failure, show the rate the draft order still has. The processed
+          // state is left as is so the failed rate is not retried in a loop.
+          applyShippingMethod.mutate(buildShippingPayload(methodToApply), {
+            onError: () => {
+              form.setValue('shippingMethod', currentServiceCode ?? '', {
+                shouldDirty: false,
+              });
+            },
+          });
         } else if (session?.enableTaxCollection) {
           updateTaxes.mutate(undefined);
         }

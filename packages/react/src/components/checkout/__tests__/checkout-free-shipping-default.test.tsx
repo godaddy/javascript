@@ -52,7 +52,6 @@ function appliedInputs(): unknown[] {
 }
 
 describe('Checkout free shipping default selection', () => {
-  // H1: a paid shipping line already on the draft order wins over a $0 rate
   it('selects and applies the free rate when the draft order already has a paid shipping line', async () => {
     renderCheckout({
       draftOrderOverrides: {
@@ -63,14 +62,54 @@ describe('Checkout free shipping default selection', () => {
     await advanceCheckoutDebounce(2500);
 
     expect(checkedShippingRadios()).toEqual(['Free FREE']);
-    expect(appliedInputs()).toContainEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ requestedService: 'free-shipping' }),
-      ])
-    );
+    expect(appliedInputs()).toEqual([
+      [expect.objectContaining({ requestedService: 'free-shipping' })],
+    ]);
   });
 
-  // H1 control: with no shipping line the first (cheapest) rate is applied
+  it('keeps a free rate already on the draft order when another free rate sorts first', async () => {
+    const standardFreeRate: ShippingMethod = {
+      ...freeRate,
+      serviceCode: 'standard-free',
+      displayName: 'Standard Free',
+      description: 'Standard Free',
+    };
+    renderCheckout({
+      draftOrderOverrides: {
+        shippingLines: [shippingLine('standard-free', 0)],
+      },
+      apiOverrides: {
+        shippingMethods: [freeRate, standardFreeRate, weightRate],
+      },
+    });
+    await waitForCheckoutReady();
+    await advanceCheckoutDebounce(2500);
+
+    expect(checkedShippingRadios()).toEqual(['Standard Free FREE']);
+    expect(appliedInputs()).toEqual([]);
+  });
+
+  it('shows the paid rate still on the draft order when applying the free rate fails', async () => {
+    renderCheckout({
+      draftOrderOverrides: {
+        shippingLines: [shippingLine('weight-based', 100)],
+      },
+      apiOverrides: {
+        errors: { applyShippingMethod: new Error('apply failed') },
+      },
+    });
+    await waitForCheckoutReady();
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    await advanceCheckoutDebounce(2500);
+
+    await waitFor(() => {
+      expect(checkedShippingRadios()).toEqual(['Weight Based $1.00']);
+    });
+    expect(appliedInputs()).toEqual([
+      [expect.objectContaining({ requestedService: 'free-shipping' })],
+    ]);
+  });
+
   it('applies the free rate when the draft order has no shipping line', async () => {
     renderCheckout();
     await waitForCheckoutReady();
@@ -82,7 +121,6 @@ describe('Checkout free shipping default selection', () => {
     ]);
   });
 
-  // H1: a paid rate is auto-applied first, then a $0 rate appears in the rates list
   it('selects the free rate when it appears after a paid rate was auto-applied', async () => {
     const { queryClient, session } = renderCheckout({
       apiOverrides: { shippingMethods: paidOnlyRates },
@@ -123,11 +161,9 @@ describe('Checkout free shipping default selection', () => {
     await advanceCheckoutDebounce(2500);
 
     expect(checkedShippingRadios()).toEqual(['Free FREE']);
-    expect(appliedInputs()).toContainEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ requestedService: 'free-shipping' }),
-      ])
-    );
+    expect(appliedInputs()).toEqual([
+      [expect.objectContaining({ requestedService: 'free-shipping' })],
+    ]);
   });
 
   it('keeps a paid rate the shopper picked when the rates are refreshed with a free rate', async () => {
