@@ -249,9 +249,9 @@ function SampleAction({ sample }: { sample: SampleProduct }): ReactElement {
   );
 }
 
-// `self-start` keeps each card its own height in the catalog grid, as when every card had its own surface wrapper.
+// In the catalog grid each card stretches to its row, and `mt-auto` lines up the price rows.
 export const packagedCardClass: string =
-  'flex min-w-0 flex-col self-start overflow-hidden rounded-lg border border-neutral-200';
+  'flex min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200';
 
 /** The packaged card's parts, inside a root that has `packagedCardClass`. */
 export function PackagedCardParts(): ReactElement {
