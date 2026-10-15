@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, useId } from 'react';
+import { type ReactElement, useId } from 'react';
 import { message } from './api';
 import { AddToCartButton, buttonClass, inputClass } from './cart';
 import type { SKU } from './catalog-model';
@@ -19,19 +19,16 @@ const disabledReasons: Record<Exclude<ProductDetailsStatus, 'ready'>, string> = 
   'not-purchasable': 'This product is not currently available to purchase.',
 };
 
-// In 0.2.0 the purchase area's option fieldsets and text messages were bare <fieldset>/<p> children of
-// `space-y-6`, and the package reset's `margin: 0` outranked that zero-specificity rule, so they had no gap.
-// Their wrappers now take the gap, so the packaged layout cancels it on those parts to stay visually identical.
-const flush = 'mb-0';
-
 /** The packaged purchase area: options, status, availability, quantity, and add to cart. */
 export function ProductDetailsPurchase({ className }: ProductDetailsPartProps): ReactElement {
-  useProductDetailsInternal('ProductDetailsPurchase');
+  const { attributes, skuOptions } = useProductDetailsInternal('ProductDetailsPurchase');
+  // The status and stock messages describe the selection, so they sit 8px under the options instead of 24px.
+  const message: string | undefined = attributes.length || skuOptions.length ? '-mt-4' : undefined;
   return (
-    <div className={partClass('space-y-6', className)}>
+    <div className={partClass('flex flex-col gap-6', className)}>
       <OptionControls />
-      <PurchaseStatusMessage textClassName={flush} />
-      <ProductDetailsAvailability className={flush} />
+      <ProductDetailsPurchaseStatus className={message} />
+      <ProductDetailsAvailability className={message} />
       <ProductDetailsQuantity />
       <ProductDetailsAddToCart />
     </div>
@@ -43,23 +40,19 @@ export function ProductDetailsOptions({ className }: ProductDetailsPartProps): R
   const { attributes, skuOptions } = useProductDetailsInternal('ProductDetailsOptions');
   if (attributes.length === 0 && skuOptions.length === 0) return null;
   return (
-    <div className={partClass('space-y-6', className)}>
+    <div className={partClass('flex flex-col gap-6', className)}>
       <OptionControls />
     </div>
   );
 }
 
-// Unwrapped so the packaged layout keeps the controls as direct children of its own spacing container.
+// Unwrapped so the packaged purchase area spaces the controls with its other parts.
 function OptionControls(): ReactElement {
   const { attributes, skuOptions } = useProductDetailsInternal('ProductDetailsOptions');
   return (
     <>
       {attributes.map((attribute) => (
-        <ProductDetailsOption
-          key={attribute.id || attribute.name}
-          attribute={attribute.name}
-          className={flush}
-        />
+        <ProductDetailsOption key={attribute.id || attribute.name} attribute={attribute.name} />
       ))}
       {skuOptions.length > 0 && <SkuOption />}
     </>
@@ -128,48 +121,30 @@ export function ProductDetailsOption({
 
 /** The single message explaining why the selection is not yet purchasable. Renders nothing when ready. */
 export function ProductDetailsPurchaseStatus({ className }: ProductDetailsPartProps): ReactElement | null {
-  return <PurchaseStatusMessage className={className} />;
-}
-
-function PurchaseStatusMessage({
-  className,
-  textClassName,
-}: ProductDetailsPartProps & { textClassName?: string }): ReactElement | null {
   const { status, variantError, retryVariant } = useProductDetailsInternal('ProductDetailsPurchaseStatus');
-  const part = (children: ReactNode, partClassName?: string): ReactElement => (
-    <div className={partClass(partClassName, className)}>{children}</div>
-  );
-  switch (status) {
-    case 'ready':
-      return null;
-    case 'variant-error':
-      return part(
+  if (status === 'ready') return null;
+  return (
+    <div className={partClass(className)}>
+      {status === 'variant-error' ? (
         <div role='alert' className='text-red-700'>
           <p>{message(variantError)}</p>
           <button type='button' className='min-h-11 bg-white text-red-700 underline' onClick={retryVariant}>
             Retry availability
           </button>
-        </div>,
-      );
-    case 'unavailable':
-      return part(
+        </div>
+      ) : status === 'unavailable' ? (
         <p role='status' className='text-sm text-red-700'>
           {disabledReasons[status]}
-        </p>,
-        textClassName,
-      );
-    case 'not-purchasable':
-      return part(<p className='text-sm'>{disabledReasons[status]}</p>, textClassName);
-    case 'checking':
-      return part(<p role='status'>{disabledReasons[status]}</p>, textClassName);
-    case 'incomplete':
-      return part(
+        </p>
+      ) : status === 'not-purchasable' ? (
+        <p className='text-sm'>{disabledReasons[status]}</p>
+      ) : (
         <p role='status' className='text-sm'>
           {disabledReasons[status]}
-        </p>,
-        textClassName,
-      );
-  }
+        </p>
+      )}
+    </div>
+  );
 }
 
 /** Stock for the verified SKU. Renders nothing until a SKU is verified. */
