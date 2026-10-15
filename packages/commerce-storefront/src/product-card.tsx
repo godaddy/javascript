@@ -1,4 +1,12 @@
-import { createContext, type ReactElement, type ReactNode, useContext, useState } from 'react';
+import {
+  createContext,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { Link } from 'react-router';
 import { money } from './api';
 import { AddToCartButton, buttonClass } from './cart';
@@ -63,6 +71,9 @@ export interface ProductCardState {
 
 interface ProductCardInternal extends ProductCardState {
   item: ProductCardItem;
+  /** Whether a `ProductCardTitle` link is rendered, so the image link can stay out of the tab order. */
+  hasTitleLink: boolean;
+  registerTitleLink: () => () => void;
 }
 
 /** Props shared by every card part. `className` is added to the part's outer element. */
@@ -96,12 +107,18 @@ export interface ProductCardRootProps {
 export function ProductCardRoot({ children, product, className }: ProductCardRootProps): ReactElement {
   const catalogItem = useContext(CatalogItemContext);
   const { config } = useCommerce();
+  const [titleLinks, setTitleLinks] = useState<number>(0);
+  const registerTitleLink = useCallback((): (() => void) => {
+    setTitleLinks((count) => count + 1);
+    return () => setTitleLinks((count) => count - 1);
+  }, []);
   if (catalogItem && product)
     throw new Error(
       'Inside <CatalogProducts>, ProductCardRoot shows each catalog product. Remove its product prop.',
     );
   const item: ProductCardItem | null = catalogItem ?? (product ? { source: 'live', product } : null);
   if (!item) throw new Error('ProductCardRoot needs a product prop outside <CatalogProducts>.');
+  const links = { hasTitleLink: titleLinks > 0, registerTitleLink };
   const value: ProductCardInternal =
     item.source === 'live'
       ? {
@@ -110,8 +127,9 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
           name: item.product.label ?? item.product.name ?? 'Product',
           href: `${config.productPath}/${encodeURIComponent(item.product.id ?? '')}`,
           isSample: false,
+          ...links,
         }
-      : { item, product: null, name: item.sample.name, href: null, isSample: true };
+      : { item, product: null, name: item.sample.name, href: null, isSample: true, ...links };
   const card: ReactElement = (
     <ProductCardContext.Provider value={value}>
       {/* `group` drives the image hover zoom. A card nested inside this one is not a catalog entry. */}
@@ -124,13 +142,21 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
   return catalogItem ? card : <StorefrontSurface>{card}</StorefrontSurface>;
 }
 
-/** The product's first image, linked to its page. Samples show a placeholder. */
+/**
+ * The product's first image, linked to its page. Samples show a placeholder. With a `ProductCardTitle` in the card,
+ * the title is the one link keyboard and screen reader users get; without one, the image link is.
+ */
 export function ProductCardImage({ className }: ProductCardPartProps): ReactElement {
-  const { item, name, href } = useProductCardInternal('ProductCardImage');
+  const { item, name, href, hasTitleLink } = useProductCardInternal('ProductCardImage');
   return (
     <div className={partClass(className)}>
       {item.source === 'live' && href ? (
-        <Link to={href} tabIndex={-1} aria-hidden='true' className='block aspect-square overflow-hidden'>
+        <Link
+          to={href}
+          tabIndex={hasTitleLink ? -1 : undefined}
+          aria-hidden={hasTitleLink ? 'true' : undefined}
+          className='block aspect-square overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4'
+        >
           <ProductImage
             url={getPrimaryImageUrl(item.product)}
             name={name}
@@ -148,7 +174,8 @@ export function ProductCardImage({ className }: ProductCardPartProps): ReactElem
 
 /** The product name as an H2, linked to its page. */
 export function ProductCardTitle({ className }: ProductCardPartProps): ReactElement {
-  const { name, href } = useProductCardInternal('ProductCardTitle');
+  const { name, href, registerTitleLink } = useProductCardInternal('ProductCardTitle');
+  useEffect(() => (href ? registerTitleLink() : undefined), [href, registerTitleLink]);
   return (
     <div className={partClass(className)}>
       <h2 className='break-words text-2xl font-semibold leading-tight'>

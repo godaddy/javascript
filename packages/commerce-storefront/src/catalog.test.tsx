@@ -206,6 +206,41 @@ describe('composable catalog', () => {
     ]);
   });
 
+  it('keeps one accessible product link whether or not the card has a title', async () => {
+    mockApi();
+    const { unmount } = mount(
+      <CatalogRoot>
+        <CatalogProducts>
+          <ProductCardRoot>
+            <ProductCardImage />
+            <ProductCardPrice />
+            <ProductCardAction />
+          </ProductCardRoot>
+        </CatalogProducts>
+      </CatalogRoot>,
+    );
+    // Without a title, the image is the product link.
+    const imageLink = await screen.findByRole('link', { name: 'Mug: image unavailable' });
+    expect(imageLink).toHaveAttribute('href', '/products/mug');
+    expect(imageLink).not.toHaveAttribute('tabindex');
+    unmount();
+    mount(
+      <CatalogRoot>
+        <CatalogProducts>
+          <ProductCardRoot>
+            <ProductCardImage />
+            <ProductCardTitle />
+          </ProductCardRoot>
+        </CatalogProducts>
+      </CatalogRoot>,
+    );
+    // With a title, the title is the only link assistive technology and the keyboard reach.
+    await screen.findByRole('link', { name: 'Mug' });
+    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Mug', 'Shirt']);
+    const hidden = document.querySelector('a[aria-hidden="true"][href="/products/mug"]');
+    expect(hidden).toHaveAttribute('tabindex', '-1');
+  });
+
   it('names the missing root or product when parts are misplaced', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<ProductCardTitle />)).toThrow(
