@@ -181,7 +181,7 @@ Parts are flat named exports, not properties such as `ProductDetails.Title`, so 
 
 ## Custom catalog layouts
 
-`Catalog` is the recommended catalog. When its layout or its cards do not fit, compose the same parts inside `CatalogRoot`. The root loads one cursor page of six products, or the built-in samples when `sampleProducts` is set and no store is connected, and shows the connection state itself. This is the packaged catalog, written out with its packaged card:
+`Catalog` is the recommended catalog. When its layout or its cards do not fit, compose the same parts inside `CatalogRoot`. The root loads one cursor page of six products, or the built-in samples when `sampleProducts` is set and no store is connected, and shows the connection state itself. This is `<Catalog sampleProducts />` written out with its packaged card:
 
 ```tsx
 import {

@@ -39,6 +39,7 @@ export {
   ProductCardImage,
   type ProductCardPartProps,
   ProductCardPrice,
+  type ProductCardProps,
   ProductCardRoot,
   type ProductCardRootProps,
   type ProductCardState,

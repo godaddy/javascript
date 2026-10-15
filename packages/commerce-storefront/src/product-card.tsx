@@ -299,8 +299,12 @@ export function PackagedCardParts(): ReactElement {
   );
 }
 
+export interface ProductCardProps {
+  product: SKUGroup;
+}
+
 /** The packaged card for one `SKUGroup`. Compose `ProductCardRoot` and the card parts for a custom card. */
-export function ProductCard({ product }: { product: SKUGroup }): ReactElement {
+export function ProductCard({ product }: ProductCardProps): ReactElement {
   return (
     <ProductCardRoot product={product} className={packagedCardClass}>
       <PackagedCardParts />
