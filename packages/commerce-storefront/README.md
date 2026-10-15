@@ -193,7 +193,7 @@ import {
   <CatalogHeader className='border-b border-neutral-200 pb-10 pt-4 sm:pb-14 sm:pt-8' />
   <CatalogSummary className='border-b border-neutral-200 py-6 sm:py-8' />
   <CatalogProducts className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 lg:py-10'>
-    <ProductCardRoot className='flex min-w-0 flex-col self-start overflow-hidden rounded-lg border border-neutral-200'>
+    <ProductCardRoot className='flex min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200'>
       <ProductCardImage />
       <div className='flex flex-1 flex-col p-6'>
         <ProductCardTitle />
@@ -223,7 +223,7 @@ As with product layouts, the grid, spacing and border classes come from your own
 | `ProductCardDescription`, `ProductCardPrice` | Up to three lines of description (nothing without one), and the price or price range |
 | `ProductCardAction` | Adds the product directly only when it has one SKU and no options; otherwise links to the product page to choose |
 
-`className` on `CatalogProducts` goes on the element whose direct children are the cards, so a host grid places them, and `className` on `ProductCardRoot` goes on each card, so classes such as `col-span-2` work. The loading placeholder (three cards, one to three columns), the error with its retry button, and the empty message render just before that element, whatever the layout. Card parts take no product, SKU or price props. Inside `CatalogProducts`, `ProductCardRoot` takes no `product` prop either and throws if it gets one, so a card always shows the product it is rendered for. Samples use the same card: they show a placeholder image, no description and no links, and add only to the sample cart. Card and catalog parts throw if they are rendered outside their root. The packaged card's `self-start` keeps each card at its own height, as in earlier releases; leave it out for cards that fill their grid row.
+`className` on `CatalogProducts` goes on the element whose direct children are the cards, so a host grid places them, and `className` on `ProductCardRoot` goes on each card, so classes such as `col-span-2` work. The loading placeholder (three cards, one to three columns), the error with its retry button, and the empty message render just before that element, whatever the layout. Card parts take no product, SKU or price props. Inside `CatalogProducts`, `ProductCardRoot` takes no `product` prop either and throws if it gets one, so a card always shows the product it is rendered for. Samples use the same card: they show a placeholder image, no description and no links, and add only to the sample cart. Card and catalog parts throw if they are rendered outside their root. Packaged cards fill their grid row, with the price and action at the bottom of each card.
 
 For a product the host already has, such as a featured product, use `ProductCard` or `ProductCardRoot` with a `product` prop outside the catalog. `useProductCard()` returns read-only `product` (`null` for samples), `name`, `href` (`null` for samples) and `isSample` for building custom card parts. Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
 
