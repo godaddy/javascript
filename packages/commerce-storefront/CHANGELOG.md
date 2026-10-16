@@ -1,5 +1,17 @@
 # @godaddy/gd-commerce-storefront
 
+## 0.4.0
+
+### Minor Changes
+
+- 2d19f71: Add composable catalog and product card parts. `CatalogRoot` with `CatalogHeader`, `CatalogSummary`, `CatalogProducts` and `CatalogPagination` builds custom catalog layouts. `ProductCardRoot` with `ProductCardImage`, `ProductCardTitle`, `ProductCardDescription`, `ProductCardPrice` and `ProductCardAction` builds custom cards, either as the card template inside `CatalogProducts` or for a product the host already has. `useProductCard` reads card state. `ProductCardProps` types the packaged card's props. Card parts take no product, SKU or price props, so a direct add is still offered only for a product with one SKU and no options, and samples add only to the sample cart. `Catalog` and `ProductCard` are now composed from these parts. Visual changes: catalog cards in the same row are now the same height, with their price rows aligned at the bottom, and the sample catalog's summary row uses the live catalog's padding, 32px instead of 24px above and below from the `sm` breakpoint. A standalone `ProductCard` is unchanged. Markup changes: each part has a wrapper `<div>`, catalog cards are now direct children of the grid instead of each having its own surface wrapper, and the sample summary text is a `<p>` inside a `<div>`.
+
+### Patch Changes
+
+- a3824b8: Host layout classes now take effect on `ProductDetailsPrice`, `ProductDetailsOptions`, `ProductDetailsPurchase` and `CatalogPagination`. For example, `<ProductDetailsOptions className='grid grid-cols-2 gap-4' />` puts the selects in two columns. `ProductDetailsRoot` and `CatalogRoot` keep the host `className` while connecting, loading or showing an error. A card's image link is hidden from keyboard and screen reader users in server HTML when the card has a title. A `CatalogProducts` card template of `false` or an empty string renders the packaged card. Default rendering is unchanged.
+- c0ea9e2: Space out the product details purchase area. Options are now 24px apart, the status or stock message sits 8px below the options, and the quantity and add to cart button are 24px apart. Previously the options, messages and quantity had no gap between them. `ProductDetailsOptions` spaces its selects the same way. The "Checking this variant…" message now uses the same small text as the other purchase messages.
+- cde208c: Product option selects draw their own chevron 12px in from the right edge instead of the browser's arrow, which sat against the border. Their text now starts at the same 12px padding as other inputs. The README notes that a host class with the same name as one of the package's utilities loses to the package's rule.
+
 ## 0.3.0
 
 ### Minor Changes
