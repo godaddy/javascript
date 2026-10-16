@@ -5,7 +5,7 @@ import postcss from 'postcss';
 // Package CSS ships unlayered, and unlayered rules beat a host's layered utilities (Tailwind v4) whatever
 // their specificity. So no package rule may set these properties on the element that receives a host class.
 const hostProperties =
-  /^(margin|padding|border-(width|style|top|right|bottom|left)|border$|color$|font-family$)/;
+  /^(margin|padding|border-(width|style|top|right|bottom|left)|border$|color$|font-family$|display$|gap$|row-gap$|column-gap$|flex-(direction|wrap)$|justify-content$|align-items$|grid-template-(columns|rows)$|width$|max-width$)/;
 
 /** Returns `selector property` for every shipped package rule that sets a host-owned property on `element`. */
 export function packageRuleConflicts(): (element: Element) => string[] {

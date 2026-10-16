@@ -1,5 +1,13 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
-import { createContext, type ReactElement, type ReactNode, useContext } from 'react';
+import {
+  Children,
+  createContext,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+} from 'react';
 import { useSearchParams } from 'react-router';
 import { message, request } from './api';
 import { buttonClass } from './cart';
@@ -32,6 +40,7 @@ export interface CatalogPartProps {
 }
 
 const CatalogContext = createContext<CatalogInternal | null>(null);
+const sampleCatalog: CatalogInternal = { source: 'sample' };
 
 function useCatalogInternal(part: string): CatalogInternal {
   const context = useContext(CatalogContext);
@@ -50,21 +59,24 @@ export interface CatalogRootProps {
 /** Loads one cursor page of products, or the built-in samples, and provides them to catalog parts. */
 export function CatalogRoot({ children, className, sampleProducts = false }: CatalogRootProps): ReactElement {
   const { connection } = useCommerce();
-  return (
-    <StorefrontSurface>
-      {connection === 'ready' ? (
-        <CatalogLoader className={className}>{children}</CatalogLoader>
-      ) : connection === 'unbound' && sampleProducts ? (
-        <CatalogContext.Provider value={{ source: 'sample' }}>
-          <section className={partClass(className)} data-commerce-source='sample'>
-            {children}
-          </section>
-        </CatalogContext.Provider>
-      ) : (
+  let content: ReactElement;
+  if (connection === 'ready') content = <CatalogLoader className={className}>{children}</CatalogLoader>;
+  else if (connection === 'unbound' && sampleProducts)
+    content = (
+      <CatalogContext.Provider value={sampleCatalog}>
+        <section className={partClass(className)} data-commerce-source='sample'>
+          {children}
+        </section>
+      </CatalogContext.Provider>
+    );
+  // Host classes stay on while connecting, so the layout does not jump when the catalog replaces the status.
+  else
+    content = (
+      <div className={partClass(className)}>
         <CommerceStatus />
-      )}
-    </StorefrontSurface>
-  );
+      </div>
+    );
+  return <StorefrontSurface>{content}</StorefrontSurface>;
 }
 
 function CatalogLoader({ children, className }: Omit<CatalogRootProps, 'sampleProducts'>): ReactElement {
@@ -82,16 +94,27 @@ function CatalogLoader({ children, className }: Omit<CatalogRootProps, 'samplePr
         headers: { 'X-Commerce-Scope': config.cartScope },
       }),
   });
-  function goToPage(cursor?: string): void {
-    const next = new URLSearchParams(params);
-    if (cursor) next.set('after', cursor);
-    else next.delete('after');
-    setParams(next);
-  }
-  const nodes: SKUGroup[] =
-    products.data?.skuGroups?.edges?.flatMap((edge) => (edge?.node?.id ? [edge.node] : [])) ?? [];
+  const goToPage = useCallback(
+    (cursor?: string): void => {
+      const next = new URLSearchParams(params);
+      if (cursor) next.set('after', cursor);
+      else next.delete('after');
+      setParams(next);
+    },
+    [params, setParams],
+  );
+  // Stable while the data is, so a refetch does not re-render every card.
+  const nodes = useMemo(
+    (): SKUGroup[] =>
+      products.data?.skuGroups?.edges?.flatMap((edge) => (edge?.node?.id ? [edge.node] : [])) ?? [],
+    [products.data],
+  );
+  const value = useMemo(
+    (): CatalogInternal => ({ source: 'live', products, nodes, after, goToPage }),
+    [products, nodes, after, goToPage],
+  );
   return (
-    <CatalogContext.Provider value={{ source: 'live', products, nodes, after, goToPage }}>
+    <CatalogContext.Provider value={value}>
       <section className={partClass(className)}>{children}</section>
     </CatalogContext.Provider>
   );
@@ -123,17 +146,29 @@ export function CatalogSummary({ className }: CatalogPartProps): ReactElement {
   return (
     <div className={partClass(className)}>
       <p className='text-sm' role='status'>
-        {catalog.source === 'sample'
-          ? 'Sample products · Example prices in USD'
-          : catalog.products.isPending
-            ? 'Loading products…'
-            : catalog.products.isError
-              ? 'Products unavailable'
-              : `Showing ${catalog.nodes.length} product${catalog.nodes.length === 1 ? '' : 's'}`}
+        {summary(catalog)}
       </p>
     </div>
   );
 }
+
+function summary(catalog: CatalogInternal): string {
+  if (catalog.source === 'sample') return 'Sample products · Example prices in USD';
+  if (catalog.products.isPending) return 'Loading products…';
+  if (catalog.products.isError) return 'Products unavailable';
+  return `Showing ${catalog.nodes.length} product${catalog.nodes.length === 1 ? '' : 's'}`;
+}
+
+const sampleItems: { key: string; item: ProductCardItem }[] = sampleProducts.map((sample) => ({
+  key: sample.key,
+  item: { source: 'sample', sample },
+}));
+
+const packagedCard: ReactElement = (
+  <ProductCardRoot className={packagedCardClass}>
+    <PackagedCardParts />
+  </ProductCardRoot>
+);
 
 export interface CatalogProductsProps extends CatalogPartProps {
   /** One card, rendered for every product. Defaults to the packaged card. */
@@ -146,15 +181,16 @@ export interface CatalogProductsProps extends CatalogPartProps {
  */
 export function CatalogProducts({ className, children }: CatalogProductsProps): ReactElement {
   const catalog = useCatalogInternal('CatalogProducts');
-  const card: ReactNode = children ?? (
-    <ProductCardRoot className={packagedCardClass}>
-      <PackagedCardParts />
-    </ProductCardRoot>
+  // `{custom && <ProductCardRoot>…}` with `custom` false still gets a card, not an empty slot per product.
+  const card: ReactNode = Children.toArray(children).some((child) => child !== '') ? children : packagedCard;
+  const nodes: SKUGroup[] | null = catalog.source === 'live' ? catalog.nodes : null;
+  const items = useMemo(
+    (): { key: string; item: ProductCardItem }[] =>
+      nodes
+        ? nodes.map((product) => ({ key: product.id ?? '', item: { source: 'live', product } }))
+        : sampleItems,
+    [nodes],
   );
-  const items: { key: string; item: ProductCardItem }[] =
-    catalog.source === 'sample'
-      ? sampleProducts.map((sample) => ({ key: sample.key, item: { source: 'sample', sample } }))
-      : catalog.nodes.map((product) => ({ key: product.id ?? '', item: { source: 'live', product } }));
   const products = catalog.source === 'live' ? catalog.products : null;
   return (
     <>
@@ -206,23 +242,26 @@ export function CatalogPagination({ className }: CatalogPartProps): ReactElement
   const { after, goToPage } = catalog;
   const pageInfo = catalog.products.data?.skuGroups?.pageInfo;
   return (
-    <nav aria-label='Product pages' className={partClass('flex justify-between', className)}>
-      {after ? (
-        <button type='button' className={buttonClass} onClick={() => goToPage()}>
-          First page
-        </button>
-      ) : (
-        <span />
-      )}
-      {pageInfo?.hasNextPage && pageInfo.endCursor && (
-        <button
-          type='button'
-          className={buttonClass}
-          onClick={() => goToPage(pageInfo.endCursor ?? undefined)}
-        >
-          Next page
-        </button>
-      )}
+    <nav aria-label='Product pages' className={partClass(className)}>
+      {/* Inside the part, so this layout cannot outrank host classes on the nav. */}
+      <div className='flex justify-between'>
+        {after ? (
+          <button type='button' className={buttonClass} onClick={() => goToPage()}>
+            First page
+          </button>
+        ) : (
+          <span />
+        )}
+        {pageInfo?.hasNextPage && pageInfo.endCursor && (
+          <button
+            type='button'
+            className={buttonClass}
+            onClick={() => goToPage(pageInfo.endCursor ?? undefined)}
+          >
+            Next page
+          </button>
+        )}
+      </div>
     </nav>
   );
 }

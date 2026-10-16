@@ -22,13 +22,14 @@ const disabledReasons: Record<Exclude<ProductDetailsStatus, 'ready'>, string> = 
 /** The packaged purchase area: options, status, availability, quantity, and add to cart. */
 export function ProductDetailsPurchase({ className }: ProductDetailsPartProps): ReactElement {
   const { attributes, skuOptions } = useProductDetailsInternal('ProductDetailsPurchase');
-  // The status and stock messages describe the selection, so they sit 8px under the options instead of 24px.
-  const message: string | undefined = attributes.length || skuOptions.length ? '-mt-4' : undefined;
+  // The status and stock messages describe the selection. Their -16px margin collapses with the 24px above to 8px.
+  const belowOptions: string | undefined = attributes.length || skuOptions.length ? '-mt-4' : undefined;
+  // `space-y-6` styles the children, not this element, so host display, gap and grid classes here still apply.
   return (
-    <div className={partClass('flex flex-col gap-6', className)}>
+    <div className={partClass('space-y-6', className)}>
       <OptionControls />
-      <ProductDetailsPurchaseStatus className={message} />
-      <ProductDetailsAvailability className={message} />
+      <ProductDetailsPurchaseStatus className={belowOptions} />
+      <ProductDetailsAvailability className={belowOptions} />
       <ProductDetailsQuantity />
       <ProductDetailsAddToCart />
     </div>
@@ -40,13 +41,14 @@ export function ProductDetailsOptions({ className }: ProductDetailsPartProps): R
   const { attributes, skuOptions } = useProductDetailsInternal('ProductDetailsOptions');
   if (attributes.length === 0 && skuOptions.length === 0) return null;
   return (
-    <div className={partClass('flex flex-col gap-6', className)}>
+    <div className={partClass('space-y-6', className)}>
       <OptionControls />
     </div>
   );
 }
 
-// Unwrapped so the packaged purchase area spaces the controls with its other parts.
+// Unwrapped so the packaged purchase area spaces the controls with its other parts. Each control's outer element
+// is a part, which the CSS reset skips, so the spacing margin applies to it.
 function OptionControls(): ReactElement {
   const { attributes, skuOptions } = useProductDetailsInternal('ProductDetailsOptions');
   return (
@@ -89,7 +91,7 @@ function SkuOption(): ReactElement {
   const id = useId();
   useSkuOptionRegistration();
   return (
-    <div>
+    <div className={partClass()}>
       <label htmlFor={id} className='mb-2 block font-medium'>
         Option
       </label>
@@ -141,29 +143,41 @@ export function ProductDetailsOption({
 /** The single message explaining why the selection is not yet purchasable. Renders nothing when ready. */
 export function ProductDetailsPurchaseStatus({ className }: ProductDetailsPartProps): ReactElement | null {
   const { status, variantError, retryVariant } = useProductDetailsInternal('ProductDetailsPurchaseStatus');
-  if (status === 'ready') return null;
-  return (
-    <div className={partClass(className)}>
-      {status === 'variant-error' ? (
+  let content: ReactElement;
+  switch (status) {
+    case 'ready':
+      return null;
+    case 'variant-error':
+      content = (
         <div role='alert' className='text-red-700'>
           <p>{message(variantError)}</p>
           <button type='button' className='min-h-11 bg-white text-red-700 underline' onClick={retryVariant}>
             Retry availability
           </button>
         </div>
-      ) : status === 'unavailable' ? (
+      );
+      break;
+    case 'unavailable':
+      content = (
         <p role='status' className='text-sm text-red-700'>
           {disabledReasons[status]}
         </p>
-      ) : status === 'not-purchasable' ? (
-        <p className='text-sm'>{disabledReasons[status]}</p>
-      ) : (
+      );
+      break;
+    case 'not-purchasable':
+      content = <p className='text-sm'>{disabledReasons[status]}</p>;
+      break;
+    case 'incomplete':
+    case 'checking':
+      content = (
         <p role='status' className='text-sm'>
           {disabledReasons[status]}
         </p>
-      )}
-    </div>
-  );
+      );
+      break;
+  }
+  // No default case: a new status leaves `content` unassigned, which TypeScript reports.
+  return <div className={partClass(className)}>{content}</div>;
 }
 
 /** Stock for the verified SKU. Renders nothing until a SKU is verified. */

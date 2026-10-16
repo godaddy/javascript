@@ -254,3 +254,8 @@ export function getProductAttributes(skuGroup: SKUGroup | null | undefined): Sto
     }) ?? []
   );
 }
+
+/** The product's display name: its label, then its name. */
+export function getProductName(skuGroup: SKUGroup): string {
+  return skuGroup.label ?? skuGroup.name ?? 'Product';
+}
