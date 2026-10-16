@@ -1,4 +1,8 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { Children, type ReactNode, useCallback, useMemo, useRef } from 'react';
+
+/** Whether `children` renders anything, so `{custom && <Part />}` with `custom` false falls back to the default. */
+export const hasChildren = (children: ReactNode): boolean =>
+  Children.toArray(children).some((child) => child !== '');
 
 export const cx = (...classes: Array<string | undefined>): string => classes.filter(Boolean).join(' ');
 

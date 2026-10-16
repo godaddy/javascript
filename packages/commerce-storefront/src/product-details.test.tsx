@@ -177,6 +177,33 @@ describe('composable product details', () => {
     expect(await screen.findByRole('spinbutton', { name: 'Quantity' })).toHaveValue(1);
   });
 
+  it('explains a quantity that cannot be added, next to the field and on the button', async () => {
+    mockApi(poster);
+    mount(
+      <ProductDetailsRoot>
+        <ProductDetailsPurchase />
+      </ProductDetailsRoot>,
+      '/products/poster',
+    );
+    await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Option' }), 'poster-small');
+    const quantity = await screen.findByRole('spinbutton', { name: 'Quantity' });
+    const add = screen.getByRole('button', { name: 'Add to cart' });
+    await waitFor(() => expect(add).toBeEnabled());
+    expect(quantity).not.toHaveAttribute('aria-invalid');
+    await userEvent.clear(quantity);
+    await userEvent.type(quantity, '4');
+    expect(quantity).toHaveAttribute('aria-invalid', 'true');
+    expect(quantity).toHaveAccessibleDescription('Only 3 available.');
+    expect(screen.getByText('Only 3 available.', { selector: 'p' })).toBeVisible();
+    expect(add).toBeDisabled();
+    expect(add).toHaveAccessibleDescription('Only 3 available.');
+    await userEvent.clear(quantity);
+    expect(quantity).toHaveAccessibleDescription('Enter a whole number of 1 or more.');
+    await userEvent.type(quantity, '2');
+    expect(quantity).not.toHaveAttribute('aria-describedby');
+    expect(add).toBeEnabled();
+  });
+
   it('warns when a layout leaves out an option the product needs', async () => {
     mockApi();
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});

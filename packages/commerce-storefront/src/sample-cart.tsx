@@ -24,6 +24,8 @@ interface SampleCartValue {
   remove: (key: string) => Promise<boolean>;
 }
 
+const noQuantities: Record<string, number> = {};
+
 const SampleCartContext = createContext<SampleCartValue | null>(null);
 
 export function useSampleCart(): SampleCartValue {
@@ -54,7 +56,15 @@ export function SampleCartProvider({
       active.current = null;
     };
   }, [session]);
-  const quantities = state.session === session && enabled ? state.quantities : {};
+  const quantities = state.session === session && enabled ? state.quantities : noQuantities;
+  // Stable while the quantities are, so `useCart` and the cart parts don't recompute on every render.
+  const items = useMemo(
+    () =>
+      sampleProducts.flatMap((product) =>
+        quantities[product.key] ? [{ ...product, quantity: quantities[product.key] }] : [],
+      ),
+    [quantities],
+  );
   function update(key: string, quantity?: number): boolean {
     if (!enabled || active.current !== session || !sampleProducts.some((product) => product.key === key))
       return false;
@@ -71,9 +81,7 @@ export function SampleCartProvider({
   return (
     <SampleCartContext.Provider
       value={{
-        items: sampleProducts.flatMap((product) =>
-          quantities[product.key] ? [{ ...product, quantity: quantities[product.key] }] : [],
-        ),
+        items,
         add: (key) => {
           const product = sampleProducts.find((product) => product.key === key);
           if (!product || !update(key)) return false;
