@@ -1,7 +1,38 @@
 export { ApiError, money, type StorefrontConfig } from './api';
-export { AddToCartButton, CartButton, CartDrawer } from './cart';
+export { AddToCartButton, CartButton } from './cart';
 export type * from './cart-model';
 export { getCartSummaryTotals } from './cart-model';
+export {
+  CartCheckout,
+  CartCheckoutNote,
+  CartClose,
+  CartDescription,
+  CartDrawer,
+  CartDrawerRoot,
+  type CartDrawerRootProps,
+  CartEmpty,
+  type CartEmptyProps,
+  CartItemImage,
+  CartItemName,
+  CartItemOptions,
+  CartItemPrice,
+  CartItemQuantity,
+  CartItemRemove,
+  CartItemRoot,
+  type CartItemRootProps,
+  CartItems,
+  type CartItemsProps,
+  CartNotices,
+  type CartPartProps,
+  CartRoot,
+  type CartRootProps,
+  CartSubtotal,
+  CartSummary,
+  type CartSummaryProps,
+  CartTitle,
+  useCartItem,
+} from './cart-parts';
+export { type CartItemState, type CartState, useCart } from './cart-state';
 export {
   Catalog,
   CatalogHeader,

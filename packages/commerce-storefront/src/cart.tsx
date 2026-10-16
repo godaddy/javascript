@@ -1,12 +1,8 @@
-import * as Dialog from '@radix-ui/react-dialog';
-import { type ReactElement, useState } from 'react';
-import { Link } from 'react-router';
-import { money } from './api';
-import { type CartSummaryTotals, getCartSummaryTotals } from './cart-model';
+import { type ReactElement, useId, useState } from 'react';
+import { useCart } from './cart-state';
 import type { SKU } from './catalog-model';
 import { getAvailableInventoryQuantity } from './catalog-model';
 import { useCommerce } from './commerce-provider';
-import { useSampleCart } from './sample-cart';
 import { StorefrontSurface } from './storefront-surface';
 
 export const buttonClass: string =
@@ -15,12 +11,8 @@ export const inputClass: string =
   'min-h-11 rounded-lg border border-neutral-400 bg-white px-3 py-2 text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900';
 
 export function CartButton(): ReactElement {
-  const { cart, setOpen, open, connection } = useCommerce();
-  const sample = useSampleCart();
-  const count: number =
-    connection === 'unbound'
-      ? sample.items.reduce((total, item) => total + item.quantity, 0)
-      : (cart?.lineItems?.reduce((total, item) => total + (item.quantity ?? 0), 0) ?? 0);
+  const { setOpen, open, connection } = useCommerce();
+  const { itemCount } = useCart();
   return (
     <StorefrontSurface className='commerce-inline'>
       <button
@@ -31,10 +23,17 @@ export function CartButton(): ReactElement {
         aria-expanded={open}
         onClick={() => setOpen(true)}
       >
-        Cart <span className='rounded-full bg-white px-2 py-0.5 text-xs text-neutral-900'>{count}</span>
+        Cart <span className='rounded-full bg-white px-2 py-0.5 text-xs text-neutral-900'>{itemCount}</span>
       </button>
     </StorefrontSurface>
   );
+}
+
+/** Why `quantity` cannot be added, or `null` when it can. `available` is `null` when stock is not tracked. */
+export function quantityProblem(quantity: number, available: number | null): string | null {
+  if (!Number.isInteger(quantity) || quantity < 1) return 'Enter a whole number of 1 or more.';
+  if (available !== null && available > 0 && quantity > available) return `Only ${available} available.`;
+  return null;
 }
 
 export function AddToCartButton({
@@ -48,16 +47,15 @@ export function AddToCartButton({
 }): ReactElement {
   const { addItem, pending, hydrating, error, open, connection } = useCommerce();
   const [adding, setAdding] = useState<boolean>(false);
+  const reasonId = useId();
   const available: number | null = getAvailableInventoryQuantity(sku);
-  const disabled: boolean =
-    connection !== 'ready' ||
-    !sku.id ||
-    adding ||
-    hydrating ||
-    available === 0 ||
-    !Number.isInteger(quantity) ||
-    quantity < 1 ||
-    (available !== null && quantity > available);
+  // Sold out needs no description: the button says so.
+  let reason: string | null = null;
+  if (connection === 'unbound') reason = 'Connect a store to add items to the cart.';
+  else if (connection !== 'ready') reason = 'Connecting to the store…';
+  else if (!sku.id) reason = 'This item cannot be added to the cart.';
+  else if (available !== 0) reason = hydrating ? 'Loading your cart…' : quantityProblem(quantity, available);
+  const disabled: boolean = adding || available === 0 || reason !== null;
   async function handleAdd(): Promise<void> {
     if (disabled || pending || !sku.id) return;
     setAdding(true);
@@ -75,275 +73,21 @@ export function AddToCartButton({
         disabled={disabled}
         aria-disabled={disabled || pending}
         aria-busy={adding}
+        aria-describedby={reason ? reasonId : undefined}
         onClick={() => void handleAdd()}
       >
         {available === 0 ? 'Out of stock' : adding ? 'Adding…' : 'Add to cart'}
       </button>
+      {reason && (
+        <span id={reasonId} hidden>
+          {reason}
+        </span>
+      )}
       {error && !open && (
         <p role='alert' className='mt-3 bg-white text-sm text-red-700'>
           {error}
         </p>
       )}
     </StorefrontSurface>
-  );
-}
-
-export function CartDrawer(): ReactElement {
-  const {
-    config,
-    connection,
-    cart,
-    open,
-    setOpen,
-    restoreFocus,
-    pending,
-    hydrating,
-    error,
-    storageWarning,
-    changeQuantity: changeLiveQuantity,
-    removeItem: removeLiveItem,
-    refresh,
-    checkout,
-  } = useCommerce();
-  const sample = useSampleCart();
-  const isSample = connection === 'unbound';
-  const changeQuantity = isSample ? sample.changeQuantity : changeLiveQuantity;
-  const removeItem = isSample ? sample.remove : removeLiveItem;
-  const [drawerAction, setDrawerAction] = useState<string | null>(null);
-  const checkingOut: boolean = drawerAction === 'checkout';
-  const locked: boolean = pending || hydrating || drawerAction !== null;
-  // Shared presentation only: sample entries never become draft orders or live mutation inputs.
-  const items = isSample
-    ? sample.items.map((item) => ({
-        id: item.key,
-        name: item.name,
-        quantity: item.quantity,
-        image: undefined,
-        options: undefined,
-        subtotal: item.price * item.quantity,
-        currency: 'USD',
-      }))
-    : (cart?.lineItems ?? []).map((item) => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        image: item.details?.productAssetUrl,
-        options: item.details?.selectedOptions,
-        subtotal: item.totals?.subTotal?.value,
-        currency: item.totals?.subTotal?.currencyCode,
-      }));
-  const summary: CartSummaryTotals = getCartSummaryTotals(cart);
-  const currency: string = isSample ? 'USD' : (cart?.totals?.total?.currencyCode ?? config.currencyCode);
-  const subtotal = isSample
-    ? sample.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-    : summary.subtotal;
-  async function handleAction(action: string, operation: () => Promise<boolean>): Promise<void> {
-    if (locked) return;
-    setDrawerAction(action);
-    try {
-      await operation();
-    } finally {
-      setDrawerAction(null);
-    }
-  }
-  return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Portal>
-        <StorefrontSurface>
-          <Dialog.Overlay className='fixed inset-0 z-40 bg-neutral-950/40' />
-          <Dialog.Content
-            data-commerce-source={isSample ? 'sample' : undefined}
-            className='fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col bg-white text-neutral-900 shadow-xl'
-            onCloseAutoFocus={(event) => {
-              event.preventDefault();
-              restoreFocus();
-            }}
-          >
-            <div className='flex items-start justify-between border-b border-neutral-200 p-6'>
-              <div>
-                <Dialog.Title className='text-2xl font-semibold'>
-                  {isSample ? 'Sample cart' : 'Your cart'}
-                </Dialog.Title>
-                <Dialog.Description className='mt-1 text-sm text-neutral-600'>
-                  {isSample
-                    ? 'Example products and prices in USD. Nothing can be purchased.'
-                    : 'Review your items before checkout.'}
-                </Dialog.Description>
-              </div>
-              <Dialog.Close
-                className='min-h-11 min-w-11 rounded-lg border border-neutral-400 bg-white px-3 text-neutral-900 focus-visible:outline focus-visible:outline-2'
-                aria-label='Close cart'
-              >
-                ✕
-              </Dialog.Close>
-            </div>
-            <div className='flex-1 overflow-y-auto p-6'>
-              {storageWarning && (
-                <p role='status' className='mb-4 text-sm text-amber-800'>
-                  {storageWarning}
-                </p>
-              )}
-              {error && (
-                <div role='alert' className='mb-4 rounded-lg bg-red-50 p-4 text-red-800'>
-                  <p>{error}</p>
-                  <button
-                    type='button'
-                    className='mt-2 min-h-11 bg-red-50 text-red-800 underline disabled:cursor-not-allowed'
-                    disabled={drawerAction === 'refresh'}
-                    aria-disabled={locked}
-                    aria-busy={drawerAction === 'refresh'}
-                    onClick={() => void handleAction('refresh', refresh)}
-                  >
-                    Refresh cart
-                  </button>
-                </div>
-              )}
-              {hydrating && <p role='status'>Loading your cart…</p>}
-              {!hydrating && !items.length && (
-                <div className='py-16 text-center'>
-                  <p className='text-xl font-medium'>Your cart is empty</p>
-                  <p className='mt-2 text-neutral-600'>
-                    {isSample
-                      ? 'Add a sample product to try the cart.'
-                      : 'Find something you love in the shop.'}
-                  </p>
-                  <Link
-                    className={`${buttonClass} mt-6`}
-                    to={config.catalogPath}
-                    onClick={() => setOpen(false)}
-                  >
-                    Browse products
-                  </Link>
-                </div>
-              )}
-              <ul className='divide-y divide-neutral-200'>
-                {items.map((item) => (
-                  <li key={item.id} className='py-5 first:pt-0' data-testid='cart-item'>
-                    <div className='flex gap-4'>
-                      {item.image && (
-                        <img
-                          src={item.image}
-                          alt=''
-                          className='h-20 w-20 rounded-lg bg-neutral-100 object-cover'
-                        />
-                      )}
-                      <div className='min-w-0 flex-1'>
-                        <h3 className='font-semibold'>{item.name}</h3>
-                        {item.options?.map((option) => (
-                          <p
-                            key={`${option.attribute}:${option.values?.join(',')}`}
-                            className='text-sm text-neutral-600'
-                          >
-                            {option.attribute}: {option.values?.join(', ')}
-                          </p>
-                        ))}
-                        <p className='mt-1 text-sm'>
-                          {typeof item.subtotal === 'number'
-                            ? money(item.subtotal, item.currency ?? currency)
-                            : 'Price unavailable'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className='mt-4 flex items-center justify-between gap-2'>
-                      <div className='flex items-center rounded-lg border border-neutral-300'>
-                        <button
-                          type='button'
-                          className='min-h-11 min-w-11 rounded-lg bg-white text-neutral-900 focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-600'
-                          aria-label={`Decrease quantity of ${item.name}`}
-                          disabled={
-                            drawerAction === `decrease:${item.id}` || !item.id || (item.quantity ?? 0) <= 1
-                          }
-                          aria-disabled={locked || !item.id || (item.quantity ?? 0) <= 1}
-                          aria-busy={drawerAction === `decrease:${item.id}`}
-                          onClick={() =>
-                            void handleAction(`decrease:${item.id}`, () =>
-                              changeQuantity(item.id ?? '', (item.quantity ?? 1) - 1),
-                            )
-                          }
-                        >
-                          −
-                        </button>
-                        <span className='min-w-8 text-center'>
-                          <span className='sr-only'>Quantity: </span>
-                          {item.quantity}
-                        </span>
-                        <button
-                          type='button'
-                          className='min-h-11 min-w-11 rounded-lg bg-white text-neutral-900 focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-600'
-                          aria-label={`Increase quantity of ${item.name}`}
-                          disabled={drawerAction === `increase:${item.id}` || !item.id}
-                          aria-disabled={locked || !item.id}
-                          aria-busy={drawerAction === `increase:${item.id}`}
-                          onClick={() =>
-                            void handleAction(`increase:${item.id}`, () =>
-                              changeQuantity(item.id ?? '', (item.quantity ?? 1) + 1),
-                            )
-                          }
-                        >
-                          +
-                        </button>
-                      </div>
-                      <button
-                        type='button'
-                        className='min-h-11 bg-white px-2 text-sm text-neutral-900 underline focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:text-neutral-600'
-                        aria-label={`Remove ${item.name}`}
-                        disabled={drawerAction === `remove:${item.id}` || !item.id}
-                        aria-disabled={locked || !item.id}
-                        aria-busy={drawerAction === `remove:${item.id}`}
-                        onClick={() =>
-                          void handleAction(`remove:${item.id}`, () => removeItem(item.id ?? ''))
-                        }
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {items.length > 0 && (
-              <div className='border-t border-neutral-200 p-6'>
-                <dl className='space-y-2 text-sm'>
-                  {(isSample || typeof cart?.totals?.subTotal?.value === 'number') && (
-                    <div className='flex justify-between'>
-                      <dt>{isSample ? 'Sample subtotal' : 'Subtotal'}</dt>
-                      <dd>
-                        {money(
-                          subtotal,
-                          isSample ? 'USD' : (cart?.totals?.subTotal?.currencyCode ?? currency),
-                        )}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-                {!isSample && (
-                  <p className='commerce-cart-checkout-adjustments-note mt-3 text-sm text-neutral-600'>
-                    Shipping, taxes, and discounts are calculated at checkout.
-                  </p>
-                )}
-                {isSample ? (
-                  <p className='text-sm text-neutral-600'>
-                    Example total in USD. Checkout is not set up yet.
-                  </p>
-                ) : config.checkoutSuccessPath ? (
-                  <button
-                    type='button'
-                    className={`${buttonClass} w-full`}
-                    disabled={checkingOut || hydrating || cart?.totals?.total?.value == null}
-                    aria-disabled={locked || cart?.totals?.total?.value == null}
-                    aria-busy={checkingOut}
-                    onClick={() => void handleAction('checkout', checkout)}
-                  >
-                    {checkingOut ? 'Opening checkout…' : 'Proceed to Checkout'}
-                  </button>
-                ) : (
-                  <p className='text-sm text-neutral-600'>Checkout is not available yet.</p>
-                )}
-              </div>
-            )}
-          </Dialog.Content>
-        </StorefrontSurface>
-      </Dialog.Portal>
-    </Dialog.Root>
   );
 }

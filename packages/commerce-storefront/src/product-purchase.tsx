@@ -1,6 +1,6 @@
 import { type ComponentProps, type ReactElement, useId } from 'react';
 import { message } from './api';
-import { AddToCartButton, buttonClass, inputClass } from './cart';
+import { AddToCartButton, buttonClass, inputClass, quantityProblem } from './cart';
 import type { SKU } from './catalog-model';
 import { partClass } from './part';
 import {
@@ -197,12 +197,16 @@ export function ProductDetailsAvailability({ className }: ProductDetailsPartProp
   );
 }
 
-/** Quantity for the verified SKU. Renders nothing until a SKU is verified. */
+/** Quantity for the verified SKU, with a message when it cannot be added. Renders nothing until a SKU is verified. */
 export function ProductDetailsQuantity({ className }: ProductDetailsPartProps): ReactElement | null {
   const { selectedSku, availableQuantity, quantity, setQuantity } =
     useProductDetailsInternal('ProductDetailsQuantity');
   const id = useId();
+  const problemId = useId();
   if (!selectedSku) return null;
+  // A sold-out SKU has no quantity to fix; its availability and button say so.
+  const problem: string | null =
+    availableQuantity === 0 ? null : quantityProblem(quantity, availableQuantity);
   return (
     <div className={partClass(className)}>
       <label htmlFor={id} className='mb-2 block font-medium'>
@@ -216,8 +220,15 @@ export function ProductDetailsQuantity({ className }: ProductDetailsPartProps): 
         step={1}
         className={`${inputClass} w-28`}
         value={Number.isNaN(quantity) ? '' : quantity}
+        aria-invalid={problem ? true : undefined}
+        aria-describedby={problem ? problemId : undefined}
         onChange={(event) => setQuantity(event.target.valueAsNumber)}
       />
+      {problem && (
+        <p id={problemId} className='mt-2 text-sm text-red-700'>
+          {problem}
+        </p>
+      )}
     </div>
   );
 }
