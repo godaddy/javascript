@@ -98,6 +98,11 @@ export function ShippingMethodForm() {
     blockedFulfillmentKey: null,
   });
 
+  // Only an explicit click in this mount counts as the shopper's choice. A
+  // shipping line already on the draft order may have been auto-applied, so
+  // it must not keep a free rate from being selected.
+  const userSelectedServiceCodeRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (
       isShippingMethodsLoading ||
@@ -167,7 +172,19 @@ export function ShippingMethodForm() {
         ? shippingMethods.find(m => m.serviceCode === existingMethod)
         : null;
 
-      const methodToApply = matchedMethod || firstMethod;
+      const userSelectedServiceCode: string | null =
+        userSelectedServiceCodeRef.current;
+      const userSelectedMethod: ShippingMethod | undefined =
+        userSelectedServiceCode
+          ? shippingMethods.find(m => m.serviceCode === userSelectedServiceCode)
+          : undefined;
+      const freeMethod: ShippingMethod | undefined =
+        matchedMethod?.cost?.value === 0
+          ? matchedMethod
+          : shippingMethods.find(m => m.cost?.value === 0);
+
+      const methodToApply =
+        userSelectedMethod || freeMethod || matchedMethod || firstMethod;
       // Check if we've already processed this exact state. If cart contents
       // changed after a shipping method was selected, shippingLines can still
       // match the selected rate while new line items are NONE. In that case we
@@ -198,7 +215,15 @@ export function ShippingMethodForm() {
             };
           }
 
-          applyShippingMethod.mutate(buildShippingPayload(methodToApply));
+          // On failure, show the rate the draft order still has. The processed
+          // state is left as is so the failed rate is not retried in a loop.
+          applyShippingMethod.mutate(buildShippingPayload(methodToApply), {
+            onError: () => {
+              form.setValue('shippingMethod', currentServiceCode ?? '', {
+                shouldDirty: false,
+              });
+            },
+          });
         } else if (session?.enableTaxCollection) {
           updateTaxes.mutate(undefined);
         }
@@ -275,6 +300,8 @@ export function ShippingMethodForm() {
 
     const previousValue = form.getValues('shippingMethod');
     const previousProcessedState = lastProcessedStateRef.current;
+    const previousUserSelectedServiceCode: string | null =
+      userSelectedServiceCodeRef.current;
     form.setValue('shippingMethod', value, {
       shouldDirty: true,
       shouldValidate: true,
@@ -283,6 +310,8 @@ export function ShippingMethodForm() {
     const method = shippingMethods?.find(m => m.serviceCode === value);
 
     if (method) {
+      userSelectedServiceCodeRef.current = method.serviceCode || value;
+
       // The mutation success path already recalculates taxes. Optimistically
       // record the selected method as processed so the post-mutation draft-order
       // refetch does not look like a new unprocessed shipping state and trigger
@@ -314,6 +343,7 @@ export function ShippingMethodForm() {
         .catch(() => {
           form.setValue('shippingMethod', previousValue);
           lastProcessedStateRef.current = previousProcessedState;
+          userSelectedServiceCodeRef.current = previousUserSelectedServiceCode;
         });
     }
   };
