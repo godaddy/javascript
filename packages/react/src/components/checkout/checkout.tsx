@@ -156,6 +156,8 @@ export const baseCheckoutSchema = z.object({
   shippingPostalCode: z.string().max(60),
   shippingCountryCode: z.string().max(2),
   shippingMethod: z.string().optional(),
+  // Client-only: true when checkout picked the method rather than the customer.
+  shippingMethodAutoSelected: z.boolean().optional(),
   billingFirstName: z.string().max(60),
   billingLastName: z.string().max(60),
   billingPhone: z.string().max(15, 'Phone number too long').optional(),
