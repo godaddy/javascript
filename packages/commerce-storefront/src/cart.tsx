@@ -29,6 +29,9 @@ export function CartButton(): ReactElement {
   );
 }
 
+/** Whether tracked stock is used up. Oversold SKUs report a negative count. */
+export const isSoldOut = (available: number | null): boolean => available !== null && available <= 0;
+
 /** Why `quantity` cannot be added, or `null` when it can. `available` is `null` when stock is not tracked. */
 export function quantityProblem(quantity: number, available: number | null): string | null {
   if (!Number.isInteger(quantity) || quantity < 1) return 'Enter a whole number of 1 or more.';
@@ -49,13 +52,14 @@ export function AddToCartButton({
   const [adding, setAdding] = useState<boolean>(false);
   const reasonId = useId();
   const available: number | null = getAvailableInventoryQuantity(sku);
+  const soldOut: boolean = isSoldOut(available);
   // Sold out needs no description: the button says so.
   let reason: string | null = null;
   if (connection === 'unbound') reason = 'Connect a store to add items to the cart.';
   else if (connection !== 'ready') reason = 'Connecting to the store…';
   else if (!sku.id) reason = 'This item cannot be added to the cart.';
-  else if (available !== 0) reason = hydrating ? 'Loading your cart…' : quantityProblem(quantity, available);
-  const disabled: boolean = adding || available === 0 || reason !== null;
+  else if (!soldOut) reason = hydrating ? 'Loading your cart…' : quantityProblem(quantity, available);
+  const disabled: boolean = adding || soldOut || reason !== null;
   async function handleAdd(): Promise<void> {
     if (disabled || pending || !sku.id) return;
     setAdding(true);
@@ -76,7 +80,7 @@ export function AddToCartButton({
         aria-describedby={reason ? reasonId : undefined}
         onClick={() => void handleAdd()}
       >
-        {available === 0 ? 'Out of stock' : adding ? 'Adding…' : 'Add to cart'}
+        {soldOut ? 'Out of stock' : adding ? 'Adding…' : 'Add to cart'}
       </button>
       {reason && (
         <span id={reasonId} hidden>

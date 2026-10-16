@@ -1,19 +1,11 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
-import {
-  Children,
-  createContext,
-  type ReactElement,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-} from 'react';
+import { createContext, type ReactElement, type ReactNode, useCallback, useContext, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { message, request } from './api';
 import { buttonClass } from './cart';
 import type { SKUGroup, SkuGroupsResult } from './catalog-model';
 import { useCommerce } from './commerce-provider';
-import { partClass } from './part';
+import { hasChildren, partClass } from './part';
 import {
   CatalogItemContext,
   PackagedCardParts,
@@ -182,7 +174,7 @@ export interface CatalogProductsProps extends CatalogPartProps {
 export function CatalogProducts({ className, children }: CatalogProductsProps): ReactElement {
   const catalog = useCatalogInternal('CatalogProducts');
   // `{custom && <ProductCardRoot>…}` with `custom` false still gets a card, not an empty slot per product.
-  const card: ReactNode = Children.toArray(children).some((child) => child !== '') ? children : packagedCard;
+  const card: ReactNode = hasChildren(children) ? children : packagedCard;
   const nodes: SKUGroup[] | null = catalog.source === 'live' ? catalog.nodes : null;
   const items = useMemo(
     (): { key: string; item: ProductCardItem }[] =>

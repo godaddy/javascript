@@ -56,6 +56,7 @@ export {
   getSingleMatchedSku,
 } from './catalog-model';
 export {
+  type AddedCartItem,
   type CommerceContextValue,
   CommerceProvider,
   type CommerceProviderProps,

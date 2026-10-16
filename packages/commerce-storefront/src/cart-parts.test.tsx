@@ -419,6 +419,131 @@ describe('composable cart', () => {
     }
   });
 
+  it('checks the notices and empty state for package rules too', async () => {
+    mockStore();
+    const store = vi.mocked(fetch).getMockImplementation();
+    vi.mocked(fetch).mockImplementation(async (input, init) =>
+      String(input).endsWith('/cart/cart-1')
+        ? response({ error: 'Cart offline' }, 503)
+        : (store?.(input, init) as Promise<Response>),
+    );
+    const conflicts = packageRuleConflicts();
+    render(
+      app(
+        <CartRoot>
+          <CartNotices className='host' />
+          <CartItems />
+          <CartEmpty className='host' />
+        </CartRoot>,
+      ),
+    );
+    await screen.findByText('Cart offline');
+    expect(document.querySelectorAll('.host')).toHaveLength(2);
+    for (const host of document.querySelectorAll('.host')) expect(conflicts(host)).toEqual([]);
+  });
+
+  it('falls back to the default empty state when its children render nothing', async () => {
+    mockStore();
+    vi.mocked(fetch).mockImplementation(async (input) =>
+      String(input).endsWith('/config')
+        ? response({ cartScope: 's', currencyCode: 'USD' })
+        : response({ cart: null }),
+    );
+    localStorage.clear();
+    const custom = false;
+    render(
+      app(
+        <CartRoot>
+          <CartEmpty>{custom && <p>Custom</p>}</CartEmpty>
+        </CartRoot>,
+      ),
+    );
+    expect(await screen.findByText('Your cart is empty')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Browse products' })).toBeVisible();
+  });
+
+  it('warns when the item template renders no CartItemRoot', async () => {
+    mockStore();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      app(
+        <CartRoot>
+          <CartItems>
+            <p>line</p>
+          </CartItems>
+        </CartRoot>,
+      ),
+    );
+    await waitFor(() => expect(screen.getAllByText('line')).toHaveLength(2));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('renders no <CartItemRoot>'));
+    warn.mockClear();
+    render(
+      app(
+        <CartRoot>
+          <CartItems />
+        </CartRoot>,
+      ),
+    );
+    await screen.findAllByRole('heading', { level: 3, name: 'Mug' });
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('opens a drawer on add only when one is mounted, and reports every add', async () => {
+    mockStore();
+    const added = vi.fn();
+    function Open(): ReactElement {
+      const { open } = useCommerce();
+      return <output data-testid='open'>{String(open)}</output>;
+    }
+    const sku = { id: 'sku-mug' };
+    const view = render(
+      app(
+        <>
+          <Open />
+          <CartButton />
+          <AddToCartButton sku={sku} name='Mug' />
+        </>,
+        { onItemAdded: added },
+      ),
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Add to cart' }));
+    await waitFor(() => expect(added).toHaveBeenCalledWith({ name: 'Mug', quantity: 1, isSample: false }));
+    expect(screen.getByTestId('open')).toHaveTextContent('false');
+    await userEvent.click(screen.getByRole('button', { name: /^Cart/ }));
+    expect(screen.getByRole('button', { name: /^Cart/ })).toHaveAttribute('aria-expanded', 'false');
+    view.unmount();
+
+    render(
+      app(
+        <>
+          <AddToCartButton sku={sku} name='Mug' />
+          <CartDrawerRoot>
+            <CartTitle />
+          </CartDrawerRoot>
+        </>,
+        { onItemAdded: added },
+      ),
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Add to cart' }));
+    expect(await screen.findByRole('dialog', { name: 'Your cart' })).toBeVisible();
+    expect(added).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports sample adds too', async () => {
+    mockStore({ state: 'unbound' });
+    const added = vi.fn();
+    render(
+      app(
+        <CatalogRoot sampleProducts>
+          <CatalogProducts />
+        </CatalogRoot>,
+        { onItemAdded: added },
+      ),
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Add Product 2 to sample cart' }));
+    expect(added).toHaveBeenCalledWith({ name: 'Product 2', quantity: 1, isSample: true });
+  });
+
   it('renders the packaged drawer from CommerceStorefront with dividers between lines', async () => {
     mockStore();
     render(
@@ -477,6 +602,12 @@ describe('add to cart reasons', () => {
     expect(button).not.toHaveAttribute('aria-describedby');
     await userEvent.click(screen.getByRole('button', { name: 'Sell out' }));
     expect(screen.getByRole('button', { name: 'Out of stock' })).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('treats oversold stock as sold out', async () => {
+    mockStore();
+    render(app(<AddToCartButton sku={mug(-2)} name='Mug' />));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Out of stock' })).toBeDisabled());
   });
 
   it('says a store must be connected before adding', async () => {

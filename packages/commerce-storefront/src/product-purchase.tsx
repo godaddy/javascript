@@ -1,6 +1,6 @@
 import { type ComponentProps, type ReactElement, useId } from 'react';
 import { message } from './api';
-import { AddToCartButton, buttonClass, inputClass, quantityProblem } from './cart';
+import { AddToCartButton, buttonClass, inputClass, isSoldOut, quantityProblem } from './cart';
 import type { SKU } from './catalog-model';
 import { partClass } from './part';
 import {
@@ -189,7 +189,7 @@ export function ProductDetailsAvailability({ className }: ProductDetailsPartProp
       <p className='text-sm' aria-live='polite'>
         {availableQuantity === null
           ? 'Available to order'
-          : availableQuantity === 0
+          : isSoldOut(availableQuantity)
             ? 'This variant is out of stock'
             : `${availableQuantity} available`}
       </p>
@@ -205,8 +205,9 @@ export function ProductDetailsQuantity({ className }: ProductDetailsPartProps): 
   const problemId = useId();
   if (!selectedSku) return null;
   // A sold-out SKU has no quantity to fix; its availability and button say so.
-  const problem: string | null =
-    availableQuantity === 0 ? null : quantityProblem(quantity, availableQuantity);
+  const problem: string | null = isSoldOut(availableQuantity)
+    ? null
+    : quantityProblem(quantity, availableQuantity);
   return (
     <div className={partClass(className)}>
       <label htmlFor={id} className='mb-2 block font-medium'>
