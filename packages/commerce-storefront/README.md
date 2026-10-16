@@ -54,11 +54,12 @@ Use the providers your application already has; do not create another router or 
 | `catalogPath` | `/shop` | Same-origin catalog route |
 | `productPath` | `/products` | Same-origin prefix for product links; register `${productPath}/:productId` |
 | `checkoutSuccessPath` | unset | Same-origin return route; enables checkout UI only when supplied |
+| `onItemAdded` | unset | Called with `{ name, quantity, isSample }` after each add, live or sample; use it to confirm adds on a site with a cart page instead of a drawer |
 | `theme` | inherited text and transparent wrappers; neutral control palette | CSS custom properties applied to storefront surfaces and the portalled drawer |
 
 Provide root-relative paths without a trailing slash. Enable `checkoutSuccessPath` only after your server supports checkout and validates merchant readiness. Mount a corresponding return page. A redirect back from checkout is **not proof of payment**; that page must obtain authoritative payment status from your server. This package does not provide a payment receipt page or merchant onboarding.
 
-`GET /api/commerce/config` supplies the currency and opaque cart scope. The scope must change when the store, channel, or currency binding changes. The draft-order cart displays its subtotal and explains that shipping, taxes, and discounts are calculated at checkout. The explanation has the stable `commerce-cart-checkout-adjustments-note` class so applications can hide it when needed. The cart does not create a checkout session or calculate adjustments. Applications do not pass store IDs or credentials into the browser package. One storefront binding is supported per page and query client.
+`GET /api/commerce/config` supplies the currency and opaque cart scope. The scope must change when the store, channel, or currency binding changes. The draft-order cart displays its subtotal and explains that shipping, taxes, and discounts are calculated at checkout. The explanation's outer element has the stable `commerce-cart-checkout-adjustments-note` class so applications can hide it when needed. The cart does not create a checkout session or calculate adjustments. Applications do not pass store IDs or credentials into the browser package. One storefront binding is supported per page and query client.
 
 A connection failure leaves the surrounding application and its state mounted. Catalog and product surfaces show the connection error and retry action. Custom integrations can render `CommerceStatus` or inspect `useCommerce().connection`.
 
@@ -157,6 +158,18 @@ Every part is named `ProductDetails*` because it works only inside `ProductDetai
 Parts read state from the root and take no product, SKU, price or quantity props. Whatever the layout, only a server-verified SKU can be added, and changing a selection resets the quantity and image. Every part throws if it is rendered outside `ProductDetailsRoot`. In development builds, if no control is rendered for an attribute the product requires, a console warning names the missing ones. A control that mounts later, such as one in a closed accordion, can trigger it; the product becomes purchasable once the control renders. Products without attributes but with several SKUs need `ProductDetailsOptions` or `ProductDetailsPurchase`. Parts can be rendered more than once, such as in a sticky mobile purchase bar; each copy gets its own element IDs.
 
 Every part accepts `className`, which is added to the part's outer element, a wrapper the package's CSS reset leaves alone. Host classes there control margin, padding, border, color, width, display, gap and grid placement, including layered utilities such as Tailwind v4's. In `ProductDetailsOptions` and `ProductDetailsPurchase`, each control keeps a 24px bottom margin, even in a host grid. The exception is a class name the package also uses, such as `grid-cols-1` or `p-6`: the package's rule wins, even over the host's responsive variants on the same element, such as `md:grid-cols-4`. The packaged layout sets its spacing and grid placement this way. Elements inside the part, such as the title's `<h1>`, keep the package's own styles: a host font size on `ProductDetailsTitle` does not change the heading's size, but a host color does reach it, because the heading inherits its color.
+
+Your own elements inside a root are a limit for now. The package's unlayered reset matches every element inside a root that is not a part's outer element, so layered host styles lose there:
+- **Color, font family and border** on any element.
+- **Margin, padding, font size and weight** on headings, paragraphs, lists and fieldsets.
+- **Font, color, background and border radius** on buttons, inputs and selects. Custom controls such as the swatches below are affected.
+
+Until the package scopes its reset, you can work around it:
+- Keep page headings outside the root.
+- Put colors on a part's `className`, which its children inherit.
+- Mark the affected declarations `!important`; a layered `!important` beats unlayered CSS.
+
+A part that renders nothing, such as `ProductDetailsAvailability` before a SKU is verified, leaves no grid cell, so the cells after it move up in a host grid. Wrap such parts in your own element or use named grid areas.
 
 Two hooks support custom parts inside the root:
 
@@ -279,9 +292,9 @@ import {
 </CommerceProvider>
 ```
 
-`className` on `CartDrawerRoot` goes on the dialog panel, which sits at the right edge at full height. The packaged width, background and column layout are the classes above; without them the panel is only as wide as its content and has no background. Add `mr-auto` to open it from the left. Keep `CartTitle` in a drawer: it names the dialog, and the dialog library logs an error without it. `CartDescription` is optional and describes the dialog when present.
+`className` on `CartDrawerRoot` goes on the dialog panel, which sits at the right edge at full height. The packaged width, background and column layout are the classes above; without them the panel is only as wide as its content and has no background. Add `mr-auto` to open it from the left. Keep `CartTitle` in a drawer: it names the dialog, and the dialog library logs an error without it. `CartDescription` is optional and describes the dialog when present. Render each of them once per drawer, because they use the dialog's own element IDs.
 
-For a cart page instead of, or as well as, the drawer, compose the same parts inside `CartRoot` on a route such as `/cart`. It shows the connection state itself, and `CartClose` renders nothing there. If the site has no drawer, use `CommerceProvider` without `CartDrawerRoot` and link to the page instead of rendering `CartButton`.
+For a cart page instead of, or as well as, the drawer, compose the same parts inside `CartRoot` on a route such as `/cart`. It shows the connection state itself, and `CartClose` renders nothing there. If the site has no drawer, use `CommerceProvider` without `CartDrawerRoot` and link to the page instead of rendering `CartButton`. Adds then open nothing, and `useCommerce().open` stays `false`. Confirm adds with the provider's `onItemAdded`, for example with a toast that links to the cart.
 
 ```tsx
 <CartRoot className='grid gap-8 lg:grid-cols-3'>
@@ -309,10 +322,10 @@ For a cart page instead of, or as well as, the drawer, compose the same parts in
 | `CartItemQuantity`, `CartItemRemove` | Decrease and increase buttons around the quantity, and the remove button |
 | `CartEmpty` | Only when the cart is empty: a message and a link to the catalog, or its own children instead |
 | `CartSummary` | A container that renders only when the cart has items |
-| `CartSubtotal`, `CartCheckoutNote` | The subtotal, and the note that shipping, taxes and discounts come at checkout. The note keeps the `commerce-cart-checkout-adjustments-note` class |
+| `CartSubtotal`, `CartCheckoutNote` | The subtotal, and the note that shipping, taxes and discounts come at checkout. The note's outer element keeps the `commerce-cart-checkout-adjustments-note` class |
 | `CartCheckout` | The checkout button when `checkoutSuccessPath` is set; otherwise a message that checkout is unavailable. Samples never check out |
 
-`className` on `CartItems` goes on the list element whose direct children are the items, and `className` on `CartItemRoot` goes on each item. The list is a `role='list'` element rather than a `<ul>`, so it has no browser margin or indent for a package rule to reset. Cart and item parts take no item, quantity or price props, and they throw if they are rendered outside their root. Every cart action goes through the shared provider's queue, whatever the layout, and while no store is connected the parts show the sample cart, which never reaches the store. Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
+`className` on `CartItems` goes on the list element whose direct children are the items, and `className` on `CartItemRoot` goes on each item. The list is a `role='list'` element rather than a `<ul>`, so it has no browser margin or indent for a package rule to reset. Cart and item parts take no item, quantity or price props, and they throw if they are rendered outside their root. In development builds, an item template without a `CartItemRoot` logs a warning, because the list would have no items. `CartItemImage` and `CartItemOptions` render nothing for a line without an image or options, which moves the line's other cells in a host grid. Every cart action goes through the shared provider's queue, whatever the layout, and while no store is connected the parts show the sample cart, which never reaches the store. Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
 
 Two hooks support custom cart markup:
 

@@ -1,6 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import {
-  Children,
   createContext,
   type ReactElement,
   type ReactNode,
@@ -14,8 +13,8 @@ import { Link } from 'react-router';
 import { money } from './api';
 import { buttonClass } from './cart';
 import { type CartItemState, type CartState, useCart } from './cart-state';
-import { useCommerce } from './commerce-provider';
-import { type PartRegistry, partClass, usePartRegistry } from './part';
+import { CartDrawerRegistry, useCommerce } from './commerce-provider';
+import { hasChildren, type PartRegistry, partClass, usePartRegistry } from './part';
 import { useSampleCart } from './sample-cart';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
@@ -62,28 +61,31 @@ function CartProvider({ children }: { children: ReactNode }): ReactElement {
   const sample = useSampleCart();
   const state = useCart();
   const [action, setAction] = useState<string | null>(null);
-  const locked: boolean = commerce.pending || commerce.hydrating || action !== null;
-  const value: CartInternal = {
-    ...state,
-    hydrating: commerce.hydrating,
-    error: commerce.error,
-    storageWarning: commerce.storageWarning,
-    catalogPath: commerce.config.catalogPath,
-    checkoutEnabled: !!commerce.config.checkoutSuccessPath,
-    checkoutReady: commerce.cart?.totals?.total?.value != null,
-    action,
-    locked,
-    run: (next, operation) => {
-      if (locked) return;
-      setAction(next);
-      void operation().finally(() => setAction(null));
-    },
-    changeQuantity: state.isSample ? sample.changeQuantity : commerce.changeQuantity,
-    removeItem: state.isSample ? sample.remove : commerce.removeItem,
-    refresh: commerce.refresh,
-    checkout: commerce.checkout,
-    close: () => commerce.setOpen(false),
-  };
+  // Stable while the provider and cart are, so a host re-render does not re-render every part.
+  const value = useMemo((): CartInternal => {
+    const locked: boolean = commerce.pending || commerce.hydrating || action !== null;
+    return {
+      ...state,
+      hydrating: commerce.hydrating,
+      error: commerce.error,
+      storageWarning: commerce.storageWarning,
+      catalogPath: commerce.config.catalogPath,
+      checkoutEnabled: !!commerce.config.checkoutSuccessPath,
+      checkoutReady: commerce.cart?.totals?.total?.value != null,
+      action,
+      locked,
+      run: (next, operation) => {
+        if (locked) return;
+        setAction(next);
+        void operation().finally(() => setAction(null));
+      },
+      changeQuantity: state.isSample ? sample.changeQuantity : commerce.changeQuantity,
+      removeItem: state.isSample ? sample.remove : commerce.removeItem,
+      refresh: commerce.refresh,
+      checkout: commerce.checkout,
+      close: () => commerce.setOpen(false),
+    };
+  }, [commerce, sample, state, action]);
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
@@ -131,6 +133,9 @@ export interface CartDrawerRootProps {
  */
 export function CartDrawerRoot({ children, className }: CartDrawerRootProps): ReactElement {
   const { open, setOpen, restoreFocus, connection } = useCommerce();
+  // Adds open the drawer only while one is mounted, so a site with a cart page gets no stuck `open` state.
+  const registerDrawer = useContext(CartDrawerRegistry);
+  useEffect(() => registerDrawer?.(), [registerDrawer]);
   // Radix links its description by default. Radix 1.1 also does so with none mounted, then warns about the missing
   // element, so `aria-describedby={undefined}` turns the link off until a `CartDescription` mounts. Without the
   // override, each Radix version links its own description ID.
@@ -251,6 +256,7 @@ export function CartNotices({ className }: CartPartProps): ReactElement | null {
 }
 
 const CartItemsContext = createContext<CartItemState | null>(null);
+const CartItemsRegistry = createContext<PartRegistry['register'] | null>(null);
 const CartItemContext = createContext<CartItemState | null>(null);
 
 function useCartItemInternal(part: string): CartItemState {
@@ -276,11 +282,19 @@ export interface CartItemsProps extends CartPartProps {
 export function CartItems({ className, children }: CartItemsProps): ReactElement {
   const { items, hydrating } = useCartInternal('CartItems');
   // `{custom && <CartItemRoot>…}` with `custom` false still gets an item, not an empty slot per line.
-  const template: ReactNode = Children.toArray(children).some((child) => child !== '')
-    ? children
-    : packagedItem;
+  const template: ReactNode = hasChildren(children) ? children : packagedItem;
+  const registry = usePartRegistry();
+  const { has } = registry;
+  // Parent effects run after child effects, so every rendered item has registered by now. Development builds only.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || items.length === 0 || has('item')) return;
+    console.warn(
+      '[gd-commerce-storefront] The <CartItems> template renders no <CartItemRoot>, so the cart list has no items. ' +
+        'Wrap each line in <CartItemRoot>.',
+    );
+  }, [items.length, has]);
   return (
-    <>
+    <CartItemsRegistry.Provider value={registry.register}>
       {hydrating && <p role='status'>Loading your cart…</p>}
       {/* A `<ul>` needs a package margin and padding reset, which would beat host classes here. */}
       <div role='list' className={partClass(className)}>
@@ -290,7 +304,7 @@ export function CartItems({ className, children }: CartItemsProps): ReactElement
           </CartItemsContext.Provider>
         ))}
       </div>
-    </>
+    </CartItemsRegistry.Provider>
   );
 }
 
@@ -303,6 +317,8 @@ export interface CartItemRootProps {
 /** One cart line. Render it as the child of `CartItems`, which renders it once for every line. */
 export function CartItemRoot({ children, className }: CartItemRootProps): ReactElement {
   const item = useContext(CartItemsContext);
+  const register = useContext(CartItemsRegistry);
+  useEffect(() => register?.('item'), [register]);
   if (!item) throw new Error('CartItemRoot must be rendered inside <CartItems>.');
   return (
     <CartItemContext.Provider value={item}>
@@ -450,7 +466,9 @@ export function CartEmpty({ className, children }: CartEmptyProps): ReactElement
   if (hydrating || items.length) return null;
   return (
     <div className={partClass(className)}>
-      {children ?? (
+      {hasChildren(children) ? (
+        children
+      ) : (
         <>
           <p className='text-xl font-medium'>Your cart is empty</p>
           <p className='mt-2 text-neutral-600'>
@@ -499,12 +517,10 @@ export function CartSubtotal({ className }: CartPartProps): ReactElement | null 
 export function CartCheckoutNote({ className }: CartPartProps): ReactElement | null {
   const { items, isSample } = useCartInternal('CartCheckoutNote');
   if (isSample || !items.length) return null;
-  // The stable class is on the outer element too, so hiding it also removes the host's spacing.
+  // The stable class is on the outer element, so hiding it also removes the host's spacing.
   return (
     <div className={partClass('commerce-cart-checkout-adjustments-note', className)}>
-      <p className='commerce-cart-checkout-adjustments-note text-sm text-neutral-600'>
-        Shipping, taxes, and discounts are calculated at checkout.
-      </p>
+      <p className='text-sm text-neutral-600'>Shipping, taxes, and discounts are calculated at checkout.</p>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   createContext,
   type ReactElement,
   type ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -24,7 +25,9 @@ export interface CommerceContextValue {
   theme: StorefrontTheme;
   config: StorefrontConfig;
   cart: CartOrder | null;
+  /** Whether the cart drawer is open. Always `false` when no `CartDrawer` or `CartDrawerRoot` is mounted. */
   open: boolean;
+  /** Opens or closes the cart drawer. Opening does nothing without a mounted drawer. */
   setOpen: (open: boolean) => void;
   /** Restores the initiating control after the cart drawer closes. */
   restoreFocus: () => void;
@@ -42,6 +45,9 @@ export interface CommerceContextValue {
 }
 
 const CommerceContext = createContext<CommerceContextValue | null>(null);
+
+/** Lets a mounted cart drawer register itself, so adds open it only when one exists. Not public. */
+export const CartDrawerRegistry = createContext<(() => () => void) | null>(null);
 
 export function useCommerce(): CommerceContextValue {
   const context: CommerceContextValue | null = useContext(CommerceContext);
@@ -67,6 +73,19 @@ export interface CommerceProviderProps {
   theme?: StorefrontTheme;
   /** Set only when your server has enabled checkout and this return route exists. */
   checkoutSuccessPath?: string;
+  /**
+   * Called after an item is added, live or sample. With a drawer mounted, the drawer also opens. Without one, such as
+   * on a site with a cart page, use it to confirm the add.
+   */
+  onItemAdded?: (item: AddedCartItem) => void;
+}
+
+/** The item passed to `onItemAdded`. */
+export interface AddedCartItem {
+  readonly name: string;
+  readonly quantity: number;
+  /** `true` for the sample cart, before a store is connected. */
+  readonly isSample: boolean;
 }
 
 type PublicConfiguration =
@@ -101,6 +120,7 @@ export function CommerceProvider({
   productPath = '/products',
   checkoutSuccessPath,
   theme = {},
+  onItemAdded,
 }: CommerceProviderProps): ReactElement {
   const config = useQuery({
     retry: false,
@@ -138,6 +158,7 @@ export function CommerceProvider({
         void config.refetch();
       }}
       theme={theme}
+      onItemAdded={onItemAdded}
     >
       {children}
     </BoundCommerceProvider>
@@ -151,7 +172,9 @@ function BoundCommerceProvider({
   connectionError,
   retryConnection,
   theme,
+  onItemAdded,
 }: {
+  onItemAdded?: (item: AddedCartItem) => void;
   connection: CommerceContextValue['connection'];
   connectionError: string | null;
   retryConnection: () => void;
@@ -179,6 +202,24 @@ function BoundCommerceProvider({
   const queue = useRef<Promise<boolean>>(Promise.resolve(true));
   const alive = useRef<boolean>(true);
   const opener = useRef<HTMLElement | null>(null);
+
+  const added = useRef(onItemAdded);
+  added.current = onItemAdded;
+  const drawers = useRef<number>(0);
+  const registerDrawer = useCallback((): (() => void) => {
+    drawers.current += 1;
+    return () => {
+      drawers.current -= 1;
+      if (drawers.current === 0) setOpen(false);
+    };
+  }, []);
+
+  /** Opens the drawer for an add, if one is mounted. */
+  function openDrawer(): void {
+    if (drawers.current === 0) return;
+    rememberOpener();
+    setOpen(true);
+  }
 
   function rememberOpener(): void {
     opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -324,7 +365,8 @@ function BoundCommerceProvider({
       if (!isActive()) return;
       commit(result.cart);
       setAnnouncement(`${item.name} added to your cart.`);
-      setOpen(true);
+      openDrawer();
+      added.current?.({ name: item.name, quantity: item.quantity, isSample: false });
     });
   }
 
@@ -412,6 +454,7 @@ function BoundCommerceProvider({
         cart,
         open,
         setOpen: (next) => {
+          if (next && drawers.current === 0) return;
           if (next) rememberOpener();
           setOpen(next);
         },
@@ -431,17 +474,19 @@ function BoundCommerceProvider({
         checkout,
       }}
     >
-      <SampleCartProvider
-        enabled={connection === 'unbound'}
-        announce={setAnnouncement}
-        onAdd={(name) => {
-          rememberOpener();
-          setAnnouncement(`${name} added to your sample cart.`);
-          setOpen(true);
-        }}
-      >
-        {children}
-      </SampleCartProvider>
+      <CartDrawerRegistry.Provider value={registerDrawer}>
+        <SampleCartProvider
+          enabled={connection === 'unbound'}
+          announce={setAnnouncement}
+          onAdd={(name) => {
+            setAnnouncement(`${name} added to your sample cart.`);
+            openDrawer();
+            added.current?.({ name, quantity: 1, isSample: true });
+          }}
+        >
+          {children}
+        </SampleCartProvider>
+      </CartDrawerRegistry.Provider>
       <span className='commerce-sr-only' role='status' aria-live='polite'>
         {announcement}
       </span>
