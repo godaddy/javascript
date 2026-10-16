@@ -2,12 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Component, type ErrorInfo, type ReactElement, type ReactNode } from 'react';
+import { renderToString } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { CatalogHeader, CatalogPagination, CatalogProducts, CatalogRoot, CatalogSummary } from './catalog';
 import type { SKUGroup } from './catalog-model';
 import { CommerceStorefront } from './commerce-storefront';
 import {
+  ProductCard,
   ProductCardAction,
   ProductCardDescription,
   ProductCardImage,
@@ -73,14 +75,18 @@ function mockApi({
   return fn;
 }
 
-function mount(layout: ReactNode) {
-  return render(
+function app(layout: ReactNode): ReactElement {
+  return (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } })}>
       <MemoryRouter initialEntries={['/shop']}>
         <CommerceStorefront>{layout}</CommerceStorefront>
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+}
+
+function mount(layout: ReactNode) {
+  return render(app(layout));
 }
 
 function Badge(): ReactElement {
@@ -239,6 +245,49 @@ describe('composable catalog', () => {
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Mug', 'Shirt']);
     const hidden = document.querySelector('a[aria-hidden="true"][href="/products/mug"]');
     expect(hidden).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('hides the image link in server HTML when the card has a title', () => {
+    mockApi();
+    const html = renderToString(app(<ProductCard product={mug} />));
+    const card = document.createElement('div');
+    card.innerHTML = html;
+    const links = [...card.querySelectorAll('a[href="/products/mug"]')];
+    expect(links.map((link) => [link.getAttribute('tabindex'), link.getAttribute('aria-hidden')])).toEqual([
+      ['-1', 'true'],
+      [null, null],
+    ]);
+  });
+
+  it('falls back to the packaged card when the card template is false or empty', async () => {
+    mockApi();
+    const custom = false;
+    mount(
+      <CatalogRoot>
+        <CatalogProducts>
+          {custom && (
+            <ProductCardRoot>
+              <ProductCardTitle />
+            </ProductCardRoot>
+          )}
+        </CatalogProducts>
+      </CatalogRoot>,
+    );
+    expect(await screen.findByRole('heading', { level: 2, name: 'Mug' })).toBeInTheDocument();
+    expect(screen.getAllByRole('article')).toHaveLength(2);
+  });
+
+  it('keeps host classes on the connection status', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>(() => {})),
+    );
+    mount(
+      <CatalogRoot className='host-root'>
+        <CatalogProducts />
+      </CatalogRoot>,
+    );
+    expect(screen.getByText('Connecting to the store…').closest('.host-root')).not.toBeNull();
   });
 
   it('names the missing root or product when parts are misplaced', async () => {

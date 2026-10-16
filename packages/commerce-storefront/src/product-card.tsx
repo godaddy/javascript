@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import { Link } from 'react-router';
@@ -13,12 +14,13 @@ import { AddToCartButton, buttonClass } from './cart';
 import {
   getPrimaryImageUrl,
   getProductAttributes,
+  getProductName,
   getSingleMatchedSku,
   type SKU,
   type SKUGroup,
 } from './catalog-model';
 import { useCommerce } from './commerce-provider';
-import { partClass } from './part';
+import { type PartRegistry, partClass, usePartRegistry } from './part';
 import { type SampleProduct, useSampleCart } from './sample-cart';
 import { StorefrontSurface } from './storefront-surface';
 
@@ -69,11 +71,40 @@ export interface ProductCardState {
   readonly isSample: boolean;
 }
 
-interface ProductCardInternal extends ProductCardState {
-  item: ProductCardItem;
-  /** Whether a `ProductCardTitle` link is rendered, so the image link can stay out of the tab order. */
-  hasTitleLink: boolean;
-  registerTitleLink: () => () => void;
+interface ProductCardLinks {
+  /** Whether the image link is the card's product link: only when no `ProductCardTitle` link is rendered. */
+  imageLinked: boolean;
+  register: (key: string) => () => void;
+}
+
+type ProductCardInternal = ProductCardState &
+  ProductCardLinks &
+  (
+    | { source: 'live'; product: SKUGroup; href: string }
+    | { source: 'sample'; sample: SampleProduct; product: null; href: null }
+  );
+
+const titleLink = 'title-link';
+
+function cardValue(item: ProductCardItem, productPath: string, links: ProductCardLinks): ProductCardInternal {
+  if (item.source === 'sample')
+    return {
+      ...links,
+      source: 'sample',
+      sample: item.sample,
+      product: null,
+      name: item.sample.name,
+      href: null,
+      isSample: true,
+    };
+  return {
+    ...links,
+    source: 'live',
+    product: item.product,
+    name: getProductName(item.product),
+    href: `${productPath}/${encodeURIComponent(item.product.id ?? '')}`,
+    isSample: false,
+  };
 }
 
 /** Props shared by every card part. `className` is added to the part's outer element. */
@@ -92,7 +123,7 @@ function useProductCardInternal(part: string): ProductCardInternal {
 /** Read the card's product, name, and link from inside `ProductCardRoot`. */
 export function useProductCard(): ProductCardState {
   const { product, name, href, isSample } = useProductCardInternal('useProductCard');
-  return { product, name, href, isSample };
+  return useMemo(() => ({ product, name, href, isSample }), [product, name, href, isSample]);
 }
 
 export interface ProductCardRootProps {
@@ -107,29 +138,24 @@ export interface ProductCardRootProps {
 export function ProductCardRoot({ children, product, className }: ProductCardRootProps): ReactElement {
   const catalogItem = useContext(CatalogItemContext);
   const { config } = useCommerce();
-  const [titleLinks, setTitleLinks] = useState<number>(0);
-  const registerTitleLink = useCallback((): (() => void) => {
-    setTitleLinks((count) => count + 1);
-    return () => setTitleLinks((count) => count - 1);
-  }, []);
+  // The image link starts hidden, so server HTML and the first render have one product link per card. A card
+  // with no title link exposes it once mounted. Parent effects run after child effects, so titles have registered.
+  const [imageLinked, setImageLinked] = useState<boolean>(false);
+  const { register, has } = usePartRegistry(
+    useCallback((registered: PartRegistry['has']) => setImageLinked(!registered(titleLink)), []),
+  );
+  useEffect(() => {
+    setImageLinked(!has(titleLink));
+  }, [has]);
+  const value = useMemo((): ProductCardInternal | null => {
+    const item: ProductCardItem | null = catalogItem ?? (product ? { source: 'live', product } : null);
+    return item && cardValue(item, config.productPath, { imageLinked, register });
+  }, [catalogItem, product, config.productPath, imageLinked, register]);
   if (catalogItem && product)
     throw new Error(
       'Inside <CatalogProducts>, ProductCardRoot shows each catalog product. Remove its product prop.',
     );
-  const item: ProductCardItem | null = catalogItem ?? (product ? { source: 'live', product } : null);
-  if (!item) throw new Error('ProductCardRoot needs a product prop outside <CatalogProducts>.');
-  const links = { hasTitleLink: titleLinks > 0, registerTitleLink };
-  const value: ProductCardInternal =
-    item.source === 'live'
-      ? {
-          item,
-          product: item.product,
-          name: item.product.label ?? item.product.name ?? 'Product',
-          href: `${config.productPath}/${encodeURIComponent(item.product.id ?? '')}`,
-          isSample: false,
-          ...links,
-        }
-      : { item, product: null, name: item.sample.name, href: null, isSample: true, ...links };
+  if (!value) throw new Error('ProductCardRoot needs a product prop outside <CatalogProducts>.');
   const card: ReactElement = (
     <ProductCardContext.Provider value={value}>
       {/* `group` drives the image hover zoom. A card nested inside this one is not a catalog entry. */}
@@ -147,19 +173,19 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
  * the title is the one link keyboard and screen reader users get; without one, the image link is.
  */
 export function ProductCardImage({ className }: ProductCardPartProps): ReactElement {
-  const { item, name, href, hasTitleLink } = useProductCardInternal('ProductCardImage');
+  const card = useProductCardInternal('ProductCardImage');
   return (
     <div className={partClass(className)}>
-      {item.source === 'live' && href ? (
+      {card.source === 'live' ? (
         <Link
-          to={href}
-          tabIndex={hasTitleLink ? -1 : undefined}
-          aria-hidden={hasTitleLink ? 'true' : undefined}
+          to={card.href}
+          tabIndex={card.imageLinked ? undefined : -1}
+          aria-hidden={card.imageLinked ? undefined : 'true'}
           className='block aspect-square overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4'
         >
           <ProductImage
-            url={getPrimaryImageUrl(item.product)}
-            name={name}
+            url={getPrimaryImageUrl(card.product)}
+            name={card.name}
             className='motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-105'
           />
         </Link>
@@ -174,8 +200,8 @@ export function ProductCardImage({ className }: ProductCardPartProps): ReactElem
 
 /** The product name as an H2, linked to its page. */
 export function ProductCardTitle({ className }: ProductCardPartProps): ReactElement {
-  const { name, href, registerTitleLink } = useProductCardInternal('ProductCardTitle');
-  useEffect(() => (href ? registerTitleLink() : undefined), [href, registerTitleLink]);
+  const { name, href, register } = useProductCardInternal('ProductCardTitle');
+  useEffect(() => (href ? register(titleLink) : undefined), [href, register]);
   return (
     <div className={partClass(className)}>
       <h2 className='break-words text-2xl font-semibold leading-tight'>
@@ -207,13 +233,13 @@ export function ProductCardDescription({ className }: ProductCardPartProps): Rea
 
 /** The product's price, or its price range when variants differ. */
 export function ProductCardPrice({ className }: ProductCardPartProps): ReactElement {
-  const { item } = useProductCardInternal('ProductCardPrice');
+  const card = useProductCardInternal('ProductCardPrice');
   const { config } = useCommerce();
   let text: string;
-  if (item.source === 'sample') text = money(item.sample.price, 'USD');
+  if (card.source === 'sample') text = money(card.sample.price, 'USD');
   else {
-    const min: number | null | undefined = item.product.priceRange?.min;
-    const max: number | null | undefined = item.product.priceRange?.max;
+    const min: number | null | undefined = card.product.priceRange?.min;
+    const max: number | null | undefined = card.product.priceRange?.max;
     text =
       typeof min === 'number'
         ? `${money(min, config.currencyCode)}${typeof max === 'number' && max !== min ? ` – ${money(max, config.currencyCode)}` : ''}`
@@ -231,13 +257,13 @@ export function ProductCardPrice({ className }: ProductCardPartProps): ReactElem
  * Samples add to the sample cart.
  */
 export function ProductCardAction({ className }: ProductCardPartProps): ReactElement {
-  const { item, name, href } = useProductCardInternal('ProductCardAction');
+  const card = useProductCardInternal('ProductCardAction');
   return (
     <div className={partClass(className)}>
-      {item.source === 'live' ? (
-        <LiveAction product={item.product} name={name} href={href ?? ''} />
+      {card.source === 'live' ? (
+        <LiveAction product={card.product} name={card.name} href={card.href} />
       ) : (
-        <SampleAction sample={item.sample} />
+        <SampleAction sample={card.sample} />
       )}
     </div>
   );
