@@ -3,16 +3,22 @@ import type {
   PaymentMethodCreateParams,
   StripeExpressCheckoutElementConfirmEvent,
 } from '@stripe/stripe-js';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useBuildPaymentRequest } from '@/components/checkout/payment/utils/use-build-payment-request';
 import {
+  isCheckoutConfirmationBlockedError,
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useConfirmExpressCheckout } from '@/components/checkout/payment/utils/use-confirm-express-checkout';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
-import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
+import {
+  GraphQLErrorWithCodes,
+  getPaymentActionRequiredResult,
+} from '@/lib/graphql-with-errors';
+import { eventIds } from '@/tracking/events';
+import { TrackingEventType, track } from '@/tracking/track';
 import type {
   CalculatedAdjustments,
   CalculatedTaxes,
@@ -20,6 +26,23 @@ import type {
   ShippingMethod,
 } from '@/types';
 import { PaymentMethodType } from '@/types';
+import {
+  getStripeNextAction,
+  stripeCheckoutErrorCode,
+} from './stripe-next-action';
+import { usePendingStripeIntent } from './stripe-provider';
+
+function confirmationErrorCodes(error: unknown): string[] {
+  if (
+    error instanceof GraphQLErrorWithCodes &&
+    error.codes.length &&
+    !getPaymentActionRequiredResult(error) &&
+    !error.codes.includes('PAYMENT_ACTION_REQUIRED')
+  ) {
+    return error.codes;
+  }
+  return ['TRANSACTION_PROCESSING_FAILED'];
+}
 
 type UseStripeCheckoutOptions = {
   mode: 'card' | 'express';
@@ -69,63 +92,180 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
   const elements = useElements();
   const confirmCheckout = useConfirmCheckout();
   const confirmExpressCheckout = useConfirmExpressCheckout();
-  const { setCheckoutErrors } = useCheckoutContext();
+  const { session, setCheckoutErrors, setIsConfirmingCheckout } =
+    useCheckoutContext();
   const { stripePaymentMethodParams, buildPaymentRequestsFromOrder } =
     useBuildPaymentRequest();
   const flushCheckoutSync = useFlushCheckoutSync();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const isSubmittingRef = useRef(false);
+  const pendingIntent = usePendingStripeIntent();
 
   const handleSubmit = useCallback(
     async (
       expressData?: StripeExpressCheckoutData,
       resolvedOrder?: DraftOrder | null
     ) => {
+      if (isSubmittingRef.current) return;
+      isSubmittingRef.current = true;
       setIsProcessingPayment(true);
       try {
         if (!stripe || !elements) {
           return;
         }
 
-        if (mode === 'card') {
-          const cardElement = elements.getElement(CardElement);
+        if (pendingIntent.current?.sessionId !== session?.id) {
+          pendingIntent.current = null;
+        }
 
-          if (!cardElement) {
-            return;
-          }
-
-          const latestOrder =
-            resolvedOrder ??
-            (
-              await flushCheckoutSync({
-                includeCurrentFormDiff: true,
-              })
-            ).latestOrder;
-          const { paymentMethod, error } = await stripe.createPaymentMethod({
-            ...(latestOrder
-              ? buildPaymentRequestsFromOrder(latestOrder)
-                  .stripePaymentMethodParams
-              : stripePaymentMethodParams),
-            card: cardElement,
-            type: 'card',
-          });
-
-          if (error) {
-            setCheckoutErrors([error.code || 'TRANSACTION_PROCESSING_FAILED']);
-            return;
-          }
-
-          if (paymentMethod) {
+        // Both card and express payments resume the same intent after authentication.
+        const confirmWithNextAction = async (
+          paymentToken: string,
+          paymentType: string,
+          confirm: (token: string) => Promise<unknown>
+        ) => {
+          const confirmPayment = async (token: string) => {
             try {
-              await confirmCheckout.mutateAsync({
-                paymentToken: paymentMethod.id,
-                paymentType: PaymentMethodType.CREDIT_CARD,
-                paymentProvider: PaymentProvider.STRIPE,
-              });
-            } catch (err: unknown) {
-              if (err instanceof GraphQLErrorWithCodes) {
-                setCheckoutErrors(err.codes);
+              await confirm(token);
+            } catch (error) {
+              // A generic confirmation failure may hide a completed payment.
+              // Only an explicit, unambiguous unpaid result permits replacement.
+              if (
+                error instanceof GraphQLErrorWithCodes &&
+                error.errors.length > 0 &&
+                error.errors.every(
+                  detail =>
+                    detail.code === 'TRANSACTION_PROCESSING_FAILED' &&
+                    detail.extensions?.transactionStatus === 'FAILED'
+                )
+              ) {
+                pendingIntent.current = null;
               }
-              // Other errors are silently ignored
+              throw error;
+            }
+          };
+          try {
+            await confirmPayment(paymentToken);
+            pendingIntent.current = null;
+          } catch (error) {
+            if (isCheckoutConfirmationBlockedError(error)) throw error;
+            const nextAction = getStripeNextAction(error);
+            if (!nextAction) throw error;
+
+            // Keep the reference even if the SDK loses its response after payment completes.
+            pendingIntent.current = {
+              sessionId: session?.id,
+              id: nextAction.paymentReference,
+              paymentType,
+            };
+            track({
+              eventId: eventIds.paymentChallengeStarted,
+              type: TrackingEventType.EVENT,
+              properties: { provider: 'STRIPE' },
+            });
+            let challengeSucceeded = false;
+            try {
+              const actionResult = await stripe.handleNextAction({
+                clientSecret: nextAction.clientSecret,
+              });
+              if (
+                actionResult.error ||
+                actionResult.paymentIntent?.id !==
+                  nextAction.paymentReference ||
+                ![
+                  'succeeded',
+                  'processing',
+                  'requires_capture',
+                  'requires_confirmation',
+                ].includes(actionResult.paymentIntent.status)
+              ) {
+                const intent =
+                  actionResult.paymentIntent ??
+                  actionResult.error?.payment_intent;
+                // Only a definite unpaid outcome permits a replacement payment.
+                if (
+                  intent?.id === nextAction.paymentReference &&
+                  ['requires_payment_method', 'canceled'].includes(
+                    intent.status
+                  )
+                ) {
+                  pendingIntent.current = null;
+                }
+                throw new GraphQLErrorWithCodes([
+                  {
+                    code: actionResult.error
+                      ? stripeCheckoutErrorCode(actionResult.error.code)
+                      : 'AUTHORIZATION_FAILED',
+                  },
+                ]);
+              }
+
+              challengeSucceeded = true;
+              await confirmPayment(actionResult.paymentIntent.id);
+              pendingIntent.current = null;
+            } finally {
+              track({
+                eventId: eventIds.paymentChallengeCompleted,
+                type: TrackingEventType.EVENT,
+                properties: { provider: 'STRIPE', success: challengeSucceeded },
+              });
+            }
+          }
+        };
+
+        if (mode === 'card') {
+          let paymentToken = pendingIntent.current?.id;
+          if (!paymentToken) {
+            const cardElement = elements.getElement(CardElement);
+
+            if (!cardElement) {
+              return;
+            }
+
+            const latestOrder =
+              resolvedOrder ??
+              (
+                await flushCheckoutSync({
+                  includeCurrentFormDiff: true,
+                })
+              ).latestOrder;
+            const { paymentMethod, error } = await stripe.createPaymentMethod({
+              ...(latestOrder
+                ? buildPaymentRequestsFromOrder(latestOrder)
+                    .stripePaymentMethodParams
+                : stripePaymentMethodParams),
+              card: cardElement,
+              type: 'card',
+            });
+
+            if (error) {
+              setCheckoutErrors([stripeCheckoutErrorCode(error.code)]);
+              return;
+            }
+            paymentToken = paymentMethod?.id;
+          }
+
+          if (paymentToken) {
+            const confirmInput = {
+              paymentToken,
+              paymentType: PaymentMethodType.CREDIT_CARD,
+              paymentProvider: PaymentProvider.STRIPE,
+            };
+
+            try {
+              await confirmWithNextAction(
+                paymentToken,
+                confirmInput.paymentType,
+                token =>
+                  confirmCheckout.mutateAsync({
+                    ...confirmInput,
+                    paymentToken: token,
+                  })
+              );
+            } catch (error) {
+              if (isCheckoutConfirmationBlockedError(error)) return;
+              setCheckoutErrors(confirmationErrorCodes(error));
+              setIsConfirmingCheckout(false);
             }
           } else {
             setCheckoutErrors(['TRANSACTION_PROCESSING_FAILED']);
@@ -133,28 +273,30 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
         }
 
         if (mode === 'express') {
-          const { error, paymentMethod } = await stripe.createPaymentMethod({
-            elements,
-            params: buildStripeExpressPaymentMethodParams(
-              expressData?.event.billingDetails
-            ),
-          });
-
-          if (error) {
-            setCheckoutErrors([error.code || 'TRANSACTION_PROCESSING_FAILED']);
-            return;
+          let paymentToken = pendingIntent.current?.id;
+          let paymentType = pendingIntent.current?.paymentType;
+          if (!paymentToken) {
+            const { error, paymentMethod } = await stripe.createPaymentMethod({
+              elements,
+              params: buildStripeExpressPaymentMethodParams(
+                expressData?.event.billingDetails
+              ),
+            });
+            if (error || !paymentMethod) {
+              const code = stripeCheckoutErrorCode(error?.code);
+              setCheckoutErrors([code]);
+              throw new GraphQLErrorWithCodes([{ code }]);
+            }
+            paymentToken = paymentMethod.id;
+            paymentType = paymentMethod.card?.wallet?.type;
           }
 
-          if (paymentMethod) {
+          if (paymentToken) {
             try {
-              // Build the checkout body similar to godaddy.tsx
               const event = expressData?.event;
               const currencyCode =
                 expressData?.shippingTotal?.currencyCode || 'USD';
-
-              const walletType = paymentMethod.card?.wallet?.type;
-              const paymentType =
-                walletType || event?.expressPaymentType || 'card';
+              paymentType = paymentType || event?.expressPaymentType || 'card';
 
               // Map Stripe billing details to checkout format
               const billing = event?.billingDetails
@@ -231,8 +373,8 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                   ]
                 : undefined;
 
-              await confirmExpressCheckout.mutateAsync({
-                paymentToken: paymentMethod.id,
+              const confirmInput = {
+                paymentToken,
                 paymentType,
                 paymentProvider: PaymentProvider.STRIPE,
                 isExpress: true,
@@ -254,11 +396,27 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                 ...(shipping ? { shipping } : {}),
                 // Include shipping lines if available
                 ...(shippingLines ? { shippingLines } : {}),
-              });
-            } catch (err: unknown) {
-              if (err instanceof GraphQLErrorWithCodes) {
-                setCheckoutErrors(err.codes);
+              };
+              await confirmWithNextAction(paymentToken, paymentType, token =>
+                confirmExpressCheckout.mutateAsync({
+                  ...confirmInput,
+                  paymentToken: token,
+                })
+              );
+              if (event) {
+                track({
+                  eventId: eventIds.expressCheckoutCompleted,
+                  type: TrackingEventType.EVENT,
+                  properties: {
+                    paymentType: event.expressPaymentType,
+                    provider: 'stripe',
+                  },
+                });
               }
+            } catch (err: unknown) {
+              if (isCheckoutConfirmationBlockedError(err)) throw err;
+              setCheckoutErrors(confirmationErrorCodes(err));
+              setIsConfirmingCheckout(false);
               throw err; // Re-throw so caller can handle
             }
           } else {
@@ -268,11 +426,14 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
 
         return { success: false, error: `Mode not supported: ${mode}` };
       } finally {
+        isSubmittingRef.current = false;
         setIsProcessingPayment(false);
       }
     },
     [
       mode,
+      pendingIntent,
+      session?.id,
       stripe,
       elements,
       confirmCheckout.mutateAsync,
@@ -280,6 +441,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
       buildPaymentRequestsFromOrder,
       confirmExpressCheckout.mutateAsync,
       setCheckoutErrors,
+      setIsConfirmingCheckout,
       stripePaymentMethodParams,
     ]
   );

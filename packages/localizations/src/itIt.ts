@@ -292,6 +292,8 @@ export const itIt = {
     DRAFT_ORDER_RETRIEVAL_FAILED: "Errore nel recupero dell'ordine",
     DATA_SOURCES_NOT_FOUND: 'Fonti dati non trovate',
     TRANSACTION_API_NOT_FOUND: 'Fonte dati API transazioni non trovata',
+    PAYMENT_ACTION_REQUIRED:
+      'Il pagamento richiede una verifica aggiuntiva. Riprova o scegli un altro metodo di pagamento.',
     TRANSACTION_PROCESSING_FAILED: "Errore nell'elaborazione della transazione",
     TRANSACTION_CREATION_FAILED:
       'Errore nella ricerca o creazione della transazione',
