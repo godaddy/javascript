@@ -1,0 +1,5 @@
+---
+"@godaddy/gd-commerce-storefront": minor
+---
+
+Add composable cart parts. `CartDrawerRoot` builds a custom cart drawer and `CartRoot` builds a cart page, both from the same parts: `CartTitle`, `CartDescription`, `CartClose`, `CartNotices`, `CartItems`, `CartEmpty`, `CartSummary`, `CartSubtotal`, `CartCheckoutNote` and `CartCheckout`. `CartItems` renders its child as the item for every line, built from `CartItemRoot` with `CartItemImage`, `CartItemName`, `CartItemOptions`, `CartItemPrice`, `CartItemQuantity` and `CartItemRemove`. `useCart` reads the cart anywhere inside the provider, for example for a custom cart button, and `useCartItem` reads one line. Every action still goes through the shared cart queue, and the sample cart never reaches the store. `CartDrawer` is now composed from these parts. Visual change: the packaged drawer now shows the 1px divider between cart lines that it always declared, which the CSS reset hid. Markup changes: each part has a wrapper `<div>`, the line list is a `role="list"` element instead of a `<ul>`, its lines are `role="listitem"` elements, and the drawer panel sits inside a positioning element.
