@@ -9,6 +9,34 @@ export const cx = (...classes: Array<string | undefined>): string => classes.fil
 /** Classes for the element that receives a part's `className`. The package CSS reset skips `commerce-part`. */
 export const partClass = (...classes: Array<string | undefined>): string => cx('commerce-part', ...classes);
 
+/**
+ * Props for a part's outer element: `partClass` plus `data-commerce-part`, the part's name in kebab case, such as
+ * `cart-checkout`. The attribute is a stable styling hook; internal utility classes are not.
+ */
+export const partProps = (
+  name: string,
+  ...classes: Array<string | undefined>
+): { className: string; 'data-commerce-part': string } => ({
+  className: partClass(...classes),
+  'data-commerce-part': name,
+});
+
+/** Replacement content for a part's text: content, or a function of the part's state. */
+export type PartLabel<State> = ReactNode | ((state: State) => ReactNode);
+
+/** The host's label for `state`, or `fallback` when the host gave none or it renders nothing. */
+export function renderLabel<State>(
+  label: PartLabel<State> | undefined,
+  state: State,
+  fallback: ReactNode,
+): ReactNode {
+  if (typeof label === 'function') {
+    const content: ReactNode = label(state);
+    return hasChildren(content) ? content : fallback;
+  }
+  return hasChildren(label) ? label : fallback;
+}
+
 export interface PartRegistry {
   /** Call from a part's effect; returns the cleanup. */
   register: (key: string) => () => void;

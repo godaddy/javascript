@@ -10,17 +10,35 @@ import {
   useState,
 } from 'react';
 import { Link } from 'react-router';
-import { money } from './api';
 import { buttonClass } from './cart';
 import { type CartItemState, type CartState, useCart } from './cart-state';
-import { CartDrawerRegistry, useCommerce } from './commerce-provider';
-import { hasChildren, type PartRegistry, partClass, usePartRegistry } from './part';
+import { CartDrawerRegistry, useCommerce, useMoney } from './commerce-provider';
+import {
+  hasChildren,
+  type PartLabel,
+  type PartRegistry,
+  partProps,
+  renderLabel,
+  usePartRegistry,
+} from './part';
 import { useSampleCart } from './sample-cart';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 /** Props shared by every cart part. `className` is added to the part's outer element. */
 export interface CartPartProps {
   className?: string;
+}
+
+/** Props for a cart part whose text the host can replace, with or without the sample wording. */
+export interface CartTextPartProps extends CartPartProps {
+  /** Replaces the text. A function receives whether the cart is the sample cart. */
+  children?: PartLabel<{ isSample: boolean }>;
+}
+
+/** Props for a cart button whose label the host can replace. The button keeps its behavior and state. */
+export interface CartActionPartProps extends CartPartProps {
+  /** Replaces the button label. A function receives whether the action is running. */
+  children?: PartLabel<{ busy: boolean }>;
 }
 
 interface CartDrawerInternal {
@@ -104,13 +122,16 @@ export function CartRoot({ children, className }: CartRootProps): ReactElement {
     <StorefrontSurface>
       {connection === 'ready' || isSample ? (
         <CartProvider>
-          <section className={partClass(className)} data-commerce-source={isSample ? 'sample' : undefined}>
+          <section
+            {...partProps('cart-root', className)}
+            data-commerce-source={isSample ? 'sample' : undefined}
+          >
             {children}
           </section>
         </CartProvider>
       ) : (
         // Host classes stay on while connecting, so the layout does not jump when the cart replaces the status.
-        <div className={partClass(className)}>
+        <div {...partProps('cart-root', className)}>
           <CommerceStatus />
         </div>
       )}
@@ -155,7 +176,7 @@ export function CartDrawerRoot({ children, className }: CartDrawerRootProps): Re
             <Dialog.Content
               data-commerce-source={connection === 'unbound' ? 'sample' : undefined}
               {...(described ? {} : { 'aria-describedby': undefined })}
-              className={partClass('pointer-events-auto', className)}
+              {...partProps('cart-drawer-root', 'pointer-events-auto', className)}
               onCloseAutoFocus={(event) => {
                 event.preventDefault();
                 restoreFocus();
@@ -173,27 +194,33 @@ export function CartDrawerRoot({ children, className }: CartDrawerRootProps): Re
 }
 
 /** "Your cart", or "Sample cart" before a store is connected, as an H2. In the drawer it names the dialog. */
-export function CartTitle({ className }: CartPartProps): ReactElement {
+export function CartTitle({ className, children }: CartTextPartProps): ReactElement {
   const { isSample } = useCartInternal('CartTitle');
   const Heading = useContext(CartDrawerContext) ? Dialog.Title : 'h2';
   return (
-    <div className={partClass(className)}>
-      <Heading className='text-2xl font-semibold'>{isSample ? 'Sample cart' : 'Your cart'}</Heading>
+    <div {...partProps('cart-title', className)}>
+      <Heading className='text-2xl font-semibold'>
+        {renderLabel(children, { isSample }, isSample ? 'Sample cart' : 'Your cart')}
+      </Heading>
     </div>
   );
 }
 
 /** One line about the cart. In the drawer it describes the dialog. */
-export function CartDescription({ className }: CartPartProps): ReactElement {
+export function CartDescription({ className, children }: CartTextPartProps): ReactElement {
   const { isSample } = useCartInternal('CartDescription');
   const drawer = useContext(CartDrawerContext);
   const register = drawer?.register;
   useEffect(() => register?.('description'), [register]);
-  const text: string = isSample
-    ? 'Example products and prices in USD. Nothing can be purchased.'
-    : 'Review your items before checkout.';
+  const text: ReactNode = renderLabel(
+    children,
+    { isSample },
+    isSample
+      ? 'Example products and prices in USD. Nothing can be purchased.'
+      : 'Review your items before checkout.',
+  );
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-description', className)}>
       {drawer ? (
         <Dialog.Description className='text-sm text-neutral-600'>{text}</Dialog.Description>
       ) : (
@@ -208,7 +235,7 @@ export function CartClose({ className }: CartPartProps): ReactElement | null {
   useCartInternal('CartClose');
   if (!useContext(CartDrawerContext)) return null;
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-close', className)}>
       <Dialog.Close
         className='min-h-11 min-w-11 rounded-lg border border-neutral-400 bg-white px-3 text-neutral-900 focus-visible:outline focus-visible:outline-2'
         aria-label='Close cart'
@@ -226,7 +253,7 @@ export function CartNotices({ className }: CartPartProps): ReactElement | null {
   // The gap is on an inner element, so host layout classes on the part still apply. (`space-y-*` would lose to the
   // reset's paragraph margin.)
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-notices', className)}>
       <div className='flex flex-col gap-4'>
         {storageWarning && (
           <p role='status' className='text-sm text-amber-800'>
@@ -295,7 +322,7 @@ export function CartItems({ className, children }: CartItemsProps): ReactElement
     <CartItemsRegistry.Provider value={registry.register}>
       {hydrating && <p role='status'>Loading your cart…</p>}
       {/* A `<ul>` needs a package margin and padding reset, which would beat host classes here. */}
-      <div role='list' className={partClass(className)}>
+      <div role='list' {...partProps('cart-items', className)}>
         {items.map((item, index) => (
           <CartItemsContext.Provider key={item.id || `line-${index}`} value={item}>
             {template}
@@ -320,7 +347,7 @@ export function CartItemRoot({ children, className }: CartItemRootProps): ReactE
   if (!item) throw new Error('CartItemRoot must be rendered inside <CartItems>.');
   return (
     <CartItemContext.Provider value={item}>
-      <div role='listitem' className={partClass(className)} data-testid='cart-item'>
+      <div role='listitem' {...partProps('cart-item-root', className)} data-testid='cart-item'>
         {/* An item nested inside this one is not a cart line. */}
         <CartItemsContext.Provider value={null}>{children}</CartItemsContext.Provider>
       </div>
@@ -333,7 +360,7 @@ export function CartItemImage({ className }: CartPartProps): ReactElement | null
   const { imageUrl } = useCartItemInternal('CartItemImage');
   if (!imageUrl) return null;
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-item-image', className)}>
       <img src={imageUrl} alt='' className='h-20 w-20 rounded-lg bg-neutral-100 object-cover' />
     </div>
   );
@@ -343,7 +370,7 @@ export function CartItemImage({ className }: CartPartProps): ReactElement | null
 export function CartItemName({ className }: CartPartProps): ReactElement {
   const { name } = useCartItemInternal('CartItemName');
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-item-name', className)}>
       <h3 className='font-semibold'>{name}</h3>
     </div>
   );
@@ -354,7 +381,7 @@ export function CartItemOptions({ className }: CartPartProps): ReactElement | nu
   const { options } = useCartItemInternal('CartItemOptions');
   if (!options.length) return null;
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-item-options', className)}>
       {options.map((option) => (
         <p key={`${option.attribute}:${option.values.join(',')}`} className='text-sm text-neutral-600'>
           {option.attribute}: {option.values.join(', ')}
@@ -367,8 +394,9 @@ export function CartItemOptions({ className }: CartPartProps): ReactElement | nu
 /** The line total. */
 export function CartItemPrice({ className }: CartPartProps): ReactElement {
   const { subtotal, currency } = useCartItemInternal('CartItemPrice');
+  const money = useMoney();
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-item-price', className)}>
       <p className='text-sm'>{subtotal === null ? 'Price unavailable' : money(subtotal, currency)}</p>
     </div>
   );
@@ -382,12 +410,13 @@ export function CartItemQuantity({ className }: CartPartProps): ReactElement {
   const { id, name, quantity } = useCartItemInternal('CartItemQuantity');
   const { action, locked, run, changeQuantity } = useCartInternal('CartItemQuantity');
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-item-quantity', className)}>
       <div className='flex items-center rounded-lg border border-neutral-300'>
         <button
           type='button'
           className={stepperButtonClass}
           aria-label={`Decrease quantity of ${name}`}
+          data-commerce-control='decrease'
           disabled={action === `decrease:${id}` || !id || quantity <= 1}
           aria-disabled={locked || !id || quantity <= 1}
           aria-busy={action === `decrease:${id}`}
@@ -403,6 +432,7 @@ export function CartItemQuantity({ className }: CartPartProps): ReactElement {
           type='button'
           className={stepperButtonClass}
           aria-label={`Increase quantity of ${name}`}
+          data-commerce-control='increase'
           disabled={action === `increase:${id}` || !id}
           aria-disabled={locked || !id}
           aria-busy={action === `increase:${id}`}
@@ -416,11 +446,11 @@ export function CartItemQuantity({ className }: CartPartProps): ReactElement {
 }
 
 /** Removes the line. */
-export function CartItemRemove({ className }: CartPartProps): ReactElement {
+export function CartItemRemove({ className, children }: CartActionPartProps): ReactElement {
   const { id, name } = useCartItemInternal('CartItemRemove');
   const { action, locked, run, removeItem } = useCartInternal('CartItemRemove');
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-item-remove', className)}>
       <button
         type='button'
         className='min-h-11 bg-white px-2 text-sm text-neutral-900 underline focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:text-neutral-600'
@@ -430,7 +460,7 @@ export function CartItemRemove({ className }: CartPartProps): ReactElement {
         aria-busy={action === `remove:${id}`}
         onClick={() => run(`remove:${id}`, () => removeItem(id))}
       >
-        Remove
+        {renderLabel(children, { busy: action === `remove:${id}` }, 'Remove')}
       </button>
     </div>
   );
@@ -463,7 +493,7 @@ export function CartEmpty({ className, children }: CartEmptyProps): ReactElement
   const { items, hydrating, isSample, catalogPath, close } = useCartInternal('CartEmpty');
   if (hydrating || items.length) return null;
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-empty', className)}>
       {hasChildren(children) ? (
         children
       ) : (
@@ -489,15 +519,16 @@ export interface CartSummaryProps extends CartPartProps {
 export function CartSummary({ className, children }: CartSummaryProps): ReactElement | null {
   const { items } = useCartInternal('CartSummary');
   if (!items.length) return null;
-  return <div className={partClass(className)}>{children}</div>;
+  return <div {...partProps('cart-summary', className)}>{children}</div>;
 }
 
 /** The subtotal, labeled "Sample subtotal" for samples. Renders nothing until the server prices the cart. */
 export function CartSubtotal({ className }: CartPartProps): ReactElement | null {
   const { items, subtotal, currency, isSample } = useCartInternal('CartSubtotal');
+  const money = useMoney();
   if (!items.length || subtotal === null) return null;
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('cart-subtotal', className)}>
       <dl className='space-y-2 text-sm'>
         <div className='flex justify-between'>
           <dt>{isSample ? 'Sample subtotal' : 'Subtotal'}</dt>
@@ -517,7 +548,7 @@ export function CartCheckoutNote({ className }: CartPartProps): ReactElement | n
   if (isSample || !items.length) return null;
   // The stable class is on the outer element, so hiding it also removes the host's spacing.
   return (
-    <div className={partClass('commerce-cart-checkout-adjustments-note', className)}>
+    <div {...partProps('cart-checkout-note', 'commerce-cart-checkout-adjustments-note', className)}>
       <p className='text-sm text-neutral-600'>Shipping, taxes, and discounts are calculated at checkout.</p>
     </div>
   );
@@ -527,7 +558,7 @@ export function CartCheckoutNote({ className }: CartPartProps): ReactElement | n
  * The checkout button when `checkoutSuccessPath` is set; otherwise a message that checkout is unavailable.
  * Samples never check out. Renders nothing for an empty cart.
  */
-export function CartCheckout({ className }: CartPartProps): ReactElement | null {
+export function CartCheckout({ className, children }: CartActionPartProps): ReactElement | null {
   const { items, isSample, checkoutEnabled, checkoutReady, hydrating, action, locked, run, checkout } =
     useCartInternal('CartCheckout');
   if (!items.length) return null;
@@ -546,10 +577,14 @@ export function CartCheckout({ className }: CartPartProps): ReactElement | null 
         aria-busy={action === 'checkout'}
         onClick={() => run('checkout', checkout)}
       >
-        {action === 'checkout' ? 'Opening checkout…' : 'Proceed to Checkout'}
+        {renderLabel(
+          children,
+          { busy: action === 'checkout' },
+          action === 'checkout' ? 'Opening checkout…' : 'Proceed to Checkout',
+        )}
       </button>
     );
-  return <div className={partClass(className)}>{content}</div>;
+  return <div {...partProps('cart-checkout', className)}>{content}</div>;
 }
 
 /** The packaged cart drawer. Compose `CartDrawerRoot` and the cart parts for a custom drawer. */

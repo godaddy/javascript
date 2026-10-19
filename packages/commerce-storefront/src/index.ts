@@ -1,8 +1,15 @@
 export { ApiError, money, type StorefrontConfig } from './api';
-export { AddToCartButton, CartButton } from './cart';
+export {
+  AddToCartButton,
+  type AddToCartButtonProps,
+  type AddToCartLabelState,
+  CartButton,
+  type CartButtonProps,
+} from './cart';
 export type * from './cart-model';
 export { getCartSummaryTotals } from './cart-model';
 export {
+  type CartActionPartProps,
   CartCheckout,
   CartCheckoutNote,
   CartClose,
@@ -29,6 +36,7 @@ export {
   CartSubtotal,
   CartSummary,
   type CartSummaryProps,
+  type CartTextPartProps,
   CartTitle,
   useCartItem,
 } from './cart-parts';
@@ -58,15 +66,21 @@ export {
 export {
   type AddedCartItem,
   type CommerceContextValue,
+  type CommerceEvent,
+  type CommerceOperation,
   CommerceProvider,
   type CommerceProviderProps,
   type StorefrontTheme,
   useCommerce,
+  useMoney,
 } from './commerce-provider';
 export { CommerceStorefront } from './commerce-storefront';
+export type { PartLabel } from './part';
 export {
   ProductCard,
   ProductCardAction,
+  type ProductCardActionLabelState,
+  type ProductCardActionProps,
   ProductCardDescription,
   ProductCardImage,
   type ProductCardPartProps,
@@ -76,17 +90,21 @@ export {
   type ProductCardRootProps,
   type ProductCardState,
   ProductCardTitle,
+  ProductImage,
+  type ProductImageProps,
   useProductCard,
 } from './product-card';
 export {
   ProductDetails,
   ProductDetailsBackLink,
+  type ProductDetailsBackLinkProps,
   ProductDetailsDescription,
   ProductDetailsGallery,
   ProductDetailsPrice,
   ProductDetailsTitle,
 } from './product-details';
 export {
+  type ProductDetailsErrorState,
   type ProductDetailsOptionState,
   type ProductDetailsOptionValueState,
   type ProductDetailsPartProps,
@@ -99,6 +117,7 @@ export {
 } from './product-details-context';
 export {
   ProductDetailsAddToCart,
+  type ProductDetailsAddToCartProps,
   ProductDetailsAvailability,
   ProductDetailsOption,
   type ProductDetailsOptionProps,

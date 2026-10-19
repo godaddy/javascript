@@ -1,11 +1,10 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 import { createContext, type ReactElement, type ReactNode, useCallback, useContext, useMemo } from 'react';
-import { useSearchParams } from 'react-router';
 import { message, request } from './api';
 import { buttonClass } from './cart';
 import type { SKUGroup, SkuGroupsResult } from './catalog-model';
 import { useCommerce } from './commerce-provider';
-import { hasChildren, partClass } from './part';
+import { hasChildren, partProps } from './part';
 import {
   CatalogItemContext,
   PackagedCardParts,
@@ -13,6 +12,7 @@ import {
   ProductCardRoot,
   packagedCardClass,
 } from './product-card';
+import { useRootParams } from './root-params';
 import { sampleProducts } from './sample-cart';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
@@ -46,17 +46,37 @@ export interface CatalogRootProps {
   className?: string;
   /** Permit built-in examples only while the host confirms this site is unbound. */
   sampleProducts?: boolean;
+  /** Products per page, a whole number of 1 or more. Defaults to 6. Samples are always one page of six. */
+  pageSize?: number;
+  /**
+   * Keep the page cursor in the page URL, as `after`, so a reload or a shared link keeps the page. Defaults to
+   * `true`. Set `false` for every other catalog on the same page, so the catalogs do not share one cursor.
+   */
+  urlState?: boolean;
 }
 
 /** Loads one cursor page of products, or the built-in samples, and provides them to catalog parts. */
-export function CatalogRoot({ children, className, sampleProducts = false }: CatalogRootProps): ReactElement {
+export function CatalogRoot({
+  children,
+  className,
+  sampleProducts = false,
+  pageSize = 6,
+  urlState = true,
+}: CatalogRootProps): ReactElement {
   const { connection } = useCommerce();
+  if (!Number.isSafeInteger(pageSize) || pageSize < 1)
+    throw new Error(`CatalogRoot pageSize must be a whole number of 1 or more, not ${pageSize}.`);
   let content: ReactElement;
-  if (connection === 'ready') content = <CatalogLoader className={className}>{children}</CatalogLoader>;
+  if (connection === 'ready')
+    content = (
+      <CatalogLoader className={className} pageSize={pageSize} urlState={urlState}>
+        {children}
+      </CatalogLoader>
+    );
   else if (connection === 'unbound' && sampleProducts)
     content = (
       <CatalogContext.Provider value={sampleCatalog}>
-        <section className={partClass(className)} data-commerce-source='sample'>
+        <section {...partProps('catalog-root', className)} data-commerce-source='sample'>
           {children}
         </section>
       </CatalogContext.Provider>
@@ -64,22 +84,27 @@ export function CatalogRoot({ children, className, sampleProducts = false }: Cat
   // Host classes stay on while connecting, so the layout does not jump when the catalog replaces the status.
   else
     content = (
-      <div className={partClass(className)}>
+      <div {...partProps('catalog-root', className)}>
         <CommerceStatus />
       </div>
     );
   return <StorefrontSurface>{content}</StorefrontSurface>;
 }
 
-function CatalogLoader({ children, className }: Omit<CatalogRootProps, 'sampleProducts'>): ReactElement {
+function CatalogLoader({
+  children,
+  className,
+  pageSize,
+  urlState,
+}: Omit<CatalogRootProps, 'sampleProducts'> & { pageSize: number; urlState: boolean }): ReactElement {
   const { config } = useCommerce();
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useRootParams(urlState);
   const after: string = params.get('after') ?? '';
-  const urlParams: URLSearchParams = new URLSearchParams({ first: '6' });
+  const urlParams: URLSearchParams = new URLSearchParams({ first: String(pageSize) });
   if (after) urlParams.set('after', after);
   const products = useQuery({
     retry: false,
-    queryKey: ['commerce', config.cartScope, 'products', after],
+    queryKey: ['commerce', config.cartScope, 'products', pageSize, after],
     queryFn: ({ signal }) =>
       request<SkuGroupsResult>(`/products?${urlParams}`, {
         signal,
@@ -107,7 +132,7 @@ function CatalogLoader({ children, className }: Omit<CatalogRootProps, 'samplePr
   );
   return (
     <CatalogContext.Provider value={value}>
-      <section className={partClass(className)}>{children}</section>
+      <section {...partProps('catalog-root', className)}>{children}</section>
     </CatalogContext.Provider>
   );
 }
@@ -125,7 +150,7 @@ export function CatalogHeader({
 }: CatalogHeaderProps): ReactElement {
   useCatalogInternal('CatalogHeader');
   return (
-    <header className={partClass(className)}>
+    <header {...partProps('catalog-header', className)}>
       <h1 className='max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl'>{title}</h1>
       <p className='mt-5 max-w-xl text-base leading-7 sm:text-lg'>{description}</p>
     </header>
@@ -136,7 +161,7 @@ export function CatalogHeader({
 export function CatalogSummary({ className }: CatalogPartProps): ReactElement {
   const catalog = useCatalogInternal('CatalogSummary');
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('catalog-summary', className)}>
       <p className='text-sm' role='status'>
         {summary(catalog)}
       </p>
@@ -165,13 +190,15 @@ const packagedCard: ReactElement = (
 export interface CatalogProductsProps extends CatalogPartProps {
   /** One card, rendered for every product. Defaults to the packaged card. */
   children?: ReactNode;
+  /** Replaces "No products available." for a catalog with no products. */
+  empty?: ReactNode;
 }
 
 /**
  * The product cards. `className` goes on the element that contains the cards, such as a grid. While loading, that
  * element holds placeholder cards. The error with its retry and the empty message render just before it.
  */
-export function CatalogProducts({ className, children }: CatalogProductsProps): ReactElement {
+export function CatalogProducts({ className, children, empty }: CatalogProductsProps): ReactElement {
   const catalog = useCatalogInternal('CatalogProducts');
   // `{custom && <ProductCardRoot>…}` with `custom` false still gets a card, not an empty slot per product.
   const card: ReactNode = hasChildren(children) ? children : packagedCard;
@@ -198,8 +225,10 @@ export function CatalogProducts({ className, children }: CatalogProductsProps): 
           </button>
         </div>
       )}
-      {products?.isSuccess && !items.length && <p className='py-16 text-center'>No products available.</p>}
-      <div className={partClass(className)}>
+      {products?.isSuccess &&
+        !items.length &&
+        (hasChildren(empty) ? empty : <p className='py-16 text-center'>No products available.</p>)}
+      <div {...partProps('catalog-products', className)}>
         {/* Placeholders go inside the host's element, so they follow its grid. */}
         {products?.isPending
           ? [0, 1, 2].map((placeholder: number) => (
@@ -233,7 +262,7 @@ export function CatalogPagination({ className }: CatalogPartProps): ReactElement
   const { after, goToPage } = catalog;
   const pageInfo = catalog.products.data?.skuGroups?.pageInfo;
   return (
-    <nav aria-label='Product pages' className={partClass(className)}>
+    <nav aria-label='Product pages' {...partProps('catalog-pagination', className)}>
       {/* Inside the part, so this layout cannot outrank host classes on the nav. */}
       <div className='flex justify-between'>
         {after ? (
@@ -266,6 +295,8 @@ export interface CatalogProps {
   showHeader?: boolean;
   /** Permit built-in examples only while the host confirms this site is unbound. */
   sampleProducts?: boolean;
+  /** Products per page. Defaults to 6. */
+  pageSize?: number;
 }
 
 /** The packaged catalog. Compose `CatalogRoot` and the catalog parts for a custom layout. */
@@ -274,9 +305,10 @@ export function Catalog({
   description,
   showHeader = true,
   sampleProducts,
+  pageSize,
 }: CatalogProps): ReactElement {
   return (
-    <CatalogRoot sampleProducts={sampleProducts}>
+    <CatalogRoot sampleProducts={sampleProducts} pageSize={pageSize}>
       {showHeader && (
         <CatalogHeader
           title={title}

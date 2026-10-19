@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createContext, type ReactElement, type ReactNode, useContext, useEffect, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { ApiError, message, request } from './api';
 import { buttonClass } from './cart';
 import {
@@ -17,7 +17,8 @@ import {
   type StorefrontProductAttribute,
 } from './catalog-model';
 import { useCommerce } from './commerce-provider';
-import { partClass, usePartRegistry } from './part';
+import { hasChildren, type PartLabel, partProps, renderLabel, usePartRegistry } from './part';
+import { useRootParams } from './root-params';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 /** Where the shopper is in choosing a purchasable SKU. Only `ready` has a verified `selectedSku`. */
@@ -131,21 +132,51 @@ export interface ProductDetailsRootProps {
   children: ReactNode;
   /** Added to the root `<article>`. */
   className?: string;
+  /** The product to show. Defaults to the route's `:productId` parameter. */
+  productId?: string;
+  /**
+   * Keep the selected options and SKU in the page URL, as `option.<attribute>` and `sku`, so a reload or a shared link
+   * keeps them. Defaults to `true`. Set `false` for every other root on the same page, such as a quick view, so the
+   * roots do not share one selection.
+   */
+  urlState?: boolean;
+  /** Replaces the loading message. */
+  loading?: ReactNode;
+  /** Replaces the not-found heading and link. */
+  notFound?: ReactNode;
+  /** Replaces the load failure. A function receives the failure message and a `retry` for the product request. */
+  error?: PartLabel<ProductDetailsErrorState>;
 }
 
-/** Loads the product for the route's `:productId` and provides state to product parts. */
-export function ProductDetailsRoot({ children, className }: ProductDetailsRootProps): ReactElement {
-  const { productId = '' } = useParams();
+/** What a replacement for the product load failure receives. */
+export interface ProductDetailsErrorState {
+  readonly message: string;
+  readonly retry: () => void;
+}
+
+/** Loads one product, by default the route's `:productId`, and provides state to product parts. */
+export function ProductDetailsRoot({
+  productId: productIdProp,
+  className,
+  ...props
+}: ProductDetailsRootProps): ReactElement {
+  const { productId: routeProductId = '' } = useParams();
+  const productId: string = productIdProp ?? routeProductId;
   const { connection } = useCommerce();
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || productId || connection !== 'ready') return;
+    console.warn(
+      '[gd-commerce-storefront] ProductDetailsRoot has no product to show. Pass `productId`, or render it on a ' +
+        'route with a `:productId` parameter.',
+    );
+  }, [productId, connection]);
   return (
     <StorefrontSurface>
       {connection === 'ready' ? (
-        <ProductDetailsLoader key={productId} productId={productId} className={className}>
-          {children}
-        </ProductDetailsLoader>
+        <ProductDetailsLoader key={productId} productId={productId} className={className} {...props} />
       ) : (
         // Host classes stay on while connecting, so the layout does not jump when the product replaces the status.
-        <div className={partClass(className)}>
+        <div {...partProps('product-details-root', className)}>
           <CommerceStatus />
         </div>
       )}
@@ -157,13 +188,18 @@ function ProductDetailsLoader({
   productId,
   className,
   children,
+  urlState = true,
+  loading,
+  notFound,
+  error,
 }: ProductDetailsRootProps & { productId: string }): ReactElement {
   const { config } = useCommerce();
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useRootParams(urlState);
   const [quantity, setQuantity] = useState<number>(1);
   const [imageIndex, setImageIndex] = useState<number>(0);
   const product = useQuery({
     retry: false,
+    enabled: !!productId,
     queryKey: ['commerce', config.cartScope, 'product', productId],
     queryFn: ({ signal }) =>
       request<SkuGroupResult>(`/products/${encodeURIComponent(productId)}`, {
@@ -247,29 +283,44 @@ function ProductDetailsLoader({
         `or <ProductDetailsPurchase />, or ignore this if the control mounts later.`,
     );
   }, [requiredControls, has]);
-  if (product.isPending)
+  // Without a product ID there is nothing to load; the disabled query would stay pending forever.
+  if (product.isPending && productId)
     return (
-      <div className={partClass(className)}>
-        <p role='status'>Loading product…</p>
+      <div {...partProps('product-details-root', className)}>
+        {hasChildren(loading) ? loading : <p role='status'>Loading product…</p>}
       </div>
     );
-  if (product.isError && !productNotFound)
+  if (product.isError && !productNotFound) {
+    const retry = (): void => void product.refetch();
     return (
-      <div role='alert' className={partClass(className)}>
-        <h1 className='text-2xl font-semibold'>Product unavailable</h1>
-        <p className='my-4 text-red-700'>{message(product.error)}</p>
-        <button type='button' className={buttonClass} onClick={() => void product.refetch()}>
-          Retry product
-        </button>
+      <div role='alert' {...partProps('product-details-root', className)}>
+        {renderLabel(
+          error,
+          { message: message(product.error), retry },
+          <>
+            <h1 className='text-2xl font-semibold'>Product unavailable</h1>
+            <p className='my-4 text-red-700'>{message(product.error)}</p>
+            <button type='button' className={buttonClass} onClick={retry}>
+              Retry product
+            </button>
+          </>,
+        )}
       </div>
     );
+  }
   if (productNotFound || !group)
     return (
-      <div className={partClass(className)}>
-        <h1 className='text-2xl font-semibold'>Product not found</h1>
-        <Link className={`${buttonClass} mt-4`} to={config.catalogPath}>
-          Back to shop
-        </Link>
+      <div {...partProps('product-details-root', className)}>
+        {hasChildren(notFound) ? (
+          notFound
+        ) : (
+          <>
+            <h1 className='text-2xl font-semibold'>Product not found</h1>
+            <Link className={`${buttonClass} mt-4`} to={config.catalogPath}>
+              Back to shop
+            </Link>
+          </>
+        )}
       </div>
     );
   const value: ProductDetailsInternal = {
@@ -301,7 +352,7 @@ function ProductDetailsLoader({
   };
   return (
     <ProductDetailsContext.Provider value={value}>
-      <article className={partClass(className)}>{children}</article>
+      <article {...partProps('product-details-root', className)}>{children}</article>
     </ProductDetailsContext.Provider>
   );
 }
