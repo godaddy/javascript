@@ -11,6 +11,7 @@ import {
   CartCheckoutNote,
   CartClose,
   CartDescription,
+  CartDrawer,
   CartDrawerRoot,
   CartEmpty,
   CartItemImage,
@@ -488,6 +489,22 @@ describe('composable cart', () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
+  it('warns when more than one drawer is mounted', () => {
+    mockStore();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      app(
+        <>
+          <CartDrawer />
+          <CartDrawerRoot>
+            <CartTitle />
+          </CartDrawerRoot>
+        </>,
+      ),
+    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('More than one cart drawer is mounted'));
+  });
+
   it('opens a drawer on add only when one is mounted, and reports every add', async () => {
     mockStore();
     const added = vi.fn();
@@ -608,6 +625,19 @@ describe('add to cart reasons', () => {
     mockStore();
     render(app(<AddToCartButton sku={mug(-2)} name='Mug' />));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Out of stock' })).toBeDisabled());
+  });
+
+  it('says when the store could not be reached', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => response({ error: 'down' }, 500)),
+    );
+    render(app(<AddToCartButton sku={mug(3)} name='Mug' />));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Add to cart' })).toHaveAccessibleDescription(
+        'The store could not be reached.',
+      ),
+    );
   });
 
   it('says a store must be connected before adding', async () => {

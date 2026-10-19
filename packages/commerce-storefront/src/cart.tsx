@@ -56,6 +56,7 @@ export function AddToCartButton({
   // Sold out needs no description: the button says so.
   let reason: string | null = null;
   if (connection === 'unbound') reason = 'Connect a store to add items to the cart.';
+  else if (connection === 'error') reason = 'The store could not be reached.';
   else if (connection !== 'ready') reason = 'Connecting to the store…';
   else if (!sku.id) reason = 'This item cannot be added to the cart.';
   else if (!soldOut) reason = hydrating ? 'Loading your cart…' : quantityProblem(quantity, available);

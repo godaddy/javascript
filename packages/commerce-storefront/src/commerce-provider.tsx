@@ -208,6 +208,11 @@ function BoundCommerceProvider({
   const drawers = useRef<number>(0);
   const registerDrawer = useCallback((): (() => void) => {
     drawers.current += 1;
+    if (process.env.NODE_ENV !== 'production' && drawers.current === 2)
+      console.warn(
+        '[gd-commerce-storefront] More than one cart drawer is mounted, so every add opens all of them. ' +
+          'CommerceStorefront already mounts CartDrawer; use CommerceProvider to mount your own CartDrawerRoot.',
+      );
     return () => {
       drawers.current -= 1;
       if (drawers.current === 0) setOpen(false);
