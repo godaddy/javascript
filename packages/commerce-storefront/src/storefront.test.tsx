@@ -129,9 +129,10 @@ describe('shared cart', () => {
     act(() => view.context().setOpen(true));
     expect(screen.getByText('Subtotal')).toBeVisible();
     expect(screen.getByText('$12.00')).toBeVisible();
-    expect(screen.getByText('Shipping, taxes, and discounts are calculated at checkout.')).toHaveClass(
-      'commerce-cart-checkout-adjustments-note',
-    );
+    // The stable class is on the part's outer element, so hiding it also removes its spacing.
+    const note = screen.getByText('Shipping, taxes, and discounts are calculated at checkout.');
+    expect(note).not.toHaveClass('commerce-cart-checkout-adjustments-note');
+    expect(note.parentElement).toHaveClass('commerce-cart-checkout-adjustments-note');
     expect(screen.queryByText('Total')).not.toBeInTheDocument();
     expect(screen.queryByText('$1.00')).not.toBeInTheDocument();
   });

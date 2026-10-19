@@ -1,19 +1,11 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
-import {
-  Children,
-  createContext,
-  type ReactElement,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-} from 'react';
+import { createContext, type ReactElement, type ReactNode, useCallback, useContext, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { message, request } from './api';
 import { buttonClass } from './cart';
 import type { SKUGroup, SkuGroupsResult } from './catalog-model';
 import { useCommerce } from './commerce-provider';
-import { partClass } from './part';
+import { hasChildren, partClass } from './part';
 import {
   CatalogItemContext,
   PackagedCardParts,
@@ -176,13 +168,13 @@ export interface CatalogProductsProps extends CatalogPartProps {
 }
 
 /**
- * The product cards. `className` goes on the element that contains the cards, such as a grid. The loading
- * placeholder, the error with its retry, and the empty message render just before that element.
+ * The product cards. `className` goes on the element that contains the cards, such as a grid. While loading, that
+ * element holds placeholder cards. The error with its retry and the empty message render just before it.
  */
 export function CatalogProducts({ className, children }: CatalogProductsProps): ReactElement {
   const catalog = useCatalogInternal('CatalogProducts');
   // `{custom && <ProductCardRoot>…}` with `custom` false still gets a card, not an empty slot per product.
-  const card: ReactNode = Children.toArray(children).some((child) => child !== '') ? children : packagedCard;
+  const card: ReactNode = hasChildren(children) ? children : packagedCard;
   const nodes: SKUGroup[] | null = catalog.source === 'live' ? catalog.nodes : null;
   const items = useMemo(
     (): { key: string; item: ProductCardItem }[] =>
@@ -194,23 +186,6 @@ export function CatalogProducts({ className, children }: CatalogProductsProps): 
   const products = catalog.source === 'live' ? catalog.products : null;
   return (
     <>
-      {products?.isPending && (
-        <div aria-hidden='true' className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3'>
-          {[0, 1, 2].map((item: number) => (
-            <div
-              key={item}
-              className='overflow-hidden rounded-lg border border-neutral-200 motion-safe:animate-pulse'
-            >
-              <div className='aspect-square bg-neutral-100' />
-              <div className='space-y-4 p-6'>
-                <div className='h-6 w-2/3 rounded bg-neutral-100' />
-                <div className='h-4 rounded bg-neutral-100' />
-                <div className='h-11 rounded bg-neutral-100' />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
       {products?.isError && (
         <div role='alert' className='rounded-lg bg-red-50 p-5 text-red-800'>
           <p>{message(products.error)}</p>
@@ -225,11 +200,27 @@ export function CatalogProducts({ className, children }: CatalogProductsProps): 
       )}
       {products?.isSuccess && !items.length && <p className='py-16 text-center'>No products available.</p>}
       <div className={partClass(className)}>
-        {items.map(({ key, item }) => (
-          <CatalogItemContext.Provider key={key} value={item}>
-            {card}
-          </CatalogItemContext.Provider>
-        ))}
+        {/* Placeholders go inside the host's element, so they follow its grid. */}
+        {products?.isPending
+          ? [0, 1, 2].map((placeholder: number) => (
+              <div
+                key={placeholder}
+                aria-hidden='true'
+                className='overflow-hidden rounded-lg border border-neutral-200 motion-safe:animate-pulse'
+              >
+                <div className='aspect-square bg-neutral-100' />
+                <div className='space-y-4 p-6'>
+                  <div className='h-6 w-2/3 rounded bg-neutral-100' />
+                  <div className='h-4 rounded bg-neutral-100' />
+                  <div className='h-11 rounded bg-neutral-100' />
+                </div>
+              </div>
+            ))
+          : items.map(({ key, item }) => (
+              <CatalogItemContext.Provider key={key} value={item}>
+                {card}
+              </CatalogItemContext.Provider>
+            ))}
       </div>
     </>
   );
@@ -267,8 +258,11 @@ export function CatalogPagination({ className }: CatalogPartProps): ReactElement
 }
 
 export interface CatalogProps {
+  /** @deprecated Compose `CatalogRoot` with `<CatalogHeader title='…' />` instead. */
   title?: string;
+  /** @deprecated Compose `CatalogRoot` with `<CatalogHeader description='…' />` instead. */
   description?: string;
+  /** @deprecated To render the page's own H1, compose `CatalogRoot` without `CatalogHeader` instead. */
   showHeader?: boolean;
   /** Permit built-in examples only while the host confirms this site is unbound. */
   sampleProducts?: boolean;

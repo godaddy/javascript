@@ -1,5 +1,16 @@
 # @godaddy/gd-commerce-storefront
 
+## 0.5.0
+
+### Minor Changes
+
+- 94cf3e6: `AddToCartButton` now says why it is disabled through its accessible description: more than the available stock, a quantity that is not a whole number of 1 or more, the cart still loading, the store connecting, the store not reachable, or no store connected. `ProductDetailsQuantity` shows the quantity message under the field and marks the field invalid. A SKU whose available count is negative (oversold) now counts as sold out, like a count of 0. Default rendering is unchanged for quantities that can be added.
+- 94cf3e6: Add composable cart parts. `CartDrawerRoot` builds a custom cart drawer and `CartRoot` builds a cart page, both from the same parts: `CartTitle`, `CartDescription`, `CartClose`, `CartNotices`, `CartItems`, `CartEmpty`, `CartSummary`, `CartSubtotal`, `CartCheckoutNote` and `CartCheckout`. `CartItems` renders its child as the item for every line, built from `CartItemRoot` with `CartItemImage`, `CartItemName`, `CartItemOptions`, `CartItemPrice`, `CartItemQuantity` and `CartItemRemove`. `useCart` reads the cart anywhere inside the provider, for example for a custom cart button, and `useCartItem` reads one line. `CommerceProvider` and `CommerceStorefront` take an optional `onItemAdded` callback, called after every live or sample add, so a site with a cart page can confirm adds. An add now opens the drawer only when a `CartDrawer` or `CartDrawerRoot` is mounted. Without one, `open` stays `false` and `CartButton` does nothing. Every action still goes through the shared cart queue, and the sample cart never reaches the store. `CartDrawer` is now composed from these parts. Visual change: the packaged drawer now shows the 1px divider between cart lines that it always declared, which the CSS reset hid. The `commerce-cart-checkout-adjustments-note` class moved from the note's paragraph to its outer element, so hiding it also removes its spacing. Markup changes: each part has a wrapper `<div>`, the line list is a `role="list"` element instead of a `<ul>`, its lines are `role="listitem"` elements, and the drawer panel sits inside a positioning element.
+
+### Patch Changes
+
+- 94cf3e6: Deprecate `Catalog`'s `title`, `description` and `showHeader` props. They still work. Compose `CatalogRoot` with `<CatalogHeader title='…' description='…' />` instead, or leave `CatalogHeader` out when the page renders its own H1. Catalog loading placeholders now render inside the `CatalogProducts` element, so they follow the host's grid. The packaged catalog's placeholders now use its loaded spacing from the `lg` breakpoint, 32px between cards and 40px above and below, instead of 24px and 32px.
+
 ## 0.4.0
 
 ### Minor Changes
