@@ -1,12 +1,12 @@
 import type { ReactElement } from 'react';
 import { Link } from 'react-router';
 import { money } from './api';
-import { ProductImage } from './catalog';
 import { useCommerce } from './commerce-provider';
+import { partClass } from './part';
+import { ProductImage } from './product-card';
 import {
   type ProductDetailsPartProps,
   ProductDetailsRoot,
-  partClass,
   useProductDetailsInternal,
 } from './product-details-context';
 import { ProductDetailsPurchase } from './product-purchase';
@@ -87,23 +87,26 @@ export function ProductDetailsPrice({ className }: ProductDetailsPartProps): Rea
   const { price, product } = useProductDetailsInternal('ProductDetailsPrice');
   const { config } = useCommerce();
   return (
-    <div
-      aria-live='polite'
-      className={partClass('flex flex-wrap items-baseline gap-x-3 gap-y-1 text-2xl font-medium', className)}
-      data-testid='product-price'
-    >
-      {price?.value?.value != null
-        ? money(price.value.value, price.value.currencyCode ?? config.currencyCode)
-        : product.priceRange?.min != null
-          ? `From ${money(product.priceRange.min, config.currencyCode)}`
-          : 'Price unavailable'}
-      {price?.compareAtValue?.value != null &&
-        price.value?.value != null &&
-        price.compareAtValue.value > price.value.value && (
-          <del className='text-lg font-normal'>
-            {money(price.compareAtValue.value, price.compareAtValue.currencyCode ?? config.currencyCode)}
-          </del>
-        )}
+    // The flex layout is inside the part, so it cannot outrank host classes on the outer element.
+    <div className={partClass(className)}>
+      <div
+        aria-live='polite'
+        className='flex flex-wrap items-baseline gap-x-3 gap-y-1 text-2xl font-medium'
+        data-testid='product-price'
+      >
+        {price?.value?.value != null
+          ? money(price.value.value, price.value.currencyCode ?? config.currencyCode)
+          : product.priceRange?.min != null
+            ? `From ${money(product.priceRange.min, config.currencyCode)}`
+            : 'Price unavailable'}
+        {price?.compareAtValue?.value != null &&
+          price.value?.value != null &&
+          price.compareAtValue.value > price.value.value && (
+            <del className='text-lg font-normal'>
+              {money(price.compareAtValue.value, price.compareAtValue.currencyCode ?? config.currencyCode)}
+            </del>
+          )}
+      </div>
     </div>
   );
 }
