@@ -510,9 +510,6 @@ describe('Checkout free / offline orders', () => {
       enableShipping: true,
       enableLocalPickup: false,
       enableTaxCollection: false,
-      experimental_rules: {
-        freeShipping: { enabled: true, minimumOrderTotal: 0 },
-      },
     });
 
     const { user } = renderCheckout({
