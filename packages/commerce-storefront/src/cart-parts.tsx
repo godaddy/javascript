@@ -454,13 +454,14 @@ export function CartItemRemove({ className, children }: CartActionPartProps): Re
       <button
         type='button'
         className='min-h-11 bg-white px-2 text-sm text-neutral-900 underline focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:text-neutral-600'
-        aria-label={`Remove ${name}`}
         disabled={action === `remove:${id}` || !id}
         aria-disabled={locked || !id}
         aria-busy={action === `remove:${id}`}
         onClick={() => run(`remove:${id}`, () => removeItem(id))}
       >
+        {/* The name is visible text plus hidden text, not an `aria-label`, so it always starts with the label shown. */}
         {renderLabel(children, { busy: action === `remove:${id}` }, 'Remove')}
+        <span className='sr-only'> {name}</span>
       </button>
     </div>
   );

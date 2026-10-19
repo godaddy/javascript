@@ -336,6 +336,56 @@ describe('replacement labels', () => {
       expect(remove).toHaveTextContent('Remove');
   });
 
+  it('starts each accessible name with the replaced label', async () => {
+    mockStore({ savedCart: true });
+    mount(
+      <>
+        <CartRoot>
+          <CartItems>
+            <CartItemRoot>
+              <CartItemRemove>Delete</CartItemRemove>
+            </CartItemRoot>
+          </CartItems>
+        </CartRoot>
+        <CartRoot>
+          <CartItems />
+        </CartRoot>
+      </>,
+      {},
+      '/cart',
+    );
+    // Voice control users say the visible label, so the name must start with it.
+    const replaced = await screen.findByRole('button', { name: 'Delete Mug' });
+    expect(replaced).toHaveTextContent(/^Delete/);
+    expect(replaced).not.toHaveAttribute('aria-label');
+    expect(screen.getByRole('button', { name: 'Remove Mug' })).toHaveTextContent(/^Remove/);
+  });
+
+  it('starts a sample card name with the replaced label', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => response({ state: 'unbound' })),
+    );
+    mount(
+      <>
+        <CatalogRoot sampleProducts>
+          <CatalogProducts>
+            <ProductCardRoot>
+              <ProductCardAction>Buy</ProductCardAction>
+            </ProductCardRoot>
+          </CatalogProducts>
+        </CatalogRoot>
+        <CatalogRoot sampleProducts>
+          <CatalogProducts />
+        </CatalogRoot>
+      </>,
+      {},
+      '/shop',
+    );
+    expect(await screen.findByRole('button', { name: 'Buy (Product 1, sample)' })).toHaveTextContent(/^Buy/);
+    expect(screen.getByRole('button', { name: 'Add Product 1 to sample cart' })).toBeVisible();
+  });
+
   it('labels card actions by what they do', async () => {
     mockStore();
     mount(
@@ -522,7 +572,7 @@ describe('onEvent', () => {
     );
     // The add opened the packaged drawer, as a successful add does, with no cart error.
     const drawer = await screen.findByRole('dialog', { name: 'Your cart' });
-    expect(within(drawer).getByText('Mug')).toBeVisible();
+    expect(within(drawer).getByRole('heading', { name: 'Mug' })).toBeVisible();
     expect(within(drawer).queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cart 1', hidden: true })).toBeInTheDocument();
     expect(logged).toHaveBeenCalledWith(

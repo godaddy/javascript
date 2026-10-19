@@ -56,7 +56,7 @@ Use the providers your application already has; do not create another router or 
 | `checkoutSuccessPath` | unset | Same-origin return route; enables checkout UI only when supplied |
 | `onItemAdded` | unset | Called with `{ name, quantity, isSample }` after each add, live or sample; use it to confirm adds on a site with a cart page instead of a drawer |
 | `onEvent` | unset | Called with a [`CommerceEvent`](#events) for every cart change and failure, such as for analytics |
-| `locale` | `en-US` | BCP 47 locale for prices, such as `de-DE`; an invalid tag falls back to `en-US` with a development warning |
+| `locale` | `en-US` | BCP 47 locale for formatting prices, such as `de-DE`; an invalid tag falls back to `en-US` with a development warning. It never selects UI text |
 | `theme` | inherited text and transparent wrappers; neutral control palette | CSS custom properties applied to storefront surfaces and the portalled drawer |
 
 Provide root-relative paths without a trailing slash. Enable `checkoutSuccessPath` only after your server supports checkout and validates merchant readiness. Mount a corresponding return page. A redirect back from checkout is **not proof of payment**; that page must obtain authoritative payment status from your server. This package does not provide a payment receipt page or merchant onboarding.
@@ -89,7 +89,7 @@ The stylesheet includes all required utilities and scopes them to the package's 
 
 By default, `.commerce-storefront` wrappers do not paint a background and inherit the host's text color. Set page and section backgrounds on the host application's layout elements. `--commerce-surface` colors controls and the opaque cart drawer, and supplies the base for muted colors; it does not color component wrappers. Set `--commerce-surface` and `--commerce-text` together to adapt controls and the drawer to a dark theme. Avoid setting wrapper backgrounds through CSS or the `theme` prop's `background`, `backgroundColor`, or `backgroundImage` properties, which can still override the transparent default. Descendants inherit the surface text and body font instead of global heading styles. Keep text, controls and focus indicators accessible when changing colors. Internal utility class names and markup are not a customization API; use the [product](#custom-product-layouts), [catalog](#custom-catalog-layouts) and [cart](#custom-cart-layouts) parts to change a layout, and the [styling hooks](#styling-hooks) to style inside a part.
 
-Prices follow the provider's `locale`, which defaults to `en-US`. UI text is English. The catalog title and description are configurable through `CatalogHeader`, and many parts take [replacement text](#replacing-text). Full localization is outside this initial API.
+Prices follow the provider's `locale`, which defaults to `en-US`. UI text is English. The catalog title and description are configurable through `CatalogHeader`, and many parts take [replacement text](#replacing-text). Full localization is outside this initial API. When it arrives, translated text will be a separate prop that a site opts into; `locale` will keep formatting only, so a site that sets it for prices never gets new wording in a minor release. Replacement text will still take priority over translations.
 
 ## Compatibility
 
@@ -358,6 +358,12 @@ Two hooks support custom cart markup:
 
 ## Replacing text
 
+The package has one rule for replacing content, so a layout never has to guess:
+
+- **A part's own text** is the part's children, such as `<CartTitle>Your bag</CartTitle>`.
+- **A state inside a loaded root**, such as an empty cart or an empty catalog, is its own part that renders only in that state: `CartEmpty` and `CatalogEmpty`. Place it anywhere in the layout.
+- **A state before the root has anything to show**, such as loading, not found or a load failure, is a root prop: `ProductDetailsRoot`'s `loading`, `notFound` and `error`. Like `<Suspense fallback>`, it replaces the root's content, because the root's children render only once its data exists. That is why `useProductDetails()` can always return a product.
+
 Parts whose wording a site often changes take replacement content as children. The part keeps its element, accessibility and rules: a replaced checkout label still waits for the cart total and still blocks a second click. As a function, the children receive the part's state, so the label can change with it. Content that renders nothing falls back to the package text, so a button is never left unlabeled.
 
 ```tsx
@@ -375,7 +381,7 @@ Parts whose wording a site often changes take replacement content as children. T
 | `ProductCardAction` | `{ action, busy, soldOut }` |
 | `ProductDetailsBackLink` | Content only |
 
-Accessible names that include the product name, such as "Remove Mug" and "Increase quantity of Mug", stay in English.
+A replaced label stays the start of the control's accessible name, so voice control users can say what they see. Where the package adds the product name for screen readers, it follows as visually hidden text: `<CartItemRemove>Delete</CartItemRemove>` is named "Delete Mug". Controls without replacement text, such as "Increase quantity of Mug", keep English names.
 
 ## Styling hooks
 

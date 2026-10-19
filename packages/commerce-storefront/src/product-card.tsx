@@ -323,14 +323,21 @@ function SampleAction({
   label: ProductCardActionProps['children'];
 }): ReactElement {
   const { add } = useSampleCart();
-  return (
+  const custom: ReactNode = renderLabel(label, { action: 'add', busy: false, soldOut: false }, null);
+  // A host label stays the start of the accessible name, so it is not replaced by an `aria-label`.
+  return custom === null ? (
     <button
       type='button'
       className={buttonClass}
       aria-label={`Add ${sample.name} to sample cart`}
       onClick={() => add(sample.key)}
     >
-      {renderLabel(label, { action: 'add', busy: false, soldOut: false }, 'Add to cart')}
+      Add to cart
+    </button>
+  ) : (
+    <button type='button' className={buttonClass} onClick={() => add(sample.key)}>
+      {custom}
+      <span className='sr-only'> ({sample.name}, sample)</span>
     </button>
   );
 }

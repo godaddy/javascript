@@ -88,7 +88,10 @@ export interface CommerceProviderProps {
   theme?: StorefrontTheme;
   /** Set only when your server has enabled checkout and this return route exists. */
   checkoutSuccessPath?: string;
-  /** The BCP 47 locale for prices, such as `de-DE`. Defaults to `en-US`; an invalid tag falls back to it. */
+  /**
+   * The BCP 47 locale for formatting prices, such as `de-DE`. Defaults to `en-US`; an invalid tag falls back to it.
+   * It never selects UI text: localized text will be a separate, opt-in prop, so setting `locale` cannot change wording.
+   */
   locale?: string;
   /**
    * Called after an item is added, live or sample. With a drawer mounted, the drawer also opens. Without one, such as
