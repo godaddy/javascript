@@ -244,7 +244,7 @@ For a product the host already has, such as a featured product, use `ProductCard
 
 ## Custom cart layouts
 
-`CartDrawer` is the recommended cart. `CommerceStorefront` mounts it. When its layout does not fit, use `CommerceProvider` and mount your own `CartDrawerRoot` once in its place. It opens when an item is added or a `CartButton` is pressed and returns focus when it closes, like the packaged drawer. This is `CartDrawer` written out:
+`CartDrawer` is the recommended cart. `CommerceStorefront` mounts it. When its layout does not fit, use `CommerceProvider` and mount your own `CartDrawerRoot` once in its place. Development builds warn when more than one drawer is mounted, because every add would open all of them. It opens when an item is added or a `CartButton` is pressed and returns focus when it closes, like the packaged drawer. This is `CartDrawer` written out:
 
 ```tsx
 import {
@@ -297,9 +297,9 @@ import {
 For a cart page instead of, or as well as, the drawer, compose the same parts inside `CartRoot` on a route such as `/cart`. It shows the connection state itself, and `CartClose` renders nothing there. If the site has no drawer, use `CommerceProvider` without `CartDrawerRoot` and link to the page instead of rendering `CartButton`. Adds then open nothing, and `useCommerce().open` stays `false`. Confirm adds with the provider's `onItemAdded`, for example with a toast that links to the cart.
 
 ```tsx
+<h1>Your cart</h1>
 <CartRoot className='grid gap-8 lg:grid-cols-3'>
   <div className='lg:col-span-2'>
-    <h1>Your cart</h1>
     <CartNotices className='mb-4' />
     <CartItems className='divide-y divide-neutral-200' />
     <CartEmpty className='py-16 text-center' />

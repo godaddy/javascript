@@ -61,31 +61,29 @@ function CartProvider({ children }: { children: ReactNode }): ReactElement {
   const sample = useSampleCart();
   const state = useCart();
   const [action, setAction] = useState<string | null>(null);
-  // Stable while the provider and cart are, so a host re-render does not re-render every part.
-  const value = useMemo((): CartInternal => {
-    const locked: boolean = commerce.pending || commerce.hydrating || action !== null;
-    return {
-      ...state,
-      hydrating: commerce.hydrating,
-      error: commerce.error,
-      storageWarning: commerce.storageWarning,
-      catalogPath: commerce.config.catalogPath,
-      checkoutEnabled: !!commerce.config.checkoutSuccessPath,
-      checkoutReady: commerce.cart?.totals?.total?.value != null,
-      action,
-      locked,
-      run: (next, operation) => {
-        if (locked) return;
-        setAction(next);
-        void operation().finally(() => setAction(null));
-      },
-      changeQuantity: state.isSample ? sample.changeQuantity : commerce.changeQuantity,
-      removeItem: state.isSample ? sample.remove : commerce.removeItem,
-      refresh: commerce.refresh,
-      checkout: commerce.checkout,
-      close: () => commerce.setOpen(false),
-    };
-  }, [commerce, sample, state, action]);
+  // Not memoized: the commerce context value is new on every provider render, so a memo would never hit.
+  const locked: boolean = commerce.pending || commerce.hydrating || action !== null;
+  const value: CartInternal = {
+    ...state,
+    hydrating: commerce.hydrating,
+    error: commerce.error,
+    storageWarning: commerce.storageWarning,
+    catalogPath: commerce.config.catalogPath,
+    checkoutEnabled: !!commerce.config.checkoutSuccessPath,
+    checkoutReady: commerce.cart?.totals?.total?.value != null,
+    action,
+    locked,
+    run: (next, operation) => {
+      if (locked) return;
+      setAction(next);
+      void operation().finally(() => setAction(null));
+    },
+    changeQuantity: state.isSample ? sample.changeQuantity : commerce.changeQuantity,
+    removeItem: state.isSample ? sample.remove : commerce.removeItem,
+    refresh: commerce.refresh,
+    checkout: commerce.checkout,
+    close: () => commerce.setOpen(false),
+  };
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
