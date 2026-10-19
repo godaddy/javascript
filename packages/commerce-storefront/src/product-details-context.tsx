@@ -1,14 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  createContext,
-  type ReactElement,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { createContext, type ReactElement, type ReactNode, useContext, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { ApiError, message, request } from './api';
 import { buttonClass } from './cart';
@@ -17,6 +8,7 @@ import {
   getImageUrls,
   getLabeledSkuOptions,
   getProductAttributes,
+  getProductName,
   getSingleMatchedSku,
   type SKU,
   type SKUGroup,
@@ -25,6 +17,7 @@ import {
   type StorefrontProductAttribute,
 } from './catalog-model';
 import { useCommerce } from './commerce-provider';
+import { partClass, usePartRegistry } from './part';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 /** Where the shopper is in choosing a purchasable SKU. Only `ready` has a verified `selectedSku`. */
@@ -69,11 +62,6 @@ interface ProductDetailsInternal extends ProductDetailsState {
 export interface ProductDetailsPartProps {
   className?: string;
 }
-
-export const cx = (...classes: Array<string | undefined>): string => classes.filter(Boolean).join(' ');
-
-/** Classes for the element that receives a part's `className`. The package CSS reset skips `commerce-part`. */
-export const partClass = (...classes: Array<string | undefined>): string => cx('commerce-part', ...classes);
 
 const ProductDetailsContext = createContext<ProductDetailsInternal | null>(null);
 
@@ -156,7 +144,10 @@ export function ProductDetailsRoot({ children, className }: ProductDetailsRootPr
           {children}
         </ProductDetailsLoader>
       ) : (
-        <CommerceStatus />
+        // Host classes stay on while connecting, so the layout does not jump when the product replaces the status.
+        <div className={partClass(className)}>
+          <CommerceStatus />
+        </div>
       )}
     </StorefrontSurface>
   );
@@ -236,16 +227,7 @@ function ProductDetailsLoader({
     setQuantity(1);
     setImageIndex(0);
   };
-  const registered = useRef<Map<string, number>>(new Map());
-  const register = useCallback((control: string): (() => void) => {
-    const counts: Map<string, number> = registered.current;
-    counts.set(control, (counts.get(control) ?? 0) + 1);
-    return () => {
-      const count: number = (counts.get(control) ?? 1) - 1;
-      if (count > 0) counts.set(control, count);
-      else counts.delete(control);
-    };
-  }, []);
+  const { register, has } = usePartRegistry();
   const requiredControls: string = [
     ...attributes.map((attribute) => `attribute:${attribute.name}`),
     ...(skuOptions.length ? ['sku'] : []),
@@ -255,9 +237,7 @@ function ProductDetailsLoader({
   // like the peer query library's own checks.
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') return;
-    const missing: string[] = requiredControls
-      .split('\n')
-      .filter((control) => control && !registered.current.has(control));
+    const missing: string[] = requiredControls.split('\n').filter((control) => control && !has(control));
     if (missing.length === 0) return;
     console.warn(
       `[gd-commerce-storefront] No control for ${missing
@@ -266,11 +246,16 @@ function ProductDetailsLoader({
         `Render <ProductDetailsOptions />, <ProductDetailsOption attribute='…' /> for each attribute, ` +
         `or <ProductDetailsPurchase />, or ignore this if the control mounts later.`,
     );
-  }, [requiredControls]);
-  if (product.isPending) return <p role='status'>Loading product…</p>;
+  }, [requiredControls, has]);
+  if (product.isPending)
+    return (
+      <div className={partClass(className)}>
+        <p role='status'>Loading product…</p>
+      </div>
+    );
   if (product.isError && !productNotFound)
     return (
-      <div role='alert'>
+      <div role='alert' className={partClass(className)}>
         <h1 className='text-2xl font-semibold'>Product unavailable</h1>
         <p className='my-4 text-red-700'>{message(product.error)}</p>
         <button type='button' className={buttonClass} onClick={() => void product.refetch()}>
@@ -280,7 +265,7 @@ function ProductDetailsLoader({
     );
   if (productNotFound || !group)
     return (
-      <div>
+      <div className={partClass(className)}>
         <h1 className='text-2xl font-semibold'>Product not found</h1>
         <Link className={`${buttonClass} mt-4`} to={config.catalogPath}>
           Back to shop
@@ -289,7 +274,7 @@ function ProductDetailsLoader({
     );
   const value: ProductDetailsInternal = {
     product: group,
-    name: group.label ?? group.name ?? 'Product',
+    name: getProductName(group),
     selectedSku,
     quantity,
     availableQuantity: getAvailableInventoryQuantity(selectedSku),

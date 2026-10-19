@@ -1,9 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import postcss from 'postcss';
 import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
@@ -26,6 +23,7 @@ import {
   ProductDetailsPurchaseStatus,
   ProductDetailsQuantity,
 } from './product-purchase';
+import { packageRuleConflicts } from './test-css';
 
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const sku = (id: string, quantity: number): SKU => ({
@@ -179,6 +177,33 @@ describe('composable product details', () => {
     expect(await screen.findByRole('spinbutton', { name: 'Quantity' })).toHaveValue(1);
   });
 
+  it('explains a quantity that cannot be added, next to the field and on the button', async () => {
+    mockApi(poster);
+    mount(
+      <ProductDetailsRoot>
+        <ProductDetailsPurchase />
+      </ProductDetailsRoot>,
+      '/products/poster',
+    );
+    await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Option' }), 'poster-small');
+    const quantity = await screen.findByRole('spinbutton', { name: 'Quantity' });
+    const add = screen.getByRole('button', { name: 'Add to cart' });
+    await waitFor(() => expect(add).toBeEnabled());
+    expect(quantity).not.toHaveAttribute('aria-invalid');
+    await userEvent.clear(quantity);
+    await userEvent.type(quantity, '4');
+    expect(quantity).toHaveAttribute('aria-invalid', 'true');
+    expect(quantity).toHaveAccessibleDescription('Only 3 available.');
+    expect(screen.getByText('Only 3 available.', { selector: 'p' })).toBeVisible();
+    expect(add).toBeDisabled();
+    expect(add).toHaveAccessibleDescription('Only 3 available.');
+    await userEvent.clear(quantity);
+    expect(quantity).toHaveAccessibleDescription('Enter a whole number of 1 or more.');
+    await userEvent.type(quantity, '2');
+    expect(quantity).not.toHaveAttribute('aria-describedby');
+    expect(add).toBeEnabled();
+  });
+
   it('warns when a layout leaves out an option the product needs', async () => {
     mockApi();
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -257,33 +282,9 @@ describe('composable product details', () => {
     expect(lists[0]?.id).not.toBe(lists[1]?.id);
   });
 
-  // Package CSS ships unlayered, and unlayered rules beat a host's layered utilities (Tailwind v4) whatever
-  // their specificity. So no package rule may set these properties on the element that receives a host class.
   it('puts host classes on an element that no package rule styles', async () => {
     mockApi();
-    const rules: Array<{ selector: string; properties: string[] }> = [];
-    postcss.parse(readFileSync(join(process.cwd(), 'dist/styles.css'), 'utf8')).walkRules((rule) => {
-      if (rule.parent?.type === 'rule') return;
-      // Only direct declarations: nested rules such as space-y-* style children, not this element.
-      const properties: string[] = [];
-      rule.each((node) => {
-        if (node.type === 'decl') properties.push(node.prop);
-      });
-      for (const selector of rule.selectors)
-        if (!selector.includes('::')) rules.push({ selector, properties });
-    });
-    const hostProperties =
-      /^(margin|padding|border-(width|style|top|right|bottom|left)|border$|color$|font-family$)/;
-    const conflicts = (element: Element): string[] =>
-      rules.flatMap(({ selector, properties }) => {
-        let matches = false;
-        try {
-          matches = element.matches(selector);
-        } catch {}
-        return matches
-          ? properties.filter((property) => hostProperties.test(property)).map((p) => `${selector} ${p}`)
-          : [];
-      });
+    const conflicts = packageRuleConflicts();
     const parts: Array<[string, ReactElement]> = [
       ['BackLink', <ProductDetailsBackLink key='a' className='host' />],
       ['Gallery', <ProductDetailsGallery key='b' className='host' />],
