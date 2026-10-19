@@ -43,6 +43,8 @@ export {
 export { type CartItemState, type CartState, useCart } from './cart-state';
 export {
   Catalog,
+  CatalogEmpty,
+  type CatalogEmptyProps,
   CatalogHeader,
   type CatalogHeaderProps,
   CatalogPagination,

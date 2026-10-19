@@ -15,7 +15,7 @@ import {
   CartSummary,
   CartTitle,
 } from './cart-parts';
-import { CatalogPagination, CatalogProducts, CatalogRoot } from './catalog';
+import { CatalogEmpty, CatalogPagination, CatalogProducts, CatalogRoot } from './catalog';
 import type { SKU, SKUGroup } from './catalog-model';
 import { type CommerceEvent, type CommerceProviderProps, useMoney } from './commerce-provider';
 import { CommerceStorefront } from './commerce-storefront';
@@ -75,10 +75,12 @@ function order(lines: { id: string; name: string; quantity: number }[]): CartOrd
 function mockStore({
   savedCart = false,
   failPatch = false,
+  emptyCatalog = false,
   checkout,
 }: {
   savedCart?: boolean;
   failPatch?: boolean;
+  emptyCatalog?: boolean;
   checkout?: Promise<Response>;
 } = {}) {
   if (savedCart) localStorage.setItem(storageKey, 'cart-1');
@@ -90,7 +92,7 @@ function mockStore({
     if (path === '/products')
       return response({
         skuGroups: {
-          edges: [mug, shirt].map((node) => ({ node })),
+          edges: emptyCatalog ? [] : [mug, shirt].map((node) => ({ node })),
           pageInfo: { hasNextPage: true, endCursor: 'c2' },
         },
       });
@@ -249,6 +251,30 @@ describe('roots that do not depend on the route', () => {
     expect(api.mock.calls.map((call) => String(call[0]))).toContain('/api/commerce/products?first=2');
     expect(screen.getByTestId('search')).toHaveTextContent('?campaign=spring');
     expect(await screen.findByRole('button', { name: 'First page' })).toBeVisible();
+  });
+
+  it('shows a custom empty state in place of the default one', async () => {
+    mockStore({ emptyCatalog: true });
+    mount(
+      <>
+        <CatalogRoot>
+          <CatalogProducts />
+          <CatalogEmpty className='host-empty'>
+            <p>New arrivals soon.</p>
+          </CatalogEmpty>
+        </CatalogRoot>
+        <CatalogRoot urlState={false}>
+          <CatalogProducts />
+        </CatalogRoot>
+      </>,
+      {},
+      '/shop',
+    );
+    const custom = (await screen.findByText('New arrivals soon.')).parentElement;
+    expect(custom).toHaveClass('host-empty');
+    expect(custom).toHaveAttribute('data-commerce-part', 'catalog-empty');
+    // Only the catalog without a CatalogEmpty shows the default message.
+    expect(await screen.findAllByText('No products available.')).toHaveLength(1);
   });
 
   it('rejects a page size that is not a whole number of 1 or more', () => {

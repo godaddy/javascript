@@ -1,10 +1,19 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
-import { createContext, type ReactElement, type ReactNode, useCallback, useContext, useMemo } from 'react';
+import {
+  createContext,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { message, request } from './api';
 import { buttonClass } from './cart';
 import type { SKUGroup, SkuGroupsResult } from './catalog-model';
 import { useCommerce } from './commerce-provider';
-import { hasChildren, partProps } from './part';
+import { hasChildren, type PartRegistry, partProps, usePartRegistry } from './part';
 import {
   CatalogItemContext,
   PackagedCardParts,
@@ -32,6 +41,14 @@ export interface CatalogPartProps {
 }
 
 const CatalogContext = createContext<CatalogInternal | null>(null);
+
+interface CatalogEmptyInternal {
+  register: PartRegistry['register'];
+  /** A `CatalogEmpty` is mounted, so `CatalogProducts` leaves out its own empty message. */
+  custom: boolean;
+}
+
+const CatalogEmptyContext = createContext<CatalogEmptyInternal | null>(null);
 const sampleCatalog: CatalogInternal = { source: 'sample' };
 
 function useCatalogInternal(part: string): CatalogInternal {
@@ -64,6 +81,15 @@ export function CatalogRoot({
   urlState = true,
 }: CatalogRootProps): ReactElement {
   const { connection } = useCommerce();
+  // Parent effects run after child effects, so a mounted `CatalogEmpty` has registered by the root's own effect.
+  const [custom, setCustom] = useState<boolean>(false);
+  const { register, has } = usePartRegistry(
+    useCallback((registered: PartRegistry['has']) => setCustom(registered('empty')), []),
+  );
+  useEffect(() => {
+    setCustom(has('empty'));
+  }, [has]);
+  const empty = useMemo((): CatalogEmptyInternal => ({ register, custom }), [register, custom]);
   if (!Number.isSafeInteger(pageSize) || pageSize < 1)
     throw new Error(`CatalogRoot pageSize must be a whole number of 1 or more, not ${pageSize}.`);
   let content: ReactElement;
@@ -88,7 +114,11 @@ export function CatalogRoot({
         <CommerceStatus />
       </div>
     );
-  return <StorefrontSurface>{content}</StorefrontSurface>;
+  return (
+    <StorefrontSurface>
+      <CatalogEmptyContext.Provider value={empty}>{content}</CatalogEmptyContext.Provider>
+    </StorefrontSurface>
+  );
 }
 
 function CatalogLoader({
@@ -190,16 +220,15 @@ const packagedCard: ReactElement = (
 export interface CatalogProductsProps extends CatalogPartProps {
   /** One card, rendered for every product. Defaults to the packaged card. */
   children?: ReactNode;
-  /** Replaces "No products available." for a catalog with no products. */
-  empty?: ReactNode;
 }
 
 /**
  * The product cards. `className` goes on the element that contains the cards, such as a grid. While loading, that
- * element holds placeholder cards. The error with its retry and the empty message render just before it.
+ * element holds placeholder cards. The error with its retry and, without a `CatalogEmpty`, the empty message render just before it.
  */
-export function CatalogProducts({ className, children, empty }: CatalogProductsProps): ReactElement {
+export function CatalogProducts({ className, children }: CatalogProductsProps): ReactElement {
   const catalog = useCatalogInternal('CatalogProducts');
+  const customEmpty: boolean = useContext(CatalogEmptyContext)?.custom ?? false;
   // `{custom && <ProductCardRoot>…}` with `custom` false still gets a card, not an empty slot per product.
   const card: ReactNode = hasChildren(children) ? children : packagedCard;
   const nodes: SKUGroup[] | null = catalog.source === 'live' ? catalog.nodes : null;
@@ -225,9 +254,9 @@ export function CatalogProducts({ className, children, empty }: CatalogProductsP
           </button>
         </div>
       )}
-      {products?.isSuccess &&
-        !items.length &&
-        (hasChildren(empty) ? empty : <p className='py-16 text-center'>No products available.</p>)}
+      {products?.isSuccess && !items.length && !customEmpty && (
+        <p className='py-16 text-center'>No products available.</p>
+      )}
       <div {...partProps('catalog-products', className)}>
         {/* Placeholders go inside the host's element, so they follow its grid. */}
         {products?.isPending
@@ -252,6 +281,27 @@ export function CatalogProducts({ className, children, empty }: CatalogProductsP
             ))}
       </div>
     </>
+  );
+}
+
+export interface CatalogEmptyProps extends CatalogPartProps {
+  /** Replaces the default message. */
+  children?: ReactNode;
+}
+
+/**
+ * Renders only when a connected store's catalog has no products: "No products available.", or its children. While
+ * one is mounted, `CatalogProducts` leaves out its own empty message. Samples are never empty.
+ */
+export function CatalogEmpty({ className, children }: CatalogEmptyProps): ReactElement | null {
+  const catalog = useCatalogInternal('CatalogEmpty');
+  const register = useContext(CatalogEmptyContext)?.register;
+  useEffect(() => register?.('empty'), [register]);
+  if (catalog.source === 'sample' || !catalog.products.isSuccess || catalog.nodes.length) return null;
+  return (
+    <div {...partProps('catalog-empty', className)}>
+      {hasChildren(children) ? children : <p>No products available.</p>}
+    </div>
   );
 }
 
