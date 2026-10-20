@@ -1,6 +1,7 @@
 /** Server-only Commerce configuration. Hosts own secrets and deployment-specific loading. */
 import type { Response } from 'express';
 import { type CommerceCheckoutConfiguration, parseCommerceCheckoutConfiguration } from './checkout-config';
+import { CommerceError, CommerceNotConfiguredError } from './errors';
 
 const DEFAULT_API_BASE_URL = 'https://api.godaddy.com';
 
@@ -45,7 +46,7 @@ function normalizeApiBaseUrl(raw: string): string {
   try {
     url = new URL(raw);
   } catch {
-    throw new Error('Commerce config: apiBaseUrl must be a valid HTTPS origin.');
+    throw new CommerceNotConfiguredError('Commerce config: apiBaseUrl must be a valid HTTPS origin.');
   }
   if (
     url.protocol !== 'https:' ||
@@ -55,7 +56,7 @@ function normalizeApiBaseUrl(raw: string): string {
     url.search ||
     url.hash
   ) {
-    throw new Error(
+    throw new CommerceNotConfiguredError(
       'Commerce config: apiBaseUrl must be an HTTPS origin without credentials, path, query, or fragment.',
     );
   }
@@ -64,7 +65,11 @@ function normalizeApiBaseUrl(raw: string): string {
 
 function requireValue(environment: NodeJS.ProcessEnv, key: string): string {
   const value = environment[key]?.trim();
-  if (!value) throw new Error(`Commerce config: ${key} is missing. Configure it in the server environment.`);
+  if (!value) {
+    throw new CommerceNotConfiguredError(
+      `Commerce config: ${key} is missing. Configure it in the server environment.`,
+    );
+  }
   return value;
 }
 
@@ -93,33 +98,69 @@ export function createRuntimeCommerceConfiguration(
   };
 }
 
-export function commerceConfigurationForResponse(res: Response): CommerceConfiguration {
-  const configuration: unknown = res.locals.commerceConfiguration;
-  if (
-    configuration &&
-    typeof configuration === 'object' &&
-    'read' in configuration &&
-    typeof configuration.read === 'function' &&
-    'readCheckout' in configuration &&
-    typeof configuration.readCheckout === 'function'
-  ) {
-    return configuration as CommerceConfiguration;
+// The functions below are the only code that calls host configuration methods, so every caller gets
+// the same readiness check and error translation. Host configurations may throw plain errors (for
+// example a missing secrets file); any failure to read configuration is reported as "not
+// configured", never as a server bug.
+function fromHost<T>(read: () => T): T {
+  try {
+    return read();
+  } catch (cause) {
+    if (cause instanceof CommerceError) throw cause;
+    throw new CommerceNotConfiguredError('Commerce configuration could not be read', { cause });
   }
-  return createRuntimeCommerceConfiguration();
+}
+
+const CONNECTION_STATES: ReadonlySet<unknown> = new Set<CommerceConnectionState>([
+  'unbound',
+  'connecting',
+  'ready',
+]);
+
+/** The host-reported connection state, or `undefined` when the host does not report one. */
+export function readCommerceConnectionState(
+  configuration: CommerceConfiguration,
+): CommerceConnectionState | undefined {
+  const state: unknown = fromHost(() => configuration.readConnectionState?.());
+  if (state !== undefined && !CONNECTION_STATES.has(state)) {
+    throw new CommerceNotConfiguredError('Invalid Commerce connection state.');
+  }
+  return state as CommerceConnectionState | undefined;
+}
+
+/** Nonready connection states must never use leftover credentials. */
+function assertCommerceConnectionReady(configuration: CommerceConfiguration): void {
+  const state = readCommerceConnectionState(configuration);
+  if (state === 'unbound' || state === 'connecting') {
+    // Logged as connectionState so a dedicated code can be split out if hosts need one.
+    throw new CommerceNotConfiguredError('Commerce store connection is not ready.', {
+      details: { connectionState: state },
+    });
+  }
+}
+
+export function readReadyCommerceConfig(configuration: CommerceConfiguration): CommerceConfig {
+  assertCommerceConnectionReady(configuration);
+  return fromHost(() => configuration.read());
+}
+
+export function readReadyCheckoutConfig(configuration: CommerceConfiguration): CommerceCheckoutConfiguration {
+  assertCommerceConnectionReady(configuration);
+  return fromHost(() => configuration.readCheckout());
+}
+
+export function commerceConfigurationForResponse(res: Response): CommerceConfiguration {
+  const supplied: unknown = res.locals.commerceConfiguration;
+  return supplied &&
+    typeof supplied === 'object' &&
+    'read' in supplied &&
+    typeof supplied.read === 'function' &&
+    'readCheckout' in supplied &&
+    typeof supplied.readCheckout === 'function'
+    ? (supplied as CommerceConfiguration)
+    : createRuntimeCommerceConfiguration();
 }
 
 export function readCommerceConfigForResponse(res: Response): CommerceConfig {
-  const configuration = commerceConfigurationForResponse(res);
-  assertCommerceConnectionReady(configuration);
-  return configuration.read();
-}
-
-/** Nonready and invalid connection states must never use leftover credentials. */
-export function assertCommerceConnectionReady(configuration: CommerceConfiguration): void {
-  const state = configuration.readConnectionState?.();
-  if (state !== undefined && state !== 'ready') {
-    throw new Error(
-      'Commerce store connection is not ready. Complete the store connection before continuing.',
-    );
-  }
+  return readReadyCommerceConfig(commerceConfigurationForResponse(res));
 }
