@@ -4,6 +4,11 @@ export {
   parseCommerceCheckoutConfiguration,
 } from './lib/commerce/checkout-config';
 export type { CheckoutReturnUrls } from './lib/commerce/checkout-return-urls';
+export type {
+  CommerceErrorLogContext,
+  CommerceLogger,
+  CommerceRequestIdResolver,
+} from './lib/commerce/commerce-route';
 export {
   type CommerceConfig,
   type CommerceConfiguration,
@@ -18,6 +23,15 @@ export {
   createCheckoutSession,
 } from './lib/commerce/create-checkout-session';
 export {
+  CommerceError,
+  type CommerceErrorCode,
+  CommerceNotConfiguredError,
+  InvalidRequestError,
+  NotFoundError,
+  ScopeMismatchError,
+  UpstreamError,
+} from './lib/commerce/errors';
+export {
   type CommerceOrderStatus,
   getOrderStatus,
   InvalidOrderIdError,
@@ -26,6 +40,7 @@ export {
 } from './lib/commerce/get-order-status';
 export {
   type CommerceRouterFeatures,
+  type CommerceRouterObservabilityOptions,
   type CreateCommerceRouterOptions,
   createCommerceCatalogRouter,
   createCommerceRouter,

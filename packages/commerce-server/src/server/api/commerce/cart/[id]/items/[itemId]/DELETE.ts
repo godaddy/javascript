@@ -11,8 +11,10 @@
  *   GET /api/commerce/cart/:id so clients only ever read one shape.
  */
 import type { Request, Response } from 'express';
-import { validateCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
+import { commerceRoute } from '@/lib/commerce/commerce-route';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
+import { InvalidRequestError } from '@/lib/commerce/errors';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type DeleteLineItemByIdResult,
@@ -22,6 +24,7 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
+import { classifyCartUpstreamError } from '@/lib/commerce/upstream-errors';
 
 const deleteLineItemByIdMutation = `
   mutation DeleteLineItemById($id: ID!, $orderId: ID!) {
@@ -29,40 +32,36 @@ const deleteLineItemByIdMutation = `
   }
 `;
 
-export default async function handler(req: Request, res: Response): Promise<void> {
-  try {
-    const cartId: unknown = req.params.id;
-    const itemId: unknown = req.params.itemId;
-    if (typeof cartId !== 'string' || !cartId || typeof itemId !== 'string' || !itemId) {
-      res.status(400).json({ error: 'Missing cart id or item id' });
-      return;
-    }
-
-    const config: CommerceConfig = readCommerceConfigForResponse(res);
-    if (!validateCommerceCartScope(req, res, config)) return;
-    const { storeId, clientId, apiBaseUrl } = config;
-    const endpoint = orderStorefrontEndpoint({ apiBaseUrl });
-    const headers = storefrontHeaders({ storeId, clientId });
-
-    await gqlRequest<DeleteLineItemByIdResult, DeleteLineItemByIdVariables>({
-      endpoint,
-      query: deleteLineItemByIdMutation,
-      variables: { id: itemId, orderId: cartId },
-      headers,
-    });
-
-    const hydrated = await gqlRequest<GetCartOrderResult, GetCartOrderVariables>({
-      endpoint,
-      query: getCartOrderQuery,
-      variables: { id: cartId },
-      headers,
-    });
-
-    res.json({ cart: hydrated.orderById ?? null });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to delete line item',
-      message: error instanceof Error ? error.message : String(error),
-    });
+async function deleteLineItem(req: Request, res: Response): Promise<void> {
+  const cartId: unknown = req.params.id;
+  const itemId: unknown = req.params.itemId;
+  if (typeof cartId !== 'string' || !cartId || typeof itemId !== 'string' || !itemId) {
+    throw new InvalidRequestError('Missing cart id or item id');
   }
+
+  const config: CommerceConfig = readCommerceConfigForResponse(res);
+  assertCommerceCartScope(req, config);
+  const { storeId, clientId, apiBaseUrl } = config;
+  const endpoint = orderStorefrontEndpoint({ apiBaseUrl });
+  const headers = storefrontHeaders({ storeId, clientId });
+
+  await gqlRequest<DeleteLineItemByIdResult, DeleteLineItemByIdVariables>({
+    endpoint,
+    query: deleteLineItemByIdMutation,
+    variables: { id: itemId, orderId: cartId },
+    headers,
+  });
+
+  const hydrated = await gqlRequest<GetCartOrderResult, GetCartOrderVariables>({
+    endpoint,
+    query: getCartOrderQuery,
+    variables: { id: cartId },
+    headers,
+  });
+
+  res.json({ cart: hydrated.orderById ?? null });
 }
+
+export default commerceRoute('Failed to delete line item', deleteLineItem, {
+  classifyUpstreamError: classifyCartUpstreamError,
+});

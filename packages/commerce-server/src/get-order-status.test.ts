@@ -194,7 +194,7 @@ describe('authorized order lookup', () => {
       .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
       .mockResolvedValueOnce(failure);
     const lookup = getOrderStatus(order.id, configuration);
-    await expect(lookup).rejects.toThrow(`Failed to load order: upstream returned ${failure.status}`);
+    await expect(lookup).rejects.toThrow(`Order lookup failed: upstream returned ${failure.status}`);
     await expect(lookup).rejects.not.toBeInstanceOf(OrderNotFoundError);
     await expect(lookup).rejects.not.toBeInstanceOf(InvalidOrderIdError);
   });
@@ -207,7 +207,7 @@ describe('authorized order lookup', () => {
         .mockResolvedValueOnce(Response.json({ access_token: 'order-token' }))
         .mockResolvedValueOnce(new Response('Private upstream details', { status }));
       await expect(getOrderStatus(order.id, configuration)).rejects.toThrow(
-        `Failed to load order: upstream returned ${status}`,
+        `Order lookup failed: upstream returned ${status}`,
       );
       expect(cancel).toHaveBeenCalledTimes(1);
     },
@@ -215,9 +215,43 @@ describe('authorized order lookup', () => {
 
   it('does not query orders when the order-read scope is denied', async (): Promise<void> => {
     upstream.mockResolvedValueOnce(new Response('Invalid scope', { status: 403 }));
-    await expect(getOrderStatus(order.id, configuration)).rejects.toThrow('Failed to get access token: 403');
+    await expect(getOrderStatus(order.id, configuration)).rejects.toThrow(
+      'Access token request failed: upstream returned 403',
+    );
     expect(upstream).toHaveBeenCalledTimes(1);
   });
+
+  it('reports a host configuration that throws as not configured', async (): Promise<void> => {
+    const cause = new Error('secrets file missing');
+    const failing = {
+      read: (): never => {
+        throw cause;
+      },
+      readCheckout: configuration.readCheckout,
+    };
+    const error = await getOrderStatus(order.id, failing).catch((thrown: unknown) => thrown);
+    expect(error).toMatchObject({ code: 'not_configured', httpStatus: 503, cause });
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  it.each(['unbound', 'connecting'] as const)(
+    'reports a %s connection as not configured without reading credentials',
+    async (state): Promise<void> => {
+      const read = vi.fn(configuration.read);
+      const error = await getOrderStatus(order.id, {
+        ...configuration,
+        read,
+        readConnectionState: () => state,
+      }).catch((thrown: unknown) => thrown);
+      expect(error).toMatchObject({
+        code: 'not_configured',
+        httpStatus: 503,
+        details: { connectionState: state },
+      });
+      expect(read).not.toHaveBeenCalled();
+      expect(upstream).not.toHaveBeenCalled();
+    },
+  );
 
   it.each(['', ' ', '.', '..', ' completed-order', 'completed-order\n'])(
     'rejects invalid order ID %j before requesting credentials',
@@ -242,7 +276,10 @@ describe('order-status route', () => {
       const response = await clientFetch(
         `http://127.0.0.1:${address.port}/api/commerce/order-status${query}`,
       );
-      return { status: response.status, body: await response.json() };
+      const body = (await response.json()) as Record<string, unknown>;
+      expect(body.requestId).toEqual(expect.any(String));
+      const { requestId: _requestId, ...stable } = body;
+      return { status: response.status, body: stable };
     } finally {
       await new Promise<void>((resolve, reject) =>
         server.close((error) => (error ? reject(error) : resolve())),
@@ -263,7 +300,11 @@ describe('order-status route', () => {
     async (query): Promise<void> => {
       await expect(requestOrderStatus(query)).resolves.toEqual({
         status: 400,
-        body: { success: false, error: 'missing or invalid orderId query parameter' },
+        body: {
+          success: false,
+          error: 'missing or invalid orderId query parameter',
+          code: 'invalid_request',
+        },
       });
       expect(upstream).not.toHaveBeenCalled();
     },
@@ -275,7 +316,7 @@ describe('order-status route', () => {
       .mockResolvedValueOnce(ordersApiInvalidId());
     await expect(requestOrderStatus(`?orderId=${order.id}`)).resolves.toEqual({
       status: 400,
-      body: { success: false, error: 'missing or invalid orderId query parameter' },
+      body: { success: false, error: 'missing or invalid orderId query parameter', code: 'invalid_request' },
     });
   });
 
@@ -291,22 +332,48 @@ describe('order-status route', () => {
       .mockResolvedValueOnce(orderResponse);
     await expect(requestOrderStatus(`?orderId=${order.id}`)).resolves.toEqual({
       status: 404,
-      body: { success: false, error: 'Order not found' },
+      body: { success: false, error: 'Order not found', code: 'not_found' },
     });
   });
 
   it.each([
-    ['a denied token', [new Response('Invalid scope', { status: 403 })]],
+    [
+      'a token denied the order-read scope',
+      'upstream_unauthorized',
+      [new Response('Invalid scope', { status: 403 })],
+    ],
+    [
+      'an OAuth invalid_scope rejection',
+      'upstream_unauthorized',
+      [Response.json({ error: 'invalid_scope' }, { status: 400 })],
+    ],
+    [
+      'an OAuth invalid_client rejection',
+      'upstream_unauthorized',
+      [Response.json({ error: 'invalid_client' }, { status: 400 })],
+    ],
+    [
+      'a malformed OAuth request',
+      'upstream_error',
+      [Response.json({ error: 'invalid_request' }, { status: 400 })],
+    ],
+    ['a non-JSON OAuth 400', 'upstream_error', [new Response('Bad Request', { status: 400 })]],
     [
       'an upstream 500',
+      'upstream_error',
       [
         Response.json({ access_token: 'order-token' }),
         new Response('Private upstream details', { status: 500 }),
       ],
     ],
-    ['an incomplete order', [Response.json({ access_token: 'order-token' }), Response.json({})]],
+    [
+      'an incomplete order',
+      'upstream_error',
+      [Response.json({ access_token: 'order-token' }), Response.json({})],
+    ],
     [
       'an order missing its store binding',
+      'upstream_error',
       [
         Response.json({ access_token: 'order-token' }),
         Response.json({ order: { ...order, context: { channelId: order.context.channelId } } }),
@@ -314,6 +381,7 @@ describe('order-status route', () => {
     ],
     [
       'a 404 from an unrouted path',
+      'upstream_error',
       [
         Response.json({ access_token: 'order-token' }),
         new Response('<pre>Cannot GET /v1/x</pre>', { status: 404 }),
@@ -321,43 +389,54 @@ describe('order-status route', () => {
     ],
     [
       'a different order ID',
+      'upstream_error',
       [
         Response.json({ access_token: 'order-token' }),
         Response.json({ order: { ...order, id: 'another-order' } }),
       ],
     ],
   ])(
-    'returns a generic 500 for %s and logs the detail server-side',
-    async (_case, responses): Promise<void> => {
+    'returns a generic 502 for %s and logs the detail server-side',
+    async (_case, code, responses): Promise<void> => {
       const log = vi.spyOn(console, 'error').mockImplementation((): void => {});
       for (const response of responses) upstream.mockResolvedValueOnce(response);
       const result = await requestOrderStatus(`?orderId=${order.id}`);
-      expect(result).toEqual({ status: 500, body: { success: false, error: 'Failed to get order status' } });
-      expect(log).toHaveBeenCalledWith('order-status: failed to get order status', expect.any(Error));
+      expect(result).toEqual({
+        status: 502,
+        body: { success: false, error: 'Failed to get order status', code },
+      });
+      expect(log).toHaveBeenCalledWith(
+        'commerce-server: Failed to get order status',
+        expect.objectContaining({ httpStatus: 502, code, error: expect.any(Error) }),
+      );
     },
   );
-});
 
-describe('order-status route with another copy of the package', () => {
-  afterEach((): void => {
-    vi.doUnmock('@/lib/commerce/get-order-status');
-    vi.resetModules();
-  });
-
-  it.each([
-    ['InvalidOrderIdError', 400, 'missing or invalid orderId query parameter'],
-    ['OrderNotFoundError', 404, 'Order not found'],
-  ])('matches a %s thrown by a different class by name', async (name, status, error): Promise<void> => {
-    vi.resetModules();
-    vi.doMock('@/lib/commerce/get-order-status', () => ({
-      getOrderStatus: async (): Promise<never> => {
-        throw Object.assign(new Error('from another copy'), { name });
-      },
-    }));
-    const { default: handler } = await import('./server/api/commerce/order-status/GET');
-    const res = { locals: {}, status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
-    await handler({ query: { orderId: order.id } } as never, res as never);
-    expect(res.status).toHaveBeenCalledWith(status);
-    expect(res.json).toHaveBeenCalledWith({ success: false, error });
+  it('returns 503 when Commerce is not configured', async (): Promise<void> => {
+    const log = vi.spyOn(console, 'error').mockImplementation((): void => {});
+    vi.stubEnv('GODADDY_STORE_ID', '');
+    const app = express();
+    app.use(
+      '/api/commerce',
+      createGoDaddyPaymentsRouter(createRuntimeCommerceConfiguration({ environment: {} })),
+    );
+    const server = app.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
+      const response = await clientFetch(
+        `http://127.0.0.1:${address.port}/api/commerce/order-status?orderId=o-1`,
+      );
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({ success: false, code: 'not_configured' });
+      expect(upstream).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+      log.mockRestore();
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
   });
 });

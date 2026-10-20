@@ -4,11 +4,13 @@
  */
 import { authorizationHeaders, getOAuthAccessToken } from './checkout-subgraph';
 import {
-  assertCommerceConnectionReady,
   type CommerceConfiguration,
   createRuntimeCommerceConfiguration,
+  readReadyCommerceConfig,
 } from './config';
+import { InvalidRequestError, NotFoundError, UpstreamError } from './errors';
 import type { Money } from './gql';
+import { fetchUpstream, readUpstreamJson, type UpstreamRequest, upstreamStatusError } from './upstream-http';
 
 /** `CommerceOrderStatus.status` when the Orders API reports no payment status. */
 export const ORDER_STATUS_UNKNOWN = 'unknown';
@@ -30,14 +32,16 @@ export interface CommerceOrderStatus {
   lineItems?: unknown[];
 }
 
-export class InvalidOrderIdError extends Error {
+export class InvalidOrderIdError extends InvalidRequestError {
   constructor() {
-    super('getOrderStatus: a valid orderId is required');
+    super('missing or invalid orderId query parameter', {
+      message: 'getOrderStatus: a valid orderId is required',
+    });
     this.name = 'InvalidOrderIdError';
   }
 }
 
-export class OrderNotFoundError extends Error {
+export class OrderNotFoundError extends NotFoundError {
   constructor() {
     super('Order not found');
     this.name = 'OrderNotFoundError';
@@ -86,38 +90,42 @@ export async function getOrderStatus(
     throw new InvalidOrderIdError();
   }
 
-  assertCommerceConnectionReady(configuration);
-  const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } = configuration.read();
+  const { storeId, channelId, clientId, clientSecret, apiBaseUrl, currencyCode } =
+    readReadyCommerceConfig(configuration);
   const token = await getOAuthAccessToken({
     clientId,
     clientSecret,
     apiBaseUrl,
     scope: 'commerce.order:read',
   });
-  const response = await fetch(
-    new URL(
-      `/v1/commerce/stores/${encodeURIComponent(storeId)}/orders/${encodeURIComponent(orderId)}`,
-      apiBaseUrl,
-    ),
+  const endpoint = new URL(
+    `/v1/commerce/stores/${encodeURIComponent(storeId)}/orders/${encodeURIComponent(orderId)}`,
+    apiBaseUrl,
+  );
+  const request: UpstreamRequest = { operation: 'Order lookup', details: { endpoint: endpoint.href } };
+  const response = await fetchUpstream(
+    endpoint,
     {
       method: 'GET',
       headers: { ...authorizationHeaders({ accessToken: token.access_token }), Accept: 'application/json' },
       cache: 'no-store',
     },
+    request,
   );
   if (!response.ok) {
     // The Orders API reports a missing order as 404 NOT_FOUND and an ID it can't decode as 422
     // VALIDATION_FAILED. A 404 without that code comes from an unrouted path or base URL.
     const code =
       response.status === 404 || response.status === 422 ? await readErrorCode(response) : undefined;
-    // Unread bodies can hold pooled connections while callers poll.
-    if (code === undefined) await response.body?.cancel();
     if (response.status === 404 && code === 'NOT_FOUND') throw new OrderNotFoundError();
     if (response.status === 422 && code === 'VALIDATION_FAILED') throw new InvalidOrderIdError();
-    throw new Error(`Failed to load order: upstream returned ${response.status}`);
+    throw await upstreamStatusError(response, {
+      ...request,
+      details: { ...request.details, upstreamCode: code ?? undefined },
+    });
   }
 
-  const data = (await response.json()) as OrderResponse;
+  const data = await readUpstreamJson<OrderResponse>(response, request);
   const order = data?.order;
   const context = order?.context;
   // A binding missing either field is a malformed upstream response, not proof of another store or channel.
@@ -128,7 +136,9 @@ export async function getOrderStatus(
     !isBindingId(context?.storeId) ||
     !isBindingId(context?.channelId)
   ) {
-    throw new Error('Order lookup did not return the requested order');
+    throw new UpstreamError('Order lookup did not return the requested order', {
+      details: { endpoint: endpoint.href },
+    });
   }
   // Report an order bound to another store or channel as missing so the route doesn't reveal it exists.
   if (context.storeId !== storeId || context.channelId !== channelId) {

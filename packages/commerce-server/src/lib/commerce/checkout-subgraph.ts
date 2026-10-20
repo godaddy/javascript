@@ -12,7 +12,9 @@
  * - Existing custom cart: convert your cart into lineItems, then post to the route.
  */
 
+import { CommerceNotConfiguredError } from './errors';
 import type { Money } from './gql';
+import { fetchUpstream, readUpstreamJson, type UpstreamRequest, upstreamStatusError } from './upstream-http';
 
 /**
  * The hosted checkout page will not render a card form without this. GDC's
@@ -335,6 +337,26 @@ export function authorizationHeaders({ accessToken }: AuthorizationHeadersInput)
   };
 }
 
+// RFC 6749 §5.2 errors that mean this server's client or its granted scope was rejected. Other 400s
+// (e.g. `invalid_request`, `unsupported_grant_type`) are a malformed request, not bad credentials.
+const UNAUTHORIZED_OAUTH_ERRORS: ReadonlySet<string> = new Set([
+  'invalid_client',
+  'invalid_grant',
+  'unauthorized_client',
+  'invalid_scope',
+]);
+
+async function readOAuthError(response: Response): Promise<string | undefined> {
+  try {
+    const body: unknown = await response.json();
+    return body && typeof body === 'object' && 'error' in body && typeof body.error === 'string'
+      ? body.error
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function getOAuthAccessToken({
   clientId,
   clientSecret,
@@ -343,30 +365,44 @@ export async function getOAuthAccessToken({
   fetch: fetchImplementation,
 }: OAuthTokenInput): Promise<OAuthTokenResponse> {
   if (!clientId || !clientSecret) {
-    throw new Error('clientId and clientSecret are required');
+    throw new CommerceNotConfiguredError('clientId and clientSecret are required');
   }
 
-  const requestFetch = fetchImplementation ?? fetch;
   const body = new URLSearchParams();
   body.append('grant_type', 'client_credentials');
   body.append('client_id', clientId);
   body.append('client_secret', clientSecret);
   body.append('scope', scope);
 
-  const response = await requestFetch(new URL('/v2/oauth2/token', apiBaseUrl).toString(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+  const endpoint = new URL('/v2/oauth2/token', apiBaseUrl);
+  const request: UpstreamRequest = {
+    operation: 'Access token request',
+    details: { endpoint: endpoint.href, scope },
+  };
+  const response = await fetchUpstream(
+    endpoint,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: body.toString(),
+      cache: 'no-store',
     },
-    body: body.toString(),
-    cache: 'no-store',
-  });
+    request,
+    fetchImplementation,
+  );
 
   if (!response.ok) {
-    throw new Error(`Failed to get access token: ${response.status} ${response.statusText}`);
+    const oauthError = response.status === 400 ? await readOAuthError(response) : undefined;
+    throw await upstreamStatusError(
+      response,
+      { ...request, details: { ...request.details, oauthError } },
+      { unauthorized: oauthError !== undefined && UNAUTHORIZED_OAUTH_ERRORS.has(oauthError) },
+    );
   }
 
-  return (await response.json()) as OAuthTokenResponse;
+  return readUpstreamJson<OAuthTokenResponse>(response, request);
 }
 
 export function buildBuyNowCheckoutInput(
