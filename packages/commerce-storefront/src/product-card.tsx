@@ -9,8 +9,7 @@ import {
   useState,
 } from 'react';
 import { Link } from 'react-router';
-import { money } from './api';
-import { AddToCartButton, buttonClass } from './cart';
+import { AddToCartButton, type AddToCartLabelState, buttonClass } from './cart';
 import {
   getPrimaryImageUrl,
   getProductAttributes,
@@ -19,28 +18,33 @@ import {
   type SKU,
   type SKUGroup,
 } from './catalog-model';
-import { useCommerce } from './commerce-provider';
-import { type PartRegistry, partClass, usePartRegistry } from './part';
+import { useCommerce, useMoney } from './commerce-provider';
+import { type PartLabel, type PartRegistry, partProps, renderLabel, usePartRegistry } from './part';
 import { type SampleProduct, useSampleCart } from './sample-cart';
 import { StorefrontSurface } from './storefront-surface';
 
-export function ProductImage({
-  url,
-  name,
-  className = '',
-}: {
+export interface ProductImageProps {
   url?: string | null;
+  /** The alt text. Pass `''` for a decorative image, such as a thumbnail next to the product name. */
   name: string;
+  /** Added to the image, or to its placeholder. */
   className?: string;
-}): ReactElement {
-  const [failed, setFailed] = useState<boolean>(false);
-  return url && !failed ? (
+}
+
+/**
+ * A product image that fills its container, with a labeled placeholder when there is no URL or it fails to load.
+ * Use it in custom parts so they handle missing images like the package's own.
+ */
+export function ProductImage({ url, name, className = '' }: ProductImageProps): ReactElement {
+  // Keyed by URL, so a new URL after a failure is requested instead of keeping the placeholder.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  return url && url !== failedUrl ? (
     <img
       src={url}
       alt={name}
       loading='lazy'
       className={`h-full w-full object-cover ${className}`}
-      onError={() => setFailed(true)}
+      onError={() => setFailedUrl(url)}
     />
   ) : (
     <div
@@ -159,7 +163,7 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
   const card: ReactElement = (
     <ProductCardContext.Provider value={value}>
       {/* `group` drives the image hover zoom. A card nested inside this one is not a catalog entry. */}
-      <article className={partClass('group', className)}>
+      <article {...partProps('product-card-root', 'group', className)}>
         <CatalogItemContext.Provider value={null}>{children}</CatalogItemContext.Provider>
       </article>
     </ProductCardContext.Provider>
@@ -175,7 +179,7 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
 export function ProductCardImage({ className }: ProductCardPartProps): ReactElement {
   const card = useProductCardInternal('ProductCardImage');
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-card-image', className)}>
       {card.source === 'live' ? (
         <Link
           to={card.href}
@@ -203,7 +207,7 @@ export function ProductCardTitle({ className }: ProductCardPartProps): ReactElem
   const { name, href, register } = useProductCardInternal('ProductCardTitle');
   useEffect(() => (href ? register(titleLink) : undefined), [href, register]);
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-card-title', className)}>
       <h2 className='break-words text-2xl font-semibold leading-tight'>
         {href ? (
           <Link
@@ -225,7 +229,7 @@ export function ProductCardDescription({ className }: ProductCardPartProps): Rea
   const { product } = useProductCardInternal('ProductCardDescription');
   if (!product?.description) return null;
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-card-description', className)}>
       <p className='line-clamp-3 text-sm leading-6'>{product.description}</p>
     </div>
   );
@@ -234,7 +238,7 @@ export function ProductCardDescription({ className }: ProductCardPartProps): Rea
 /** The product's price, or its price range when variants differ. */
 export function ProductCardPrice({ className }: ProductCardPartProps): ReactElement {
   const card = useProductCardInternal('ProductCardPrice');
-  const { config } = useCommerce();
+  const money = useMoney();
   let text: string;
   if (card.source === 'sample') text = money(card.sample.price, 'USD');
   else {
@@ -242,28 +246,39 @@ export function ProductCardPrice({ className }: ProductCardPartProps): ReactElem
     const max: number | null | undefined = card.product.priceRange?.max;
     text =
       typeof min === 'number'
-        ? `${money(min, config.currencyCode)}${typeof max === 'number' && max !== min ? ` – ${money(max, config.currencyCode)}` : ''}`
+        ? `${money(min)}${typeof max === 'number' && max !== min ? ` – ${money(max)}` : ''}`
         : 'Price unavailable';
   }
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-card-price', className)}>
       <p className='text-lg font-semibold leading-7'>{text}</p>
     </div>
   );
+}
+
+/** What a card action label can depend on. Only `add` can be busy or sold out. */
+export interface ProductCardActionLabelState extends AddToCartLabelState {
+  /** `add` adds directly; `choose-options` and `view-product` link to the product page. */
+  readonly action: 'add' | 'choose-options' | 'view-product';
+}
+
+export interface ProductCardActionProps extends ProductCardPartProps {
+  /** Replaces the button or link label. A function receives the action and its state. */
+  children?: PartLabel<ProductCardActionLabelState>;
 }
 
 /**
  * Adds the product directly when it has exactly one SKU and no options; otherwise links to its page to choose.
  * Samples add to the sample cart.
  */
-export function ProductCardAction({ className }: ProductCardPartProps): ReactElement {
+export function ProductCardAction({ className, children }: ProductCardActionProps): ReactElement {
   const card = useProductCardInternal('ProductCardAction');
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-card-action', className)}>
       {card.source === 'live' ? (
-        <LiveAction product={card.product} name={card.name} href={card.href} />
+        <LiveAction product={card.product} name={card.name} href={card.href} label={children} />
       ) : (
-        <SampleAction sample={card.sample} />
+        <SampleAction sample={card.sample} label={children} />
       )}
     </div>
   );
@@ -273,24 +288,45 @@ function LiveAction({
   product,
   name,
   href,
+  label,
 }: {
   product: SKUGroup;
   name: string;
   href: string;
+  label: ProductCardActionProps['children'];
 }): ReactElement {
   const selectedSku: SKU | null = getSingleMatchedSku(product);
   const hasVariants: boolean = getProductAttributes(product).length > 0;
-  if (!hasVariants && selectedSku) return <AddToCartButton sku={selectedSku} name={name} />;
+  if (!hasVariants && selectedSku)
+    return (
+      <AddToCartButton sku={selectedSku} name={name}>
+        {/* Nothing from the host falls back to the button's own label. */}
+        {(state: AddToCartLabelState) => renderLabel(label, { action: 'add', ...state }, null)}
+      </AddToCartButton>
+    );
+  const action = hasVariants ? 'choose-options' : 'view-product';
   return (
     <Link className={buttonClass} to={href}>
-      {hasVariants ? 'Choose options' : 'View product'}
+      {renderLabel(
+        label,
+        { action, busy: false, soldOut: false },
+        hasVariants ? 'Choose options' : 'View product',
+      )}
     </Link>
   );
 }
 
-function SampleAction({ sample }: { sample: SampleProduct }): ReactElement {
+function SampleAction({
+  sample,
+  label,
+}: {
+  sample: SampleProduct;
+  label: ProductCardActionProps['children'];
+}): ReactElement {
   const { add } = useSampleCart();
-  return (
+  const custom: ReactNode = renderLabel(label, { action: 'add', busy: false, soldOut: false }, null);
+  // A host label stays the start of the accessible name, so it is not replaced by an `aria-label`.
+  return custom === null ? (
     <button
       type='button'
       className={buttonClass}
@@ -298,6 +334,11 @@ function SampleAction({ sample }: { sample: SampleProduct }): ReactElement {
       onClick={() => add(sample.key)}
     >
       Add to cart
+    </button>
+  ) : (
+    <button type='button' className={buttonClass} onClick={() => add(sample.key)}>
+      {custom}
+      <span className='sr-only'> ({sample.name}, sample)</span>
     </button>
   );
 }

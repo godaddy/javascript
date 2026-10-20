@@ -1,8 +1,15 @@
 import { type ComponentProps, type ReactElement, useId } from 'react';
 import { message } from './api';
-import { AddToCartButton, buttonClass, inputClass, isSoldOut, quantityProblem } from './cart';
+import {
+  AddToCartButton,
+  type AddToCartLabelState,
+  buttonClass,
+  inputClass,
+  isSoldOut,
+  quantityProblem,
+} from './cart';
 import type { SKU } from './catalog-model';
-import { partClass } from './part';
+import { type PartLabel, partProps, renderLabel } from './part';
 import {
   type ProductDetailsPartProps,
   type ProductDetailsStatus,
@@ -26,7 +33,7 @@ export function ProductDetailsPurchase({ className }: ProductDetailsPartProps): 
   const belowOptions: string | undefined = attributes.length || skuOptions.length ? '-mt-4' : undefined;
   // `space-y-6` styles the children, not this element, so host display, gap and grid classes here still apply.
   return (
-    <div className={partClass('space-y-6', className)}>
+    <div {...partProps('product-details-purchase', 'space-y-6', className)}>
       <OptionControls />
       <ProductDetailsPurchaseStatus className={belowOptions} />
       <ProductDetailsAvailability className={belowOptions} />
@@ -41,7 +48,7 @@ export function ProductDetailsOptions({ className }: ProductDetailsPartProps): R
   const { attributes, skuOptions } = useProductDetailsInternal('ProductDetailsOptions');
   if (attributes.length === 0 && skuOptions.length === 0) return null;
   return (
-    <div className={partClass('space-y-6', className)}>
+    <div {...partProps('product-details-options', 'space-y-6', className)}>
       <OptionControls />
     </div>
   );
@@ -91,7 +98,7 @@ function SkuOption(): ReactElement {
   const id = useId();
   useSkuOptionRegistration();
   return (
-    <div className={partClass()}>
+    <div {...partProps('product-details-sku-option')}>
       <label htmlFor={id} className='mb-2 block font-medium'>
         Option
       </label>
@@ -120,7 +127,7 @@ export function ProductDetailsOption({
   const option = useProductDetailsOption(attribute);
   if (!option) return null;
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-details-option', className)} data-commerce-attribute={option.name}>
       <fieldset>
         <legend className='mb-2 font-medium'>{option.label}</legend>
         <Select
@@ -177,7 +184,7 @@ export function ProductDetailsPurchaseStatus({ className }: ProductDetailsPartPr
       break;
   }
   // No default case: a new status leaves `content` unassigned, which TypeScript reports.
-  return <div className={partClass(className)}>{content}</div>;
+  return <div {...partProps('product-details-purchase-status', className)}>{content}</div>;
 }
 
 /** Stock for the verified SKU. Renders nothing until a SKU is verified. */
@@ -185,7 +192,7 @@ export function ProductDetailsAvailability({ className }: ProductDetailsPartProp
   const { selectedSku, availableQuantity } = useProductDetailsInternal('ProductDetailsAvailability');
   if (!selectedSku) return null;
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-details-availability', className)}>
       <p className='text-sm' aria-live='polite'>
         {availableQuantity === null
           ? 'Available to order'
@@ -209,7 +216,7 @@ export function ProductDetailsQuantity({ className }: ProductDetailsPartProps): 
     ? null
     : quantityProblem(quantity, availableQuantity);
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-details-quantity', className)}>
       <label htmlFor={id} className='mb-2 block font-medium'>
         Quantity
       </label>
@@ -234,18 +241,31 @@ export function ProductDetailsQuantity({ className }: ProductDetailsPartProps): 
   );
 }
 
+export interface ProductDetailsAddToCartProps extends ProductDetailsPartProps {
+  /** Replaces the button label. A function receives `busy` and `soldOut`; the button keeps its rules either way. */
+  children?: PartLabel<AddToCartLabelState>;
+}
+
 /** Adds the verified SKU and quantity. While disabled, its accessible description says why. */
-export function ProductDetailsAddToCart({ className }: ProductDetailsPartProps): ReactElement {
+export function ProductDetailsAddToCart({ className, children }: ProductDetailsAddToCartProps): ReactElement {
   const { selectedSku, name, quantity, status } = useProductDetailsInternal('ProductDetailsAddToCart');
   const reasonId = useId();
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-details-add-to-cart', className)}>
       {selectedSku ? (
-        <AddToCartButton sku={selectedSku} name={name} quantity={quantity} />
+        <AddToCartButton sku={selectedSku} name={name} quantity={quantity}>
+          {children}
+        </AddToCartButton>
       ) : (
         <>
-          <button type='button' className={`${buttonClass} w-full`} disabled aria-describedby={reasonId}>
-            Add to cart
+          <button
+            type='button'
+            className={`${buttonClass} w-full`}
+            disabled
+            aria-describedby={reasonId}
+            data-commerce-part='add-to-cart-button'
+          >
+            {renderLabel(children, { busy: false, soldOut: false }, 'Add to cart')}
           </button>
           <span id={reasonId} hidden>
             {status === 'ready' ? '' : disabledReasons[status]}

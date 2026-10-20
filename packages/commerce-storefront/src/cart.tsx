@@ -3,6 +3,7 @@ import { useCart } from './cart-state';
 import type { SKU } from './catalog-model';
 import { getAvailableInventoryQuantity } from './catalog-model';
 import { useCommerce } from './commerce-provider';
+import { type PartLabel, renderLabel } from './part';
 import { StorefrontSurface } from './storefront-surface';
 
 export const buttonClass: string =
@@ -10,7 +11,13 @@ export const buttonClass: string =
 export const inputClass: string =
   'min-h-11 rounded-lg border border-neutral-400 bg-white px-3 py-2 text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900';
 
-export function CartButton(): ReactElement {
+export interface CartButtonProps {
+  /** Replaces the label and count. A function receives the item count. Keep the count in the label. */
+  children?: PartLabel<{ itemCount: number }>;
+}
+
+/** Opens the cart drawer and shows the item count. */
+export function CartButton({ children }: CartButtonProps = {}): ReactElement {
   const { setOpen, open, connection } = useCommerce();
   const { itemCount } = useCart();
   return (
@@ -21,9 +28,17 @@ export function CartButton(): ReactElement {
         disabled={connection !== 'ready' && connection !== 'unbound'}
         aria-haspopup='dialog'
         aria-expanded={open}
+        data-commerce-part='cart-button'
         onClick={() => setOpen(true)}
       >
-        Cart <span className='rounded-full bg-white px-2 py-0.5 text-xs text-neutral-900'>{itemCount}</span>
+        {renderLabel(
+          children,
+          { itemCount },
+          <>
+            Cart{' '}
+            <span className='rounded-full bg-white px-2 py-0.5 text-xs text-neutral-900'>{itemCount}</span>
+          </>,
+        )}
       </button>
     </StorefrontSurface>
   );
@@ -39,15 +54,23 @@ export function quantityProblem(quantity: number, available: number | null): str
   return null;
 }
 
-export function AddToCartButton({
-  sku,
-  name,
-  quantity = 1,
-}: {
+/** What an add-to-cart label can depend on. */
+export interface AddToCartLabelState {
+  /** The add is running. */
+  readonly busy: boolean;
+  /** Tracked stock is used up, so the button stays disabled. */
+  readonly soldOut: boolean;
+}
+
+export interface AddToCartButtonProps {
   sku: SKU;
   name: string;
   quantity?: number;
-}): ReactElement {
+  /** Replaces the label. A function receives `busy` and `soldOut`; the button keeps its rules either way. */
+  children?: PartLabel<AddToCartLabelState>;
+}
+
+export function AddToCartButton({ sku, name, quantity = 1, children }: AddToCartButtonProps): ReactElement {
   const { addItem, pending, hydrating, error, open, connection } = useCommerce();
   const [adding, setAdding] = useState<boolean>(false);
   const reasonId = useId();
@@ -79,9 +102,14 @@ export function AddToCartButton({
         aria-disabled={disabled || pending}
         aria-busy={adding}
         aria-describedby={reason ? reasonId : undefined}
+        data-commerce-part='add-to-cart-button'
         onClick={() => void handleAdd()}
       >
-        {soldOut ? 'Out of stock' : adding ? 'Adding…' : 'Add to cart'}
+        {renderLabel(
+          children,
+          { busy: adding, soldOut },
+          soldOut ? 'Out of stock' : adding ? 'Adding…' : 'Add to cart',
+        )}
       </button>
       {reason && (
         <span id={reasonId} hidden>

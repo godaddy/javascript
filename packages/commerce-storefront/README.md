@@ -55,6 +55,8 @@ Use the providers your application already has; do not create another router or 
 | `productPath` | `/products` | Same-origin prefix for product links; register `${productPath}/:productId` |
 | `checkoutSuccessPath` | unset | Same-origin return route; enables checkout UI only when supplied |
 | `onItemAdded` | unset | Called with `{ name, quantity, isSample }` after each add, live or sample; use it to confirm adds on a site with a cart page instead of a drawer |
+| `onEvent` | unset | Called with a [`CommerceEvent`](#events) for every cart change and failure, such as for analytics |
+| `locale` | `en-US` | BCP 47 locale for formatting prices, such as `de-DE`; an invalid tag falls back to `en-US` with a development warning. It never selects UI text |
 | `theme` | inherited text and transparent wrappers; neutral control palette | CSS custom properties applied to storefront surfaces and the portalled drawer |
 
 Provide root-relative paths without a trailing slash. Enable `checkoutSuccessPath` only after your server supports checkout and validates merchant readiness. Mount a corresponding return page. A redirect back from checkout is **not proof of payment**; that page must obtain authoritative payment status from your server. This package does not provide a payment receipt page or merchant onboarding.
@@ -85,9 +87,9 @@ A connection failure leaves the surrounding application and its state mounted. C
 
 The stylesheet includes all required utilities and scopes them to the package's surfaces. The build removes CSS layer wrappers in their declared order, so the exported CSS can pass through a host Tailwind v3 PostCSS pipeline without `@tailwind` directives. Import it directly; consumers do not need to copy or rewrite the CSS. It does not add a global reset or require dependency scanning by a host Tailwind build. The `theme` prop reaches the drawer even though it is portalled into `document.body`.
 
-By default, `.commerce-storefront` wrappers do not paint a background and inherit the host's text color. Set page and section backgrounds on the host application's layout elements. `--commerce-surface` colors controls and the opaque cart drawer, and supplies the base for muted colors; it does not color component wrappers. Set `--commerce-surface` and `--commerce-text` together to adapt controls and the drawer to a dark theme. Avoid setting wrapper backgrounds through CSS or the `theme` prop's `background`, `backgroundColor`, or `backgroundImage` properties, which can still override the transparent default. Descendants inherit the surface text and body font instead of global heading styles. Keep text, controls and focus indicators accessible when changing colors. Internal utility class names and markup are not a customization API; use the [product](#custom-product-layouts), [catalog](#custom-catalog-layouts) and [cart](#custom-cart-layouts) parts to change a layout.
+By default, `.commerce-storefront` wrappers do not paint a background and inherit the host's text color. Set page and section backgrounds on the host application's layout elements. `--commerce-surface` colors controls and the opaque cart drawer, and supplies the base for muted colors; it does not color component wrappers. Set `--commerce-surface` and `--commerce-text` together to adapt controls and the drawer to a dark theme. Avoid setting wrapper backgrounds through CSS or the `theme` prop's `background`, `backgroundColor`, or `backgroundImage` properties, which can still override the transparent default. Descendants inherit the surface text and body font instead of global heading styles. Keep text, controls and focus indicators accessible when changing colors. Internal utility class names and markup are not a customization API; use the [product](#custom-product-layouts), [catalog](#custom-catalog-layouts) and [cart](#custom-cart-layouts) parts to change a layout, and the [styling hooks](#styling-hooks) to style inside a part.
 
-The first release uses English UI text and `en-US` currency formatting. The catalog title and description are configurable through `CatalogHeader`. Full localization is outside this initial API.
+Prices follow the provider's `locale`, which defaults to `en-US`. UI text is English. The catalog title and description are configurable through `CatalogHeader`, and many parts take [replacement text](#replacing-text). Full localization is outside this initial API. When it arrives, translated text will be a separate prop that a site opts into; `locale` will keep formatting only, so a site that sets it for prices never gets new wording in a minor release. Replacement text will still take priority over translations.
 
 ## Compatibility
 
@@ -100,17 +102,19 @@ The repository example uses React Router 7. Follow each router version's own Rea
 | Export | Purpose |
 | --- | --- |
 | `CommerceStorefront` | Recommended integration: provider and one drawer |
-| `Catalog` | Six products per cursor page. Its `title`, `description`, and `showHeader` props are deprecated; compose `CatalogRoot` instead |
+| `Catalog` | Six products per cursor page, or `pageSize`. Its `title`, `description`, and `showHeader` props are deprecated; compose `CatalogRoot` instead |
 | `CatalogRoot` and catalog parts | Build a [custom catalog or card layout](#custom-catalog-layouts) with the same rules as `Catalog` |
-| `ProductDetails` | Reads `:productId`; validates URL option selections against catalog results |
+| `ProductDetails` | Reads `:productId`; validates URL option selections against catalog results. `ProductDetailsRoot` also takes a `productId` prop |
 | `ProductDetailsRoot` and product parts | Build a [custom product layout](#custom-product-layouts) with the same rules as `ProductDetails` |
 | `ProductCard` | Renders one `SKUGroup` with direct add or a product-details link; `ProductCardRoot` and card parts customize it |
 | `CartDrawer` | The cart dialog; `CommerceStorefront` mounts one |
 | `CartDrawerRoot`, `CartRoot` and cart parts | Build a [custom drawer or a cart page](#custom-cart-layouts) with the same rules as `CartDrawer` |
-| `CartButton` | Opens the shared drawer and displays item count; `useCart()` builds a custom one |
-| `AddToCartButton` | Adds a verified `sku`, `name`, and optional integer `quantity`; while disabled, its accessible description says why |
+| `CartButton` | Opens the shared drawer and displays item count; its children replace the label, and `useCart()` builds a custom one |
+| `AddToCartButton` | Adds a verified `sku`, `name`, and optional integer `quantity`; while disabled, its accessible description says why. Its children replace the label |
 | `CommerceStatus` | Connection progress/error/retry for custom layouts |
 | `useCommerce` | Cart, connection, pending/error state and serialized cart actions |
+| `useMoney` | Formats minor units in the provider's `locale`, like the package's own prices, for custom parts |
+| `ProductImage` | A product image with the package's placeholder for a missing or broken image, for custom parts |
 | `CommerceProvider` | Lower-level composition when the recommended wrapper does not fit, such as a custom drawer; mount it once |
 
 The package exports TypeScript catalog/cart response types and selection/summary helpers for custom product layouts. `useCommerce` actions return `Promise<boolean>`: `false` means an operation failed or its connection became stale. Inspect `error` for active-session failures. Do not automatically retry a failed mutation: the server may have committed it before the response failed. `applyDiscount(code)` is available to custom layouts; the default drawer does not render a promotion form.
@@ -119,7 +123,7 @@ The package exports TypeScript catalog/cart response types and selection/summary
 
 ## Custom product layouts
 
-`ProductDetails` is the recommended product page. When its layout does not fit, compose the same parts inside `ProductDetailsRoot`. The root loads the route's `:productId` and shows the connection, loading, error and not-found states itself, so parts render only once the product exists. This is the packaged layout, written out:
+`ProductDetails` is the recommended product page. When its layout does not fit, compose the same parts inside `ProductDetailsRoot`. The root loads the route's `:productId`, or its `productId` prop, and shows the connection, loading, error and not-found states itself, so parts render only once the product exists. This is the packaged layout, written out:
 
 ```tsx
 import {
@@ -154,6 +158,23 @@ Add your own elements between parts, reorder them, or leave out display parts. `
 | `ProductDetailsAddToCart` | Adds the verified SKU and quantity; before a SKU is verified, its accessible description gives the reason |
 
 Every part is named `ProductDetails*` because it works only inside `ProductDetailsRoot`. `AddToCartButton` is the standalone button for a SKU you already have.
+
+The root keeps the selection in the page URL, as `option.<attribute>` and `sku`, so a reload or a shared link keeps it. To show a product outside its route, such as in a quick view or next to another product, pass `productId` and set `urlState={false}`. That root keeps its selection to itself, and it ends when the root unmounts. Give every root but one on a page `urlState={false}`; otherwise the roots share one selection. A root with no `productId` on a route without `:productId` shows the not-found state and, in development builds, warns.
+
+```tsx
+{/* Your own dialog, opened from a card with the product's ID. */}
+<QuickViewDialog open={quickViewId !== null} onClose={() => setQuickViewId(null)}>
+  {quickViewId && (
+    <ProductDetailsRoot productId={quickViewId} urlState={false} loading={<p role='status'>Loading…</p>}>
+      <ProductDetailsTitle />
+      <ProductDetailsPrice />
+      <ProductDetailsPurchase />
+    </ProductDetailsRoot>
+  )}
+</QuickViewDialog>
+```
+
+`loading` and `notFound` replace those states. `error` replaces the load failure; as a function, it receives `{ message, retry }`. Replacement content renders inside the root's element, which keeps its `className`, and the error keeps `role='alert'`; a replacement loading message should have its own `role='status'`.
 
 Parts read state from the root and take no product, SKU, price or quantity props. Whatever the layout, only a server-verified SKU can be added, and changing a selection resets the quantity and image. Every part throws if it is rendered outside `ProductDetailsRoot`. In development builds, if no control is rendered for an attribute the product requires, a console warning names the missing ones. A control that mounts later, such as one in a closed accordion, can trigger it; the product becomes purchasable once the control renders. Products without attributes but with several SKUs need `ProductDetailsOptions` or `ProductDetailsPurchase`. Parts can be rendered more than once, such as in a sticky mobile purchase bar; each copy gets its own element IDs.
 
@@ -196,7 +217,7 @@ Parts are flat named exports, not properties such as `ProductDetails.Title`, so 
 
 ## Custom catalog layouts
 
-`Catalog` is the recommended catalog. When its layout or its cards do not fit, compose the same parts inside `CatalogRoot`. The root loads one cursor page of six products, or the built-in samples when `sampleProducts` is set and no store is connected, and shows the connection state itself. This is `<Catalog sampleProducts />` written out with its packaged card:
+`Catalog` is the recommended catalog. When its layout or its cards do not fit, compose the same parts inside `CatalogRoot`. The root loads one cursor page of six products, or `pageSize` products, or the built-in samples when `sampleProducts` is set and no store is connected, and shows the connection state itself. This is `<Catalog sampleProducts />` written out with its packaged card:
 
 ```tsx
 import {
@@ -233,12 +254,15 @@ As with product layouts, the grid, spacing and border classes come from your own
 | `CatalogHeader` | The `title` as the page's H1 and a `description`; leave it out when the host page owns the H1 |
 | `CatalogSummary` | The loading, failure or product-count status line |
 | `CatalogProducts` | One card per product. Its children are the card, rendered once for each product; without children, the packaged card |
+| `CatalogEmpty` | Only when the store's catalog has no products: "No products available.", or its own children instead. While one is mounted, `CatalogProducts` leaves out its own empty message. Samples are never empty |
 | `CatalogPagination` | First-page and next-page buttons; nothing for samples |
 | `ProductCardImage`, `ProductCardTitle` | The first image and the name as an H2, each linked to the product page. With a title in the card, keyboard and screen reader users get only the title link; without one, the image link takes its place once the page is interactive |
 | `ProductCardDescription`, `ProductCardPrice` | Up to three lines of description (nothing without one), and the price or price range |
-| `ProductCardAction` | Adds the product directly only when it has one SKU and no options; otherwise links to the product page to choose |
+| `ProductCardAction` | Adds the product directly only when it has one SKU and no options; otherwise links to the product page to choose. Its children replace the label; as a function, they receive the `action`: `add`, `choose-options` or `view-product` |
 
-`className` on `CatalogProducts` goes on the element whose direct children are the cards, so a host grid places them, and `className` on `ProductCardRoot` goes on each card, so classes such as `col-span-2` work. While products load, that element holds three placeholder cards, so they follow the host's grid. The error with its retry button and the empty message render just before it. Card parts take no product, SKU or price props. Inside `CatalogProducts`, `ProductCardRoot` takes no `product` prop either and throws if it gets one, so a card always shows the product it is rendered for. Samples use the same card: they show a placeholder image, no description and no links, and add only to the sample cart. Card and catalog parts throw if they are rendered outside their root. Packaged cards fill their grid row, with the price and action at the bottom of each card.
+`className` on `CatalogProducts` goes on the element whose direct children are the cards, so a host grid places them, and `className` on `ProductCardRoot` goes on each card, so classes such as `col-span-2` work. While products load, that element holds three placeholder cards, so they follow the host's grid. The error with its retry button and, without a `CatalogEmpty`, the empty message render just before it. Card parts take no product, SKU or price props. Inside `CatalogProducts`, `ProductCardRoot` takes no `product` prop either and throws if it gets one, so a card always shows the product it is rendered for. Samples use the same card: they show a placeholder image, no description and no links, and add only to the sample cart. Card and catalog parts throw if they are rendered outside their root. Packaged cards fill their grid row, with the price and action at the bottom of each card.
+
+The root keeps its page cursor in the page URL, as `after`. For a second catalog on the same page, such as a featured row above the main grid, set `urlState={false}` on it so the two do not share one cursor.
 
 For a product the host already has, such as a featured product, use `ProductCard` or `ProductCardRoot` with a `product` prop outside the catalog. `useProductCard()` returns read-only `product` (`null` for samples), `name`, `href` (`null` for samples) and `isSample` for building custom card parts. Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
 
@@ -331,6 +355,60 @@ Two hooks support custom cart markup:
 
 - `useCart()` works anywhere inside `CommerceProvider`. It returns read-only `items`, `itemCount`, `subtotal` (minor units, or `null` when the server has not priced the cart), `currency`, `isSample` and `loading`. Combine `itemCount` with `useCommerce().setOpen(true)` for a custom cart button.
 - `useCartItem()` returns the line inside `CartItemRoot`: `id`, `name`, `quantity`, `imageUrl`, `options`, `subtotal` and `currency`.
+
+## Replacing text
+
+The package has one rule for replacing content, so a layout never has to guess:
+
+- **A part's own text** is the part's children, such as `<CartTitle>Your bag</CartTitle>`.
+- **A state inside a loaded root**, such as an empty cart or an empty catalog, is its own part that renders only in that state: `CartEmpty` and `CatalogEmpty`. Place it anywhere in the layout.
+- **A state before the root has anything to show**, such as loading, not found or a load failure, is a root prop: `ProductDetailsRoot`'s `loading`, `notFound` and `error`. Like `<Suspense fallback>`, it replaces the root's content, because the root's children render only once its data exists. That is why `useProductDetails()` can always return a product.
+
+Parts whose wording a site often changes take replacement content as children. The part keeps its element, accessibility and rules: a replaced checkout label still waits for the cart total and still blocks a second click. As a function, the children receive the part's state, so the label can change with it. Content that is empty, such as `null`, `false`, blank text or an empty fragment, falls back to the package text. The package cannot see what a component of yours renders, so a label component that returns `null` leaves the control unlabeled. Make that choice in the children function instead, which can return `null` to keep the package text.
+
+```tsx
+<CartCheckout>{({ busy }) => (busy ? 'Redirecting…' : 'Pay securely')}</CartCheckout>
+<CartButton>{({ itemCount }) => `Bag (${itemCount})`}</CartButton>
+<ProductDetailsAddToCart>{({ soldOut }) => (soldOut ? 'Sold out' : 'Add to bag')}</ProductDetailsAddToCart>
+```
+
+| Part | Function receives |
+| --- | --- |
+| `CartTitle`, `CartDescription` | `{ isSample }` |
+| `CartCheckout`, `CartItemRemove` | `{ busy }` |
+| `CartButton` | `{ itemCount }`. Keep the count in the label |
+| `AddToCartButton`, `ProductDetailsAddToCart` | `{ busy, soldOut }` |
+| `ProductCardAction` | `{ action, busy, soldOut }` |
+| `ProductDetailsBackLink` | Content only |
+
+A replaced label stays the start of the control's accessible name, so voice control users can say what they see. Where the package adds the product name for screen readers, it follows as visually hidden text: `<CartItemRemove>Delete</CartItemRemove>` is named "Delete Mug". Controls without replacement text, such as "Increase quantity of Mug", keep English names.
+
+## Styling hooks
+
+Every part's outer element has a `data-commerce-part` attribute with the part's name in kebab case, such as `cart-checkout` or `product-details-option`. Roots have one too, such as `product-details-root`, including while they show the connection, loading or error state. `CartButton` and add-to-cart buttons have `cart-button` and `add-to-cart-button` on the button itself. These names, and the controls' standard state attributes (`disabled`, `aria-busy`, `aria-pressed`, `aria-invalid`, `aria-expanded`), are a stable styling API; utility classes and other markup are not.
+
+```css
+.commerce-storefront [data-commerce-part='cart-checkout'] button { border-radius: 9999px; }
+.commerce-storefront [data-commerce-part='cart-checkout'] button[aria-busy='true'] { opacity: 0.7; }
+.commerce-storefront [data-commerce-part='product-details-option'][data-commerce-attribute='color'] { display: none; }
+```
+
+`ProductDetailsOption` also has `data-commerce-attribute` with its attribute name. Controls inside a part that has more than one have `data-commerce-control`: `decrease` and `increase` in `CartItemQuantity`, and `thumbnail` in `ProductDetailsGallery`. The package's utilities are unlayered and have the specificity of two classes, such as `.commerce-storefront .w-full`, or three with a state such as `:hover`. To override one, write unlayered CSS that starts with `.commerce-storefront` and a part attribute, and add the same state when the utility has one, as above. Layered host CSS, such as Tailwind v4 utilities, loses to the package's unlayered rules whatever its specificity.
+
+## Events
+
+`onEvent` on `CommerceProvider` or `CommerceStorefront` receives every cart change once the server has returned the updated cart, and every cart failure. Sample-cart changes have `isSample: true` and never reach the store.
+
+| `type` | Fields |
+| --- | --- |
+| `item-added` | `skuId` (`null` for samples), `name`, `quantity`, `isSample` |
+| `quantity-changed` | `itemId`, `quantity`, `isSample` |
+| `item-removed` | `itemId`, `isSample` |
+| `discount-applied` | `code` |
+| `checkout-started` | `cartId`; sent just before the browser leaves for checkout, so use `navigator.sendBeacon` or a keepalive request |
+| `error` | `operation` (`add`, `change-quantity`, `remove`, `discount`, `refresh` or `checkout`) and the `message` the cart shows |
+
+New event types may be added in minor releases, so ignore types you do not handle. A callback that throws or returns a rejected promise, including `onItemAdded`, is logged to the console and does not fail the cart operation. Async callbacks are not awaited, so a slow analytics call never delays the cart.
 
 ## How it works
 

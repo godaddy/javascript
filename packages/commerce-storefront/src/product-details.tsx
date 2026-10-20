@@ -1,8 +1,7 @@
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Link } from 'react-router';
-import { money } from './api';
-import { useCommerce } from './commerce-provider';
-import { partClass } from './part';
+import { useCommerce, useMoney } from './commerce-provider';
+import { partProps, renderLabel } from './part';
 import { ProductImage } from './product-card';
 import {
   type ProductDetailsPartProps,
@@ -29,16 +28,22 @@ export function ProductDetails(): ReactElement {
   );
 }
 
-export function ProductDetailsBackLink({ className }: ProductDetailsPartProps): ReactElement {
+export interface ProductDetailsBackLinkProps extends ProductDetailsPartProps {
+  /** Replaces "← Back to shop". */
+  children?: ReactNode;
+}
+
+/** A link to the catalog. */
+export function ProductDetailsBackLink({ className, children }: ProductDetailsBackLinkProps): ReactElement {
   useProductDetailsInternal('ProductDetailsBackLink');
   const { config } = useCommerce();
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-details-back-link', className)}>
       <Link
         className='inline-flex min-h-11 items-center text-sm text-inherit underline underline-offset-4 focus-visible:outline focus-visible:outline-2'
         to={config.catalogPath}
       >
-        ← Back to shop
+        {renderLabel(children, undefined, '← Back to shop')}
       </Link>
     </div>
   );
@@ -48,7 +53,7 @@ export function ProductDetailsBackLink({ className }: ProductDetailsPartProps): 
 export function ProductDetailsGallery({ className }: ProductDetailsPartProps): ReactElement {
   const { images, imageIndex, setImageIndex, name } = useProductDetailsInternal('ProductDetailsGallery');
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-details-gallery', className)}>
       <div className='aspect-square overflow-hidden rounded-lg'>
         <ProductImage key={images[imageIndex]} url={images[imageIndex]} name={name} />
       </div>
@@ -61,6 +66,7 @@ export function ProductDetailsGallery({ className }: ProductDetailsPartProps): R
               className={`h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${imageIndex === index ? 'border-neutral-900' : 'border-transparent'}`}
               aria-label={`View image ${index + 1}`}
               aria-pressed={imageIndex === index}
+              data-commerce-control='thumbnail'
               onClick={() => setImageIndex(index)}
             >
               <ProductImage url={url} name='' />
@@ -76,7 +82,7 @@ export function ProductDetailsGallery({ className }: ProductDetailsPartProps): R
 export function ProductDetailsTitle({ className }: ProductDetailsPartProps): ReactElement {
   const { name } = useProductDetailsInternal('ProductDetailsTitle');
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-details-title', className)}>
       <h1 className='break-words text-4xl font-semibold leading-tight sm:text-5xl'>{name}</h1>
     </div>
   );
@@ -86,9 +92,10 @@ export function ProductDetailsTitle({ className }: ProductDetailsPartProps): Rea
 export function ProductDetailsPrice({ className }: ProductDetailsPartProps): ReactElement {
   const { price, product } = useProductDetailsInternal('ProductDetailsPrice');
   const { config } = useCommerce();
+  const money = useMoney();
   return (
     // The flex layout is inside the part, so it cannot outrank host classes on the outer element.
-    <div className={partClass(className)}>
+    <div {...partProps('product-details-price', className)}>
       <div
         aria-live='polite'
         className='flex flex-wrap items-baseline gap-x-3 gap-y-1 text-2xl font-medium'
@@ -97,7 +104,7 @@ export function ProductDetailsPrice({ className }: ProductDetailsPartProps): Rea
         {price?.value?.value != null
           ? money(price.value.value, price.value.currencyCode ?? config.currencyCode)
           : product.priceRange?.min != null
-            ? `From ${money(product.priceRange.min, config.currencyCode)}`
+            ? `From ${money(product.priceRange.min)}`
             : 'Price unavailable'}
         {price?.compareAtValue?.value != null &&
           price.value?.value != null &&
@@ -115,7 +122,7 @@ export function ProductDetailsPrice({ className }: ProductDetailsPartProps): Rea
 export function ProductDetailsDescription({ className }: ProductDetailsPartProps): ReactElement {
   const { selectedSku, product } = useProductDetailsInternal('ProductDetailsDescription');
   return (
-    <div className={partClass(className)}>
+    <div {...partProps('product-details-description', className)}>
       <p className='whitespace-pre-line text-base leading-7'>
         {selectedSku?.description ?? product.description}
       </p>

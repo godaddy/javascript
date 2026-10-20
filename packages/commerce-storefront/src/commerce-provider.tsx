@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { ApiError, CartIdStorage, checkedFetch, message, request, type StorefrontConfig } from './api';
+import { ApiError, CartIdStorage, checkedFetch, message, money, request, type StorefrontConfig } from './api';
 import { type AddToCartItemInput, addToCart, type CartOrder } from './cart-model';
 import { SampleCartProvider } from './sample-cart';
 
@@ -24,6 +24,8 @@ export interface CommerceContextValue {
   retryConnection: () => void;
   theme: StorefrontTheme;
   config: StorefrontConfig;
+  /** The BCP 47 locale that prices are formatted in, such as `en-US`. */
+  locale: string;
   cart: CartOrder | null;
   /** Whether the cart drawer is open. Always `false` when no `CartDrawer` or `CartDrawerRoot` is mounted. */
   open: boolean;
@@ -56,6 +58,19 @@ export function useCommerce(): CommerceContextValue {
   return context;
 }
 
+/**
+ * Formats minor units, such as cents, in the provider's `locale`, the way the package's own parts do. Uses the
+ * store's currency unless `currency` is given.
+ */
+export function useMoney(): (value: number, currency?: string) => string {
+  const { locale, config } = useCommerce();
+  const { currencyCode } = config;
+  return useCallback(
+    (value: number, currency: string = currencyCode): string => money(value, currency, locale),
+    [locale, currencyCode],
+  );
+}
+
 export type StorefrontTheme = CSSProperties & {
   '--commerce-accent'?: string;
   '--commerce-accent-hover'?: string;
@@ -74,11 +89,47 @@ export interface CommerceProviderProps {
   /** Set only when your server has enabled checkout and this return route exists. */
   checkoutSuccessPath?: string;
   /**
+   * The BCP 47 locale for formatting prices, such as `de-DE`. Defaults to `en-US`; an invalid tag falls back to it.
+   * It never selects UI text: localized text will be a separate, opt-in prop, so setting `locale` cannot change wording.
+   */
+  locale?: string;
+  /**
    * Called after an item is added, live or sample. With a drawer mounted, the drawer also opens. Without one, such as
    * on a site with a cart page, use it to confirm the add.
    */
   onItemAdded?: (item: AddedCartItem) => void;
+  /** Called for every cart change and failure, such as for analytics. See `CommerceEvent`. */
+  onEvent?: (event: CommerceEvent) => void;
 }
+
+/** A cart operation that can fail. */
+export type CommerceOperation = 'add' | 'change-quantity' | 'remove' | 'discount' | 'refresh' | 'checkout';
+
+/**
+ * What `onEvent` reports. Live changes are reported once the server returns the updated cart; sample changes have
+ * `isSample: true` and never reach the store. New event types may be added, so ignore types you do not handle.
+ */
+export type CommerceEvent =
+  | {
+      readonly type: 'item-added';
+      /** `null` for a sample product, which is not a SKU. */
+      readonly skuId: string | null;
+      readonly name: string;
+      readonly quantity: number;
+      readonly isSample: boolean;
+    }
+  | {
+      readonly type: 'quantity-changed';
+      readonly itemId: string;
+      readonly quantity: number;
+      readonly isSample: boolean;
+    }
+  | { readonly type: 'item-removed'; readonly itemId: string; readonly isSample: boolean }
+  | { readonly type: 'discount-applied'; readonly code: string }
+  /** Sent just before the browser leaves for checkout. */
+  | { readonly type: 'checkout-started'; readonly cartId: string }
+  /** `message` is the one the cart shows. */
+  | { readonly type: 'error'; readonly operation: CommerceOperation; readonly message: string };
 
 /** The item passed to `onItemAdded`. */
 export interface AddedCartItem {
@@ -93,6 +144,35 @@ type PublicConfiguration =
   | ({ state: 'ready' } & Pick<StorefrontConfig, 'cartScope' | 'currencyCode'>);
 
 const CONNECTING_FAILURE_GRACE_MS = 60_000;
+
+/** `locale` as a canonical tag, or `en-US` when it is not a valid one, so one bad prop cannot break every price. */
+function resolveLocale(locale: string | undefined): string {
+  if (!locale) return 'en-US';
+  try {
+    return Intl.getCanonicalLocales(locale)[0] ?? 'en-US';
+  } catch {
+    if (process.env.NODE_ENV !== 'production')
+      console.warn(`[gd-commerce-storefront] "${locale}" is not a valid locale, so prices use en-US.`);
+    return 'en-US';
+  }
+}
+
+const logCallbackFailure = (cause: unknown): void =>
+  console.error('[gd-commerce-storefront] A storefront callback threw.', cause);
+
+/**
+ * Runs a host callback so that its failure cannot fail the cart operation that triggered it. An async callback is
+ * not awaited; its rejection is logged instead of becoming an unhandled rejection.
+ */
+function callHost(callback: () => unknown): void {
+  try {
+    const result: unknown = callback();
+    if (typeof (result as PromiseLike<unknown> | null)?.then === 'function')
+      Promise.resolve(result).catch(logCallbackFailure);
+  } catch (cause: unknown) {
+    logCallbackFailure(cause);
+  }
+}
 
 async function loadConfig(signal: AbortSignal): Promise<PublicConfiguration> {
   const config = await request<Record<string, unknown>>('/config', { signal });
@@ -120,8 +200,11 @@ export function CommerceProvider({
   productPath = '/products',
   checkoutSuccessPath,
   theme = {},
+  locale,
   onItemAdded,
+  onEvent,
 }: CommerceProviderProps): ReactElement {
+  const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
   const config = useQuery({
     retry: false,
     queryKey: ['commerce', 'configuration'],
@@ -158,7 +241,9 @@ export function CommerceProvider({
         void config.refetch();
       }}
       theme={theme}
+      locale={resolvedLocale}
       onItemAdded={onItemAdded}
+      onEvent={onEvent}
     >
       {children}
     </BoundCommerceProvider>
@@ -172,9 +257,13 @@ function BoundCommerceProvider({
   connectionError,
   retryConnection,
   theme,
+  locale,
   onItemAdded,
+  onEvent,
 }: {
+  locale: string;
   onItemAdded?: (item: AddedCartItem) => void;
+  onEvent?: (event: CommerceEvent) => void;
   connection: CommerceContextValue['connection'];
   connectionError: string | null;
   retryConnection: () => void;
@@ -203,8 +292,16 @@ function BoundCommerceProvider({
   const alive = useRef<boolean>(true);
   const opener = useRef<HTMLElement | null>(null);
 
-  const added = useRef(onItemAdded);
-  added.current = onItemAdded;
+  const callbacks = useRef({ onItemAdded, onEvent });
+  callbacks.current = { onItemAdded, onEvent };
+  /** Reports an event to the host. A callback that throws is logged, and the operation still succeeds. */
+  function emit(event: CommerceEvent): void {
+    if (event.type === 'item-added') {
+      const { name, quantity, isSample } = event;
+      callHost(() => callbacks.current.onItemAdded?.({ name, quantity, isSample }));
+    }
+    callHost(() => callbacks.current.onEvent?.(event));
+  }
   const drawers = useRef<number>(0);
   const registerDrawer = useCallback((): (() => void) => {
     drawers.current += 1;
@@ -283,7 +380,11 @@ function BoundCommerceProvider({
 
   // All mutations share this queue, including the first add that creates the order.
   // Never retry writes automatically: a failed response can follow a successful write.
-  function run(operation: () => Promise<void>, loading: boolean = false): Promise<boolean> {
+  function run(
+    kind: CommerceOperation,
+    operation: () => Promise<void>,
+    loading: boolean = false,
+  ): Promise<boolean> {
     const task: Promise<boolean> = queue.current.then(async (): Promise<boolean> => {
       if (!isActive()) return false;
       setPending(true);
@@ -298,7 +399,11 @@ function BoundCommerceProvider({
         else await operation();
         return isActive();
       } catch (cause: unknown) {
-        if (isActive()) setError(message(cause));
+        if (isActive()) {
+          const text: string = message(cause);
+          setError(text);
+          emit({ type: 'error', operation: kind, message: text });
+        }
         return false;
       } finally {
         if (isActive()) {
@@ -312,7 +417,7 @@ function BoundCommerceProvider({
   }
 
   function refresh(): Promise<boolean> {
-    return run(hydrate, true);
+    return run('refresh', hydrate, true);
   }
 
   // The subscription belongs to a store connection; render-local operations use that session.
@@ -347,7 +452,7 @@ function BoundCommerceProvider({
 
   function addItem(item: AddToCartItemInput): Promise<boolean> {
     rememberOpener();
-    return run(async (): Promise<void> => {
+    return run('add', async (): Promise<void> => {
       if (!item.skuId || !item.name || !Number.isInteger(item.quantity) || item.quantity < 1)
         throw new Error('Select a product variant and a positive quantity.');
       await hydrate();
@@ -371,12 +476,18 @@ function BoundCommerceProvider({
       commit(result.cart);
       setAnnouncement(`${item.name} added to your cart.`);
       openDrawer();
-      added.current?.({ name: item.name, quantity: item.quantity, isSample: false });
+      emit({
+        type: 'item-added',
+        skuId: item.skuId,
+        name: item.name,
+        quantity: item.quantity,
+        isSample: false,
+      });
     });
   }
 
-  function mutateItem(itemId: string, method: string, quantity?: number): Promise<boolean> {
-    return run(async (): Promise<void> => {
+  function mutateItem(itemId: string, method: 'PATCH' | 'DELETE', quantity?: number): Promise<boolean> {
+    return run(method === 'DELETE' ? 'remove' : 'change-quantity', async (): Promise<void> => {
       await hydrate();
       if (!isActive()) return;
       if (!id.current || !currentCart.current?.lineItems?.some((item) => item.id === itemId))
@@ -395,11 +506,16 @@ function BoundCommerceProvider({
       if (!isActive()) return;
       commit(result.cart);
       setAnnouncement(method === 'DELETE' ? 'Item removed from cart.' : 'Cart quantity updated.');
+      emit(
+        method === 'DELETE'
+          ? { type: 'item-removed', itemId, isSample: false }
+          : { type: 'quantity-changed', itemId, quantity: quantity ?? 0, isSample: false },
+      );
     });
   }
 
   function applyDiscount(code: string): Promise<boolean> {
-    return run(async (): Promise<void> => {
+    return run('discount', async (): Promise<void> => {
       await hydrate();
       if (!isActive()) return;
       if (!id.current || !code.trim()) throw new Error('Add an item and enter a promotion code.');
@@ -418,11 +534,12 @@ function BoundCommerceProvider({
       if (!isActive()) return;
       commit(result.cart);
       setAnnouncement('Promotion codes updated.');
+      emit({ type: 'discount-applied', code: code.trim() });
     });
   }
 
   function checkout(): Promise<boolean> {
-    return run(async (): Promise<void> => {
+    return run('checkout', async (): Promise<void> => {
       if (!config.checkoutSuccessPath) throw new Error('Checkout has not been enabled for this store.');
       await hydrate();
       if (!isActive()) return;
@@ -444,6 +561,7 @@ function BoundCommerceProvider({
         throw new Error('Commerce did not return a checkout URL.');
       const url: URL = new URL(session.url, origin);
       if (url.protocol !== 'https:') throw new Error('Commerce returned an invalid checkout URL.');
+      emit({ type: 'checkout-started', cartId: id.current });
       window.location.assign(url.href);
     });
   }
@@ -456,6 +574,7 @@ function BoundCommerceProvider({
         connectionError,
         retryConnection,
         theme,
+        locale,
         cart,
         open,
         setOpen: (next) => {
@@ -483,10 +602,11 @@ function BoundCommerceProvider({
         <SampleCartProvider
           enabled={connection === 'unbound'}
           announce={setAnnouncement}
+          emit={emit}
           onAdd={(name) => {
             setAnnouncement(`${name} added to your sample cart.`);
             openDrawer();
-            added.current?.({ name, quantity: 1, isSample: true });
+            emit({ type: 'item-added', skuId: null, name, quantity: 1, isSample: true });
           }}
         >
           {children}
