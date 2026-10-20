@@ -140,7 +140,7 @@ describe('composable cart', () => {
       ),
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Open' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Your cart' });
+    const dialog = await screen.findByRole('dialog', { name: /^Your cart/ });
     expect(dialog).toHaveClass('host-panel');
     // Without a CartDescription the dialog names no description, so Radix has nothing to warn about.
     expect(dialog).not.toHaveAttribute('aria-describedby');
@@ -165,7 +165,7 @@ describe('composable cart', () => {
     await waitFor(() => expect(within(dialog).getAllByTestId('line')).toHaveLength(1));
     expect(within(dialog).getByRole('button', { name: 'Decrease quantity of Mug' })).toBeEnabled();
 
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Proceed to Checkout' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Proceed to checkout' }));
     await waitFor(() => expect(assign).toHaveBeenCalledWith('https://pay.test/session'));
     await userEvent.click(within(dialog).getByRole('button', { name: 'Close cart' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -187,7 +187,7 @@ describe('composable cart', () => {
       ),
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Open' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Your cart' });
+    const dialog = await screen.findByRole('dialog', { name: /^Your cart/ });
     await waitFor(() => expect(dialog).toHaveAccessibleDescription('Review your items before checkout.'));
     expect(warn).not.toHaveBeenCalled();
   });
@@ -219,7 +219,7 @@ describe('composable cart', () => {
         </Routes>,
       ),
     );
-    const title = await screen.findByRole('heading', { level: 2, name: 'Your cart' });
+    const title = await screen.findByRole('heading', { level: 2, name: /^Your cart/ });
     expect(title.closest('section')).toHaveClass('host-page');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Close cart' })).not.toBeInTheDocument();
@@ -260,7 +260,7 @@ describe('composable cart', () => {
         </>,
       ),
     );
-    const title = await screen.findByRole('heading', { level: 2, name: 'Sample cart' });
+    const title = await screen.findByRole('heading', { level: 2, name: /^Sample cart/ });
     const page = title.closest('section') as HTMLElement;
     expect(page).toHaveAttribute('data-commerce-source', 'sample');
     expect(within(page).getByRole('link', { name: 'Browse products' })).toHaveAttribute('href', '/shop');
@@ -336,7 +336,7 @@ describe('composable cart', () => {
       ),
     );
     await waitFor(() => expect(screen.getByTestId('count')).toHaveTextContent('3'));
-    expect(screen.getByRole('button', { name: 'Cart 3' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Cart, 3 items' })).toBeEnabled();
   });
 
   it('names the missing root when parts are misplaced', () => {
@@ -542,7 +542,7 @@ describe('composable cart', () => {
       ),
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Add to cart' }));
-    expect(await screen.findByRole('dialog', { name: 'Your cart' })).toBeVisible();
+    expect(await screen.findByRole('dialog', { name: /^Your cart/ })).toBeVisible();
     expect(added).toHaveBeenCalledTimes(2);
   });
 
@@ -573,8 +573,9 @@ describe('composable cart', () => {
       </QueryClientProvider>,
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Open' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Your cart' });
-    expect(dialog).toHaveAccessibleDescription('Review your items before checkout.');
+    const dialog = await screen.findByRole('dialog', { name: /^Your cart \([1-9][0-9]*\)$/ });
+    // Only the sample drawer is described, to say nothing can be bought.
+    expect(dialog).not.toHaveAttribute('aria-describedby');
     await within(dialog).findByRole('heading', { level: 3, name: 'Shirt' });
     // The reset skips part elements, so the list's divider reaches each line.
     expect(getComputedStyle(within(dialog).getAllByRole('listitem')[0]).borderBottomWidth).not.toBe('0px');
@@ -710,3 +711,26 @@ class Boundary extends Component<{ errors: unknown[]; children: ReactNode }, { f
     return this.state.failed ? null : this.props.children;
   }
 }
+
+describe('packaged drawer', () => {
+  it('names the cart button with the count, and continues shopping by closing the drawer', async () => {
+    mockStore();
+    render(
+      app(
+        <>
+          <CartButton />
+          <CartDrawer />
+        </>,
+      ),
+    );
+    const button = await screen.findByRole('button', { name: 'Cart, 3 items' });
+    expect(button).toHaveTextContent(/^3$/);
+    await userEvent.click(button);
+    const dialog = await screen.findByRole('dialog', { name: 'Your cart (3)' });
+    expect(within(dialog).getByText('Shipping, taxes & discounts')).toBeVisible();
+    expect(within(dialog).getByText('Size: M')).toBeVisible();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Continue shopping' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(button).toHaveFocus();
+  });
+});

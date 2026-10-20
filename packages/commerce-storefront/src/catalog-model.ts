@@ -259,3 +259,15 @@ export function getProductAttributes(skuGroup: SKUGroup | null | undefined): Sto
 export function getProductName(skuGroup: SKUGroup): string {
   return skuGroup.label ?? skuGroup.name ?? 'Product';
 }
+
+/** Whether `compareAt` is above `price`, so the price is a sale price. */
+export function isOnSale(price: number | null | undefined, compareAt: number | null | undefined): boolean {
+  return typeof price === 'number' && typeof compareAt === 'number' && compareAt > price;
+}
+
+/** The SKU's attribute value names, or `null` when the response does not include them. */
+export function getSkuAttributeValueNames(sku: SKU | null | undefined): string[] | null {
+  const edges = sku?.attributeValues?.edges;
+  if (!edges) return null;
+  return edges.flatMap((edge) => (edge?.node?.name ? [edge.node.name] : []));
+}

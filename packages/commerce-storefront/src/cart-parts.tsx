@@ -10,8 +10,8 @@ import {
   useState,
 } from 'react';
 import { Link } from 'react-router';
-import { buttonClass } from './cart';
 import { type CartItemState, type CartState, useCart } from './cart-state';
+import { buttonClass, errorActionClass, errorNoticeClass, secondaryButtonClass } from './class-names';
 import { CartDrawerRegistry, useCommerce, useMoney } from './commerce-provider';
 import {
   hasChildren,
@@ -170,7 +170,7 @@ export function CartDrawerRoot({ children, className }: CartDrawerRootProps): Re
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
         <StorefrontSurface>
-          <Dialog.Overlay className='fixed inset-0 z-40 bg-neutral-950/40' />
+          <Dialog.Overlay className='fixed inset-0 z-40 bg-neutral-950/40 motion-safe:animate-commerce-fade-in' />
           {/* Positions the panel, so the panel itself carries no package layout that host classes would lose to. */}
           <div className='pointer-events-none fixed inset-0 z-50 flex justify-end'>
             <Dialog.Content
@@ -193,14 +193,24 @@ export function CartDrawerRoot({ children, className }: CartDrawerRootProps): Re
   );
 }
 
-/** "Your cart", or "Sample cart" before a store is connected, as an H2. In the drawer it names the dialog. */
+/**
+ * "Your cart", or "Sample cart" before a store is connected, as an H2, with the item count once there are items.
+ * In the drawer it names the dialog.
+ */
 export function CartTitle({ className, children }: CartTextPartProps): ReactElement {
-  const { isSample } = useCartInternal('CartTitle');
+  const { isSample, itemCount } = useCartInternal('CartTitle');
   const Heading = useContext(CartDrawerContext) ? Dialog.Title : 'h2';
   return (
     <div {...partProps('cart-title', className)}>
-      <Heading className='text-2xl font-semibold'>
-        {renderLabel(children, { isSample }, isSample ? 'Sample cart' : 'Your cart')}
+      <Heading className='text-lg font-semibold tracking-tight'>
+        {renderLabel(
+          children,
+          { isSample },
+          <>
+            {isSample ? 'Sample cart' : 'Your cart'}
+            {itemCount > 0 && <span className='font-normal text-commerce-muted'> ({itemCount})</span>}
+          </>,
+        )}
       </Heading>
     </div>
   );
@@ -222,9 +232,9 @@ export function CartDescription({ className, children }: CartTextPartProps): Rea
   return (
     <div {...partProps('cart-description', className)}>
       {drawer ? (
-        <Dialog.Description className='text-sm text-neutral-600'>{text}</Dialog.Description>
+        <Dialog.Description className='text-sm text-commerce-muted'>{text}</Dialog.Description>
       ) : (
-        <p className='text-sm text-neutral-600'>{text}</p>
+        <p className='text-sm text-commerce-muted'>{text}</p>
       )}
     </div>
   );
@@ -237,10 +247,18 @@ export function CartClose({ className }: CartPartProps): ReactElement | null {
   return (
     <div {...partProps('cart-close', className)}>
       <Dialog.Close
-        className='min-h-11 min-w-11 rounded-lg border border-neutral-400 bg-white px-3 text-neutral-900 focus-visible:outline focus-visible:outline-2'
+        className='inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-commerce-muted transition-colors hover:bg-commerce-tint hover:text-inherit focus-visible:outline focus-visible:outline-2 focus-visible:outline-current'
         aria-label='Close cart'
       >
-        ✕
+        <svg aria-hidden='true' viewBox='0 0 20 20' className='h-5 w-5'>
+          <path
+            d='M5 5l10 10M15 5L5 15'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='1.5'
+            strokeLinecap='round'
+          />
+        </svg>
       </Dialog.Close>
     </div>
   );
@@ -256,16 +274,16 @@ export function CartNotices({ className }: CartPartProps): ReactElement | null {
     <div {...partProps('cart-notices', className)}>
       <div className='flex flex-col gap-4'>
         {storageWarning && (
-          <p role='status' className='text-sm text-amber-800'>
+          <p role='status' className='rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900'>
             {storageWarning}
           </p>
         )}
         {error && (
-          <div role='alert' className='rounded-lg bg-red-50 p-4 text-red-800'>
+          <div role='alert' className={errorNoticeClass}>
             <p>{error}</p>
             <button
               type='button'
-              className='mt-2 min-h-11 bg-red-50 text-red-800 underline disabled:cursor-not-allowed'
+              className={errorActionClass}
               disabled={action === 'refresh'}
               aria-disabled={locked}
               aria-busy={action === 'refresh'}
@@ -320,7 +338,11 @@ export function CartItems({ className, children }: CartItemsProps): ReactElement
   }, [items.length, has]);
   return (
     <CartItemsRegistry.Provider value={registry.register}>
-      {hydrating && <p role='status'>Loading your cart…</p>}
+      {hydrating && (
+        <p role='status' className='py-4 text-sm text-commerce-muted'>
+          Loading your cart…
+        </p>
+      )}
       {/* A `<ul>` needs a package margin and padding reset, which would beat host classes here. */}
       <div role='list' {...partProps('cart-items', className)}>
         {items.map((item, index) => (
@@ -361,7 +383,7 @@ export function CartItemImage({ className }: CartPartProps): ReactElement | null
   if (!imageUrl) return null;
   return (
     <div {...partProps('cart-item-image', className)}>
-      <img src={imageUrl} alt='' className='h-20 w-20 rounded-lg bg-neutral-100 object-cover' />
+      <img src={imageUrl} alt='' className='h-20 w-20 bg-commerce-tint object-cover' />
     </div>
   );
 }
@@ -371,22 +393,25 @@ export function CartItemName({ className }: CartPartProps): ReactElement {
   const { name } = useCartItemInternal('CartItemName');
   return (
     <div {...partProps('cart-item-name', className)}>
-      <h3 className='font-semibold'>{name}</h3>
+      <h3 className='break-words text-sm font-medium leading-6'>{name}</h3>
     </div>
   );
 }
 
-/** The selected options, one per line, such as "Color: Blue". Renders nothing without options. */
+/** The selected options on one line, such as "Color: Blue · Size: M". Renders nothing without options. */
 export function CartItemOptions({ className }: CartPartProps): ReactElement | null {
   const { options } = useCartItemInternal('CartItemOptions');
   if (!options.length) return null;
   return (
     <div {...partProps('cart-item-options', className)}>
-      {options.map((option) => (
-        <p key={`${option.attribute}:${option.values.join(',')}`} className='text-sm text-neutral-600'>
-          {option.attribute}: {option.values.join(', ')}
-        </p>
-      ))}
+      <p className='text-sm text-commerce-muted'>
+        {options.map((option, index) => (
+          <span key={`${option.attribute}:${option.values.join(',')}`}>
+            {index > 0 && ' · '}
+            {option.attribute}: {option.values.join(', ')}
+          </span>
+        ))}
+      </p>
     </div>
   );
 }
@@ -397,13 +422,30 @@ export function CartItemPrice({ className }: CartPartProps): ReactElement {
   const money = useMoney();
   return (
     <div {...partProps('cart-item-price', className)}>
-      <p className='text-sm'>{subtotal === null ? 'Price unavailable' : money(subtotal, currency)}</p>
+      <p className='text-sm leading-6 tabular-nums'>
+        {subtotal === null ? 'Price unavailable' : money(subtotal, currency)}
+      </p>
     </div>
   );
 }
 
+// Transparent, so the stepper reads in the drawer and on a cart page over any host background.
 const stepperButtonClass: string =
-  'min-h-11 min-w-11 rounded-lg bg-white text-neutral-900 focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-600';
+  'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-commerce-tint focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:text-commerce-muted disabled:hover:bg-transparent';
+
+function StepperIcon({ plus }: { plus?: boolean }): ReactElement {
+  return (
+    <svg aria-hidden='true' viewBox='0 0 16 16' className='h-4 w-4'>
+      <path
+        d={plus ? 'M3.5 8h9M8 3.5v9' : 'M3.5 8h9'}
+        fill='none'
+        stroke='currentColor'
+        strokeWidth='1.5'
+        strokeLinecap='round'
+      />
+    </svg>
+  );
+}
 
 /** Decrease and increase buttons around the line's quantity. */
 export function CartItemQuantity({ className }: CartPartProps): ReactElement {
@@ -411,7 +453,7 @@ export function CartItemQuantity({ className }: CartPartProps): ReactElement {
   const { action, locked, run, changeQuantity } = useCartInternal('CartItemQuantity');
   return (
     <div {...partProps('cart-item-quantity', className)}>
-      <div className='flex items-center rounded-lg border border-neutral-300'>
+      <div className='inline-flex items-center rounded-lg border border-commerce-edge'>
         <button
           type='button'
           className={stepperButtonClass}
@@ -422,9 +464,9 @@ export function CartItemQuantity({ className }: CartPartProps): ReactElement {
           aria-busy={action === `decrease:${id}`}
           onClick={() => run(`decrease:${id}`, () => changeQuantity(id, quantity - 1))}
         >
-          −
+          <StepperIcon />
         </button>
-        <span className='min-w-8 text-center'>
+        <span className='min-w-8 text-center text-sm tabular-nums'>
           <span className='sr-only'>Quantity: </span>
           {quantity}
         </span>
@@ -438,7 +480,7 @@ export function CartItemQuantity({ className }: CartPartProps): ReactElement {
           aria-busy={action === `increase:${id}`}
           onClick={() => run(`increase:${id}`, () => changeQuantity(id, quantity + 1))}
         >
-          +
+          <StepperIcon plus />
         </button>
       </div>
     </div>
@@ -453,7 +495,7 @@ export function CartItemRemove({ className, children }: CartActionPartProps): Re
     <div {...partProps('cart-item-remove', className)}>
       <button
         type='button'
-        className='min-h-11 bg-white px-2 text-sm text-neutral-900 underline focus-visible:outline focus-visible:outline-2 disabled:cursor-not-allowed disabled:text-neutral-600'
+        className='min-h-11 rounded-sm px-1 text-sm text-commerce-muted underline-offset-4 transition-colors hover:text-inherit hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:hover:no-underline'
         disabled={action === `remove:${id}` || !id}
         aria-disabled={locked || !id}
         aria-busy={action === `remove:${id}`}
@@ -468,18 +510,20 @@ export function CartItemRemove({ className, children }: CartActionPartProps): Re
 }
 
 const packagedItem: ReactElement = (
-  <CartItemRoot className='py-5 first:pt-0'>
-    <div className='flex gap-4'>
-      <CartItemImage />
-      <div className='min-w-0 flex-1'>
-        <CartItemName />
-        <CartItemOptions />
-        <CartItemPrice className='mt-1' />
+  <CartItemRoot className='flex gap-4 py-5'>
+    <CartItemImage className='shrink-0' />
+    <div className='flex min-w-0 flex-1 flex-col'>
+      <div className='flex items-start justify-between gap-4'>
+        <div className='min-w-0'>
+          <CartItemName />
+          <CartItemOptions />
+        </div>
+        <CartItemPrice className='shrink-0' />
       </div>
-    </div>
-    <div className='mt-4 flex items-center justify-between gap-2'>
-      <CartItemQuantity />
-      <CartItemRemove />
+      <div className='mt-3 flex items-center justify-between gap-2'>
+        <CartItemQuantity />
+        <CartItemRemove />
+      </div>
     </div>
   </CartItemRoot>
 );
@@ -499,11 +543,25 @@ export function CartEmpty({ className, children }: CartEmptyProps): ReactElement
         children
       ) : (
         <>
-          <p className='text-xl font-medium'>Your cart is empty</p>
-          <p className='mt-2 text-neutral-600'>
-            {isSample ? 'Add a sample product to try the cart.' : 'Find something you love in the shop.'}
+          <div className='mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-commerce-tint text-commerce-muted'>
+            <svg aria-hidden='true' viewBox='0 0 20 20' className='h-6 w-6'>
+              <path
+                d='M4.5 6.5h11l-.8 9.1a1.5 1.5 0 0 1-1.5 1.4H6.8a1.5 1.5 0 0 1-1.5-1.4L4.5 6.5ZM7.5 6.5V6a2.5 2.5 0 0 1 5 0v.5'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='1.5'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              />
+            </svg>
+          </div>
+          <p className='text-base font-semibold'>Your cart is empty</p>
+          <p className='mt-1 text-sm text-commerce-muted'>
+            {isSample
+              ? 'Add a sample product to try the cart.'
+              : 'Add something you love and it will show up here.'}
           </p>
-          <Link className={`${buttonClass} mt-6`} to={catalogPath} onClick={close}>
+          <Link className={`${secondaryButtonClass} mt-6`} to={catalogPath} onClick={close}>
             Browse products
           </Link>
         </>
@@ -530,10 +588,10 @@ export function CartSubtotal({ className }: CartPartProps): ReactElement | null 
   if (!items.length || subtotal === null) return null;
   return (
     <div {...partProps('cart-subtotal', className)}>
-      <dl className='space-y-2 text-sm'>
-        <div className='flex justify-between'>
+      <dl>
+        <div className='flex justify-between gap-4 font-semibold'>
           <dt>{isSample ? 'Sample subtotal' : 'Subtotal'}</dt>
-          <dd>{money(subtotal, currency)}</dd>
+          <dd className='tabular-nums'>{money(subtotal, currency)}</dd>
         </div>
       </dl>
     </div>
@@ -541,7 +599,7 @@ export function CartSubtotal({ className }: CartPartProps): ReactElement | null 
 }
 
 /**
- * "Shipping, taxes, and discounts are calculated at checkout." Has the stable
+ * A row under the subtotal: "Shipping, taxes & discounts", "Calculated at checkout". Has the stable
  * `commerce-cart-checkout-adjustments-note` class. Renders nothing for samples or an empty cart.
  */
 export function CartCheckoutNote({ className }: CartPartProps): ReactElement | null {
@@ -550,7 +608,10 @@ export function CartCheckoutNote({ className }: CartPartProps): ReactElement | n
   // The stable class is on the outer element, so hiding it also removes the host's spacing.
   return (
     <div {...partProps('cart-checkout-note', 'commerce-cart-checkout-adjustments-note', className)}>
-      <p className='text-sm text-neutral-600'>Shipping, taxes, and discounts are calculated at checkout.</p>
+      <dl className='flex justify-between gap-4 text-sm text-commerce-muted'>
+        <dt>Shipping, taxes &amp; discounts</dt>
+        <dd>Calculated at checkout</dd>
+      </dl>
     </div>
   );
 }
@@ -565,9 +626,11 @@ export function CartCheckout({ className, children }: CartActionPartProps): Reac
   if (!items.length) return null;
   let content: ReactElement;
   if (isSample)
-    content = <p className='text-sm text-neutral-600'>Example total in USD. Checkout is not set up yet.</p>;
+    content = (
+      <p className='text-sm text-commerce-muted'>Example total in USD. Checkout is not set up yet.</p>
+    );
   else if (!checkoutEnabled)
-    content = <p className='text-sm text-neutral-600'>Checkout is not available yet.</p>;
+    content = <p className='text-sm text-commerce-muted'>Checkout is not available yet.</p>;
   else
     content = (
       <button
@@ -581,33 +644,64 @@ export function CartCheckout({ className, children }: CartActionPartProps): Reac
         {renderLabel(
           children,
           { busy: action === 'checkout' },
-          action === 'checkout' ? 'Opening checkout…' : 'Proceed to Checkout',
+          action === 'checkout' ? 'Opening checkout…' : 'Proceed to checkout',
         )}
       </button>
     );
   return <div {...partProps('cart-checkout', className)}>{content}</div>;
 }
 
+/**
+ * "Continue shopping": closes the drawer, or on a cart page links to the catalog. Renders nothing for an empty cart,
+ * whose `CartEmpty` links to the catalog.
+ */
+export function CartContinueShopping({ className, children }: CartTextPartProps): ReactElement | null {
+  const { items, isSample, catalogPath } = useCartInternal('CartContinueShopping');
+  const inDrawer: boolean = !!useContext(CartDrawerContext);
+  if (!items.length) return null;
+  const label: ReactNode = renderLabel(children, { isSample }, 'Continue shopping');
+  const linkClass: string =
+    'inline-flex min-h-11 w-full items-center justify-center rounded-lg px-5 py-2 text-sm font-medium transition-colors hover:bg-commerce-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current';
+  return (
+    <div {...partProps('cart-continue-shopping', className)}>
+      {inDrawer ? (
+        <Dialog.Close className={linkClass}>{label}</Dialog.Close>
+      ) : (
+        <Link className={linkClass} to={catalogPath}>
+          {label}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+// The live drawer needs no description; the sample one says nothing can be bought.
+function SampleDescription({ className }: CartPartProps): ReactElement | null {
+  const { isSample } = useCartInternal('CartDescription');
+  return isSample ? <CartDescription className={className} /> : null;
+}
+
 /** The packaged cart drawer. Compose `CartDrawerRoot` and the cart parts for a custom drawer. */
 export function CartDrawer(): ReactElement {
   return (
-    <CartDrawerRoot className='flex w-full max-w-lg flex-col bg-white text-neutral-900 shadow-xl'>
-      <div className='flex items-start justify-between border-b border-neutral-200 p-6'>
-        <div>
+    <CartDrawerRoot className='flex w-full max-w-md flex-col bg-white text-neutral-900 shadow-2xl motion-safe:animate-commerce-drawer-in'>
+      <div className='flex items-start justify-between gap-4 border-b border-commerce-line py-3 pl-6 pr-3'>
+        <div className='min-w-0 pt-2.5'>
           <CartTitle />
-          <CartDescription className='mt-1' />
+          <SampleDescription className='mt-0.5' />
         </div>
         <CartClose />
       </div>
-      <div className='flex-1 overflow-y-auto p-6'>
-        <CartNotices className='mb-4' />
-        <CartItems className='divide-y divide-neutral-200' />
-        <CartEmpty className='py-16 text-center' />
+      <div className='flex-1 overflow-y-auto px-6'>
+        <CartNotices className='mt-6' />
+        <CartItems className='divide-y divide-commerce-line' />
+        <CartEmpty className='py-20 text-center' />
       </div>
-      <CartSummary className='border-t border-neutral-200 p-6'>
+      <CartSummary className='border-t border-commerce-line px-6 pb-6 pt-4'>
         <CartSubtotal />
-        <CartCheckoutNote className='mt-3' />
-        <CartCheckout />
+        <CartCheckoutNote className='mt-1' />
+        <CartCheckout className='mt-5' />
+        <CartContinueShopping className='mt-2' />
       </CartSummary>
     </CartDrawerRoot>
   );

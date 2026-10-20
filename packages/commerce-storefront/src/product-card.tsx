@@ -9,15 +9,18 @@ import {
   useState,
 } from 'react';
 import { Link } from 'react-router';
-import { AddToCartButton, type AddToCartLabelState, buttonClass } from './cart';
+import { AddToCart, type AddToCartLabelState } from './cart';
 import {
   getPrimaryImageUrl,
   getProductAttributes,
   getProductName,
   getSingleMatchedSku,
+  isOnSale,
+  type PriceRange,
   type SKU,
   type SKUGroup,
 } from './catalog-model';
+import { saleBadgeClass, secondaryButtonClass } from './class-names';
 import { useCommerce, useMoney } from './commerce-provider';
 import { type PartLabel, type PartRegistry, partProps, renderLabel, usePartRegistry } from './part';
 import { type SampleProduct, useSampleCart } from './sample-cart';
@@ -48,7 +51,7 @@ export function ProductImage({ url, name, className = '' }: ProductImageProps): 
     />
   ) : (
     <div
-      className={`flex h-full min-h-44 items-center justify-center p-6 text-center ${className}`}
+      className={`flex h-full min-h-44 items-center justify-center bg-commerce-tint p-6 text-center text-sm text-commerce-muted ${className}`}
       role='img'
       aria-label={`${name}: image unavailable`}
     >
@@ -185,17 +188,17 @@ export function ProductCardImage({ className }: ProductCardPartProps): ReactElem
           to={card.href}
           tabIndex={card.imageLinked ? undefined : -1}
           aria-hidden={card.imageLinked ? undefined : 'true'}
-          className='block aspect-square overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4'
+          className='block aspect-square overflow-hidden bg-commerce-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current'
         >
           <ProductImage
             url={getPrimaryImageUrl(card.product)}
             name={card.name}
-            className='motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-105'
+            className='motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out motion-safe:group-hover:scale-[1.03]'
           />
         </Link>
       ) : (
-        <div aria-hidden='true' className='flex aspect-square items-center justify-center bg-neutral-100'>
-          <div className='h-20 w-20 rounded-lg border border-neutral-300' />
+        <div aria-hidden='true' className='flex aspect-square items-center justify-center bg-commerce-tint'>
+          <div className='h-16 w-16 rounded-full border border-commerce-line' />
         </div>
       )}
     </div>
@@ -208,10 +211,10 @@ export function ProductCardTitle({ className }: ProductCardPartProps): ReactElem
   useEffect(() => (href ? register(titleLink) : undefined), [href, register]);
   return (
     <div {...partProps('product-card-title', className)}>
-      <h2 className='break-words text-2xl font-semibold leading-tight'>
+      <h2 className='break-words text-base font-medium leading-6'>
         {href ? (
           <Link
-            className='rounded text-inherit hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
+            className='rounded-sm text-inherit underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current'
             to={href}
           >
             {name}
@@ -230,30 +233,101 @@ export function ProductCardDescription({ className }: ProductCardPartProps): Rea
   if (!product?.description) return null;
   return (
     <div {...partProps('product-card-description', className)}>
-      <p className='line-clamp-3 text-sm leading-6'>{product.description}</p>
+      <p className='line-clamp-2 text-sm leading-6 text-commerce-muted'>{product.description}</p>
     </div>
   );
 }
 
-/** The product's price, or its price range when variants differ. */
+/** Whether the product's lowest compare-at price is above its lowest price. */
+export const isProductOnSale = (product: SKUGroup | null | undefined): boolean =>
+  isOnSale(product?.priceRange?.min, product?.compareAtPriceRange?.min);
+
+const formatRange = (
+  range: PriceRange | null | undefined,
+  money: (value: number) => string,
+): string | null => {
+  const min: number | null | undefined = range?.min;
+  const max: number | null | undefined = range?.max;
+  if (typeof min !== 'number') return null;
+  return `${money(min)}${typeof max === 'number' && max !== min ? ` – ${money(max)}` : ''}`;
+};
+
+/** "Sale" when the product's compare-at price is above its price. Renders nothing otherwise, or for samples. */
+export function ProductCardBadge({ className }: ProductCardPartProps): ReactElement | null {
+  const { product } = useProductCardInternal('ProductCardBadge');
+  if (!isProductOnSale(product)) return null;
+  return (
+    <div {...partProps('product-card-badge', className)}>
+      <span className={saleBadgeClass}>Sale</span>
+    </div>
+  );
+}
+
+/** The product's price, or its price range when variants differ, after the compare-at price when on sale. */
 export function ProductCardPrice({ className }: ProductCardPartProps): ReactElement {
   const card = useProductCardInternal('ProductCardPrice');
   const money = useMoney();
-  let text: string;
-  if (card.source === 'sample') text = money(card.sample.price, 'USD');
-  else {
-    const min: number | null | undefined = card.product.priceRange?.min;
-    const max: number | null | undefined = card.product.priceRange?.max;
-    text =
-      typeof min === 'number'
-        ? `${money(min)}${typeof max === 'number' && max !== min ? ` – ${money(max)}` : ''}`
-        : 'Price unavailable';
-  }
+  const text: string =
+    card.source === 'sample'
+      ? money(card.sample.price, 'USD')
+      : (formatRange(card.product.priceRange, money) ?? 'Price unavailable');
+  const compareAt: string | null =
+    card.source === 'live' && isProductOnSale(card.product)
+      ? formatRange(card.product.compareAtPriceRange, money)
+      : null;
   return (
     <div {...partProps('product-card-price', className)}>
-      <p className='text-lg font-semibold leading-7'>{text}</p>
+      <p className='flex flex-wrap items-baseline gap-x-2 text-sm leading-6 tabular-nums'>
+        <span className='font-medium'>{text}</span>
+        {compareAt && (
+          <>
+            <span className='sr-only'>Was</span>
+            <del className='text-commerce-muted'>{compareAt}</del>
+          </>
+        )}
+      </p>
     </div>
   );
+}
+
+/**
+ * Dots for the first attribute whose values all have a swatch from the provider's `getSwatch`, such as colors.
+ * Renders nothing without `getSwatch`, for samples, or when no attribute has swatches.
+ */
+export function ProductCardSwatches({ className }: ProductCardPartProps): ReactElement | null {
+  const { product } = useProductCardInternal('ProductCardSwatches');
+  const { getSwatch } = useCommerce();
+  if (!getSwatch || !product) return null;
+  for (const attribute of getProductAttributes(product)) {
+    const swatches = attribute.values.map((value) => ({
+      ...value,
+      background: getSwatch({ attribute: attribute.name, name: value.name, label: value.label }),
+    }));
+    if (!swatches.length || swatches.some((swatch) => !swatch.background)) continue;
+    const shown = swatches.slice(0, 5);
+    return (
+      <div {...partProps('product-card-swatches', className)}>
+        <p className='flex items-center gap-1.5 text-xs text-commerce-muted'>
+          <span className='sr-only'>
+            {swatches.length} {attribute.label.toLowerCase()} options:{' '}
+            {swatches.map((swatch) => swatch.label).join(', ')}
+          </span>
+          {shown.map((swatch) => (
+            <span
+              key={swatch.name}
+              aria-hidden='true'
+              className='h-3.5 w-3.5 rounded-full border border-commerce-edge'
+              style={{ background: swatch.background ?? undefined }}
+            />
+          ))}
+          {swatches.length > shown.length && (
+            <span aria-hidden='true'>+{swatches.length - shown.length}</span>
+          )}
+        </p>
+      </div>
+    );
+  }
+  return null;
 }
 
 /** What a card action label can depend on. Only `add` can be busy or sold out. */
@@ -299,14 +373,14 @@ function LiveAction({
   const hasVariants: boolean = getProductAttributes(product).length > 0;
   if (!hasVariants && selectedSku)
     return (
-      <AddToCartButton sku={selectedSku} name={name}>
+      <AddToCart sku={selectedSku} name={name} className={secondaryButtonClass} block>
         {/* Nothing from the host falls back to the button's own label. */}
         {(state: AddToCartLabelState) => renderLabel(label, { action: 'add', ...state }, null)}
-      </AddToCartButton>
+      </AddToCart>
     );
   const action = hasVariants ? 'choose-options' : 'view-product';
   return (
-    <Link className={buttonClass} to={href}>
+    <Link className={`${secondaryButtonClass} w-full`} to={href}>
       {renderLabel(
         label,
         { action, busy: false, soldOut: false },
@@ -329,38 +403,40 @@ function SampleAction({
   return custom === null ? (
     <button
       type='button'
-      className={buttonClass}
+      className={`${secondaryButtonClass} w-full`}
       aria-label={`Add ${sample.name} to sample cart`}
       onClick={() => add(sample.key)}
     >
       Add to cart
     </button>
   ) : (
-    <button type='button' className={buttonClass} onClick={() => add(sample.key)}>
+    <button type='button' className={`${secondaryButtonClass} w-full`} onClick={() => add(sample.key)}>
       {custom}
       <span className='sr-only'> ({sample.name}, sample)</span>
     </button>
   );
 }
 
-// In the catalog grid each card stretches to its row, and `mt-auto` lines up the price rows.
-export const packagedCardClass: string =
-  'flex min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200';
+// In the catalog grid each card stretches to its row, and `mt-auto` lines up the actions. No border or fill: the
+// card sits directly on the host's background.
+export const packagedCardClass: string = 'flex min-w-0 flex-col';
 
-/** The packaged card's parts, inside a root that has `packagedCardClass`. */
+/**
+ * The packaged card's parts, inside a root that has `packagedCardClass`. No description: cards scan better without
+ * it, and `ProductCardDescription` adds it back.
+ */
 export function PackagedCardParts(): ReactElement {
   return (
     <>
-      <ProductCardImage />
-      <div className='flex flex-1 flex-col p-6'>
+      <div className='relative'>
+        <ProductCardImage />
+        <ProductCardBadge className='pointer-events-none absolute left-3 top-3' />
+      </div>
+      <div className='flex flex-1 flex-col pt-3'>
         <ProductCardTitle />
-        <ProductCardDescription className='mt-3' />
-        <div className='mt-auto pt-6'>
-          <div className='flex flex-wrap items-end justify-between gap-4 border-t border-neutral-200 pt-5'>
-            <ProductCardPrice className='min-w-0 flex-1' />
-            <ProductCardAction className='max-w-full' />
-          </div>
-        </div>
+        <ProductCardPrice className='mt-0.5' />
+        <ProductCardSwatches className='mt-2' />
+        <ProductCardAction className='mt-auto pt-4' />
       </div>
     </>
   );

@@ -23,6 +23,8 @@ export interface CommerceContextValue {
   connectionError: string | null;
   retryConnection: () => void;
   theme: StorefrontTheme;
+  /** The host's swatch lookup, or `undefined` when options render as buttons. */
+  getSwatch: GetSwatch | undefined;
   config: StorefrontConfig;
   /** The BCP 47 locale that prices are formatted in, such as `en-US`. */
   locale: string;
@@ -78,7 +80,24 @@ export type StorefrontTheme = CSSProperties & {
   '--commerce-surface'?: string;
   '--commerce-text'?: string;
   '--commerce-radius'?: string;
+  /** Fills the Sale badge. Defaults to a red that white text reads on. */
+  '--commerce-sale'?: string;
+  /** Text on the Sale badge. Defaults to white. */
+  '--commerce-on-sale'?: string;
 };
+
+/** The attribute value a host can give a swatch, such as `{ attribute: 'color', name: 'forest', label: 'Forest' }`. */
+export interface SwatchValue {
+  readonly attribute: string;
+  readonly name: string;
+  readonly label: string;
+}
+
+/**
+ * Returns a CSS `background` for a value, such as `'#3f6352'` or `'url(/swatches/linen.png) center / cover'`, or
+ * nothing for no swatch. An attribute shows swatches only when every value has one.
+ */
+export type GetSwatch = (value: SwatchValue) => string | null | undefined;
 
 export interface CommerceProviderProps {
   children: ReactNode;
@@ -86,6 +105,11 @@ export interface CommerceProviderProps {
   productPath?: string;
   /** Applied to storefront surfaces and the portalled cart drawer. */
   theme?: StorefrontTheme;
+  /**
+   * Swatches for attribute values, off by default. Attributes whose values all have a swatch render as swatches on
+   * the product page, and cards show them as dots. See `GetSwatch`.
+   */
+  getSwatch?: GetSwatch;
   /** Set only when your server has enabled checkout and this return route exists. */
   checkoutSuccessPath?: string;
   /**
@@ -200,6 +224,7 @@ export function CommerceProvider({
   productPath = '/products',
   checkoutSuccessPath,
   theme = {},
+  getSwatch,
   locale,
   onItemAdded,
   onEvent,
@@ -241,6 +266,7 @@ export function CommerceProvider({
         void config.refetch();
       }}
       theme={theme}
+      getSwatch={getSwatch}
       locale={resolvedLocale}
       onItemAdded={onItemAdded}
       onEvent={onEvent}
@@ -257,10 +283,12 @@ function BoundCommerceProvider({
   connectionError,
   retryConnection,
   theme,
+  getSwatch,
   locale,
   onItemAdded,
   onEvent,
 }: {
+  getSwatch: GetSwatch | undefined;
   locale: string;
   onItemAdded?: (item: AddedCartItem) => void;
   onEvent?: (event: CommerceEvent) => void;
@@ -574,6 +602,7 @@ function BoundCommerceProvider({
         connectionError,
         retryConnection,
         theme,
+        getSwatch,
         locale,
         cart,
         open,

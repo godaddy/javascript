@@ -22,7 +22,7 @@ it('ships CSS that scopes every document selector to a commerce surface', async 
   expect(selectors.length).toBeGreaterThan(100);
   expect(selectors.filter((selector) => !selector.startsWith('.commerce-'))).toEqual([]);
   expect(selectors).toContain('.commerce-storefront .min-h-11');
-  expect(selectors).toContain('.commerce-storefront .grid-cols-1');
+  expect(selectors).toContain('.commerce-storefront .grid-cols-2');
   expect(css.toString()).toContain('var(--commerce-accent, #171717)');
 });
 
@@ -79,13 +79,13 @@ it('passes shipped CSS through Tailwind v3 without losing package styles', async
     },
   );
   expect(result.css).not.toMatch(/@(?:layer|tailwind|apply|theme|source)\b/);
-  expect(result.css).toContain('.commerce-storefront .grid-cols-1');
+  expect(result.css).toContain('.commerce-storefront .grid-cols-2');
   expect(result.css).toContain('var(--commerce-accent, #171717)');
   expect(result.css).toContain('@media');
   expect(result.css).toContain('@keyframes pulse');
   const resetIndex = css.search(/\.commerce-storefront :where\(button,\s*input,\s*select\)/);
   expect(resetIndex).toBeGreaterThanOrEqual(0);
-  expect(resetIndex).toBeLessThan(css.indexOf('.commerce-storefront .grid-cols-1'));
+  expect(resetIndex).toBeLessThan(css.indexOf('.commerce-storefront .grid-cols-2'));
   const rules = (value: string): string[] => {
     const declarations: string[] = [];
     postcss.parse(value).walkDecls((declaration) => {

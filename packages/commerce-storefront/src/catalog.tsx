@@ -10,8 +10,8 @@ import {
   useState,
 } from 'react';
 import { message, request } from './api';
-import { buttonClass } from './cart';
 import type { SKUGroup, SkuGroupsResult } from './catalog-model';
+import { errorActionClass, errorNoticeClass, secondaryButtonClass } from './class-names';
 import { useCommerce } from './commerce-provider';
 import { hasChildren, type PartRegistry, partProps, usePartRegistry } from './part';
 import {
@@ -181,8 +181,8 @@ export function CatalogHeader({
   useCatalogInternal('CatalogHeader');
   return (
     <header {...partProps('catalog-header', className)}>
-      <h1 className='max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl'>{title}</h1>
-      <p className='mt-5 max-w-xl text-base leading-7 sm:text-lg'>{description}</p>
+      <h1 className='max-w-3xl text-balance text-3xl font-semibold leading-tight tracking-tight'>{title}</h1>
+      <p className='mt-1 max-w-xl text-base leading-7 text-commerce-muted'>{description}</p>
     </header>
   );
 }
@@ -192,7 +192,7 @@ export function CatalogSummary({ className }: CatalogPartProps): ReactElement {
   const catalog = useCatalogInternal('CatalogSummary');
   return (
     <div {...partProps('catalog-summary', className)}>
-      <p className='text-sm' role='status'>
+      <p className='text-sm text-commerce-muted' role='status'>
         {summary(catalog)}
       </p>
     </div>
@@ -205,6 +205,10 @@ function summary(catalog: CatalogInternal): string {
   if (catalog.products.isError) return 'Products unavailable';
   return `Showing ${catalog.nodes.length} product${catalog.nodes.length === 1 ? '' : 's'}`;
 }
+
+/** Two columns on phones, then as many 240px columns as fit. Shared with `RelatedProducts`. */
+export const catalogGridClass: string =
+  'grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] lg:gap-y-12';
 
 const sampleItems: { key: string; item: ProductCardItem }[] = sampleProducts.map((sample) => ({
   key: sample.key,
@@ -243,35 +247,27 @@ export function CatalogProducts({ className, children }: CatalogProductsProps): 
   return (
     <>
       {products?.isError && (
-        <div role='alert' className='rounded-lg bg-red-50 p-5 text-red-800'>
+        <div role='alert' className={errorNoticeClass}>
           <p>{message(products.error)}</p>
-          <button
-            type='button'
-            className='min-h-11 bg-red-50 text-red-800 underline'
-            onClick={() => void products.refetch()}
-          >
+          <button type='button' className={errorActionClass} onClick={() => void products.refetch()}>
             Retry products
           </button>
         </div>
       )}
       {products?.isSuccess && !items.length && !customEmpty && (
-        <p className='py-16 text-center'>No products available.</p>
+        <p className='py-16 text-center text-commerce-muted'>No products available.</p>
       )}
       <div {...partProps('catalog-products', className)}>
         {/* Placeholders go inside the host's element, so they follow its grid. */}
         {products?.isPending
           ? [0, 1, 2].map((placeholder: number) => (
-              <div
-                key={placeholder}
-                aria-hidden='true'
-                className='overflow-hidden rounded-lg border border-neutral-200 motion-safe:animate-pulse'
-              >
-                <div className='aspect-square bg-neutral-100' />
-                <div className='space-y-4 p-6'>
-                  <div className='h-6 w-2/3 rounded bg-neutral-100' />
-                  <div className='h-4 rounded bg-neutral-100' />
-                  <div className='h-11 rounded bg-neutral-100' />
+              <div key={placeholder} aria-hidden='true' className='motion-safe:animate-pulse'>
+                <div className='aspect-square bg-commerce-tint-strong' />
+                <div className='space-y-2 pt-3'>
+                  <div className='h-4 w-2/3 rounded bg-commerce-tint-strong' />
+                  <div className='h-4 w-1/4 rounded bg-commerce-tint-strong' />
                 </div>
+                <div className='mt-4 h-11 rounded-lg bg-commerce-tint' />
               </div>
             ))
           : items.map(({ key, item }) => (
@@ -305,27 +301,29 @@ export function CatalogEmpty({ className, children }: CatalogEmptyProps): ReactE
   );
 }
 
-/** First-page and next-page buttons. Renders nothing for samples, which have one page. */
+/**
+ * First-page and next-page buttons. Renders nothing when there is only one page, including for samples.
+ */
 export function CatalogPagination({ className }: CatalogPartProps): ReactElement | null {
   const catalog = useCatalogInternal('CatalogPagination');
   if (catalog.source === 'sample') return null;
   const { after, goToPage } = catalog;
   const pageInfo = catalog.products.data?.skuGroups?.pageInfo;
+  const hasNext: boolean = !!(pageInfo?.hasNextPage && pageInfo.endCursor);
+  if (!after && !hasNext) return null;
   return (
     <nav aria-label='Product pages' {...partProps('catalog-pagination', className)}>
       {/* Inside the part, so this layout cannot outrank host classes on the nav. */}
-      <div className='flex justify-between'>
-        {after ? (
-          <button type='button' className={buttonClass} onClick={() => goToPage()}>
+      <div className='flex justify-center gap-3'>
+        {after && (
+          <button type='button' className={secondaryButtonClass} onClick={() => goToPage()}>
             First page
           </button>
-        ) : (
-          <span />
         )}
-        {pageInfo?.hasNextPage && pageInfo.endCursor && (
+        {hasNext && pageInfo?.endCursor && (
           <button
             type='button'
-            className={buttonClass}
+            className={secondaryButtonClass}
             onClick={() => goToPage(pageInfo.endCursor ?? undefined)}
           >
             Next page
@@ -359,16 +357,12 @@ export function Catalog({
 }: CatalogProps): ReactElement {
   return (
     <CatalogRoot sampleProducts={sampleProducts} pageSize={pageSize}>
-      {showHeader && (
-        <CatalogHeader
-          title={title}
-          description={description}
-          className='border-b border-neutral-200 pb-10 pt-4 sm:pb-14 sm:pt-8'
-        />
-      )}
-      <CatalogSummary className='border-b border-neutral-200 py-6 sm:py-8' />
-      <CatalogProducts className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 lg:py-10' />
-      <CatalogPagination className='border-t border-neutral-200 pt-6' />
+      <div className='flex flex-wrap items-end justify-between gap-x-4 gap-y-2 pb-6 pt-4 sm:pb-8 sm:pt-8'>
+        {showHeader && <CatalogHeader title={title} description={description} />}
+        <CatalogSummary />
+      </div>
+      <CatalogProducts className={catalogGridClass} />
+      <CatalogPagination className='mt-12 border-t border-commerce-line pt-6' />
     </CatalogRoot>
   );
 }
