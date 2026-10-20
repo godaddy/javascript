@@ -364,7 +364,7 @@ The package has one rule for replacing content, so a layout never has to guess:
 - **A state inside a loaded root**, such as an empty cart or an empty catalog, is its own part that renders only in that state: `CartEmpty` and `CatalogEmpty`. Place it anywhere in the layout.
 - **A state before the root has anything to show**, such as loading, not found or a load failure, is a root prop: `ProductDetailsRoot`'s `loading`, `notFound` and `error`. Like `<Suspense fallback>`, it replaces the root's content, because the root's children render only once its data exists. That is why `useProductDetails()` can always return a product.
 
-Parts whose wording a site often changes take replacement content as children. The part keeps its element, accessibility and rules: a replaced checkout label still waits for the cart total and still blocks a second click. As a function, the children receive the part's state, so the label can change with it. Content that renders nothing falls back to the package text, so a button is never left unlabeled.
+Parts whose wording a site often changes take replacement content as children. The part keeps its element, accessibility and rules: a replaced checkout label still waits for the cart total and still blocks a second click. As a function, the children receive the part's state, so the label can change with it. Content that is empty, such as `null`, `false`, blank text or an empty fragment, falls back to the package text. The package cannot see what a component of yours renders, so a label component that returns `null` leaves the control unlabeled. Make that choice in the children function instead, which can return `null` to keep the package text.
 
 ```tsx
 <CartCheckout>{({ busy }) => (busy ? 'Redirecting…' : 'Pay securely')}</CartCheckout>
@@ -408,7 +408,7 @@ Every part's outer element has a `data-commerce-part` attribute with the part's 
 | `checkout-started` | `cartId`; sent just before the browser leaves for checkout, so use `navigator.sendBeacon` or a keepalive request |
 | `error` | `operation` (`add`, `change-quantity`, `remove`, `discount`, `refresh` or `checkout`) and the `message` the cart shows |
 
-New event types may be added in minor releases, so ignore types you do not handle. A callback that throws, including `onItemAdded`, is logged to the console and does not fail the cart operation.
+New event types may be added in minor releases, so ignore types you do not handle. A callback that throws or returns a rejected promise, including `onItemAdded`, is logged to the console and does not fail the cart operation. Async callbacks are not awaited, so a slow analytics call never delays the cart.
 
 ## How it works
 

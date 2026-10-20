@@ -157,12 +157,20 @@ function resolveLocale(locale: string | undefined): string {
   }
 }
 
-/** Runs a host callback so that its failure cannot fail the cart operation that triggered it. */
-function callHost(callback: () => void): void {
+const logCallbackFailure = (cause: unknown): void =>
+  console.error('[gd-commerce-storefront] A storefront callback threw.', cause);
+
+/**
+ * Runs a host callback so that its failure cannot fail the cart operation that triggered it. An async callback is
+ * not awaited; its rejection is logged instead of becoming an unhandled rejection.
+ */
+function callHost(callback: () => unknown): void {
   try {
-    callback();
+    const result: unknown = callback();
+    if (typeof (result as PromiseLike<unknown> | null)?.then === 'function')
+      Promise.resolve(result).catch(logCallbackFailure);
   } catch (cause: unknown) {
-    console.error('[gd-commerce-storefront] A storefront callback threw.', cause);
+    logCallbackFailure(cause);
   }
 }
 

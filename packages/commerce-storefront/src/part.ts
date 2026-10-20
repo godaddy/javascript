@@ -1,8 +1,17 @@
-import { Children, type ReactNode, useCallback, useMemo, useRef } from 'react';
+import { Children, Fragment, isValidElement, type ReactNode, useCallback, useMemo, useRef } from 'react';
 
-/** Whether `children` renders anything, so `{custom && <Part />}` with `custom` false falls back to the default. */
+/**
+ * Whether `children` renders anything, so `{custom && <Part />}` with `custom` false falls back to the default. Blank
+ * text and fragments holding nothing count as nothing. A component element counts as content: what it renders is
+ * not known until it renders.
+ */
 export const hasChildren = (children: ReactNode): boolean =>
-  Children.toArray(children).some((child) => child !== '');
+  Children.toArray(children).some((child) => {
+    if (typeof child === 'string') return child.trim() !== '';
+    if (isValidElement<{ children?: ReactNode }>(child) && child.type === Fragment)
+      return hasChildren(child.props.children);
+    return true;
+  });
 
 export const cx = (...classes: Array<string | undefined>): string => classes.filter(Boolean).join(' ');
 

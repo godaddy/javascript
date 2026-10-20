@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Component, type ErrorInfo, type ReactElement, type ReactNode } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
@@ -19,7 +19,7 @@ import { CatalogEmpty, CatalogPagination, CatalogProducts, CatalogRoot } from '.
 import type { SKU, SKUGroup } from './catalog-model';
 import { type CommerceEvent, type CommerceProviderProps, useMoney } from './commerce-provider';
 import { CommerceStorefront } from './commerce-storefront';
-import { ProductCardAction, ProductCardPrice, ProductCardRoot } from './product-card';
+import { ProductCardAction, ProductCardPrice, ProductCardRoot, ProductImage } from './product-card';
 import { ProductDetailsRoot, useProductDetails } from './product-details-context';
 import { ProductDetailsAddToCart, ProductDetailsOption } from './product-purchase';
 
@@ -336,6 +336,35 @@ describe('replacement labels', () => {
       expect(remove).toHaveTextContent('Remove');
   });
 
+  it('falls back to the package text for labels that hold nothing', async () => {
+    mockStore();
+    const emptyFragment = () => <></>;
+    const nested = (
+      <>
+        {null}
+        {false}
+        {/* biome-ignore lint/complexity/noUselessFragments: a fragment of blank text is the case under test. */}
+        <>{'  '}</>
+      </>
+    );
+    mount(
+      <>
+        <AddToCartButton sku={sku('sku-1')} name='Mug'>
+          {emptyFragment}
+        </AddToCartButton>
+        <AddToCartButton sku={sku('sku-2')} name='Mug'>
+          {nested}
+        </AddToCartButton>
+        <AddToCartButton sku={sku('sku-3')} name='Mug'>
+          {() => ' '}
+        </AddToCartButton>
+      </>,
+      {},
+      '/cart',
+    );
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Add to cart' })).toHaveLength(3));
+  });
+
   it('starts each accessible name with the replaced label', async () => {
     mockStore({ savedCart: true });
     mount(
@@ -429,6 +458,16 @@ describe('replacement labels', () => {
       'data-commerce-attribute',
       'color',
     );
+  });
+});
+
+describe('ProductImage', () => {
+  it('loads a new URL after an earlier one failed', () => {
+    const { rerender } = render(<ProductImage url='https://img.test/broken.png' name='Mug' />);
+    fireEvent.error(screen.getByRole('img', { name: 'Mug' }));
+    expect(screen.getByRole('img', { name: 'Mug: image unavailable' })).toBeInTheDocument();
+    rerender(<ProductImage url='https://img.test/mug.png' name='Mug' />);
+    expect(screen.getByRole('img', { name: 'Mug' })).toHaveAttribute('src', 'https://img.test/mug.png');
   });
 });
 
@@ -578,6 +617,32 @@ describe('onEvent', () => {
     expect(logged).toHaveBeenCalledWith(
       '[gd-commerce-storefront] A storefront callback threw.',
       expect.any(Error),
+    );
+  });
+  it('logs a rejected async callback without failing or delaying the add', async () => {
+    mockStore();
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const failure = new Error('analytics is down');
+    const onItemAdded = vi.fn(async () => {
+      throw failure;
+    });
+    // Never settles, so an add that awaited it would never finish.
+    const onEvent = vi.fn(() => new Promise<void>(() => {}));
+    mount(
+      <>
+        <AddToCartButton sku={sku('sku-mug')} name='Mug' />
+        <CartButton />
+      </>,
+      { onItemAdded, onEvent },
+      '/cart',
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Add to cart' }));
+    const drawer = await screen.findByRole('dialog', { name: 'Your cart' });
+    expect(within(drawer).getByRole('heading', { name: 'Mug' })).toBeVisible();
+    expect(within(drawer).queryByRole('alert')).not.toBeInTheDocument();
+    expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'item-added', name: 'Mug' }));
+    await waitFor(() =>
+      expect(logged).toHaveBeenCalledWith('[gd-commerce-storefront] A storefront callback threw.', failure),
     );
   });
 });

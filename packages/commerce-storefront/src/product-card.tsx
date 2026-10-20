@@ -36,14 +36,15 @@ export interface ProductImageProps {
  * Use it in custom parts so they handle missing images like the package's own.
  */
 export function ProductImage({ url, name, className = '' }: ProductImageProps): ReactElement {
-  const [failed, setFailed] = useState<boolean>(false);
-  return url && !failed ? (
+  // Keyed by URL, so a new URL after a failure is requested instead of keeping the placeholder.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  return url && url !== failedUrl ? (
     <img
       src={url}
       alt={name}
       loading='lazy'
       className={`h-full w-full object-cover ${className}`}
-      onError={() => setFailed(true)}
+      onError={() => setFailedUrl(url)}
     />
   ) : (
     <div
