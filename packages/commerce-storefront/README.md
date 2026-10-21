@@ -154,7 +154,7 @@ import {
 
 The grid, spacing and border classes come from your own stylesheet in a custom layout. Without them, the parts stack in one column with no space between them. `border-commerce-line` and `divide-commerce-line` stand for the package's hairline, the surrounding text color at 14% opacity, which reads on light and dark pages alike; use your own border color in its place.
 
-Add your own elements between parts, reorder them, or leave out display parts. `ProductDetailsBadge` shows "Sale" when the verified SKU's compare-at price is above its price, or before then the product's, and nothing otherwise. `ProductDetailsPrice` shows "From" and the starting price until a SKU is verified. It strikes through a compare-at price beside it only when the cheapest SKUs all have that compare-at price, so a strike-through never pairs one SKU's price with another's compare-at price. `ProductDetailsPurchase` renders the options and status, then the quantity and add button in one row, then the availability. Replace it with individual parts to place options apart from the add button:
+Add your own elements between parts, reorder them, or leave out display parts. `ProductDetailsBadge` shows "Sale" when the verified SKU's compare-at price is above its price, or before then when some SKU's compare-at price is above that SKU's own price, and nothing otherwise. `ProductDetailsPrice` shows "From" and the starting price until a SKU is verified. It strikes through a compare-at price beside it only when the cheapest SKUs all have that compare-at price, so a strike-through never pairs one SKU's price with another's compare-at price. `ProductDetailsPurchase` renders the options and status, then the quantity and add button in one row, then the availability. Replace it with individual parts to place options apart from the add button:
 
 | Part | Renders |
 | --- | --- |
@@ -297,7 +297,7 @@ As with product layouts, the grid, spacing and border classes come from your own
 | `CatalogEmpty` | Only when the store's catalog has no products: "No products available.", or its own children instead. While one is mounted, `CatalogProducts` leaves out its own empty message. Samples are never empty |
 | `CatalogPagination` | First-page and next-page buttons; nothing when there is one page, or for samples |
 | `ProductCardImage`, `ProductCardTitle` | The first image and the name as an H2, each linked to the product page. With a title in the card, keyboard and screen reader users get only the title link; without one, the image link takes its place once the page is interactive |
-| `ProductCardBadge` | "Sale" when the product's lowest compare-at price is above its lowest price; nothing otherwise |
+| `ProductCardBadge` | "Sale" when some SKU's compare-at price is above that SKU's price. The catalog list has no SKU prices, so there it shows only when the lowest compare-at price is above the highest price |
 | `ProductCardPrice` | The price or price range. A single price on sale shows its compare-at price struck through; a range does not |
 | `ProductCardSwatches` | Dots for the first attribute whose values all have a [swatch](#swatches); nothing without `getSwatch` |
 | `ProductCardDescription` | Up to two lines of description; nothing without one. The packaged card leaves it out |

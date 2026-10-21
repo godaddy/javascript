@@ -1,10 +1,10 @@
 import type { ReactElement, ReactNode } from 'react';
 import { Link } from 'react-router';
-import { getStartingCompareAt, isOnSale } from './catalog-model';
+import { getStartingCompareAt, isOnSale, isProductOnSale } from './catalog-model';
 import { saleBadgeClass } from './class-names';
 import { useCommerce, useMoney } from './commerce-provider';
 import { partProps, renderLabel } from './part';
-import { isProductOnSale, ProductImage } from './product-card';
+import { ProductImage } from './product-card';
 import {
   type ProductDetailsPartProps,
   ProductDetailsRoot,
@@ -100,7 +100,7 @@ export function ProductDetailsGallery({ className }: ProductDetailsPartProps): R
 }
 
 /**
- * "Sale" when the verified SKU's compare-at price is above its price, or, before then, the product's. Renders
+ * "Sale" when the verified SKU's compare-at price is above its price, or, before then, when some SKU's is. Renders
  * nothing otherwise.
  */
 export function ProductDetailsBadge({ className }: ProductDetailsPartProps): ReactElement | null {

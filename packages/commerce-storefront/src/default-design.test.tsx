@@ -5,7 +5,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { Catalog } from './catalog';
-import type { SKU, SKUGroup } from './catalog-model';
+import { isProductOnSale, type SKU, type SKUGroup } from './catalog-model';
 import type { CommerceProviderProps } from './commerce-provider';
 import { CommerceStorefront } from './commerce-storefront';
 import { ProductDetails } from './product-details';
@@ -267,5 +267,63 @@ describe('default catalog', () => {
     expect(within(await article('Shirt')).getByText('3 color options: Blue, Red, Green')).toBeInTheDocument();
     expect(screen.getAllByText('Sale')).toHaveLength(3);
     expect(screen.queryByRole('navigation', { name: 'Product pages' })).not.toBeInTheDocument();
+  });
+});
+
+describe('isProductOnSale', () => {
+  const priced = (prices: Array<[number, number?]>, complete = true): SKUGroup => ({
+    priceRange: {
+      min: Math.min(...prices.map(([price]) => price)),
+      max: Math.max(...prices.map(([price]) => price)),
+    },
+    skus: {
+      totalCount: prices.length,
+      pageInfo: { hasNextPage: !complete },
+      edges: prices.map(([price, compareAt], index) => ({
+        node: sku(`sku-${index}`, [], 1, price, compareAt),
+      })),
+    },
+  });
+
+  it('pairs each SKU price with its own compare-at price', () => {
+    // $10 without a compare-at price, and $20 "marked down" from $20: nothing is on sale.
+    expect(
+      isProductOnSale({ ...priced([[1000], [2000, 2000]]), compareAtPriceRange: { min: 2000, max: 2000 } }),
+    ).toBe(false);
+    // $10 at its compare-at price, and $20 marked down from $30: the $20 SKU is on sale.
+    expect(
+      isProductOnSale({
+        ...priced([
+          [1000, 1000],
+          [2000, 3000],
+        ]),
+        compareAtPriceRange: { min: 1000, max: 3000 },
+      }),
+    ).toBe(true);
+  });
+
+  it('falls back to ranges, badging only a product whose every compare-at price is above every price', () => {
+    const ranges = (price: [number, number], compareAt: [number, number]): SKUGroup => ({
+      priceRange: { min: price[0], max: price[1] },
+      compareAtPriceRange: { min: compareAt[0], max: compareAt[1] },
+      skus: { totalCount: 2, edges: [] },
+    });
+    expect(isProductOnSale(ranges([2800, 2800], [3400, 3400]))).toBe(true);
+    expect(isProductOnSale(ranges([13300, 13800], [14800, 15300]))).toBe(true);
+    expect(isProductOnSale(ranges([1000, 2000], [2000, 2000]))).toBe(false);
+    expect(isProductOnSale(ranges([1000, 2000], [1000, 3000]))).toBe(false);
+    // A truncated SKU list falls back to the ranges too, which cannot show this one is on sale.
+    expect(
+      isProductOnSale({
+        ...priced(
+          [
+            [1000, 1000],
+            [2000, 3000],
+          ],
+          false,
+        ),
+        compareAtPriceRange: { min: 1000, max: 3000 },
+      }),
+    ).toBe(false);
   });
 });

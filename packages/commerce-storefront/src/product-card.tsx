@@ -17,7 +17,7 @@ import {
   getSingleMatchedSku,
   getStartingCompareAt,
   inSentence,
-  isOnSale,
+  isProductOnSale,
   type PriceRange,
   type SKU,
   type SKUGroup,
@@ -240,10 +240,6 @@ export function ProductCardDescription({ className }: ProductCardPartProps): Rea
   );
 }
 
-/** Whether the product's lowest compare-at price is above its lowest price. */
-export const isProductOnSale = (product: SKUGroup | null | undefined): boolean =>
-  isOnSale(product?.priceRange?.min, product?.compareAtPriceRange?.min);
-
 const formatRange = (
   range: PriceRange | null | undefined,
   money: (value: number) => string,
@@ -254,7 +250,10 @@ const formatRange = (
   return `${money(min)}${typeof max === 'number' && max !== min ? ` – ${money(max)}` : ''}`;
 };
 
-/** "Sale" when the product's compare-at price is above its price. Renders nothing otherwise, or for samples. */
+/**
+ * "Sale" when some SKU's compare-at price is above that SKU's price. Without SKU prices, as in the catalog list, only
+ * when the lowest compare-at price is above the highest price. Renders nothing otherwise, or for samples.
+ */
 export function ProductCardBadge({ className }: ProductCardPartProps): ReactElement | null {
   const { product } = useProductCardInternal('ProductCardBadge');
   if (!isProductOnSale(product)) return null;
