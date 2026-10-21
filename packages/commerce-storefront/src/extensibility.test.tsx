@@ -181,13 +181,13 @@ describe('roots that do not depend on the route', () => {
     );
     await waitFor(() => expect(screen.getByTestId('quick')).toHaveTextContent('ready:sku-mug'));
     const quickView = screen.getByRole('region', { name: 'Quick view' });
-    await userEvent.selectOptions(await within(quickView).findByRole('combobox', { name: 'Color' }), 'red');
+    await userEvent.click(await within(quickView).findByRole('radio', { name: 'RED' }));
     await waitFor(() => expect(screen.getByTestId('quick-shirt')).toHaveTextContent('ready:sku-red'));
     expect(screen.getByTestId('search')).toHaveTextContent(/^$/);
     expect(screen.getByTestId('page')).toHaveTextContent('incomplete:none');
 
-    const [pageColor] = screen.getAllByRole('combobox', { name: 'Color' });
-    await userEvent.selectOptions(pageColor, 'blue');
+    const [pageBlue] = screen.getAllByRole('radio', { name: 'BLUE' });
+    await userEvent.click(pageBlue as HTMLElement);
     await waitFor(() => expect(screen.getByTestId('page')).toHaveTextContent('ready:sku-blue'));
     expect(screen.getByTestId('search')).toHaveTextContent('?option.color=blue');
     expect(screen.getByTestId('quick-shirt')).toHaveTextContent('ready:sku-red');
@@ -533,7 +533,7 @@ describe('onEvent', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Add to cart' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Increase quantity of Mug' }));
     await waitFor(() => expect(events).toHaveLength(2));
-    await userEvent.click(screen.getByRole('button', { name: 'Proceed to Checkout' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Proceed to checkout' }));
     await waitFor(() => expect(assign).toHaveBeenCalled());
     await userEvent.click(screen.getByRole('button', { name: 'Remove Mug' }));
     await waitFor(() => expect(events).toHaveLength(4));
@@ -610,10 +610,10 @@ describe('onEvent', () => {
       expect(onItemAdded).toHaveBeenCalledWith({ name: 'Mug', quantity: 1, isSample: false }),
     );
     // The add opened the packaged drawer, as a successful add does, with no cart error.
-    const drawer = await screen.findByRole('dialog', { name: 'Your cart' });
+    const drawer = await screen.findByRole('dialog', { name: /^Your cart/ });
     expect(within(drawer).getByRole('heading', { name: 'Mug' })).toBeVisible();
     expect(within(drawer).queryByRole('alert')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Cart 1', hidden: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cart, 1 item', hidden: true })).toBeInTheDocument();
     expect(logged).toHaveBeenCalledWith(
       '[gd-commerce-storefront] A storefront callback threw.',
       expect.any(Error),
@@ -637,7 +637,7 @@ describe('onEvent', () => {
       '/cart',
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Add to cart' }));
-    const drawer = await screen.findByRole('dialog', { name: 'Your cart' });
+    const drawer = await screen.findByRole('dialog', { name: 'Your cart (1)' });
     expect(within(drawer).getByRole('heading', { name: 'Mug' })).toBeVisible();
     expect(within(drawer).queryByRole('alert')).not.toBeInTheDocument();
     expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'item-added', name: 'Mug' }));

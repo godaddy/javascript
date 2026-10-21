@@ -259,3 +259,81 @@ export function getProductAttributes(skuGroup: SKUGroup | null | undefined): Sto
 export function getProductName(skuGroup: SKUGroup): string {
   return skuGroup.label ?? skuGroup.name ?? 'Product';
 }
+
+/** Lowercases a label for use mid-sentence, leaving acronyms alone: "Size" becomes "size", "US Size" stays. */
+export const inSentence = (label: string): string =>
+  label.replace(/^[A-Z](?=[a-z])/, (first) => first.toLowerCase());
+
+/** Whether `compareAt` is above `price`, so the price is a sale price. */
+export function isOnSale(price: number | null | undefined, compareAt: number | null | undefined): boolean {
+  return typeof price === 'number' && typeof compareAt === 'number' && compareAt > price;
+}
+
+interface PairedPrice {
+  value: number;
+  compareAt: number | null;
+}
+
+/**
+ * Each SKU's price paired with its own compare-at price, or `null` unless the response has every SKU and each has a
+ * price. The catalog list returns too few SKUs and no SKU prices, so its cards fall back to the product's ranges.
+ */
+function getPairedPrices(product: SKUGroup | null | undefined): PairedPrice[] | null {
+  const connection: Connection<SKU> | null | undefined = product?.skus;
+  const skus: SKU[] = connection?.edges?.flatMap((edge) => (edge?.node ? [edge.node] : [])) ?? [];
+  if (
+    !skus.length ||
+    connection?.pageInfo?.hasNextPage ||
+    (connection?.totalCount ?? skus.length) !== skus.length
+  )
+    return null;
+  const pairs: PairedPrice[] = skus.flatMap((sku) => {
+    const price: SKUPrice | null | undefined = sku.prices?.edges?.find((entry) => entry?.node?.value)?.node;
+    return typeof price?.value?.value === 'number'
+      ? [{ value: price.value.value, compareAt: price.compareAtValue?.value ?? null }]
+      : [];
+  });
+  return pairs.length === skus.length ? pairs : null;
+}
+
+/**
+ * Whether some SKU's compare-at price is above that SKU's own price. Without every SKU's price, only a product whose
+ * lowest compare-at price is above its highest price is certainly on sale, so other products show no badge.
+ */
+export function isProductOnSale(product: SKUGroup | null | undefined): boolean {
+  const pairs: PairedPrice[] | null = getPairedPrices(product);
+  if (pairs) return pairs.some((pair) => isOnSale(pair.value, pair.compareAt));
+  return isOnSale(product?.priceRange?.max, product?.compareAtPriceRange?.min);
+}
+
+/**
+ * The compare-at price that belongs with the product's starting price, so a struck-through price never pairs one
+ * SKU's price with another SKU's compare-at price. With every SKU and its price loaded, the cheapest SKUs must share
+ * one compare-at price above their price. Otherwise the product needs a single price and a single compare-at price.
+ */
+export function getStartingCompareAt(product: SKUGroup | null | undefined): number | null {
+  const price: PriceRange | null | undefined = product?.priceRange;
+  const compareAt: PriceRange | null | undefined = product?.compareAtPriceRange;
+  const pairs: PairedPrice[] | null = getPairedPrices(product);
+  if (pairs) {
+    const lowest: number = Math.min(...pairs.map((pair) => pair.value));
+    if (lowest !== price?.min) return null;
+    const compareAts: Set<number | null> = new Set(
+      pairs.flatMap((pair) => (pair.value === lowest ? [pair.compareAt] : [])),
+    );
+    const [only] = compareAts;
+    return compareAts.size === 1 && only != null && isOnSale(lowest, only) ? only : null;
+  }
+  return price?.min === price?.max &&
+    compareAt?.min === compareAt?.max &&
+    isOnSale(price?.min, compareAt?.min)
+    ? (compareAt?.min ?? null)
+    : null;
+}
+
+/** The SKU's attribute value names, or `null` when the response does not include them. */
+export function getSkuAttributeValueNames(sku: SKU | null | undefined): string[] | null {
+  const edges = sku?.attributeValues?.edges;
+  if (!edges) return null;
+  return edges.flatMap((edge) => (edge?.node?.name ? [edge.node.name] : []));
+}

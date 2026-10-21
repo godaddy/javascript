@@ -1,8 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
-import { createContext, type ReactElement, type ReactNode, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Link, useParams } from 'react-router';
 import { ApiError, message, request } from './api';
-import { buttonClass } from './cart';
+import { isSoldOut } from './cart';
 import {
   getAvailableInventoryQuantity,
   getImageUrls,
@@ -10,13 +19,15 @@ import {
   getProductAttributes,
   getProductName,
   getSingleMatchedSku,
+  getSkuAttributeValueNames,
   type SKU,
   type SKUGroup,
   type SKUPrice,
   type SkuGroupResult,
   type StorefrontProductAttribute,
 } from './catalog-model';
-import { useCommerce } from './commerce-provider';
+import { buttonClass, errorNoticeClass } from './class-names';
+import { type GetSwatch, useCommerce } from './commerce-provider';
 import { hasChildren, type PartLabel, partProps, renderLabel, usePartRegistry } from './part';
 import { useRootParams } from './root-params';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
@@ -57,6 +68,13 @@ interface ProductDetailsInternal extends ProductDetailsState {
   selectSku: (skuId: string) => void;
   retryVariant: () => void;
   register: (control: string) => () => void;
+  /** Value names that are sold out, by attribute index, given the other attributes' selections. */
+  soldOutValues: ReadonlySet<string>[];
+  /** The shopper pressed add before choosing every option, so missing options show an error. */
+  showMissing: boolean;
+  /** Shows the missing-option errors and focuses the first missing control. */
+  requestMissing: () => void;
+  getSwatch: GetSwatch | undefined;
 }
 
 /** Props shared by every product part. `className` is added to the part's outer element. */
@@ -83,12 +101,21 @@ export interface ProductDetailsOptionValueState {
   readonly name: string;
   readonly label: string;
   readonly selected: boolean;
+  /**
+   * Every SKU with this value and the other selected values has tracked stock used up. `false` when that is not
+   * known, such as for a product with more SKUs than the page loads.
+   */
+  readonly soldOut: boolean;
+  /** The CSS background from the provider's `getSwatch`, or `null`. */
+  readonly swatch: string | null;
 }
 
 export interface ProductDetailsOptionState {
   readonly name: string;
   readonly label: string;
   readonly selected: string | null;
+  /** Nothing is selected and the shopper pressed add, so the control should show an error. */
+  readonly missing: boolean;
   readonly values: readonly ProductDetailsOptionValueState[];
   /** Accepts only this attribute's own value names, or `null` to clear. Other values are ignored. */
   readonly select: (value: string | null) => void;
@@ -99,7 +126,7 @@ export interface ProductDetailsOptionState {
  * A selection is never purchasable until the server verifies it.
  */
 export function useProductDetailsOption(attribute: string): ProductDetailsOptionState | null {
-  const { attributes, selections, selectOption, register } =
+  const { attributes, selections, selectOption, register, soldOutValues, showMissing, getSwatch } =
     useProductDetailsInternal('useProductDetailsOption');
   useEffect(() => register(`attribute:${attribute}`), [attribute, register]);
   const index: number = attributes.findIndex((candidate) => candidate.name === attribute);
@@ -110,10 +137,13 @@ export function useProductDetailsOption(attribute: string): ProductDetailsOption
     name: match.name,
     label: match.label,
     selected,
+    missing: showMissing && !selected,
     values: match.values.map((value) => ({
       name: value.name,
       label: value.label,
       selected: value.name === selected,
+      soldOut: soldOutValues[index]?.has(value.name) ?? false,
+      swatch: getSwatch?.({ attribute: match.name, name: value.name, label: value.label }) || null,
     })),
     select: (value: string | null): void => {
       if (value === null) selectOption(attribute, '');
@@ -193,10 +223,17 @@ function ProductDetailsLoader({
   notFound,
   error,
 }: ProductDetailsRootProps & { productId: string }): ReactElement {
-  const { config } = useCommerce();
+  const { config, getSwatch } = useCommerce();
   const [params, setParams] = useRootParams(urlState);
   const [quantity, setQuantity] = useState<number>(1);
   const [imageIndex, setImageIndex] = useState<number>(0);
+  const [showMissing, setShowMissing] = useState<boolean>(false);
+  const [focusMissing, setFocusMissing] = useState<number>(0);
+  const root = useRef<HTMLElement>(null);
+  // After the errors render, so the first missing control is marked.
+  useEffect(() => {
+    if (focusMissing) focusFirstMissing(root);
+  }, [focusMissing]);
   const product = useQuery({
     retry: false,
     enabled: !!productId,
@@ -260,7 +297,8 @@ function ProductDetailsLoader({
     if (value) next.set(key, value);
     else next.delete(key);
     setParams(next);
-    setQuantity(1);
+    // The stepper works before a selection, so a quantity set first must survive choosing options. A quantity above
+    // the new SKU's stock shows the quantity error rather than changing silently.
     setImageIndex(0);
   };
   const { register, has } = usePartRegistry();
@@ -287,7 +325,13 @@ function ProductDetailsLoader({
   if (product.isPending && productId)
     return (
       <div {...partProps('product-details-root', className)}>
-        {hasChildren(loading) ? loading : <p role='status'>Loading product…</p>}
+        {hasChildren(loading) ? (
+          loading
+        ) : (
+          <p role='status' className='text-sm text-commerce-muted'>
+            Loading product…
+          </p>
+        )}
       </div>
     );
   if (product.isError && !productNotFound) {
@@ -298,8 +342,8 @@ function ProductDetailsLoader({
           error,
           { message: message(product.error), retry },
           <>
-            <h1 className='text-2xl font-semibold'>Product unavailable</h1>
-            <p className='my-4 text-red-700'>{message(product.error)}</p>
+            <h1 className='text-2xl font-semibold tracking-tight'>Product unavailable</h1>
+            <p className={`my-4 ${errorNoticeClass}`}>{message(product.error)}</p>
             <button type='button' className={buttonClass} onClick={retry}>
               Retry product
             </button>
@@ -315,8 +359,8 @@ function ProductDetailsLoader({
           notFound
         ) : (
           <>
-            <h1 className='text-2xl font-semibold'>Product not found</h1>
-            <Link className={`${buttonClass} mt-4`} to={config.catalogPath}>
+            <h1 className='text-2xl font-semibold tracking-tight'>Product not found</h1>
+            <Link className={`${buttonClass} mt-6`} to={config.catalogPath}>
               Back to shop
             </Link>
           </>
@@ -349,10 +393,60 @@ function ProductDetailsLoader({
       if (matched.isError) void matched.refetch();
     },
     register,
+    soldOutValues: getSoldOutValues(group, attributes, selections),
+    showMissing,
+    requestMissing: (): void => {
+      setShowMissing(true);
+      setFocusMissing((count) => count + 1);
+    },
+    getSwatch,
   };
   return (
     <ProductDetailsContext.Provider value={value}>
-      <article {...partProps('product-details-root', className)}>{children}</article>
+      <article ref={root} {...partProps('product-details-root', className)}>
+        {children}
+      </article>
     </ProductDetailsContext.Provider>
   );
+}
+
+// Controls for a missing option carry `data-commerce-missing`. A sticky bar may repeat the controls; the first wins.
+function focusFirstMissing(root: RefObject<HTMLElement | null>): void {
+  root.current
+    ?.querySelector<HTMLElement>(
+      '[data-commerce-missing] input:not(:disabled), [data-commerce-missing] select',
+    )
+    ?.focus();
+}
+
+/**
+ * For each attribute, the values whose every SKU, among those with the other selected values, has tracked stock
+ * used up. Needs every SKU with its attribute values, so it is empty for a truncated list or an older server.
+ */
+function getSoldOutValues(
+  group: SKUGroup | null | undefined,
+  attributes: StorefrontProductAttribute[],
+  selections: string[],
+): ReadonlySet<string>[] {
+  const connection = group?.skus;
+  const skus: SKU[] = connection?.edges?.flatMap((edge) => (edge?.node ? [edge.node] : [])) ?? [];
+  const values: (string[] | null)[] = skus.map(getSkuAttributeValueNames);
+  const complete: boolean =
+    !connection?.pageInfo?.hasNextPage &&
+    (connection?.totalCount ?? skus.length) === skus.length &&
+    values.every((names) => names !== null);
+  return attributes.map((attribute, index) => {
+    const soldOut: Set<string> = new Set();
+    if (!complete) return soldOut;
+    const others: string[] = selections.filter((selection, other) => other !== index && selection);
+    for (const value of attribute.values) {
+      const matching: SKU[] = skus.filter((_, sku) => {
+        const names: string[] = values[sku] ?? [];
+        return names.includes(value.name) && others.every((selection) => names.includes(selection));
+      });
+      if (matching.length && matching.every((sku) => isSoldOut(getAvailableInventoryQuantity(sku))))
+        soldOut.add(value.name);
+    }
+    return soldOut;
+  });
 }

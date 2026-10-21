@@ -136,9 +136,9 @@ describe('composable product details', () => {
     const title = await screen.findByRole('heading', { level: 1, name: 'Shirt' });
     expect(title.parentElement).toHaveClass('host-title');
     expect(title.closest('article')).toHaveClass('host-article');
-    const add = screen.getByRole('button', { name: 'Add to cart' });
-    expect(add).toBeDisabled();
-    expect(add).toHaveAccessibleDescription('Select all options to add this item to your cart.');
+    // Enabled before every option is chosen, and named for the first missing one.
+    const add = screen.getByRole('button', { name: 'Select color' });
+    expect(add).toBeEnabled();
 
     await userEvent.click(screen.getByRole('button', { name: 'Invalid' }));
     expect(screen.getByTestId('selected')).toHaveTextContent('incomplete:none');
@@ -146,11 +146,19 @@ describe('composable product details', () => {
     expect(screen.getByRole('button', { name: 'BLUE' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('selected')).toHaveTextContent('incomplete:none');
 
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Size' }), 'm');
+    // Pressing it marks the missing option and focuses its first choice.
+    await userEvent.click(screen.getByRole('button', { name: 'Select size' }));
+    expect(screen.getByText('Select size.')).toBeVisible();
+    expect(screen.getByRole('group', { name: 'Size' })).toHaveAccessibleDescription('Select size.');
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'S' })).toHaveFocus());
+
+    await userEvent.click(screen.getByRole('radio', { name: 'M' }));
     await waitFor(() => expect(screen.getByTestId('selected')).toHaveTextContent('ready:sku-blue-m'));
+    expect(screen.queryByText('Select size.')).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Size M' })).toBeInTheDocument();
     await userEvent.clear(screen.getByRole('spinbutton', { name: 'Quantity' }));
     await userEvent.type(screen.getByRole('spinbutton', { name: 'Quantity' }), '2');
-    await userEvent.click(screen.getByRole('button', { name: 'Add to cart' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add to cart, $24.00' }));
     await waitFor(() => expect(api.mock.calls.some((call) => call[1]?.method === 'POST')).toBe(true));
     const post = api.mock.calls.find((call) => call[1]?.method === 'POST');
     expect(JSON.parse(String(post?.[1]?.body))).toEqual({
@@ -158,23 +166,40 @@ describe('composable product details', () => {
     });
   });
 
-  it('resets quantity when any control changes the selection', async () => {
+  it('keeps a quantity set before or between selections', async () => {
     mockApi();
     mount(
       <ProductDetailsRoot>
-        <Swatches attribute='color' />
-        <ProductDetailsOption attribute='size' />
-        <ProductDetailsQuantity />
-        <ProductDetailsPurchaseStatus />
+        <ProductDetailsPurchase />
       </ProductDetailsRoot>,
     );
-    await userEvent.click(await screen.findByRole('button', { name: 'BLUE' }));
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Size' }), 's');
+    const increase = await screen.findByRole('button', { name: 'Increase quantity of Shirt' });
+    await userEvent.click(increase);
+    await userEvent.click(increase);
+    await userEvent.click(screen.getByRole('radio', { name: 'BLUE' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'S' }));
+    expect(await screen.findByRole('button', { name: 'Add to cart, $36.00' })).toBeEnabled();
+    expect(screen.getByRole('spinbutton', { name: 'Quantity' })).toHaveValue(3);
+    await userEvent.click(screen.getByRole('radio', { name: 'RED' }));
+    expect(await screen.findByRole('button', { name: 'Add to cart, $36.00' })).toBeEnabled();
+    expect(screen.getByRole('spinbutton', { name: 'Quantity' })).toHaveValue(3);
+  });
+
+  it('shows the quantity error when a new selection has less stock than the quantity', async () => {
+    mockApi();
+    mount(
+      <ProductDetailsRoot>
+        <ProductDetailsPurchase />
+      </ProductDetailsRoot>,
+    );
     const quantity = await screen.findByRole('spinbutton', { name: 'Quantity' });
     await userEvent.clear(quantity);
-    await userEvent.type(quantity, '4');
-    await userEvent.click(screen.getByRole('button', { name: 'RED' }));
-    expect(await screen.findByRole('spinbutton', { name: 'Quantity' })).toHaveValue(1);
+    await userEvent.type(quantity, '7');
+    await userEvent.click(screen.getByRole('radio', { name: 'BLUE' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'S' }));
+    await waitFor(() => expect(quantity).toHaveAccessibleDescription('Only 5 available.'));
+    expect(quantity).toHaveValue(7);
+    expect(screen.getByRole('button', { name: /^Add to cart/ })).toBeDisabled();
   });
 
   it('explains a quantity that cannot be added, next to the field and on the button', async () => {
@@ -185,9 +210,9 @@ describe('composable product details', () => {
       </ProductDetailsRoot>,
       '/products/poster',
     );
-    await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Option' }), 'poster-small');
+    await userEvent.click(await screen.findByRole('radio', { name: 'small' }));
     const quantity = await screen.findByRole('spinbutton', { name: 'Quantity' });
-    const add = screen.getByRole('button', { name: 'Add to cart' });
+    const add = await screen.findByRole('button', { name: /^Add to cart/ });
     await waitFor(() => expect(add).toBeEnabled());
     expect(quantity).not.toHaveAttribute('aria-invalid');
     await userEvent.clear(quantity);
@@ -213,7 +238,7 @@ describe('composable product details', () => {
         <ProductDetailsAddToCart />
       </ProductDetailsRoot>,
     );
-    await screen.findByRole('combobox', { name: 'Color' });
+    await screen.findByRole('radio', { name: 'BLUE' });
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('No control for "size" is rendered right now'));
     expect(warn.mock.calls.join('')).not.toMatch(/never/);
     expect(warn.mock.calls.join('')).not.toContain('"color"');
@@ -227,7 +252,7 @@ describe('composable product details', () => {
         <ProductDetailsPurchase />
       </ProductDetailsRoot>,
     );
-    await screen.findByRole('combobox', { name: 'Size' });
+    await screen.findByRole('radio', { name: 'M' });
     expect(warn).not.toHaveBeenCalled();
   });
 
@@ -257,14 +282,16 @@ describe('composable product details', () => {
         </div>
       </ProductDetailsRoot>,
     );
-    const [first, second] = await screen.findAllByRole('button', { name: 'Add to cart' });
+    const [, second] = await screen.findAllByRole('button', { name: 'Select color' });
     unique();
-    expect(first).toHaveAccessibleDescription('Select all options to add this item to your cart.');
-    expect(second).toHaveAccessibleDescription('Select all options to add this item to your cart.');
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Color' }), 'blue');
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Size' }), 'm');
-    const quantities = await screen.findAllByRole('spinbutton', { name: 'Quantity' });
-    expect(quantities).toHaveLength(2);
+    // Either add button marks the missing options once, in the one set of controls.
+    await userEvent.click(second as HTMLElement);
+    expect(screen.getAllByText('Select color.')).toHaveLength(1);
+    unique();
+    await userEvent.click(screen.getByRole('radio', { name: 'BLUE' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'M' }));
+    await screen.findAllByRole('button', { name: 'Add to cart, $12.00' });
+    expect(screen.getAllByRole('spinbutton', { name: 'Quantity' })).toHaveLength(2);
     unique();
   });
 
@@ -277,9 +304,12 @@ describe('composable product details', () => {
       </ProductDetailsRoot>,
       '/products/poster',
     );
-    const lists = await screen.findAllByRole('combobox', { name: 'Option' });
-    expect(lists).toHaveLength(2);
-    expect(lists[0]?.id).not.toBe(lists[1]?.id);
+    // Two separate radio groups: a shared name would make them one group.
+    const choices = (await screen.findAllByRole('radio', { name: 'small' })) as HTMLInputElement[];
+    expect(choices).toHaveLength(2);
+    expect(choices[0]?.name).not.toBe(choices[1]?.name);
+    await userEvent.click(choices[1] as HTMLInputElement);
+    for (const choice of choices) expect(choice).toBeChecked();
   });
 
   it('puts host classes on an element that no package rule styles', async () => {
@@ -320,12 +350,12 @@ describe('composable product details', () => {
       }
     };
     await screen.findByRole('heading', { level: 1, name: 'Shirt' });
-    // Every part plus the root; the status message shows until the selection is ready.
-    expectNoConflicts(parts.length + 1);
+    // Every part plus the root and the quantity, but not the status message, which waits for a full selection.
+    expectNoConflicts(parts.length + 1 - 1 + 1);
     await userEvent.click(screen.getByRole('button', { name: 'BLUE' }));
-    await userEvent.selectOptions(screen.getAllByRole('combobox', { name: 'Size' })[0] as HTMLElement, 'm');
-    await screen.findAllByRole('spinbutton', { name: 'Quantity' });
-    // The status message is gone; availability and quantity appear.
+    await userEvent.click(screen.getAllByRole('radio', { name: 'M' })[0] as HTMLElement);
+    await screen.findAllByText('5 available');
+    // Availability appears.
     expectNoConflicts(parts.length + 1 - 1 + 2);
   });
 
@@ -338,7 +368,7 @@ describe('composable product details', () => {
         <ProductDetailsOption attribute='color' />
       </ProductDetailsRoot>,
     );
-    await screen.findByRole('combobox', { name: 'Color' });
+    await screen.findByRole('radio', { name: 'BLUE' });
     expect(warn).not.toHaveBeenCalled();
     vi.unstubAllEnvs();
   });
