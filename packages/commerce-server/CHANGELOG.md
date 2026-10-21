@@ -1,5 +1,11 @@
 # @godaddy/gd-commerce-server
 
+## 0.4.0
+
+### Minor Changes
+
+- 7e94726: The product details route returns each SKU's attribute value names (`attributeValues`), so the storefront can mark option values that are sold out.
+
 ## 0.3.0
 
 ### Minor Changes
