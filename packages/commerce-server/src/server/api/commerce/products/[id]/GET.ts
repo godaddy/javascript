@@ -6,7 +6,8 @@
  * Re-call this route after the user picks attribute values to narrow the
  * SKU set (pass `?attributeValues=red&attributeValues=large`). Use the
  * `getSingleMatchedSku` helper returns the selected SKU, including price,
- * inventory, and media, without a separate SKU request.
+ * inventory, and media, without a separate SKU request. Each SKU carries its
+ * attribute value names, so a client can tell which values are sold out.
  *
  * Query params:
  *   attributeValues - repeat for each chosen attribute value's `name` field
@@ -98,6 +99,9 @@ const skuGroupQuery = `
             }
             mediaObjects(first: 25) {
               edges { node { url type } }
+            }
+            attributeValues(first: 50) {
+              edges { node { name } }
             }
            inventoryCounts {
               edges {
