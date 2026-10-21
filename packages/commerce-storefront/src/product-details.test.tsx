@@ -166,23 +166,40 @@ describe('composable product details', () => {
     });
   });
 
-  it('resets quantity when any control changes the selection', async () => {
+  it('keeps a quantity set before or between selections', async () => {
     mockApi();
     mount(
       <ProductDetailsRoot>
-        <Swatches attribute='color' />
-        <ProductDetailsOption attribute='size' />
-        <ProductDetailsQuantity />
-        <ProductDetailsPurchaseStatus />
+        <ProductDetailsPurchase />
       </ProductDetailsRoot>,
     );
-    await userEvent.click(await screen.findByRole('button', { name: 'BLUE' }));
+    const increase = await screen.findByRole('button', { name: 'Increase quantity of Shirt' });
+    await userEvent.click(increase);
+    await userEvent.click(increase);
+    await userEvent.click(screen.getByRole('radio', { name: 'BLUE' }));
     await userEvent.click(screen.getByRole('radio', { name: 'S' }));
+    expect(await screen.findByRole('button', { name: 'Add to cart, $36.00' })).toBeEnabled();
+    expect(screen.getByRole('spinbutton', { name: 'Quantity' })).toHaveValue(3);
+    await userEvent.click(screen.getByRole('radio', { name: 'RED' }));
+    expect(await screen.findByRole('button', { name: 'Add to cart, $36.00' })).toBeEnabled();
+    expect(screen.getByRole('spinbutton', { name: 'Quantity' })).toHaveValue(3);
+  });
+
+  it('shows the quantity error when a new selection has less stock than the quantity', async () => {
+    mockApi();
+    mount(
+      <ProductDetailsRoot>
+        <ProductDetailsPurchase />
+      </ProductDetailsRoot>,
+    );
     const quantity = await screen.findByRole('spinbutton', { name: 'Quantity' });
     await userEvent.clear(quantity);
-    await userEvent.type(quantity, '4');
-    await userEvent.click(screen.getByRole('button', { name: 'RED' }));
-    expect(await screen.findByRole('spinbutton', { name: 'Quantity' })).toHaveValue(1);
+    await userEvent.type(quantity, '7');
+    await userEvent.click(screen.getByRole('radio', { name: 'BLUE' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'S' }));
+    await waitFor(() => expect(quantity).toHaveAccessibleDescription('Only 5 available.'));
+    expect(quantity).toHaveValue(7);
+    expect(screen.getByRole('button', { name: /^Add to cart/ })).toBeDisabled();
   });
 
   it('explains a quantity that cannot be added, next to the field and on the button', async () => {

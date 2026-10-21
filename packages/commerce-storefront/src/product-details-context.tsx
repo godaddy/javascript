@@ -297,7 +297,8 @@ function ProductDetailsLoader({
     if (value) next.set(key, value);
     else next.delete(key);
     setParams(next);
-    setQuantity(1);
+    // The stepper works before a selection, so a quantity set first must survive choosing options. A quantity above
+    // the new SKU's stock shows the quantity error rather than changing silently.
     setImageIndex(0);
   };
   const { register, has } = usePartRegistry();

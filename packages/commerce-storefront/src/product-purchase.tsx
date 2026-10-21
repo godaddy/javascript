@@ -1,7 +1,7 @@
 import { type ComponentProps, type ReactElement, type ReactNode, useId } from 'react';
 import { message } from './api';
 import { AddToCart, type AddToCartLabelState, isSoldOut, quantityProblem } from './cart';
-import { getAvailableInventoryQuantity, type SKU } from './catalog-model';
+import { getAvailableInventoryQuantity, inSentence, type SKU } from './catalog-model';
 import { buttonClass, errorActionClass, errorNoticeClass, inputClass } from './class-names';
 import { useCommerce, useMoney } from './commerce-provider';
 import { type PartLabel, partProps, renderLabel } from './part';
@@ -23,10 +23,6 @@ const disabledReasons: Record<Exclude<ProductDetailsStatus, 'ready'>, string> = 
 
 /** Above this many values, buttons wrap into a wall, so the option is a select. */
 const maxChoiceButtons: number = 8;
-
-/** Lowercases a label for use mid-sentence, leaving acronyms alone: "Size" becomes "size", "US Size" stays. */
-const inSentence = (label: string): string =>
-  label.replace(/^[A-Z](?=[a-z])/, (first) => first.toLowerCase());
 
 /** The packaged purchase area: options, status, quantity, add to cart, and availability. */
 export function ProductDetailsPurchase({ className }: ProductDetailsPartProps): ReactElement {

@@ -15,6 +15,8 @@ import {
   getProductAttributes,
   getProductName,
   getSingleMatchedSku,
+  getStartingCompareAt,
+  inSentence,
   isOnSale,
   type PriceRange,
   type SKU,
@@ -263,7 +265,7 @@ export function ProductCardBadge({ className }: ProductCardPartProps): ReactElem
   );
 }
 
-/** The product's price, or its price range when variants differ, after the compare-at price when on sale. */
+/** The product's price, or its price range when variants differ. A single price on sale shows its compare-at price. */
 export function ProductCardPrice({ className }: ProductCardPartProps): ReactElement {
   const card = useProductCardInternal('ProductCardPrice');
   const money = useMoney();
@@ -271,10 +273,11 @@ export function ProductCardPrice({ className }: ProductCardPartProps): ReactElem
     card.source === 'sample'
       ? money(card.sample.price, 'USD')
       : (formatRange(card.product.priceRange, money) ?? 'Price unavailable');
-  const compareAt: string | null =
-    card.source === 'live' && isProductOnSale(card.product)
-      ? formatRange(card.product.compareAtPriceRange, money)
-      : null;
+  // A range has no single compare-at price that belongs to it, so only a single price is struck through.
+  const range: PriceRange | null | undefined = card.source === 'live' ? card.product.priceRange : null;
+  const starting: number | null =
+    card.source === 'live' && range?.min === range?.max ? getStartingCompareAt(card.product) : null;
+  const compareAt: string | null = starting === null ? null : money(starting);
   return (
     <div {...partProps('product-card-price', className)}>
       <p className='flex flex-wrap items-baseline gap-x-2 text-sm leading-6 tabular-nums'>
@@ -309,7 +312,7 @@ export function ProductCardSwatches({ className }: ProductCardPartProps): ReactE
       <div {...partProps('product-card-swatches', className)}>
         <p className='flex items-center gap-1.5 text-xs text-commerce-muted'>
           <span className='sr-only'>
-            {swatches.length} {attribute.label.toLowerCase()} options:{' '}
+            {swatches.length} {inSentence(attribute.label)} options:{' '}
             {swatches.map((swatch) => swatch.label).join(', ')}
           </span>
           {shown.map((swatch) => (

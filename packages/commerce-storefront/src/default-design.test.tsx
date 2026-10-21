@@ -32,14 +32,14 @@ const sku = (id: string, names: string[], quantity: number, price = 2500, compar
   },
   inventoryCounts: { edges: [{ node: { type: 'AVAILABLE', quantity } }] },
 });
-// Red is sold out only in size M; green in every size.
+// Red is sold out only in size M; green in every size. Every SKU is $25, and only Blue S is not marked down from $30.
 const skus: SKU[] = [
   sku('blue-s', ['blue', 's'], 4),
-  sku('blue-m', ['blue', 'm'], 4),
-  sku('red-s', ['red', 's'], 2),
-  sku('red-m', ['red', 'm'], 0),
-  sku('green-s', ['green', 's'], 0),
-  sku('green-m', ['green', 'm'], 0),
+  sku('blue-m', ['blue', 'm'], 4, 2500, 3000),
+  sku('red-s', ['red', 's'], 2, 2500, 3000),
+  sku('red-m', ['red', 'm'], 0, 2500, 3000),
+  sku('green-s', ['green', 's'], 0, 2500, 3000),
+  sku('green-m', ['green', 'm'], 0, 2500, 3000),
 ];
 const shirt: SKUGroup = {
   id: 'shirt',
@@ -81,8 +81,8 @@ const card = (id: string, label: string, extra: Partial<SKUGroup> = {}): SKUGrou
 const catalog: SKUGroup[] = [
   card('mug', 'Mug'),
   shirt,
-  card('cap', 'Cap'),
-  card('bag', 'Bag'),
+  card('cap', 'Cap', { priceRange: { min: 1000, max: 2000 }, compareAtPriceRange: { min: 2400, max: 2400 } }),
+  card('bag', 'Bag', { compareAtPriceRange: { min: 1400, max: 1400 } }),
   card('pen', 'Pen'),
   card('cup', 'Cup'),
 ];
@@ -174,19 +174,29 @@ describe('default product page', () => {
     expect(await screen.findByRole('radio', { name: 'Green' })).toBeInTheDocument();
   });
 
-  it('shows the sale badge and starting compare-at price, then the SKU price on the add button', async () => {
+  it('strikes through a starting compare-at price only when it belongs to the cheapest SKUs', async () => {
     mockApi();
     mount(<ProductDetails />, '/products/shirt');
     const price = await screen.findByTestId('product-price');
-    expect(price).toHaveTextContent('From $25.00Was$30.00');
+    // Blue S costs $25 but was never $30, so "From $25" has no compare-at price; the badge still says a SKU is on sale.
+    expect(price).toHaveTextContent(/^From \$25\.00$/);
+    expect(screen.getByText('Sale')).toBeVisible();
+    await userEvent.click(screen.getByRole('radio', { name: 'Red' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'S' }));
+    await waitFor(() => expect(price).toHaveTextContent('$25.00Was$30.00'));
     expect(within(price).getByText('$30.00').tagName).toBe('DEL');
     expect(screen.getByText('Sale')).toBeVisible();
-    await userEvent.click(screen.getByRole('radio', { name: 'Blue' }));
+  });
+
+  it('labels the add button with the total, and drops the badge for a SKU that is not on sale', async () => {
+    mockApi();
+    mount(<ProductDetails />, '/products/shirt');
+    await userEvent.click(await screen.findByRole('radio', { name: 'Blue' }));
     await userEvent.click(screen.getByRole('radio', { name: 'S' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Increase quantity of Shirt' }));
     expect(await screen.findByRole('button', { name: 'Add to cart, $50.00' })).toBeEnabled();
-    // Blue S has no compare-at price, so it is not on sale.
     expect(screen.queryByText('Sale')).not.toBeInTheDocument();
+    expect(within(screen.getByTestId('product-price')).queryByRole('deletion')).not.toBeInTheDocument();
   });
 
   it('caps the stepper at the verified stock', async () => {
@@ -241,16 +251,21 @@ describe('RelatedProducts', () => {
 });
 
 describe('default catalog', () => {
-  it('badges sale products, shows swatch dots, and hides pagination on a single page', async () => {
+  it('badges sale products, strikes through only a compare-at price that belongs to the price, and shows swatch dots', async () => {
     mockApi();
     mount(<Catalog pageSize={24} />, '/shop', { getSwatch });
-    const shirtCard = (await screen.findByRole('heading', { level: 2, name: 'Shirt' })).closest('article');
-    expect(within(shirtCard as HTMLElement).getByText('Sale')).toBeVisible();
-    expect(within(shirtCard as HTMLElement).getByText('$30.00').tagName).toBe('DEL');
-    expect(
-      within(shirtCard as HTMLElement).getByText('3 color options: Blue, Red, Green'),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText('Sale')).toHaveLength(1);
+    const article = async (name: string) =>
+      (await screen.findByRole('heading', { level: 2, name })).closest('article') as HTMLElement;
+    // The bag has one price and one compare-at price.
+    expect(within(await article('Bag')).getByText('Sale')).toBeVisible();
+    expect(within(await article('Bag')).getByText('$14.00').tagName).toBe('DEL');
+    // The cap's prices are a range, and the shirt's cheapest SKU was never $30, so they show only the badge.
+    for (const name of ['Cap', 'Shirt']) {
+      expect(within(await article(name)).getByText('Sale')).toBeVisible();
+      expect(within(await article(name)).queryByRole('deletion')).not.toBeInTheDocument();
+    }
+    expect(within(await article('Shirt')).getByText('3 color options: Blue, Red, Green')).toBeInTheDocument();
+    expect(screen.getAllByText('Sale')).toHaveLength(3);
     expect(screen.queryByRole('navigation', { name: 'Product pages' })).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from 'react';
 import { Link } from 'react-router';
-import { isOnSale } from './catalog-model';
+import { getStartingCompareAt, isOnSale } from './catalog-model';
 import { saleBadgeClass } from './class-names';
 import { useCommerce, useMoney } from './commerce-provider';
 import { partProps, renderLabel } from './part';
@@ -128,7 +128,10 @@ export function ProductDetailsTitle({ className }: ProductDetailsPartProps): Rea
   );
 }
 
-/** The verified SKU's price and compare-at price, or the product's starting price and starting compare-at price. */
+/**
+ * The verified SKU's price and compare-at price, or the product's starting price. Before a SKU is verified, the
+ * compare-at price shows only when it belongs to the cheapest SKUs, so it never pairs prices from different SKUs.
+ */
 export function ProductDetailsPrice({ className }: ProductDetailsPartProps): ReactElement {
   const { price, product } = useProductDetailsInternal('ProductDetailsPrice');
   const { config } = useCommerce();
@@ -136,8 +139,10 @@ export function ProductDetailsPrice({ className }: ProductDetailsPartProps): Rea
   let compareAt: string | null = null;
   if (price?.compareAtValue?.value != null && isOnSale(price.value?.value, price.compareAtValue.value))
     compareAt = money(price.compareAtValue.value, price.compareAtValue.currencyCode ?? config.currencyCode);
-  else if (!price && product.compareAtPriceRange?.min != null && isProductOnSale(product))
-    compareAt = money(product.compareAtPriceRange.min);
+  else if (!price) {
+    const starting: number | null = getStartingCompareAt(product);
+    if (starting !== null) compareAt = money(starting);
+  }
   return (
     // The flex layout is inside the part, so it cannot outrank host classes on the outer element.
     <div {...partProps('product-details-price', className)}>

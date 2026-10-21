@@ -260,9 +260,50 @@ export function getProductName(skuGroup: SKUGroup): string {
   return skuGroup.label ?? skuGroup.name ?? 'Product';
 }
 
+/** Lowercases a label for use mid-sentence, leaving acronyms alone: "Size" becomes "size", "US Size" stays. */
+export const inSentence = (label: string): string =>
+  label.replace(/^[A-Z](?=[a-z])/, (first) => first.toLowerCase());
+
 /** Whether `compareAt` is above `price`, so the price is a sale price. */
 export function isOnSale(price: number | null | undefined, compareAt: number | null | undefined): boolean {
   return typeof price === 'number' && typeof compareAt === 'number' && compareAt > price;
+}
+
+/**
+ * The compare-at price that belongs with the product's starting price, so a struck-through price never pairs one
+ * SKU's price with another SKU's compare-at price. With every SKU and its price loaded, the cheapest SKUs must share
+ * one compare-at price above their price. Otherwise the product needs a single price and a single compare-at price.
+ */
+export function getStartingCompareAt(product: SKUGroup | null | undefined): number | null {
+  const price: PriceRange | null | undefined = product?.priceRange;
+  const compareAt: PriceRange | null | undefined = product?.compareAtPriceRange;
+  const connection: Connection<SKU> | null | undefined = product?.skus;
+  const prices: (SKUPrice | null | undefined)[] =
+    connection?.edges?.flatMap((edge) =>
+      edge?.node ? [edge.node.prices?.edges?.find((entry) => entry?.node?.value)?.node] : [],
+    ) ?? [];
+  const values: number[] = prices.flatMap((sku) =>
+    typeof sku?.value?.value === 'number' ? [sku.value.value] : [],
+  );
+  if (
+    values.length > 0 &&
+    values.length === prices.length &&
+    !connection?.pageInfo?.hasNextPage &&
+    (connection?.totalCount ?? prices.length) === prices.length
+  ) {
+    const lowest: number = Math.min(...values);
+    if (lowest !== price?.min) return null;
+    const compareAts: Set<number | null> = new Set(
+      prices.flatMap((sku) => (sku?.value?.value === lowest ? [sku.compareAtValue?.value ?? null] : [])),
+    );
+    const [only] = compareAts;
+    return compareAts.size === 1 && only != null && isOnSale(lowest, only) ? only : null;
+  }
+  return price?.min === price?.max &&
+    compareAt?.min === compareAt?.max &&
+    isOnSale(price?.min, compareAt?.min)
+    ? (compareAt?.min ?? null)
+    : null;
 }
 
 /** The SKU's attribute value names, or `null` when the response does not include them. */
