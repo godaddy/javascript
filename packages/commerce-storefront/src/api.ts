@@ -87,8 +87,9 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 }
 
-export function money(value: number, currency: string): string {
-  const formatter: Intl.NumberFormat = new Intl.NumberFormat('en-US', {
+/** Formats minor units, such as cents, as currency. Inside the provider, prefer `useMoney`, which follows its `locale`. */
+export function money(value: number, currency: string, locale: string = 'en-US'): string {
+  const formatter: Intl.NumberFormat = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
   });

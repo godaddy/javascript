@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import type { CommerceEvent } from './commerce-provider';
 
 // Deliberately distinct from SKU groups, SKUs and draft orders. Never sent to Commerce.
 export const sampleProducts = Array.from({ length: 6 }, (_, index) => ({
@@ -15,6 +16,7 @@ export const sampleProducts = Array.from({ length: 6 }, (_, index) => ({
   name: `Product ${index + 1}`,
   price: (index + 1) * 1_000,
 }));
+export type SampleProduct = (typeof sampleProducts)[number];
 
 interface SampleCartValue {
   items: { key: string; name: string; price: number; quantity: number }[];
@@ -22,6 +24,8 @@ interface SampleCartValue {
   changeQuantity: (key: string, quantity: number) => Promise<boolean>;
   remove: (key: string) => Promise<boolean>;
 }
+
+const noQuantities: Record<string, number> = {};
 
 const SampleCartContext = createContext<SampleCartValue | null>(null);
 
@@ -35,11 +39,13 @@ export function SampleCartProvider({
   enabled,
   onAdd,
   announce,
+  emit,
   children,
 }: {
   enabled: boolean;
   onAdd: (name: string) => void;
   announce: (message: string) => void;
+  emit: (event: CommerceEvent) => void;
   children: ReactNode;
 }): ReactElement {
   const session = useMemo(() => ({ enabled }), [enabled]);
@@ -53,7 +59,15 @@ export function SampleCartProvider({
       active.current = null;
     };
   }, [session]);
-  const quantities = state.session === session && enabled ? state.quantities : {};
+  const quantities = state.session === session && enabled ? state.quantities : noQuantities;
+  // Stable while the quantities are, so `useCart` and the cart parts don't recompute on every render.
+  const items = useMemo(
+    () =>
+      sampleProducts.flatMap((product) =>
+        quantities[product.key] ? [{ ...product, quantity: quantities[product.key] }] : [],
+      ),
+    [quantities],
+  );
   function update(key: string, quantity?: number): boolean {
     if (!enabled || active.current !== session || !sampleProducts.some((product) => product.key === key))
       return false;
@@ -70,9 +84,7 @@ export function SampleCartProvider({
   return (
     <SampleCartContext.Provider
       value={{
-        items: sampleProducts.flatMap((product) =>
-          quantities[product.key] ? [{ ...product, quantity: quantities[product.key] }] : [],
-        ),
+        items,
         add: (key) => {
           const product = sampleProducts.find((product) => product.key === key);
           if (!product || !update(key)) return false;
@@ -81,12 +93,18 @@ export function SampleCartProvider({
         },
         changeQuantity: async (key, quantity) => {
           const updated = quantity >= 1 && update(key, quantity);
-          if (updated) announce('Sample cart quantity updated.');
+          if (updated) {
+            announce('Sample cart quantity updated.');
+            emit({ type: 'quantity-changed', itemId: key, quantity, isSample: true });
+          }
           return updated;
         },
         remove: async (key) => {
           const updated = update(key, 0);
-          if (updated) announce('Sample item removed from cart.');
+          if (updated) {
+            announce('Sample item removed from cart.');
+            emit({ type: 'item-removed', itemId: key, isSample: true });
+          }
           return updated;
         },
       }}

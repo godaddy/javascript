@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getAvailableInventoryQuantity,
+  getImageUrls,
   getLabeledSkuOptions,
   getSingleMatchedSku,
   type SKU,
@@ -46,5 +47,20 @@ describe('safe SKU selection', () => {
         inventoryCounts: { edges: [{ node: { type: 'AVAILABLE', quantity: 2 } }] },
       }),
     ).toBe(2);
+  });
+  it('treats legacy PHOTO media as images and skips other media', () => {
+    expect(
+      getImageUrls({
+        mediaObjects: {
+          edges: [
+            { node: { type: 'PHOTO', url: '/legacy.jpg' } },
+            { node: { type: 'VIDEO', url: '/clip.mp4' } },
+            { node: { type: 'IMAGE', url: '/current.jpg' } },
+            { node: { type: 'IMAGE', url: '' } },
+            null,
+          ],
+        },
+      }),
+    ).toEqual(['/legacy.jpg', '/current.jpg']);
   });
 });
