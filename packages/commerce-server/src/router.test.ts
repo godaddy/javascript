@@ -111,6 +111,7 @@ describe('Commerce scoped routes', () => {
     const query: string = vi.mocked(gqlRequest).mock.calls[0]?.[0].query ?? '';
     expect(query).toContain('prices(first: 10)');
     expect(query).toContain('inventoryCounts');
+    expect(query).toContain('attributeValues(first: 50) {');
     expect(query).toContain('pageInfo { hasNextPage }');
     expect(query).toContain(
       'activeSkuGroups: skuGroups(id: { in: [$id] }, status: { eq: "ACTIVE" }, first: 1)',

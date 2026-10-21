@@ -164,7 +164,7 @@ describe('composable catalog', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Add Product 3 to sample cart' }));
-    const drawer = await screen.findByRole('dialog', { name: 'Sample cart' });
+    const drawer = await screen.findByRole('dialog', { name: /^Sample cart/ });
     expect(within(drawer).getByRole('heading', { name: 'Product 3' })).toBeInTheDocument();
     expect(api.mock.calls.every(([input]) => String(input).endsWith('/config'))).toBe(true);
   });

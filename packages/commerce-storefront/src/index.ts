@@ -13,6 +13,7 @@ export {
   CartCheckout,
   CartCheckoutNote,
   CartClose,
+  CartContinueShopping,
   CartDescription,
   CartDrawer,
   CartDrawerRoot,
@@ -72,7 +73,9 @@ export {
   type CommerceOperation,
   CommerceProvider,
   type CommerceProviderProps,
+  type GetSwatch,
   type StorefrontTheme,
+  type SwatchValue,
   useCommerce,
   useMoney,
 } from './commerce-provider';
@@ -83,6 +86,7 @@ export {
   ProductCardAction,
   type ProductCardActionLabelState,
   type ProductCardActionProps,
+  ProductCardBadge,
   ProductCardDescription,
   ProductCardImage,
   type ProductCardPartProps,
@@ -91,6 +95,7 @@ export {
   ProductCardRoot,
   type ProductCardRootProps,
   type ProductCardState,
+  ProductCardSwatches,
   ProductCardTitle,
   ProductImage,
   type ProductImageProps,
@@ -100,6 +105,7 @@ export {
   ProductDetails,
   ProductDetailsBackLink,
   type ProductDetailsBackLinkProps,
+  ProductDetailsBadge,
   ProductDetailsDescription,
   ProductDetailsGallery,
   ProductDetailsPrice,
@@ -128,4 +134,5 @@ export {
   ProductDetailsPurchaseStatus,
   ProductDetailsQuantity,
 } from './product-purchase';
+export { RelatedProducts, type RelatedProductsProps } from './related-products';
 export { CommerceStatus } from './storefront-surface';
