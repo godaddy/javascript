@@ -287,6 +287,8 @@ export const esEs = {
     DATA_SOURCES_NOT_FOUND: 'Fuentes de datos no encontradas',
     TRANSACTION_API_NOT_FOUND:
       'Fuente de datos de la API de transacciones no encontrada',
+    PAYMENT_ACTION_REQUIRED:
+      'Tu pago requiere una verificación adicional. Inténtalo de nuevo o elige otro método de pago.',
     TRANSACTION_PROCESSING_FAILED: 'No se pudo procesar la transacción',
     TRANSACTION_CREATION_FAILED: 'No se pudo encontrar o crear la transacción',
     ORDER_OPENING_FAILED: 'No se pudo abrir el pedido',

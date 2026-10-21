@@ -286,6 +286,8 @@ export const qaPs = {
     DRAFT_ORDER_RETRIEVAL_FAILED: '[Fâîlëd ţö rëţrîëvë ördër]',
     DATA_SOURCES_NOT_FOUND: '[Dâţâ šöürçëš ñöţ föüñd îñ šÿšţëm]',
     TRANSACTION_API_NOT_FOUND: '[Ţrâñšâçţîöñ ÂÞÎ dâţâ šöürçë ñöţ föüñd]',
+    PAYMENT_ACTION_REQUIRED:
+      '[Your payment needs additional verification. Please try again or choose another payment method.]',
     TRANSACTION_PROCESSING_FAILED: '[Fâîlëd ţö þröçëšš ţrâñšâçţîöñ]',
     TRANSACTION_CREATION_FAILED: '[Fâîlëd ţö fîñd ör çrëâţë ţrâñšâçţîöñ]',
     ORDER_OPENING_FAILED: '[Fâîlëd ţö öþëñ ördër fôr þröçëššîñg]',

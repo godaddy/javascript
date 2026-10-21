@@ -293,6 +293,8 @@ export const frCa = {
     DATA_SOURCES_NOT_FOUND: 'Sources de données introuvables',
     TRANSACTION_API_NOT_FOUND:
       'Source de données API de transaction introuvable',
+    PAYMENT_ACTION_REQUIRED:
+      'Votre paiement nécessite une vérification supplémentaire. Réessayez ou choisissez un autre moyen de paiement.',
     TRANSACTION_PROCESSING_FAILED: 'Échec du traitement de la transaction',
     TRANSACTION_CREATION_FAILED:
       'Échec de la recherche ou création de transaction',
