@@ -168,6 +168,9 @@ type PublicConfiguration =
   | ({ state: 'ready' } & Pick<StorefrontConfig, 'cartScope' | 'currencyCode'>);
 
 const CONNECTING_FAILURE_GRACE_MS = 60_000;
+/** Polls every five seconds for five minutes after the page loads, then every minute, and stops at thirty. */
+const FAST_POLL_FOR_MS = 5 * 60_000;
+const STOP_POLLING_AT_MS = 30 * 60_000;
 
 /** `locale` as a canonical tag, or `en-US` when it is not a valid one, so one bad prop cannot break every price. */
 function resolveLocale(locale: string | undefined): string {
@@ -230,6 +233,12 @@ export function CommerceProvider({
   onEvent,
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
+  const [mountedAt] = useState(Date.now);
+  const [pollingStopped, setPollingStopped] = useState<boolean>(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => setPollingStopped(true), STOP_POLLING_AT_MS);
+    return () => clearTimeout(timeout);
+  }, []);
   const config = useQuery({
     retry: false,
     queryKey: ['commerce', 'configuration'],
@@ -238,8 +247,13 @@ export function CommerceProvider({
     refetchOnMount: 'always',
     refetchOnWindowFocus: 'always',
     // Errors after an unbound response also need recovery; stale data never grants eligibility.
-    refetchInterval: (query) =>
-      query.state.data?.state === 'unbound' || query.state.data?.state === 'connecting' ? 5_000 : false,
+    // A site can stay unbound for days, so polling ends; reloading the page starts it again.
+    refetchInterval: (query) => {
+      const waiting = query.state.data?.state === 'unbound' || query.state.data?.state === 'connecting';
+      const elapsed = Date.now() - mountedAt;
+      if (!waiting || elapsed >= STOP_POLLING_AT_MS) return false;
+      return elapsed < FAST_POLL_FOR_MS ? 5_000 : 60_000;
+    },
     refetchIntervalInBackground: false,
   });
   // Hosts may restart while connecting a store. Keep the connecting state through brief
@@ -250,6 +264,9 @@ export function CommerceProvider({
     config.errorUpdatedAt - config.dataUpdatedAt < CONNECTING_FAILURE_GRACE_MS;
   let connection: CommerceContextValue['connection'] = config.data?.state ?? 'loading';
   if (config.isError) connection = holdConnecting ? 'connecting' : 'error';
+  // Nothing refreshes a connecting page once polling stops, so offer a retry instead of waiting forever.
+  const stalled: boolean = pollingStopped && connection === 'connecting';
+  if (stalled) connection = 'error';
   return (
     <BoundCommerceProvider
       config={{
@@ -261,7 +278,13 @@ export function CommerceProvider({
         checkoutSuccessPath,
       }}
       connection={connection}
-      connectionError={connection === 'error' ? message(config.error) : null}
+      connectionError={
+        stalled
+          ? 'The store is taking too long to connect.'
+          : connection === 'error'
+            ? message(config.error)
+            : null
+      }
       retryConnection={() => {
         void config.refetch();
       }}
