@@ -160,5 +160,13 @@ describe('useAuthorizeCheckout', () => {
     const authorized = await result.current.mutateAsync(cardFieldsInput);
 
     expect(authorized?.transactionRefNum).toBe('transaction-ref-1');
+    expect(authorized?.fundingSource?.paymentReference).toBe(
+      'order_razorpay_123'
+    );
+    expect(authorized?.references).toContainEqual({
+      type: 'MERCHANT_PUBLIC_KEY',
+      value: 'rzp_test_public',
+      additionalLabel: null,
+    });
   });
 });
