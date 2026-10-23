@@ -39,8 +39,12 @@ function mockApi(handler: (path: string, init?: RequestInit) => Response | Promi
   vi.stubGlobal('fetch', fn);
   return fn;
 }
-function mount(children?: ReactNode, path = '/shop', checkoutSuccessPath?: string) {
-  const client = new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } });
+function mount(
+  children?: ReactNode,
+  path = '/shop',
+  checkoutSuccessPath?: string,
+  client = new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } }),
+) {
   let context: CommerceContextValue;
   function Observe() {
     context = useCommerce();
@@ -732,6 +736,157 @@ describe('sample products before a store is connected', () => {
       vi.useRealTimers();
     }
   });
+});
+
+describe('bounded polling while waiting for a store', () => {
+  const minutes = (count: number) => count * 60_000;
+  const configReads = (api: ReturnType<typeof mockApi>) =>
+    api.mock.calls.filter(([path]) => String(path).endsWith('/config')).length;
+  async function advance(ms: number) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms);
+    });
+  }
+  function showPage() {
+    act(() => {
+      window.dispatchEvent(new Event('visibilitychange'));
+    });
+  }
+  function withTimers(test: () => Promise<void>) {
+    return async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+      try {
+        await test();
+      } finally {
+        vi.useRealTimers();
+      }
+    };
+  }
+
+  it(
+    'stops polling an unbound store after fifteen minutes',
+    withTimers(async () => {
+      const api = mockApi(() => response({ state: 'unbound' }));
+      const view = mount(<Catalog sampleProducts />);
+      await screen.findByRole('button', { name: 'Add Product 1 to sample cart' });
+      await advance(minutes(2));
+      // Every five seconds for two minutes, then every thirty seconds.
+      expect(configReads(api)).toBe(1 + 24);
+      await advance(minutes(13));
+      const read = configReads(api);
+      expect(read).toBeLessThanOrEqual(1 + 24 + 26);
+      await advance(minutes(60));
+      expect(configReads(api)).toBe(read);
+      expect(view.context().connection).toBe('unbound');
+      expect(screen.getByText('Product 1')).toBeVisible();
+    }),
+  );
+
+  it(
+    'stops polling after failed refreshes of an unbound store',
+    withTimers(async () => {
+      const api = mockApi(() => response({ state: 'unbound' }));
+      const view = mount(<Catalog sampleProducts />);
+      await screen.findByRole('button', { name: 'Add Product 1 to sample cart' });
+      api.mockImplementation(async () => response({ error: 'Host state unavailable' }, 503));
+      await advance(5_000);
+      await vi.waitFor(() => expect(view.context().connection).toBe('error'));
+      expect(document.querySelector('[data-commerce-source="sample"]')).toBeNull();
+      await advance(minutes(15));
+      const read = configReads(api);
+      await advance(minutes(60));
+      expect(configReads(api)).toBe(read);
+      expect(view.context().connection).toBe('error');
+    }),
+  );
+
+  it(
+    'picks up a connected store while polling slows down',
+    withTimers(async () => {
+      let config: unknown = { state: 'unbound' };
+      mockApi((path) =>
+        path.endsWith('/config') ? response(config) : response({ skuGroups: { edges: [] } }),
+      );
+      const view = mount(<Catalog sampleProducts />);
+      await screen.findByRole('button', { name: 'Add Product 1 to sample cart' });
+      await advance(minutes(10));
+      config = { state: 'ready', ...configuration };
+      await advance(30_000);
+      await vi.waitFor(() => expect(view.context().connection).toBe('ready'));
+      await screen.findByText('No products available.');
+    }),
+  );
+
+  it(
+    'recovers on focus after polling stops and polls again while still unbound',
+    withTimers(async () => {
+      let config: unknown = { state: 'unbound' };
+      const api = mockApi((path) =>
+        path.endsWith('/config') ? response(config) : response({ skuGroups: { edges: [] } }),
+      );
+      const view = mount(<Catalog sampleProducts />);
+      await screen.findByRole('button', { name: 'Add Product 1 to sample cart' });
+      await advance(minutes(20));
+      const stopped = configReads(api);
+      showPage();
+      await vi.waitFor(() => expect(configReads(api)).toBe(stopped + 1));
+      await advance(5_000);
+      expect(configReads(api)).toBe(stopped + 2);
+      config = { state: 'ready', ...configuration };
+      await advance(minutes(20));
+      expect(configReads(api)).toBe(stopped + 3);
+      await vi.waitFor(() => expect(view.context().connection).toBe('ready'));
+      await advance(minutes(20));
+      config = { state: 'unbound' };
+      showPage();
+      await vi.waitFor(() => expect(configReads(api)).toBe(stopped + 4));
+    }),
+  );
+
+  it(
+    'recovers on mount after polling stops',
+    withTimers(async () => {
+      let config: unknown = { state: 'unbound' };
+      const api = mockApi((path) =>
+        path.endsWith('/config') ? response(config) : response({ skuGroups: { edges: [] } }),
+      );
+      const view = mount(<Catalog sampleProducts />);
+      await screen.findByRole('button', { name: 'Add Product 1 to sample cart' });
+      await advance(minutes(20));
+      const stopped = configReads(api);
+      config = { state: 'ready', ...configuration };
+      await advance(minutes(5));
+      expect(configReads(api)).toBe(stopped);
+      expect(view.context().connection).toBe('unbound');
+      view.unmount();
+      const next = mount(<Catalog sampleProducts />, '/shop', undefined, view.client);
+      await vi.waitFor(() => expect(next.context().connection).toBe('ready'));
+      expect(configReads(api)).toBe(stopped + 1);
+    }),
+  );
+
+  it(
+    'polls a connecting store for longer than an unbound one, then stops',
+    withTimers(async () => {
+      let config: unknown = { state: 'unbound' };
+      const api = mockApi(() => response(config));
+      const view = mount(<Catalog sampleProducts />);
+      await screen.findByRole('button', { name: 'Add Product 1 to sample cart' });
+      await advance(minutes(10));
+      config = { state: 'connecting' };
+      await advance(30_000);
+      await vi.waitFor(() => expect(view.context().connection).toBe('connecting'));
+      // The connecting limit starts when the state is first seen, not when unbound was.
+      const connected = configReads(api);
+      await advance(minutes(5));
+      expect(configReads(api)).toBe(connected + 60);
+      await advance(minutes(25));
+      const read = configReads(api);
+      await advance(minutes(60));
+      expect(configReads(api)).toBe(read);
+      expect(view.context().connection).toBe('connecting');
+    }),
+  );
 });
 
 describe('connection state transitions', () => {

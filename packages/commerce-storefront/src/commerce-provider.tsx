@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { focusManager, type Query, useQuery } from '@tanstack/react-query';
 import {
   type CSSProperties,
   createContext,
@@ -169,6 +169,19 @@ type PublicConfiguration =
 
 const CONNECTING_FAILURE_GRACE_MS = 60_000;
 
+type WaitingState = 'unbound' | 'connecting';
+/**
+ * How long to poll `/config` in a waiting state, timed from when the page first saw it: every `FAST_POLL_MS` for
+ * `fastFor`, then every `SLOW_POLL_MS` until `stopAfter`. A site may stay `unbound` indefinitely, so polling must
+ * end; mount and focus refetches recover afterwards. `connecting` should end soon, so it is followed for longer.
+ */
+const POLLING: Record<WaitingState, { readonly fastFor: number; readonly stopAfter: number }> = {
+  unbound: { fastFor: 2 * 60_000, stopAfter: 15 * 60_000 },
+  connecting: { fastFor: 5 * 60_000, stopAfter: 30 * 60_000 },
+};
+const FAST_POLL_MS = 5_000;
+const SLOW_POLL_MS = 30_000;
+
 /** `locale` as a canonical tag, or `en-US` when it is not a valid one, so one bad prop cannot break every price. */
 function resolveLocale(locale: string | undefined): string {
   if (!locale) return 'en-US';
@@ -230,6 +243,26 @@ export function CommerceProvider({
   onEvent,
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
+  // The waiting state this page is polling for and when it was first seen. Showing the page again starts over.
+  const waiting = useRef<{ state: WaitingState; since: number } | null>(null);
+  useEffect(
+    () =>
+      focusManager.subscribe((focused: boolean) => {
+        if (focused) waiting.current = null;
+      }),
+    [],
+  );
+  const refetchInterval = useCallback((query: Query<PublicConfiguration, Error>): number | false => {
+    const state = query.state.data?.state;
+    if (state !== 'unbound' && state !== 'connecting') {
+      waiting.current = null;
+      return false;
+    }
+    if (waiting.current?.state !== state) waiting.current = { state, since: Date.now() };
+    const elapsed: number = Date.now() - waiting.current.since;
+    if (elapsed < POLLING[state].fastFor) return FAST_POLL_MS;
+    return elapsed < POLLING[state].stopAfter ? SLOW_POLL_MS : false;
+  }, []);
   const config = useQuery({
     retry: false,
     queryKey: ['commerce', 'configuration'],
@@ -237,9 +270,8 @@ export function CommerceProvider({
     staleTime: 30_000,
     refetchOnMount: 'always',
     refetchOnWindowFocus: 'always',
-    // Errors after an unbound response also need recovery; stale data never grants eligibility.
-    refetchInterval: (query) =>
-      query.state.data?.state === 'unbound' || query.state.data?.state === 'connecting' ? 5_000 : false,
+    // Errors after a waiting response keep polling within the same limit; stale data never grants eligibility.
+    refetchInterval,
     refetchIntervalInBackground: false,
   });
   // Hosts may restart while connecting a store. Keep the connecting state through brief

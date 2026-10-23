@@ -525,8 +525,11 @@ mutation methods apply only to the connected store; sample cart data is internal
 without `sampleProducts`, and direct product-detail visits, show the unconnected state.
 Sample grids and drawers have the attribute `data-commerce-source="sample"`.
 
-The provider reads configuration on mount and focus, and every five seconds while the page is
-visible and the state is `unbound` or `connecting`. The first failed refresh hides samples and
+The provider reads configuration on mount and when the page becomes visible. While the page is
+visible and the state is `unbound`, it also polls every five seconds for two minutes, then every 30
+seconds until fifteen minutes have passed. `connecting` polls fast for five minutes and stops after 30
+minutes. Each limit counts from when the page first saw that state, and failed refreshes count toward
+it. Showing the page again, or remounting, starts a new polling period. The first failed refresh hides samples and
 clears the sample cart; a later `unbound` response starts an empty sample cart. While
 connecting, refresh failures keep the connecting state for up to 60 seconds before showing
 the error. Polling stops
