@@ -134,12 +134,9 @@ live data only when the deployed server reports a new state. If a host's deploym
 state from deployment configuration, a deployed site keeps showing samples until that
 configuration is updated, for example by publishing again.
 
-While the page is visible and the state is `unbound`, the storefront polls every five seconds for
-two minutes, then every 30 seconds, and stops after fifteen minutes. `connecting` polls fast for five
-minutes and stops after 30. Each page refreshes on mount and when it becomes visible, which also starts
-a new polling period. A host that connects a store in a page that stays visible, such as a preview
-iframe, should report `connecting` promptly or reload the page once the store is ready. A failed refresh immediately hides samples, without
+The storefront polls every five seconds while the page is visible and the state is `unbound` or
+`connecting`, and refreshes on mount and focus. Polling stops after about fifteen minutes unbound or thirty connecting. A failed refresh immediately hides samples, without
 automatic request retries. While the last response was `connecting`, refresh failures keep the
 connecting state for up to 60 seconds, so a host restart during connection does not flash an
-error. Polling continues within its limit, and a longer failure reports the error. Aborted configuration requests cannot overwrite newer responses.
+error. Polling continues, and a longer failure reports the error. Aborted configuration requests cannot overwrite newer responses.
 Release server and client support before using the `sampleProducts` prop. No new endpoint is required.
