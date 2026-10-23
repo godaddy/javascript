@@ -137,8 +137,8 @@ configuration is updated, for example by publishing again.
 While the page is visible and the state is `unbound` or `connecting`, the storefront polls every
 five seconds for five minutes after the page loads, then every minute, and stops thirty minutes
 after load. It also refreshes on mount and focus, and reloading the page starts polling again. A
-page still `connecting` when polling stops keeps showing that state until it is focused or
-reloaded, so finish connecting well within thirty minutes. A failed refresh immediately hides
+page still `connecting` when polling stops shows an error with a retry button, so finish connecting
+well within thirty minutes. A failed refresh immediately hides
 samples, without automatic request retries. While the last response was `connecting`, refresh
 failures keep the connecting state for up to 60 seconds, so a host restart during connection does
 not flash an error. This holds only in the first five minutes; after that, polls are a minute

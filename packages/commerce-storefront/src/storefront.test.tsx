@@ -784,6 +784,30 @@ describe('bounded polling', () => {
     }
   });
 
+  it('offers a retry when the store is still connecting after polling stops', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
+    try {
+      let config: unknown = { state: 'connecting' };
+      const api = mockApi((path) =>
+        path.endsWith('/config') ? response(config) : response({ skuGroups: { edges: [] } }),
+      );
+      const view = mount(<Catalog sampleProducts />);
+      await vi.waitFor(() => expect(view.context().connection).toBe('connecting'));
+      await advance(minutes(30));
+      await vi.waitFor(() => expect(view.context().connection).toBe('error'));
+      expect(screen.getByText('The store is taking too long to connect.')).toBeVisible();
+      const read = configReads(api);
+      fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
+      await vi.waitFor(() => expect(configReads(api)).toBe(read + 1));
+      expect(screen.getByRole('button', { name: 'Retry connection' })).toBeVisible();
+      config = { state: 'ready', ...configuration };
+      fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
+      await vi.waitFor(() => expect(view.context().connection).toBe('ready'));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('polls again after a reload once polling has stopped', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
     try {

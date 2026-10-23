@@ -234,6 +234,11 @@ export function CommerceProvider({
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
   const [mountedAt] = useState(Date.now);
+  const [pollingStopped, setPollingStopped] = useState<boolean>(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => setPollingStopped(true), STOP_POLLING_AT_MS);
+    return () => clearTimeout(timeout);
+  }, []);
   const config = useQuery({
     retry: false,
     queryKey: ['commerce', 'configuration'],
@@ -259,6 +264,9 @@ export function CommerceProvider({
     config.errorUpdatedAt - config.dataUpdatedAt < CONNECTING_FAILURE_GRACE_MS;
   let connection: CommerceContextValue['connection'] = config.data?.state ?? 'loading';
   if (config.isError) connection = holdConnecting ? 'connecting' : 'error';
+  // Nothing refreshes a connecting page once polling stops, so offer a retry instead of waiting forever.
+  const stalled: boolean = pollingStopped && connection === 'connecting';
+  if (stalled) connection = 'error';
   return (
     <BoundCommerceProvider
       config={{
@@ -270,7 +278,13 @@ export function CommerceProvider({
         checkoutSuccessPath,
       }}
       connection={connection}
-      connectionError={connection === 'error' ? message(config.error) : null}
+      connectionError={
+        stalled
+          ? 'The store is taking too long to connect.'
+          : connection === 'error'
+            ? message(config.error)
+            : null
+      }
       retryConnection={() => {
         void config.refetch();
       }}
