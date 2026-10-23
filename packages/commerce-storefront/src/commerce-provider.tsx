@@ -168,11 +168,9 @@ type PublicConfiguration =
   | ({ state: 'ready' } & Pick<StorefrontConfig, 'cartScope' | 'currencyCode'>);
 
 const CONNECTING_FAILURE_GRACE_MS = 60_000;
-/**
- * Polls at five seconds stop after about fifteen minutes unbound or thirty connecting, counting failures. A site can
- * stay unbound indefinitely; mount and focus still refresh.
- */
-const POLL_LIMIT = { unbound: 180, connecting: 360 } as const;
+/** Polls every five seconds for five minutes after the page loads, then every minute, and stops at thirty. */
+const FAST_POLL_FOR_MS = 5 * 60_000;
+const STOP_POLLING_AT_MS = 30 * 60_000;
 
 /** `locale` as a canonical tag, or `en-US` when it is not a valid one, so one bad prop cannot break every price. */
 function resolveLocale(locale: string | undefined): string {
@@ -235,6 +233,7 @@ export function CommerceProvider({
   onEvent,
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
+  const [mountedAt] = useState(Date.now);
   const config = useQuery({
     retry: false,
     queryKey: ['commerce', 'configuration'],
@@ -243,11 +242,13 @@ export function CommerceProvider({
     refetchOnMount: 'always',
     refetchOnWindowFocus: 'always',
     // Errors after an unbound response also need recovery; stale data never grants eligibility.
-    refetchInterval: ({ state }) =>
-      (state.data?.state === 'unbound' || state.data?.state === 'connecting') &&
-      state.dataUpdateCount + state.errorUpdateCount < POLL_LIMIT[state.data.state]
-        ? 5_000
-        : false,
+    // A site can stay unbound for days, so polling ends; reloading the page starts it again.
+    refetchInterval: (query) => {
+      const waiting = query.state.data?.state === 'unbound' || query.state.data?.state === 'connecting';
+      const elapsed = Date.now() - mountedAt;
+      if (!waiting || elapsed >= STOP_POLLING_AT_MS) return false;
+      return elapsed < FAST_POLL_FOR_MS ? 5_000 : 60_000;
+    },
     refetchIntervalInBackground: false,
   });
   // Hosts may restart while connecting a store. Keep the connecting state through brief

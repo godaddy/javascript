@@ -2,4 +2,4 @@
 '@godaddy/gd-commerce-storefront': minor
 ---
 
-Configuration polling now stops instead of continuing every five seconds for as long as the page is visible: after about fifteen minutes (180 requests) while the server reports `unbound`, and thirty minutes (360) while `connecting`. Failed requests count toward the limit. Mount, focus and `retryConnection()` still refresh configuration.
+Configuration polling while the server reports `unbound` or `connecting` now ends. After the page loads, the provider polls `/api/commerce/config` every five seconds for five minutes, then every minute, and stops at thirty minutes, whether or not requests fail. Before, it polled every five seconds for as long as the page stayed visible. Reloading the page starts polling again, and focus and `retryConnection()` still refresh configuration.
