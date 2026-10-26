@@ -279,7 +279,7 @@ export const enUs = {
     DATA_SOURCES_NOT_FOUND: 'Data sources not found',
     TRANSACTION_API_NOT_FOUND: 'Transaction API data source not found',
     PAYMENT_STILL_CONFIRMING:
-      'A previous payment for this order is still being confirmed. Please wait a moment, or refresh the page to check its status.',
+      'A previous payment for this order is still being confirmed. Please wait a moment before trying again.',
     PAYMENT_ACTION_REQUIRED:
       'Your payment needs additional verification. Please try again or choose another payment method.',
     TRANSACTION_PROCESSING_FAILED: 'Failed to process transaction',

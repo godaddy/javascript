@@ -281,7 +281,7 @@ export const trTr = {
     DATA_SOURCES_NOT_FOUND: 'Veri kaynakları bulunamadı',
     TRANSACTION_API_NOT_FOUND: 'İşlem API veri kaynağı bulunamadı',
     PAYMENT_STILL_CONFIRMING:
-      'Bu sipariş için önceki bir ödeme hâlâ onaylanıyor. Lütfen biraz bekleyin veya durumunu kontrol etmek için sayfayı yenileyin.',
+      'Bu sipariş için önceki bir ödeme hâlâ onaylanıyor. Lütfen tekrar denemeden önce biraz bekleyin.',
     PAYMENT_ACTION_REQUIRED:
       'Ödemeniz için ek doğrulama gerekiyor. Lütfen tekrar deneyin veya başka bir ödeme yöntemi seçin.',
     TRANSACTION_PROCESSING_FAILED: 'İşlem işlenemedi',

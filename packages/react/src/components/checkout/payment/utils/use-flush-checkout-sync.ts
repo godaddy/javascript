@@ -6,12 +6,10 @@ import {
   checkoutMutationKeys,
   checkoutQueryKeys,
 } from '@/components/checkout/utils/query-keys';
+import { CheckoutErrorAlreadyReported } from './checkout-error-reported';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 50;
-
-import { CheckoutErrorAlreadyReported } from './checkout-error-reported';
-
 const CHECKOUT_SYNC_ERROR = 'DRAFT_ORDER_UPDATE_FAILED';
 
 interface FlushCheckoutSyncOptions {

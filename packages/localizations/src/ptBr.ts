@@ -283,7 +283,7 @@ export const ptBr = {
     TRANSACTION_API_NOT_FOUND:
       'Fonte de dados da API de transação não encontrada',
     PAYMENT_STILL_CONFIRMING:
-      'Um pagamento anterior deste pedido ainda está sendo confirmado. Aguarde um momento ou atualize a página para verificar o status.',
+      'Um pagamento anterior deste pedido ainda está sendo confirmado. Aguarde um momento antes de tentar novamente.',
     PAYMENT_ACTION_REQUIRED:
       'Seu pagamento precisa de uma verificação adicional. Tente novamente ou escolha outra forma de pagamento.',
     TRANSACTION_PROCESSING_FAILED: 'Falha ao processar transação',

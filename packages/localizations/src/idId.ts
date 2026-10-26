@@ -279,7 +279,7 @@ export const idId = {
     DATA_SOURCES_NOT_FOUND: 'Sumber data tidak ditemukan',
     TRANSACTION_API_NOT_FOUND: 'Sumber data API transaksi tidak ditemukan',
     PAYMENT_STILL_CONFIRMING:
-      'Pembayaran sebelumnya untuk pesanan ini masih dikonfirmasi. Tunggu sebentar, atau muat ulang halaman untuk memeriksa statusnya.',
+      'Pembayaran sebelumnya untuk pesanan ini masih dikonfirmasi. Tunggu sebentar sebelum mencoba lagi.',
     PAYMENT_ACTION_REQUIRED:
       'Pembayaran Anda memerlukan verifikasi tambahan. Coba lagi atau pilih metode pembayaran lain.',
     TRANSACTION_PROCESSING_FAILED: 'Gagal memproses transaksi',

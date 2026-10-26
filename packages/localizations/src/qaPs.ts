@@ -287,7 +287,7 @@ export const qaPs = {
     DATA_SOURCES_NOT_FOUND: '[Dâţâ šöürçëš ñöţ föüñd îñ šÿšţëm]',
     TRANSACTION_API_NOT_FOUND: '[Ţrâñšâçţîöñ ÂÞÎ dâţâ šöürçë ñöţ föüñd]',
     PAYMENT_STILL_CONFIRMING:
-      '[A previous payment for this order is still being confirmed. Please wait a moment, or refresh the page to check its status.]',
+      '[A previous payment for this order is still being confirmed. Please wait a moment before trying again.]',
     PAYMENT_ACTION_REQUIRED:
       '[Your payment needs additional verification. Please try again or choose another payment method.]',
     TRANSACTION_PROCESSING_FAILED: '[Fâîlëd ţö þröçëšš ţrâñšâçţîöñ]',

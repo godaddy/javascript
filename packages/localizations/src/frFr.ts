@@ -294,7 +294,7 @@ export const frFr = {
     TRANSACTION_API_NOT_FOUND:
       "Source de données de l'API de transaction non trouvée",
     PAYMENT_STILL_CONFIRMING:
-      'Un paiement précédent pour cette commande est toujours en cours de confirmation. Patientez un instant ou actualisez la page pour vérifier son état.',
+      'Un paiement précédent pour cette commande est toujours en cours de confirmation. Patientez un instant avant de réessayer.',
     PAYMENT_ACTION_REQUIRED:
       'Votre paiement nécessite une vérification supplémentaire. Réessayez ou choisissez un autre moyen de paiement.',
     TRANSACTION_PROCESSING_FAILED: 'Échec du traitement de la transaction',
