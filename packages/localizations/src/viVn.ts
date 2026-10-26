@@ -278,6 +278,8 @@ export const viVn = {
     DRAFT_ORDER_RETRIEVAL_FAILED: 'Không thể truy xuất đơn hàng',
     DATA_SOURCES_NOT_FOUND: 'Không tìm thấy nguồn dữ liệu',
     TRANSACTION_API_NOT_FOUND: 'Không tìm thấy nguồn dữ liệu API giao dịch',
+    PAYMENT_STILL_CONFIRMING:
+      'Một khoản thanh toán trước đó cho đơn hàng này vẫn đang được xác nhận. Vui lòng đợi một chút hoặc tải lại trang để kiểm tra trạng thái.',
     PAYMENT_ACTION_REQUIRED:
       'Thanh toán của bạn cần được xác minh thêm. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.',
     TRANSACTION_PROCESSING_FAILED: 'Không thể xử lý giao dịch',

@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useFormContext } from 'react-hook-form';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { useDraftOrderTotals } from '@/components/checkout/order/use-draft-order';
@@ -10,6 +10,10 @@ import {
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { authorizeCheckoutSession } from '@/lib/godaddy/godaddy';
 import type { AuthorizeCheckoutSessionInput } from '@/types';
+import {
+  assertNoUnresolvedPayment,
+  isUnresolvedPaymentError,
+} from './unresolved-payment';
 
 export function useAuthorizeCheckout() {
   const { session, jwt } = useCheckoutContext();
@@ -17,9 +21,17 @@ export function useAuthorizeCheckout() {
   const form = useFormContext();
   const { data: totals } = useDraftOrderTotals();
   const flushCheckoutSync = useFlushCheckoutSync();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (input: AuthorizeCheckoutSessionInput['input']) => {
+      // Redirect providers (CCAvenue) take the payment off site after this, and
+      // PayPal and MercadoPago collect approval, so block before any of it while
+      // another flow's payment may still have succeeded. Authorize never resumes
+      // an unresolved payment, so no flow or token can match.
+      assertNoUnresolvedPayment(queryClient, session?.id, {
+        flow: 'authorize',
+      });
       await flushCheckoutSync();
 
       // The form is the single source of truth for the tip, deliberately
@@ -53,6 +65,7 @@ export function useAuthorizeCheckout() {
       };
     },
     onError: (error: unknown) => {
+      if (isUnresolvedPaymentError(error)) return;
       const translate = (code: string) =>
         t.apiErrors?.[code as keyof typeof t.apiErrors];
 

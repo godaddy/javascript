@@ -23,6 +23,8 @@ export function usePaidOrderRedirect({
   const orderStatusQuery = useCheckoutOrderStatus({
     enabled: needsOrderStatus,
   });
+  const { isFetching, isPending, isError } = orderStatusQuery;
+
   const showPaidOrder =
     isCheckoutComplete(orderStatusQuery.data) && !isConfirmingCheckout;
 
@@ -32,7 +34,11 @@ export function usePaidOrderRedirect({
 
   return {
     showPaidOrder,
-    // Pending until the lookup settles, including the render that enables it.
-    isLoadingOrderStatus: needsOrderStatus && orderStatusQuery.isPending,
+    // Loading until the lookup started when the draft order went missing
+    // settles, so the missing-order fallback can't act on an older cached
+    // status (useCheckoutOrderStatus treats every cached status as stale). A
+    // failed lookup (an API without orderStatus) settles it.
+    isLoadingOrderStatus:
+      needsOrderStatus && (isFetching || (isPending && !isError)),
   };
 }

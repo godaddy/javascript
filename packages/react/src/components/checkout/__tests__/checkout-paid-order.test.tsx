@@ -2,9 +2,11 @@ import { act, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import {
+  buildDraftOrder,
   getOperations,
   mockWindowLocation,
   renderCheckout,
+  setCurrentDraftOrder,
   waitForCheckoutReady,
 } from './checkout-test-env';
 
@@ -166,6 +168,44 @@ describe('Checkout paid-order recovery', () => {
       expect(screen.queryByText('Payment successful')).not.toBeInTheDocument();
     }
   );
+
+  it('looks up the status again instead of acting on one cached before the order was paid', async () => {
+    const successUrl = 'https://merchant.example/success';
+    const returnUrl = 'https://merchant.example/cart';
+    const { queryClient, session } = renderCheckout({
+      sessionOverrides: { successUrl, returnUrl },
+      draftOrderOverrides: { statuses: { paymentStatus: 'UNPAID' } },
+    });
+    await waitForCheckoutReady();
+    // Recovery after a lost confirmation response cached UNPAID before the
+    // payment was recorded.
+    act(() => {
+      queryClient.setQueryData(checkoutQueryKeys.orderStatus(session.id), {
+        checkoutSession: {
+          id: session.id,
+          orderStatus: { status: 'DRAFT', paymentStatus: 'UNPAID' },
+        },
+      });
+    });
+    // The payment is recorded, so the draft order is no longer returned.
+    setCurrentDraftOrder(
+      buildDraftOrder({ statuses: { status: 'OPEN', paymentStatus: 'PAID' } })
+    );
+    await act(async () => {
+      await queryClient.refetchQueries({
+        queryKey: checkoutQueryKeys.draftOrder(session.id),
+      });
+    });
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Payment successful'
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1100);
+    });
+    expect(window.location.href).toBe(successUrl);
+    expect(getOperations('CheckoutOrderStatus').length).toBeGreaterThan(0);
+  });
 
   it('redirects when a refreshed order status becomes paid', async () => {
     const successUrl = 'https://merchant.example/success';

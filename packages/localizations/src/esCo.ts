@@ -284,6 +284,8 @@ export const esCo = {
     DATA_SOURCES_NOT_FOUND: 'Fuentes de datos no encontradas',
     TRANSACTION_API_NOT_FOUND:
       'Fuente de datos de API de transacciones no encontrada',
+    PAYMENT_STILL_CONFIRMING:
+      'Todavía se está confirmando un pago anterior de este pedido. Espera un momento o actualiza la página para ver su estado.',
     PAYMENT_ACTION_REQUIRED:
       'Tu pago requiere una verificación adicional. Inténtalo de nuevo o elige otro método de pago.',
     TRANSACTION_PROCESSING_FAILED: 'Error al procesar transacción',

@@ -1,11 +1,14 @@
 import type { StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, renderHook } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkoutContext } from '@/components/checkout/checkout';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { eventIds } from '@/tracking/events';
 import type { DraftOrder } from '@/types';
+import { CheckoutErrorAlreadyReported } from './checkout-error-reported';
 import { StripeProvider } from './stripe-provider';
 import { CheckoutConfirmationBlockedError } from './use-confirm-checkout';
 import { useStripeCheckout } from './use-stripe-checkout';
@@ -79,18 +82,26 @@ vi.mock(
   })
 );
 
+// The unresolved payment lives in the QueryClient, so each test gets its own.
+let queryClient = new QueryClient();
+beforeEach(() => {
+  queryClient = new QueryClient();
+});
+
 function Wrapper({ children }: { children: React.ReactNode }) {
   return (
-    <checkoutContext.Provider
-      value={{
-        session: { id: mocks.sessionId } as never,
-        isConfirmingCheckout: false,
-        setIsConfirmingCheckout: mocks.setIsConfirmingCheckout,
-        setCheckoutErrors: mocks.setCheckoutErrors,
-      }}
-    >
-      <StripeProvider>{children}</StripeProvider>
-    </checkoutContext.Provider>
+    <QueryClientProvider client={queryClient}>
+      <checkoutContext.Provider
+        value={{
+          session: { id: mocks.sessionId } as never,
+          isConfirmingCheckout: false,
+          setIsConfirmingCheckout: mocks.setIsConfirmingCheckout,
+          setCheckoutErrors: mocks.setCheckoutErrors,
+        }}
+      >
+        <StripeProvider>{children}</StripeProvider>
+      </checkoutContext.Provider>
+    </QueryClientProvider>
   );
 }
 
@@ -284,6 +295,82 @@ describe('useStripeCheckout payment request resolution', () => {
     });
     mocks.confirm.mockResolvedValue(undefined);
     mocks.confirmExpress.mockResolvedValue(undefined);
+  });
+
+  it.each(['card', 'express'] as const)(
+    "keeps the confirm hook's own error code on a %s non-GraphQL failure",
+    async mode => {
+      // useConfirmCheckout sets e.g. MISSING_SHIPPING_INFO, then throws.
+      const confirm = mode === 'card' ? mocks.confirm : mocks.confirmExpress;
+      confirm.mockRejectedValueOnce(
+        new CheckoutErrorAlreadyReported('MISSING_SHIPPING_INFO')
+      );
+      const { result } = renderHook(() => useStripeCheckout({ mode }), {
+        wrapper: Wrapper,
+      });
+
+      await act(async () => {
+        await result.current
+          .handleSubmit(
+            mode === 'express'
+              ? {
+                  event: {
+                    expressPaymentType: 'apple_pay',
+                  } as StripeExpressCheckoutElementConfirmEvent,
+                }
+              : undefined
+          )
+          .catch(() => undefined);
+      });
+
+      expect(mocks.setCheckoutErrors).not.toHaveBeenCalled();
+      expect(mocks.setIsConfirmingCheckout).toHaveBeenCalledWith(false);
+    }
+  );
+
+  it.each([
+    ['a bodyless 502 on the final confirmation', 'confirm'],
+    ['a Stripe.js rejection', 'sdk'],
+  ] as const)('still reports %s after 3-D Secure', async (_name, failure) => {
+    mocks.confirm.mockRejectedValueOnce(actionRequiredError());
+    if (failure === 'confirm') {
+      mocks.confirm.mockRejectedValueOnce(new Error('Bad Gateway'));
+    } else {
+      mocks.handleNextAction.mockRejectedValueOnce(new Error('network'));
+    }
+    const { result } = renderHook(() => useStripeCheckout({ mode: 'card' }), {
+      wrapper: Wrapper,
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(mocks.setCheckoutErrors).toHaveBeenCalledWith([
+      'TRANSACTION_PROCESSING_FAILED',
+    ]);
+    expect(mocks.setIsConfirmingCheckout).toHaveBeenCalledWith(false);
+  });
+
+  it('blocks a card payment while an express payment is unresolved', async () => {
+    queryClient.setQueryData(
+      checkoutQueryKeys.unresolvedPayment(mocks.sessionId),
+      { flow: 'express', paymentReference: 'pi-express' }
+    );
+    const { result } = renderHook(() => useStripeCheckout({ mode: 'card' }), {
+      wrapper: Wrapper,
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    // The card flow creates its own payment method and never resumes the
+    // express intent; the confirm hook (mocked here) is what blocks it.
+    expect(mocks.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentToken: 'stripe-payment-method' })
+    );
+    expect(mocks.handleNextAction).not.toHaveBeenCalled();
   });
 
   it('tokenizes card billing from the flushed latest order before confirmation', async () => {

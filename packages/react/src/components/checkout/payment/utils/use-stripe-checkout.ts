@@ -26,13 +26,24 @@ import type {
   ShippingMethod,
 } from '@/types';
 import { PaymentMethodType } from '@/types';
+import { isCheckoutErrorAlreadyReported } from './checkout-error-reported';
 import {
   getStripeNextAction,
   stripeCheckoutErrorCode,
 } from './stripe-next-action';
-import { usePendingStripeIntent } from './stripe-provider';
+import {
+  isUnresolvedPaymentError,
+  PAYMENT_STILL_CONFIRMING,
+  useUnresolvedPayment,
+} from './unresolved-payment';
 
-function confirmationErrorCodes(error: unknown): string[] {
+// Codes to show for a failed Stripe confirmation, or undefined to leave codes
+// already set by the confirm hook or checkout sync (e.g. MISSING_SHIPPING_INFO).
+// Every other failure, including a bodyless 502 or a Stripe.js rejection,
+// still shows TRANSACTION_PROCESSING_FAILED.
+function confirmationErrorCodes(error: unknown): string[] | undefined {
+  if (isCheckoutErrorAlreadyReported(error)) return undefined;
+  if (isUnresolvedPaymentError(error)) return [PAYMENT_STILL_CONFIRMING];
   if (
     error instanceof GraphQLErrorWithCodes &&
     error.codes.length &&
@@ -92,14 +103,13 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
   const elements = useElements();
   const confirmCheckout = useConfirmCheckout();
   const confirmExpressCheckout = useConfirmExpressCheckout();
-  const { session, setCheckoutErrors, setIsConfirmingCheckout } =
-    useCheckoutContext();
+  const { setCheckoutErrors, setIsConfirmingCheckout } = useCheckoutContext();
   const { stripePaymentMethodParams, buildPaymentRequestsFromOrder } =
     useBuildPaymentRequest();
   const flushCheckoutSync = useFlushCheckoutSync();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const isSubmittingRef = useRef(false);
-  const pendingIntent = usePendingStripeIntent();
+  const unresolvedPayment = useUnresolvedPayment();
 
   const handleSubmit = useCallback(
     async (
@@ -114,11 +124,13 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
           return;
         }
 
-        if (pendingIntent.current?.sessionId !== session?.id) {
-          pendingIntent.current = null;
-        }
+        // Only this flow may resume its own intent: card and express send
+        // different taxes, shipping and totals. Another flow's unresolved
+        // payment blocks this one at the confirm hook instead.
+        const ownPending = unresolvedPayment.get();
+        const pending = ownPending?.flow === mode ? ownPending : undefined;
+        const clearPending = () => unresolvedPayment.clear(mode);
 
-        // Both card and express payments resume the same intent after authentication.
         const confirmWithNextAction = async (
           paymentToken: string,
           paymentType: string,
@@ -139,25 +151,25 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                     detail.extensions?.transactionStatus === 'FAILED'
                 )
               ) {
-                pendingIntent.current = null;
+                clearPending();
               }
               throw error;
             }
           };
           try {
             await confirmPayment(paymentToken);
-            pendingIntent.current = null;
+            clearPending();
           } catch (error) {
             if (isCheckoutConfirmationBlockedError(error)) throw error;
             const nextAction = getStripeNextAction(error);
             if (!nextAction) throw error;
 
             // Keep the reference even if the SDK loses its response after payment completes.
-            pendingIntent.current = {
-              sessionId: session?.id,
-              id: nextAction.paymentReference,
+            unresolvedPayment.set({
+              flow: mode,
+              paymentReference: nextAction.paymentReference,
               paymentType,
-            };
+            });
             track({
               eventId: eventIds.paymentChallengeStarted,
               type: TrackingEventType.EVENT,
@@ -189,7 +201,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
                     intent.status
                   )
                 ) {
-                  pendingIntent.current = null;
+                  clearPending();
                 }
                 throw new GraphQLErrorWithCodes([
                   {
@@ -202,7 +214,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
 
               challengeSucceeded = true;
               await confirmPayment(actionResult.paymentIntent.id);
-              pendingIntent.current = null;
+              clearPending();
             } finally {
               track({
                 eventId: eventIds.paymentChallengeCompleted,
@@ -214,7 +226,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
         };
 
         if (mode === 'card') {
-          let paymentToken = pendingIntent.current?.id;
+          let paymentToken = pending?.paymentReference;
           if (!paymentToken) {
             const cardElement = elements.getElement(CardElement);
 
@@ -264,7 +276,8 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
               );
             } catch (error) {
               if (isCheckoutConfirmationBlockedError(error)) return;
-              setCheckoutErrors(confirmationErrorCodes(error));
+              const codes = confirmationErrorCodes(error);
+              if (codes) setCheckoutErrors(codes);
               setIsConfirmingCheckout(false);
             }
           } else {
@@ -273,8 +286,8 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
         }
 
         if (mode === 'express') {
-          let paymentToken = pendingIntent.current?.id;
-          let paymentType = pendingIntent.current?.paymentType;
+          let paymentToken = pending?.paymentReference;
+          let paymentType = pending?.paymentType;
           if (!paymentToken) {
             const { error, paymentMethod } = await stripe.createPaymentMethod({
               elements,
@@ -415,7 +428,8 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
               }
             } catch (err: unknown) {
               if (isCheckoutConfirmationBlockedError(err)) throw err;
-              setCheckoutErrors(confirmationErrorCodes(err));
+              const codes = confirmationErrorCodes(err);
+              if (codes) setCheckoutErrors(codes);
               setIsConfirmingCheckout(false);
               throw err; // Re-throw so caller can handle
             }
@@ -432,8 +446,7 @@ export function useStripeCheckout({ mode }: UseStripeCheckoutOptions) {
     },
     [
       mode,
-      pendingIntent,
-      session?.id,
+      unresolvedPayment,
       stripe,
       elements,
       confirmCheckout.mutateAsync,

@@ -291,6 +291,8 @@ export const deDe = {
     DRAFT_ORDER_RETRIEVAL_FAILED: 'Abrufen der Bestellung fehlgeschlagen',
     DATA_SOURCES_NOT_FOUND: 'Datenquellen nicht gefunden',
     TRANSACTION_API_NOT_FOUND: 'Transaktions-API-Datenquelle nicht gefunden',
+    PAYMENT_STILL_CONFIRMING:
+      'Eine vorherige Zahlung für diese Bestellung wird noch bestätigt. Warte einen Moment oder lade die Seite neu, um den Status zu prüfen.',
     PAYMENT_ACTION_REQUIRED:
       'Deine Zahlung erfordert eine zusätzliche Bestätigung. Versuche es erneut oder wähle eine andere Zahlungsmethode.',
     TRANSACTION_PROCESSING_FAILED:

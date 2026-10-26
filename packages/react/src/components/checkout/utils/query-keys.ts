@@ -34,4 +34,6 @@ export const checkoutQueryKeys = {
     ['draft-order-shipping-methods', { sessionId }] as const,
   orderStatus: (sessionId?: string | null) =>
     ['checkout-order-status', { sessionId }] as const,
+  unresolvedPayment: (sessionId?: string | null) =>
+    ['checkout-unresolved-payment', { sessionId }] as const,
 };

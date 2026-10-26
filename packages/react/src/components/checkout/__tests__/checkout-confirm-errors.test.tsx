@@ -9,6 +9,7 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import {
@@ -347,6 +348,30 @@ describe('Checkout confirm errors', () => {
 
     // Order rejected; the success-URL redirect path is bypassed.
     expect(window.location.href).not.toContain('should-not-go-here');
+  });
+
+  it('blocks every provider while another flow has an unresolved payment', async () => {
+    const { session, queryClient, user } = renderCheckoutWithConfirmSeam({
+      sessionOverrides: offlineSessionOverrides(),
+    });
+    await waitForCheckoutReady();
+    // A card 3-D Secure payment whose final confirmation had an unclear outcome.
+    queryClient.setQueryData(checkoutQueryKeys.unresolvedPayment(session.id), {
+      flow: 'card',
+      paymentReference: 'pi_unresolved',
+    });
+    vi.mocked(confirmCheckout).mockClear();
+
+    await user.click(
+      await screen.findByRole('button', { name: /confirm seam/i })
+    );
+
+    expect(
+      await screen.findByText(/still being confirmed/i)
+    ).toBeInTheDocument();
+    expect(confirmCheckout).not.toHaveBeenCalled();
+    // Checkout stays usable: nothing is left locked.
+    expect(screen.getByRole('button', { name: /confirm seam/i })).toBeEnabled();
   });
 
   it('refreshes after a lost confirmation response and redirects the paid order', async () => {

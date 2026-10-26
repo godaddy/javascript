@@ -9,6 +9,9 @@ import {
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 50;
+
+import { CheckoutErrorAlreadyReported } from './checkout-error-reported';
+
 const CHECKOUT_SYNC_ERROR = 'DRAFT_ORDER_UPDATE_FAILED';
 
 interface FlushCheckoutSyncOptions {
@@ -104,7 +107,9 @@ export function useFlushCheckoutSync() {
         return result;
       } catch (error) {
         setCheckoutErrors([CHECKOUT_SYNC_ERROR]);
-        throw error;
+        throw new CheckoutErrorAlreadyReported(
+          error instanceof Error ? error.message : CHECKOUT_SYNC_ERROR
+        );
       }
     },
     [flushDraftOrderSync, queryClient, session, setCheckoutErrors]

@@ -33,7 +33,10 @@ export function useCheckoutOrderStatus({ enabled }: { enabled: boolean }) {
     // Callers enable this only when it can matter; confirmation recovery fills
     // the same cache entry directly with fetchQuery.
     enabled: enabled && !!session?.id,
-    staleTime: 5_000,
+    // Always look the status up again when it's needed: a status cached before
+    // the draft order went missing (for example UNPAID, from the recovery after
+    // a lost confirmation) can't explain why it's missing now.
+    staleTime: 0,
     select: data => data.checkoutSession?.orderStatus ?? null,
     // An API without orderStatus fails validation; retrying cannot help, and a
     // failed lookup only means checkout is not known to be complete.

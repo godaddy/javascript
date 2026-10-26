@@ -19,6 +19,12 @@ import {
 } from '@/tracking/track';
 import type { ConfirmCheckoutMutationInput } from '@/types';
 import { getStripeNextAction } from './stripe-next-action';
+import {
+  assertNoUnresolvedPayment,
+  getUnresolvedPayment,
+  isUnresolvedPaymentError,
+  PAYMENT_STILL_CONFIRMING,
+} from './unresolved-payment';
 import { useConfirmCheckoutRecovery } from './use-confirm-checkout-recovery';
 
 export function useConfirmExpressCheckout() {
@@ -32,10 +38,6 @@ export function useConfirmExpressCheckout() {
   const { apiHost } = useGoDaddyContext();
   const queryClient = useQueryClient();
   const isPendingRef = useRef(false);
-  const pendingActionRef = useRef<{
-    sessionId: string;
-    paymentReference: string;
-  } | null>(null);
   const confirmWithRecovery = useConfirmCheckoutRecovery();
 
   return useMutation({
@@ -51,10 +53,13 @@ export function useConfirmExpressCheckout() {
       if (!input?.paymentType) {
         throw new Error('Express checkout payment type is unavailable');
       }
+      // Read from the session-scoped unresolved payment rather than this hook
+      // instance, so a remounted express form still recognizes its own resume.
+      const unresolved = getUnresolvedPayment(queryClient, session.id);
       const isContinuation =
         input.paymentProvider === PaymentProvider.STRIPE &&
-        pendingActionRef.current?.sessionId === session.id &&
-        pendingActionRef.current.paymentReference === input.paymentToken;
+        unresolved?.flow === 'express' &&
+        unresolved.paymentReference === input.paymentToken;
       if (isConfirmingCheckout && !isContinuation) {
         throw new CheckoutConfirmationBlockedError(
           'Checkout confirmation is already in progress'
@@ -74,6 +79,10 @@ export function useConfirmExpressCheckout() {
           'Express checkout confirmation is already in progress'
         );
       }
+      assertNoUnresolvedPayment(queryClient, session.id, {
+        flow: 'express',
+        paymentToken: input.paymentToken,
+      });
 
       isPendingRef.current = true;
 
@@ -115,7 +124,6 @@ export function useConfirmExpressCheckout() {
     },
     onSuccess: (data, input) => {
       if (!data) return;
-      pendingActionRef.current = null;
       let completedEventId: TrackingEventId | null = null;
       switch (input.paymentType) {
         case 'apple_pay':
@@ -160,20 +168,19 @@ export function useConfirmExpressCheckout() {
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
-
-      const nextAction = getStripeNextAction(error);
-      if (
-        data?.paymentProvider === PaymentProvider.STRIPE &&
-        nextAction &&
-        session?.id
-      ) {
-        pendingActionRef.current = {
-          sessionId: session.id,
-          paymentReference: nextAction.paymentReference,
-        };
+      if (isUnresolvedPaymentError(error)) {
+        setCheckoutErrors([PAYMENT_STILL_CONFIRMING]);
+        setIsConfirmingCheckout(false);
         return;
       }
-      pendingActionRef.current = null;
+
+      // useStripeCheckout records the challenge and keeps checkout locked.
+      if (
+        data?.paymentProvider === PaymentProvider.STRIPE &&
+        getStripeNextAction(error)
+      ) {
+        return;
+      }
 
       track({
         eventId: eventIds.checkoutError,
