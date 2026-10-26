@@ -518,6 +518,9 @@ describe('Checkout free / offline orders', () => {
       apiOverrides: { shippingMethods: buildShippingRates() },
     });
     await waitForCheckoutReady();
+    await user.click(
+      await screen.findByRole('radio', { name: /weight based/i })
+    );
     expect(
       await screen.findByRole('button', { name: /pay now/i })
     ).toBeInTheDocument();

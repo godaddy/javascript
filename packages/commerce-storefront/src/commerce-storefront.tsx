@@ -1,4 +1,4 @@
-import { CartDrawer } from './cart';
+import { CartDrawer } from './cart-parts';
 import { CommerceProvider, type CommerceProviderProps } from './commerce-provider';
 
 /** Mount once inside the application's Router and QueryClientProvider. */
