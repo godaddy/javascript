@@ -1,7 +1,7 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import {
@@ -9,6 +9,8 @@ import {
   PaymentProvider,
   useConfirmCheckout,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
+import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import {
   buildCheckoutSession,
@@ -19,9 +21,11 @@ import {
   clearOperations,
   getOperations,
   mockGodaddyApi,
+  mockWindowLocation,
   type RenderCheckoutOptions,
   renderCheckout,
   setApiError,
+  setCurrentDraftOrder,
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
@@ -98,7 +102,7 @@ function ConfirmSeamButton({
   paymentType = isExpress ? 'apple_pay' : 'offline',
   paymentProvider = isExpress ? PaymentProvider.POYNT : PaymentProvider.OFFLINE,
 }: ConfirmSeamProps) {
-  const confirmCheckout = useConfirmCheckout();
+  const confirmation = useConfirmCheckout();
   const form = useFormContext();
   const { setCheckoutErrors } = useCheckoutContext();
 
@@ -112,7 +116,7 @@ function ConfirmSeamButton({
             form.setValue(key, value);
           }
         }
-        void confirmCheckout
+        void confirmation
           .mutateAsync({
             paymentToken: isExpress ? 'express-nonce' : '',
             paymentType,
@@ -140,7 +144,7 @@ function ConfirmSeamButton({
 }
 
 function DuplicateConfirmSeamButton() {
-  const confirmCheckout = useConfirmCheckout();
+  const confirmation = useConfirmCheckout();
   const form = useFormContext();
   const [secondResult, setSecondResult] = useState('idle');
 
@@ -156,8 +160,8 @@ function DuplicateConfirmSeamButton() {
             paymentProvider: PaymentProvider.OFFLINE,
           };
 
-          void confirmCheckout.mutateAsync(input).catch(() => undefined);
-          void confirmCheckout
+          void confirmation.mutateAsync(input).catch(() => undefined);
+          void confirmation
             .mutateAsync(input)
             .then(() => setSecondResult('resolved'))
             .catch(err => {
@@ -344,6 +348,69 @@ describe('Checkout confirm errors', () => {
 
     // Order rejected; the success-URL redirect path is bypassed.
     expect(window.location.href).not.toContain('should-not-go-here');
+  });
+
+  it('blocks every provider while another flow has an unresolved payment', async () => {
+    const { session, queryClient, user } = renderCheckoutWithConfirmSeam({
+      sessionOverrides: offlineSessionOverrides(),
+    });
+    await waitForCheckoutReady();
+    // A card 3-D Secure payment whose final confirmation had an unclear outcome.
+    queryClient.setQueryData(checkoutQueryKeys.unresolvedPayment(session.id), {
+      flow: 'card',
+      paymentReference: 'pi_unresolved',
+    });
+    vi.mocked(confirmCheckout).mockClear();
+
+    await user.click(
+      await screen.findByRole('button', { name: /confirm seam/i })
+    );
+
+    expect(
+      await screen.findByText(/still being confirmed/i)
+    ).toBeInTheDocument();
+    expect(confirmCheckout).not.toHaveBeenCalled();
+    // Checkout stays usable: nothing is left locked.
+    expect(screen.getByRole('button', { name: /confirm seam/i })).toBeEnabled();
+  });
+
+  it('refreshes after a lost confirmation response and redirects the paid order', async () => {
+    mockWindowLocation();
+    const successUrl = 'https://merchant.example/success';
+    const { user } = renderCheckoutWithConfirmSeam(
+      {
+        sessionOverrides: { ...offlineSessionOverrides(), successUrl },
+      },
+      {
+        isExpress: true,
+        paymentType: 'offline',
+        paymentProvider: PaymentProvider.OFFLINE,
+      }
+    );
+    await waitForCheckoutReady();
+    vi.mocked(confirmCheckout).mockImplementationOnce(async () => {
+      // The payment landed even though its response was lost.
+      setCurrentDraftOrder(
+        buildDraftOrder({
+          statuses: { status: 'OPEN', paymentStatus: 'PAID' },
+        })
+      );
+      throw new Error('Confirmation response lost');
+    });
+    await user.click(
+      await screen.findByRole('button', { name: /confirm seam/i })
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Payment successful'
+    );
+    expect(
+      screen.queryByRole('button', { name: /confirm seam/i })
+    ).not.toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1100);
+    });
+    expect(window.location.href).toBe(successUrl);
+    expect(confirmCheckout).toHaveBeenCalledTimes(1);
   });
 
   it('surfaces DRAFT_ORDER_UPDATE_FAILED when the in-confirm draft-order fetch fails', async () => {

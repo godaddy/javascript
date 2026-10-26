@@ -48,3 +48,6 @@ dist
 .DS_Store
 .env
 .env.local
+
+# Claude Code local state (worktrees, settings)
+.claude/

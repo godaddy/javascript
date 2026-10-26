@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -25,6 +25,14 @@ import {
   track,
 } from '@/tracking/track';
 import type { ConfirmCheckoutMutationInput } from '@/types';
+import { CheckoutErrorAlreadyReported } from './checkout-error-reported';
+import { getStripeNextAction } from './stripe-next-action';
+import {
+  assertNoUnresolvedPayment,
+  isUnresolvedPaymentError,
+  PAYMENT_STILL_CONFIRMING,
+} from './unresolved-payment';
+import { useConfirmCheckoutRecovery } from './use-confirm-checkout-recovery';
 
 export class CheckoutConfirmationBlockedError extends Error {
   constructor(message: string) {
@@ -101,6 +109,8 @@ export function useConfirmCheckout() {
   const { data: order } = useDraftOrder();
   const flushCheckoutSync = useFlushCheckoutSync();
   const isPendingRef = useRef(false);
+  const queryClient = useQueryClient();
+  const confirmWithRecovery = useConfirmCheckoutRecovery();
 
   return useMutation({
     mutationFn: async (
@@ -120,6 +130,12 @@ export function useConfirmCheckout() {
           'Checkout confirmation is already in progress'
         );
       }
+      // Card payments resume as flow 'card'. Any other provider, or a wallet
+      // confirmed here, is blocked while another flow's payment is unresolved.
+      assertNoUnresolvedPayment(queryClient, session.id, {
+        flow: input.isExpress ? 'express' : 'card',
+        paymentToken: input.paymentToken,
+      });
 
       isPendingRef.current = true;
 
@@ -154,7 +170,7 @@ export function useConfirmCheckout() {
           (!hasShippingLines || hasLineItemsMissingShippingFulfillment)
         ) {
           setCheckoutErrors(['MISSING_SHIPPING_INFO']);
-          throw new Error('MISSING_SHIPPING_INFO');
+          throw new CheckoutErrorAlreadyReported('MISSING_SHIPPING_INFO');
         }
 
         const pickupLocationId = form.getValues('pickupLocationId');
@@ -218,17 +234,20 @@ export function useConfirmCheckout() {
           },
         });
 
-        const data = jwt
-          ? await confirmCheckout(
-              payload,
-              { accessToken: jwt, sessionId: session?.id || '' },
-              apiHost
-            )
-          : await confirmCheckout(payload, session, apiHost);
+        const data = await confirmWithRecovery(async () => {
+          const result = jwt
+            ? await confirmCheckout(
+                payload,
+                { accessToken: jwt, sessionId: session?.id || '' },
+                apiHost
+              )
+            : await confirmCheckout(payload, session, apiHost);
 
-        if (!data) {
-          throw new Error('Checkout confirmation failed');
-        }
+          if (!result) {
+            throw new Error('Checkout confirmation failed');
+          }
+          return result;
+        });
 
         return data;
       } finally {
@@ -282,6 +301,19 @@ export function useConfirmCheckout() {
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
+      // Nothing was sent: unlock, and say why for every payment provider.
+      if (isUnresolvedPaymentError(error)) {
+        setCheckoutErrors([PAYMENT_STILL_CONFIRMING]);
+        setIsConfirmingCheckout(false);
+        return;
+      }
+
+      if (
+        data?.paymentProvider === PaymentProvider.STRIPE &&
+        getStripeNextAction(error)
+      ) {
+        return;
+      }
 
       const translate = (code: string) =>
         t.apiErrors?.[code as keyof typeof t.apiErrors];

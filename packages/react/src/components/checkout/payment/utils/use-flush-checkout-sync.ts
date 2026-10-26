@@ -6,6 +6,7 @@ import {
   checkoutMutationKeys,
   checkoutQueryKeys,
 } from '@/components/checkout/utils/query-keys';
+import { CheckoutErrorAlreadyReported } from './checkout-error-reported';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 50;
@@ -104,7 +105,9 @@ export function useFlushCheckoutSync() {
         return result;
       } catch (error) {
         setCheckoutErrors([CHECKOUT_SYNC_ERROR]);
-        throw error;
+        throw new CheckoutErrorAlreadyReported(
+          error instanceof Error ? error.message : CHECKOUT_SYNC_ERROR
+        );
       }
     },
     [flushDraftOrderSync, queryClient, session, setCheckoutErrors]

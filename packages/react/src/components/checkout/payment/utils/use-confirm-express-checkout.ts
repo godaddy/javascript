@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 import {
   redirectToSuccessUrl,
@@ -9,7 +9,6 @@ import {
   isCheckoutConfirmationBlockedError,
   PaymentProvider,
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
-import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { confirmCheckout } from '@/lib/godaddy/godaddy';
 import { eventIds } from '@/tracking/events';
@@ -19,6 +18,14 @@ import {
   track,
 } from '@/tracking/track';
 import type { ConfirmCheckoutMutationInput } from '@/types';
+import { getStripeNextAction } from './stripe-next-action';
+import {
+  assertNoUnresolvedPayment,
+  getUnresolvedPayment,
+  isUnresolvedPaymentError,
+  PAYMENT_STILL_CONFIRMING,
+} from './unresolved-payment';
+import { useConfirmCheckoutRecovery } from './use-confirm-checkout-recovery';
 
 export function useConfirmExpressCheckout() {
   const {
@@ -29,8 +36,9 @@ export function useConfirmExpressCheckout() {
     setCheckoutErrors,
   } = useCheckoutContext();
   const { apiHost } = useGoDaddyContext();
-  const isPaymentDisabled = useIsPaymentDisabled();
+  const queryClient = useQueryClient();
   const isPendingRef = useRef(false);
+  const confirmWithRecovery = useConfirmCheckoutRecovery();
 
   return useMutation({
     mutationFn: async (
@@ -45,12 +53,23 @@ export function useConfirmExpressCheckout() {
       if (!input?.paymentType) {
         throw new Error('Express checkout payment type is unavailable');
       }
-      if (isConfirmingCheckout) {
+      // Read from the session-scoped unresolved payment rather than this hook
+      // instance, so a remounted express form still recognizes its own resume.
+      const unresolved = getUnresolvedPayment(queryClient, session.id);
+      const isContinuation =
+        input.paymentProvider === PaymentProvider.STRIPE &&
+        unresolved?.flow === 'express' &&
+        unresolved.paymentReference === input.paymentToken;
+      if (isConfirmingCheckout && !isContinuation) {
         throw new CheckoutConfirmationBlockedError(
           'Checkout confirmation is already in progress'
         );
       }
-      if (isPaymentDisabled) {
+      // This mutation already contributes one to the live pending count.
+      // A render-time busy flag can count confirmation itself and block resumption.
+      const isOtherWorkPending =
+        queryClient.isMutating() > 1 || queryClient.isFetching() > 0;
+      if (isOtherWorkPending && !isContinuation) {
         throw new CheckoutConfirmationBlockedError(
           'Checkout is currently busy'
         );
@@ -60,6 +79,10 @@ export function useConfirmExpressCheckout() {
           'Express checkout confirmation is already in progress'
         );
       }
+      assertNoUnresolvedPayment(queryClient, session.id, {
+        flow: 'express',
+        paymentToken: input.paymentToken,
+      });
 
       isPendingRef.current = true;
 
@@ -79,17 +102,20 @@ export function useConfirmExpressCheckout() {
           },
         });
 
-        const data = jwt
-          ? await confirmCheckout(
-              confirmCheckoutInput,
-              { accessToken: jwt, sessionId: session?.id || '' },
-              apiHost
-            )
-          : await confirmCheckout(confirmCheckoutInput, session, apiHost);
+        const data = await confirmWithRecovery(async () => {
+          const result = jwt
+            ? await confirmCheckout(
+                confirmCheckoutInput,
+                { accessToken: jwt, sessionId: session?.id || '' },
+                apiHost
+              )
+            : await confirmCheckout(confirmCheckoutInput, session, apiHost);
 
-        if (!data) {
-          throw new Error('Express checkout confirmation failed');
-        }
+          if (!result) {
+            throw new Error('Express checkout confirmation failed');
+          }
+          return result;
+        });
 
         return data;
       } finally {
@@ -142,6 +168,19 @@ export function useConfirmExpressCheckout() {
     },
     onError: (error: unknown, data) => {
       if (isCheckoutConfirmationBlockedError(error)) return;
+      if (isUnresolvedPaymentError(error)) {
+        setCheckoutErrors([PAYMENT_STILL_CONFIRMING]);
+        setIsConfirmingCheckout(false);
+        return;
+      }
+
+      // useStripeCheckout records the challenge and keeps checkout locked.
+      if (
+        data?.paymentProvider === PaymentProvider.STRIPE &&
+        getStripeNextAction(error)
+      ) {
+        return;
+      }
 
       track({
         eventId: eventIds.checkoutError,

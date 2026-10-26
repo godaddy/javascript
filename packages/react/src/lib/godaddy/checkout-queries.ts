@@ -322,6 +322,20 @@ export const AddressMatchesQuery = graphql(`
     }
 `);
 
+// Unlike draftOrder, orderStatus stays available once checkout is finished
+// (paid or pending offline payment), so it is safe to poll after confirmation.
+export const CheckoutOrderStatusQuery = graphql(`
+  query CheckoutOrderStatus {
+    checkoutSession {
+      id
+      orderStatus {
+        status
+        paymentStatus
+      }
+    }
+  }
+`);
+
 export const DraftOrderQuery = graphql(`
   query DraftOrder {
       checkoutSession {

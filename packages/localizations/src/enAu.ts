@@ -278,6 +278,10 @@ export const enAu = {
     DRAFT_ORDER_RETRIEVAL_FAILED: 'Failed to retrieve order',
     DATA_SOURCES_NOT_FOUND: 'Data sources not found',
     TRANSACTION_API_NOT_FOUND: 'Transaction API data source not found',
+    PAYMENT_STILL_CONFIRMING:
+      'A previous payment for this order is still being confirmed. Please wait a moment before trying again.',
+    PAYMENT_ACTION_REQUIRED:
+      'Your payment needs additional verification. Please try again or choose another payment method.',
     TRANSACTION_PROCESSING_FAILED: 'Failed to process transaction',
     TRANSACTION_CREATION_FAILED: 'Failed to find or create transaction',
     ORDER_OPENING_FAILED: 'Failed to open order',
