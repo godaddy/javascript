@@ -171,6 +171,8 @@ const CONNECTING_FAILURE_GRACE_MS = 60_000;
 /** Polls every five seconds for five minutes after the page loads, then every minute, and stops at thirty. */
 const FAST_POLL_FOR_MS = 5 * 60_000;
 const STOP_POLLING_AT_MS = 30 * 60_000;
+/** A failed retry keeps showing connecting this long so the click visibly does something. */
+const RETRY_FEEDBACK_MS = 1_000;
 
 /** `locale` as a canonical tag, or `en-US` when it is not a valid one, so one bad prop cannot break every price. */
 function resolveLocale(locale: string | undefined): string {
@@ -236,6 +238,7 @@ export function CommerceProvider({
   // Polling is timed from load, and a retry starts it over.
   const [pollingSince, setPollingSince] = useState(Date.now);
   const [pollingStopped, setPollingStopped] = useState<boolean>(false);
+  const [retrying, setRetrying] = useState<boolean>(false);
   useEffect(() => {
     setPollingStopped(false);
     const timeout = setTimeout(() => setPollingStopped(true), pollingSince + STOP_POLLING_AT_MS - Date.now());
@@ -269,6 +272,8 @@ export function CommerceProvider({
   // Nothing refreshes a connecting page once polling stops, so offer a retry instead of waiting forever.
   const stalled: boolean = pollingStopped && connection === 'connecting';
   if (stalled) connection = 'error';
+  // Retrying only ever shows connecting; readiness still comes from the refreshed response.
+  if (retrying) connection = 'connecting';
   return (
     <BoundCommerceProvider
       config={{
@@ -281,15 +286,21 @@ export function CommerceProvider({
       }}
       connection={connection}
       connectionError={
-        stalled
-          ? 'The store is taking too long to connect.'
-          : connection === 'error'
-            ? message(config.error)
-            : null
+        connection !== 'error'
+          ? null
+          : stalled
+            ? 'The store is taking too long to connect.'
+            : message(config.error)
       }
       retryConnection={() => {
-        setPollingSince(Date.now());
-        void config.refetch();
+        const started = Date.now();
+        setPollingSince(started);
+        setRetrying(true);
+        void config.refetch().then(async (result) => {
+          if (result.isError)
+            await new Promise((resolve) => setTimeout(resolve, started + RETRY_FEEDBACK_MS - Date.now()));
+          setRetrying(false);
+        });
       }}
       theme={theme}
       getSwatch={getSwatch}

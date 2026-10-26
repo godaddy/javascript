@@ -814,6 +814,27 @@ describe('bounded polling', () => {
     }
   });
 
+  it('shows connecting for at least a second when a retry fails', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
+    try {
+      const api = mockApi(async () => response({ error: 'Store offline' }, 503));
+      const view = mount(<Catalog />);
+      await vi.waitFor(() => expect(screen.getByText('Store offline')).toBeVisible());
+      const read = configReads(api);
+      fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
+      await vi.waitFor(() => expect(configReads(api)).toBe(read + 1));
+      await advance(900);
+      expect(view.context().connection).toBe('connecting');
+      expect(screen.getByText('Connecting to the store…')).toBeVisible();
+      expect(screen.queryByText('Store offline')).toBeNull();
+      await advance(100);
+      await vi.waitFor(() => expect(screen.getByText('Store offline')).toBeVisible());
+      expect(view.context().connection).toBe('error');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('polls again after a reload once polling has stopped', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
     try {
