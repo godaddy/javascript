@@ -35,7 +35,7 @@ The companion `@godaddy/gd-commerce-server` returns 404 from product details whe
 
 ## Configuration
 
-`cartScope` is a nonempty opaque identifier for the effective store/channel/currency binding. It is not a secret. Rotate it when that binding changes so a saved cart cannot cross stores or currencies. `currencyCode` is a three-letter uppercase ISO 4217 code, for example `USD`. Money integers use that currency's smallest unit: USD 1234 is $12.34; JPY 1234 is ¥1,234. The cart shows the draft-order subtotal and the message “Shipping, taxes, and discounts are calculated at checkout.” The message has the stable `commerce-cart-checkout-adjustments-note` class so a host can hide it without changing the component.
+`cartScope` is a nonempty opaque identifier for the effective store/channel/currency binding. It is not a secret. Rotate it when that binding changes so a saved cart cannot cross stores or currencies. `currencyCode` is a three-letter uppercase ISO 4217 code, for example `USD`. Money integers use that currency's smallest unit: USD 1234 is $12.34; JPY 1234 is ¥1,234. The cart shows the draft-order subtotal and a row saying “Shipping, taxes & discounts: Calculated at checkout.” The row has the stable `commerce-cart-checkout-adjustments-note` class so a host can hide it without changing the component.
 
 The browser rechecks configuration on window focus when stale. Return current server configuration rather than a browser-selected store. Persisted IDs use the package-specific key documented in the README; migration from another application's storage keys belongs to that application's integration.
 
@@ -67,6 +67,8 @@ Exported `SKUGroup`, `SKU`, `Connection`, `SkuGroupsResult` and `SkuGroupResult`
 ```
 
 For options, return `attributes.edges[].node` with `name`, `label`, and `values.edges[].node` containing `name` and `label`. For example, the attribute `color` has values named `blue` and `clay`. The browser sends those value names as repeated `attributeValues` parameters. Return the group with a SKU connection filtered to that exact combination. Zero or multiple results cannot be purchased. Include accurate `totalCount` and `hasNextPage`; a truncated one-item result must never look like a complete match.
+
+Optionally, give each SKU in the unfiltered response its `attributeValues.edges[].node.name`. With every SKU and its value names, the product page crosses out values whose SKUs are all sold out, given the shopper's other selections. Without them, or when `hasNextPage` is true, no value is marked sold out; the add button still reports a sold-out SKU once it is chosen.
 
 Products without attribute definitions can offer explicit SKU selection only when all SKUs are returned with unique IDs and unique nonempty labels/names. Ambiguous or incomplete collections cannot be purchased. No inventory records means untracked inventory; records without an `AVAILABLE` quantity mean unavailable. Supply appropriate records for physical inventory.
 
@@ -101,3 +103,45 @@ The client refreshes the cart before checkout and sends its ID, an absolute cata
 When using `@godaddy/gd-commerce-server`, configure the router's `checkoutReturnUrls.returnUrls` with the absolute catalog return URL and `checkoutReturnUrls.successUrls` with the absolute success-page URL. The package matches these exact destinations and permits an additional `orderId` parameter on success URLs. Missing policy disables HTTP checkout. Public HTTP requests accept only cart or SKU checkout; non-catalog amounts belong in a trusted server handler.
 
 Do not treat `checkoutSuccessPath`, a client-provided URL, the redirect itself, or a draft-order response as proof that payment succeeded. Verify payment using the checkout/payment service or trusted webhook state. Expire or reject paid/closed drafts on subsequent cart reads so returning customers cannot reuse a completed cart.
+
+## Connection state
+
+A host may return one of these uncached config responses:
+
+```json
+{ "state": "unbound" }
+{ "state": "connecting" }
+{ "state": "ready", "cartScope": "opaque-cart-scope", "currencyCode": "USD" }
+```
+
+Only an explicit `unbound` response allows `Catalog sampleProducts`. `connecting` suspends all
+catalog and cart actions. Loading, malformed state, HTTP errors, and missing routes never allow
+samples. A successful `{ cartScope, currencyCode }` response without `state` still means ready.
+
+`@godaddy/gd-commerce-server` accepts an optional synchronous
+`CommerceConfiguration.readConnectionState(): 'unbound' | 'connecting' | 'ready' | undefined`.
+Return `undefined` to keep the existing config behavior. Return `unbound` only when the host has
+confirmed that no store is connected. Throw when the state is unknown or cannot be read.
+`unbound` and `connecting` responses need no credentials. `ready` still requires `read()` to
+succeed. Data and checkout handlers reject any state other than `ready`, even if credentials
+remain. Do not infer `unbound` from missing credentials or configuration.
+
+The host owns the connection lifecycle. Report `ready` only when the store connection is
+complete, and keep failures in a state other than `unbound`. After a store connects, missing
+configuration must never bring samples back. Report `unbound` again only after the store is
+deliberately disconnected. State changes must be visible to the next request. Pages switch to
+live data only when the deployed server reports a new state. If a host's deployments read
+state from deployment configuration, a deployed site keeps showing samples until that
+configuration is updated, for example by publishing again.
+
+While the page is visible and the state is `unbound` or `connecting`, the storefront polls every
+five seconds for five minutes after the page loads, then every minute, and stops thirty minutes
+after load. It also refreshes on mount and focus, and reloading or retrying starts polling again. A
+page still `connecting` when polling stops shows an error with a retry button, so finish connecting
+well within thirty minutes. A failed refresh immediately hides
+samples, without automatic request retries. While the last response was `connecting`, refresh
+failures keep the connecting state for up to 60 seconds, so a host restart during connection does
+not flash an error. This holds only in the first five minutes; after that, polls are a minute
+apart, and the first failure reports the error. Polling continues, and a longer failure reports
+the error. Aborted configuration requests cannot overwrite newer responses.
+Release server and client support before using the `sampleProducts` prop. No new endpoint is required.

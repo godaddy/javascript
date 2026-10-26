@@ -5,21 +5,28 @@
  */
 import type { Request, Response } from 'express';
 import { getCommerceCartScope } from '@/lib/commerce/cart-scope';
-import { type CommerceConfig, commerceConfigurationForResponse } from '@/lib/commerce/config';
+import { commerceRoute } from '@/lib/commerce/commerce-route';
+import {
+  type CommerceConfig,
+  commerceConfigurationForResponse,
+  readCommerceConnectionState,
+  readReadyCommerceConfig,
+} from '@/lib/commerce/config';
 
-export default async function handler(_req: Request, res: Response): Promise<void> {
+async function readPublicConfig(_req: Request, res: Response): Promise<void> {
   res.setHeader('Cache-Control', 'no-store');
-  try {
-    const configuration = commerceConfigurationForResponse(res);
-    const config: CommerceConfig = configuration.read();
-    res.json({
-      cartScope: getCommerceCartScope(config),
-      currencyCode: config.currencyCode,
-    });
-  } catch (cause: unknown) {
-    res.status(503).json({
-      error: 'Commerce configuration is unavailable. Complete the store connection before continuing.',
-      message: cause instanceof Error ? cause.message : 'Invalid Commerce configuration.',
-    });
+  const configuration = commerceConfigurationForResponse(res);
+  const state = readCommerceConnectionState(configuration);
+  if (state === 'unbound' || state === 'connecting') {
+    res.json({ state });
+    return;
   }
+  const config: CommerceConfig = readReadyCommerceConfig(configuration);
+  res.json({
+    ...(state === 'ready' ? { state } : {}),
+    cartScope: getCommerceCartScope(config),
+    currencyCode: config.currencyCode,
+  });
 }
+
+export default commerceRoute('Failed to load Commerce configuration', readPublicConfig);

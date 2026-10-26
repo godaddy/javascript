@@ -22,7 +22,7 @@ it('ships CSS that scopes every document selector to a commerce surface', async 
   expect(selectors.length).toBeGreaterThan(100);
   expect(selectors.filter((selector) => !selector.startsWith('.commerce-'))).toEqual([]);
   expect(selectors).toContain('.commerce-storefront .min-h-11');
-  expect(selectors).toContain('.commerce-storefront .grid-cols-1');
+  expect(selectors).toContain('.commerce-storefront .grid-cols-2');
   expect(css.toString()).toContain('var(--commerce-accent, #171717)');
 });
 
@@ -38,7 +38,7 @@ it('ships a client package with framework peers external and no server dependenc
   expect(pkg.exports['./styles.css']).toBe('./dist/styles.css');
 });
 
-it('defaults to host text and transparent surfaces before applying utilities', async () => {
+it('inherits host text without painting wrappers while retaining opaque themed controls', async () => {
   const css = postcss.parse(await readFile(new URL('../dist/styles.css', import.meta.url), 'utf8'));
   const declarations: Record<string, string> = {};
   css.walkRules('.commerce-storefront', (rule) => {
@@ -47,15 +47,23 @@ it('defaults to host text and transparent surfaces before applying utilities', a
     });
   });
   expect(declarations.color).toBe('var(--commerce-text, inherit)');
-  expect(declarations['background-color']).toBe('var(--commerce-surface, transparent)');
+  expect(declarations['background-color']).toBeUndefined();
+  expect(declarations.background).toBeUndefined();
+  const controlDeclarations: Record<string, string> = {};
+  css.walkRules('.commerce-storefront .bg-white', (rule) => {
+    rule.walkDecls((declaration) => {
+      controlDeclarations[declaration.prop] = declaration.value;
+    });
+  });
+  expect(controlDeclarations['background-color']).toBe('var(--commerce-surface, #fff)');
   const resets: Record<string, string> = {};
-  css.walkRules('.commerce-storefront :where(*)', (rule) => {
+  css.walkRules('.commerce-storefront :where(*:not(.commerce-part))', (rule) => {
     rule.walkDecls((declaration) => {
       resets[declaration.prop] = declaration.value;
     });
   });
   expect(resets).toMatchObject({ color: 'inherit', 'font-family': 'inherit' });
-  expect(css.toString().indexOf('.commerce-storefront :where(*)')).toBeLessThan(
+  expect(css.toString().indexOf('.commerce-storefront :where(*:not(.commerce-part))')).toBeLessThan(
     css.toString().indexOf('.commerce-storefront .text-commerce-on-accent'),
   );
 });
@@ -71,13 +79,13 @@ it('passes shipped CSS through Tailwind v3 without losing package styles', async
     },
   );
   expect(result.css).not.toMatch(/@(?:layer|tailwind|apply|theme|source)\b/);
-  expect(result.css).toContain('.commerce-storefront .grid-cols-1');
+  expect(result.css).toContain('.commerce-storefront .grid-cols-2');
   expect(result.css).toContain('var(--commerce-accent, #171717)');
   expect(result.css).toContain('@media');
   expect(result.css).toContain('@keyframes pulse');
   const resetIndex = css.search(/\.commerce-storefront :where\(button,\s*input,\s*select\)/);
   expect(resetIndex).toBeGreaterThanOrEqual(0);
-  expect(resetIndex).toBeLessThan(css.indexOf('.commerce-storefront .grid-cols-1'));
+  expect(resetIndex).toBeLessThan(css.indexOf('.commerce-storefront .grid-cols-2'));
   const rules = (value: string): string[] => {
     const declarations: string[] = [];
     postcss.parse(value).walkDecls((declaration) => {
