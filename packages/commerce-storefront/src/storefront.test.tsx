@@ -835,6 +835,50 @@ describe('bounded polling', () => {
     }
   });
 
+  it('keeps a connected cart when retrying without an error', async () => {
+    localStorage.setItem(storageKey, 'cart-1');
+    const api = mockApi((path) =>
+      path.endsWith('/config') ? response(configuration) : response({ cart: cart() }),
+    );
+    const view = mount();
+    await connected(view);
+    const loaded = view.context().cart;
+    const reads = api.mock.calls.filter(([path]) => String(path).includes('/cart')).length;
+    act(() => view.context().retryConnection());
+    expect(view.context().connection).toBe('ready');
+    await waitFor(() => expect(configReads(api)).toBe(2));
+    expect(view.context().cart).toBe(loaded);
+    expect(api.mock.calls.filter(([path]) => String(path).includes('/cart')).length).toBe(reads);
+  });
+
+  it('gives a store connected after polling stopped a fresh window', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
+    try {
+      let config: unknown = { state: 'unbound' };
+      const api = mockApi((path) =>
+        path.endsWith('/config') ? response(config) : response({ skuGroups: { edges: [] } }),
+      );
+      const view = mount(<Catalog sampleProducts />);
+      await vi.waitFor(() => expect(view.context().connection).toBe('unbound'));
+      await advance(minutes(60));
+      // A focus refresh after polling stopped finds the store connecting.
+      config = { state: 'connecting' };
+      await act(async () => {
+        await view.client.refetchQueries({ queryKey: ['commerce', 'configuration'] });
+      });
+      await vi.waitFor(() => expect(view.context().connection).toBe('connecting'));
+      expect(screen.queryByText('The store is taking too long to connect.')).toBeNull();
+      const read = configReads(api);
+      await advance(5_000);
+      expect(configReads(api)).toBe(read + 1);
+      config = { state: 'ready', ...configuration };
+      await advance(5_000);
+      await vi.waitFor(() => expect(view.context().connection).toBe('ready'));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('polls again after a reload once polling has stopped', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
     try {

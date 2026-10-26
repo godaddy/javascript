@@ -235,7 +235,7 @@ export function CommerceProvider({
   onEvent,
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
-  // Polling is timed from load, and a retry starts it over.
+  // Polling is timed from load, and a retry or a change in the reported state starts it over.
   const [pollingSince, setPollingSince] = useState(Date.now);
   const [pollingStopped, setPollingStopped] = useState<boolean>(false);
   const [retrying, setRetrying] = useState<boolean>(false);
@@ -261,6 +261,13 @@ export function CommerceProvider({
     },
     refetchIntervalInBackground: false,
   });
+  // A store connected after polling stopped (picked up on focus) gets a fresh window.
+  const [reported, setReported] = useState(config.data?.state);
+  if (reported !== config.data?.state) {
+    setReported(config.data?.state);
+    setPollingSince(Date.now());
+    setPollingStopped(false);
+  }
   // Hosts may restart while connecting a store. Keep the connecting state through brief
   // refresh failures; it never shows samples, and polling continues until the grace ends.
   const holdConnecting: boolean =
@@ -295,6 +302,11 @@ export function CommerceProvider({
       retryConnection={() => {
         const started = Date.now();
         setPollingSince(started);
+        // Only an error shows retry feedback; changing a ready or unbound connection would reset the cart.
+        if (connection !== 'error') {
+          void config.refetch();
+          return;
+        }
         setRetrying(true);
         void config.refetch().then(async (result) => {
           if (result.isError)
