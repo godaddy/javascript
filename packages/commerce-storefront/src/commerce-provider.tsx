@@ -168,6 +168,11 @@ type PublicConfiguration =
   | ({ state: 'ready' } & Pick<StorefrontConfig, 'cartScope' | 'currencyCode'>);
 
 const CONNECTING_FAILURE_GRACE_MS = 60_000;
+/** Polls every five seconds for five minutes after the page loads, then every minute, and stops at thirty. */
+const FAST_POLL_FOR_MS = 5 * 60_000;
+const STOP_POLLING_AT_MS = 30 * 60_000;
+/** A failed retry keeps showing connecting this long so the click visibly does something. */
+const RETRY_FEEDBACK_MS = 1_000;
 
 /** `locale` as a canonical tag, or `en-US` when it is not a valid one, so one bad prop cannot break every price. */
 function resolveLocale(locale: string | undefined): string {
@@ -230,6 +235,15 @@ export function CommerceProvider({
   onEvent,
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
+  // Polling is timed from load, and a retry or a change in the reported state starts it over.
+  const [pollingSince, setPollingSince] = useState(Date.now);
+  const [pollingStopped, setPollingStopped] = useState<boolean>(false);
+  const [retrying, setRetrying] = useState<boolean>(false);
+  useEffect(() => {
+    setPollingStopped(false);
+    const timeout = setTimeout(() => setPollingStopped(true), pollingSince + STOP_POLLING_AT_MS - Date.now());
+    return () => clearTimeout(timeout);
+  }, [pollingSince]);
   const config = useQuery({
     retry: false,
     queryKey: ['commerce', 'configuration'],
@@ -238,10 +252,22 @@ export function CommerceProvider({
     refetchOnMount: 'always',
     refetchOnWindowFocus: 'always',
     // Errors after an unbound response also need recovery; stale data never grants eligibility.
-    refetchInterval: (query) =>
-      query.state.data?.state === 'unbound' || query.state.data?.state === 'connecting' ? 5_000 : false,
+    // A site can stay unbound for days, so polling ends; reloading the page or retrying starts it again.
+    refetchInterval: (query) => {
+      const waiting = query.state.data?.state === 'unbound' || query.state.data?.state === 'connecting';
+      const elapsed = Date.now() - pollingSince;
+      if (!waiting || elapsed >= STOP_POLLING_AT_MS) return false;
+      return elapsed < FAST_POLL_FOR_MS ? 5_000 : 60_000;
+    },
     refetchIntervalInBackground: false,
   });
+  // A store connected after polling stopped (picked up on focus) gets a fresh window.
+  const [reported, setReported] = useState(config.data?.state);
+  if (reported !== config.data?.state) {
+    setReported(config.data?.state);
+    setPollingSince(Date.now());
+    setPollingStopped(false);
+  }
   // Hosts may restart while connecting a store. Keep the connecting state through brief
   // refresh failures; it never shows samples, and polling continues until the grace ends.
   const holdConnecting: boolean =
@@ -250,6 +276,11 @@ export function CommerceProvider({
     config.errorUpdatedAt - config.dataUpdatedAt < CONNECTING_FAILURE_GRACE_MS;
   let connection: CommerceContextValue['connection'] = config.data?.state ?? 'loading';
   if (config.isError) connection = holdConnecting ? 'connecting' : 'error';
+  // Nothing refreshes a connecting page once polling stops, so offer a retry instead of waiting forever.
+  const stalled: boolean = pollingStopped && connection === 'connecting';
+  if (stalled) connection = 'error';
+  // Retrying only ever shows connecting; readiness still comes from the refreshed response.
+  if (retrying) connection = 'connecting';
   return (
     <BoundCommerceProvider
       config={{
@@ -261,9 +292,27 @@ export function CommerceProvider({
         checkoutSuccessPath,
       }}
       connection={connection}
-      connectionError={connection === 'error' ? message(config.error) : null}
+      connectionError={
+        connection !== 'error'
+          ? null
+          : stalled
+            ? 'The store is taking too long to connect.'
+            : message(config.error)
+      }
       retryConnection={() => {
-        void config.refetch();
+        const started = Date.now();
+        setPollingSince(started);
+        // Only an error shows retry feedback; changing a ready or unbound connection would reset the cart.
+        if (connection !== 'error') {
+          void config.refetch();
+          return;
+        }
+        setRetrying(true);
+        void config.refetch().then(async (result) => {
+          if (result.isError)
+            await new Promise((resolve) => setTimeout(resolve, started + RETRY_FEEDBACK_MS - Date.now()));
+          setRetrying(false);
+        });
       }}
       theme={theme}
       getSwatch={getSwatch}

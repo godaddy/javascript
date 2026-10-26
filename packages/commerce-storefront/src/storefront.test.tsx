@@ -734,6 +734,170 @@ describe('sample products before a store is connected', () => {
   });
 });
 
+describe('bounded polling', () => {
+  const minutes = (count: number) => count * 60_000;
+  const configReads = (api: ReturnType<typeof mockApi>) =>
+    api.mock.calls.filter(([path]) => String(path).endsWith('/config')).length;
+  async function advance(ms: number) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms);
+    });
+  }
+
+  it('backs off after five minutes and stops at thirty, including after a failed refresh', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    try {
+      const api = mockApi(() => response({ state: 'unbound' }));
+      const view = mount(<Catalog sampleProducts />);
+      await screen.findByRole('button', { name: 'Add Product 1 to sample cart' });
+      await advance(minutes(5));
+      expect(configReads(api)).toBe(61);
+      await advance(minutes(5));
+      expect(configReads(api)).toBe(66);
+      api.mockImplementation(async () => response({ error: 'Host state unavailable' }, 503));
+      await advance(minutes(20));
+      await vi.waitFor(() => expect(view.context().connection).toBe('error'));
+      const read = configReads(api);
+      await advance(minutes(60 * 24));
+      expect(configReads(api)).toBe(read);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('picks up a connected store while backed off', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    try {
+      let config: unknown = { state: 'unbound' };
+      mockApi((path) =>
+        path.endsWith('/config') ? response(config) : response({ skuGroups: { edges: [] } }),
+      );
+      const view = mount(<Catalog sampleProducts />);
+      await screen.findByRole('button', { name: 'Add Product 1 to sample cart' });
+      await advance(minutes(20));
+      config = { state: 'ready', ...configuration };
+      await advance(minutes(1));
+      await vi.waitFor(() => expect(view.context().connection).toBe('ready'));
+      await screen.findByText('No products available.');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('offers a retry when the store is still connecting after polling stops', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
+    try {
+      let config: unknown = { state: 'connecting' };
+      const api = mockApi((path) =>
+        path.endsWith('/config') ? response(config) : response({ skuGroups: { edges: [] } }),
+      );
+      const view = mount(<Catalog sampleProducts />);
+      await vi.waitFor(() => expect(view.context().connection).toBe('connecting'));
+      await advance(minutes(30));
+      await vi.waitFor(() => expect(view.context().connection).toBe('error'));
+      expect(screen.getByText('The store is taking too long to connect.')).toBeVisible();
+      // A retry shows connecting again and starts a new polling period.
+      const read = configReads(api);
+      fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
+      await vi.waitFor(() => expect(view.context().connection).toBe('connecting'));
+      expect(screen.getByText('Connecting to the store…')).toBeVisible();
+      expect(configReads(api)).toBe(read + 1);
+      await advance(5_000);
+      expect(configReads(api)).toBe(read + 2);
+      await advance(minutes(30));
+      await vi.waitFor(() => expect(view.context().connection).toBe('error'));
+      config = { state: 'ready', ...configuration };
+      fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
+      await vi.waitFor(() => expect(view.context().connection).toBe('ready'));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shows connecting for at least a second when a retry fails', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
+    try {
+      const api = mockApi(async () => response({ error: 'Store offline' }, 503));
+      const view = mount(<Catalog />);
+      await vi.waitFor(() => expect(screen.getByText('Store offline')).toBeVisible());
+      const read = configReads(api);
+      fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
+      await vi.waitFor(() => expect(configReads(api)).toBe(read + 1));
+      await advance(900);
+      expect(view.context().connection).toBe('connecting');
+      expect(screen.getByText('Connecting to the store…')).toBeVisible();
+      expect(screen.queryByText('Store offline')).toBeNull();
+      await advance(100);
+      await vi.waitFor(() => expect(screen.getByText('Store offline')).toBeVisible());
+      expect(view.context().connection).toBe('error');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps a connected cart when retrying without an error', async () => {
+    localStorage.setItem(storageKey, 'cart-1');
+    const api = mockApi((path) =>
+      path.endsWith('/config') ? response(configuration) : response({ cart: cart() }),
+    );
+    const view = mount();
+    await connected(view);
+    const loaded = view.context().cart;
+    const reads = api.mock.calls.filter(([path]) => String(path).includes('/cart')).length;
+    act(() => view.context().retryConnection());
+    expect(view.context().connection).toBe('ready');
+    await waitFor(() => expect(configReads(api)).toBe(2));
+    expect(view.context().cart).toBe(loaded);
+    expect(api.mock.calls.filter(([path]) => String(path).includes('/cart')).length).toBe(reads);
+  });
+
+  it('gives a store connected after polling stopped a fresh window', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
+    try {
+      let config: unknown = { state: 'unbound' };
+      const api = mockApi((path) =>
+        path.endsWith('/config') ? response(config) : response({ skuGroups: { edges: [] } }),
+      );
+      const view = mount(<Catalog sampleProducts />);
+      await vi.waitFor(() => expect(view.context().connection).toBe('unbound'));
+      await advance(minutes(60));
+      // A focus refresh after polling stopped finds the store connecting.
+      config = { state: 'connecting' };
+      await act(async () => {
+        await view.client.refetchQueries({ queryKey: ['commerce', 'configuration'] });
+      });
+      await vi.waitFor(() => expect(view.context().connection).toBe('connecting'));
+      expect(screen.queryByText('The store is taking too long to connect.')).toBeNull();
+      const read = configReads(api);
+      await advance(5_000);
+      expect(configReads(api)).toBe(read + 1);
+      config = { state: 'ready', ...configuration };
+      await advance(5_000);
+      await vi.waitFor(() => expect(view.context().connection).toBe('ready'));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('polls again after a reload once polling has stopped', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    try {
+      const api = mockApi(() => response({ state: 'unbound' }));
+      const view = mount(<Catalog sampleProducts />);
+      await screen.findByRole('button', { name: 'Add Product 1 to sample cart' });
+      await advance(minutes(60));
+      view.unmount();
+      const stopped = configReads(api);
+      mount(<Catalog sampleProducts />);
+      await vi.waitFor(() => expect(configReads(api)).toBe(stopped + 1));
+      await advance(5_000);
+      expect(configReads(api)).toBe(stopped + 2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('connection state transitions', () => {
   it('preserves samples across routed pages but resets when the storefront is remounted', async () => {
     mockApi(() => response({ state: 'unbound' }));
