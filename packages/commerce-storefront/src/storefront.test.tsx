@@ -796,10 +796,16 @@ describe('bounded polling', () => {
       await advance(minutes(30));
       await vi.waitFor(() => expect(view.context().connection).toBe('error'));
       expect(screen.getByText('The store is taking too long to connect.')).toBeVisible();
+      // A retry shows connecting again and starts a new polling period.
       const read = configReads(api);
       fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
-      await vi.waitFor(() => expect(configReads(api)).toBe(read + 1));
-      expect(screen.getByRole('button', { name: 'Retry connection' })).toBeVisible();
+      await vi.waitFor(() => expect(view.context().connection).toBe('connecting'));
+      expect(screen.getByText('Connecting to the store…')).toBeVisible();
+      expect(configReads(api)).toBe(read + 1);
+      await advance(5_000);
+      expect(configReads(api)).toBe(read + 2);
+      await advance(minutes(30));
+      await vi.waitFor(() => expect(view.context().connection).toBe('error'));
       config = { state: 'ready', ...configuration };
       fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
       await vi.waitFor(() => expect(view.context().connection).toBe('ready'));

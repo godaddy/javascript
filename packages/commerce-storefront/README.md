@@ -527,7 +527,7 @@ Sample grids and drawers have the attribute `data-commerce-source="sample"`.
 
 The provider reads configuration on mount and focus. While the page is visible and the state is
 `unbound` or `connecting`, it also polls every five seconds for five minutes after the page loads,
-then every minute, and stops thirty minutes after load. Reloading the page starts polling again.
+then every minute, and stops thirty minutes after load. Reloading or retrying starts it again.
 A page still `connecting` when polling stops shows an error with "Retry connection". The first
 failed refresh hides samples and clears the sample cart; a later `unbound` response starts an
 empty sample cart. While connecting, refresh failures keep the connecting

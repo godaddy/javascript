@@ -233,12 +233,14 @@ export function CommerceProvider({
   onEvent,
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
-  const [mountedAt] = useState(Date.now);
+  // Polling is timed from load, and a retry starts it over.
+  const [pollingSince, setPollingSince] = useState(Date.now);
   const [pollingStopped, setPollingStopped] = useState<boolean>(false);
   useEffect(() => {
-    const timeout = setTimeout(() => setPollingStopped(true), STOP_POLLING_AT_MS);
+    setPollingStopped(false);
+    const timeout = setTimeout(() => setPollingStopped(true), pollingSince + STOP_POLLING_AT_MS - Date.now());
     return () => clearTimeout(timeout);
-  }, []);
+  }, [pollingSince]);
   const config = useQuery({
     retry: false,
     queryKey: ['commerce', 'configuration'],
@@ -247,10 +249,10 @@ export function CommerceProvider({
     refetchOnMount: 'always',
     refetchOnWindowFocus: 'always',
     // Errors after an unbound response also need recovery; stale data never grants eligibility.
-    // A site can stay unbound for days, so polling ends; reloading the page starts it again.
+    // A site can stay unbound for days, so polling ends; reloading the page or retrying starts it again.
     refetchInterval: (query) => {
       const waiting = query.state.data?.state === 'unbound' || query.state.data?.state === 'connecting';
-      const elapsed = Date.now() - mountedAt;
+      const elapsed = Date.now() - pollingSince;
       if (!waiting || elapsed >= STOP_POLLING_AT_MS) return false;
       return elapsed < FAST_POLL_FOR_MS ? 5_000 : 60_000;
     },
@@ -286,6 +288,7 @@ export function CommerceProvider({
             : null
       }
       retryConnection={() => {
+        setPollingSince(Date.now());
         void config.refetch();
       }}
       theme={theme}
