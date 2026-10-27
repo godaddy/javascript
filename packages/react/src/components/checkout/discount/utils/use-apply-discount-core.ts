@@ -15,7 +15,7 @@ import type { ApplyCheckoutSessionDiscountInput } from '@/types';
 type DiscountMutationResult = ResultOf<
   typeof ApplyCheckoutSessionDiscountMutation
 >;
-type DiscountOrder = NonNullable<
+export type DiscountOrder = NonNullable<
   DiscountMutationResult['applyCheckoutSessionDiscount']
 >;
 

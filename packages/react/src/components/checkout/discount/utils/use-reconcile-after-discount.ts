@@ -14,8 +14,10 @@ import { useApplyShippingMethodCore } from '@/components/checkout/shipping/utils
 import { useDraftOrderShippingMethods } from '@/components/checkout/shipping/utils/use-draft-order-shipping-methods';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
+import { getProductDiscountTotal } from './get-product-discount-total';
 import {
   type ApplyDiscountVariables,
+  type DiscountOrder,
   useApplyDiscountCore,
 } from './use-apply-discount-core';
 
@@ -29,7 +31,10 @@ export function useReconcileAfterDiscount() {
   const applyShippingMethod = useApplyShippingMethodCore();
   const reapplyDiscount = useApplyDiscountCore();
 
-  return async (variables: ApplyDiscountVariables) => {
+  return async (
+    variables: ApplyDiscountVariables,
+    updatedOrder?: DiscountOrder | null
+  ) => {
     if (!session) return;
 
     const deliveryMethod = form.getValues('deliveryMethod');
@@ -40,7 +45,19 @@ export function useReconcileAfterDiscount() {
         shippingAddress.countryCode
     );
 
-    if (deliveryMethod === DeliveryMethods.SHIP && hasShippingDestination) {
+    // A coupon can only change shipping rates through the product discount,
+    // the one coupon input to checkout-api's rate request (adjustedOrderTotal).
+    // A failed rates query is refetched regardless so the coupon acts as a retry.
+    const productDiscountChanged =
+      !updatedOrder ||
+      getProductDiscountTotal(updatedOrder) !==
+        getProductDiscountTotal(draftOrder);
+
+    if (
+      deliveryMethod === DeliveryMethods.SHIP &&
+      hasShippingDestination &&
+      (productDiscountChanged || shippingMethodsQuery.isError)
+    ) {
       const previousShippingMethods = shippingMethodsQuery.data ?? [];
       const { data, isError } = await shippingMethodsQuery.refetch();
       // A failed refresh is treated as "no rates": the coupon may have changed

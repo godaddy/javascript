@@ -1,5 +1,5 @@
 import { enUs } from '@godaddy/localizations';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { getDraftOrderShippingMethods } from '@/lib/godaddy/godaddy';
@@ -166,6 +166,47 @@ describe('Checkout discounts', () => {
     await waitForOperation('DraftOrderShippingRates');
 
     expect(getOperations('DraftOrderShippingRates')).toHaveLength(1);
+  });
+
+  it('does not refetch shipping methods when the product discount is unchanged', async () => {
+    const { user } = renderCheckout({
+      sessionOverrides: { enableTaxCollection: false },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+
+    // A shipping-only code changes the shipping line's discount, not the product
+    // discount, so the rates cannot change.
+    await applyCoupon(user, 'freeship');
+    await waitForOperation('ApplyCheckoutSessionDiscount');
+    await waitForOperation('DraftOrder');
+    await flushPromises();
+
+    expect(getOperations('DraftOrderShippingRates')).toHaveLength(0);
+  });
+
+  it('refetches shipping methods on a coupon change after a rates failure even when the product discount is unchanged', async () => {
+    const { user, queryClient, session } = renderCheckout({
+      sessionOverrides: { enableTaxCollection: false },
+    });
+    await waitForCheckoutReady();
+    setApiError('getDraftOrderShippingMethods', 'rates failed');
+    await act(async () => {
+      await queryClient.refetchQueries({
+        queryKey: checkoutQueryKeys.draftOrderShippingMethods(session.id),
+      });
+    });
+    await screen.findByRole('button', { name: enUs.shipping.retryMethods });
+    clearApiError('getDraftOrderShippingMethods');
+    clearOperations();
+
+    await applyCoupon(user, 'freeship');
+    await waitForOperation('DraftOrderShippingRates');
+
+    expect(getOperations('DraftOrderShippingRates')).toHaveLength(1);
+    expect(
+      screen.queryByRole('button', { name: enUs.shipping.retryMethods })
+    ).not.toBeInTheDocument();
   });
 
   it('calculates taxes once after a discount changes the selected shipping cost', async () => {
@@ -1039,10 +1080,12 @@ describe('Checkout discounts', () => {
 
     await applyCoupon(user, 'freeship');
 
+    // A shipping-only coupon leaves the product discount unchanged, so the
+    // rates cannot change and are not refetched.
     await waitFor(() => {
-      expect(getOperations('DraftOrderShippingRates')).toHaveLength(1);
       expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
     });
+    expect(getOperations('DraftOrderShippingRates')).toHaveLength(0);
     expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(0);
     expect(
       screen.getAllByRole('button', { name: /remove freeship/i }).length
@@ -1082,9 +1125,9 @@ describe('Checkout discounts', () => {
     );
 
     await waitFor(() => {
-      expect(getOperations('DraftOrderShippingRates')).toHaveLength(1);
       expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
     });
+    expect(getOperations('DraftOrderShippingRates')).toHaveLength(0);
     expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(0);
     expect(getOperations('ApplyCheckoutSessionDiscount')[0].input).toEqual({
       discountCodes: [],

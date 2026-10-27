@@ -5,8 +5,11 @@ export function useDiscountApply() {
   const reconcileAfterDiscount = useReconcileAfterDiscount();
 
   return useApplyDiscountCore({
-    onSuccess: async (_data, variables) => {
-      await reconcileAfterDiscount(variables);
+    onSuccess: async (data, variables) => {
+      await reconcileAfterDiscount(
+        variables,
+        data.applyCheckoutSessionDiscount
+      );
     },
   });
 }
