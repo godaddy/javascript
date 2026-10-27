@@ -325,15 +325,69 @@ describe('Checkout discounts', () => {
     ).not.toBeInTheDocument();
   });
 
-  it.each([
-    ['error', 'same'],
-    ['null', 'same'],
-    ['error', 'changed'],
-    ['error', 'default'],
-    ['error', 'empty'],
-  ] as const)(
-    'clears shipping after a %s rate failure and recovers with %s rates',
-    async (failure, recovery) => {
+  it('treats null shipping rates as no rates instead of a failure', async () => {
+    const paidShipping = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 1000, currencyCode: 'USD' },
+      },
+    ]);
+    const { user, session } = renderCheckout({
+      apiOverrides: { shippingMethods: paidShipping },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 1000, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+    // checkout-api returns null rates on purpose, e.g. for an order with no
+    // SKU-backed line items.
+    vi.mocked(getDraftOrderShippingMethods).mockResolvedValue({
+      checkoutSession: {
+        id: session.id,
+        storeId: session.storeId,
+        draftOrder: { id: 'order-1', calculatedShippingRates: null },
+      },
+    });
+
+    await applyCoupon(user, 'onedollar');
+    await waitFor(() => {
+      expect(document.body).toHaveTextContent(/no shipping methods found/i);
+    });
+    await flushPromises();
+
+    expect(
+      screen.queryByRole('button', { name: enUs.shipping.retryMethods })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(enUs.shipping.failedToLoadMethods)
+    ).not.toBeInTheDocument();
+    expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(1);
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod')[0].input
+    ).toEqual([]);
+
+    // The query is not left in an error state, so an unrelated coupon change
+    // does not keep refetching rates.
+    clearOperations();
+    await applyCoupon(user, 'freeship');
+    await waitForOperation('ApplyCheckoutSessionDiscount');
+    await flushPromises();
+    expect(getOperations('DraftOrderShippingRates')).toHaveLength(0);
+  });
+
+  it.each(['same', 'changed', 'default', 'empty'] as const)(
+    'clears shipping after a rate failure and recovers with %s rates',
+    async recovery => {
       const paidShipping = buildShippingRates([
         {
           serviceCode: 'standard',
@@ -385,17 +439,7 @@ describe('Checkout discounts', () => {
         });
       }
       clearOperations();
-      if (failure === 'error') {
-        setApiError('getDraftOrderShippingMethods', 'rates failed');
-      } else {
-        vi.mocked(getDraftOrderShippingMethods).mockResolvedValueOnce({
-          checkoutSession: {
-            id: session.id,
-            storeId: session.storeId,
-            draftOrder: { id: 'order-1', calculatedShippingRates: null },
-          },
-        });
-      }
+      setApiError('getDraftOrderShippingMethods', 'rates failed');
       await applyCoupon(user, 'onedollar');
       const retry = await screen.findByRole('button', {
         name: enUs.shipping.retryMethods,

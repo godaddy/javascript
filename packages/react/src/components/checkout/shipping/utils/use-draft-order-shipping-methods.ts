@@ -66,15 +66,8 @@ export function useDraftOrderShippingMethods() {
             apiHost
           )
         : await getDraftOrderShippingMethods(session, destination, apiHost);
-      // A null response can represent an upstream provider failure. Only an
-      // actual array (including []) is a validated shipping-rate result.
-      if (
-        !Array.isArray(
-          result?.checkoutSession?.draftOrder?.calculatedShippingRates?.rates
-        )
-      ) {
-        throw new Error('Shipping rates are unavailable');
-      }
+      // Null rates are a normal "no rates" result from checkout-api (e.g. no
+      // SKU-backed items), not a failure; only thrown request errors show retry.
       return result;
     },
     enabled: !!session?.id && hasShippingAddress,
