@@ -7,8 +7,6 @@ export const checkoutMutationKeys = {
     ['update-draft-order-fees', { sessionId }] as const,
   applyShippingMethod: (sessionId?: string | null) =>
     ['apply-shipping-method', { sessionId }] as const,
-  removeShippingMethod: (sessionId?: string | null) =>
-    ['remove-shipping-method', { sessionId }] as const,
   applyDiscount: (sessionId?: string | null) =>
     ['apply-discount', { sessionId }] as const,
   applyDeliveryMethod: (sessionId?: string | null) =>

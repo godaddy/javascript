@@ -433,22 +433,6 @@ export const ApplyCheckoutSessionDeliveryMethodMutation = graphql(`
   }
 `);
 
-export const RemoveAppliedCheckoutSessionShippingMethodMutation = graphql(`
-    mutation RemoveAppliedCheckoutSessionShippingMethod($input: RemoveShippingMethodInput!)  {
-      removeAppliedCheckoutSessionShippingMethod(input: $input) {
-        status
-        draftOrder {
-          totals {
-            shippingTotal {
-              currencyCode
-              value
-            }
-          }
-        }
-      }
-    }
-`);
-
 export const ApplyCheckoutSessionFulfillmentLocationMutation = graphql(`
     mutation ApplyCheckoutSessionFulfillmentLocation($input: MutationApplyCheckoutSessionFulfillmentLocationInput!) {
         applyCheckoutSessionFulfillmentLocation(input: $input) {

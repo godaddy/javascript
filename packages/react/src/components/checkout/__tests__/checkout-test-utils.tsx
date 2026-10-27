@@ -34,7 +34,6 @@ export type OperationName =
   | 'UpdateCheckoutSessionDraftOrder'
   | 'CalculateCheckoutSessionTaxes'
   | 'ApplyCheckoutSessionShippingMethod'
-  | 'RemoveAppliedCheckoutSessionShippingMethod'
   | 'ApplyCheckoutSessionDiscount'
   | 'ApplyCheckoutSessionFulfillmentLocation'
   | 'ConfirmCheckoutSession'
@@ -67,7 +66,6 @@ export type MockGodaddyApiErrorKey =
   | 'updateDraftOrder'
   | 'updateDraftOrderTaxes'
   | 'applyShippingMethod'
-  | 'removeShippingMethod'
   | 'applyDiscount'
   | 'applyFulfillmentLocation'
   | 'confirmCheckout'
@@ -884,28 +882,6 @@ export function mockGodaddyApi(options: MockGodaddyApiOptions) {
       };
     }
   );
-
-  mockedGodaddyApi.removeShippingMethod.mockImplementation(async input => {
-    record('RemoveAppliedCheckoutSessionShippingMethod', input);
-    await maybeDelay();
-    maybeThrow('removeShippingMethod');
-    if (state) {
-      state.draftOrder = recalculateTotal({
-        ...state.draftOrder,
-        shippingLines: [],
-        totals: {
-          ...(state.draftOrder.totals ?? defaultTotals()),
-          shippingTotal: money(0),
-        },
-      });
-      state.session = { ...state.session, draftOrder: state.draftOrder };
-    }
-    return {
-      removeAppliedCheckoutSessionShippingMethod: {
-        draftOrder: state?.draftOrder,
-      },
-    };
-  });
 
   mockedGodaddyApi.applyDiscount.mockImplementation(async discountCodes => {
     record('ApplyCheckoutSessionDiscount', { discountCodes });
