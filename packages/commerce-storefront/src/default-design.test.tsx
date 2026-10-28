@@ -71,6 +71,21 @@ const shoe: SKUGroup = {
   },
   skus: { totalCount: 9, edges: [] },
 };
+// The scarf offers five sizes, but only XS and L have an active SKU.
+const scarfSkus: SKU[] = [sku('scarf-xs', ['xs'], 3), sku('scarf-l', ['l'], 3)];
+const scarf: SKUGroup = {
+  id: 'scarf',
+  label: 'Scarf',
+  priceRange: { min: 2500, max: 2500 },
+  attributes: {
+    edges: [{ node: { name: 'size', label: 'Size', values: values(['xs', 's', 'm', 'l', 'xl']) } }],
+  },
+  skus: {
+    totalCount: scarfSkus.length,
+    pageInfo: { hasNextPage: false },
+    edges: scarfSkus.map((node) => ({ node })),
+  },
+};
 const card = (id: string, label: string, extra: Partial<SKUGroup> = {}): SKUGroup => ({
   id,
   label,
@@ -101,7 +116,7 @@ function mockApi() {
       });
     }
     const id = url.pathname.split('/').at(-1);
-    const group = [shirt, shoe].find((product) => product.id === id);
+    const group = [shirt, shoe, scarf].find((product) => product.id === id);
     if (!group) return response({ error: 'Product not found' }, 404);
     const selected = url.searchParams.getAll('attributeValues');
     if (!selected.length) return response({ skuGroup: group });
@@ -172,6 +187,41 @@ describe('default product page', () => {
     );
     mount(<ProductDetails />, '/products/shirt');
     expect(await screen.findByRole('radio', { name: 'Green' })).toBeInTheDocument();
+  });
+
+  it('offers only the values some active SKU has, so every choice can be bought', async () => {
+    mockApi();
+    mount(<ProductDetails />, '/products/scarf');
+    expect(await screen.findByRole('radio', { name: 'Xs' })).toBeEnabled();
+    expect(screen.getAllByRole('radio').map((radio) => radio.getAttribute('value'))).toEqual(['xs', 'l']);
+    await userEvent.click(screen.getByRole('radio', { name: 'L' }));
+    expect(await screen.findByRole('button', { name: 'Add to cart, $25.00' })).toBeEnabled();
+    expect(
+      screen.queryByText('This combination is unavailable. Choose different options.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('treats a shared link to a value with no active SKU as not yet chosen', async () => {
+    mockApi();
+    mount(<ProductDetails />, '/products/scarf?option.size=s');
+    expect(await screen.findByRole('button', { name: 'Select size' })).toBeInTheDocument();
+    expect(screen.getAllByRole('radio').every((radio) => !(radio as HTMLInputElement).checked)).toBe(true);
+    expect(
+      screen.queryByText('This combination is unavailable. Choose different options.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps every value when the SKU list is incomplete', async () => {
+    mockApi();
+    const truncated = { ...scarf, skus: { ...scarf.skus, pageInfo: { hasNextPage: true } } };
+    vi.mocked(fetch).mockImplementation(async (input) =>
+      String(input).endsWith('/config')
+        ? response({ cartScope: 's', currencyCode: 'USD' })
+        : response({ skuGroup: truncated }),
+    );
+    mount(<ProductDetails />, '/products/scarf');
+    expect(await screen.findByRole('radio', { name: 'M' })).toBeInTheDocument();
+    expect(screen.getAllByRole('radio')).toHaveLength(5);
   });
 
   it('strikes through a starting compare-at price only when it belongs to the cheapest SKUs', async () => {

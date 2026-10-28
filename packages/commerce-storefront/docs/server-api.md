@@ -68,7 +68,7 @@ Exported `SKUGroup`, `SKU`, `Connection`, `SkuGroupsResult` and `SkuGroupResult`
 
 For options, return `attributes.edges[].node` with `name`, `label`, and `values.edges[].node` containing `name` and `label`. For example, the attribute `color` has values named `blue` and `clay`. The browser sends those value names as repeated `attributeValues` parameters. Return the group with a SKU connection filtered to that exact combination. Zero or multiple results cannot be purchased. Include accurate `totalCount` and `hasNextPage`; a truncated one-item result must never look like a complete match.
 
-Optionally, give each SKU in the unfiltered response its `attributeValues.edges[].node.name`. With every SKU and its value names, the product page crosses out values whose SKUs are all sold out, given the shopper's other selections. Without them, or when `hasNextPage` is true, no value is marked sold out; the add button still reports a sold-out SKU once it is chosen.
+Optionally, give each SKU in the unfiltered response its `attributeValues.edges[].node.name`. With every SKU and its value names, the product page leaves out values that no SKU has and crosses out values whose SKUs are all sold out, given the shopper's other selections. Without them, or when `hasNextPage` is true, every value is shown and none is marked sold out; the add button still reports a sold-out SKU once it is chosen.
 
 Products without attribute definitions can offer explicit SKU selection only when all SKUs are returned with unique IDs and unique nonempty labels/names. Ambiguous or incomplete collections cannot be purchased. No inventory records means untracked inventory; records without an `AVAILABLE` quantity mean unavailable. Supply appropriate records for physical inventory.
 
