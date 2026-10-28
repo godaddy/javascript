@@ -58,21 +58,20 @@ export function useDraftOrderShippingMethods() {
         countryCode: shippingAddress?.countryCode,
       },
     ],
-    queryFn: async () => {
-      const result = jwt
-        ? await getDraftOrderShippingMethods(
+    queryFn: () =>
+      jwt
+        ? getDraftOrderShippingMethods(
             { accessToken: jwt },
             destination,
             apiHost
           )
-        : await getDraftOrderShippingMethods(session, destination, apiHost);
-      // Null rates are a normal "no rates" result from checkout-api (e.g. no
-      // SKU-backed items), not a failure; only thrown request errors show retry.
-      return result;
-    },
+        : getDraftOrderShippingMethods(session, destination, apiHost),
     enabled: !!session?.id && hasShippingAddress,
-    // The failure UI offers a manual retry; don't stack automatic retries on it.
+    // The failure UI offers a manual retry. Set explicitly because hosts can
+    // supply their own QueryClient with automatic retries enabled.
     retry: false,
+    // Null rates are a normal "no rates" result from checkout-api (e.g. no
+    // SKU-backed items), not a failure; only thrown request errors show retry.
     select: data =>
       data?.checkoutSession?.draftOrder?.calculatedShippingRates?.rates,
   });

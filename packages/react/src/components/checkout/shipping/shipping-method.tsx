@@ -158,10 +158,19 @@ export function ShippingMethodForm() {
       if (shouldClearShipping) {
         const previousShippingMethod =
           form.getValues('shippingMethod') || currentServiceCode || '';
+        const previousAutoSelected = form.getValues(
+          'shippingMethodAutoSelected'
+        );
         form.setValue('shippingMethod', '', { shouldDirty: false });
+        form.setValue('shippingMethodAutoSelected', false, {
+          shouldDirty: false,
+        });
         applyShippingMethod.mutate([], {
           onError: () => {
             form.setValue('shippingMethod', previousShippingMethod, {
+              shouldDirty: false,
+            });
+            form.setValue('shippingMethodAutoSelected', previousAutoSelected, {
               shouldDirty: false,
             });
           },

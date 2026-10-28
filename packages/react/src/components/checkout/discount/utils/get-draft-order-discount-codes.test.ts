@@ -47,12 +47,44 @@ describe('getHighestValueDraftOrderDiscountCode', () => {
   it('prefers the first code seen, order-level first, on a tie', () => {
     const draftOrder = {
       discounts: [{ code: 'SAVE10', amount: { value: 500 } }],
-      shippingLines: [
-        { discounts: [{ code: 'FREESHIP', amount: { value: 500 } }] },
-      ],
+      lineItems: [{ discounts: [{ code: 'LINE5', amount: { value: 500 } }] }],
     } as DraftOrder;
 
     expect(getHighestValueDraftOrderDiscountCode(draftOrder)).toBe('SAVE10');
+  });
+
+  it('ranks by product discount, ignoring shipping-only codes', () => {
+    const draftOrder = {
+      lineItems: [
+        { discounts: [{ code: 'PRODUCT10', amount: { value: 500 } }] },
+      ],
+      shippingLines: [
+        { discounts: [{ code: 'FREESHIP', amount: { value: 800 } }] },
+      ],
+    } as DraftOrder;
+
+    expect(getHighestValueDraftOrderDiscountCode(draftOrder)).toBe('PRODUCT10');
+  });
+
+  it('skips shipping-only codes, which the wallet prices after an address', () => {
+    const draftOrder = {
+      shippingLines: [
+        { discounts: [{ code: 'FREESHIP', amount: { value: 800 } }] },
+      ],
+    } as DraftOrder;
+
+    expect(getHighestValueDraftOrderDiscountCode(draftOrder)).toBeUndefined();
+  });
+
+  it('still uses a code that discounts products as well as shipping', () => {
+    const draftOrder = {
+      lineItems: [{ discounts: [{ code: 'COMBO', amount: { value: 200 } }] }],
+      shippingLines: [
+        { discounts: [{ code: 'COMBO', amount: { value: 800 } }] },
+      ],
+    } as DraftOrder;
+
+    expect(getHighestValueDraftOrderDiscountCode(draftOrder)).toBe('COMBO');
   });
 
   it('returns undefined when no discount codes are applied', () => {

@@ -2,7 +2,10 @@ import { enUs } from '@godaddy/localizations';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
-import { getDraftOrderShippingMethods } from '@/lib/godaddy/godaddy';
+import {
+  applyShippingMethod,
+  getDraftOrderShippingMethods,
+} from '@/lib/godaddy/godaddy';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
 import { CheckoutType, PaymentProvider } from '@/types';
 import {
@@ -276,6 +279,149 @@ describe('Checkout discounts', () => {
     expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
     expect(taxIndex).toBeGreaterThan(shippingIndex);
     expect(taxIndex).toBeGreaterThan(lastDiscountIndex);
+  });
+
+  it('keeps the coupon and reconciles taxes when the post-shipping discount reapply fails', async () => {
+    const paidShipping = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 1000, currencyCode: 'USD' },
+      },
+    ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods: paidShipping },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 1000, currencyCode: 'USD' },
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+    setShippingMethods(
+      buildShippingRates([
+        {
+          serviceCode: 'standard',
+          carrierCode: 'carrier',
+          displayName: 'Standard',
+          cost: { value: 0, currencyCode: 'USD' },
+        },
+      ])
+    );
+    // Fail only the discount reapply that follows the shipping reapply.
+    const applyShippingMock = vi.mocked(applyShippingMethod);
+    const applyShippingImpl = applyShippingMock.getMockImplementation();
+    applyShippingMock.mockImplementationOnce(async (...args) => {
+      const result = await applyShippingImpl?.(...args);
+      setApiErrorOnce('applyDiscount', 'reapply failed');
+      return result as Awaited<ReturnType<typeof applyShippingMethod>>;
+    });
+
+    await applyCoupon(user, 'onedollar');
+
+    await waitFor(() => {
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
+    });
+    await flushPromises();
+
+    const operations = getOperations().map(operation => operation.op);
+    expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(1);
+    expect(getOperations('ApplyCheckoutSessionDiscount')).toHaveLength(2);
+    expect(operations.indexOf('CalculateCheckoutSessionTaxes')).toBeGreaterThan(
+      operations.lastIndexOf('ApplyCheckoutSessionDiscount')
+    );
+    // The original apply succeeded and applying shipping keeps product
+    // (order/line-item) discounts server-side, so the coupon stays applied.
+    expect(
+      screen.getAllByRole('button', { name: /remove onedollar/i }).length
+    ).toBeGreaterThan(0);
+    await screen.findByText(enUs.apiErrors.DISCOUNT_APPLICATION_FAILED);
+  });
+
+  it('drops a shipping-line coupon when the post-shipping discount reapply fails', async () => {
+    const paidShipping = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 1000, currencyCode: 'USD' },
+      },
+    ]);
+    const { user } = renderCheckout({
+      apiOverrides: { shippingMethods: paidShipping },
+      draftOrderOverrides: {
+        shippingLines: [
+          {
+            requestedService: 'standard',
+            requestedProvider: 'carrier',
+            name: 'Standard',
+            amount: { value: 1000, currencyCode: 'USD' },
+            discounts: [
+              {
+                id: 'freeship-discount',
+                name: 'freeship',
+                code: 'freeship',
+                amount: { value: 1000, currencyCode: 'USD' },
+                ratePercentage: null,
+                appliedBeforeTax: false,
+                metafields: [],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    await waitForCheckoutReady();
+    clearOperations();
+    setShippingMethods(
+      buildShippingRates([
+        {
+          serviceCode: 'standard',
+          carrierCode: 'carrier',
+          displayName: 'Standard',
+          cost: { value: 500, currencyCode: 'USD' },
+        },
+      ])
+    );
+    // Applying shipping replaces the line, dropping its discounts server-side;
+    // then the reapply that would restore them fails.
+    const applyShippingMock = vi.mocked(applyShippingMethod);
+    const applyShippingImpl = applyShippingMock.getMockImplementation();
+    applyShippingMock.mockImplementationOnce(async (...args) => {
+      const result = await applyShippingImpl?.(...args);
+      setApiErrorOnce('applyDiscount', 'reapply failed');
+      return result as Awaited<ReturnType<typeof applyShippingMethod>>;
+    });
+
+    await applyCoupon(user, 'onedollar');
+
+    await waitFor(() => {
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
+    });
+    await flushPromises();
+
+    expect(getOperations('ApplyCheckoutSessionDiscount')[0].input).toEqual({
+      discountCodes: ['freeship', 'onedollar'],
+    });
+    expect(getOperations('ApplyCheckoutSessionDiscount')).toHaveLength(2);
+    await screen.findByText(enUs.apiErrors.DISCOUNT_APPLICATION_FAILED);
+    // The refreshed order shows what the server kept: the product coupon,
+    // not the shipping coupon the new shipping line no longer carries.
+    await waitFor(() => {
+      expect(
+        screen.queryAllByRole('button', { name: /remove freeship/i })
+      ).toHaveLength(0);
+    });
+    expect(
+      screen.getAllByRole('button', { name: /remove onedollar/i }).length
+    ).toBeGreaterThan(0);
   });
 
   it('clears applied shipping once when the discount rate refresh returns an empty array', async () => {
@@ -595,7 +741,8 @@ describe('Checkout discounts', () => {
     expect(getOperations('ApplyCheckoutSessionShippingMethod')).toHaveLength(3);
     expect(screen.getByRole('radio', { name: /standard/i })).toBeChecked();
     expect(screen.getByRole('radio', { name: /free/i })).not.toBeChecked();
-    expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
+    // Shipping changed or was cleared, so taxes are still reconciled.
+    expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
 
     await screen.findByText(enUs.apiErrors.SHIPPING_METHOD_APPLICATION_FAILED);
 
@@ -775,7 +922,8 @@ describe('Checkout discounts', () => {
       await flushPromises();
 
       expect(getOperations('ApplyCheckoutSessionDiscount')).toHaveLength(1);
-      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(0);
+      // Shipping changed or was cleared, so taxes are still reconciled.
+      expect(getOperations('CalculateCheckoutSessionTaxes')).toHaveLength(1);
 
       if (result === 'empty') {
         expect(document.body).toHaveTextContent(/no shipping methods found/i);

@@ -94,15 +94,12 @@ export function useReconcileAfterDiscount() {
           await applyShippingMethod.mutateAsync(
             selectedMethod ? buildShippingPayload(selectedMethod) : []
           );
+          setCheckoutErrors(undefined);
+          setShippingSelection(selectedMethod?.serviceCode, autoSelected);
         } catch (error) {
-          if (
-            error instanceof GraphQLErrorWithCodes &&
-            error.codes.length > 0
-          ) {
-            setCheckoutErrors(error.codes);
-          } else {
-            setCheckoutErrors(['SHIPPING_METHOD_APPLICATION_FAILED']);
-          }
+          setCheckoutErrors(
+            getErrorCodes(error, 'SHIPPING_METHOD_APPLICATION_FAILED')
+          );
 
           // The failed reapplication left the order's shipping line stale
           // (possibly no longer valid, e.g. a coupon that granted it is gone).
@@ -113,42 +110,36 @@ export function useReconcileAfterDiscount() {
           if (selectedMethod) {
             try {
               await applyShippingMethod.mutateAsync([]);
-              form.setValue('shippingMethod', '', { shouldDirty: false });
+              setShippingSelection(undefined, false);
             } catch {
-              // Clearing failed too; fall through to invalidation below so
-              // mounted views still refresh against whatever the server has.
+              // Clearing failed too; the refresh below still re-syncs mounted
+              // views against whatever the server has.
             }
           }
 
-          // Invalidate after the clear settles so the refetch it triggers
-          // picks up the now-actually-empty shippingLines instead of racing
-          // ahead of the clear and re-caching the stale line.
-          await queryClient.invalidateQueries({
-            queryKey: checkoutQueryKeys.draftOrder(session.id),
-          });
           await queryClient.invalidateQueries({
             queryKey: checkoutQueryKeys.draftOrderShippingMethods(session.id),
           });
+          // Shipping may have changed or been cleared, so totals and taxes
+          // still need reconciling against the order as it now stands.
+          await refreshTotals();
           return;
         }
 
-        setCheckoutErrors(undefined);
-        form.setValue('shippingMethod', selectedMethod?.serviceCode ?? '', {
-          shouldDirty: false,
-        });
-        form.setValue('shippingMethodAutoSelected', autoSelected, {
-          shouldDirty: false,
-        });
-
         if (session.enablePromotionCodes && variables.discountCodes?.length) {
-          await reapplyDiscount.mutateAsync(variables);
+          try {
+            await reapplyDiscount.mutateAsync(variables);
+          } catch (error) {
+            // The coupon was applied; only the post-shipping re-apply failed
+            // (e.g. it no longer qualifies at the new shipping price). Surface
+            // it without failing the original apply, and still reconcile totals.
+            setCheckoutErrors(
+              getErrorCodes(error, 'DISCOUNT_APPLICATION_FAILED')
+            );
+          }
         }
 
-        if (session.enableTaxCollection) {
-          await updateTaxes.mutateAsync(undefined);
-        } else {
-          await invalidateDraftOrder();
-        }
+        await refreshTotals();
         return;
       }
     }
@@ -188,4 +179,32 @@ export function useReconcileAfterDiscount() {
       queryKey: checkoutQueryKeys.draftOrder(session?.id),
     });
   }
+
+  // Taxes are recalculated from the order's saved shipping line and address.
+  function refreshTotals() {
+    return session?.enableTaxCollection
+      ? updateTaxes.mutateAsync(undefined)
+      : invalidateDraftOrder();
+  }
+
+  function setShippingSelection(
+    serviceCode: string | null | undefined,
+    autoSelected: boolean
+  ) {
+    form.setValue('shippingMethod', serviceCode ?? '', { shouldDirty: false });
+    // A cleared selection has no origin, so it's never "auto selected".
+    form.setValue(
+      'shippingMethodAutoSelected',
+      Boolean(serviceCode) && autoSelected,
+      {
+        shouldDirty: false,
+      }
+    );
+  }
+}
+
+function getErrorCodes(error: unknown, fallback: string) {
+  return error instanceof GraphQLErrorWithCodes && error.codes.length > 0
+    ? error.codes
+    : [fallback];
 }

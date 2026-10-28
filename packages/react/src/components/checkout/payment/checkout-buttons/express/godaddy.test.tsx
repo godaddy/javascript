@@ -100,10 +100,27 @@ class FakeTokenizeJs {
 function draftOrder({
   subTotal = 2500,
   id = 'draft-order-1',
+  shippingOnly = false,
 }: {
   subTotal?: number;
   id?: string;
+  shippingOnly?: boolean;
 } = {}) {
+  if (shippingOnly) {
+    return {
+      id,
+      totals: {
+        subTotal: { value: subTotal, currencyCode: 'USD' },
+        total: { value: subTotal, currencyCode: 'USD' },
+      },
+      discounts: [],
+      lineItems: [{ id: 'line-1', discounts: [] }],
+      shippingLines: [
+        { discounts: [{ code: 'FREESHIP', amount: { value: 1000 } }] },
+      ],
+    } as unknown as DraftOrder;
+  }
+
   return {
     id,
     totals: {
@@ -150,6 +167,15 @@ describe('ExpressCheckoutButton coupon sync', () => {
       discountCodes: ['BIG'],
     });
     expect(mocks.tokenizeOptions[0].couponCode).toMatchObject({ code: 'BIG' });
+  });
+
+  it('does not prefill a shipping-only coupon before the wallet has shipping', async () => {
+    mocks.draftOrder = draftOrder({ shippingOnly: true });
+    render(<ExpressCheckoutButton />);
+
+    await waitFor(() => expect(mocks.tokenizeOptions).toHaveLength(1));
+    expect(mocks.getPriceAdjustments).not.toHaveBeenCalled();
+    expect(mocks.tokenizeOptions[0].couponCode).toBeUndefined();
   });
 
   it('recomputes adjustments when the subtotal changes, not on unrelated order updates', async () => {

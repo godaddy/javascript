@@ -46,10 +46,18 @@ export function updateShippingMethodCache(
           ...cached.checkoutSession,
           draftOrder: {
             ...cached.checkoutSession?.draftOrder,
+            // checkout-api replaces the line and drops its discounts on apply,
+            // so build a fresh line instead of carrying the previous rate's
+            // discounts; the follow-up discount re-apply restores valid ones.
+            // The new line's id isn't returned, so keep the old one until the
+            // draft order refetches.
             shippingLines: shippingMethods[0]
               ? [
                   {
-                    ...cached.checkoutSession?.draftOrder?.shippingLines?.[0],
+                    id:
+                      cached.checkoutSession?.draftOrder?.shippingLines?.[0]
+                        ?.id ?? null,
+                    discounts: [],
                     name: shippingMethods[0].name,
                     requestedProvider:
                       shippingMethods[0].requestedProvider ?? null,
