@@ -1,5 +1,6 @@
 import { enUs } from '@godaddy/localizations';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { useFormContext } from 'react-hook-form';
 import { describe, expect, it } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import * as godaddyApi from '@/lib/godaddy/godaddy';
@@ -22,6 +23,23 @@ import {
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
+
+function AutoSelectedProbe() {
+  const form = useFormContext();
+  return (
+    <div data-testid='auto-selected'>
+      {String(form.watch('shippingMethodAutoSelected'))}
+    </div>
+  );
+}
+
+function autoSelected() {
+  return screen.getByTestId('auto-selected').textContent;
+}
+
+const autoSelectedProbe = {
+  targets: { 'checkout.form.payment.after': () => <AutoSelectedProbe /> },
+};
 
 describe('Checkout shipping behavior', () => {
   it.each([true, false])(
@@ -188,6 +206,44 @@ describe('Checkout shipping behavior', () => {
     ]);
     expect(applied.length).toBeLessThanOrEqual(2);
     expect(screen.getByRole('radio', { name: /free/i })).toBeChecked();
+  });
+
+  it('clears the automatic selection flag when switching to local pickup', async () => {
+    const { user, queryClient } = renderCheckout({
+      draftOrderOverrides: { shippingLines: [] },
+      checkoutProps: autoSelectedProbe,
+    });
+    await waitForCheckoutReady();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(autoSelected()).toBe('true');
+
+    await user.click(screen.getByRole('radio', { name: /local pickup/i }));
+
+    expect(autoSelected()).toBe('false');
+  });
+
+  it('clears the automatic selection flag when rates come back empty', async () => {
+    const { queryClient } = renderCheckout({
+      draftOrderOverrides: { shippingLines: [] },
+      checkoutProps: autoSelectedProbe,
+    });
+    await waitForCheckoutReady();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(autoSelected()).toBe('true');
+    clearOperations();
+
+    setShippingMethods([]);
+    await act(async () => {
+      await queryClient.refetchQueries({
+        queryKey: ['draft-order-shipping-methods'],
+      });
+    });
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod').at(-1)?.input
+    ).toEqual([]);
+    expect(autoSelected()).toBe('false');
   });
 
   it('shows the no-origin-address message when shipping origin is missing', async () => {
