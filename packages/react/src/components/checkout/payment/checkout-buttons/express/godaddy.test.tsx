@@ -11,6 +11,11 @@ const mocks = vi.hoisted(() => ({
   getPriceAdjustments: vi.fn(),
   getShippingMethods: vi.fn(),
   getTaxes: vi.fn(),
+  setCheckoutErrors: vi.fn(),
+  mountOptions: null as null | {
+    buttonOptions: { onClick: (args: { source?: string }) => unknown };
+  },
+  abortApplePaySession: vi.fn(),
   tokenizeOptions: [] as Array<Record<string, unknown>>,
   handlers: {} as Record<string, Handler>,
 }));
@@ -26,7 +31,7 @@ vi.mock('@/components/checkout/checkout', () => ({
       enableTaxCollection: false,
     },
     godaddyPaymentsConfig: { appId: 'app-1', businessId: 'business-1' },
-    setCheckoutErrors: vi.fn(),
+    setCheckoutErrors: mocks.setCheckoutErrors,
     isConfirmingCheckout: false,
   }),
 }));
@@ -89,8 +94,17 @@ class FakeTokenizeJs {
   supportWalletPayments() {
     return Promise.resolve({ applePay: true, googlePay: false });
   }
-  mount() {
+  mount(_id: string, _document: Document, options: typeof mocks.mountOptions) {
+    mocks.mountOptions = options;
+  }
+  startApplePaySession() {
     return undefined;
+  }
+  startGooglePaySession() {
+    return undefined;
+  }
+  abortApplePaySession() {
+    mocks.abortApplePaySession();
   }
   on(event: string, handler: Handler) {
     mocks.handlers[event] = handler;
@@ -155,6 +169,9 @@ describe('ExpressCheckoutButton coupon sync', () => {
       totalDiscountAmount: { value: 800, currencyCode: 'USD' },
     });
     mocks.getShippingMethods.mockReset();
+    mocks.setCheckoutErrors.mockReset();
+    mocks.abortApplePaySession.mockReset();
+    mocks.mountOptions = null;
     mocks.getTaxes.mockReset();
     (window as unknown as { TokenizeJs: unknown }).TokenizeJs = FakeTokenizeJs;
   });
@@ -217,5 +234,64 @@ describe('ExpressCheckoutButton coupon sync', () => {
     expect(mocks.getShippingMethods).toHaveBeenCalledTimes(1);
     expect(updateWith).toHaveBeenCalledTimes(1);
     expect(updateWith.mock.calls[0][0]).not.toHaveProperty('shippingMethods');
+  });
+
+  async function openWallet(source: 'apple_pay' | 'google_pay') {
+    render(<ExpressCheckoutButton />);
+    await waitFor(() => expect(mocks.mountOptions).not.toBeNull());
+    await act(async () => {
+      await mocks.mountOptions?.buttonOptions.onClick({ source });
+    });
+  }
+
+  async function changeAddress() {
+    const updateWith = vi.fn();
+    await act(async () => {
+      await mocks.handlers.shipping_address_change({
+        shippingAddress: { countryCode: 'US', postalCode: '85001' },
+        updateWith,
+      });
+    });
+    return updateWith;
+  }
+
+  it('tells the wallet no shipping methods were found when there are no rates', async () => {
+    await openWallet('google_pay');
+    mocks.getShippingMethods.mockResolvedValueOnce([]);
+
+    const updateWith = await changeAddress();
+
+    expect(updateWith).toHaveBeenCalledWith({
+      error: {
+        code: 'invalid_shipping_address',
+        message: enUs.shipping.noShippingMethods,
+      },
+    });
+  });
+
+  it('tells the wallet shipping methods failed to load when the request fails', async () => {
+    await openWallet('google_pay');
+    mocks.getShippingMethods.mockRejectedValueOnce(new Error('rates failed'));
+
+    const updateWith = await changeAddress();
+
+    expect(updateWith).toHaveBeenCalledOnce();
+    expect(updateWith).toHaveBeenCalledWith({
+      error: { code: 'unknown', message: enUs.shipping.failedToLoadMethods },
+    });
+    expect(mocks.abortApplePaySession).not.toHaveBeenCalled();
+  });
+
+  it('closes the Apple Pay sheet and shows the error when the rates request fails', async () => {
+    await openWallet('apple_pay');
+    mocks.getShippingMethods.mockRejectedValueOnce(new Error('rates failed'));
+
+    const updateWith = await changeAddress();
+
+    expect(updateWith).not.toHaveBeenCalled();
+    expect(mocks.abortApplePaySession).toHaveBeenCalledOnce();
+    expect(mocks.setCheckoutErrors).toHaveBeenLastCalledWith([
+      enUs.shipping.failedToLoadMethods,
+    ]);
   });
 });

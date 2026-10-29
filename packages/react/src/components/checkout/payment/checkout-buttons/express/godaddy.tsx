@@ -1202,9 +1202,31 @@ export function ExpressCheckoutButton() {
         // });
         setShippingAddress(e.shippingAddress);
 
-        const methods = await getSortedShippingMethods({
-          shippingAddress: e.shippingAddress,
-        });
+        let methods: Awaited<ReturnType<typeof getSortedShippingMethods>>;
+        try {
+          methods = await getSortedShippingMethods({
+            shippingAddress: e.shippingAddress,
+          });
+        } catch {
+          // Empty or null rates mean "no methods"; only a failed request lands
+          // here, so the wallet must still get a response or the sheet hangs.
+          setGoDaddyTotals(value => ({
+            ...value,
+            shipping: { currencyCode, value: 0 },
+          }));
+          if (walletSource !== 'apple_pay') {
+            e.updateWith({
+              error: {
+                code: 'unknown',
+                message: t.shipping.failedToLoadMethods,
+              },
+            });
+            return;
+          }
+          setCheckoutErrors([t.shipping.failedToLoadMethods]);
+          collect?.current?.abortApplePaySession();
+          return;
+        }
 
         if (methods[0]) {
           setShippingMethod(methods[0]?.label || null);
