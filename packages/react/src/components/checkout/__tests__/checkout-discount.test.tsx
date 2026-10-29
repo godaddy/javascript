@@ -1,5 +1,6 @@
 import { enUs } from '@godaddy/localizations';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { useFormContext } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
 import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import {
@@ -22,6 +23,19 @@ import {
   waitForCheckoutReady,
   waitForOperation,
 } from './checkout-test-env';
+
+function AutoSelectedProbe() {
+  const form = useFormContext();
+  return (
+    <div data-testid='auto-selected'>
+      {String(form.watch('shippingMethodAutoSelected'))}
+    </div>
+  );
+}
+
+const autoSelectedProbe = {
+  targets: { 'checkout.form.payment.after': () => <AutoSelectedProbe /> },
+};
 
 async function applyCoupon(
   user: ReturnType<typeof import('@testing-library/user-event').default.setup>,
@@ -937,6 +951,66 @@ describe('Checkout discounts', () => {
       }
     }
   );
+
+  it('clears the automatic selection flag when a failed reapplication falls back to clearing shipping', async () => {
+    const paidShipping = buildShippingRates([
+      {
+        serviceCode: 'standard',
+        carrierCode: 'carrier',
+        displayName: 'Standard',
+        cost: { value: 1000, currencyCode: 'USD' },
+      },
+    ]);
+    const { user, queryClient } = renderCheckout({
+      apiOverrides: { shippingMethods: paidShipping },
+      draftOrderOverrides: { shippingLines: [] },
+      checkoutProps: autoSelectedProbe,
+    });
+    await waitForCheckoutReady();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(screen.getByTestId('auto-selected')).toHaveTextContent('true');
+    clearOperations();
+    setShippingMethods(
+      buildShippingRates([
+        {
+          serviceCode: 'express',
+          carrierCode: 'carrier',
+          displayName: 'Express',
+          cost: { value: 1500, currencyCode: 'USD' },
+        },
+      ])
+    );
+    // The replacement fails and the fallback clear succeeds. Later applies
+    // fail too, so the form's automatic re-selection can't overwrite the
+    // flag the clear reset (its rollback restores the cleared value).
+    const applyShippingMock = vi.mocked(applyShippingMethod);
+    const applyShippingImpl = applyShippingMock.getMockImplementation();
+    applyShippingMock
+      .mockImplementationOnce(async () => {
+        throw new Error('apply failed');
+      })
+      .mockImplementationOnce(async (...args) => {
+        const result = await applyShippingImpl?.(...args);
+        setApiError('applyShippingMethod', 'apply failed');
+        return result as Awaited<ReturnType<typeof applyShippingMethod>>;
+      });
+
+    await applyCoupon(user, 'onedollar');
+    await waitFor(() => {
+      expect(
+        getOperations('ApplyCheckoutSessionShippingMethod').length
+      ).toBeGreaterThanOrEqual(1);
+    });
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    await flushPromises();
+
+    // The failing replacement throws before the mock records it, so the
+    // fallback clear is the first recorded apply.
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod')[0].input
+    ).toEqual([]);
+    expect(screen.getByTestId('auto-selected')).toHaveTextContent('false');
+  });
 
   it("keeps the customer's chosen method when a coupon reprices the rates", async () => {
     const rates = (standardCost: number, expressCost: number) =>

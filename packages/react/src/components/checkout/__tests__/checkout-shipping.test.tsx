@@ -17,6 +17,7 @@ import {
   getOperations,
   renderCheckout,
   setApiError,
+  setApiErrorOnce,
   setCurrentDraftOrder,
   setShippingMethods,
   typeIntoNamedField,
@@ -244,6 +245,32 @@ describe('Checkout shipping behavior', () => {
       getOperations('ApplyCheckoutSessionShippingMethod').at(-1)?.input
     ).toEqual([]);
     expect(autoSelected()).toBe('false');
+  });
+
+  it('restores the automatic selection flag when clearing shipping fails', async () => {
+    const { queryClient } = renderCheckout({
+      draftOrderOverrides: { shippingLines: [] },
+      checkoutProps: autoSelectedProbe,
+    });
+    await waitForCheckoutReady();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(autoSelected()).toBe('true');
+    clearOperations();
+
+    setApiErrorOnce('applyShippingMethod', 'clear failed');
+    setShippingMethods([]);
+    await act(async () => {
+      await queryClient.refetchQueries({
+        queryKey: ['draft-order-shipping-methods'],
+      });
+    });
+    await waitForOperation('ApplyCheckoutSessionShippingMethod');
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+
+    expect(
+      getOperations('ApplyCheckoutSessionShippingMethod').at(-1)?.input
+    ).toEqual([]);
+    expect(autoSelected()).toBe('true');
   });
 
   it('shows the no-origin-address message when shipping origin is missing', async () => {
