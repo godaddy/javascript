@@ -148,6 +148,10 @@ export const CreateCheckoutSessionMutation = graphql(`
         razorpay {
           configured
         }
+        godaddy {
+          businessId
+          applicationId
+        }
       }
       draftOrder {
         id

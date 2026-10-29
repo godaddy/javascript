@@ -17,6 +17,7 @@ import {
   type CheckoutValidationMessages,
   createCheckoutValidationAdapter,
 } from './form/checkout-validation-adapter';
+import { resolveGodaddyPaymentsConfig } from './payment/utils/resolve-godaddy-payments-config';
 import type { Target } from './target/types';
 
 // Utility function for redirecting to success URL after checkout
@@ -69,8 +70,10 @@ export type StripeConfig = {
   testMode?: boolean;
 };
 
+/** Collect bootstrap IDs. Prefer session.paymentProviderConfiguration.godaddy when unset. */
 export type GodaddyPaymentsConfig = {
   businessId?: string;
+  /** Maps from GraphQL `applicationId` when resolved from the session. */
   appId?: string;
 };
 
@@ -291,6 +294,11 @@ export function Checkout(props: CheckoutProps) {
       ? { configured: sessionRazorpayConfig.configured }
       : undefined;
 
+  const effectiveGodaddyPaymentsConfig = resolveGodaddyPaymentsConfig(
+    godaddyPaymentsConfig,
+    session
+  );
+
   const validationMessages = React.useMemo<CheckoutValidationMessages>(
     () => ({
       enterValidBillingPhone: t.validation.enterValidBillingPhone,
@@ -364,7 +372,7 @@ export function Checkout(props: CheckoutProps) {
           session,
           jwt,
           stripeConfig,
-          godaddyPaymentsConfig,
+          godaddyPaymentsConfig: effectiveGodaddyPaymentsConfig,
           squareConfig,
           mercadoPagoConfig,
           paypalConfig: effectivePayPalConfig,

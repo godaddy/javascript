@@ -3899,6 +3899,15 @@ const introspection = {
             },
             "args": [],
             "isDeprecated": false
+          },
+          {
+            "name": "godaddy",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionGodaddyProviderConfiguration"
+            },
+            "args": [],
+            "isDeprecated": false
           }
         ],
         "interfaces": []
@@ -3914,6 +3923,37 @@ const introspection = {
               "ofType": {
                 "kind": "SCALAR",
                 "name": "Boolean"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "CheckoutSessionGodaddyProviderConfiguration",
+        "fields": [
+          {
+            "name": "businessId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
+              }
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
+            "name": "applicationId",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String"
               }
             },
             "args": [],

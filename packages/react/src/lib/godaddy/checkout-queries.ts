@@ -165,6 +165,10 @@ export const GetCheckoutSessionQuery = graphql(`
               razorpay {
                 configured
               }
+              godaddy {
+                businessId
+                applicationId
+              }
             }
             locations {
               id
