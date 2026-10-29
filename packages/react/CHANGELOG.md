@@ -1,5 +1,13 @@
 # @godaddy/react
 
+## 1.0.60
+
+### Patch Changes
+
+- 6c05b32: Keep shipping rates, discounts, and taxes in sync when coupons change, and show a retry action when shipping rates fail to load.
+- Updated dependencies [6c05b32]
+  - @godaddy/localizations@1.0.15
+
 ## 1.0.59
 
 ### Patch Changes
