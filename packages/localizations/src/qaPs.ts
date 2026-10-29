@@ -70,6 +70,8 @@ export const qaPs = {
     noShippingMethodAddress:
       '[Ëñťër ÿöür âddrëšš ťö šëë âvâîlâblë šhîþþîñg mëťhödš fôr ÿöür löçâťîöñ.]',
     noShippingMethods: '[Ñö šhîþþîñg mëťhödš föüñd fôr ţhîš löçâţîöñ.]',
+    failedToLoadMethods: '[Üñâblë ťö löâd šhîþþîñg mëťhödš. Þléâšé ťrÿ âgâîñ.]',
+    retryMethods: '[Ťrÿ âgâîñ]',
     phone: '[Þhöñë Ñümkër Îñförmâťîöñ]',
     country: '[Çöüñţrÿ Šëlëçťîöñ]',
     selectCountry: '[Šëlëçť çöüñţrÿ frôm lîšť]',

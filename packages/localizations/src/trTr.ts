@@ -70,6 +70,9 @@ export const trTr = {
     noShippingMethodAddress:
       'Mevcut kargo yöntemlerini görmek için adresinizi girin.',
     noShippingMethods: 'Kargo yöntemi bulunamadı.',
+    failedToLoadMethods:
+      'Gönderim yöntemleri yüklenemedi. Lütfen tekrar deneyin.',
+    retryMethods: 'Tekrar dene',
     phone: 'Telefon Numarası',
     country: 'Ülke',
     selectCountry: 'Ülke seçin',
