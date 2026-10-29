@@ -34,7 +34,6 @@ export type OperationName =
   | 'UpdateCheckoutSessionDraftOrder'
   | 'CalculateCheckoutSessionTaxes'
   | 'ApplyCheckoutSessionShippingMethod'
-  | 'RemoveAppliedCheckoutSessionShippingMethod'
   | 'ApplyCheckoutSessionDiscount'
   | 'ApplyCheckoutSessionFulfillmentLocation'
   | 'ConfirmCheckoutSession'
@@ -67,7 +66,6 @@ export type MockGodaddyApiErrorKey =
   | 'updateDraftOrder'
   | 'updateDraftOrderTaxes'
   | 'applyShippingMethod'
-  | 'removeShippingMethod'
   | 'applyDiscount'
   | 'applyFulfillmentLocation'
   | 'confirmCheckout'
@@ -631,21 +629,45 @@ function applyShippingLines(shippingMethods: unknown) {
 
 function applyDiscountCodes(discountCodes: string[]) {
   if (!state) return;
-  const discounts = discountCodes.map(code => discount(code));
   const totals = state.draftOrder.totals ?? defaultTotals();
+  const hasFreeShipping = discountCodes.some(
+    code => code.toLowerCase() === 'freeship'
+  );
+  const orderDiscountCodes = hasFreeShipping
+    ? discountCodes.filter(code => code.toLowerCase() !== 'freeship')
+    : discountCodes;
+  const discounts = orderDiscountCodes.map(code => discount(code));
   const freeOrderDiscount =
     (totals.subTotal?.value ?? 0) +
     (totals.shippingTotal?.value ?? 0) +
     (totals.taxTotal?.value ?? 0) +
     (totals.feeTotal?.value ?? 0);
+  const shippingDiscount = hasFreeShipping
+    ? (totals.shippingTotal?.value ?? 0)
+    : 0;
   const discountTotal = money(
     discountCodes.some(code => code.toLowerCase() === 'free100')
       ? freeOrderDiscount
-      : discountCodes.length * 100
+      : orderDiscountCodes.length * 100 + shippingDiscount
   );
+  const shippingLines =
+    state.draftOrder.shippingLines?.map(shippingLine => ({
+      ...shippingLine,
+      discounts: hasFreeShipping
+        ? [
+            {
+              ...discount('freeship'),
+              amount: money(shippingLine.amount?.value ?? 0),
+              metafields: [],
+            },
+          ]
+        : [],
+    })) ?? null;
+
   state.draftOrder = recalculateTotal({
     ...state.draftOrder,
     discounts,
+    shippingLines,
     totals: {
       ...(state.draftOrder.totals ?? defaultTotals()),
       discountTotal,
@@ -861,28 +883,6 @@ export function mockGodaddyApi(options: MockGodaddyApiOptions) {
     }
   );
 
-  mockedGodaddyApi.removeShippingMethod.mockImplementation(async input => {
-    record('RemoveAppliedCheckoutSessionShippingMethod', input);
-    await maybeDelay();
-    maybeThrow('removeShippingMethod');
-    if (state) {
-      state.draftOrder = recalculateTotal({
-        ...state.draftOrder,
-        shippingLines: [],
-        totals: {
-          ...(state.draftOrder.totals ?? defaultTotals()),
-          shippingTotal: money(0),
-        },
-      });
-      state.session = { ...state.session, draftOrder: state.draftOrder };
-    }
-    return {
-      removeAppliedCheckoutSessionShippingMethod: {
-        draftOrder: state?.draftOrder,
-      },
-    };
-  });
-
   mockedGodaddyApi.applyDiscount.mockImplementation(async discountCodes => {
     record('ApplyCheckoutSessionDiscount', { discountCodes });
     await maybeDelay();
@@ -1009,6 +1009,11 @@ export function setFeeTotal(value: number, currencyCode = 'USD') {
 export function setPriceAdjustments(adjustments: unknown[]) {
   if (!state) throw new Error('mockGodaddyApi must be called first');
   state.priceAdjustments = adjustments;
+}
+
+export function setShippingMethods(shippingMethods: ShippingMethod[]) {
+  if (!state) throw new Error('mockGodaddyApi must be called first');
+  state.shippingMethods = shippingMethods;
 }
 
 export function getOperations(op?: OperationName) {

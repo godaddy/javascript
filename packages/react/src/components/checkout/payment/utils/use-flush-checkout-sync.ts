@@ -43,10 +43,7 @@ export function useFlushCheckoutSync() {
             ? [checkoutMutationKeys.updateDraftOrderTaxes(sessionId)]
             : []),
           ...(session?.enableShipping
-            ? [
-                checkoutMutationKeys.applyShippingMethod(sessionId),
-                checkoutMutationKeys.removeShippingMethod(sessionId),
-              ]
+            ? [checkoutMutationKeys.applyShippingMethod(sessionId)]
             : []),
         ];
 

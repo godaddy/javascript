@@ -228,6 +228,7 @@ export function mapOrderToFormValues({
 
     // shippingMethod
     shippingMethod: order?.shippingLines?.[0]?.requestedService ?? '',
+    shippingMethodAutoSelected: false,
   };
 }
 

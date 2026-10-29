@@ -70,10 +70,6 @@ export const CreateCheckoutSessionMutation = graphql(`
         }
       }
       experimental_rules {
-        freeShipping {
-          enabled
-            minimumOrderTotal
-        }
         gopay_override {
           enabled
           goPayAppId
@@ -369,6 +365,7 @@ export const ApplyCheckoutSessionDiscountMutation = graphql(`
             }
           }
           shippingLines {
+            id
             discounts {
               id
               amount {
@@ -434,22 +431,6 @@ export const ApplyCheckoutSessionDeliveryMethodMutation = graphql(`
       status
     }
   }
-`);
-
-export const RemoveAppliedCheckoutSessionShippingMethodMutation = graphql(`
-    mutation RemoveAppliedCheckoutSessionShippingMethod($input: RemoveShippingMethodInput!)  {
-      removeAppliedCheckoutSessionShippingMethod(input: $input) {
-        status
-        draftOrder {
-          totals {
-            shippingTotal {
-              currencyCode
-              value
-            }
-          }
-        }
-      }
-    }
 `);
 
 export const ApplyCheckoutSessionFulfillmentLocationMutation = graphql(`

@@ -14,7 +14,6 @@ vi.mock('@/lib/godaddy/godaddy', () => ({
   updateDraftOrderTaxes: vi.fn(),
   applyDiscount: vi.fn(),
   applyShippingMethod: vi.fn(),
-  removeShippingMethod: vi.fn(),
   confirmCheckout: vi.fn(),
   authorizeCheckoutSession: vi.fn(),
   getDraftOrderShippingMethods: vi.fn(),

@@ -32,7 +32,6 @@ import type {
   DraftOrderPriceAdjustmentsQueryInput,
   GetCheckoutSessionShippingRatesInput,
   GetCheckoutSessionTaxesInput,
-  RemoveAppliedCheckoutSessionShippingMethodInput,
   SkuGroupInput,
   SkuGroupsInput,
   SkuInput,
@@ -51,7 +50,6 @@ import {
   CreateCheckoutSessionMutation,
   ExchangeCheckoutTokenMutation,
   RefreshCheckoutTokenMutation,
-  RemoveAppliedCheckoutSessionShippingMethodMutation,
   UpdateCheckoutSessionDraftOrderMutation,
   VerifyCheckoutSessionAddressMutation,
 } from './checkout-mutations.ts';
@@ -761,64 +759,6 @@ export function applyShippingMethod(
     GODADDY_HOST,
     ApplyCheckoutSessionShippingMethodMutation,
     { input: [...shippingMethods] },
-    {
-      'x-session-token': `${session.token}`,
-      'x-session-id': session.id,
-      'x-store-id': session.storeId,
-    }
-  );
-}
-
-export function removeShippingMethod(
-  input: RemoveAppliedCheckoutSessionShippingMethodInput['input'],
-  session: CheckoutSession | undefined | null,
-  apiHost?: string
-): Promise<ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>>;
-export function removeShippingMethod(
-  input: RemoveAppliedCheckoutSessionShippingMethodInput['input'],
-  auth: { accessToken: string | undefined },
-  apiHost?: string
-): Promise<ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>>;
-export function removeShippingMethod(
-  input: RemoveAppliedCheckoutSessionShippingMethodInput['input'],
-  sessionOrAuth:
-    | CheckoutSession
-    | undefined
-    | null
-    | { accessToken: string | undefined },
-  apiHost?: string
-): Promise<
-  ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>
-> {
-  const GODADDY_HOST = getHostByEnvironment(apiHost);
-
-  if (sessionOrAuth && 'accessToken' in sessionOrAuth) {
-    if (!sessionOrAuth.accessToken) {
-      throw new Error('No access token provided');
-    }
-    return graphqlRequestWithErrors<
-      ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>
-    >(
-      GODADDY_HOST,
-      RemoveAppliedCheckoutSessionShippingMethodMutation,
-      { input },
-      {
-        Authorization: `Bearer ${sessionOrAuth.accessToken}`,
-      }
-    );
-  }
-
-  const session = sessionOrAuth;
-  if (!session?.token || !session?.id) {
-    throw new Error('No session token or ID provided');
-  }
-
-  return graphqlRequestWithErrors<
-    ResultOf<typeof RemoveAppliedCheckoutSessionShippingMethodMutation>
-  >(
-    GODADDY_HOST,
-    RemoveAppliedCheckoutSessionShippingMethodMutation,
-    { input },
     {
       'x-session-token': `${session.token}`,
       'x-session-id': session.id,
