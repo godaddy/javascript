@@ -492,7 +492,8 @@ describe('locale', () => {
       '/shop',
     );
     expect(await screen.findByText(/^12,00\s\$$/)).toBeVisible();
-    expect(screen.getByText(/^20,00\s\$ – 25,00\s\$$/)).toBeVisible();
+    // German writes a range without spaces around the dash, and the symbol once.
+    expect(screen.getByText(/^20,00–25,00\s\$$/)).toBeVisible();
     expect(screen.getByTestId('total')).toHaveTextContent(/^1\.234,56\s\$$/);
   });
 

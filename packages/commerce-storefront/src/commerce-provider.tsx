@@ -11,8 +11,25 @@ import {
   useRef,
   useState,
 } from 'react';
-import { ApiError, CartIdStorage, checkedFetch, message, money, request, type StorefrontConfig } from './api';
+import {
+  ApiError,
+  CartIdStorage,
+  checkedFetch,
+  describeError,
+  money,
+  moneyRange,
+  request,
+  type StorefrontConfig,
+} from './api';
 import { type AddToCartItemInput, addToCart, type CartOrder } from './cart-model';
+import {
+  enUS,
+  formatMessage,
+  type MessageValues,
+  StorefrontError,
+  type StorefrontMessageKey,
+  type StorefrontMessages,
+} from './messages';
 import { SampleCartProvider } from './sample-cart';
 
 interface CartResponse {
@@ -28,6 +45,8 @@ export interface CommerceContextValue {
   config: StorefrontConfig;
   /** The BCP 47 locale that prices are formatted in, such as `en-US`. */
   locale: string;
+  /** The package's text: English, with the provider's `messages` over it. */
+  messages: StorefrontMessages;
   cart: CartOrder | null;
   /** Whether the cart drawer is open. Always `false` when no `CartDrawer` or `CartDrawerRoot` is mounted. */
   open: boolean;
@@ -73,6 +92,29 @@ export function useMoney(): (value: number, currency?: string) => string {
   );
 }
 
+/** `useMoney` for a range, such as `$20.00 – $25.00`, written the way the provider's `locale` writes ranges. */
+export function useMoneyRange(): (min: number, max: number, currency?: string) => string {
+  const { locale, config } = useCommerce();
+  const { currencyCode } = config;
+  return useCallback(
+    (min: number, max: number, currency: string = currencyCode): string =>
+      moneyRange(min, max, currency, locale),
+    [locale, currencyCode],
+  );
+}
+
+/**
+ * The provider's text for `key`, with `{placeholders}` filled from `values`, the way the package's own parts read
+ * it. For custom parts that should match the package's language. English outside a provider.
+ */
+export function useMessage(): (key: StorefrontMessageKey, values?: MessageValues) => string {
+  const messages: StorefrontMessages = useContext(CommerceContext)?.messages ?? enUS;
+  return useCallback(
+    (key: StorefrontMessageKey, values?: MessageValues): string => formatMessage(messages, key, values),
+    [messages],
+  );
+}
+
 export type StorefrontTheme = CSSProperties & {
   '--commerce-accent'?: string;
   '--commerce-accent-hover'?: string;
@@ -114,9 +156,15 @@ export interface CommerceProviderProps {
   checkoutSuccessPath?: string;
   /**
    * The BCP 47 locale for formatting prices, such as `de-DE`. Defaults to `en-US`; an invalid tag falls back to it.
-   * It never selects UI text: localized text will be a separate, opt-in prop, so setting `locale` cannot change wording.
+   * It never selects UI text; set `messages` for that.
    */
   locale?: string;
+  /**
+   * The package's text, such as `frFR` from `@godaddy/gd-commerce-storefront/messages/fr-FR`. Keys left out use
+   * English. Independent of `locale`, so set both for a translated store. Part `children` and props such as
+   * `CatalogHeader`'s `title` still replace the text where given.
+   */
+  messages?: Partial<StorefrontMessages>;
   /**
    * Called after an item is added, live or sample. With a drawer mounted, the drawer also opens. Without one, such as
    * on a site with a cart page, use it to confirm the add.
@@ -206,8 +254,7 @@ function callHost(callback: () => unknown): void {
 async function loadConfig(signal: AbortSignal): Promise<PublicConfiguration> {
   const config = await request<Record<string, unknown>>('/config', { signal });
   if (config?.state === 'unbound' || config?.state === 'connecting') {
-    if ('cartScope' in config || 'currencyCode' in config)
-      throw new Error('The store returned invalid configuration.');
+    if ('cartScope' in config || 'currencyCode' in config) throw new StorefrontError('invalidConfiguration');
     return { state: config.state };
   }
   if (
@@ -218,7 +265,7 @@ async function loadConfig(signal: AbortSignal): Promise<PublicConfiguration> {
     typeof config.currencyCode !== 'string' ||
     !/^[A-Z]{3}$/.test(config.currencyCode)
   ) {
-    throw new Error('The store returned invalid configuration.');
+    throw new StorefrontError('invalidConfiguration');
   }
   return { state: 'ready', cartScope: config.cartScope, currencyCode: config.currencyCode };
 }
@@ -231,10 +278,15 @@ export function CommerceProvider({
   theme = {},
   getSwatch,
   locale,
+  messages,
   onItemAdded,
   onEvent,
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
+  const resolvedMessages: StorefrontMessages = useMemo(
+    () => ({ ...enUS, ...messages, errorCodes: { ...enUS.errorCodes, ...messages?.errorCodes } }),
+    [messages],
+  );
   // Polling is timed from load, and a retry or a change in the reported state starts it over.
   const [pollingSince, setPollingSince] = useState(Date.now);
   const [pollingStopped, setPollingStopped] = useState<boolean>(false);
@@ -296,8 +348,8 @@ export function CommerceProvider({
         connection !== 'error'
           ? null
           : stalled
-            ? 'The store is taking too long to connect.'
-            : message(config.error)
+            ? formatMessage(resolvedMessages, 'connectionSlow')
+            : describeError(config.error, resolvedMessages)
       }
       retryConnection={() => {
         const started = Date.now();
@@ -317,6 +369,7 @@ export function CommerceProvider({
       theme={theme}
       getSwatch={getSwatch}
       locale={resolvedLocale}
+      messages={resolvedMessages}
       onItemAdded={onItemAdded}
       onEvent={onEvent}
     >
@@ -334,11 +387,13 @@ function BoundCommerceProvider({
   theme,
   getSwatch,
   locale,
+  messages,
   onItemAdded,
   onEvent,
 }: {
   getSwatch: GetSwatch | undefined;
   locale: string;
+  messages: StorefrontMessages;
   onItemAdded?: (item: AddedCartItem) => void;
   onEvent?: (event: CommerceEvent) => void;
   connection: CommerceContextValue['connection'];
@@ -348,6 +403,8 @@ function BoundCommerceProvider({
   config: StorefrontConfig;
   children: ReactNode;
 }): ReactElement {
+  const text = (key: StorefrontMessageKey, values?: MessageValues): string =>
+    formatMessage(messages, key, values);
   const storageKey: string = `godaddy:commerce-storefront:cart:${config.cartScope}`;
   const cartIdStorage = useMemo(() => new CartIdStorage(storageKey), [storageKey]);
   const ready = connection === 'ready';
@@ -418,7 +475,7 @@ function BoundCommerceProvider({
     try {
       return cartIdStorage.read();
     } catch {
-      setStorageWarning('Your browser cannot save the cart. Keep this page open while shopping.');
+      setStorageWarning(text('storageUnavailable'));
       return id.current;
     }
   }
@@ -432,7 +489,7 @@ function BoundCommerceProvider({
       cartIdStorage.write(id.current);
       setStorageWarning(null);
     } catch {
-      setStorageWarning('Your browser cannot save the cart. Keep this page open while shopping.');
+      setStorageWarning(text('storageUnavailable'));
     }
   }
 
@@ -477,9 +534,9 @@ function BoundCommerceProvider({
         return isActive();
       } catch (cause: unknown) {
         if (isActive()) {
-          const text: string = message(cause);
-          setError(text);
-          emit({ type: 'error', operation: kind, message: text });
+          const shown: string = describeError(cause, messages);
+          setError(shown);
+          emit({ type: 'error', operation: kind, message: shown });
         }
         return false;
       } finally {
@@ -531,7 +588,7 @@ function BoundCommerceProvider({
     rememberOpener();
     return run('add', async (): Promise<void> => {
       if (!item.skuId || !item.name || !Number.isInteger(item.quantity) || item.quantity < 1)
-        throw new Error('Select a product variant and a positive quantity.');
+        throw new StorefrontError('invalidAddItem');
       await hydrate();
       if (!isActive()) return;
       const fetchCart: typeof globalThis.fetch = (
@@ -547,11 +604,10 @@ function BoundCommerceProvider({
         { skuId: item.skuId, name: item.name, quantity: item.quantity },
         fetchCart,
       );
-      if (!result.cart?.id || !result.cart.lineItems?.length)
-        throw new Error('Commerce did not return a cart with items. Refresh before retrying.');
+      if (!result.cart?.id || !result.cart.lineItems?.length) throw new StorefrontError('addReturnedNoCart');
       if (!isActive()) return;
       commit(result.cart);
-      setAnnouncement(`${item.name} added to your cart.`);
+      setAnnouncement(text('itemAdded', { name: item.name }));
       openDrawer();
       emit({
         type: 'item-added',
@@ -568,9 +624,9 @@ function BoundCommerceProvider({
       await hydrate();
       if (!isActive()) return;
       if (!id.current || !currentCart.current?.lineItems?.some((item) => item.id === itemId))
-        throw new Error('This item is no longer in the cart.');
+        throw new StorefrontError('itemNotInCart');
       if (quantity !== undefined && (!Number.isInteger(quantity) || quantity < 1))
-        throw new Error('Quantity must be a positive whole number.');
+        throw new StorefrontError('invalidQuantity');
       const result: CartResponse = await boundRequest<CartResponse>(
         `/cart/${encodeURIComponent(id.current)}/items/${encodeURIComponent(itemId)}`,
         {
@@ -578,11 +634,10 @@ function BoundCommerceProvider({
           ...(quantity !== undefined ? { body: JSON.stringify({ quantity }) } : {}),
         },
       );
-      if (!result.cart?.id)
-        throw new Error('Commerce did not return the updated cart. Refresh before retrying.');
+      if (!result.cart?.id) throw new StorefrontError('updateReturnedNoCart');
       if (!isActive()) return;
       commit(result.cart);
-      setAnnouncement(method === 'DELETE' ? 'Item removed from cart.' : 'Cart quantity updated.');
+      setAnnouncement(text(method === 'DELETE' ? 'itemRemoved' : 'quantityUpdated'));
       emit(
         method === 'DELETE'
           ? { type: 'item-removed', itemId, isSample: false }
@@ -595,7 +650,7 @@ function BoundCommerceProvider({
     return run('discount', async (): Promise<void> => {
       await hydrate();
       if (!isActive()) return;
-      if (!id.current || !code.trim()) throw new Error('Add an item and enter a promotion code.');
+      if (!id.current || !code.trim()) throw new StorefrontError('discountMissing');
       const codes: string[] = [
         ...new Set([
           ...(currentCart.current?.discounts?.flatMap((discount) => (discount.code ? [discount.code] : [])) ??
@@ -607,21 +662,20 @@ function BoundCommerceProvider({
         `/cart/${encodeURIComponent(id.current)}/discounts`,
         { method: 'POST', body: JSON.stringify({ discountCodes: codes }) },
       );
-      if (!result.cart?.id) throw new Error('Commerce did not return the updated cart.');
+      if (!result.cart?.id) throw new StorefrontError('discountReturnedNoCart');
       if (!isActive()) return;
       commit(result.cart);
-      setAnnouncement('Promotion codes updated.');
+      setAnnouncement(text('discountsUpdated'));
       emit({ type: 'discount-applied', code: code.trim() });
     });
   }
 
   function checkout(): Promise<boolean> {
     return run('checkout', async (): Promise<void> => {
-      if (!config.checkoutSuccessPath) throw new Error('Checkout has not been enabled for this store.');
+      if (!config.checkoutSuccessPath) throw new StorefrontError('checkoutDisabled');
       await hydrate();
       if (!isActive()) return;
-      if (!id.current || !currentCart.current?.lineItems?.length)
-        throw new Error('Add an item before checking out.');
+      if (!id.current || !currentCart.current?.lineItems?.length) throw new StorefrontError('checkoutEmpty');
       const origin: string = window.location.origin;
       const successUrl: URL = new URL(config.checkoutSuccessPath, origin);
       successUrl.searchParams.set('orderId', id.current);
@@ -634,10 +688,9 @@ function BoundCommerceProvider({
         }),
       });
       if (!isActive()) return;
-      if (typeof session.url !== 'string' || !session.url.trim())
-        throw new Error('Commerce did not return a checkout URL.');
+      if (typeof session.url !== 'string' || !session.url.trim()) throw new StorefrontError('checkoutNoUrl');
       const url: URL = new URL(session.url, origin);
-      if (url.protocol !== 'https:') throw new Error('Commerce returned an invalid checkout URL.');
+      if (url.protocol !== 'https:') throw new StorefrontError('checkoutInvalidUrl');
       emit({ type: 'checkout-started', cartId: id.current });
       window.location.assign(url.href);
     });
@@ -653,6 +706,7 @@ function BoundCommerceProvider({
         theme,
         getSwatch,
         locale,
+        messages,
         cart,
         open,
         setOpen: (next) => {
@@ -679,10 +733,11 @@ function BoundCommerceProvider({
       <CartDrawerRegistry.Provider value={registerDrawer}>
         <SampleCartProvider
           enabled={connection === 'unbound'}
-          announce={setAnnouncement}
+          messages={messages}
+          announce={(key) => setAnnouncement(text(key))}
           emit={emit}
           onAdd={(name) => {
-            setAnnouncement(`${name} added to your sample cart.`);
+            setAnnouncement(text('sampleItemAdded', { name }));
             openDrawer();
             emit({ type: 'item-added', skuId: null, name, quantity: 1, isSample: true });
           }}

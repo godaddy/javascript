@@ -3,7 +3,8 @@ import { useCart } from './cart-state';
 import type { SKU } from './catalog-model';
 import { getAvailableInventoryQuantity } from './catalog-model';
 import { buttonClass, errorNoticeClass } from './class-names';
-import { useCommerce } from './commerce-provider';
+import { useCommerce, useMessage } from './commerce-provider';
+import type { MessageValues, StorefrontMessageKey } from './messages';
 import { type PartLabel, renderLabel } from './part';
 import { StorefrontSurface } from './storefront-surface';
 
@@ -22,6 +23,7 @@ export interface CartButtonProps {
 export function CartButton({ children }: CartButtonProps = {}): ReactElement {
   const { setOpen, open, connection } = useCommerce();
   const { itemCount } = useCart();
+  const text = useMessage();
   // Bumped on each change after the first render, so the badge remounts and replays its pop.
   const [bump, setBump] = useState<number>(0);
   const previous = useRef<number>(itemCount);
@@ -39,7 +41,7 @@ export function CartButton({ children }: CartButtonProps = {}): ReactElement {
         disabled={connection !== 'ready' && connection !== 'unbound'}
         aria-haspopup='dialog'
         aria-expanded={open}
-        aria-label={custom === null ? `Cart, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}` : undefined}
+        aria-label={custom === null ? text('cartButtonLabel', { count: itemCount }) : undefined}
         data-commerce-part='cart-button'
         onClick={() => setOpen(true)}
       >
@@ -81,9 +83,13 @@ function BagIcon(): ReactElement {
 export const isSoldOut = (available: number | null): boolean => available !== null && available <= 0;
 
 /** Why `quantity` cannot be added, or `null` when it can. `available` is `null` when stock is not tracked. */
-export function quantityProblem(quantity: number, available: number | null): string | null {
-  if (!Number.isInteger(quantity) || quantity < 1) return 'Enter a whole number of 1 or more.';
-  if (available !== null && available > 0 && quantity > available) return `Only ${available} available.`;
+export function quantityProblem(
+  quantity: number,
+  available: number | null,
+): { key: StorefrontMessageKey; values?: MessageValues } | null {
+  if (!Number.isInteger(quantity) || quantity < 1) return { key: 'quantityNotWhole' };
+  if (available !== null && available > 0 && quantity > available)
+    return { key: 'quantityOverStock', values: { count: available } };
   return null;
 }
 
@@ -123,23 +129,28 @@ export function AddToCart({
 }: AddToCartButtonProps & {
   className: string;
   block?: boolean;
-  /** The package's own label while the button can add, in place of "Add to cart". */
+  /** The package's own label while the button can add, in place of the `addToCart` message. */
   label?: ReactNode;
   /** The accessible name for `label`, when its text does not read well, such as "Add to cart, $64.00". */
   labelName?: string;
 }): ReactElement {
   const { addItem, pending, hydrating, error, open, connection } = useCommerce();
+  const text = useMessage();
   const [adding, setAdding] = useState<boolean>(false);
   const reasonId = useId();
   const available: number | null = getAvailableInventoryQuantity(sku);
   const soldOut: boolean = isSoldOut(available);
   // Sold out needs no description: the button says so.
   let reason: string | null = null;
-  if (connection === 'unbound') reason = 'Connect a store to add items to the cart.';
-  else if (connection === 'error') reason = 'The store could not be reached.';
-  else if (connection !== 'ready') reason = 'Connecting to the store…';
-  else if (!sku.id) reason = 'This item cannot be added to the cart.';
-  else if (!soldOut) reason = hydrating ? 'Loading your cart…' : quantityProblem(quantity, available);
+  if (connection === 'unbound') reason = text('addReasonUnbound');
+  else if (connection === 'error') reason = text('addReasonError');
+  else if (connection !== 'ready') reason = text('connecting');
+  else if (!sku.id) reason = text('addReasonNoSku');
+  else if (!soldOut && hydrating) reason = text('loadingCart');
+  else if (!soldOut) {
+    const problem = quantityProblem(quantity, available);
+    reason = problem && text(problem.key, problem.values);
+  }
   const disabled: boolean = adding || soldOut || reason !== null;
   // Only while the package's own `label` shows; a host label is the name as it reads.
   const ownLabel: boolean =
@@ -169,7 +180,7 @@ export function AddToCart({
         {renderLabel(
           children,
           { busy: adding, soldOut },
-          soldOut ? 'Out of stock' : adding ? 'Adding…' : (label ?? 'Add to cart'),
+          soldOut ? text('outOfStock') : adding ? text('adding') : (label ?? text('addToCart')),
         )}
       </button>
       {reason && (

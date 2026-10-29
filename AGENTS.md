@@ -294,6 +294,7 @@ E. @godaddy/gd-commerce-storefront
 - Build: tsdown plus local Tailwind CLI, CSS scoping, and layer removal in declared order; styles exported as ./styles.css. Artifact tests process the output through Tailwind v3 to verify host compatibility. No host Tailwind setup or global reset.
 - Test: build first, then Vitest (behavior plus compiled artifact checks). Commands: build, typecheck, lint, test.
 - Example: examples/commerce-storefront, port 5184, development-only in-memory server; production build needs real API routes.
+- Text: every package string is a key in src/messages.ts (English) and src/locales/fr-fr.ts (French, exported as `./messages/fr-FR`). `messages` selects text and `locale` formats prices; keep them separate. Add new strings to both files; the messages test fails on a missing or untranslated key.
 - Keep credentials, merchant provisioning and platform configuration out of this client package. No dependency on the separate commerce web-component runtime.
 
 F. @godaddy/gd-commerce-server

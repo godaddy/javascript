@@ -1,3 +1,13 @@
+import {
+  enUS,
+  formatMessage,
+  isEnglish,
+  type MessageValues,
+  StorefrontError,
+  type StorefrontMessageKey,
+  type StorefrontMessages,
+} from './messages';
+
 export interface StorefrontConfig {
   cartScope: string;
   currencyCode: string;
@@ -27,12 +37,19 @@ export class CartIdStorage {
 }
 
 export class ApiError extends Error {
+  /** The failure response's `code`, such as `not_found`, when the server sent one. */
+  public readonly code: string | undefined;
+  /** Package text to show in place of `message`, for failures the package describes itself. */
+  public readonly text: { key: StorefrontMessageKey; values?: MessageValues } | undefined;
+
   constructor(
     message: string,
     public readonly status: number,
-    options?: ErrorOptions,
+    options?: ErrorOptions & { code?: string; text?: { key: StorefrontMessageKey; values?: MessageValues } },
   ) {
     super(message, options);
+    this.code = options?.code;
+    this.text = options?.text;
   }
 }
 
@@ -47,16 +64,17 @@ export const checkedFetch: typeof globalThis.fetch = async (
       try {
         return JSON.parse(data) as unknown;
       } catch (cause: unknown) {
-        throw new ApiError(`Commerce request failed (${response.status}). Please retry.`, response.status, {
-          cause,
-        });
+        const text = { key: 'requestFailedStatus', values: { status: response.status } } as const;
+        throw new ApiError(formatMessage(enUS, text.key, text.values), response.status, { cause, text });
       }
     })();
-    const detail: string =
-      typeof parsed === 'object' && parsed !== null && 'error' in parsed && typeof parsed.error === 'string'
-        ? parsed.error
-        : 'Commerce request failed. Please retry.';
-    throw new ApiError(detail, response.status);
+    const body: Record<string, unknown> = typeof parsed === 'object' && parsed !== null ? { ...parsed } : {};
+    const code: string | undefined = typeof body.code === 'string' ? body.code : undefined;
+    if (typeof body.error === 'string') throw new ApiError(body.error, response.status, { code });
+    throw new ApiError(formatMessage(enUS, 'requestFailed'), response.status, {
+      code,
+      text: { key: 'requestFailed' },
+    });
   }
   return response;
 };
@@ -79,24 +97,50 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return (await response.json()) as T;
   } catch (cause: unknown) {
     if (timeout?.aborted && !init?.signal?.aborted) {
-      throw new ApiError('Commerce information took too long to load. Please retry.', 408, {
+      throw new ApiError(formatMessage(enUS, 'requestTimeout'), 408, {
         cause,
+        text: { key: 'requestTimeout' },
       });
     }
     throw cause;
   }
 }
 
-/** Formats minor units, such as cents, as currency. Inside the provider, prefer `useMoney`, which follows its `locale`. */
-export function money(value: number, currency: string, locale: string = 'en-US'): string {
-  const formatter: Intl.NumberFormat = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-  });
-  const digits: number = formatter.resolvedOptions().maximumFractionDigits ?? 2;
-  return formatter.format(value / 10 ** digits);
+function currencyFormat(currency: string, locale: string): { format: Intl.NumberFormat; scale: number } {
+  const format: Intl.NumberFormat = new Intl.NumberFormat(locale, { style: 'currency', currency });
+  return { format, scale: 10 ** (format.resolvedOptions().maximumFractionDigits ?? 2) };
 }
 
-export function message(error: unknown): string {
-  return error instanceof Error ? error.message : 'Something went wrong. Please retry.';
+/** Formats minor units, such as cents, as currency. Inside the provider, prefer `useMoney`, which follows its `locale`. */
+export function money(value: number, currency: string, locale: string = 'en-US'): string {
+  const { format, scale } = currencyFormat(currency, locale);
+  return format.format(value / scale);
 }
+
+/** Formats a range of minor units the way `locale` writes ranges, such as `$20.00 – $25.00` or `20,00–25,00 €`. */
+export function moneyRange(min: number, max: number, currency: string, locale: string = 'en-US'): string {
+  const { format, scale } = currencyFormat(currency, locale);
+  // Browsers from before 2023 lack `formatRange`.
+  if (typeof format.formatRange !== 'function')
+    return `${format.format(min / scale)} – ${format.format(max / scale)}`;
+  return format.formatRange(min / scale, max / scale);
+}
+
+/**
+ * The text to show for a failure, in the language of `messages`. Server messages are English, so other languages
+ * show the text for the response's `code`, or a generic message.
+ */
+export function describeError(error: unknown, messages: StorefrontMessages): string {
+  const text = error instanceof StorefrontError || error instanceof ApiError ? textOf(error) : undefined;
+  if (text) return formatMessage(messages, text.key, text.values);
+  if (error instanceof ApiError) {
+    const coded: string | undefined = error.code ? messages.errorCodes[error.code] : undefined;
+    if (coded) return coded;
+    return isEnglish(messages) ? error.message : formatMessage(messages, 'requestFailed');
+  }
+  if (error instanceof Error && isEnglish(messages)) return error.message;
+  return formatMessage(messages, 'unknownError');
+}
+
+const textOf = (error: StorefrontError | ApiError): ApiError['text'] =>
+  error instanceof StorefrontError ? { key: error.key, values: error.values } : error.text;

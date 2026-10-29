@@ -10,7 +10,7 @@ import {
   useState,
 } from 'react';
 import { Link, useParams } from 'react-router';
-import { ApiError, message, request } from './api';
+import { ApiError, describeError, request } from './api';
 import { isSoldOut } from './cart';
 import {
   getAvailableInventoryQuantity,
@@ -27,7 +27,7 @@ import {
   type StorefrontProductAttribute,
 } from './catalog-model';
 import { buttonClass, errorNoticeClass } from './class-names';
-import { type GetSwatch, useCommerce } from './commerce-provider';
+import { type GetSwatch, useCommerce, useMessage } from './commerce-provider';
 import { hasChildren, type PartLabel, partProps, renderLabel, usePartRegistry } from './part';
 import { useRootParams } from './root-params';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
@@ -223,7 +223,8 @@ function ProductDetailsLoader({
   notFound,
   error,
 }: ProductDetailsRootProps & { productId: string }): ReactElement {
-  const { config, getSwatch } = useCommerce();
+  const { config, getSwatch, messages } = useCommerce();
+  const text = useMessage();
   const [params, setParams] = useRootParams(urlState);
   const [quantity, setQuantity] = useState<number>(1);
   const [imageIndex, setImageIndex] = useState<number>(0);
@@ -328,7 +329,7 @@ function ProductDetailsLoader({
           loading
         ) : (
           <p role='status' className='text-sm text-commerce-muted'>
-            Loading product…
+            {text('loadingProduct')}
           </p>
         )}
       </div>
@@ -339,12 +340,12 @@ function ProductDetailsLoader({
       <div role='alert' {...partProps('product-details-root', className)}>
         {renderLabel(
           error,
-          { message: message(product.error), retry },
+          { message: describeError(product.error, messages), retry },
           <>
-            <h1 className='text-2xl font-semibold tracking-tight'>Product unavailable</h1>
-            <p className={`my-4 ${errorNoticeClass}`}>{message(product.error)}</p>
+            <h1 className='text-2xl font-semibold tracking-tight'>{text('productUnavailable')}</h1>
+            <p className={`my-4 ${errorNoticeClass}`}>{describeError(product.error, messages)}</p>
             <button type='button' className={buttonClass} onClick={retry}>
-              Retry product
+              {text('retryProduct')}
             </button>
           </>,
         )}
@@ -358,9 +359,9 @@ function ProductDetailsLoader({
           notFound
         ) : (
           <>
-            <h1 className='text-2xl font-semibold tracking-tight'>Product not found</h1>
+            <h1 className='text-2xl font-semibold tracking-tight'>{text('productNotFound')}</h1>
             <Link className={`${buttonClass} mt-6`} to={config.catalogPath}>
-              Back to shop
+              {text('backToShop')}
             </Link>
           </>
         )}
