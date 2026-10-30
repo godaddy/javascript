@@ -120,10 +120,11 @@ export function money(value: number, currency: string, locale: string = 'en-US')
 /** Formats a range of minor units the way `locale` writes ranges, such as `$20.00 – $25.00` or `20,00–25,00 €`. */
 export function moneyRange(min: number, max: number, currency: string, locale: string = 'en-US'): string {
   const { format, scale } = currencyFormat(currency, locale);
-  // Browsers from before 2023 lack `formatRange`.
-  if (typeof format.formatRange !== 'function')
-    return `${format.format(min / scale)} – ${format.format(max / scale)}`;
-  return format.formatRange(min / scale, max / scale);
+  // Browsers from before 2023 lack `formatRange`, and early versions throw when `min` is above `max`.
+  try {
+    if (typeof format.formatRange === 'function') return format.formatRange(min / scale, max / scale);
+  } catch {}
+  return `${format.format(min / scale)} – ${format.format(max / scale)}`;
 }
 
 /**
@@ -131,13 +132,13 @@ export function moneyRange(min: number, max: number, currency: string, locale: s
  * show the text for the response's `code`, or a generic message.
  */
 export function describeError(error: unknown, messages: StorefrontMessages): string {
+  const coded: string | undefined =
+    error instanceof ApiError && error.code ? messages.errorCodes[error.code] : undefined;
+  if (coded) return coded;
   const text = error instanceof StorefrontError || error instanceof ApiError ? textOf(error) : undefined;
   if (text) return formatMessage(messages, text.key, text.values);
-  if (error instanceof ApiError) {
-    const coded: string | undefined = error.code ? messages.errorCodes[error.code] : undefined;
-    if (coded) return coded;
+  if (error instanceof ApiError)
     return isEnglish(messages) ? error.message : formatMessage(messages, 'requestFailed');
-  }
   if (error instanceof Error && isEnglish(messages)) return error.message;
   return formatMessage(messages, 'unknownError');
 }

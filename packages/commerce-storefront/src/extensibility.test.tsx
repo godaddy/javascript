@@ -110,7 +110,7 @@ function mockStore({
     if (path === '/checkout') return checkout ?? response({ url: 'https://pay.test/session' });
     const line = path.match(/\/items\/([^/]+)$/)?.[1];
     if (line && init?.method === 'PATCH') {
-      if (failPatch) return response({ error: 'Quantity rejected.' }, 409);
+      if (failPatch) return response({ error: 'Quantity rejected.', code: 'invalid_request' }, 409);
       const { quantity } = JSON.parse(String(init.body));
       lines = lines.map((candidate) => (candidate.id === line ? { ...candidate, quantity } : candidate));
     }
@@ -562,6 +562,7 @@ describe('onEvent', () => {
         type: 'error',
         operation: 'change-quantity',
         message: 'Quantity rejected.',
+        code: 'invalid_request',
       }),
     );
   });

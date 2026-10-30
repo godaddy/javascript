@@ -82,7 +82,7 @@ export const frFR: StorefrontMessages = {
   subtotal: 'Sous-total',
   sampleSubtotal: "Sous-total d'exemple",
   checkoutAdjustments: 'Livraison, taxes et remises',
-  checkoutAdjustmentsValue: 'Calculés au paiement',
+  checkoutAdjustmentsValue: 'Calculées au paiement',
   sampleCheckoutNote: "Total d'exemple en {currency}. Le paiement n'est pas encore configuré.",
   checkoutUnavailable: "Le paiement n'est pas encore disponible.",
   checkout: 'Passer la commande',

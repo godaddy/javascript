@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import { ApiError, describeError } from './api';
+import { ApiError, describeError, moneyRange } from './api';
 import { CartButton } from './cart';
 import { Catalog, CatalogHeader, CatalogRoot } from './catalog';
 import type { SKU, SKUGroup } from './catalog-model';
@@ -58,6 +58,8 @@ function mockStore(state: 'ready' | 'unbound' = 'ready') {
       if (path === '/products/missing')
         return response({ error: 'Product not found', code: 'not_found' }, 404);
       if (path === '/products/broken') return response({ error: 'Catalog offline', code: 'teapot' }, 500);
+      if (path === '/products/upstream')
+        return response({ error: 'Upstream failed', code: 'upstream_error' }, 502);
       if (path === '/products/mug') return response({ skuGroup: mug });
       if (path === '/products/shirt') return response({ skuGroup: shirt });
       return response({ cart: null });
@@ -132,9 +134,30 @@ describe('describeError', () => {
     expect(describeError('nope', enUS)).toBe(formatMessage(enUS, 'unknownError'));
   });
 
+  it('translates a code that came without server text', () => {
+    const coded = new ApiError('Commerce request failed.', 409, {
+      code: 'scope_mismatch',
+      text: { key: 'requestFailed' },
+    });
+    expect(describeError(coded, frFR)).toBe(frFR.errorCodes.scope_mismatch);
+  });
+
   it('lets a site translate a code in English too', () => {
     const coded = new ApiError('Not found', 404, { code: 'not_found' });
     expect(describeError(coded, { ...enUS, errorCodes: { not_found: 'Gone.' } })).toBe('Gone.');
+  });
+});
+
+describe('moneyRange', () => {
+  it('joins the two prices when formatRange throws', () => {
+    const formatRange = vi.spyOn(Intl.NumberFormat.prototype, 'formatRange').mockImplementation(() => {
+      throw new RangeError('start is greater than end');
+    });
+    try {
+      expect(moneyRange(2500, 2000, 'USD')).toBe('$25.00 – $20.00');
+    } finally {
+      formatRange.mockRestore();
+    }
   });
 });
 
@@ -192,6 +215,19 @@ describe('messages prop', () => {
     expect(within(alert).getByRole('heading', { name: 'Produit indisponible' })).toBeVisible();
     expect(within(alert).getByText(formatMessage(frFR, 'requestFailed'))).toBeVisible();
     expect(within(alert).getByRole('button', { name: 'Recharger le produit' })).toBeVisible();
+  });
+
+  it('shows the French text for a known server code', async () => {
+    mockStore();
+    mount(<ProductDetails />, french, '/products/upstream');
+    const alert = await screen.findByRole('alert');
+    expect(within(alert).getByText(frFR.errorCodes.upstream_error ?? '')).toBeVisible();
+  });
+
+  it('keeps English server text when an override leaves locale empty', async () => {
+    mockStore();
+    mount(<ProductDetails />, { messages: { locale: null as unknown as string } }, '/products/broken');
+    expect(await screen.findByText('Catalog offline')).toBeVisible();
   });
 
   it('names samples and sample carts in French', async () => {

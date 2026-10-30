@@ -200,8 +200,16 @@ export type CommerceEvent =
   | { readonly type: 'discount-applied'; readonly code: string }
   /** Sent just before the browser leaves for checkout. */
   | { readonly type: 'checkout-started'; readonly cartId: string }
-  /** `message` is the one the cart shows. */
-  | { readonly type: 'error'; readonly operation: CommerceOperation; readonly message: string };
+  /**
+   * `message` is the one the cart shows, in the provider's language. `code` is the server's failure code, such as
+   * `scope_mismatch`, when it sent one.
+   */
+  | {
+      readonly type: 'error';
+      readonly operation: CommerceOperation;
+      readonly message: string;
+      readonly code?: string;
+    };
 
 /** The item passed to `onItemAdded`. */
 export interface AddedCartItem {
@@ -284,7 +292,13 @@ export function CommerceProvider({
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
   const resolvedMessages: StorefrontMessages = useMemo(
-    () => ({ ...enUS, ...messages, errorCodes: { ...enUS.errorCodes, ...messages?.errorCodes } }),
+    () => ({
+      ...enUS,
+      ...messages,
+      // JSON can carry `locale: null`, which would otherwise hide English server messages.
+      locale: messages?.locale || enUS.locale,
+      errorCodes: { ...enUS.errorCodes, ...messages?.errorCodes },
+    }),
     [messages],
   );
   // Polling is timed from load, and a retry or a change in the reported state starts it over.
@@ -536,7 +550,8 @@ function BoundCommerceProvider({
         if (isActive()) {
           const shown: string = describeError(cause, messages);
           setError(shown);
-          emit({ type: 'error', operation: kind, message: shown });
+          const code: string | undefined = cause instanceof ApiError ? cause.code : undefined;
+          emit({ type: 'error', operation: kind, message: shown, ...(code ? { code } : {}) });
         }
         return false;
       } finally {

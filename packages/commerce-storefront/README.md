@@ -448,7 +448,7 @@ import { frFR } from '@godaddy/gd-commerce-storefront/messages/fr-FR';
 <CommerceStorefront locale='fr-FR' messages={frFR}>
 ```
 
-French is its own import, so English-only sites do not load it. Pass only the keys to change, and the rest stay as they were, English by default: `messages={{ ...frFR, checkout: 'Commander' }}`. The `StorefrontMessages` type lists every key, and `enUS` has the English text.
+French is its own import, so English-only sites do not load it. Pass only the keys to change, and the rest stay as they were, English by default: `messages={{ ...frFR, checkout: 'Commander' }}`. The `StorefrontMessages` type lists every key, and `enUS` has the English text. New keys may be added in minor releases and stay English until translated, so type a translation of your own as `Partial<StorefrontMessages>`.
 
 Messages are plain data, so they can come from JSON, a translation service, or a server component. `{name}` placeholders are filled in, and numbers in them are formatted for the messages' `locale`. A message with a count can have plural forms, chosen by the language's rules; French counts 0 as singular:
 
@@ -483,7 +483,7 @@ Every part's outer element has a `data-commerce-part` attribute with the part's 
 | `item-removed` | `itemId`, `isSample` |
 | `discount-applied` | `code` |
 | `checkout-started` | `cartId`; sent just before the browser leaves for checkout, so use `navigator.sendBeacon` or a keepalive request |
-| `error` | `operation` (`add`, `change-quantity`, `remove`, `discount`, `refresh` or `checkout`) and the `message` the cart shows |
+| `error` | `operation` (`add`, `change-quantity`, `remove`, `discount`, `refresh` or `checkout`), the `message` the cart shows in the provider's language, and the server's `code`, such as `scope_mismatch`, when it sent one |
 
 New event types may be added in minor releases, so ignore types you do not handle. A callback that throws or returns a rejected promise, including `onItemAdded`, is logged to the console and does not fail the cart operation. Async callbacks are not awaited, so a slow analytics call never delays the cart.
 
