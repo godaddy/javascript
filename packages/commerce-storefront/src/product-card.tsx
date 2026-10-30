@@ -25,7 +25,7 @@ import {
 import { saleBadgeClass, secondaryButtonClass } from './class-names';
 import { useCommerce, useMessage, useMoney, useMoneyRange } from './commerce-provider';
 import { type PartLabel, type PartRegistry, partProps, renderLabel, usePartRegistry } from './part';
-import { type SampleProduct, sampleCurrency, useSampleCart } from './sample-cart';
+import { type SampleProduct, sampleCurrency, sampleName, useSampleCart } from './sample-cart';
 import { StorefrontSurface } from './storefront-surface';
 
 export interface ProductImageProps {
@@ -165,8 +165,7 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
   }, [has]);
   const value = useMemo((): ProductCardInternal | null => {
     const item: ProductCardItem | null = catalogItem ?? (product ? { source: 'live', product } : null);
-    const sampleText: string =
-      item?.source === 'sample' ? text('sampleProductName', { number: item.sample.number }) : '';
+    const sampleText: string = item?.source === 'sample' ? sampleName(text, item.sample) : '';
     return item && cardValue(item, config.productPath, { imageLinked, register }, sampleText);
   }, [catalogItem, product, config.productPath, imageLinked, register, text]);
   if (catalogItem && product)
@@ -419,7 +418,7 @@ function SampleAction({
 }): ReactElement {
   const { add } = useSampleCart();
   const text = useMessage();
-  const name: string = text('sampleProductName', { number: sample.number });
+  const name: string = sampleName(text, sample);
   const custom: ReactNode = renderLabel(label, { action: 'add', busy: false, soldOut: false }, null);
   // A host label stays the start of the accessible name, so it is not replaced by an `aria-label`.
   return custom === null ? (

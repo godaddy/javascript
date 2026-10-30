@@ -230,20 +230,43 @@ const STOP_POLLING_AT_MS = 30 * 60_000;
 /** A failed retry keeps showing connecting this long so the click visibly does something. */
 const RETRY_FEEDBACK_MS = 1_000;
 
-/** `value` while its own keys and values are unchanged, so an inline object literal does not change every render. */
-function useShallowStable<T extends object>(value: T | undefined): T | undefined {
-  const stable = useRef<T | undefined>(value);
-  if (!shallowEqual(stable.current, value)) stable.current = value;
-  return stable.current;
+/**
+ * `messages` while its contents are unchanged, so an inline object, including inline `errorCodes` or plural forms,
+ * does not change every render. The kept value is state, so a render React discards cannot leave it behind.
+ */
+function useStableMessages<T extends object>(value: T | undefined): T | undefined {
+  const [stable, setStable] = useState<T | undefined>(value);
+  if (stable === value || sameMessages(stable, value)) return stable;
+  // Storing information from the previous render: React re-renders at once with the new state.
+  setStable(() => value);
+  return value;
 }
 
-function shallowEqual(a: object | undefined, b: object | undefined): boolean {
+/** Equal keys and values, comparing plain-object values, such as `errorCodes` and plural forms, one level deeper. */
+function sameMessages(a: object | undefined, b: object | undefined, deeper: boolean = true): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
   const left = a as Record<string, unknown>;
   const right = b as Record<string, unknown>;
   const keys: string[] = Object.keys(left);
-  return keys.length === Object.keys(right).length && keys.every((key) => Object.is(left[key], right[key]));
+  return (
+    keys.length === Object.keys(right).length &&
+    keys.every(
+      (key) =>
+        Object.hasOwn(right, key) &&
+        (Object.is(left[key], right[key]) ||
+          (deeper &&
+            isPlainObject(left[key]) &&
+            isPlainObject(right[key]) &&
+            sameMessages(left[key], right[key], false))),
+    )
+  );
+}
+
+function isPlainObject(value: unknown): value is object {
+  if (typeof value !== 'object' || value === null) return false;
+  const prototype: unknown = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
 
 /** `locale` as a canonical tag, or `en-US` when it is not a valid one, so one bad prop cannot break every price. */
@@ -309,7 +332,7 @@ export function CommerceProvider({
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
   // Keyed on the override's contents, so an inline `messages={{ ...frFR, checkout: 'Commander' }}` keeps the text,
   // and everything memoized on it, stable across renders.
-  const stableMessages: Partial<StorefrontMessages> | undefined = useShallowStable(messages);
+  const stableMessages: Partial<StorefrontMessages> | undefined = useStableMessages(messages);
   const resolvedMessages: StorefrontMessages = useMemo(
     () => ({
       ...enUS,

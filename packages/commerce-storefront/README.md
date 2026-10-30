@@ -483,7 +483,7 @@ Every part's outer element has a `data-commerce-part` attribute with the part's 
 | `item-removed` | `itemId`, `isSample` |
 | `discount-applied` | `code` |
 | `checkout-started` | `cartId`; sent just before the browser leaves for checkout, so use `navigator.sendBeacon` or a keepalive request |
-| `error` | `operation` (`add`, `change-quantity`, `remove`, `discount`, `refresh` or `checkout`), the `message` the cart shows in the provider's language, and the server's `code`, such as `scope_mismatch`, when it sent one |
+| `error` | `operation` (`add`, `change-quantity`, `remove`, `discount`, `refresh` or `checkout`), the `message` the cart shows in the provider's language at the time of the failure, and the server's `code`, such as `scope_mismatch`, when it sent one. The cart's own notice follows a later change of `messages`; the event's text does not, so log `code` to group failures |
 
 New event types may be added in minor releases, so ignore types you do not handle. A callback that throws or returns a rejected promise, including `onItemAdded`, is logged to the console and does not fail the cart operation. Async callbacks are not awaited, so a slow analytics call never delays the cart.
 

@@ -169,10 +169,10 @@ function CatalogLoader({
 }
 
 export interface CatalogHeaderProps extends CatalogPartProps {
-  /** Defaults to the provider's `catalogTitle` message. */
-  title?: string;
-  /** Defaults to the provider's `catalogDescription` message. */
-  description?: string;
+  /** Defaults to the provider's `catalogTitle` message. `null` leaves the heading out. */
+  title?: string | null;
+  /** Defaults to the provider's `catalogDescription` message. `null` leaves it out. */
+  description?: string | null;
 }
 
 /** The catalog title as the page's H1, with a description. */
@@ -181,12 +181,16 @@ export function CatalogHeader({ title, description, className }: CatalogHeaderPr
   const text = useMessage();
   return (
     <header {...partProps('catalog-header', className)}>
-      <h1 className='max-w-3xl text-balance text-3xl font-semibold leading-tight tracking-tight'>
-        {title === undefined ? text('catalogTitle') : title}
-      </h1>
-      <p className='mt-1 max-w-xl text-base leading-7 text-commerce-muted'>
-        {description === undefined ? text('catalogDescription') : description}
-      </p>
+      {title !== null && (
+        <h1 className='max-w-3xl text-balance text-3xl font-semibold leading-tight tracking-tight'>
+          {title === undefined ? text('catalogTitle') : title}
+        </h1>
+      )}
+      {description !== null && (
+        <p className='mt-1 max-w-xl text-base leading-7 text-commerce-muted'>
+          {description === undefined ? text('catalogDescription') : description}
+        </p>
+      )}
     </header>
   );
 }

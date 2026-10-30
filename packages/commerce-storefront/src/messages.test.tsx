@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactElement, ReactNode } from 'react';
+import { type ReactElement, type ReactNode, StrictMode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError, describeError, money, moneyRange } from './api';
@@ -19,6 +19,7 @@ import {
   type StorefrontMessages,
 } from './messages';
 import { ProductDetails } from './product-details';
+import { RelatedProducts } from './related-products';
 
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const sku = (id: string, quantity = 5): SKU => ({
@@ -166,6 +167,12 @@ describe('describeError', () => {
     expect(describeError(inherited, frFR)).toBe(formatMessage(frFR, 'requestFailed'));
   });
 
+  it('handles messages with no errorCodes, such as from JSON', () => {
+    const coded = new ApiError('Not found', 404, { code: 'not_found' });
+    const partial = { ...frFR, errorCodes: undefined } as unknown as StorefrontMessages;
+    expect(describeError(coded, partial)).toBe(formatMessage(frFR, 'requestFailed'));
+  });
+
   it('lets a site translate a code in English too', () => {
     const coded = new ApiError('Not found', 404, { code: 'not_found' });
     expect(describeError(coded, { ...enUS, errorCodes: { not_found: 'Gone.' } })).toBe('Gone.');
@@ -210,16 +217,22 @@ describe('messages prop', () => {
     expect(screen.getByText(/^12,50\s€$/)).toBeVisible();
   });
 
-  it('keeps a null title and description, so a site can leave them out', async () => {
+  it('leaves out a null title and description, rather than an empty heading', async () => {
     mockStore();
     mount(
       <CatalogRoot>
-        <CatalogHeader title={null as unknown as string} description={null as unknown as string} />
+        <CatalogHeader title={null} description={null} />
+        <RelatedProducts productId='mug' title={null} />
       </CatalogRoot>,
     );
-    const heading = await screen.findByRole('heading', { level: 1 });
-    expect(heading).toBeEmptyDOMElement();
+    // The related products load after the catalog, so their cards show it rendered.
+    expect(await screen.findByRole('heading', { level: 2, name: 'T-shirt' })).toBeVisible();
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
     expect(screen.queryByText(enUS.catalogDescription as string)).not.toBeInTheDocument();
+    expect(screen.queryByText(enUS.relatedTitle as string)).not.toBeInTheDocument();
+    expect(document.querySelector('[data-commerce-part=related-products]')).not.toHaveAttribute(
+      'aria-labelledby',
+    );
   });
 
   it('fills keys a site leaves out with English, and props still win', async () => {
@@ -285,30 +298,43 @@ describe('messages prop', () => {
     );
   });
 
-  it('keeps the text function stable when messages is an inline object', () => {
+  it('keeps the text function stable when messages is an inline object, nested parts included', () => {
     const seen = new Set<unknown>();
     function Probe(): ReactElement {
       const text = useMessage();
       seen.add(text);
-      return <output>{text('checkout')}</output>;
+      return <output>{`${text('checkout')} ${text('cartButtonLabel', { count: 2 })}`}</output>;
     }
     mockStore();
     const client = new QueryClient();
+    // A new object, plural and errorCodes on every render, as an inline prop would be.
     const page = (checkout: string) => (
-      <QueryClientProvider client={client}>
-        <MemoryRouter>
-          <CommerceStorefront locale='fr-FR' messages={{ ...frFR, checkout }}>
-            <Probe />
-          </CommerceStorefront>
-        </MemoryRouter>
-      </QueryClientProvider>
+      <StrictMode>
+        <QueryClientProvider client={client}>
+          <MemoryRouter>
+            <CommerceStorefront
+              locale='fr-FR'
+              messages={{
+                ...frFR,
+                checkout,
+                cartButtonLabel: { one: 'Panier ({count})', other: 'Panier ({count})' },
+                errorCodes: { ...frFR.errorCodes, not_found: 'Introuvable' },
+              }}
+            >
+              <Probe />
+            </CommerceStorefront>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </StrictMode>
     );
     const view = render(page('Commander'));
+    const first: number = seen.size;
     view.rerender(page('Commander'));
-    expect(seen.size).toBe(1);
+    view.rerender(page('Commander'));
+    expect(seen.size).toBe(first);
     view.rerender(page('Payer'));
-    expect(screen.getByText('Payer')).toBeVisible();
-    expect(seen.size).toBe(2);
+    expect(screen.getByText('Payer Panier (2)')).toBeVisible();
+    expect(seen.size).toBe(first + 1);
   });
 
   it('gives custom parts the provider text, and English outside a provider', () => {

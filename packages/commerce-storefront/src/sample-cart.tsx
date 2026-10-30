@@ -2,6 +2,7 @@ import {
   createContext,
   type ReactElement,
   type ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -9,7 +10,12 @@ import {
   useState,
 } from 'react';
 import type { CommerceEvent } from './commerce-provider';
-import { formatMessage, type StorefrontMessageKey, type StorefrontMessages } from './messages';
+import {
+  formatMessage,
+  type MessageValues,
+  type StorefrontMessageKey,
+  type StorefrontMessages,
+} from './messages';
 
 // Deliberately distinct from SKU groups, SKUs and draft orders. Never sent to Commerce.
 export const sampleProducts = Array.from({ length: 6 }, (_, index) => ({
@@ -22,8 +28,11 @@ export type SampleProduct = (typeof sampleProducts)[number];
 /** Sample prices are examples, in this currency whatever the store's. */
 export const sampleCurrency: string = 'USD';
 
-const sampleName = (messages: StorefrontMessages, sample: SampleProduct): string =>
-  formatMessage(messages, 'sampleProductName', { number: sample.number });
+/** A sample's name, such as "Product 1". The card and the cart both name samples with this. */
+export const sampleName = (
+  text: (key: StorefrontMessageKey, values?: MessageValues) => string,
+  sample: SampleProduct,
+): string => text('sampleProductName', { number: sample.number });
 
 interface SampleCartValue {
   items: { key: string; name: string; price: number; quantity: number }[];
@@ -57,6 +66,10 @@ export function SampleCartProvider({
   emit: (event: CommerceEvent) => void;
   children: ReactNode;
 }): ReactElement {
+  const text = useCallback(
+    (key: StorefrontMessageKey, values?: MessageValues): string => formatMessage(messages, key, values),
+    [messages],
+  );
   const session = useMemo(() => ({ enabled }), [enabled]);
   const active = useRef<typeof session | null>(session);
   active.current = session;
@@ -74,10 +87,10 @@ export function SampleCartProvider({
     () =>
       sampleProducts.flatMap((product) =>
         quantities[product.key]
-          ? [{ ...product, name: sampleName(messages, product), quantity: quantities[product.key] }]
+          ? [{ ...product, name: sampleName(text, product), quantity: quantities[product.key] }]
           : [],
       ),
-    [quantities, messages],
+    [quantities, text],
   );
   function update(key: string, quantity?: number): boolean {
     if (!enabled || active.current !== session || !sampleProducts.some((product) => product.key === key))
@@ -99,7 +112,7 @@ export function SampleCartProvider({
         add: (key) => {
           const product = sampleProducts.find((product) => product.key === key);
           if (!product || !update(key)) return false;
-          onAdd(sampleName(messages, product));
+          onAdd(sampleName(text, product));
           return true;
         },
         changeQuantity: async (key, quantity) => {
