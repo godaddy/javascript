@@ -167,20 +167,27 @@ export function formatMessage(
   key: StorefrontMessageKey,
   values: MessageValues = {},
 ): string {
-  const message: StorefrontMessage = messages[key] ?? enUS[key];
-  let text: string;
-  if (typeof message === 'string') text = message;
-  else {
-    const count: string | number | undefined = values.count;
-    const form: Intl.LDMLPluralRule | undefined =
-      typeof count === 'number' ? pluralRules(messages.locale).select(count) : undefined;
-    text = (form && message[form]) || message.other;
-  }
+  // Messages can come from JSON, so a malformed one shows the English text rather than breaking rendering.
+  const text: string =
+    pickText(messages[key], values.count, messages.locale) ??
+    pickText(enUS[key], values.count, enUS.locale) ??
+    key;
   return text.replace(/\{(\w+)\}/g, (placeholder: string, name: string): string => {
     const value: string | number | undefined = values[name];
     if (value === undefined) return placeholder;
     return typeof value === 'number' ? numberFormat(messages.locale).format(value) : value;
   });
+}
+
+function pickText(message: unknown, count: unknown, locale: string): string | undefined {
+  if (typeof message === 'string') return message;
+  if (typeof message !== 'object' || message === null) return undefined;
+  const forms = message as Partial<Record<Intl.LDMLPluralRule, unknown>>;
+  const form: Intl.LDMLPluralRule | undefined =
+    typeof count === 'number' ? pluralRules(locale).select(count) : undefined;
+  const chosen: unknown = form && forms[form];
+  if (typeof chosen === 'string' && chosen) return chosen;
+  return typeof forms.other === 'string' ? forms.other : undefined;
 }
 
 /** Whether the text is English, the language of the server's own error messages. */

@@ -106,9 +106,18 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 }
 
+const currencyFormats = new Map<string, { format: Intl.NumberFormat; scale: number }>();
+
+// Every price on the page formats through here, so formatters are kept per locale and currency.
 function currencyFormat(currency: string, locale: string): { format: Intl.NumberFormat; scale: number } {
-  const format: Intl.NumberFormat = new Intl.NumberFormat(locale, { style: 'currency', currency });
-  return { format, scale: 10 ** (format.resolvedOptions().maximumFractionDigits ?? 2) };
+  const key: string = `${locale}|${currency}`;
+  let cached = currencyFormats.get(key);
+  if (!cached) {
+    const format: Intl.NumberFormat = new Intl.NumberFormat(locale, { style: 'currency', currency });
+    cached = { format, scale: 10 ** (format.resolvedOptions().maximumFractionDigits ?? 2) };
+    currencyFormats.set(key, cached);
+  }
+  return cached;
 }
 
 /** Formats minor units, such as cents, as currency. Inside the provider, prefer `useMoney`, which follows its `locale`. */
@@ -120,6 +129,8 @@ export function money(value: number, currency: string, locale: string = 'en-US')
 /** Formats a range of minor units the way `locale` writes ranges, such as `$20.00 – $25.00` or `20,00–25,00 €`. */
 export function moneyRange(min: number, max: number, currency: string, locale: string = 'en-US'): string {
   const { format, scale } = currencyFormat(currency, locale);
+  // `formatRange` writes an equal range as an approximation, such as `~$20.00`.
+  if (min === max) return format.format(min / scale);
   // Browsers from before 2023 lack `formatRange`, and early versions throw when `min` is above `max`.
   try {
     if (typeof format.formatRange === 'function') return format.formatRange(min / scale, max / scale);
@@ -132,9 +143,12 @@ export function moneyRange(min: number, max: number, currency: string, locale: s
  * show the text for the response's `code`, or a generic message.
  */
 export function describeError(error: unknown, messages: StorefrontMessages): string {
-  const coded: string | undefined =
-    error instanceof ApiError && error.code ? messages.errorCodes[error.code] : undefined;
-  if (coded) return coded;
+  // Own keys only, so a code such as `constructor` cannot match an inherited property.
+  const coded: unknown =
+    error instanceof ApiError && error.code && Object.hasOwn(messages.errorCodes, error.code)
+      ? messages.errorCodes[error.code]
+      : undefined;
+  if (typeof coded === 'string' && coded) return coded;
   const text = error instanceof StorefrontError || error instanceof ApiError ? textOf(error) : undefined;
   if (text) return formatMessage(messages, text.key, text.values);
   if (error instanceof ApiError)

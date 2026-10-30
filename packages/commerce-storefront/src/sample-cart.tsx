@@ -22,7 +22,7 @@ export type SampleProduct = (typeof sampleProducts)[number];
 /** Sample prices are examples, in this currency whatever the store's. */
 export const sampleCurrency: string = 'USD';
 
-export const sampleName = (messages: StorefrontMessages, sample: SampleProduct): string =>
+const sampleName = (messages: StorefrontMessages, sample: SampleProduct): string =>
   formatMessage(messages, 'sampleProductName', { number: sample.number });
 
 interface SampleCartValue {

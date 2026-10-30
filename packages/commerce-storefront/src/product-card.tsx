@@ -25,7 +25,7 @@ import {
 import { saleBadgeClass, secondaryButtonClass } from './class-names';
 import { useCommerce, useMessage, useMoney, useMoneyRange } from './commerce-provider';
 import { type PartLabel, type PartRegistry, partProps, renderLabel, usePartRegistry } from './part';
-import { type SampleProduct, sampleCurrency, sampleName, useSampleCart } from './sample-cart';
+import { type SampleProduct, sampleCurrency, useSampleCart } from './sample-cart';
 import { StorefrontSurface } from './storefront-surface';
 
 export interface ProductImageProps {
@@ -152,7 +152,8 @@ export interface ProductCardRootProps {
 /** Provides one product to card parts. Inside `CatalogProducts` it renders the current catalog entry. */
 export function ProductCardRoot({ children, product, className }: ProductCardRootProps): ReactElement {
   const catalogItem = useContext(CatalogItemContext);
-  const { config, messages } = useCommerce();
+  const { config } = useCommerce();
+  const text = useMessage();
   // The image link starts hidden, so server HTML and the first render have one product link per card. A card
   // with no title link exposes it once mounted. Parent effects run after child effects, so titles have registered.
   const [imageLinked, setImageLinked] = useState<boolean>(false);
@@ -164,9 +165,10 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
   }, [has]);
   const value = useMemo((): ProductCardInternal | null => {
     const item: ProductCardItem | null = catalogItem ?? (product ? { source: 'live', product } : null);
-    const sampleText: string = item?.source === 'sample' ? sampleName(messages, item.sample) : '';
+    const sampleText: string =
+      item?.source === 'sample' ? text('sampleProductName', { number: item.sample.number }) : '';
     return item && cardValue(item, config.productPath, { imageLinked, register }, sampleText);
-  }, [catalogItem, product, config.productPath, imageLinked, register, messages]);
+  }, [catalogItem, product, config.productPath, imageLinked, register, text]);
   if (catalogItem && product)
     throw new Error(
       'Inside <CatalogProducts>, ProductCardRoot shows each catalog product. Remove its product prop.',
@@ -416,9 +418,8 @@ function SampleAction({
   label: ProductCardActionProps['children'];
 }): ReactElement {
   const { add } = useSampleCart();
-  const { messages } = useCommerce();
   const text = useMessage();
-  const name: string = sampleName(messages, sample);
+  const name: string = text('sampleProductName', { number: sample.number });
   const custom: ReactNode = renderLabel(label, { action: 'add', busy: false, soldOut: false }, null);
   // A host label stays the start of the accessible name, so it is not replaced by an `aria-label`.
   return custom === null ? (

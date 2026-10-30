@@ -230,6 +230,22 @@ const STOP_POLLING_AT_MS = 30 * 60_000;
 /** A failed retry keeps showing connecting this long so the click visibly does something. */
 const RETRY_FEEDBACK_MS = 1_000;
 
+/** `value` while its own keys and values are unchanged, so an inline object literal does not change every render. */
+function useShallowStable<T extends object>(value: T | undefined): T | undefined {
+  const stable = useRef<T | undefined>(value);
+  if (!shallowEqual(stable.current, value)) stable.current = value;
+  return stable.current;
+}
+
+function shallowEqual(a: object | undefined, b: object | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const left = a as Record<string, unknown>;
+  const right = b as Record<string, unknown>;
+  const keys: string[] = Object.keys(left);
+  return keys.length === Object.keys(right).length && keys.every((key) => Object.is(left[key], right[key]));
+}
+
 /** `locale` as a canonical tag, or `en-US` when it is not a valid one, so one bad prop cannot break every price. */
 function resolveLocale(locale: string | undefined): string {
   if (!locale) return 'en-US';
@@ -291,15 +307,18 @@ export function CommerceProvider({
   onEvent,
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
+  // Keyed on the override's contents, so an inline `messages={{ ...frFR, checkout: 'Commander' }}` keeps the text,
+  // and everything memoized on it, stable across renders.
+  const stableMessages: Partial<StorefrontMessages> | undefined = useShallowStable(messages);
   const resolvedMessages: StorefrontMessages = useMemo(
     () => ({
       ...enUS,
-      ...messages,
+      ...stableMessages,
       // JSON can carry `locale: null`, which would otherwise hide English server messages.
-      locale: messages?.locale || enUS.locale,
-      errorCodes: { ...enUS.errorCodes, ...messages?.errorCodes },
+      locale: stableMessages?.locale || enUS.locale,
+      errorCodes: { ...enUS.errorCodes, ...stableMessages?.errorCodes },
     }),
-    [messages],
+    [stableMessages],
   );
   // Polling is timed from load, and a retry or a change in the reported state starts it over.
   const [pollingSince, setPollingSince] = useState(Date.now);
@@ -431,8 +450,11 @@ function BoundCommerceProvider({
   const [open, setOpen] = useState<boolean>(false);
   const [pending, setPending] = useState<boolean>(false);
   const [hydrating, setHydrating] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  // The failure and warning are kept untranslated and described on render, so they follow a change of `messages`.
+  const [failure, setError] = useState<{ cause: unknown } | null>(null);
+  const [storageUnavailable, setStorageUnavailable] = useState<boolean>(false);
+  const error: string | null = failure && describeError(failure.cause, messages);
+  const storageWarning: string | null = storageUnavailable ? text('storageUnavailable') : null;
   const [announcement, setAnnouncement] = useState<string>('');
   const id = useRef<string | null>(null);
   const currentCart = useRef<CartOrder | null>(null);
@@ -489,7 +511,7 @@ function BoundCommerceProvider({
     try {
       return cartIdStorage.read();
     } catch {
-      setStorageWarning(text('storageUnavailable'));
+      setStorageUnavailable(true);
       return id.current;
     }
   }
@@ -501,9 +523,9 @@ function BoundCommerceProvider({
     setCart(next);
     try {
       cartIdStorage.write(id.current);
-      setStorageWarning(null);
+      setStorageUnavailable(false);
     } catch {
-      setStorageWarning(text('storageUnavailable'));
+      setStorageUnavailable(true);
     }
   }
 
@@ -549,7 +571,7 @@ function BoundCommerceProvider({
       } catch (cause: unknown) {
         if (isActive()) {
           const shown: string = describeError(cause, messages);
-          setError(shown);
+          setError({ cause });
           const code: string | undefined = cause instanceof ApiError ? cause.code : undefined;
           emit({ type: 'error', operation: kind, message: shown, ...(code ? { code } : {}) });
         }
@@ -579,7 +601,7 @@ function BoundCommerceProvider({
     setCart(null);
     setOpen(false);
     setError(null);
-    setStorageWarning(null);
+    setStorageUnavailable(false);
     setAnnouncement('');
     setPending(false);
     setHydrating(ready);

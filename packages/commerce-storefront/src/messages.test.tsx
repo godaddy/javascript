@@ -4,14 +4,20 @@ import userEvent from '@testing-library/user-event';
 import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import { ApiError, describeError, moneyRange } from './api';
+import { ApiError, describeError, money, moneyRange } from './api';
 import { CartButton } from './cart';
 import { Catalog, CatalogHeader, CatalogRoot } from './catalog';
 import type { SKU, SKUGroup } from './catalog-model';
 import { type CommerceProviderProps, useMessage } from './commerce-provider';
 import { CommerceStorefront } from './commerce-storefront';
 import { frFR } from './locales/fr-fr';
-import { enUS, formatMessage, StorefrontError, type StorefrontMessageKey } from './messages';
+import {
+  enUS,
+  formatMessage,
+  StorefrontError,
+  type StorefrontMessageKey,
+  type StorefrontMessages,
+} from './messages';
 import { ProductDetails } from './product-details';
 
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
@@ -107,6 +113,18 @@ describe('formatMessage', () => {
     );
   });
 
+  it('shows English for a malformed message instead of throwing', () => {
+    // As if loaded from JSON: a plural with no `other`, and a number in place of text.
+    const broken = {
+      ...frFR,
+      productCount: { one: '{count} produit' },
+      sale: 1,
+    } as unknown as StorefrontMessages;
+    expect(formatMessage(broken, 'productCount', { count: 1 })).toBe('1 produit');
+    expect(formatMessage(broken, 'productCount', { count: 3 })).toBe('Showing 3 products');
+    expect(formatMessage(broken, 'sale')).toBe('Sale');
+  });
+
   it('ships French for every English key', () => {
     const keys = Object.keys(enUS) as StorefrontMessageKey[];
     expect(Object.keys(frFR).sort()).toEqual(keys.sort());
@@ -142,6 +160,12 @@ describe('describeError', () => {
     expect(describeError(coded, frFR)).toBe(frFR.errorCodes.scope_mismatch);
   });
 
+  it('ignores codes that name inherited properties', () => {
+    const inherited = new ApiError('Upstream text', 500, { code: 'constructor' });
+    expect(describeError(inherited, enUS)).toBe('Upstream text');
+    expect(describeError(inherited, frFR)).toBe(formatMessage(frFR, 'requestFailed'));
+  });
+
   it('lets a site translate a code in English too', () => {
     const coded = new ApiError('Not found', 404, { code: 'not_found' });
     expect(describeError(coded, { ...enUS, errorCodes: { not_found: 'Gone.' } })).toBe('Gone.');
@@ -149,6 +173,11 @@ describe('describeError', () => {
 });
 
 describe('moneyRange', () => {
+  it('writes an equal range as one exact price', () => {
+    expect(moneyRange(2000, 2000, 'USD')).toBe(money(2000, 'USD'));
+    expect(moneyRange(2000, 2000, 'EUR', 'fr-FR')).toBe(money(2000, 'EUR', 'fr-FR'));
+  });
+
   it('joins the two prices when formatRange throws', () => {
     const formatRange = vi.spyOn(Intl.NumberFormat.prototype, 'formatRange').mockImplementation(() => {
       throw new RangeError('start is greater than end');
@@ -179,6 +208,18 @@ describe('messages prop', () => {
     mount(<Catalog />, { locale: 'fr-FR' });
     expect(await screen.findByText('Showing 2 products')).toBeVisible();
     expect(screen.getByText(/^12,50\s€$/)).toBeVisible();
+  });
+
+  it('keeps a null title and description, so a site can leave them out', async () => {
+    mockStore();
+    mount(
+      <CatalogRoot>
+        <CatalogHeader title={null as unknown as string} description={null as unknown as string} />
+      </CatalogRoot>,
+    );
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading).toBeEmptyDOMElement();
+    expect(screen.queryByText(enUS.catalogDescription as string)).not.toBeInTheDocument();
   });
 
   it('fills keys a site leaves out with English, and props still win', async () => {
@@ -242,6 +283,32 @@ describe('messages prop', () => {
     expect(document.querySelector('.commerce-sr-only[aria-live]')?.textContent).toBe(
       "Article ajouté à votre panier d'exemple\u00a0: Produit 1.",
     );
+  });
+
+  it('keeps the text function stable when messages is an inline object', () => {
+    const seen = new Set<unknown>();
+    function Probe(): ReactElement {
+      const text = useMessage();
+      seen.add(text);
+      return <output>{text('checkout')}</output>;
+    }
+    mockStore();
+    const client = new QueryClient();
+    const page = (checkout: string) => (
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <CommerceStorefront locale='fr-FR' messages={{ ...frFR, checkout }}>
+            <Probe />
+          </CommerceStorefront>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const view = render(page('Commander'));
+    view.rerender(page('Commander'));
+    expect(seen.size).toBe(1);
+    view.rerender(page('Payer'));
+    expect(screen.getByText('Payer')).toBeVisible();
+    expect(seen.size).toBe(2);
   });
 
   it('gives custom parts the provider text, and English outside a provider', () => {

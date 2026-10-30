@@ -182,10 +182,10 @@ export function CatalogHeader({ title, description, className }: CatalogHeaderPr
   return (
     <header {...partProps('catalog-header', className)}>
       <h1 className='max-w-3xl text-balance text-3xl font-semibold leading-tight tracking-tight'>
-        {title ?? text('catalogTitle')}
+        {title === undefined ? text('catalogTitle') : title}
       </h1>
       <p className='mt-1 max-w-xl text-base leading-7 text-commerce-muted'>
-        {description ?? text('catalogDescription')}
+        {description === undefined ? text('catalogDescription') : description}
       </p>
     </header>
   );

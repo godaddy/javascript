@@ -74,7 +74,7 @@ export function RelatedProducts({
     <StorefrontSurface>
       <section aria-labelledby={headingId} {...partProps('related-products', className)}>
         <h2 id={headingId} className='mb-6 text-xl font-semibold tracking-tight'>
-          {title ?? text('relatedTitle')}
+          {title === undefined ? text('relatedTitle') : title}
         </h2>
         <div className={catalogGridClass}>
           {related.map((product) => (

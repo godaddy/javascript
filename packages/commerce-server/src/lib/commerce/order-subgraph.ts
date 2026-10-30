@@ -393,13 +393,9 @@ export async function addToCart(
   return res.json() as Promise<{ cart: CartOrder | null }>;
 }
 
-/** The cart's totals in minor units. `currencyCode` is the cart's, or `fallbackCurrency`, such as the store's. */
-export function getCartSummaryTotals(
-  order: CartOrder | null | undefined,
-  fallbackCurrency: string = 'USD',
-): CartSummaryTotals {
+export function getCartSummaryTotals(order: CartOrder | null | undefined): CartSummaryTotals {
   const lineItems = order?.lineItems ?? [];
-  const currencyCode = order?.totals?.total?.currencyCode || fallbackCurrency;
+  const currencyCode = order?.totals?.total?.currencyCode || 'USD';
 
   return {
     itemCount: lineItems.reduce((sum, item) => sum + (item.quantity || 0), 0),
