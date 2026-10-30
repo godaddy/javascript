@@ -12,7 +12,7 @@ import {
 import { Link } from 'react-router';
 import { type CartItemState, type CartState, useCart } from './cart-state';
 import { buttonClass, errorActionClass, errorNoticeClass, secondaryButtonClass } from './class-names';
-import { CartDrawerRegistry, useCommerce, useMoney } from './commerce-provider';
+import { CartDrawerRegistry, useCommerce, useMessage, useMoney } from './commerce-provider';
 import {
   hasChildren,
   type PartLabel,
@@ -21,7 +21,7 @@ import {
   renderLabel,
   usePartRegistry,
 } from './part';
-import { useSampleCart } from './sample-cart';
+import { sampleCurrency, useSampleCart } from './sample-cart';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 /** Props shared by every cart part. `className` is added to the part's outer element. */
@@ -200,6 +200,7 @@ export function CartDrawerRoot({ children, className }: CartDrawerRootProps): Re
 export function CartTitle({ className, children }: CartTextPartProps): ReactElement {
   const { isSample, itemCount } = useCartInternal('CartTitle');
   const Heading = useContext(CartDrawerContext) ? Dialog.Title : 'h2';
+  const text = useMessage();
   return (
     <div {...partProps('cart-title', className)}>
       <Heading className='text-lg font-semibold tracking-tight'>
@@ -207,7 +208,7 @@ export function CartTitle({ className, children }: CartTextPartProps): ReactElem
           children,
           { isSample },
           <>
-            {isSample ? 'Sample cart' : 'Your cart'}
+            {text(isSample ? 'sampleCartTitle' : 'cartTitle')}
             {itemCount > 0 && <span className='font-normal text-commerce-muted'> ({itemCount})</span>}
           </>,
         )}
@@ -222,12 +223,11 @@ export function CartDescription({ className, children }: CartTextPartProps): Rea
   const drawer = useContext(CartDrawerContext);
   const register = drawer?.register;
   useEffect(() => register?.('description'), [register]);
+  const message = useMessage();
   const text: ReactNode = renderLabel(
     children,
     { isSample },
-    isSample
-      ? 'Example products and prices in USD. Nothing can be purchased.'
-      : 'Review your items before checkout.',
+    isSample ? message('sampleCartDescription', { currency: sampleCurrency }) : message('cartDescription'),
   );
   return (
     <div {...partProps('cart-description', className)}>
@@ -243,12 +243,13 @@ export function CartDescription({ className, children }: CartTextPartProps): Rea
 /** The drawer's close button. Renders nothing outside the drawer. */
 export function CartClose({ className }: CartPartProps): ReactElement | null {
   useCartInternal('CartClose');
+  const text = useMessage();
   if (!useContext(CartDrawerContext)) return null;
   return (
     <div {...partProps('cart-close', className)}>
       <Dialog.Close
         className='inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-commerce-muted transition-colors hover:bg-commerce-tint hover:text-inherit focus-visible:outline focus-visible:outline-2 focus-visible:outline-current'
-        aria-label='Close cart'
+        aria-label={text('closeCart')}
       >
         <svg aria-hidden='true' viewBox='0 0 20 20' className='h-5 w-5'>
           <path
@@ -267,6 +268,7 @@ export function CartClose({ className }: CartPartProps): ReactElement | null {
 /** A storage warning, and a cart error with a refresh button. Renders nothing when there are neither. */
 export function CartNotices({ className }: CartPartProps): ReactElement | null {
   const { storageWarning, error, action, locked, run, refresh } = useCartInternal('CartNotices');
+  const text = useMessage();
   if (!storageWarning && !error) return null;
   // The gap is on an inner element, so host layout classes on the part still apply. (`space-y-*` would lose to the
   // reset's paragraph margin.)
@@ -289,7 +291,7 @@ export function CartNotices({ className }: CartPartProps): ReactElement | null {
               aria-busy={action === 'refresh'}
               onClick={() => run('refresh', refresh)}
             >
-              Refresh cart
+              {text('refreshCart')}
             </button>
           </div>
         )}
@@ -324,6 +326,7 @@ export interface CartItemsProps extends CartPartProps {
  */
 export function CartItems({ className, children }: CartItemsProps): ReactElement {
   const { items, hydrating } = useCartInternal('CartItems');
+  const text = useMessage();
   // `{custom && <CartItemRoot>…}` with `custom` false still gets an item, not an empty slot per line.
   const template: ReactNode = hasChildren(children) ? children : packagedItem;
   const registry = usePartRegistry();
@@ -340,7 +343,7 @@ export function CartItems({ className, children }: CartItemsProps): ReactElement
     <CartItemsRegistry.Provider value={registry.register}>
       {hydrating && (
         <p role='status' className='py-4 text-sm text-commerce-muted'>
-          Loading your cart…
+          {text('loadingCart')}
         </p>
       )}
       {/* A `<ul>` needs a package margin and padding reset, which would beat host classes here. */}
@@ -401,6 +404,7 @@ export function CartItemName({ className }: CartPartProps): ReactElement {
 /** The selected options on one line, such as "Color: Blue · Size: M". Renders nothing without options. */
 export function CartItemOptions({ className }: CartPartProps): ReactElement | null {
   const { options } = useCartItemInternal('CartItemOptions');
+  const text = useMessage();
   if (!options.length) return null;
   return (
     <div {...partProps('cart-item-options', className)}>
@@ -408,7 +412,7 @@ export function CartItemOptions({ className }: CartPartProps): ReactElement | nu
         {options.map((option, index) => (
           <span key={`${option.attribute}:${option.values.join(',')}`}>
             {index > 0 && ' · '}
-            {option.attribute}: {option.values.join(', ')}
+            {text('itemOption', { attribute: option.attribute, values: option.values.join(', ') })}
           </span>
         ))}
       </p>
@@ -420,10 +424,11 @@ export function CartItemOptions({ className }: CartPartProps): ReactElement | nu
 export function CartItemPrice({ className }: CartPartProps): ReactElement {
   const { subtotal, currency } = useCartItemInternal('CartItemPrice');
   const money = useMoney();
+  const text = useMessage();
   return (
     <div {...partProps('cart-item-price', className)}>
       <p className='text-sm leading-6 tabular-nums'>
-        {subtotal === null ? 'Price unavailable' : money(subtotal, currency)}
+        {subtotal === null ? text('priceUnavailable') : money(subtotal, currency)}
       </p>
     </div>
   );
@@ -451,13 +456,14 @@ function StepperIcon({ plus }: { plus?: boolean }): ReactElement {
 export function CartItemQuantity({ className }: CartPartProps): ReactElement {
   const { id, name, quantity } = useCartItemInternal('CartItemQuantity');
   const { action, locked, run, changeQuantity } = useCartInternal('CartItemQuantity');
+  const text = useMessage();
   return (
     <div {...partProps('cart-item-quantity', className)}>
       <div className='inline-flex items-center rounded-lg border border-commerce-edge'>
         <button
           type='button'
           className={stepperButtonClass}
-          aria-label={`Decrease quantity of ${name}`}
+          aria-label={text('decreaseQuantity', { name })}
           data-commerce-control='decrease'
           disabled={action === `decrease:${id}` || !id || quantity <= 1}
           aria-disabled={locked || !id || quantity <= 1}
@@ -467,13 +473,13 @@ export function CartItemQuantity({ className }: CartPartProps): ReactElement {
           <StepperIcon />
         </button>
         <span className='min-w-8 text-center text-sm tabular-nums'>
-          <span className='sr-only'>Quantity: </span>
+          <span className='sr-only'>{text('quantityPrefix')}</span>
           {quantity}
         </span>
         <button
           type='button'
           className={stepperButtonClass}
-          aria-label={`Increase quantity of ${name}`}
+          aria-label={text('increaseQuantity', { name })}
           data-commerce-control='increase'
           disabled={action === `increase:${id}` || !id}
           aria-disabled={locked || !id}
@@ -491,6 +497,7 @@ export function CartItemQuantity({ className }: CartPartProps): ReactElement {
 export function CartItemRemove({ className, children }: CartActionPartProps): ReactElement {
   const { id, name } = useCartItemInternal('CartItemRemove');
   const { action, locked, run, removeItem } = useCartInternal('CartItemRemove');
+  const text = useMessage();
   return (
     <div {...partProps('cart-item-remove', className)}>
       <button
@@ -502,7 +509,7 @@ export function CartItemRemove({ className, children }: CartActionPartProps): Re
         onClick={() => run(`remove:${id}`, () => removeItem(id))}
       >
         {/* The name is visible text plus hidden text, not an `aria-label`, so it always starts with the label shown. */}
-        {renderLabel(children, { busy: action === `remove:${id}` }, 'Remove')}
+        {renderLabel(children, { busy: action === `remove:${id}` }, text('remove'))}
         <span className='sr-only'> {name}</span>
       </button>
     </div>
@@ -536,6 +543,7 @@ export interface CartEmptyProps extends CartPartProps {
 /** Renders only when the cart is empty: a message and a link to the catalog, or its children. */
 export function CartEmpty({ className, children }: CartEmptyProps): ReactElement | null {
   const { items, hydrating, isSample, catalogPath, close } = useCartInternal('CartEmpty');
+  const text = useMessage();
   if (hydrating || items.length) return null;
   return (
     <div {...partProps('cart-empty', className)}>
@@ -555,14 +563,12 @@ export function CartEmpty({ className, children }: CartEmptyProps): ReactElement
               />
             </svg>
           </div>
-          <p className='text-base font-semibold'>Your cart is empty</p>
+          <p className='text-base font-semibold'>{text('cartEmpty')}</p>
           <p className='mt-1 text-sm text-commerce-muted'>
-            {isSample
-              ? 'Add a sample product to try the cart.'
-              : 'Add something you love and it will show up here.'}
+            {text(isSample ? 'sampleCartEmptyHint' : 'cartEmptyHint')}
           </p>
           <Link className={`${secondaryButtonClass} mt-6`} to={catalogPath} onClick={close}>
-            Browse products
+            {text('browseProducts')}
           </Link>
         </>
       )}
@@ -585,12 +591,13 @@ export function CartSummary({ className, children }: CartSummaryProps): ReactEle
 export function CartSubtotal({ className }: CartPartProps): ReactElement | null {
   const { items, subtotal, currency, isSample } = useCartInternal('CartSubtotal');
   const money = useMoney();
+  const text = useMessage();
   if (!items.length || subtotal === null) return null;
   return (
     <div {...partProps('cart-subtotal', className)}>
       <dl>
         <div className='flex justify-between gap-4 font-semibold'>
-          <dt>{isSample ? 'Sample subtotal' : 'Subtotal'}</dt>
+          <dt>{text(isSample ? 'sampleSubtotal' : 'subtotal')}</dt>
           <dd className='tabular-nums'>{money(subtotal, currency)}</dd>
         </div>
       </dl>
@@ -604,13 +611,14 @@ export function CartSubtotal({ className }: CartPartProps): ReactElement | null 
  */
 export function CartCheckoutNote({ className }: CartPartProps): ReactElement | null {
   const { items, isSample } = useCartInternal('CartCheckoutNote');
+  const text = useMessage();
   if (isSample || !items.length) return null;
   // The stable class is on the outer element, so hiding it also removes the host's spacing.
   return (
     <div {...partProps('cart-checkout-note', 'commerce-cart-checkout-adjustments-note', className)}>
       <dl className='flex justify-between gap-4 text-sm text-commerce-muted'>
-        <dt>Shipping, taxes &amp; discounts</dt>
-        <dd>Calculated at checkout</dd>
+        <dt>{text('checkoutAdjustments')}</dt>
+        <dd>{text('checkoutAdjustmentsValue')}</dd>
       </dl>
     </div>
   );
@@ -623,14 +631,17 @@ export function CartCheckoutNote({ className }: CartPartProps): ReactElement | n
 export function CartCheckout({ className, children }: CartActionPartProps): ReactElement | null {
   const { items, isSample, checkoutEnabled, checkoutReady, hydrating, action, locked, run, checkout } =
     useCartInternal('CartCheckout');
+  const text = useMessage();
   if (!items.length) return null;
   let content: ReactElement;
   if (isSample)
     content = (
-      <p className='text-sm text-commerce-muted'>Example total in USD. Checkout is not set up yet.</p>
+      <p className='text-sm text-commerce-muted'>
+        {text('sampleCheckoutNote', { currency: sampleCurrency })}
+      </p>
     );
   else if (!checkoutEnabled)
-    content = <p className='text-sm text-commerce-muted'>Checkout is not available yet.</p>;
+    content = <p className='text-sm text-commerce-muted'>{text('checkoutUnavailable')}</p>;
   else
     content = (
       <button
@@ -644,7 +655,7 @@ export function CartCheckout({ className, children }: CartActionPartProps): Reac
         {renderLabel(
           children,
           { busy: action === 'checkout' },
-          action === 'checkout' ? 'Opening checkout…' : 'Proceed to checkout',
+          text(action === 'checkout' ? 'openingCheckout' : 'checkout'),
         )}
       </button>
     );
@@ -658,8 +669,9 @@ export function CartCheckout({ className, children }: CartActionPartProps): Reac
 export function CartContinueShopping({ className, children }: CartTextPartProps): ReactElement | null {
   const { items, isSample, catalogPath } = useCartInternal('CartContinueShopping');
   const inDrawer: boolean = !!useContext(CartDrawerContext);
+  const text = useMessage();
   if (!items.length) return null;
-  const label: ReactNode = renderLabel(children, { isSample }, 'Continue shopping');
+  const label: ReactNode = renderLabel(children, { isSample }, text('continueShopping'));
   const linkClass: string =
     'inline-flex min-h-11 w-full items-center justify-center rounded-lg px-5 py-2 text-sm font-medium transition-colors hover:bg-commerce-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current';
   return (

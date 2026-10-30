@@ -1,3 +1,13 @@
+import {
+  enUS,
+  formatMessage,
+  isEnglish,
+  type MessageValues,
+  StorefrontError,
+  type StorefrontMessageKey,
+  type StorefrontMessages,
+} from './messages';
+
 export interface StorefrontConfig {
   cartScope: string;
   currencyCode: string;
@@ -27,12 +37,19 @@ export class CartIdStorage {
 }
 
 export class ApiError extends Error {
+  /** The failure response's `code`, such as `not_found`, when the server sent one. */
+  public readonly code: string | undefined;
+  /** Package text to show in place of `message`, for failures the package describes itself. */
+  public readonly text: { key: StorefrontMessageKey; values?: MessageValues } | undefined;
+
   constructor(
     message: string,
     public readonly status: number,
-    options?: ErrorOptions,
+    options?: ErrorOptions & { code?: string; text?: { key: StorefrontMessageKey; values?: MessageValues } },
   ) {
     super(message, options);
+    this.code = options?.code;
+    this.text = options?.text;
   }
 }
 
@@ -47,16 +64,17 @@ export const checkedFetch: typeof globalThis.fetch = async (
       try {
         return JSON.parse(data) as unknown;
       } catch (cause: unknown) {
-        throw new ApiError(`Commerce request failed (${response.status}). Please retry.`, response.status, {
-          cause,
-        });
+        const text = { key: 'requestFailedStatus', values: { status: response.status } } as const;
+        throw new ApiError(formatMessage(enUS, text.key, text.values), response.status, { cause, text });
       }
     })();
-    const detail: string =
-      typeof parsed === 'object' && parsed !== null && 'error' in parsed && typeof parsed.error === 'string'
-        ? parsed.error
-        : 'Commerce request failed. Please retry.';
-    throw new ApiError(detail, response.status);
+    const body: Record<string, unknown> = typeof parsed === 'object' && parsed !== null ? { ...parsed } : {};
+    const code: string | undefined = typeof body.code === 'string' ? body.code : undefined;
+    if (typeof body.error === 'string') throw new ApiError(body.error, response.status, { code });
+    throw new ApiError(formatMessage(enUS, 'requestFailed'), response.status, {
+      code,
+      text: { key: 'requestFailed' },
+    });
   }
   return response;
 };
@@ -79,24 +97,72 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return (await response.json()) as T;
   } catch (cause: unknown) {
     if (timeout?.aborted && !init?.signal?.aborted) {
-      throw new ApiError('Commerce information took too long to load. Please retry.', 408, {
+      throw new ApiError(formatMessage(enUS, 'requestTimeout'), 408, {
         cause,
+        text: { key: 'requestTimeout' },
       });
     }
     throw cause;
   }
 }
 
-/** Formats minor units, such as cents, as currency. Inside the provider, prefer `useMoney`, which follows its `locale`. */
-export function money(value: number, currency: string, locale: string = 'en-US'): string {
-  const formatter: Intl.NumberFormat = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-  });
-  const digits: number = formatter.resolvedOptions().maximumFractionDigits ?? 2;
-  return formatter.format(value / 10 ** digits);
+const currencyFormats = new Map<string, { format: Intl.NumberFormat; scale: number }>();
+/** A page uses a few pairs; the limit bounds a long-running server rendering many locales and currencies. */
+const maxCurrencyFormats: number = 64;
+
+// Every price on the page formats through here, so formatters are kept per locale and currency.
+function currencyFormat(currency: string, locale: string): { format: Intl.NumberFormat; scale: number } {
+  const key: string = `${locale}|${currency}`;
+  let cached = currencyFormats.get(key);
+  if (!cached) {
+    const format: Intl.NumberFormat = new Intl.NumberFormat(locale, { style: 'currency', currency });
+    cached = { format, scale: 10 ** (format.resolvedOptions().maximumFractionDigits ?? 2) };
+    // Maps keep insertion order, so the first key is the oldest.
+    if (currencyFormats.size >= maxCurrencyFormats)
+      currencyFormats.delete(currencyFormats.keys().next().value ?? '');
+    currencyFormats.set(key, cached);
+  }
+  return cached;
 }
 
-export function message(error: unknown): string {
-  return error instanceof Error ? error.message : 'Something went wrong. Please retry.';
+/** Formats minor units, such as cents, as currency. Inside the provider, prefer `useMoney`, which follows its `locale`. */
+export function money(value: number, currency: string, locale: string = 'en-US'): string {
+  const { format, scale } = currencyFormat(currency, locale);
+  return format.format(value / scale);
 }
+
+/** Formats a range of minor units the way `locale` writes ranges, such as `$20.00 – $25.00` or `20,00–25,00 €`. */
+export function moneyRange(min: number, max: number, currency: string, locale: string = 'en-US'): string {
+  const { format, scale } = currencyFormat(currency, locale);
+  // `formatRange` writes an equal range as an approximation, such as `~$20.00`.
+  if (min === max) return format.format(min / scale);
+  // Browsers from before 2023 lack `formatRange`, and early versions throw when `min` is above `max`.
+  try {
+    if (typeof format.formatRange === 'function') return format.formatRange(min / scale, max / scale);
+  } catch {}
+  return `${format.format(min / scale)} – ${format.format(max / scale)}`;
+}
+
+/**
+ * The text to show for a failure, in the language of `messages`. Server messages are English, so other languages
+ * show the text for the response's `code`, or a generic message.
+ */
+export function describeError(error: unknown, messages: StorefrontMessages): string {
+  // Own keys only, so a code such as `constructor` cannot match an inherited property. Messages from JSON may have no
+  // `errorCodes` at all.
+  const codes: StorefrontMessages['errorCodes'] | undefined = messages.errorCodes;
+  const coded: unknown =
+    error instanceof ApiError && error.code && codes && Object.hasOwn(codes, error.code)
+      ? codes[error.code]
+      : undefined;
+  if (typeof coded === 'string' && coded) return coded;
+  const text = error instanceof StorefrontError || error instanceof ApiError ? textOf(error) : undefined;
+  if (text) return formatMessage(messages, text.key, text.values);
+  if (error instanceof ApiError)
+    return isEnglish(messages) ? error.message : formatMessage(messages, 'requestFailed');
+  if (error instanceof Error && isEnglish(messages)) return error.message;
+  return formatMessage(messages, 'unknownError');
+}
+
+const textOf = (error: StorefrontError | ApiError): ApiError['text'] =>
+  error instanceof StorefrontError ? { key: error.key, values: error.values } : error.text;

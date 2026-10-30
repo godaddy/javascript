@@ -20,8 +20,20 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./messages/fr-FR": {
+      "types": "./dist/messages/fr-FR.d.ts",
+      "import": "./dist/messages/fr-FR.js",
+      "default": "./dist/messages/fr-FR.js"
+    },
     "./styles.css": "./dist/styles.css",
     "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "messages/fr-FR": [
+        "./dist/messages/fr-FR.d.ts"
+      ]
+    }
   },
   "scripts": {
     "build": "tsdown && node scripts/build-css.mjs",

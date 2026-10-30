@@ -57,6 +57,7 @@ Use the providers your application already has; do not create another router or 
 | `onItemAdded` | unset | Called with `{ name, quantity, isSample }` after each add, live or sample; use it to confirm adds on a site with a cart page instead of a drawer |
 | `onEvent` | unset | Called with a [`CommerceEvent`](#events) for every cart change and failure, such as for analytics |
 | `locale` | `en-US` | BCP 47 locale for formatting prices, such as `de-DE`; an invalid tag falls back to `en-US` with a development warning. It never selects UI text |
+| `messages` | English | The package's text, such as `frFR`. Keys left out stay English. See [translations](#translations) |
 | `theme` | inherited text and transparent wrappers; neutral control palette | CSS custom properties applied to storefront surfaces and the portalled drawer |
 | `getSwatch` | unset | Swatches for attribute values, such as colors. Returns a CSS `background` for a value, or nothing. See [swatches](#swatches) |
 
@@ -92,7 +93,7 @@ The stylesheet includes all required utilities and scopes them to the package's 
 
 By default, `.commerce-storefront` wrappers do not paint a background and inherit the host's text color. Set page and section backgrounds on the host application's layout elements. Muted text, hairlines, image placeholders and the quieter outlined buttons (cart button, product card actions, pagination) derive from the inherited text color, so they read on a light or dark page without configuration. `--commerce-surface` colors form inputs and the opaque cart drawer, paired with `--commerce-text`; it does not color component wrappers. Error and warning messages bring their own light background. The Sale badge fills with `--commerce-sale` behind `--commerce-on-sale` text, so it reads over an image and on any page; sale prices keep the surrounding text color, with the compare-at price struck through beside them. Images have square corners; `--commerce-radius` rounds buttons, inputs and option buttons. Primary buttons use `--commerce-accent` and are ringed in it on focus, so choose an accent that contrasts with the page. Set `--commerce-surface` and `--commerce-text` together to adapt controls and the drawer to a dark theme. Avoid setting wrapper backgrounds through CSS or the `theme` prop's `background`, `backgroundColor`, or `backgroundImage` properties, which can still override the transparent default. Descendants inherit the surface text and body font instead of global heading styles. Keep text, controls and focus indicators accessible when changing colors. Internal utility class names and markup are not a customization API; use the [product](#custom-product-layouts), [catalog](#custom-catalog-layouts) and [cart](#custom-cart-layouts) parts to change a layout, and the [styling hooks](#styling-hooks) to style inside a part.
 
-Prices follow the provider's `locale`, which defaults to `en-US`. UI text is English. The catalog title and description are configurable through `CatalogHeader`, and many parts take [replacement text](#replacing-text). Full localization is outside this initial API. When it arrives, translated text will be a separate prop that a site opts into; `locale` will keep formatting only, so a site that sets it for prices never gets new wording in a minor release. Replacement text will still take priority over translations.
+Prices follow the provider's `locale`, which defaults to `en-US`. UI text is English unless the site sets [`messages`](#translations).
 
 ## Compatibility
 
@@ -117,7 +118,8 @@ The repository example uses React Router 7. Follow each router version's own Rea
 | `AddToCartButton` | Adds a verified `sku`, `name`, and optional integer `quantity`; while disabled, its accessible description says why. Its children replace the label |
 | `CommerceStatus` | Connection progress/error/retry for custom layouts |
 | `useCommerce` | Cart, connection, pending/error state and serialized cart actions |
-| `useMoney` | Formats minor units in the provider's `locale`, like the package's own prices, for custom parts |
+| `useMoney` | Formats minor units in the provider's `locale`, like the package's own prices, for custom parts. `useMoneyRange` formats a range |
+| `useMessage` | The provider's [text](#translations) by key, for custom parts |
 | `ProductImage` | A product image with the package's placeholder for a missing or broken image, for custom parts |
 | `CommerceProvider` | Lower-level composition when the recommended wrapper does not fit, such as a custom drawer; mount it once |
 
@@ -433,7 +435,30 @@ Parts whose wording a site often changes take replacement content as children. T
 | `ProductCardAction` | `{ action, busy, soldOut }` |
 | `ProductDetailsBackLink` | Content only |
 
-A replaced label stays the start of the control's accessible name, so voice control users can say what they see. Where the package adds the product name for screen readers, it follows as visually hidden text: `<CartItemRemove>Delete</CartItemRemove>` is named "Delete Mug". Controls without replacement text, such as "Increase quantity of Mug", keep English names.
+A replaced label stays the start of the control's accessible name, so voice control users can say what they see. Where the package adds the product name for screen readers, it follows as visually hidden text: `<CartItemRemove>Delete</CartItemRemove>` is named "Delete Mug". Controls without replacement text, such as "Increase quantity of Mug", take their names from [`messages`](#translations).
+
+## Translations
+
+The package's text comes from the provider's `messages`. Set it with `locale` for a translated store; the two are separate, so a site that sets `locale` for prices never gets new wording.
+
+```tsx
+import { CommerceStorefront } from '@godaddy/gd-commerce-storefront';
+import { frFR } from '@godaddy/gd-commerce-storefront/messages/fr-FR';
+
+<CommerceStorefront locale='fr-FR' messages={frFR}>
+```
+
+French is its own import, so English-only sites do not load it. Pass only the keys to change, and the rest stay as they were, English by default: `messages={{ ...frFR, checkout: 'Commander' }}`. The `StorefrontMessages` type lists every key, and `enUS` has the English text. New keys may be added in minor releases and stay English until translated, so type a translation of your own as `Partial<StorefrontMessages>`.
+
+Messages are plain data, so they can come from JSON, a translation service, or a server component. `{name}` placeholders are filled in, and numbers in them are formatted for the messages' `locale`. A message with a count can have plural forms, chosen by the language's rules; French counts 0 as singular:
+
+```ts
+{ productCount: { one: '{count} produit affiché', other: '{count} produits affichés' } }
+```
+
+The server's failure messages are English. With English text the storefront shows them as they are; with any other language it shows the text in `errorCodes` for the response's `code`, such as `scope_mismatch`, or the generic `requestFailed`. Product names, descriptions and attribute names come from the catalog as the merchant entered them, and are not translated. Sample prices stay in USD.
+
+[Replacement text](#replacing-text) and props such as `CatalogHeader`'s `title` take priority over `messages`. For custom parts, `useMessage()` returns the provider's text by key, `useMoney()` formats prices, and `useMoneyRange()` formats a range the way the `locale` writes it, such as `$20.00 – $25.00` or `20,00–25,00 €`.
 
 ## Styling hooks
 
@@ -458,7 +483,7 @@ Every part's outer element has a `data-commerce-part` attribute with the part's 
 | `item-removed` | `itemId`, `isSample` |
 | `discount-applied` | `code` |
 | `checkout-started` | `cartId`; sent just before the browser leaves for checkout, so use `navigator.sendBeacon` or a keepalive request |
-| `error` | `operation` (`add`, `change-quantity`, `remove`, `discount`, `refresh` or `checkout`) and the `message` the cart shows |
+| `error` | `operation` (`add`, `change-quantity`, `remove`, `discount`, `refresh` or `checkout`), the `message` the cart shows in the provider's language at the time of the failure, and the server's `code`, such as `scope_mismatch`, when it sent one. The cart's own notice follows a later change of `messages`; the event's text does not, so log `code` to group failures |
 
 New event types may be added in minor releases, so ignore types you do not handle. A callback that throws or returns a rejected promise, including `onItemAdded`, is logged to the console and does not fail the cart operation. Async callbacks are not awaited, so a slow analytics call never delays the cart.
 

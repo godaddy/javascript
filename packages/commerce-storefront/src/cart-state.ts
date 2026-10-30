@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useCommerce } from './commerce-provider';
-import { useSampleCart } from './sample-cart';
+import { sampleCurrency, useSampleCart } from './sample-cart';
 
 /** One cart line, for custom cart parts. */
 export interface CartItemState {
@@ -44,11 +44,11 @@ export function useCart(): CartState {
           imageUrl: null,
           options: [],
           subtotal: item.price * item.quantity,
-          currency: 'USD',
+          currency: sampleCurrency,
         })),
         itemCount: sampleItems.reduce((total, item) => total + item.quantity, 0),
         subtotal: sampleItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-        currency: 'USD',
+        currency: sampleCurrency,
         isSample,
         loading: false,
       };

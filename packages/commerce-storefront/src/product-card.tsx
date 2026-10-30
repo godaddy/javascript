@@ -23,9 +23,9 @@ import {
   type SKUGroup,
 } from './catalog-model';
 import { saleBadgeClass, secondaryButtonClass } from './class-names';
-import { useCommerce, useMoney } from './commerce-provider';
+import { useCommerce, useMessage, useMoney, useMoneyRange } from './commerce-provider';
 import { type PartLabel, type PartRegistry, partProps, renderLabel, usePartRegistry } from './part';
-import { type SampleProduct, useSampleCart } from './sample-cart';
+import { type SampleProduct, sampleCurrency, sampleName, useSampleCart } from './sample-cart';
 import { StorefrontSurface } from './storefront-surface';
 
 export interface ProductImageProps {
@@ -43,6 +43,7 @@ export interface ProductImageProps {
 export function ProductImage({ url, name, className = '' }: ProductImageProps): ReactElement {
   // Keyed by URL, so a new URL after a failure is requested instead of keeping the placeholder.
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const text = useMessage();
   return url && url !== failedUrl ? (
     <img
       src={url}
@@ -55,9 +56,9 @@ export function ProductImage({ url, name, className = '' }: ProductImageProps): 
     <div
       className={`flex h-full min-h-44 items-center justify-center bg-commerce-tint p-6 text-center text-sm text-commerce-muted ${className}`}
       role='img'
-      aria-label={`${name}: image unavailable`}
+      aria-label={text('imageUnavailable', { name })}
     >
-      No image available
+      {text('noImage')}
     </div>
   );
 }
@@ -95,14 +96,19 @@ type ProductCardInternal = ProductCardState &
 
 const titleLink = 'title-link';
 
-function cardValue(item: ProductCardItem, productPath: string, links: ProductCardLinks): ProductCardInternal {
+function cardValue(
+  item: ProductCardItem,
+  productPath: string,
+  links: ProductCardLinks,
+  sampleNameText: string,
+): ProductCardInternal {
   if (item.source === 'sample')
     return {
       ...links,
       source: 'sample',
       sample: item.sample,
       product: null,
-      name: item.sample.name,
+      name: sampleNameText,
       href: null,
       isSample: true,
     };
@@ -147,6 +153,7 @@ export interface ProductCardRootProps {
 export function ProductCardRoot({ children, product, className }: ProductCardRootProps): ReactElement {
   const catalogItem = useContext(CatalogItemContext);
   const { config } = useCommerce();
+  const text = useMessage();
   // The image link starts hidden, so server HTML and the first render have one product link per card. A card
   // with no title link exposes it once mounted. Parent effects run after child effects, so titles have registered.
   const [imageLinked, setImageLinked] = useState<boolean>(false);
@@ -158,8 +165,9 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
   }, [has]);
   const value = useMemo((): ProductCardInternal | null => {
     const item: ProductCardItem | null = catalogItem ?? (product ? { source: 'live', product } : null);
-    return item && cardValue(item, config.productPath, { imageLinked, register });
-  }, [catalogItem, product, config.productPath, imageLinked, register]);
+    const sampleText: string = item?.source === 'sample' ? sampleName(text, item.sample) : '';
+    return item && cardValue(item, config.productPath, { imageLinked, register }, sampleText);
+  }, [catalogItem, product, config.productPath, imageLinked, register, text]);
   if (catalogItem && product)
     throw new Error(
       'Inside <CatalogProducts>, ProductCardRoot shows each catalog product. Remove its product prop.',
@@ -243,11 +251,12 @@ export function ProductCardDescription({ className }: ProductCardPartProps): Rea
 const formatRange = (
   range: PriceRange | null | undefined,
   money: (value: number) => string,
+  moneyRange: (min: number, max: number) => string,
 ): string | null => {
   const min: number | null | undefined = range?.min;
   const max: number | null | undefined = range?.max;
   if (typeof min !== 'number') return null;
-  return `${money(min)}${typeof max === 'number' && max !== min ? ` – ${money(max)}` : ''}`;
+  return typeof max === 'number' && max !== min ? moneyRange(min, max) : money(min);
 };
 
 /**
@@ -256,10 +265,11 @@ const formatRange = (
  */
 export function ProductCardBadge({ className }: ProductCardPartProps): ReactElement | null {
   const { product } = useProductCardInternal('ProductCardBadge');
+  const text = useMessage();
   if (!isProductOnSale(product)) return null;
   return (
     <div {...partProps('product-card-badge', className)}>
-      <span className={saleBadgeClass}>Sale</span>
+      <span className={saleBadgeClass}>{text('sale')}</span>
     </div>
   );
 }
@@ -268,10 +278,12 @@ export function ProductCardBadge({ className }: ProductCardPartProps): ReactElem
 export function ProductCardPrice({ className }: ProductCardPartProps): ReactElement {
   const card = useProductCardInternal('ProductCardPrice');
   const money = useMoney();
+  const moneyRange = useMoneyRange();
+  const message = useMessage();
   const text: string =
     card.source === 'sample'
-      ? money(card.sample.price, 'USD')
-      : (formatRange(card.product.priceRange, money) ?? 'Price unavailable');
+      ? money(card.sample.price, sampleCurrency)
+      : (formatRange(card.product.priceRange, money, moneyRange) ?? message('priceUnavailable'));
   // A range has no single compare-at price that belongs to it, so only a single price is struck through.
   const range: PriceRange | null | undefined = card.source === 'live' ? card.product.priceRange : null;
   const starting: number | null =
@@ -283,7 +295,7 @@ export function ProductCardPrice({ className }: ProductCardPartProps): ReactElem
         <span className='font-medium'>{text}</span>
         {compareAt && (
           <>
-            <span className='sr-only'>Was</span>
+            <span className='sr-only'>{message('wasPrice')}</span>
             <del className='text-commerce-muted'>{compareAt}</del>
           </>
         )}
@@ -299,6 +311,7 @@ export function ProductCardPrice({ className }: ProductCardPartProps): ReactElem
 export function ProductCardSwatches({ className }: ProductCardPartProps): ReactElement | null {
   const { product } = useProductCardInternal('ProductCardSwatches');
   const { getSwatch } = useCommerce();
+  const text = useMessage();
   if (!getSwatch || !product) return null;
   for (const attribute of getProductAttributes(product)) {
     const swatches = attribute.values.map((value) => ({
@@ -311,8 +324,11 @@ export function ProductCardSwatches({ className }: ProductCardPartProps): ReactE
       <div {...partProps('product-card-swatches', className)}>
         <p className='flex items-center gap-1.5 text-xs text-commerce-muted'>
           <span className='sr-only'>
-            {swatches.length} {inSentence(attribute.label)} options:{' '}
-            {swatches.map((swatch) => swatch.label).join(', ')}
+            {text('swatchSummary', {
+              count: swatches.length,
+              attribute: inSentence(attribute.label),
+              values: swatches.map((swatch) => swatch.label).join(', '),
+            })}
           </span>
           {shown.map((swatch) => (
             <span
@@ -373,6 +389,7 @@ function LiveAction({
 }): ReactElement {
   const selectedSku: SKU | null = getSingleMatchedSku(product);
   const hasVariants: boolean = getProductAttributes(product).length > 0;
+  const text = useMessage();
   if (!hasVariants && selectedSku)
     return (
       <AddToCart sku={selectedSku} name={name} className={secondaryButtonClass} block>
@@ -386,7 +403,7 @@ function LiveAction({
       {renderLabel(
         label,
         { action, busy: false, soldOut: false },
-        hasVariants ? 'Choose options' : 'View product',
+        text(hasVariants ? 'chooseOptions' : 'viewProduct'),
       )}
     </Link>
   );
@@ -400,21 +417,23 @@ function SampleAction({
   label: ProductCardActionProps['children'];
 }): ReactElement {
   const { add } = useSampleCart();
+  const text = useMessage();
+  const name: string = sampleName(text, sample);
   const custom: ReactNode = renderLabel(label, { action: 'add', busy: false, soldOut: false }, null);
   // A host label stays the start of the accessible name, so it is not replaced by an `aria-label`.
   return custom === null ? (
     <button
       type='button'
       className={`${secondaryButtonClass} w-full`}
-      aria-label={`Add ${sample.name} to sample cart`}
+      aria-label={text('addSampleToCart', { name })}
       onClick={() => add(sample.key)}
     >
-      Add to cart
+      {text('addToCart')}
     </button>
   ) : (
     <button type='button' className={`${secondaryButtonClass} w-full`} onClick={() => add(sample.key)}>
       {custom}
-      <span className='sr-only'> ({sample.name}, sample)</span>
+      <span className='sr-only'> {text('sampleItemName', { name })}</span>
     </button>
   );
 }

@@ -11,6 +11,7 @@ import {
   CartItemRemove,
   CartItemRoot,
   CartItems,
+  CartNotices,
   CartRoot,
   CartSummary,
   CartTitle,
@@ -19,6 +20,7 @@ import { CatalogEmpty, CatalogPagination, CatalogProducts, CatalogRoot } from '.
 import type { SKU, SKUGroup } from './catalog-model';
 import { type CommerceEvent, type CommerceProviderProps, useMoney } from './commerce-provider';
 import { CommerceStorefront } from './commerce-storefront';
+import { frFR } from './locales/fr-fr';
 import { ProductCardAction, ProductCardPrice, ProductCardRoot, ProductImage } from './product-card';
 import { ProductDetailsRoot, useProductDetails } from './product-details-context';
 import { ProductDetailsAddToCart, ProductDetailsOption } from './product-purchase';
@@ -110,7 +112,7 @@ function mockStore({
     if (path === '/checkout') return checkout ?? response({ url: 'https://pay.test/session' });
     const line = path.match(/\/items\/([^/]+)$/)?.[1];
     if (line && init?.method === 'PATCH') {
-      if (failPatch) return response({ error: 'Quantity rejected.' }, 409);
+      if (failPatch) return response({ error: 'Quantity rejected.', code: 'invalid_request' }, 409);
       const { quantity } = JSON.parse(String(init.body));
       lines = lines.map((candidate) => (candidate.id === line ? { ...candidate, quantity } : candidate));
     }
@@ -492,7 +494,8 @@ describe('locale', () => {
       '/shop',
     );
     expect(await screen.findByText(/^12,00\s\$$/)).toBeVisible();
-    expect(screen.getByText(/^20,00\s\$ – 25,00\s\$$/)).toBeVisible();
+    // German writes a range without spaces around the dash, and the symbol once.
+    expect(screen.getByText(/^20,00–25,00\s\$$/)).toBeVisible();
     expect(screen.getByTestId('total')).toHaveTextContent(/^1\.234,56\s\$$/);
   });
 
@@ -561,8 +564,32 @@ describe('onEvent', () => {
         type: 'error',
         operation: 'change-quantity',
         message: 'Quantity rejected.',
+        code: 'invalid_request',
       }),
     );
+  });
+
+  it('shows a cart error in the current language after messages change', async () => {
+    mockStore({ savedCart: true, failPatch: true });
+    const client = new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } });
+    const page = (props: Partial<CommerceProviderProps>) => (
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={['/cart']}>
+          <CommerceStorefront {...props}>
+            <CartRoot>
+              <CartItems />
+              <CartNotices />
+            </CartRoot>
+          </CommerceStorefront>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const view = render(page({}));
+    await userEvent.click(await screen.findByRole('button', { name: 'Increase quantity of Mug' }));
+    expect(await screen.findByText('Quantity rejected.')).toBeVisible();
+    view.rerender(page({ locale: 'fr-FR', messages: frFR }));
+    expect(await screen.findByText(frFR.errorCodes.invalid_request ?? '')).toBeVisible();
+    expect(screen.queryByText('Quantity rejected.')).not.toBeInTheDocument();
   });
 
   it('reports sample changes as samples', async () => {

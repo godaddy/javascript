@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getCartSummaryTotals } from './cart-model';
 import {
   getAvailableInventoryQuantity,
   getImageUrls,
@@ -62,5 +63,15 @@ describe('safe SKU selection', () => {
         },
       }),
     ).toEqual(['/legacy.jpg', '/current.jpg']);
+  });
+});
+
+describe('getCartSummaryTotals', () => {
+  it("uses the cart's currency, then the fallback", () => {
+    expect(
+      getCartSummaryTotals({ totals: { total: { value: 500, currencyCode: 'EUR' } } }).currencyCode,
+    ).toBe('EUR');
+    expect(getCartSummaryTotals(null, 'CAD').currencyCode).toBe('CAD');
+    expect(getCartSummaryTotals(null).currencyCode).toBe('USD');
   });
 });

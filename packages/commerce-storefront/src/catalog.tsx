@@ -9,10 +9,11 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { message, request } from './api';
+import { describeError, request } from './api';
 import type { SKUGroup, SkuGroupsResult } from './catalog-model';
 import { errorActionClass, errorNoticeClass, secondaryButtonClass } from './class-names';
-import { useCommerce } from './commerce-provider';
+import { useCommerce, useMessage } from './commerce-provider';
+import type { MessageValues, StorefrontMessageKey } from './messages';
 import { hasChildren, type PartRegistry, partProps, usePartRegistry } from './part';
 import {
   CatalogItemContext,
@@ -22,7 +23,7 @@ import {
   packagedCardClass,
 } from './product-card';
 import { useRootParams } from './root-params';
-import { sampleProducts } from './sample-cart';
+import { sampleCurrency, sampleProducts } from './sample-cart';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 type CatalogInternal =
@@ -168,21 +169,28 @@ function CatalogLoader({
 }
 
 export interface CatalogHeaderProps extends CatalogPartProps {
-  title?: string;
-  description?: string;
+  /** Defaults to the provider's `catalogTitle` message. `null` leaves the heading out. */
+  title?: string | null;
+  /** Defaults to the provider's `catalogDescription` message. `null` leaves it out. */
+  description?: string | null;
 }
 
 /** The catalog title as the page's H1, with a description. */
-export function CatalogHeader({
-  title = 'Shop all products',
-  description = 'Explore the collection and find your favorites.',
-  className,
-}: CatalogHeaderProps): ReactElement {
+export function CatalogHeader({ title, description, className }: CatalogHeaderProps): ReactElement {
   useCatalogInternal('CatalogHeader');
+  const text = useMessage();
   return (
     <header {...partProps('catalog-header', className)}>
-      <h1 className='max-w-3xl text-balance text-3xl font-semibold leading-tight tracking-tight'>{title}</h1>
-      <p className='mt-1 max-w-xl text-base leading-7 text-commerce-muted'>{description}</p>
+      {title !== null && (
+        <h1 className='max-w-3xl text-balance text-3xl font-semibold leading-tight tracking-tight'>
+          {title === undefined ? text('catalogTitle') : title}
+        </h1>
+      )}
+      {description !== null && (
+        <p className='mt-1 max-w-xl text-base leading-7 text-commerce-muted'>
+          {description === undefined ? text('catalogDescription') : description}
+        </p>
+      )}
     </header>
   );
 }
@@ -190,20 +198,23 @@ export function CatalogHeader({
 /** Announces loading, failure, or how many products the page shows. */
 export function CatalogSummary({ className }: CatalogPartProps): ReactElement {
   const catalog = useCatalogInternal('CatalogSummary');
+  const { key, values } = summary(catalog);
+  const text = useMessage();
   return (
     <div {...partProps('catalog-summary', className)}>
       <p className='text-sm text-commerce-muted' role='status'>
-        {summary(catalog)}
+        {text(key, values)}
       </p>
     </div>
   );
 }
 
-function summary(catalog: CatalogInternal): string {
-  if (catalog.source === 'sample') return 'Sample products · Example prices in USD';
-  if (catalog.products.isPending) return 'Loading products…';
-  if (catalog.products.isError) return 'Products unavailable';
-  return `Showing ${catalog.nodes.length} product${catalog.nodes.length === 1 ? '' : 's'}`;
+function summary(catalog: CatalogInternal): { key: StorefrontMessageKey; values?: MessageValues } {
+  if (catalog.source === 'sample')
+    return { key: 'sampleCatalogSummary', values: { currency: sampleCurrency } };
+  if (catalog.products.isPending) return { key: 'loadingProducts' };
+  if (catalog.products.isError) return { key: 'productsUnavailable' };
+  return { key: 'productCount', values: { count: catalog.nodes.length } };
 }
 
 /** Two columns on phones, then as many 240px columns as fit. Shared with `RelatedProducts`. */
@@ -244,18 +255,20 @@ export function CatalogProducts({ className, children }: CatalogProductsProps): 
     [nodes],
   );
   const products = catalog.source === 'live' ? catalog.products : null;
+  const { messages } = useCommerce();
+  const text = useMessage();
   return (
     <>
       {products?.isError && (
         <div role='alert' className={errorNoticeClass}>
-          <p>{message(products.error)}</p>
+          <p>{describeError(products.error, messages)}</p>
           <button type='button' className={errorActionClass} onClick={() => void products.refetch()}>
-            Retry products
+            {text('retryProducts')}
           </button>
         </div>
       )}
       {products?.isSuccess && !items.length && !customEmpty && (
-        <p className='py-16 text-center text-commerce-muted'>No products available.</p>
+        <p className='py-16 text-center text-commerce-muted'>{text('noProducts')}</p>
       )}
       <div {...partProps('catalog-products', className)}>
         {/* Placeholders go inside the host's element, so they follow its grid. */}
@@ -293,10 +306,11 @@ export function CatalogEmpty({ className, children }: CatalogEmptyProps): ReactE
   const catalog = useCatalogInternal('CatalogEmpty');
   const register = useContext(CatalogEmptyContext)?.register;
   useEffect(() => register?.('empty'), [register]);
+  const text = useMessage();
   if (catalog.source === 'sample' || !catalog.products.isSuccess || catalog.nodes.length) return null;
   return (
     <div {...partProps('catalog-empty', className)}>
-      {hasChildren(children) ? children : <p>No products available.</p>}
+      {hasChildren(children) ? children : <p>{text('noProducts')}</p>}
     </div>
   );
 }
@@ -306,18 +320,19 @@ export function CatalogEmpty({ className, children }: CatalogEmptyProps): ReactE
  */
 export function CatalogPagination({ className }: CatalogPartProps): ReactElement | null {
   const catalog = useCatalogInternal('CatalogPagination');
+  const text = useMessage();
   if (catalog.source === 'sample') return null;
   const { after, goToPage } = catalog;
   const pageInfo = catalog.products.data?.skuGroups?.pageInfo;
   const hasNext: boolean = !!(pageInfo?.hasNextPage && pageInfo.endCursor);
   if (!after && !hasNext) return null;
   return (
-    <nav aria-label='Product pages' {...partProps('catalog-pagination', className)}>
+    <nav aria-label={text('productPages')} {...partProps('catalog-pagination', className)}>
       {/* Inside the part, so this layout cannot outrank host classes on the nav. */}
       <div className='flex justify-center gap-3'>
         {after && (
           <button type='button' className={secondaryButtonClass} onClick={() => goToPage()}>
-            First page
+            {text('firstPage')}
           </button>
         )}
         {hasNext && pageInfo?.endCursor && (
@@ -326,7 +341,7 @@ export function CatalogPagination({ className }: CatalogPartProps): ReactElement
             className={secondaryButtonClass}
             onClick={() => goToPage(pageInfo.endCursor ?? undefined)}
           >
-            Next page
+            {text('nextPage')}
           </button>
         )}
       </div>
