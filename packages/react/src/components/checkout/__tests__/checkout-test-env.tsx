@@ -91,6 +91,15 @@ vi.mock(
   })
 );
 
+vi.mock(
+  '@/components/checkout/payment/checkout-buttons/razorpay/razorpay',
+  inertButtonMock({
+    exportName: 'RazorpayCheckoutButton',
+    testId: 'mock-razorpay-button',
+    label: 'Pay with Razorpay',
+  })
+);
+
 // The dedicated express buttons (paymentMethods.express.processor=godaddy /
 // stripe). Their real implementations open a wallet sheet, run their own
 // shipping/tax/coupon flow, and then call confirmCheckout with isExpress=true

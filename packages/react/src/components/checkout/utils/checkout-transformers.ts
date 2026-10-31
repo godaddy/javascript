@@ -42,6 +42,34 @@ function processPhoneNumber(
   }
 }
 
+/**
+ * Normalizes a persisted checkout contact phone for Razorpay prefill.
+ * Unlike the general checkout normalizer, this never assumes a default country.
+ */
+export function normalizePhoneForRazorpay(
+  phoneValue?: string | null,
+  countryCode?: string | null
+): string | undefined {
+  const phone = phoneValue?.trim();
+  if (!phone) return undefined;
+
+  try {
+    const parsed = parsePhoneNumber(phone);
+    if (parsed?.isValid()) return parsed.number;
+  } catch {
+    // A national number requires an explicit persisted country below.
+  }
+
+  if (!countryCode) return undefined;
+
+  try {
+    const parsed = parsePhoneNumber(phone, countryCode as Country);
+    return parsed?.isValid() ? parsed.number : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 type DraftOrderAddress = NonNullable<
   NonNullable<DraftOrder['shipping']>['address']
 >;
