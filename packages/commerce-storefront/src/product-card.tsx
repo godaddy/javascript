@@ -90,7 +90,10 @@ export interface ProductCardState<Sample extends SampleProduct = SampleProduct> 
 }
 
 interface ProductCardLinks {
-  /** Whether the image link is the card's product link: only when no `ProductCardTitle` link is rendered. */
+  /**
+   * Whether the image is exposed to keyboard and screen reader users: only when no `ProductCardTitle` is rendered.
+   * For a product the image link is then the card's product link; for a sample, its image is the card's name.
+   */
   imageLinked: boolean;
   register: (key: string) => () => void;
 }
@@ -102,7 +105,7 @@ type ProductCardInternal = Omit<ProductCardState, 'sample'> &
     | { source: 'sample'; sample: SampleProduct; product: null; href: null }
   );
 
-const titleLink = 'title-link';
+const titleLink = 'title';
 
 function cardValue(
   item: ProductCardItem,
@@ -145,7 +148,8 @@ function useProductCardInternal(part: string): ProductCardInternal {
 
 /**
  * Read the card's product or sample, name, and link from inside `ProductCardRoot`. Pass the type of the site's
- * samples, such as `useProductCard<MySample>()`, to read their own fields from `sample`.
+ * samples, such as `useProductCard<MySample>()`, to read their own fields from `sample`. The type is not checked:
+ * on a page that also shows the packaged samples, read the site's own fields as possibly missing.
  */
 export function useProductCard<Sample extends SampleProduct = SampleProduct>(): ProductCardState<Sample> {
   const card = useProductCardInternal('useProductCard');
@@ -200,8 +204,8 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
 
 /**
  * The product's first image, linked to its page. A sample shows its `imageUrl`, unlinked, or the packaged samples'
- * placeholder. With a `ProductCardTitle` in the card, the title is the one link keyboard and screen reader users get;
- * without one, the image link is.
+ * placeholder. With a `ProductCardTitle` in the card, the title is the one link keyboard and screen reader users get,
+ * and a sample's image is hidden from screen readers so its name is not read twice; without one, the image is exposed.
  */
 export function ProductCardImage({ className }: ProductCardPartProps): ReactElement {
   const card = useProductCardInternal('ProductCardImage');
@@ -228,7 +232,10 @@ export function ProductCardImage({ className }: ProductCardPartProps): ReactElem
           <div className='h-16 w-16 rounded-full border border-commerce-line' />
         </div>
       ) : (
-        <div className='aspect-(--commerce-card-image-aspect,1/1) overflow-hidden bg-commerce-tint'>
+        <div
+          aria-hidden={card.imageLinked ? undefined : 'true'}
+          className='aspect-(--commerce-card-image-aspect,1/1) overflow-hidden bg-commerce-tint'
+        >
           <ProductImage url={card.sample.imageUrl} name={card.name} />
         </div>
       )}
@@ -239,7 +246,7 @@ export function ProductCardImage({ className }: ProductCardPartProps): ReactElem
 /** The product name as an H2, linked to its page. */
 export function ProductCardTitle({ className }: ProductCardPartProps): ReactElement {
   const { name, href, register } = useProductCardInternal('ProductCardTitle');
-  useEffect(() => (href ? register(titleLink) : undefined), [href, register]);
+  useEffect(() => register(titleLink), [register]);
   return (
     <div {...partProps('product-card-title', className)}>
       <h2 className='break-words text-base font-medium leading-6'>

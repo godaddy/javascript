@@ -312,7 +312,8 @@ function useCartItemInternal(part: string): CartItemState {
 
 /**
  * Read the line from inside `CartItemRoot`, for custom item parts. Pass the type of the site's samples, such as
- * `useCartItem<MySample>()`, to read their own fields from `sample`.
+ * `useCartItem<MySample>()`, to read their own fields from `sample`. The type is not checked: when the cart can hold
+ * samples from more than one catalog, read the site's own fields as possibly missing.
  */
 export function useCartItem<Sample extends SampleProduct = SampleProduct>(): CartItemState<Sample> {
   return useCartItemInternal('useCartItem') as CartItemState<Sample>;

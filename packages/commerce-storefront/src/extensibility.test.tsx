@@ -751,10 +751,9 @@ describe('host sample products', () => {
     expect(cards).toHaveLength(2);
     expect(screen.getByTestId('count')).toHaveTextContent('ready:2:true');
     const [cleanser, serum] = cards;
-    expect(within(cleanser).getByRole('img', { name: 'Daily Cleanser' })).toHaveAttribute(
-      'src',
-      '/images/cleanser.jpg',
-    );
+    // With a title in the card, the image is hidden from screen readers so the name is read once.
+    expect(within(cleanser).queryByRole('img')).not.toBeInTheDocument();
+    expect(cleanser.querySelector('img')).toHaveAttribute('src', '/images/cleanser.jpg');
     // A sample has no product page, so its image is not a link.
     expect(within(cleanser).queryByRole('link')).not.toBeInTheDocument();
     expect(within(cleanser).getByRole('heading', { level: 2, name: 'Daily Cleanser' })).toBeVisible();
@@ -763,7 +762,7 @@ describe('host sample products', () => {
     expect(within(cleanser).getByText('$32.00')).toBeVisible();
     expect(within(cleanser).queryByText('Sale')).not.toBeInTheDocument();
     // Without an image the sample shows the labeled placeholder; a compare-at price shows the sale badge.
-    expect(within(serum).getByRole('img', { name: 'Vitamin C Serum: image unavailable' })).toBeVisible();
+    expect(within(serum).getByText('No image available')).toBeInTheDocument();
     expect(within(serum).getByText('Sale')).toBeVisible();
     expect(within(serum).getByText('$76.00').tagName).toBe('DEL');
     expect(within(serum).getByTestId('eyebrow')).toHaveTextContent('Treat');
@@ -881,10 +880,33 @@ describe('host sample products', () => {
     expect(screen.queryByTestId('eyebrow')).not.toBeInTheDocument();
   });
 
+  it('exposes a sample image to screen readers when the card has no title', async () => {
+    mockApi({ state: 'unbound' });
+    mount(
+      <CatalogRoot sampleProducts={routine}>
+        <CatalogProducts>
+          <ProductCardRoot>
+            <ProductCardImage />
+            <ProductCardPrice />
+          </ProductCardRoot>
+        </CatalogProducts>
+      </CatalogRoot>,
+      {},
+      '/shop',
+    );
+    expect(await screen.findByRole('img', { name: 'Daily Cleanser' })).toHaveAttribute(
+      'src',
+      '/images/cleanser.jpg',
+    );
+    expect(screen.getByRole('img', { name: 'Vitamin C Serum: image unavailable' })).toBeVisible();
+  });
+
   it.each([
     [[], 'at least one'],
     [[routine[0], { ...routine[1], key: 'daily-cleanser' }], 'unique'],
     [[{ ...routine[0], key: '' }], 'unique'],
+    [[{ ...routine[0], key: 7 }], 'string keys'],
+    [[{ ...routine[0], name: ' ' }], 'name'],
     [[{ ...routine[0], price: 12.5 }], 'price'],
     [[{ ...routine[0], compareAtPrice: -1 }], 'price'],
   ])('rejects invalid samples %#', (samples, message) => {
@@ -892,7 +914,7 @@ describe('host sample products', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     mount(
       <Boundary>
-        <CatalogRoot sampleProducts={samples as RoutineSample[]}>{null}</CatalogRoot>
+        <CatalogRoot sampleProducts={samples as unknown as RoutineSample[]}>{null}</CatalogRoot>
       </Boundary>,
       {},
       '/shop',

@@ -320,10 +320,13 @@ Elements that are only display, such as a "Bestseller" label, a category line or
 function CategoryLine() {
   const { sample, product } = useProductCard<RoutineSample>();
   // Samples carry your own fields; live products come from your catalog data.
+  // The type is not checked, so a sample from another catalog, such as the packaged ones, may lack your fields.
   const category = sample ? sample.category : categoryFor(product);
   return category ? <p className='eyebrow'>{category}</p> : null;
 }
-``` Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
+```
+
+Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
 
 ## Custom cart layouts
 
@@ -603,14 +606,19 @@ Each sample needs a unique `key`, a `name` and a `price` in minor units of USD. 
 `description` and `imageUrl` are optional. `imageUrl` is any URL the browser can load, such as a
 file in the site's own public folder; the package does not upload or check it, and an image that
 fails to load shows the image placeholder. `CatalogRoot` throws for an empty list, a duplicate or
-empty key, or a price or compare-at price that is not a whole number of 0 or more.
+empty key, an empty name, or a price or compare-at price that is not a whole number of 0 or more.
+Define the list outside your component, or memoize it, so the cards are not rebuilt on every
+render. In a card with `ProductCardTitle`, a sample's image is hidden from screen readers,
+which read the name from the title.
 
 The card parts show a sample's image, description, price, and a Sale badge and struck-through
 price when `compareAtPrice` is above `price`. Samples have no product page. Fields of your own,
 such as `category`, come back unchanged from `useProductCard().sample` and, once added, from
-`useCartItem().sample`. The sample cart keeps each sample as it was added, with its image. Once
-a store is connected, the same card tree shows the store's products, so build the card for both:
-your own parts read `sample` before a store is connected and `product` after.
+`useCartItem().sample`. The type you pass, as in `useProductCard<RoutineSample>()`, is not
+checked, so where other samples can appear, read your own fields as possibly missing. The sample
+cart keeps each sample as it was added, with its image. Once a store is connected, the same card
+tree shows the store's products, so build the card for both: your own parts read `sample` before
+a store is connected and `product` after.
 
 Use a server that reports connection state before you enable `sampleProducts`. Successful
 config responses without `state` still mean ready. A server that does not report `unbound`

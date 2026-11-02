@@ -69,9 +69,13 @@ export function validateSamples(samples: readonly SampleProduct[]): void {
   if (!samples.length) throw new Error('CatalogRoot sampleProducts needs at least one product, or `true`.');
   const keys = new Set<string>();
   for (const sample of samples) {
-    if (!sample.key || keys.has(sample.key))
-      throw new Error(`CatalogRoot sampleProducts need unique, non-empty keys, not "${sample.key}".`);
+    if (typeof sample.key !== 'string' || !sample.key || keys.has(sample.key))
+      throw new Error(
+        `CatalogRoot sampleProducts need unique, non-empty string keys, not "${String(sample.key)}".`,
+      );
     keys.add(sample.key);
+    if (typeof sample.name !== 'string' || !sample.name.trim())
+      throw new Error(`CatalogRoot sampleProducts: "${sample.key}" needs a non-empty name.`);
     for (const field of ['price', 'compareAtPrice'] as const) {
       const value: unknown = sample[field];
       if ((field === 'price' || value !== undefined) && !validPrice(value))

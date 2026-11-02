@@ -60,7 +60,10 @@ function useCatalogInternal(part: string): CatalogInternal {
 
 /** Read-only catalog state for custom catalog parts rendered inside `CatalogRoot`. */
 export interface CatalogState {
-  /** Products on the current page: `0` while loading or after a failure. */
+  /**
+   * Products on the current page: `0` while loading or after a first load fails. A failed refetch keeps the last page,
+   * so `status` can be `error` while `count` is above `0`.
+   */
   readonly count: number;
   readonly isSample: boolean;
   /** Samples are always `ready`. */
@@ -122,7 +125,7 @@ export function CatalogRoot({
     throw new Error(`CatalogRoot pageSize must be a whole number of 1 or more, not ${pageSize}.`);
   const hostSamples: readonly SampleProduct[] | null = Array.isArray(sampleProducts) ? sampleProducts : null;
   // Checked whether or not a store is connected, so a mistake shows up before the samples are needed.
-  useMemo(() => hostSamples && validateSamples(hostSamples), [hostSamples]);
+  if (hostSamples) validateSamples(hostSamples);
   const sampleCatalog = useMemo(
     (): CatalogInternal => (hostSamples ? { source: 'sample', samples: hostSamples } : builtInCatalog),
     [hostSamples],
