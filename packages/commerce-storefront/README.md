@@ -604,21 +604,28 @@ const samples: RoutineSample[] = [
 
 Each sample needs a unique `key`, a `name` and a `price` in minor units of USD. `compareAtPrice`,
 `description` and `imageUrl` are optional. `imageUrl` is any URL the browser can load, such as a
-file in the site's own public folder; the package does not upload or check it, and an image that
-fails to load shows the image placeholder. `CatalogRoot` throws for an empty list, a duplicate or
-empty key, an empty name, or a price or compare-at price that is not a whole number of 0 or more.
-Define the list outside your component, or memoize it, so the cards are not rebuilt on every
-render. In a card with `ProductCardTitle`, a sample's image is hidden from screen readers,
-which read the name from the title.
+file in the site's own public folder; the package does not upload or check it. An image that
+fails to load shows the image placeholder on the card and no image in the cart. `CatalogRoot`
+throws, while no store is connected, for an empty list, an entry that is not an object, a
+duplicate or empty key, a packaged sample's key (`sample-1` to `sample-6`), an empty name, a
+`description` or `imageUrl` that is not a string, or a price or compare-at price that is not a
+whole number of 0 or more. Once a store is connected the samples are not shown, so development
+builds log the problem instead and the store's catalog still renders. A list written inline is
+compared by its values, so it does not rebuild the cards when it is unchanged. In a card with
+`ProductCardTitle`, a sample's image is hidden from screen readers, which read the name from the
+title.
 
 The card parts show a sample's image, description, price, and a Sale badge and struck-through
 price when `compareAtPrice` is above `price`. Samples have no product page. Fields of your own,
 such as `category`, come back unchanged from `useProductCard().sample` and, once added, from
 `useCartItem().sample`. The type you pass, as in `useProductCard<RoutineSample>()`, is not
 checked, so where other samples can appear, read your own fields as possibly missing. The sample
-cart keeps each sample as it was added, with its image. Once a store is connected, the same card
-tree shows the store's products, so build the card for both: your own parts read `sample` before
-a store is connected and `product` after.
+cart keeps each sample as it was added, with its image, so the cart still shows it on a page
+without the catalog. While a catalog with a sample of the same key is mounted, the cart shows
+that sample's current fields, so a price or name loaded later matches the card. The cart lists
+packaged samples in catalog order and your own in the order they were added, after them. Once a
+store is connected, the same card tree shows the store's products, so build the card for both:
+your own parts read `sample` before a store is connected and `product` after.
 
 Use a server that reports connection state before you enable `sampleProducts`. Successful
 config responses without `state` still mean ready. A server that does not report `unbound`

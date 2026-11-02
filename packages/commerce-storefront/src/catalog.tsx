@@ -23,7 +23,14 @@ import {
   packagedCardClass,
 } from './product-card';
 import { useRootParams } from './root-params';
-import { builtInSamples, type SampleProduct, sampleCurrency, validateSamples } from './sample-cart';
+import {
+  builtInSamples,
+  type SampleProduct,
+  sameSamples,
+  sampleCurrency,
+  sampleProblem,
+  useSampleCart,
+} from './sample-cart';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 type CatalogInternal =
@@ -123,9 +130,21 @@ export function CatalogRoot({
   const empty = useMemo((): CatalogEmptyInternal => ({ register, custom }), [register, custom]);
   if (!Number.isSafeInteger(pageSize) || pageSize < 1)
     throw new Error(`CatalogRoot pageSize must be a whole number of 1 or more, not ${pageSize}.`);
-  const hostSamples: readonly SampleProduct[] | null = Array.isArray(sampleProducts) ? sampleProducts : null;
-  // Checked whether or not a store is connected, so a mistake shows up before the samples are needed.
-  if (hostSamples) validateSamples(hostSamples);
+  const hostSamples: readonly SampleProduct[] | null = useStableSamples(
+    Array.isArray(sampleProducts) ? sampleProducts : null,
+  );
+  const problem: string | null = useMemo(() => hostSamples && sampleProblem(hostSamples), [hostSamples]);
+  // Thrown only while the samples would show. Once a store is connected, a mistake in a list that is no longer shown
+  // must not take down the live catalog, so development builds log it instead.
+  if (problem && connection === 'unbound') throw new Error(problem);
+  useEffect(() => {
+    if (problem && process.env.NODE_ENV !== 'production')
+      console.error(`[gd-commerce-storefront] ${problem}`);
+  }, [problem]);
+  const { refresh } = useSampleCart();
+  useEffect(() => {
+    if (hostSamples && !problem && connection === 'unbound') refresh(hostSamples);
+  }, [hostSamples, problem, connection, refresh]);
   const sampleCatalog = useMemo(
     (): CatalogInternal => (hostSamples ? { source: 'sample', samples: hostSamples } : builtInCatalog),
     [hostSamples],
@@ -157,6 +176,14 @@ export function CatalogRoot({
       <CatalogEmptyContext.Provider value={empty}>{content}</CatalogEmptyContext.Provider>
     </StorefrontSurface>
   );
+}
+
+/** The previous list while the samples and their fields are unchanged, so an inline list does not rebuild the cards. */
+function useStableSamples(samples: readonly SampleProduct[] | null): readonly SampleProduct[] | null {
+  const [stable, setStable] = useState(samples);
+  const same: boolean = stable === samples || (!!stable && !!samples && sameSamples(stable, samples));
+  if (!same) setStable(samples);
+  return same ? stable : samples;
 }
 
 function CatalogLoader({

@@ -387,10 +387,17 @@ export function CartItemRoot({ children, className }: CartItemRootProps): ReactE
 /** The line's product image. Renders nothing without one. */
 export function CartItemImage({ className }: CartPartProps): ReactElement | null {
   const { imageUrl } = useCartItemInternal('CartItemImage');
-  if (!imageUrl) return null;
+  // Keyed by URL, like `ProductImage`, so a new URL after a failure is requested again.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  if (!imageUrl || imageUrl === failedUrl) return null;
   return (
     <div {...partProps('cart-item-image', className)}>
-      <img src={imageUrl} alt='' className='h-20 w-20 bg-commerce-tint object-cover' />
+      <img
+        src={imageUrl}
+        alt=''
+        className='h-20 w-20 bg-commerce-tint object-cover'
+        onError={() => setFailedUrl(imageUrl)}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Component, type ErrorInfo, type ReactElement, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactElement, type ReactNode, useState } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { AddToCartButton, CartButton } from './cart';
@@ -909,7 +909,11 @@ describe('host sample products', () => {
     [[{ ...routine[0], name: ' ' }], 'name'],
     [[{ ...routine[0], price: 12.5 }], 'price'],
     [[{ ...routine[0], compareAtPrice: -1 }], 'price'],
-  ])('rejects invalid samples %#', (samples, message) => {
+    [[{ ...routine[0], key: 'sample-1' }], "packaged sample's key"],
+    [[routine[0], undefined], 'entry 1 is undefined'],
+    [[{ ...routine[0], imageUrl: 42 }], 'imageUrl that is not a string'],
+    [[{ ...routine[0], description: {} }], 'description that is not a string'],
+  ])('rejects invalid samples %#', async (samples, message) => {
     mockApi({ state: 'unbound' });
     vi.spyOn(console, 'error').mockImplementation(() => {});
     mount(
@@ -919,7 +923,133 @@ describe('host sample products', () => {
       {},
       '/shop',
     );
-    expect(screen.getByRole('alert')).toHaveTextContent(message);
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+  });
+
+  it('logs invalid samples instead of throwing once a store is connected, so the live catalog still shows', async () => {
+    mockStore();
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mount(
+      <Boundary>
+        <CatalogRoot sampleProducts={[{ ...routine[0], price: 12.5 }]}>
+          <CatalogProducts>{routineCard}</CatalogProducts>
+        </CatalogRoot>
+      </Boundary>,
+      {},
+      '/shop',
+    );
+    expect(await screen.findByRole('heading', { level: 2, name: 'Mug' })).toBeVisible();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(logged).toHaveBeenCalledWith(expect.stringContaining('has an invalid price, 12.5'));
+  });
+
+  it('keeps the cards when an inline sample list is rebuilt with the same values', async () => {
+    mockApi({ state: 'unbound' });
+    let renders = 0;
+    // Reads the card, so it re-renders whenever the card's sample changes.
+    function Counted(): null {
+      useProductCard();
+      renders++;
+      return null;
+    }
+    const card: ReactElement = (
+      <ProductCardRoot>
+        <ProductCardTitle />
+        <Counted />
+      </ProductCardRoot>
+    );
+    function Page(): ReactElement {
+      const [count, setCount] = useState(0);
+      return (
+        <>
+          <button type='button' onClick={() => setCount(count + 1)}>
+            Rerender
+          </button>
+          <CatalogRoot sampleProducts={routine.map((sample) => ({ ...sample }))}>
+            <CatalogProducts>{card}</CatalogProducts>
+          </CatalogRoot>
+        </>
+      );
+    }
+    mount(<Page />, {}, '/shop');
+    await screen.findAllByRole('article');
+    const before: number = renders;
+    await userEvent.click(screen.getByRole('button', { name: 'Rerender' }));
+    expect(renders).toBe(before);
+  });
+
+  it('updates sample cart lines when the catalog changes a sample, and hides a cart image that fails', async () => {
+    mockApi({ state: 'unbound' });
+    function Page(): ReactElement {
+      const [price, setPrice] = useState(3200);
+      return (
+        <>
+          <button type='button' onClick={() => setPrice(2800)}>
+            Lower price
+          </button>
+          <CatalogRoot sampleProducts={[{ ...routine[0], price }]}>
+            <CatalogProducts>{routineCard}</CatalogProducts>
+          </CatalogRoot>
+          <CartRoot>
+            <CartItems>
+              <CartItemRoot>
+                <CartItemImage />
+                <CartItemName />
+              </CartItemRoot>
+            </CartItems>
+            <CartSubtotal />
+          </CartRoot>
+        </>
+      );
+    }
+    mount(<Page />, {}, '/shop');
+    await userEvent.click(await screen.findByRole('button', { name: 'Add Daily Cleanser to sample cart' }));
+    const page = await waitFor(() => {
+      const found = document.querySelector<HTMLElement>('section[data-commerce-part="cart-root"]');
+      if (!found?.querySelector('img')) throw new Error('no cart line');
+      return found;
+    });
+    expect(within(page).getByText('Sample subtotal').nextElementSibling).toHaveTextContent('$32.00');
+    // The drawer opened on add and is modal, so the button behind it is reached directly.
+    fireEvent.click(screen.getByText('Lower price'));
+    await waitFor(() =>
+      expect(within(page).getByText('Sample subtotal').nextElementSibling).toHaveTextContent('$28.00'),
+    );
+    const image = page.querySelector('img');
+    if (!image) throw new Error('no cart image');
+    fireEvent.error(image);
+    expect(page.querySelector('img')).toBeNull();
+    expect(page.querySelector('[data-commerce-part="cart-item-image"]')).toBeNull();
+  });
+
+  it('lists packaged samples in the cart in catalog order, whatever order they were added in', async () => {
+    mockApi({ state: 'unbound' });
+    mount(
+      <>
+        <CatalogRoot sampleProducts>
+          <CatalogProducts />
+        </CatalogRoot>
+        <CartRoot>
+          <CartItems>
+            <CartItemRoot>
+              <CartItemName />
+            </CartItemRoot>
+          </CartItems>
+        </CartRoot>
+      </>,
+      {},
+      '/shop',
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Add Product 3 to sample cart' }));
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(await screen.findByRole('button', { name: 'Add Product 1 to sample cart' }));
+    const page = document.querySelector<HTMLElement>('section[data-commerce-part="cart-root"]');
+    if (!page) throw new Error('no cart page');
+    await waitFor(() => expect(page.querySelectorAll('h3')).toHaveLength(2));
+    expect([...page.querySelectorAll('h3')].map((name) => name.textContent)).toEqual([
+      'Product 1',
+      'Product 3',
+    ]);
   });
 });
 
