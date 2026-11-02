@@ -82,6 +82,7 @@ A connection failure leaves the surrounding application and its state mounted. C
     '--commerce-radius': '0.75rem',
     '--commerce-sale': '#b42318',
     '--commerce-on-sale': '#ffffff',
+    '--commerce-card-image-aspect': '1 / 1',
   }}
 >
   {/* Register /collection and /item/:productId in your router. */}
@@ -108,6 +109,8 @@ The repository example uses React Router 7. Follow each router version's own Rea
 | `CommerceStorefront` | Recommended integration: provider and one drawer |
 | `Catalog` | Six products per cursor page, or `pageSize`. Its `title`, `description`, and `showHeader` props are deprecated; compose `CatalogRoot` instead |
 | `CatalogRoot` and catalog parts | Build a [custom catalog or card layout](#custom-catalog-layouts) with the same rules as `Catalog` |
+| `useProductCard`, `useCatalog` | Card and catalog state for your own card parts, such as a category line or a product count |
+| `SampleProduct` | The type of [your own sample products](#your-own-sample-products), for a template shown before a store is connected |
 | `ProductDetails` | Reads `:productId`; validates URL option selections against catalog results. `ProductDetailsRoot` also takes a `productId` prop |
 | `ProductDetailsRoot` and product parts | Build a [custom product layout](#custom-product-layouts) with the same rules as `ProductDetails` |
 | `ProductCard` | Renders one `SKUGroup` with direct add or a product-details link; `ProductCardRoot` and card parts customize it |
@@ -305,11 +308,22 @@ As with product layouts, the grid, spacing and border classes come from your own
 | `ProductCardDescription` | Up to two lines of description; nothing without one. The packaged card leaves it out |
 | `ProductCardAction` | Adds the product directly only when it has one SKU and no options; otherwise links to the product page to choose. Its children replace the label; as a function, they receive the `action`: `add`, `choose-options` or `view-product` |
 
-`className` on `CatalogProducts` goes on the element whose direct children are the cards, so a host grid places them, and `className` on `ProductCardRoot` goes on each card, so classes such as `col-span-2` work. While products load, that element holds three placeholder cards, so they follow the host's grid. The error with its retry button and, without a `CatalogEmpty`, the empty message render just before it. Card parts take no product, SKU or price props. Inside `CatalogProducts`, `ProductCardRoot` takes no `product` prop either and throws if it gets one, so a card always shows the product it is rendered for. Samples use the same card: they show a placeholder image, no badge, description or links, and add only to the sample cart. Card and catalog parts throw if they are rendered outside their root. Packaged cards fill their grid row, with the price and action at the bottom of each card.
+`className` on `CatalogProducts` goes on the element whose direct children are the cards, so a host grid places them, and `className` on `ProductCardRoot` goes on each card, so classes such as `col-span-2` work. While products load, that element holds three placeholder cards, so they follow the host's grid. The error with its retry button and, without a `CatalogEmpty`, the empty message render just before it. Card parts take no product, SKU or price props. Inside `CatalogProducts`, `ProductCardRoot` takes no `product` prop either and throws if it gets one, so a card always shows the product it is rendered for. Samples use the same card and add only to the sample cart. They have no product page, so their title and image are not links. The packaged samples show a placeholder image and no badge or description; [your own samples](#your-own-sample-products) show their image, description and sale badge. Card images and their loading placeholders are square; set `--commerce-card-image-aspect`, such as `3 / 4`, in the `theme` or on any element around the cards to change that. Card and catalog parts throw if they are rendered outside their root. Packaged cards fill their grid row, with the price and action at the bottom of each card.
 
 The root keeps its page cursor in the page URL, as `after`. For a second catalog on the same page, such as a featured row above the main grid, set `urlState={false}` on it so the two do not share one cursor.
 
-For a product the host already has, such as a featured product, use `ProductCard` or `ProductCardRoot` with a `product` prop outside the catalog. `useProductCard()` returns read-only `product` (`null` for samples), `name`, `href` (`null` for samples) and `isSample` for building custom card parts. Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
+For a product the host already has, such as a featured product, use `ProductCard` or `ProductCardRoot` with a `product` prop outside the catalog. `useProductCard()` returns read-only `product` (`null` for samples), `sample` (the sample as you passed it, or `null` for a product), `name`, `href` (`null` for samples) and `isSample` for building custom card parts. `useCatalog()` returns the catalog's `count`, `isSample` and `status` (`loading`, `error` or `ready`) inside `CatalogRoot`, for a custom product count.
+
+Elements that are only display, such as a "Bestseller" label, a category line or a "View" link, are your own components, written with these hooks. Write such a component once and read its data where you place it, so the same label works on a card and in the cart:
+
+```tsx
+function CategoryLine() {
+  const { sample, product } = useProductCard<RoutineSample>();
+  // Samples carry your own fields; live products come from your catalog data.
+  const category = sample ? sample.category : categoryFor(product);
+  return category ? <p className='eyebrow'>{category}</p> : null;
+}
+``` Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
 
 ## Custom cart layouts
 
@@ -408,7 +422,7 @@ For a cart page instead of, or as well as, the drawer, compose the same parts in
 Two hooks support custom cart markup:
 
 - `useCart()` works anywhere inside `CommerceProvider`. It returns read-only `items`, `itemCount`, `subtotal` (minor units, or `null` when the server has not priced the cart), `currency`, `isSample` and `loading`. Combine `itemCount` with `useCommerce().setOpen(true)` for a custom cart button.
-- `useCartItem()` returns the line inside `CartItemRoot`: `id`, `name`, `quantity`, `imageUrl`, `options`, `subtotal` and `currency`.
+- `useCartItem()` returns the line inside `CartItemRoot`: `id`, `name`, `quantity`, `imageUrl`, `options`, `subtotal`, `currency` and `sample` (the sample as it was added, or `null` for a store line).
 
 ## Replacing text
 
@@ -531,8 +545,8 @@ A site can mount the same components before it has a connected store:
 </CommerceStorefront>
 ```
 
-`Catalog.sampleProducts` defaults to `false`. It allows six built-in sample products
-(Product 1–6, $10–$60 USD) **only** when `/api/commerce/config` reports `state: 'unbound'`.
+`Catalog.sampleProducts` defaults to `false`. `true` allows six built-in sample products
+(Product 1–6, $10–$60 USD, without images) **only** when `/api/commerce/config` reports `state: 'unbound'`.
 When a store is connected, the server reports a different state and the components show real
 products. You do not need to change props or the component tree. The prop has no effect while
 a store is connected. Real empty catalogs and errors never fall back to samples.
@@ -560,6 +574,43 @@ empty sample cart. While connecting, refresh failures keep the connecting
 state for up to 60 seconds before showing the error. Once polling slows to every minute, the next
 failure is already 60 seconds after the last success, so it shows the error at once. Polling
 stops when the state is `ready`; focus and explicit retry still refresh configuration.
+
+#### Your own sample products
+
+A template can show its own samples instead, with the same rule. Pass them to `sampleProducts` on
+`Catalog` or `CatalogRoot`:
+
+```tsx
+interface RoutineSample extends SampleProduct {
+  category: string;
+}
+
+const samples: RoutineSample[] = [
+  {
+    key: 'daily-cleanser',
+    name: 'Daily Cleanser',
+    price: 3200,
+    description: 'Gentle, pH-balanced foam that removes without stripping.',
+    imageUrl: '/images/cleanser.jpg',
+    category: 'Cleanse',
+  },
+];
+
+<Catalog sampleProducts={samples} />
+```
+
+Each sample needs a unique `key`, a `name` and a `price` in minor units of USD. `compareAtPrice`,
+`description` and `imageUrl` are optional. `imageUrl` is any URL the browser can load, such as a
+file in the site's own public folder; the package does not upload or check it, and an image that
+fails to load shows the image placeholder. `CatalogRoot` throws for an empty list, a duplicate or
+empty key, or a price or compare-at price that is not a whole number of 0 or more.
+
+The card parts show a sample's image, description, price, and a Sale badge and struck-through
+price when `compareAtPrice` is above `price`. Samples have no product page. Fields of your own,
+such as `category`, come back unchanged from `useProductCard().sample` and, once added, from
+`useCartItem().sample`. The sample cart keeps each sample as it was added, with its image. Once
+a store is connected, the same card tree shows the store's products, so build the card for both:
+your own parts read `sample` before a store is connected and `product` after.
 
 Use a server that reports connection state before you enable `sampleProducts`. Successful
 config responses without `state` still mean ready. A server that does not report `unbound`

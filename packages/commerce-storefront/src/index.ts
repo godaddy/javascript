@@ -55,7 +55,9 @@ export {
   type CatalogProps,
   CatalogRoot,
   type CatalogRootProps,
+  type CatalogState,
   CatalogSummary,
+  useCatalog,
 } from './catalog';
 export type * from './catalog-model';
 export {
@@ -146,4 +148,5 @@ export {
   ProductDetailsQuantity,
 } from './product-purchase';
 export { RelatedProducts, type RelatedProductsProps } from './related-products';
+export type { SampleProduct } from './sample-cart';
 export { CommerceStatus } from './storefront-surface';

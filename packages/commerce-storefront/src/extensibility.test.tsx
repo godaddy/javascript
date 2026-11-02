@@ -8,22 +8,37 @@ import { AddToCartButton, CartButton } from './cart';
 import type { CartOrder } from './cart-model';
 import {
   CartCheckout,
+  CartItemImage,
+  CartItemName,
   CartItemRemove,
   CartItemRoot,
   CartItems,
   CartNotices,
   CartRoot,
+  CartSubtotal,
   CartSummary,
   CartTitle,
+  useCartItem,
 } from './cart-parts';
-import { CatalogEmpty, CatalogPagination, CatalogProducts, CatalogRoot } from './catalog';
+import { CatalogEmpty, CatalogPagination, CatalogProducts, CatalogRoot, useCatalog } from './catalog';
 import type { SKU, SKUGroup } from './catalog-model';
 import { type CommerceEvent, type CommerceProviderProps, useMoney } from './commerce-provider';
 import { CommerceStorefront } from './commerce-storefront';
 import { frFR } from './locales/fr-fr';
-import { ProductCardAction, ProductCardPrice, ProductCardRoot, ProductImage } from './product-card';
+import {
+  ProductCardAction,
+  ProductCardBadge,
+  ProductCardDescription,
+  ProductCardImage,
+  ProductCardPrice,
+  ProductCardRoot,
+  ProductCardTitle,
+  ProductImage,
+  useProductCard,
+} from './product-card';
 import { ProductDetailsRoot, useProductDetails } from './product-details-context';
 import { ProductDetailsAddToCart, ProductDetailsOption } from './product-purchase';
+import type { SampleProduct } from './sample-cart';
 
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const storageKey = 'godaddy:commerce-storefront:cart:s';
@@ -673,3 +688,221 @@ describe('onEvent', () => {
     );
   });
 });
+
+interface RoutineSample extends SampleProduct {
+  category: string;
+  badge?: string;
+}
+
+const routine: RoutineSample[] = [
+  {
+    key: 'daily-cleanser',
+    name: 'Daily Cleanser',
+    price: 3200,
+    description: 'Gentle, pH-balanced foam.',
+    imageUrl: '/images/cleanser.jpg',
+    category: 'Cleanse',
+    badge: 'Bestseller',
+  },
+  { key: 'vitamin-c-serum', name: 'Vitamin C Serum', price: 6800, compareAtPrice: 7600, category: 'Treat' },
+];
+
+/** A host one-off that reads the host's own sample fields, or live product data once a store is connected. */
+function Eyebrow(): ReactElement | null {
+  const { sample, product } = useProductCard<RoutineSample>();
+  const category: string | undefined = sample ? sample.category : (product?.type ?? undefined);
+  return category ? <p data-testid='eyebrow'>{category}</p> : null;
+}
+
+function Count(): ReactElement {
+  const { count, isSample, status } = useCatalog();
+  return <output data-testid='count'>{`${status}:${count}:${isSample}`}</output>;
+}
+
+function HostLine(): ReactElement {
+  const { sample } = useCartItem<RoutineSample>();
+  return <p data-testid='line-category'>{sample?.category ?? 'live'}</p>;
+}
+
+const routineCard: ReactElement = (
+  <ProductCardRoot>
+    <ProductCardImage />
+    <ProductCardBadge />
+    <Eyebrow />
+    <ProductCardTitle />
+    <ProductCardDescription />
+    <ProductCardPrice />
+    <ProductCardAction />
+  </ProductCardRoot>
+);
+
+describe('host sample products', () => {
+  it('renders host samples through the same parts, with their images and own fields', async () => {
+    const api = mockApi({ state: 'unbound' });
+    mount(
+      <CatalogRoot sampleProducts={routine}>
+        <Count />
+        <CatalogProducts>{routineCard}</CatalogProducts>
+      </CatalogRoot>,
+      {},
+      '/shop',
+    );
+    const cards = await screen.findAllByRole('article');
+    expect(cards).toHaveLength(2);
+    expect(screen.getByTestId('count')).toHaveTextContent('ready:2:true');
+    const [cleanser, serum] = cards;
+    expect(within(cleanser).getByRole('img', { name: 'Daily Cleanser' })).toHaveAttribute(
+      'src',
+      '/images/cleanser.jpg',
+    );
+    // A sample has no product page, so its image is not a link.
+    expect(within(cleanser).queryByRole('link')).not.toBeInTheDocument();
+    expect(within(cleanser).getByRole('heading', { level: 2, name: 'Daily Cleanser' })).toBeVisible();
+    expect(within(cleanser).getByText('Gentle, pH-balanced foam.')).toBeVisible();
+    expect(within(cleanser).getByTestId('eyebrow')).toHaveTextContent('Cleanse');
+    expect(within(cleanser).getByText('$32.00')).toBeVisible();
+    expect(within(cleanser).queryByText('Sale')).not.toBeInTheDocument();
+    // Without an image the sample shows the labeled placeholder; a compare-at price shows the sale badge.
+    expect(within(serum).getByRole('img', { name: 'Vitamin C Serum: image unavailable' })).toBeVisible();
+    expect(within(serum).getByText('Sale')).toBeVisible();
+    expect(within(serum).getByText('$76.00').tagName).toBe('DEL');
+    expect(within(serum).getByTestId('eyebrow')).toHaveTextContent('Treat');
+    expect(api.mock.calls.every(([path]) => String(path).endsWith('/config'))).toBe(true);
+  });
+
+  it('keeps what was added in the sample cart, with the image and host fields', async () => {
+    const api = mockApi({ state: 'unbound' });
+    const onEvent = vi.fn();
+    mount(
+      <>
+        <CatalogRoot sampleProducts={routine}>
+          <CatalogProducts>{routineCard}</CatalogProducts>
+        </CatalogRoot>
+        <CartRoot>
+          <CartItems>
+            <CartItemRoot>
+              <CartItemImage />
+              <CartItemName />
+              <HostLine />
+            </CartItemRoot>
+          </CartItems>
+          <CartSubtotal />
+        </CartRoot>
+      </>,
+      { onEvent },
+      '/shop',
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Add Daily Cleanser to sample cart' }));
+    await screen.findAllByTestId('cart-item');
+    const page = document.querySelector<HTMLElement>('section[data-commerce-part="cart-root"]');
+    if (!page) throw new Error('no cart page');
+    const line = within(page).getByTestId('cart-item');
+    // The drawer opened on add and is modal, so the page behind it is out of the accessibility tree.
+    expect(within(line).getByText('Daily Cleanser').tagName).toBe('H3');
+    expect(line.querySelector('img')).toHaveAttribute('src', '/images/cleanser.jpg');
+    expect(within(line).getByTestId('line-category')).toHaveTextContent('Cleanse');
+    expect(within(page).getByText('Sample subtotal').nextElementSibling).toHaveTextContent('$32.00');
+    expect(onEvent).toHaveBeenCalledWith({
+      type: 'item-added',
+      skuId: null,
+      name: 'Daily Cleanser',
+      quantity: 1,
+      isSample: true,
+    });
+    expect(api.mock.calls.every(([path]) => String(path).endsWith('/config'))).toBe(true);
+  });
+
+  it('gives the same custom card live products once a store is connected', async () => {
+    mockStore();
+    mount(
+      <CatalogRoot sampleProducts={routine}>
+        <Count />
+        <CatalogProducts>{routineCard}</CatalogProducts>
+      </CatalogRoot>,
+      {},
+      '/shop',
+    );
+    expect(await screen.findByRole('heading', { level: 2, name: 'Mug' })).toBeVisible();
+    expect(screen.queryByText('Daily Cleanser')).not.toBeInTheDocument();
+    expect(screen.getByTestId('count')).toHaveTextContent('ready:2:false');
+    expect(screen.queryByTestId('eyebrow')).not.toBeInTheDocument();
+  });
+
+  it('reports the catalog while it loads', async () => {
+    let resolve: (value: Response) => void = () => {};
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) =>
+        String(input).endsWith('/config')
+          ? response({ cartScope: 's', currencyCode: 'USD' })
+          : new Promise<Response>((next) => {
+              resolve = next;
+            }),
+      ),
+    );
+    mount(
+      <CatalogRoot>
+        <Count />
+      </CatalogRoot>,
+      {},
+      '/shop',
+    );
+    await waitFor(() => expect(screen.getByTestId('count')).toHaveTextContent('loading:0:false'));
+    resolve(response({ error: 'down' }, 500));
+    await waitFor(() => expect(screen.getByTestId('count')).toHaveTextContent('error:0:false'));
+  });
+
+  it('sizes card images and their placeholders by the aspect property, square by default', async () => {
+    mockApi({ state: 'unbound' });
+    mount(
+      <CatalogRoot sampleProducts={routine}>
+        <CatalogProducts>{routineCard}</CatalogProducts>
+      </CatalogRoot>,
+      {},
+      '/shop',
+    );
+    await screen.findAllByRole('article');
+    const frames = document.querySelectorAll('[data-commerce-part="product-card-image"] > div');
+    expect(frames).toHaveLength(2);
+    for (const frame of frames) expect(frame).toHaveClass('aspect-(--commerce-card-image-aspect,1/1)');
+  });
+
+  it('keeps the built-in samples free of images', async () => {
+    mockApi({ state: 'unbound' });
+    mount(
+      <CatalogRoot sampleProducts>
+        <CatalogProducts>{routineCard}</CatalogProducts>
+      </CatalogRoot>,
+      {},
+      '/shop',
+    );
+    expect(await screen.findAllByRole('article')).toHaveLength(6);
+    expect(document.querySelector('img')).toBeNull();
+    expect(screen.queryByTestId('eyebrow')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [[], 'at least one'],
+    [[routine[0], { ...routine[1], key: 'daily-cleanser' }], 'unique'],
+    [[{ ...routine[0], key: '' }], 'unique'],
+    [[{ ...routine[0], price: 12.5 }], 'price'],
+    [[{ ...routine[0], compareAtPrice: -1 }], 'price'],
+  ])('rejects invalid samples %#', (samples, message) => {
+    mockApi({ state: 'unbound' });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mount(
+      <Boundary>
+        <CatalogRoot sampleProducts={samples as RoutineSample[]}>{null}</CatalogRoot>
+      </Boundary>,
+      {},
+      '/shop',
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
+  });
+});
+
+function mockApi(config: unknown) {
+  const fn = vi.fn(async (_input: RequestInfo | URL) => response(config));
+  vi.stubGlobal('fetch', fn);
+  return fn;
+}

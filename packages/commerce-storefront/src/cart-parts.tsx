@@ -21,7 +21,7 @@ import {
   renderLabel,
   usePartRegistry,
 } from './part';
-import { sampleCurrency, useSampleCart } from './sample-cart';
+import { type SampleProduct, sampleCurrency, useSampleCart } from './sample-cart';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 /** Props shared by every cart part. `className` is added to the part's outer element. */
@@ -310,9 +310,12 @@ function useCartItemInternal(part: string): CartItemState {
   return item;
 }
 
-/** Read the line from inside `CartItemRoot`, for custom item parts. */
-export function useCartItem(): CartItemState {
-  return useCartItemInternal('useCartItem');
+/**
+ * Read the line from inside `CartItemRoot`, for custom item parts. Pass the type of the site's samples, such as
+ * `useCartItem<MySample>()`, to read their own fields from `sample`.
+ */
+export function useCartItem<Sample extends SampleProduct = SampleProduct>(): CartItemState<Sample> {
+  return useCartItemInternal('useCartItem') as CartItemState<Sample>;
 }
 
 export interface CartItemsProps extends CartPartProps {

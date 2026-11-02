@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useCommerce } from './commerce-provider';
-import { sampleCurrency, useSampleCart } from './sample-cart';
+import { type SampleProduct, sampleCurrency, useSampleCart } from './sample-cart';
 
 /** One cart line, for custom cart parts. */
-export interface CartItemState {
+export interface CartItemState<Sample extends SampleProduct = SampleProduct> {
   /** Empty when the server returned a line without an ID. Such a line cannot be changed or removed. */
   readonly id: string;
   readonly name: string;
@@ -13,6 +13,8 @@ export interface CartItemState {
   /** The line total in minor units, or `null` when the server did not price it. */
   readonly subtotal: number | null;
   readonly currency: string;
+  /** The sample as it was added, with the site's own fields. `null` for a line in the connected store's cart. */
+  readonly sample: Sample | null;
 }
 
 /** Read-only cart contents: the connected store's cart, or the sample cart while no store is connected. */
@@ -41,10 +43,11 @@ export function useCart(): CartState {
           id: item.key,
           name: item.name,
           quantity: item.quantity,
-          imageUrl: null,
+          imageUrl: item.sample.imageUrl || null,
           options: [],
           subtotal: item.price * item.quantity,
           currency: sampleCurrency,
+          sample: item.sample,
         })),
         itemCount: sampleItems.reduce((total, item) => total + item.quantity, 0),
         subtotal: sampleItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -67,6 +70,7 @@ export function useCart(): CartState {
         })),
         subtotal: typeof item.totals?.subTotal?.value === 'number' ? item.totals.subTotal.value : null,
         currency: item.totals?.subTotal?.currencyCode ?? currency,
+        sample: null,
       })),
       itemCount: lines.reduce((total, item) => total + (item.quantity ?? 0), 0),
       subtotal: typeof subtotal === 'number' ? subtotal : null,
