@@ -943,6 +943,36 @@ describe('host sample products', () => {
     expect(logged).toHaveBeenCalledWith(expect.stringContaining('has an invalid price, 12.5'));
   });
 
+  it('keeps the live catalog when a sample entry later becomes undefined', async () => {
+    mockStore();
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    function Page(): ReactElement {
+      const [broken, setBroken] = useState(false);
+      return (
+        <>
+          <button type='button' onClick={() => setBroken(true)}>
+            Break samples
+          </button>
+          <CatalogRoot sampleProducts={(broken ? [undefined] : [routine[0]]) as RoutineSample[]}>
+            <CatalogProducts>{routineCard}</CatalogProducts>
+          </CatalogRoot>
+        </>
+      );
+    }
+    mount(
+      <Boundary>
+        <Page />
+      </Boundary>,
+      {},
+      '/shop',
+    );
+    expect(await screen.findByRole('heading', { level: 2, name: 'Mug' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Break samples' }));
+    expect(screen.getByRole('heading', { level: 2, name: 'Mug' })).toBeVisible();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await waitFor(() => expect(logged).toHaveBeenCalledWith(expect.stringContaining('entry 0 is undefined')));
+  });
+
   it('keeps the cards when an inline sample list is rebuilt with the same values', async () => {
     mockApi({ state: 'unbound' });
     let renders = 0;

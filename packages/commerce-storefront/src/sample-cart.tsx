@@ -96,6 +96,8 @@ export function sampleProblem(samples: readonly SampleProduct[]): string | null 
 
 const sameSample = (a: SampleProduct, b: SampleProduct): boolean => {
   if (a === b) return true;
+  // An entry that is not an object is never the same, so `sampleProblem` reports it instead of this throwing.
+  if (typeof a !== 'object' || !a || typeof b !== 'object' || !b) return false;
   const fields = Object.keys(a);
   return (
     fields.length === Object.keys(b).length &&
