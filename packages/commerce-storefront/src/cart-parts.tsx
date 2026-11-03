@@ -21,7 +21,7 @@ import {
   renderLabel,
   usePartRegistry,
 } from './part';
-import { sampleCurrency, useSampleCart } from './sample-cart';
+import { type SampleProduct, sampleCurrency, useSampleCart } from './sample-cart';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 /** Props shared by every cart part. `className` is added to the part's outer element. */
@@ -310,9 +310,13 @@ function useCartItemInternal(part: string): CartItemState {
   return item;
 }
 
-/** Read the line from inside `CartItemRoot`, for custom item parts. */
-export function useCartItem(): CartItemState {
-  return useCartItemInternal('useCartItem');
+/**
+ * Read the line from inside `CartItemRoot`, for custom item parts. Pass the type of the site's samples, such as
+ * `useCartItem<MySample>()`, to read their own fields from `sample`. The type is not checked: when the cart can hold
+ * samples from more than one catalog, read the site's own fields as possibly missing.
+ */
+export function useCartItem<Sample extends SampleProduct = SampleProduct>(): CartItemState<Sample> {
+  return useCartItemInternal('useCartItem') as CartItemState<Sample>;
 }
 
 export interface CartItemsProps extends CartPartProps {
@@ -383,10 +387,17 @@ export function CartItemRoot({ children, className }: CartItemRootProps): ReactE
 /** The line's product image. Renders nothing without one. */
 export function CartItemImage({ className }: CartPartProps): ReactElement | null {
   const { imageUrl } = useCartItemInternal('CartItemImage');
-  if (!imageUrl) return null;
+  // Keyed by URL, like `ProductImage`, so a new URL after a failure is requested again.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  if (!imageUrl || imageUrl === failedUrl) return null;
   return (
     <div {...partProps('cart-item-image', className)}>
-      <img src={imageUrl} alt='' className='h-20 w-20 bg-commerce-tint object-cover' />
+      <img
+        src={imageUrl}
+        alt=''
+        className='h-20 w-20 bg-commerce-tint object-cover'
+        onError={() => setFailedUrl(imageUrl)}
+      />
     </div>
   );
 }

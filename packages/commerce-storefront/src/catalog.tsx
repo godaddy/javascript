@@ -23,11 +23,18 @@ import {
   packagedCardClass,
 } from './product-card';
 import { useRootParams } from './root-params';
-import { sampleCurrency, sampleProducts } from './sample-cart';
+import {
+  builtInSamples,
+  type SampleProduct,
+  sameSamples,
+  sampleCurrency,
+  sampleProblem,
+  useSampleCart,
+} from './sample-cart';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
 
 type CatalogInternal =
-  | { source: 'sample' }
+  | { source: 'sample'; samples: readonly SampleProduct[] }
   | {
       source: 'live';
       products: UseQueryResult<SkuGroupsResult>;
@@ -50,7 +57,7 @@ interface CatalogEmptyInternal {
 }
 
 const CatalogEmptyContext = createContext<CatalogEmptyInternal | null>(null);
-const sampleCatalog: CatalogInternal = { source: 'sample' };
+const builtInCatalog: CatalogInternal = { source: 'sample', samples: builtInSamples };
 
 function useCatalogInternal(part: string): CatalogInternal {
   const context = useContext(CatalogContext);
@@ -58,13 +65,43 @@ function useCatalogInternal(part: string): CatalogInternal {
   return context;
 }
 
+/** Read-only catalog state for custom catalog parts rendered inside `CatalogRoot`. */
+export interface CatalogState {
+  /**
+   * Products on the current page: `0` while loading or after a first load fails. A failed refetch keeps the last page,
+   * so `status` can be `error` while `count` is above `0`.
+   */
+  readonly count: number;
+  readonly isSample: boolean;
+  /** Samples are always `ready`. */
+  readonly status: 'loading' | 'error' | 'ready';
+}
+
+/** Read how many products the catalog shows, and whether they are samples, for a custom summary. */
+export function useCatalog(): CatalogState {
+  const catalog = useCatalogInternal('useCatalog');
+  let count: number;
+  let status: CatalogState['status'] = 'ready';
+  if (catalog.source === 'sample') count = catalog.samples.length;
+  else {
+    count = catalog.nodes.length;
+    if (catalog.products.isPending) status = 'loading';
+    else if (catalog.products.isError) status = 'error';
+  }
+  const isSample: boolean = catalog.source === 'sample';
+  return useMemo(() => ({ count, isSample, status }), [count, isSample, status]);
+}
+
 export interface CatalogRootProps {
   children: ReactNode;
   /** Added to the root `<section>`. */
   className?: string;
-  /** Permit built-in examples only while the host confirms this site is unbound. */
-  sampleProducts?: boolean;
-  /** Products per page, a whole number of 1 or more. Defaults to 6. Samples are always one page of six. */
+  /**
+   * Products to show only while the server reports no connected store (`unbound`): `true` for the six packaged
+   * samples, or the site's own. Never shown once a store is connected. Defaults to `false`.
+   */
+  sampleProducts?: boolean | readonly SampleProduct[];
+  /** Products per page, a whole number of 1 or more. Defaults to 6. Samples are always one page. */
   pageSize?: number;
   /**
    * Keep the page cursor in the page URL, as `after`, so a reload or a shared link keeps the page. Defaults to
@@ -73,7 +110,7 @@ export interface CatalogRootProps {
   urlState?: boolean;
 }
 
-/** Loads one cursor page of products, or the built-in samples, and provides them to catalog parts. */
+/** Loads one cursor page of products, or the samples, and provides them to catalog parts. */
 export function CatalogRoot({
   children,
   className,
@@ -93,6 +130,25 @@ export function CatalogRoot({
   const empty = useMemo((): CatalogEmptyInternal => ({ register, custom }), [register, custom]);
   if (!Number.isSafeInteger(pageSize) || pageSize < 1)
     throw new Error(`CatalogRoot pageSize must be a whole number of 1 or more, not ${pageSize}.`);
+  const hostSamples: readonly SampleProduct[] | null = useStableSamples(
+    Array.isArray(sampleProducts) ? sampleProducts : null,
+  );
+  const problem: string | null = useMemo(() => hostSamples && sampleProblem(hostSamples), [hostSamples]);
+  // Thrown only while the samples would show. Once a store is connected, a mistake in a list that is no longer shown
+  // must not take down the live catalog, so development builds log it instead.
+  if (problem && connection === 'unbound') throw new Error(problem);
+  useEffect(() => {
+    if (problem && process.env.NODE_ENV !== 'production')
+      console.error(`[gd-commerce-storefront] ${problem}`);
+  }, [problem]);
+  const { refresh } = useSampleCart();
+  useEffect(() => {
+    if (hostSamples && !problem && connection === 'unbound') refresh(hostSamples);
+  }, [hostSamples, problem, connection, refresh]);
+  const sampleCatalog = useMemo(
+    (): CatalogInternal => (hostSamples ? { source: 'sample', samples: hostSamples } : builtInCatalog),
+    [hostSamples],
+  );
   let content: ReactElement;
   if (connection === 'ready')
     content = (
@@ -120,6 +176,14 @@ export function CatalogRoot({
       <CatalogEmptyContext.Provider value={empty}>{content}</CatalogEmptyContext.Provider>
     </StorefrontSurface>
   );
+}
+
+/** The previous list while the samples and their fields are unchanged, so an inline list does not rebuild the cards. */
+function useStableSamples(samples: readonly SampleProduct[] | null): readonly SampleProduct[] | null {
+  const [stable, setStable] = useState(samples);
+  const same: boolean = stable === samples || (!!stable && !!samples && sameSamples(stable, samples));
+  if (!same) setStable(samples);
+  return same ? stable : samples;
 }
 
 function CatalogLoader({
@@ -221,11 +285,6 @@ function summary(catalog: CatalogInternal): { key: StorefrontMessageKey; values?
 export const catalogGridClass: string =
   'grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] lg:gap-y-12';
 
-const sampleItems: { key: string; item: ProductCardItem }[] = sampleProducts.map((sample) => ({
-  key: sample.key,
-  item: { source: 'sample', sample },
-}));
-
 const packagedCard: ReactElement = (
   <ProductCardRoot className={packagedCardClass}>
     <PackagedCardParts />
@@ -247,12 +306,13 @@ export function CatalogProducts({ className, children }: CatalogProductsProps): 
   // `{custom && <ProductCardRoot>…}` with `custom` false still gets a card, not an empty slot per product.
   const card: ReactNode = hasChildren(children) ? children : packagedCard;
   const nodes: SKUGroup[] | null = catalog.source === 'live' ? catalog.nodes : null;
+  const samples: readonly SampleProduct[] | null = catalog.source === 'sample' ? catalog.samples : null;
   const items = useMemo(
     (): { key: string; item: ProductCardItem }[] =>
       nodes
         ? nodes.map((product) => ({ key: product.id ?? '', item: { source: 'live', product } }))
-        : sampleItems,
-    [nodes],
+        : (samples ?? []).map((sample) => ({ key: sample.key, item: { source: 'sample', sample } })),
+    [nodes, samples],
   );
   const products = catalog.source === 'live' ? catalog.products : null;
   const { messages } = useCommerce();
@@ -275,7 +335,7 @@ export function CatalogProducts({ className, children }: CatalogProductsProps): 
         {products?.isPending
           ? [0, 1, 2].map((placeholder: number) => (
               <div key={placeholder} aria-hidden='true' className='motion-safe:animate-pulse'>
-                <div className='aspect-square bg-commerce-tint-strong' />
+                <div className='aspect-(--commerce-card-image-aspect,1/1) bg-commerce-tint-strong' />
                 <div className='space-y-2 pt-3'>
                   <div className='h-4 w-2/3 rounded bg-commerce-tint-strong' />
                   <div className='h-4 w-1/4 rounded bg-commerce-tint-strong' />
@@ -356,8 +416,8 @@ export interface CatalogProps {
   description?: string;
   /** @deprecated To render the page's own H1, compose `CatalogRoot` without `CatalogHeader` instead. */
   showHeader?: boolean;
-  /** Permit built-in examples only while the host confirms this site is unbound. */
-  sampleProducts?: boolean;
+  /** Products to show only while no store is connected, as in `CatalogRoot`. */
+  sampleProducts?: boolean | readonly SampleProduct[];
   /** Products per page. Defaults to 6. */
   pageSize?: number;
 }

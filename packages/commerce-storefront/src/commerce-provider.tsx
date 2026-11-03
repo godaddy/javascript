@@ -126,6 +126,11 @@ export type StorefrontTheme = CSSProperties & {
   '--commerce-sale'?: string;
   /** Text on the Sale badge. Defaults to white. */
   '--commerce-on-sale'?: string;
+  /**
+   * The aspect ratio of catalog card images and their loading placeholders, such as `3 / 4`. Defaults to `1 / 1`.
+   * Can also be set on a card or any element around it.
+   */
+  '--commerce-card-image-aspect'?: string;
 };
 
 /** The attribute value a host can give a swatch, such as `{ attribute: 'color', name: 'forest', label: 'Forest' }`. */
