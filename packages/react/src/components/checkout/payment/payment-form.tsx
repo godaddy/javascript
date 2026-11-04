@@ -28,6 +28,7 @@ import GooglePayIcon from '@/components/checkout/payment/icons/GooglePay';
 import MercadoPagoIcon from '@/components/checkout/payment/icons/MercadoPago';
 import PayPalIcon from '@/components/checkout/payment/icons/PayPal';
 import PazeIcon from '@/components/checkout/payment/icons/Paze';
+import RazorpayIcon from '@/components/checkout/payment/icons/Razorpay';
 import {
   hasPaymentMethodButton,
   hasPaymentMethodForm,
@@ -88,6 +89,12 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   mercadopago: <MercadoPagoIcon className='h-5 w-8' />,
   offline: <Wallet className='h-5 w-5' />,
   ccavenue: <CcavenueIcon className='h-5 w-5' />,
+  razorpay: <RazorpayIcon className='h-5 w-5' />,
+};
+
+type SessionPaymentMethodConfig = {
+  processor: AvailablePaymentProviders;
+  checkoutTypes: string[];
 };
 
 export function PaymentForm(
@@ -101,6 +108,8 @@ export function PaymentForm(
     setCheckoutErrors,
     requiredFields,
     godaddyPaymentsConfig,
+    paypalConfig,
+    razorpayConfig,
   } = useCheckoutContext();
   const form = useFormContext();
   const paymentMethod = form.watch('paymentMethod');
@@ -113,9 +122,27 @@ export function PaymentForm(
     paymentMethod === PaymentMethodType.ACH;
   const canOfferShippingAddressAsBilling =
     useCanOfferShippingAddressAsBilling();
-  const methodConfig = useGetSelectedPaymentMethod(
+  const rawMethodConfig = useGetSelectedPaymentMethod(
     paymentMethod as PaymentMethodValue
   );
+  // TEMP FOR TESTING — DO NOT COMMIT: mirrors the availablePaymentMethods
+  // bypass below. session.paymentMethods.paypal can be null even when PayPal
+  // is actually configured (only paymentProviderConfiguration.paypal gets
+  // resolved by discovery on a session created with explicit paymentMethods
+  // input). Without this, useGetSelectedPaymentMethod returns null for
+  // PayPal, so getCheckoutButton() bails out at `if (!methodConfig) return
+  // null` and the "Pay now" button never renders — even though PayPal is
+  // selectable in the accordion thanks to the bypass below.
+  const methodConfig =
+    rawMethodConfig ??
+    (paymentMethod === PaymentMethodType.PAYPAL &&
+    paypalConfig?.clientId?.trim()
+      ? {
+          type: PaymentMethodType.PAYPAL as PaymentMethodValue,
+          processor: PaymentProvider.PAYPAL,
+          checkoutTypes: [CheckoutType.STANDARD],
+        }
+      : null);
   const { isPoyntLoaded } = useLoadPoyntCollect();
 
   const [pazeSupported, setPazeSupported] = useState<boolean | null>(null);
@@ -131,6 +158,12 @@ export function PaymentForm(
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
   const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
   const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
+  // Both the container and each individual method are nullable on the session,
+  // so the cast has to admit null on both levels.
+  const configuredPaymentMethods = session?.paymentMethods as unknown as
+    | Partial<Record<PaymentMethodValue, SessionPaymentMethodConfig | null>>
+    | null
+    | undefined;
 
   // Helper function to get translated payment method labels
   const getPaymentMethodLabel = useCallback(
@@ -154,6 +187,8 @@ export function PaymentForm(
           return t.payment.methods.mercadopago;
         case PaymentMethodType.CCAVENUE:
           return t.payment.methods.ccavenue;
+        case PaymentMethodType.RAZORPAY:
+          return t.payment.methods.razorpay;
         default:
           return key;
       }
@@ -183,6 +218,8 @@ export function PaymentForm(
           return t.payment.descriptions?.mercadopago;
         case PaymentMethodType.CCAVENUE:
           return t.payment.descriptions?.ccavenue;
+        case PaymentMethodType.RAZORPAY:
+          return t.payment.descriptions?.razorpay;
         default:
           return undefined;
       }
@@ -242,15 +279,28 @@ export function PaymentForm(
   const hasGoDaddyBusinessId = !!businessId;
 
   const availablePaymentMethods = React.useMemo(() => {
-    if (!session?.paymentMethods) return [];
-    return Object.keys(session.paymentMethods).filter(key => {
-      const method = session.paymentMethods?.[key as PaymentMethodValue];
+    if (!configuredPaymentMethods) return [];
+    return Object.keys(configuredPaymentMethods).filter(key => {
+      const method = configuredPaymentMethods[key as PaymentMethodValue];
+
+      // TEMP FOR TESTING — DO NOT COMMIT: session.paymentMethods.paypal can
+      // be null on a session created with explicit paymentMethods input
+      // (only paymentProviderConfiguration gets resolved by discovery in
+      // that case). Only treat a null paypal method as "standard" when real
+      // PayPal SDK config actually exists. (Razorpay's equivalent signal,
+      // paymentProviderConfiguration.razorpay.configured, is checked in the
+      // stable gating block below instead.)
+      const isPayPalWithRealConfig =
+        key === PaymentMethodType.PAYPAL && !!paypalConfig?.clientId?.trim();
+      const effectiveCheckoutTypes =
+        method?.checkoutTypes ??
+        (isPayPalWithRealConfig ? [CheckoutType.STANDARD] : undefined);
 
       const baseCheck =
         PAYMENT_METHOD_ICONS[key as PaymentMethodValue] &&
-        method &&
-        Array.isArray(method.checkoutTypes) &&
-        method.checkoutTypes.includes(CheckoutType.STANDARD);
+        (method || isPayPalWithRealConfig) &&
+        Array.isArray(effectiveCheckoutTypes) &&
+        effectiveCheckoutTypes.includes(CheckoutType.STANDARD);
 
       // Match the business ID requirement used by Collect and its providers.
       if (
@@ -265,6 +315,27 @@ export function PaymentForm(
         method?.processor === PaymentProvider.GODADDY
       ) {
         return baseCheck && hasGoDaddyBusinessId;
+      }
+
+      // PayPal requires public SDK configuration (clientId at minimum) to
+      // initialize the JS SDK. Without it, the button would render a visible
+      // "configuration missing" error instead of a usable payment option.
+      // (method is null in the TEMP testing case above, so also allow
+      // through when method is missing but the key matches.)
+      if (
+        key === PaymentMethodType.PAYPAL &&
+        (method?.processor === PaymentProvider.PAYPAL || !method)
+      ) {
+        return baseCheck && !!paypalConfig?.clientId?.trim();
+      }
+
+      // Razorpay requires checkout-api to have resolved a working merchant
+      // account before the button is offered.
+      if (
+        key === PaymentMethodType.RAZORPAY &&
+        method?.processor === PaymentProvider.RAZORPAY
+      ) {
+        return baseCheck && razorpayConfig?.configured === true;
       }
 
       // Special handling for GoDaddy wallet payments — only show when device supports them
@@ -292,11 +363,13 @@ export function PaymentForm(
       return baseCheck;
     });
   }, [
-    session,
+    configuredPaymentMethods,
     hasGoDaddyBusinessId,
     pazeSupported,
     applePaySupported,
     googlePaySupported,
+    paypalConfig?.clientId,
+    razorpayConfig?.configured,
   ]);
 
   const shouldShowBilling =
@@ -454,7 +527,7 @@ export function PaymentForm(
                   {filteredPaymentMethods.map(
                     ([key, { label, icon }], index, array) => {
                       const itemMethodConfig =
-                        session?.paymentMethods?.[key as PaymentMethodValue];
+                        configuredPaymentMethods?.[key as PaymentMethodValue];
                       const itemMethodForm = itemMethodConfig
                         ? getPaymentMethodForm(
                             key as PaymentMethodValue,

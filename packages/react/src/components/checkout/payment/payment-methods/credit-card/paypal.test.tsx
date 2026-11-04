@@ -142,6 +142,19 @@ describe('PayPalCreditCardForm', () => {
     restoreWindowLocation();
   });
 
+  it('returns fundingSource.paymentReference from createOrder for Card Fields', async () => {
+    // PayPal Card Fields require the PayPal order id. INIT authorize puts it on
+    // fundingSource.paymentReference; transactionRefNum is often null.
+    renderPayPalCardFields();
+
+    let orderId: string | undefined;
+    await act(async () => {
+      orderId = await createOrder();
+    });
+
+    expect(orderId).toBe('order_razorpay_123');
+  });
+
   it('confirms with the authorized tip, not one that changed before approval', async () => {
     // Tokenisation and 3DS sit between `createOrder` and `onApprove`, and the
     // tip can move on its own across that gap — a percentage preset re-derives

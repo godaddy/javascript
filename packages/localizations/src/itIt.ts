@@ -117,6 +117,7 @@ export const itIt = {
       ach: 'Conto Bancario',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Paga con CCAvenue',
+      razorpay: 'Razorpay',
     },
     descriptions: {
       creditCard: '',
@@ -129,6 +130,7 @@ export const itIt = {
       mercadopago:
         'Usa il modulo MercadoPago qui sotto per completare l’acquisto in modo sicuro.',
       ccavenue: '',
+      razorpay: '',
     },
     noMethodsAvailable: 'Nessun metodo di pagamento disponibile',
     cardNumber: 'Numero della carta',
