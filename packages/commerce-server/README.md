@@ -79,6 +79,38 @@ report `unbound` again only after it is deliberately disconnected. The storefron
 the generic sample products and local sample cart; this server never creates sample Commerce
 records or simulates checkout.
 
+#### A site before its store connects
+
+A template that shows the storefront's sample products before a store connects needs the catalog routes and an
+explicit connection state. Here `COMMERCE_CONNECTION_STATE` is a host-owned setting, set to `unbound` when the site
+is created and to `ready` by the host's connection flow. Read it from whatever records the connection; never derive
+it from missing `GODADDY_*` variables.
+
+```ts
+import express from 'express';
+import { createCommerceCatalogRouter, createRuntimeCommerceConfiguration } from '@godaddy/gd-commerce-server';
+
+const runtime = createRuntimeCommerceConfiguration();
+const configuration = {
+  ...runtime,
+  readConnectionState() {
+    const state = process.env.COMMERCE_CONNECTION_STATE;
+    if (state === 'unbound' || state === 'connecting' || state === 'ready') return state;
+    throw new Error('COMMERCE_CONNECTION_STATE must be unbound, connecting, or ready.');
+  },
+};
+
+const app = express();
+app.use(express.json());
+// Before static files and any single-page app or SSR fallback, which would answer /api/commerce with HTML.
+app.use('/api/commerce', createCommerceCatalogRouter(configuration));
+app.use(express.static('dist'));
+```
+
+`createCommerceCatalogRouter` exposes no checkout routes, so a site without checkout needs no `checkoutReturnUrls`.
+`GET /api/commerce/config` should return `{"state":"unbound"}` as JSON. If it returns the app's HTML page, the
+router is not mounted, or a fallback route runs before it.
+
 ## Errors
 
 Every route reports failures the same way. The body is `{ "error": "<customer-facing message>", "code": "<code>", "requestId": "<id>" }` (order-status also includes `success: false`). The same id is passed to the logger. Bodies never contain upstream messages, configuration details, or credentials.

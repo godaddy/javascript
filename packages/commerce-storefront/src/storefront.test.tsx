@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode, useState } from 'react';
 import { Link, MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import { ApiError, CartIdStorage, money, request } from './api';
+import { ApiError, CartIdStorage, checkedFetch, money, request } from './api';
 import { AddToCartButton, CartButton } from './cart';
 import { addToCart, type CartOrder } from './cart-model';
 import { Catalog } from './catalog';
@@ -536,6 +536,46 @@ describe('storage and transport', () => {
     if (!(error instanceof ApiError)) throw error;
     expect(error.status).toBe(502);
     expect(error.cause).toBeInstanceOf(SyntaxError);
+  });
+  it('reports an HTML page served for an API route as an unavailable store', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response('<!doctype html><html></html>', {
+            status: 200,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          }),
+      ),
+    );
+    const failures = await Promise.all([
+      request('/config').catch((cause: unknown) => cause),
+      request('/config?retry=1').catch((cause: unknown) => cause),
+      addToCart(null, { skuId: 'mug', name: 'Mug', quantity: 1 }, checkedFetch).catch(
+        (cause: unknown) => cause,
+      ),
+    ]);
+    for (const failure of failures) {
+      expect(failure).toBeInstanceOf(ApiError);
+      expect(failure).toHaveProperty('message', 'The store could not be reached. Please retry.');
+      expect(failure).toHaveProperty('text', { key: 'apiUnavailable' });
+    }
+    // One hint per path, naming the route to mount.
+    expect(error).toHaveBeenCalledTimes(2);
+    expect(error.mock.calls[0]?.[0]).toContain('/api/commerce/config returned an HTML page instead of JSON');
+    expect(error.mock.calls[1]?.[0]).toContain('/api/commerce/cart returned an HTML page');
+  });
+  it('shows the unavailable-store message in the catalog when the API route serves HTML', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('<!doctype html>', { headers: { 'Content-Type': 'text/html' } })),
+    );
+    mount(<Catalog sampleProducts />);
+    expect(await screen.findByText('The store could not be reached. Please retry.')).toBeVisible();
+    expect(screen.queryByText(/Unexpected token/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Product 1')).not.toBeInTheDocument();
   });
   it('formats currency minor units according to the currency exponent', () => {
     expect(money(1234, 'USD')).toBe('$12.34');

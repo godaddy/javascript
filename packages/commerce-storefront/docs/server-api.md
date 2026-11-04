@@ -9,7 +9,7 @@ Server implementations can use GoDaddy Commerce APIs or their existing integrati
 - Requests use same-origin browser credentials. JSON writes set `Content-Type: application/json`.
 - Cart, catalog and checkout requests include `X-Commerce-Scope` from `/config`. Validate that scope against the server's current store/channel binding, especially before writes. Treat it as a stale-binding guard, not authorization. Authenticate and authorize requests independently.
 - Read requests use `cache: no-store`, cancellation, and a 15-second timeout. The initial cart creation/add request is also a write and is never retried automatically.
-- Return a non-2xx response with `{ "error": "A useful customer-facing message" }` for failure. HTML error pages are also handled as failures.
+- Return a non-2xx response with `{ "error": "A useful customer-facing message" }` for failure. HTML error pages are also handled as failures, and so is a successful `text/html` response, such as a single-page app fallback answering an unmounted route.
 - Only cart reads with HTTP 404 or 410 clear an expired saved cart. Network errors, 401/403/409/5xx, and other failures preserve the ID and block writes until hydration succeeds.
 - Resolve prices and availability on the server. The cart does not calculate shipping, taxes, or discounts; it explains that they are calculated at checkout. Browser SKU names and quantities are input, not pricing authority. Protect mutations against CSRF as appropriate for the host application's authentication.
 

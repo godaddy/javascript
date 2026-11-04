@@ -512,6 +512,16 @@ Cart mutations share one queue, including initial cart creation. The cart ID is 
 
 Changing the server-provided cart scope resets cart state and prevents old responses from affecting the new connection. A failed configuration refresh temporarily disables commerce and also invalidates pending responses. Normal configuration loading and failures do not unmount host content.
 
+## Troubleshooting
+
+**"The store could not be reached" with `returned an HTML page instead of JSON` in the console.** A request under
+`/api/commerce` got the application's HTML page. The Commerce routes are not mounted on this origin, or a static
+file, single-page app or SSR fallback route answers before them. Mount them at `/api/commerce` ahead of those
+routes; with a separate API server in development, proxy `/api/commerce` to it. Opening `/api/commerce/config` in
+the browser should return JSON. A missing route never shows sample products, even with `sampleProducts`: the server
+must report `state: 'unbound'`. See [Before a store is connected](#before-a-store-is-connected) and the server
+package's [example for a site before its store connects](../commerce-server/README.md#a-site-before-its-store-connects).
+
 ## Guides
 
 - [Server API contract](docs/server-api.md)
