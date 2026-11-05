@@ -73,11 +73,13 @@ export const checkedFetch: typeof globalThis.fetch = async (
   init?: RequestInit,
 ): Promise<Response> => {
   const response: Response = await fetch(input, init);
-  // An unmounted route behind a single-page app fallback answers with the app's HTML page and a 200.
-  if (response.ok && /^\s*text\/html\b/i.test(response.headers.get('Content-Type') ?? '')) {
+  // An unmounted route answers with the app's HTML page: a 200 from a single-page app fallback, or a 404 page. It is
+  // reported as a 502, so an HTML 404 never reads as an expired cart and clears the saved cart ID. A 5xx HTML page
+  // comes from a gateway in front of the API and is handled below.
+  if (response.status < 500 && /^\s*text\/html\b/i.test(response.headers.get('Content-Type') ?? '')) {
     warnHtmlResponse(input);
     const text = { key: 'apiUnavailable' } as const;
-    throw new ApiError(formatMessage(enUS, text.key), response.status, { text });
+    throw new ApiError(formatMessage(enUS, text.key), 502, { text });
   }
   if (!response.ok) {
     const data: string = await response.text();

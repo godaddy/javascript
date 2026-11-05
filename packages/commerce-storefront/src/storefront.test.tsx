@@ -207,6 +207,19 @@ describe('shared cart', () => {
       expect(view.context().error).toBeNull();
     },
   );
+  it('keeps a saved cart when the cart route answers with an HTML 404 page', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    localStorage.setItem(storageKey, 'existing');
+    mockApi((path) =>
+      path.endsWith('/config')
+        ? response(configuration)
+        : new Response('<!doctype html>', { status: 404, headers: { 'Content-Type': 'text/html' } }),
+    );
+    const view = mount();
+    await connected(view);
+    expect(localStorage.getItem(storageKey)).toBe('existing');
+    expect(view.context().error).toBe('The store could not be reached. Please retry.');
+  });
   it('starts a new cart after the server reports that a completed order is no longer a draft', async () => {
     localStorage.setItem(storageKey, 'completed-cart');
     const api = mockApi((path, init) => {
@@ -542,9 +555,10 @@ describe('storage and transport', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(
-        async () =>
+        async (input: RequestInfo | URL) =>
           new Response('<!doctype html><html></html>', {
-            status: 200,
+            // A single-page app fallback answers with a 200; a server without one answers with a 404 page.
+            status: String(input).includes('retry') ? 404 : 200,
             headers: { 'Content-Type': 'text/html; charset=utf-8' },
           }),
       ),
@@ -560,6 +574,7 @@ describe('storage and transport', () => {
       expect(failure).toBeInstanceOf(ApiError);
       expect(failure).toHaveProperty('message', 'The store could not be reached. Please retry.');
       expect(failure).toHaveProperty('text', { key: 'apiUnavailable' });
+      expect(failure).toHaveProperty('status', 502);
     }
     // One hint per path, naming the route to mount.
     expect(error).toHaveBeenCalledTimes(2);
