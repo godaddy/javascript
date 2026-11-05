@@ -106,7 +106,9 @@ describe('Commerce scoped routes', () => {
       res as unknown as Response,
     );
     expect(gqlRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ variables: { id: 'product', attributeValues: ['red', 'large'] } }),
+      expect.objectContaining({
+        variables: { channelId: 'channel-1', id: 'product', attributeValues: ['red', 'large'] },
+      }),
     );
     const query: string = vi.mocked(gqlRequest).mock.calls[0]?.[0].query ?? '';
     expect(query).toContain('prices(first: 10)');
@@ -114,7 +116,7 @@ describe('Commerce scoped routes', () => {
     expect(query).toContain('attributeValues(first: 50) {');
     expect(query).toContain('pageInfo { hasNextPage }');
     expect(query).toContain(
-      'activeSkuGroups: skuGroups(id: { in: [$id] }, status: { eq: "ACTIVE" }, first: 1)',
+      'activeSkuGroups: skuGroups(id: { in: [$id] }, channelId: { eq: $channelId }, status: { eq: "ACTIVE" }, first: 1)',
     );
     expect(query).toMatch(/skuGroup\(id: \$id\) \{\s+id\s+name/);
     expect(query).not.toMatch(/^\s+status\s*$/m);

@@ -48,6 +48,8 @@ Hosts with their own configuration service can implement `CommerceConfiguration`
 
 `createCommerceCatalogRouter(configuration)` installs catalog, public configuration, and cart routes. `createGoDaddyPaymentsRouter(configuration, checkoutReturnUrls)` installs checkout and read-only order-status routes without requiring catalog UI. `createCommerceRouter({ configuration })` installs both by default or accepts explicit feature flags.
 
+Product lists and product details use the channel from the server configuration and request only `ACTIVE` products. Search, category filters, and explicit product IDs retain that channel filter. Direct links to products unavailable on that channel return 404. Browser query parameters cannot select a different channel.
+
 The HTTP checkout route accepts an existing `draftOrderId` or a direct `skuId`; Commerce resolves catalog prices. It rejects `lineItemData`. For non-catalog charges such as fixed-price deposits, calculate the amount on the server and call `createCheckoutSession(params, configuration)` directly. Never forward browser-supplied prices to this trusted helper. Server callers can also use `getOrderStatus(orderId, configuration)` without an HTTP loopback.
 
 ## Checkout return destinations

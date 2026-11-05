@@ -127,6 +127,7 @@ export interface LabelFilter {
 }
 
 export interface SkuGroupsVariables {
+  channelId: string;
   first?: number | null;
   after?: string | null;
   id?: StringInFilter;
@@ -135,6 +136,7 @@ export interface SkuGroupsVariables {
 }
 
 export interface SkuGroupVariables {
+  channelId: string;
   id: string;
   first?: number | null;
   /** Attribute value `name` fields — the catalog API's `has` filter matches by `name`, not `id`. */
@@ -158,6 +160,7 @@ export interface SkuResult {
 }
 
 export interface ProductGridVariablesInput {
+  channelId: string;
   first?: number | null;
   after?: string | null;
   productIds?: readonly string[];
@@ -166,6 +169,7 @@ export interface ProductGridVariablesInput {
 }
 
 export interface ProductDetailsVariablesInput {
+  channelId: string;
   productId: string;
   /** Attribute value `name` fields, not `id`. */
   selectedAttributeValues?: readonly string[];
@@ -204,6 +208,7 @@ export function buildSkuGroupsVariables(input: ProductGridVariablesInput): SkuGr
   const hasExplicitFilters = productIds.length > 0 || categoryIds.length > 0;
 
   return {
+    channelId: input.channelId,
     ...(input.first !== undefined && { first: input.first }),
     ...(input.after && { after: input.after }),
     ...(productIds.length > 0 && { id: { in: [...productIds] } }),
@@ -213,6 +218,7 @@ export function buildSkuGroupsVariables(input: ProductGridVariablesInput): SkuGr
 }
 
 export function buildSkuGroupVariables({
+  channelId,
   productId,
   selectedAttributeValues,
   skuGroupFirst,
@@ -220,6 +226,7 @@ export function buildSkuGroupVariables({
   const attributeValues = selectedAttributeValues ? [...selectedAttributeValues] : [];
 
   return {
+    channelId,
     id: productId,
     attributeValues,
     ...(!attributeValues.length && { first: skuGroupFirst ?? 50 }),

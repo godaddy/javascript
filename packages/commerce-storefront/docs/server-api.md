@@ -31,7 +31,7 @@ Server implementations can use GoDaddy Commerce APIs or their existing integrati
 
 `/checkout` is required only when checkout is enabled. `/discounts` is needed if the host uses `applyDiscount`. The standard catalog/detail/cart flow uses the other routes. All product/cart IDs in request paths are encoded.
 
-The companion `@godaddy/gd-commerce-server` returns 404 from product details when the group is missing or excluded by the catalog's ACTIVE filter, including direct links to inactive products.
+The companion `@godaddy/gd-commerce-server` filters product lists to ACTIVE groups available on the server-configured channel. It returns 404 from product details when the group is missing, inactive, or unavailable on that channel, including direct links. Browser callers cannot override the configured channel.
 
 ## Configuration
 
