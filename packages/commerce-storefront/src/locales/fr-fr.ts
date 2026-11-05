@@ -26,6 +26,7 @@ export const frFR: StorefrontMessages = {
   requestFailed: 'La requête a échoué. Veuillez réessayer.',
   requestFailedStatus: 'La requête a échoué ({status}). Veuillez réessayer.',
   requestTimeout: 'Le chargement des informations a pris trop de temps. Veuillez réessayer.',
+  apiUnavailable: 'La boutique est injoignable. Veuillez réessayer.',
   unknownError: 'Un problème est survenu. Veuillez réessayer.',
   storageUnavailable:
     'Votre navigateur ne peut pas enregistrer le panier. Gardez cette page ouverte pendant vos achats.',

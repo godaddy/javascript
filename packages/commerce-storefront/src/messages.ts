@@ -17,6 +17,7 @@ const englishText = {
   requestFailed: 'Commerce request failed. Please retry.',
   requestFailedStatus: 'Commerce request failed ({status}). Please retry.',
   requestTimeout: 'Commerce information took too long to load. Please retry.',
+  apiUnavailable: 'The store could not be reached. Please retry.',
   unknownError: 'Something went wrong. Please retry.',
   storageUnavailable: 'Your browser cannot save the cart. Keep this page open while shopping.',
   invalidAddItem: 'Select a product variant and a positive quantity.',

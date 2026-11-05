@@ -53,11 +53,34 @@ export class ApiError extends Error {
   }
 }
 
+const warnedHtmlPaths = new Set<string>();
+
+function warnHtmlResponse(input: RequestInfo | URL): void {
+  if (process.env.NODE_ENV === 'production') return;
+  const url: string = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  const path: string = url.split(/[?#]/)[0] ?? url;
+  // Configuration polling repeats the request, so each path is reported once.
+  if (warnedHtmlPaths.has(path)) return;
+  warnedHtmlPaths.add(path);
+  console.error(
+    `[gd-commerce-storefront] ${path} returned an HTML page instead of JSON. Mount the commerce routes at ` +
+      '/api/commerce on this origin, before any static file or single-page app fallback route.',
+  );
+}
+
 export const checkedFetch: typeof globalThis.fetch = async (
   input: RequestInfo | URL,
   init?: RequestInit,
 ): Promise<Response> => {
   const response: Response = await fetch(input, init);
+  // An unmounted route answers with the app's HTML page: a 200 from a single-page app fallback, or a 404 page. It is
+  // reported as a 502, so an HTML 404 never reads as an expired cart and clears the saved cart ID. A 5xx HTML page
+  // comes from a gateway in front of the API and is handled below.
+  if (response.status < 500 && /^\s*text\/html\b/i.test(response.headers.get('Content-Type') ?? '')) {
+    warnHtmlResponse(input);
+    const text = { key: 'apiUnavailable' } as const;
+    throw new ApiError(formatMessage(enUS, text.key), 502, { text });
+  }
   if (!response.ok) {
     const data: string = await response.text();
     const parsed: unknown = ((): unknown => {
