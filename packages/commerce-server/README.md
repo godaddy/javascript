@@ -48,9 +48,17 @@ Hosts with their own configuration service can implement `CommerceConfiguration`
 
 `createCommerceCatalogRouter(configuration)` installs catalog, public configuration, and cart routes. `createGoDaddyPaymentsRouter(configuration, checkoutReturnUrls)` installs checkout and read-only order-status routes without requiring catalog UI. `createCommerceRouter({ configuration })` installs both by default or accepts explicit feature flags.
 
-Product lists and product details use the channel from the server configuration and request only `ACTIVE` products. Search, category filters, and explicit product IDs retain that channel filter. Direct links to products unavailable on that channel return 404. Browser query parameters cannot select a different channel.
-
 The HTTP checkout route accepts an existing `draftOrderId` or a direct `skuId`; Commerce resolves catalog prices. It rejects `lineItemData`. For non-catalog charges such as fixed-price deposits, calculate the amount on the server and call `createCheckoutSession(params, configuration)` directly. Never forward browser-supplied prices to this trusted helper. Server callers can also use `getOrderStatus(orderId, configuration)` without an HTTP loopback.
+
+### Product channel visibility
+
+`GET /products` and `GET /products/:id` use the channel from the server configuration and request only `ACTIVE` products. Search, category filters, and explicit product IDs retain that channel filter. Product-detail requests for products unavailable on that channel return 404. Browser query parameters cannot select a different channel. Products configured for all channels remain available when the configured channel is active and registered to the store.
+
+If a configured `GODADDY_CHANNEL_ID` is inactive or is not registered to the configured store, the Catalog API returns an empty product list and product-detail requests return 404. These are successful empty results from the Catalog API, not configuration errors. When an expected catalog is empty, verify that the channel is active and registered to `GODADDY_STORE_ID`, then check product status and channel assignments. A missing `GODADDY_CHANNEL_ID` is different: the default configuration reader rejects it with 503 `not_configured`.
+
+The Catalog API resolves active store channels through the paginated `/v1/commerce/channels` endpoint when evaluating a channel filter. Those lookups are not currently cached by the Catalog API, so channel-filtered catalog requests can add upstream calls and latency.
+
+These checks control product browsing. `GET /skus/:id`, cart creation (`POST /cart`), and item addition (`POST /cart/:id/items`) forward SKU IDs without this package checking whether their products are available on the configured channel. A 404 from product details does not establish that a SKU lookup or cart write will be rejected. Hosts that require channel-based restrictions on these operations must enforce them before forwarding the SKU IDs; browsing filters are not an authorization boundary.
 
 ## Checkout return destinations
 

@@ -31,7 +31,9 @@ Server implementations can use GoDaddy Commerce APIs or their existing integrati
 
 `/checkout` is required only when checkout is enabled. `/discounts` is needed if the host uses `applyDiscount`. The standard catalog/detail/cart flow uses the other routes. All product/cart IDs in request paths are encoded.
 
-The companion `@godaddy/gd-commerce-server` filters product lists to ACTIVE groups available on the server-configured channel. It returns 404 from product details when the group is missing, inactive, or unavailable on that channel, including direct links. Browser callers cannot override the configured channel.
+The companion `@godaddy/gd-commerce-server` filters `GET /products` to ACTIVE groups available on the server-configured channel. It returns 404 from `GET /products/:id` when the group is missing, inactive, or unavailable on that channel, including direct product links. Browser callers cannot override the configured channel. This browsing filter does not check product-channel eligibility for `GET /skus/:id`, cart creation, or item addition by SKU ID; hosts must enforce any required restrictions on those operations. See the [server package's channel visibility notes][server-channel-visibility] for stale-channel troubleshooting and upstream lookup costs.
+
+[server-channel-visibility]: ../../commerce-server/README.md#product-channel-visibility
 
 ## Configuration
 
