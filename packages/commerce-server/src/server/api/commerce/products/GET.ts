@@ -6,6 +6,7 @@
  * the catalog subgraph directly so the browser never sees `X-Store-ID` /
  * `X-Client-ID` and the server can layer caching, abuse protection, or
  * per-tenant filtering later without touching the client.
+ * Only ACTIVE products available on the server-configured channel are returned.
  *
  * Query params (all optional):
  *   first        - page size (number)
@@ -32,8 +33,9 @@ import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 // Cards use group pricing/media and SKU identity/inventory for quick-add.
 // Nested SKU price money fields would exceed the catalog API's depth limit of 10.
 const skuGroupsQuery = `
-  query SkuGroups($first: Int, $after: String, $id: SKUGroupIdsFilter, $listId: ListIdFilter, $label: LabelFilter) {
+  query SkuGroups($channelId: String!, $first: Int, $after: String, $id: SKUGroupIdsFilter, $listId: ListIdFilter, $label: LabelFilter) {
     skuGroups(
+      channelId: { eq: $channelId }
       first: $first
       after: $after
       id: $id
@@ -134,9 +136,10 @@ function asNumber(value: unknown): number | undefined {
 async function listProducts(req: Request, res: Response): Promise<void> {
   const config: CommerceConfig = readCommerceConfigForResponse(res);
   assertCommerceCartScope(req, config);
-  const { storeId, clientId, apiBaseUrl } = config;
+  const { storeId, channelId, clientId, apiBaseUrl } = config;
 
   const variables = buildSkuGroupsVariables({
+    channelId,
     first: asNumber(req.query.first) ?? 24,
     after: typeof req.query.after === 'string' ? req.query.after : undefined,
     searchQuery: typeof req.query.searchQuery === 'string' ? req.query.searchQuery : undefined,
