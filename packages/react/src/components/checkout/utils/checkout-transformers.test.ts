@@ -12,6 +12,7 @@ const DeliveryMethods = {
 import {
   mapOrderToFormValues,
   mapSkusToItemsDisplay,
+  normalizePhoneForRazorpay,
 } from './checkout-transformers';
 
 type DeepPartial<T> = T extends Array<infer U>
@@ -25,6 +26,26 @@ type DeepPartial<T> = T extends Array<infer U>
 type DraftOrderLineItem = NonNullable<DraftOrder['lineItems']>[number];
 type DraftOrderContact = NonNullable<DraftOrder['shipping']>;
 type DraftOrderAddress = NonNullable<DraftOrderContact['address']>;
+
+describe('normalizePhoneForRazorpay', () => {
+  it('preserves a valid E.164 phone number', () => {
+    expect(normalizePhoneForRazorpay('+442079460958')).toBe('+442079460958');
+  });
+
+  it('normalizes a national number only when its persisted country is known', () => {
+    expect(normalizePhoneForRazorpay('(201) 555-0123', 'US')).toBe(
+      '+12015550123'
+    );
+    expect(normalizePhoneForRazorpay('020 7946 0958', 'GB')).toBe(
+      '+442079460958'
+    );
+    expect(normalizePhoneForRazorpay('(201) 555-0123')).toBeUndefined();
+  });
+
+  it('omits invalid phone input', () => {
+    expect(normalizePhoneForRazorpay('not-a-phone', 'US')).toBeUndefined();
+  });
+});
 
 const money = (value: number, currencyCode = 'USD') => ({
   value,

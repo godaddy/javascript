@@ -25,6 +25,7 @@ import {
   type CheckoutFormData,
   checkoutContext,
 } from '@/components/checkout/checkout';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { DraftOrderSyncProvider } from '@/components/checkout/order/draft-order-sync-provider';
 import { PayPalCheckoutButton } from '@/components/checkout/payment/checkout-buttons/paypal/paypal';
 import { GoDaddyProvider } from '@/godaddy-provider';
@@ -66,9 +67,17 @@ const PAYPAL_ORDER_ID = 'paypal-order-1';
 
 let form: UseFormReturn<CheckoutFormData> | undefined;
 
-function renderPayPalButton({ enableTips = true, tipAmount = 0 } = {}) {
+function renderPayPalButton({
+  enableTips = true,
+  tipAmount = 0,
+  draftOrderOverrides,
+}: {
+  enableTips?: boolean;
+  tipAmount?: number;
+  draftOrderOverrides?: Parameters<typeof buildDraftOrder>[0];
+} = {}) {
   const session = buildCheckoutSession({ enableTips });
-  const draftOrder = buildDraftOrder();
+  const draftOrder = buildDraftOrder(draftOrderOverrides);
   mockGodaddyApi({ session, draftOrder });
   const queryClient = createTestQueryClient();
 
@@ -254,5 +263,41 @@ describe('PayPalCheckoutButton', () => {
     });
     expect(tipMinorUnitsInOrder(createdOrders[0])).toBe(0);
     expect(confirmInput()?.tipAmount).toBeUndefined();
+  });
+
+  it('requests NO_SHIPPING and omits shipping for a digital-only order', async () => {
+    // A digital-only order never collects a shipping address, so the stub
+    // (country-code-only) shipping object use-build-payment-request.ts builds
+    // must be dropped here, same as the pickup case already was — otherwise
+    // PayPal rejects it with POSTAL_CODE_REQUIRED for an address we never
+    // asked the buyer for.
+    renderPayPalButton({
+      draftOrderOverrides: {
+        lineItems: [
+          {
+            id: 'line-item-1',
+            name: 'Digital Game',
+            type: DeliveryMethods.DIGITAL,
+            fulfillmentMode: DeliveryMethods.DIGITAL,
+          },
+        ],
+      },
+    });
+    const createdOrders: Array<Record<string, unknown>> = [];
+
+    await act(async () => {
+      await getPayPalButtonsProps().createOrder?.(
+        {},
+        payPalActions(createdOrders)
+      );
+    });
+
+    const purchaseUnit = (
+      createdOrders[0].purchase_units as Array<Record<string, unknown>>
+    )[0];
+    expect(purchaseUnit.shipping).toBeUndefined();
+    expect(createdOrders[0].application_context).toMatchObject({
+      shipping_preference: 'NO_SHIPPING',
+    });
   });
 });

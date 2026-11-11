@@ -46,9 +46,11 @@ export function useAuthorizeCheckout() {
 
       // The tip is reported so redirect providers persist the one this call sent
       // instead of reading the form a second time across an await.
+      const transaction = result.authorizeCheckoutSession;
       return {
-        transactionRefNum:
-          result.authorizeCheckoutSession?.transactionRefNum ?? null,
+        transactionRefNum: transaction?.transactionRefNum ?? null,
+        fundingSource: transaction?.fundingSource ?? null,
+        references: transaction?.references ?? null,
         authorizedTipAmount: payload.tipAmount ?? null,
       };
     },

@@ -116,6 +116,7 @@ export const ptBr = {
       ach: 'Conta Bancária',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Pagar com CCAvenue',
+      razorpay: 'Razorpay',
     },
     descriptions: {
       creditCard: '',
@@ -128,6 +129,7 @@ export const ptBr = {
       mercadopago:
         'Use o formulário do MercadoPago abaixo para concluir sua compra com segurança.',
       ccavenue: '',
+      razorpay: '',
     },
     noMethodsAvailable: 'Nenhum método de pagamento disponível',
     cardNumber: 'Número do cartão',
