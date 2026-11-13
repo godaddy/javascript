@@ -17,7 +17,7 @@
  *
  * Body:
  *   currencyCode? - override the configured currency (defaults to GODADDY_CURRENCY_CODE)
- *   lineItems?    - [{ skuId, name, quantity }] added one-by-one after create
+ *   lineItems?    - [{ skuId, name, quantity, details?, metafields? }] added one-by-one after create
  *
  * Response: { cart: CartOrder | null }
  *   Same shape as GET /api/commerce/cart/:id and the other cart mutation

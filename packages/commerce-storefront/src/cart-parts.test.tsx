@@ -561,6 +561,47 @@ describe('composable cart', () => {
     expect(added).toHaveBeenCalledWith({ name: 'Product 2', quantity: 1, isSample: true });
   });
 
+  it('forwards details and metafields from a custom addItem call to the cart POST body', async () => {
+    const fetchMock = mockStore();
+    function CustomAdd(): ReactElement {
+      const { addItem } = useCommerce();
+      return (
+        <button
+          type='button'
+          onClick={() =>
+            void addItem({
+              skuId: 'sku-mug',
+              name: 'Mug',
+              quantity: 1,
+              details: {
+                productAssetUrl: 'https://cdn.test/design.png',
+                selectedAddons: [{ optionId: 'opt-1', values: [{ inputValue: 'Custom design 123' }] }],
+              },
+              metafields: [{ key: 'designId', value: 'design-123' }],
+            })
+          }
+        >
+          Add customized
+        </button>
+      );
+    }
+    render(app(<CustomAdd />));
+    await userEvent.click(screen.getByRole('button', { name: 'Add customized' }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const itemsCall = fetchMock.mock.calls.find(([input]) => String(input).includes('/items'));
+    const body = JSON.parse(String(itemsCall?.[1]?.body));
+    expect(body).toEqual({
+      skuId: 'sku-mug',
+      name: 'Mug',
+      quantity: 1,
+      details: {
+        productAssetUrl: 'https://cdn.test/design.png',
+        selectedAddons: [{ optionId: 'opt-1', values: [{ inputValue: 'Custom design 123' }] }],
+      },
+      metafields: [{ key: 'designId', value: 'design-123' }],
+    });
+  });
+
   it('renders the packaged drawer from CommerceStorefront with dividers between lines', async () => {
     mockStore();
     render(
