@@ -4,7 +4,7 @@ import { useParams } from 'react-router';
 import { request } from './api';
 import { catalogGridClass } from './catalog';
 import type { SKUGroup, SkuGroupsResult } from './catalog-model';
-import { useCommerce } from './commerce-provider';
+import { useCommerce, useMessage } from './commerce-provider';
 import { hasChildren, partProps } from './part';
 import { CatalogItemContext, PackagedCardParts, ProductCardRoot, packagedCardClass } from './product-card';
 import { StorefrontSurface } from './storefront-surface';
@@ -12,7 +12,7 @@ import { StorefrontSurface } from './storefront-surface';
 export interface RelatedProductsProps {
   /** The product to leave out. Defaults to the route's `:productId` parameter. */
   productId?: string;
-  /** The H2. Defaults to "You may also like". */
+  /** The H2. Defaults to "You may also like", or the provider's `relatedTitle` message. `null` leaves it out. */
   title?: ReactNode;
   /** The most products to show, a whole number from 1 to 24. Defaults to 4. */
   limit?: number;
@@ -36,7 +36,7 @@ const packagedCard: ReactElement = (
  */
 export function RelatedProducts({
   productId: productIdProp,
-  title = 'You may also like',
+  title,
   limit = 4,
   className,
   children,
@@ -44,6 +44,7 @@ export function RelatedProducts({
   const { productId: routeProductId = '' } = useParams();
   const productId: string = productIdProp ?? routeProductId;
   const { config, connection } = useCommerce();
+  const text = useMessage();
   const headingId = useId();
   // One extra, in case the current product is among them.
   const first: number = limit + 1;
@@ -71,10 +72,15 @@ export function RelatedProducts({
   const card: ReactNode = hasChildren(children) ? children : packagedCard;
   return (
     <StorefrontSurface>
-      <section aria-labelledby={headingId} {...partProps('related-products', className)}>
-        <h2 id={headingId} className='mb-6 text-xl font-semibold tracking-tight'>
-          {title}
-        </h2>
+      <section
+        aria-labelledby={title === null ? undefined : headingId}
+        {...partProps('related-products', className)}
+      >
+        {title !== null && (
+          <h2 id={headingId} className='mb-6 text-xl font-semibold tracking-tight'>
+            {title === undefined ? text('relatedTitle') : title}
+          </h2>
+        )}
         <div className={catalogGridClass}>
           {related.map((product) => (
             <CatalogItemContext.Provider key={product.id} value={{ source: 'live', product }}>

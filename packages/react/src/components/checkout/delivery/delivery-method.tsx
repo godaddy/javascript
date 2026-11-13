@@ -55,6 +55,7 @@ export function DeliveryMethodForm() {
     });
     if (value === DeliveryMethods.PICKUP) {
       form.setValue('shippingMethod', undefined, { shouldDirty: true });
+      form.setValue('shippingMethodAutoSelected', false);
     }
     track({
       eventId: eventIds.changeDeliveryMethod,

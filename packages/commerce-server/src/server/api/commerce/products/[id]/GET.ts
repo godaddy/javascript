@@ -2,7 +2,8 @@
  * GET /api/commerce/products/:id
  *
  * Proxy for the catalog `skuGroup` query — single-product (PDP) detail.
- * Only ACTIVE groups appear on a product page, matching the catalog list.
+ * Only ACTIVE groups available on the configured channel appear on a product
+ * page, matching the catalog list.
  * Re-call this route after the user picks attribute values to narrow the
  * SKU set (pass `?attributeValues=red&attributeValues=large`). Use the
  * `getSingleMatchedSku` helper returns the selected SKU, including price,
@@ -33,8 +34,8 @@ import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 type ProductDetailsResult = SkuGroupResult & { activeSkuGroups?: SkuGroupsResult['skuGroups'] };
 
 const skuGroupQuery = `
-  query SkuGroup($id: String!, $first: Int, $attributeValues: [String!] = []) {
-    activeSkuGroups: skuGroups(id: { in: [$id] }, status: { eq: "ACTIVE" }, first: 1) {
+  query SkuGroup($channelId: String!, $id: String!, $first: Int, $attributeValues: [String!] = []) {
+    activeSkuGroups: skuGroups(id: { in: [$id] }, channelId: { eq: $channelId }, status: { eq: "ACTIVE" }, first: 1) {
       edges { node { id } }
     }
     skuGroup(id: $id) {
@@ -139,9 +140,10 @@ async function readProduct(req: Request, res: Response): Promise<void> {
 
   const config: CommerceConfig = readCommerceConfigForResponse(res);
   assertCommerceCartScope(req, config);
-  const { storeId, clientId, apiBaseUrl } = config;
+  const { storeId, channelId, clientId, apiBaseUrl } = config;
 
   const variables = buildSkuGroupVariables({
+    channelId,
     productId,
     selectedAttributeValues: asStringArray(req.query.attributeValues),
     skuGroupFirst: asNumber(req.query.skuGroupFirst),

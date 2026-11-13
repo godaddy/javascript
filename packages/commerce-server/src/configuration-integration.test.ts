@@ -10,26 +10,30 @@ afterEach((): void => {
   vi.restoreAllMocks();
 });
 
-it('serves variant product details without querying SKUGroup.status', async (): Promise<void> => {
+it('serves variant product details only on the configured channel without querying SKUGroup.status', async (): Promise<void> => {
   const upstream = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const { query, variables } = JSON.parse(String(init?.body)) as {
       query: string;
-      variables: { id: string; attributeValues: string[] };
+      variables: { id: string; attributeValues: string[]; channelId?: string };
     };
     if (/^\s+status\s*$/m.test(query)) {
       return Response.json({ errors: [{ message: 'Cannot query field "status" on type "SKUGroup".' }] });
     }
     expect(query).toContain(
-      'activeSkuGroups: skuGroups(id: { in: [$id] }, status: { eq: "ACTIVE" }, first: 1)',
+      'activeSkuGroups: skuGroups(id: { in: [$id] }, channelId: { eq: $channelId }, status: { eq: "ACTIVE" }, first: 1)',
     );
-    expect(['shirt', 'archived-shirt']).toContain(variables.id);
+    expect(['shirt', 'other-shirt', 'archived-shirt']).toContain(variables.id);
+    const appliesChannelFilter = /channelId:\s*\{\s*eq:\s*\$channelId\s*\}/.test(query);
+    const productChannel = variables.id === 'other-shirt' ? 'channel-2' : 'channel-1';
+    const visible =
+      variables.id !== 'archived-shirt' && (!appliesChannelFilter || variables.channelId === productChannel);
     const skus = [
       { id: 'shirt-red', label: 'Red shirt' },
       { id: 'shirt-blue', label: 'Blue shirt' },
     ];
     return Response.json({
       data: {
-        activeSkuGroups: { edges: variables.id === 'shirt' ? [{ node: { id: 'shirt' } }] : [] },
+        activeSkuGroups: { edges: visible ? [{ node: { id: variables.id } }] : [] },
         skuGroup: {
           id: variables.id,
           label: 'Shirt',
@@ -101,7 +105,90 @@ it('serves variant product details without querying SKUGroup.status', async (): 
       code: 'not_found',
       requestId: expect.any(String),
     });
-    expect(upstream).toHaveBeenCalledTimes(3);
+    const otherChannel = await clientFetch(`${url.replace('/shirt', '/other-shirt')}?channelId=channel-2`);
+    expect(otherChannel.status).toBe(404);
+    expect(await otherChannel.json()).toEqual({
+      error: 'Product not found',
+      code: 'not_found',
+      requestId: expect.any(String),
+    });
+    expect(upstream).toHaveBeenCalledTimes(4);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+});
+
+it('filters product lists by the current server channel with every catalog filter', async (): Promise<void> => {
+  const environment = {
+    GODADDY_OAUTH_CLIENT_ID: 'client-1',
+    GODADDY_OAUTH_CLIENT_SECRET: 'secret-1',
+    GODADDY_STORE_ID: 'store-1',
+    GODADDY_CHANNEL_ID: 'channel-1',
+    GODADDY_CURRENCY_CODE: 'USD',
+  };
+  const products = [
+    { id: 'shirt', channelId: 'channel-1' },
+    { id: 'other-shirt', channelId: 'channel-2' },
+    { id: 'all-channels-shirt', channelId: null },
+  ];
+  const upstream = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const { query, variables } = JSON.parse(String(init?.body)) as {
+      query: string;
+      variables: { channelId?: string };
+    };
+    // Catalog products without custom channel assignments remain available on all channels.
+    const appliesChannelFilter = /channelId:\s*\{\s*eq:\s*\$channelId\s*\}/.test(query);
+    const visible = products.filter(
+      (product) =>
+        !appliesChannelFilter || product.channelId === null || product.channelId === variables.channelId,
+    );
+    return Response.json({ data: { skuGroups: { edges: visible.map(({ id }) => ({ node: { id } })) } } });
+  });
+  vi.stubGlobal('fetch', upstream);
+  const app = express();
+  app.use(
+    '/api/commerce',
+    createCommerceRouter({ configuration: createRuntimeCommerceConfiguration({ environment }) }),
+  );
+  const server = app.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  try {
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
+    const url = `http://127.0.0.1:${address.port}/api/commerce/products`;
+    const cases = [
+      ['', { first: 24 }],
+      ['?first=12&after=page-2', { first: 12, after: 'page-2' }],
+      ['?searchQuery=shirt', { first: 24, label: { contains: 'shirt' } }],
+      [
+        '?productIds=shirt&productIds=other-shirt&productIds=all-channels-shirt&searchQuery=ignored',
+        { first: 24, id: { in: ['shirt', 'other-shirt', 'all-channels-shirt'] } },
+      ],
+      [
+        '?categoryIds=clothing&categoryIds=sale&searchQuery=ignored',
+        { first: 24, listId: { in: ['clothing', 'sale'] } },
+      ],
+      ['?channelId=channel-2', { first: 24 }],
+    ] as const;
+    for (const [search, filters] of cases) {
+      const response = await clientFetch(`${url}${search}`);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        skuGroups: { edges: [{ node: { id: 'shirt' } }, { node: { id: 'all-channels-shirt' } }] },
+      });
+      const request = JSON.parse(String(upstream.mock.lastCall?.[1]?.body));
+      expect(request.variables).toEqual({ ...filters, channelId: 'channel-1' });
+      expect(request.query).toContain('$channelId: String!');
+    }
+    environment.GODADDY_CHANNEL_ID = 'channel-2';
+    const rebound = await clientFetch(url);
+    expect(rebound.status).toBe(200);
+    expect(await rebound.json()).toEqual({
+      skuGroups: { edges: [{ node: { id: 'other-shirt' } }, { node: { id: 'all-channels-shirt' } }] },
+    });
+    expect(upstream).toHaveBeenCalledTimes(cases.length + 1);
   } finally {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),

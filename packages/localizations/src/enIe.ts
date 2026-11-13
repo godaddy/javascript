@@ -70,6 +70,8 @@ export const enIe = {
     noShippingMethodAddress:
       'Enter your address to see available shipping methods.',
     noShippingMethods: 'No shipping methods found.',
+    failedToLoadMethods: 'Unable to load shipping methods. Please try again.',
+    retryMethods: 'Try again',
     phone: 'Phone Number',
     country: 'Country',
     selectCountry: 'Select country',

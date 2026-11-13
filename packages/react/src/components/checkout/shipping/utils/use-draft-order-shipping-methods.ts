@@ -67,6 +67,11 @@ export function useDraftOrderShippingMethods() {
           )
         : getDraftOrderShippingMethods(session, destination, apiHost),
     enabled: !!session?.id && hasShippingAddress,
+    // The failure UI offers a manual retry. Set explicitly because hosts can
+    // supply their own QueryClient with automatic retries enabled.
+    retry: false,
+    // Null rates are a normal "no rates" result from checkout-api (e.g. no
+    // SKU-backed items), not a failure; only thrown request errors show retry.
     select: data =>
       data?.checkoutSession?.draftOrder?.calculatedShippingRates?.rates,
   });

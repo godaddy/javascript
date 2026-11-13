@@ -23,9 +23,15 @@ import {
   type SKUGroup,
 } from './catalog-model';
 import { saleBadgeClass, secondaryButtonClass } from './class-names';
-import { useCommerce, useMoney } from './commerce-provider';
+import { useCommerce, useMessage, useMoney, useMoneyRange } from './commerce-provider';
 import { type PartLabel, type PartRegistry, partProps, renderLabel, usePartRegistry } from './part';
-import { type SampleProduct, useSampleCart } from './sample-cart';
+import {
+  isBuiltInSample,
+  type SampleProduct,
+  sampleCurrency,
+  sampleName,
+  useSampleCart,
+} from './sample-cart';
 import { StorefrontSurface } from './storefront-surface';
 
 export interface ProductImageProps {
@@ -43,6 +49,7 @@ export interface ProductImageProps {
 export function ProductImage({ url, name, className = '' }: ProductImageProps): ReactElement {
   // Keyed by URL, so a new URL after a failure is requested instead of keeping the placeholder.
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const text = useMessage();
   return url && url !== failedUrl ? (
     <img
       src={url}
@@ -55,14 +62,14 @@ export function ProductImage({ url, name, className = '' }: ProductImageProps): 
     <div
       className={`flex h-full min-h-44 items-center justify-center bg-commerce-tint p-6 text-center text-sm text-commerce-muted ${className}`}
       role='img'
-      aria-label={`${name}: image unavailable`}
+      aria-label={text('imageUnavailable', { name })}
     >
-      No image available
+      {text('noImage')}
     </div>
   );
 }
 
-/** One catalog entry: a product from the server, or a built-in sample while no store is connected. */
+/** One catalog entry: a product from the server, or a sample while no store is connected. */
 export type ProductCardItem =
   | { source: 'live'; product: SKUGroup }
   | { source: 'sample'; sample: SampleProduct };
@@ -71,9 +78,11 @@ export type ProductCardItem =
 export const CatalogItemContext = createContext<ProductCardItem | null>(null);
 
 /** Read-only card state for custom parts rendered inside `ProductCardRoot`. */
-export interface ProductCardState {
-  /** `null` for a built-in sample, which is not a catalog product. */
+export interface ProductCardState<Sample extends SampleProduct = SampleProduct> {
+  /** `null` for a sample, which is not a catalog product. */
   readonly product: SKUGroup | null;
+  /** The sample as the site passed it to `sampleProducts`, with its own fields. `null` for a catalog product. */
+  readonly sample: Sample | null;
   readonly name: string;
   /** The product page, or `null` for a sample, which has none. */
   readonly href: string | null;
@@ -81,28 +90,36 @@ export interface ProductCardState {
 }
 
 interface ProductCardLinks {
-  /** Whether the image link is the card's product link: only when no `ProductCardTitle` link is rendered. */
+  /**
+   * Whether the image is exposed to keyboard and screen reader users: only when no `ProductCardTitle` is rendered.
+   * For a product the image link is then the card's product link; for a sample, its image is the card's name.
+   */
   imageLinked: boolean;
   register: (key: string) => () => void;
 }
 
-type ProductCardInternal = ProductCardState &
+type ProductCardInternal = Omit<ProductCardState, 'sample'> &
   ProductCardLinks &
   (
     | { source: 'live'; product: SKUGroup; href: string }
     | { source: 'sample'; sample: SampleProduct; product: null; href: null }
   );
 
-const titleLink = 'title-link';
+const titleLink = 'title';
 
-function cardValue(item: ProductCardItem, productPath: string, links: ProductCardLinks): ProductCardInternal {
+function cardValue(
+  item: ProductCardItem,
+  productPath: string,
+  links: ProductCardLinks,
+  sampleNameText: string,
+): ProductCardInternal {
   if (item.source === 'sample')
     return {
       ...links,
       source: 'sample',
       sample: item.sample,
       product: null,
-      name: item.sample.name,
+      name: sampleNameText,
       href: null,
       isSample: true,
     };
@@ -129,10 +146,16 @@ function useProductCardInternal(part: string): ProductCardInternal {
   return context;
 }
 
-/** Read the card's product, name, and link from inside `ProductCardRoot`. */
-export function useProductCard(): ProductCardState {
-  const { product, name, href, isSample } = useProductCardInternal('useProductCard');
-  return useMemo(() => ({ product, name, href, isSample }), [product, name, href, isSample]);
+/**
+ * Read the card's product or sample, name, and link from inside `ProductCardRoot`. Pass the type of the site's
+ * samples, such as `useProductCard<MySample>()`, to read their own fields from `sample`. The type is not checked:
+ * on a page that also shows the packaged samples, read the site's own fields as possibly missing.
+ */
+export function useProductCard<Sample extends SampleProduct = SampleProduct>(): ProductCardState<Sample> {
+  const card = useProductCardInternal('useProductCard');
+  const { product, name, href, isSample } = card;
+  const sample = (card.source === 'sample' ? card.sample : null) as Sample | null;
+  return useMemo(() => ({ product, sample, name, href, isSample }), [product, sample, name, href, isSample]);
 }
 
 export interface ProductCardRootProps {
@@ -147,6 +170,7 @@ export interface ProductCardRootProps {
 export function ProductCardRoot({ children, product, className }: ProductCardRootProps): ReactElement {
   const catalogItem = useContext(CatalogItemContext);
   const { config } = useCommerce();
+  const text = useMessage();
   // The image link starts hidden, so server HTML and the first render have one product link per card. A card
   // with no title link exposes it once mounted. Parent effects run after child effects, so titles have registered.
   const [imageLinked, setImageLinked] = useState<boolean>(false);
@@ -158,8 +182,9 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
   }, [has]);
   const value = useMemo((): ProductCardInternal | null => {
     const item: ProductCardItem | null = catalogItem ?? (product ? { source: 'live', product } : null);
-    return item && cardValue(item, config.productPath, { imageLinked, register });
-  }, [catalogItem, product, config.productPath, imageLinked, register]);
+    const sampleText: string = item?.source === 'sample' ? sampleName(text, item.sample) : '';
+    return item && cardValue(item, config.productPath, { imageLinked, register }, sampleText);
+  }, [catalogItem, product, config.productPath, imageLinked, register, text]);
   if (catalogItem && product)
     throw new Error(
       'Inside <CatalogProducts>, ProductCardRoot shows each catalog product. Remove its product prop.',
@@ -178,8 +203,9 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
 }
 
 /**
- * The product's first image, linked to its page. Samples show a placeholder. With a `ProductCardTitle` in the card,
- * the title is the one link keyboard and screen reader users get; without one, the image link is.
+ * The product's first image, linked to its page. A sample shows its `imageUrl`, unlinked, or the packaged samples'
+ * placeholder. With a `ProductCardTitle` in the card, the title is the one link keyboard and screen reader users get,
+ * and a sample's image is hidden from screen readers so its name is not read twice; without one, the image is exposed.
  */
 export function ProductCardImage({ className }: ProductCardPartProps): ReactElement {
   const card = useProductCardInternal('ProductCardImage');
@@ -190,7 +216,7 @@ export function ProductCardImage({ className }: ProductCardPartProps): ReactElem
           to={card.href}
           tabIndex={card.imageLinked ? undefined : -1}
           aria-hidden={card.imageLinked ? undefined : 'true'}
-          className='block aspect-square overflow-hidden bg-commerce-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current'
+          className='block aspect-(--commerce-card-image-aspect,1/1) overflow-hidden bg-commerce-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current'
         >
           <ProductImage
             url={getPrimaryImageUrl(card.product)}
@@ -198,9 +224,19 @@ export function ProductCardImage({ className }: ProductCardPartProps): ReactElem
             className='motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out motion-safe:group-hover:scale-[1.03]'
           />
         </Link>
-      ) : (
-        <div aria-hidden='true' className='flex aspect-square items-center justify-center bg-commerce-tint'>
+      ) : isBuiltInSample(card.sample) ? (
+        <div
+          aria-hidden='true'
+          className='flex aspect-(--commerce-card-image-aspect,1/1) items-center justify-center bg-commerce-tint'
+        >
           <div className='h-16 w-16 rounded-full border border-commerce-line' />
+        </div>
+      ) : (
+        <div
+          aria-hidden={card.imageLinked ? undefined : 'true'}
+          className='aspect-(--commerce-card-image-aspect,1/1) overflow-hidden bg-commerce-tint'
+        >
+          <ProductImage url={card.sample.imageUrl} name={card.name} />
         </div>
       )}
     </div>
@@ -210,7 +246,7 @@ export function ProductCardImage({ className }: ProductCardPartProps): ReactElem
 /** The product name as an H2, linked to its page. */
 export function ProductCardTitle({ className }: ProductCardPartProps): ReactElement {
   const { name, href, register } = useProductCardInternal('ProductCardTitle');
-  useEffect(() => (href ? register(titleLink) : undefined), [href, register]);
+  useEffect(() => register(titleLink), [register]);
   return (
     <div {...partProps('product-card-title', className)}>
       <h2 className='break-words text-base font-medium leading-6'>
@@ -229,13 +265,15 @@ export function ProductCardTitle({ className }: ProductCardPartProps): ReactElem
   );
 }
 
-/** Up to three lines of the product description. Renders nothing without one. */
+/** Up to two lines of the product or sample description. Renders nothing without one. */
 export function ProductCardDescription({ className }: ProductCardPartProps): ReactElement | null {
-  const { product } = useProductCardInternal('ProductCardDescription');
-  if (!product?.description) return null;
+  const card = useProductCardInternal('ProductCardDescription');
+  const description: string | null | undefined =
+    card.source === 'sample' ? card.sample.description : card.product.description;
+  if (!description) return null;
   return (
     <div {...partProps('product-card-description', className)}>
-      <p className='line-clamp-2 text-sm leading-6 text-commerce-muted'>{product.description}</p>
+      <p className='line-clamp-2 text-sm leading-6 text-commerce-muted'>{description}</p>
     </div>
   );
 }
@@ -243,47 +281,58 @@ export function ProductCardDescription({ className }: ProductCardPartProps): Rea
 const formatRange = (
   range: PriceRange | null | undefined,
   money: (value: number) => string,
+  moneyRange: (min: number, max: number) => string,
 ): string | null => {
   const min: number | null | undefined = range?.min;
   const max: number | null | undefined = range?.max;
   if (typeof min !== 'number') return null;
-  return `${money(min)}${typeof max === 'number' && max !== min ? ` – ${money(max)}` : ''}`;
+  return typeof max === 'number' && max !== min ? moneyRange(min, max) : money(min);
 };
 
 /**
  * "Sale" when some SKU's compare-at price is above that SKU's price. Without SKU prices, as in the catalog list, only
- * when the lowest compare-at price is above the highest price. Renders nothing otherwise, or for samples.
+ * when the lowest compare-at price is above the highest price. For a sample, when its `compareAtPrice` is above its
+ * price. Renders nothing otherwise.
  */
 export function ProductCardBadge({ className }: ProductCardPartProps): ReactElement | null {
-  const { product } = useProductCardInternal('ProductCardBadge');
-  if (!isProductOnSale(product)) return null;
+  const card = useProductCardInternal('ProductCardBadge');
+  const text = useMessage();
+  if (card.source === 'sample' ? sampleCompareAt(card.sample) === null : !isProductOnSale(card.product))
+    return null;
   return (
     <div {...partProps('product-card-badge', className)}>
-      <span className={saleBadgeClass}>Sale</span>
+      <span className={saleBadgeClass}>{text('sale')}</span>
     </div>
   );
 }
+
+const sampleCompareAt = (sample: SampleProduct): number | null =>
+  sample.compareAtPrice !== undefined && sample.compareAtPrice > sample.price ? sample.compareAtPrice : null;
 
 /** The product's price, or its price range when variants differ. A single price on sale shows its compare-at price. */
 export function ProductCardPrice({ className }: ProductCardPartProps): ReactElement {
   const card = useProductCardInternal('ProductCardPrice');
   const money = useMoney();
+  const moneyRange = useMoneyRange();
+  const message = useMessage();
   const text: string =
     card.source === 'sample'
-      ? money(card.sample.price, 'USD')
-      : (formatRange(card.product.priceRange, money) ?? 'Price unavailable');
+      ? money(card.sample.price, sampleCurrency)
+      : (formatRange(card.product.priceRange, money, moneyRange) ?? message('priceUnavailable'));
   // A range has no single compare-at price that belongs to it, so only a single price is struck through.
   const range: PriceRange | null | undefined = card.source === 'live' ? card.product.priceRange : null;
-  const starting: number | null =
-    card.source === 'live' && range?.min === range?.max ? getStartingCompareAt(card.product) : null;
-  const compareAt: string | null = starting === null ? null : money(starting);
+  let starting: number | null = null;
+  if (card.source === 'sample') starting = sampleCompareAt(card.sample);
+  else if (range?.min === range?.max) starting = getStartingCompareAt(card.product);
+  const compareAt: string | null =
+    starting === null ? null : money(starting, card.source === 'sample' ? sampleCurrency : undefined);
   return (
     <div {...partProps('product-card-price', className)}>
       <p className='flex flex-wrap items-baseline gap-x-2 text-sm leading-6 tabular-nums'>
         <span className='font-medium'>{text}</span>
         {compareAt && (
           <>
-            <span className='sr-only'>Was</span>
+            <span className='sr-only'>{message('wasPrice')}</span>
             <del className='text-commerce-muted'>{compareAt}</del>
           </>
         )}
@@ -299,6 +348,7 @@ export function ProductCardPrice({ className }: ProductCardPartProps): ReactElem
 export function ProductCardSwatches({ className }: ProductCardPartProps): ReactElement | null {
   const { product } = useProductCardInternal('ProductCardSwatches');
   const { getSwatch } = useCommerce();
+  const text = useMessage();
   if (!getSwatch || !product) return null;
   for (const attribute of getProductAttributes(product)) {
     const swatches = attribute.values.map((value) => ({
@@ -311,8 +361,11 @@ export function ProductCardSwatches({ className }: ProductCardPartProps): ReactE
       <div {...partProps('product-card-swatches', className)}>
         <p className='flex items-center gap-1.5 text-xs text-commerce-muted'>
           <span className='sr-only'>
-            {swatches.length} {inSentence(attribute.label)} options:{' '}
-            {swatches.map((swatch) => swatch.label).join(', ')}
+            {text('swatchSummary', {
+              count: swatches.length,
+              attribute: inSentence(attribute.label),
+              values: swatches.map((swatch) => swatch.label).join(', '),
+            })}
           </span>
           {shown.map((swatch) => (
             <span
@@ -373,6 +426,7 @@ function LiveAction({
 }): ReactElement {
   const selectedSku: SKU | null = getSingleMatchedSku(product);
   const hasVariants: boolean = getProductAttributes(product).length > 0;
+  const text = useMessage();
   if (!hasVariants && selectedSku)
     return (
       <AddToCart sku={selectedSku} name={name} className={secondaryButtonClass} block>
@@ -386,7 +440,7 @@ function LiveAction({
       {renderLabel(
         label,
         { action, busy: false, soldOut: false },
-        hasVariants ? 'Choose options' : 'View product',
+        text(hasVariants ? 'chooseOptions' : 'viewProduct'),
       )}
     </Link>
   );
@@ -400,21 +454,23 @@ function SampleAction({
   label: ProductCardActionProps['children'];
 }): ReactElement {
   const { add } = useSampleCart();
+  const text = useMessage();
+  const name: string = sampleName(text, sample);
   const custom: ReactNode = renderLabel(label, { action: 'add', busy: false, soldOut: false }, null);
   // A host label stays the start of the accessible name, so it is not replaced by an `aria-label`.
   return custom === null ? (
     <button
       type='button'
       className={`${secondaryButtonClass} w-full`}
-      aria-label={`Add ${sample.name} to sample cart`}
-      onClick={() => add(sample.key)}
+      aria-label={text('addSampleToCart', { name })}
+      onClick={() => add(sample)}
     >
-      Add to cart
+      {text('addToCart')}
     </button>
   ) : (
-    <button type='button' className={`${secondaryButtonClass} w-full`} onClick={() => add(sample.key)}>
+    <button type='button' className={`${secondaryButtonClass} w-full`} onClick={() => add(sample)}>
       {custom}
-      <span className='sr-only'> ({sample.name}, sample)</span>
+      <span className='sr-only'> {text('sampleItemName', { name })}</span>
     </button>
   );
 }

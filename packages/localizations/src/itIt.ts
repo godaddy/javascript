@@ -70,6 +70,9 @@ export const itIt = {
     noShippingMethodAddress:
       'Inserisci il tuo indirizzo per vedere i metodi di spedizione disponibili.',
     noShippingMethods: 'Nessun metodo di spedizione trovato.',
+    failedToLoadMethods:
+      'Impossibile caricare i metodi di spedizione. Riprova.',
+    retryMethods: 'Riprova',
     phone: 'Numero di Telefono',
     country: 'Paese',
     selectCountry: 'Seleziona paese',

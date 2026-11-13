@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { getStartingCompareAt, isOnSale, isProductOnSale } from './catalog-model';
 import { saleBadgeClass } from './class-names';
-import { useCommerce, useMoney } from './commerce-provider';
+import { useCommerce, useMessage, useMoney } from './commerce-provider';
 import { partProps, renderLabel } from './part';
 import { ProductImage } from './product-card';
 import {
@@ -34,7 +34,7 @@ export function ProductDetails(): ReactElement {
 }
 
 export interface ProductDetailsBackLinkProps extends ProductDetailsPartProps {
-  /** Replaces the chevron and "Back to shop". */
+  /** Replaces the chevron and the `backToShop` message. */
   children?: ReactNode;
 }
 
@@ -42,6 +42,7 @@ export interface ProductDetailsBackLinkProps extends ProductDetailsPartProps {
 export function ProductDetailsBackLink({ className, children }: ProductDetailsBackLinkProps): ReactElement {
   useProductDetailsInternal('ProductDetailsBackLink');
   const { config } = useCommerce();
+  const text = useMessage();
   return (
     <div {...partProps('product-details-back-link', className)}>
       <Link
@@ -62,7 +63,7 @@ export function ProductDetailsBackLink({ className, children }: ProductDetailsBa
                 strokeLinejoin='round'
               />
             </svg>
-            Back to shop
+            {text('backToShop')}
           </>,
         )}
       </Link>
@@ -73,6 +74,7 @@ export function ProductDetailsBackLink({ className, children }: ProductDetailsBa
 /** Main image with thumbnails; the selected SKU's images replace the product's when present. */
 export function ProductDetailsGallery({ className }: ProductDetailsPartProps): ReactElement {
   const { images, imageIndex, setImageIndex, name } = useProductDetailsInternal('ProductDetailsGallery');
+  const text = useMessage();
   return (
     <div {...partProps('product-details-gallery', className)}>
       <div className='aspect-square overflow-hidden bg-commerce-tint'>
@@ -85,7 +87,7 @@ export function ProductDetailsGallery({ className }: ProductDetailsPartProps): R
               type='button'
               key={url}
               className={`h-20 w-20 shrink-0 overflow-hidden bg-commerce-tint outline-offset-2 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-current ${imageIndex === index ? 'outline outline-2 outline-current' : 'opacity-60 hover:opacity-100'}`}
-              aria-label={`View image ${index + 1}`}
+              aria-label={text('viewImage', { number: index + 1 })}
               aria-pressed={imageIndex === index}
               data-commerce-control='thumbnail'
               onClick={() => setImageIndex(index)}
@@ -105,13 +107,14 @@ export function ProductDetailsGallery({ className }: ProductDetailsPartProps): R
  */
 export function ProductDetailsBadge({ className }: ProductDetailsPartProps): ReactElement | null {
   const { price, product } = useProductDetailsInternal('ProductDetailsBadge');
+  const text = useMessage();
   const onSale: boolean = price
     ? isOnSale(price.value?.value, price.compareAtValue?.value)
     : isProductOnSale(product);
   if (!onSale) return null;
   return (
     <div {...partProps('product-details-badge', className)}>
-      <span className={saleBadgeClass}>Sale</span>
+      <span className={saleBadgeClass}>{text('sale')}</span>
     </div>
   );
 }
@@ -136,6 +139,7 @@ export function ProductDetailsPrice({ className }: ProductDetailsPartProps): Rea
   const { price, product } = useProductDetailsInternal('ProductDetailsPrice');
   const { config } = useCommerce();
   const money = useMoney();
+  const text = useMessage();
   let compareAt: string | null = null;
   if (price?.compareAtValue?.value != null && isOnSale(price.value?.value, price.compareAtValue.value))
     compareAt = money(price.compareAtValue.value, price.compareAtValue.currencyCode ?? config.currencyCode);
@@ -154,11 +158,11 @@ export function ProductDetailsPrice({ className }: ProductDetailsPartProps): Rea
         {price?.value?.value != null
           ? money(price.value.value, price.value.currencyCode ?? config.currencyCode)
           : product.priceRange?.min != null
-            ? `From ${money(product.priceRange.min)}`
-            : 'Price unavailable'}
+            ? text('priceFrom', { price: money(product.priceRange.min) })
+            : text('priceUnavailable')}
         {compareAt && (
           <>
-            <span className='sr-only'>Was</span>
+            <span className='sr-only'>{text('wasPrice')}</span>
             <del className='text-base font-normal text-commerce-muted'>{compareAt}</del>
           </>
         )}

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { DiscountApplyButton } from '@/components/checkout/discount/discount-apply-button';
 import { DiscountErrorList } from '@/components/checkout/discount/discount-error-list';
 import { DiscountInput } from '@/components/checkout/discount/discount-input';
+import { getDraftOrderDiscountCodes } from '@/components/checkout/discount/utils/get-draft-order-discount-codes';
 import { useDiscountApply } from '@/components/checkout/discount/utils/use-discount-apply';
 import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
@@ -23,49 +24,10 @@ export function DiscountStandalone({
   const isPaymentDisabled = useIsPaymentDisabled();
   const { data: draftOrder } = useDraftOrder();
 
-  // Get current discount codes from order-level, line item-level, and shipping line-level discounts
-  const currentDiscountCodes = React.useMemo(() => {
-    if (!draftOrder) return [];
-
-    const allCodes = new Set<string>();
-
-    // Add order-level discount codes
-    if (draftOrder.discounts) {
-      for (const discount of draftOrder.discounts) {
-        if (discount.code) {
-          allCodes.add(discount.code);
-        }
-      }
-    }
-
-    // Add line item-level discount codes
-    if (draftOrder.lineItems) {
-      for (const lineItem of draftOrder.lineItems) {
-        if (lineItem.discounts) {
-          for (const discount of lineItem.discounts) {
-            if (discount.code) {
-              allCodes.add(discount.code);
-            }
-          }
-        }
-      }
-    }
-
-    // Add shipping line-level discount codes
-    if (draftOrder.shippingLines) {
-      for (const shippingLine of draftOrder.shippingLines) {
-        if (shippingLine.discounts) {
-          for (const discount of shippingLine.discounts) {
-            if (discount.code) {
-              allCodes.add(discount.code);
-            }
-          }
-        }
-      }
-    }
-
-    return Array.from(allCodes);
-  }, [draftOrder]);
+  const currentDiscountCodes = React.useMemo(
+    () => getDraftOrderDiscountCodes(draftOrder),
+    [draftOrder]
+  );
 
   const [discountCode, setDiscountCode] = useState<string>('');
   const [formErrors, setFormErrors] = useState<string[] | undefined>(undefined);

@@ -1,5 +1,31 @@
 # @godaddy/gd-commerce-storefront
 
+## 0.11.1
+
+### Patch Changes
+
+- 8f69cfd: Show "The store could not be reached" instead of a JSON parse error when an `/api/commerce` route answers with the app's HTML page, such as an unmounted route behind a single-page app fallback or an HTML 404 page. The failure has status 502 rather than the page's status, so an HTML 404 never clears the saved cart. Development builds log which route returned HTML and how to mount the Commerce routes. The new `apiUnavailable` message has English and French text.
+
+## 0.11.0
+
+### Minor Changes
+
+- 53bbe3b: A site can show its own sample products before a store is connected. `sampleProducts` on `Catalog` and `CatalogRoot` takes an array as well as `true`. Each sample has a `key`, `name` and `price`, and optionally a `compareAtPrice`, `description` and `imageUrl`, such as a file in the site's public folder. The card parts show a sample's image, description, price and Sale badge, and the sample cart keeps each line's image. While no store is connected, `CatalogRoot` throws for an invalid list, such as duplicate keys, a packaged sample's key or a decimal price; once one is connected, development builds log the problem instead and the store's catalog still renders. A cart line shows the current fields of a mounted catalog's sample with the same key. `CartItemImage` renders nothing when its image fails to load. `sampleProducts` still shows samples only while the server reports `unbound`, and `true` still shows the six packaged samples without images.
+  
+  Custom parts can read the site's own sample fields. `useProductCard()` and `useCartItem()` return `sample`, typed with the site's sample type, such as `useProductCard<MySample>()`. A new `useCatalog()` returns the catalog's `count`, `isSample` and `status` for a custom product count. Card images and their loading placeholders follow a new `--commerce-card-image-aspect` theme property, which defaults to square. The `SampleProduct` and `CatalogState` types are exported. The default design is unchanged.
+
+## 0.10.0
+
+### Minor Changes
+
+- 06e3825: Translate the storefront's text. `CommerceProvider` takes a `messages` prop, separate from `locale`, and the package ships French as `frFR` from `@godaddy/gd-commerce-storefront/messages/fr-FR`. Keys a site leaves out stay English. Plurals follow the language's rules, and server failures show translated text by their `code`. Price ranges are formatted for the `locale`, so German and French write `20,00–25,00 €`. `useMessage` and `useMoneyRange` give custom parts the same text and formatting. Error events from `onEvent` carry the translated `message` and the server's `code`. `getCartSummaryTotals` takes a fallback currency, such as the store's.
+
+## 0.9.0
+
+### Minor Changes
+
+- 48258d3: The product page leaves out attribute values that no active SKU has. Before, a product with five sizes but SKUs in only two showed all five, and choosing one of the other three showed "This combination is unavailable. Choose different options." A link with such a value, such as `?option.size=s`, now counts as that option not chosen. This needs every SKU with its attribute values, which `@godaddy/gd-commerce-server` 0.4.0 and later return for up to 50 SKUs. For a product with more SKUs, or with an older server, every value is still shown. An attribute that no SKU has a value for keeps all its values.
+
 ## 0.8.0
 
 ### Minor Changes

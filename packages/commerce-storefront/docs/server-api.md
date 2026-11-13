@@ -9,7 +9,7 @@ Server implementations can use GoDaddy Commerce APIs or their existing integrati
 - Requests use same-origin browser credentials. JSON writes set `Content-Type: application/json`.
 - Cart, catalog and checkout requests include `X-Commerce-Scope` from `/config`. Validate that scope against the server's current store/channel binding, especially before writes. Treat it as a stale-binding guard, not authorization. Authenticate and authorize requests independently.
 - Read requests use `cache: no-store`, cancellation, and a 15-second timeout. The initial cart creation/add request is also a write and is never retried automatically.
-- Return a non-2xx response with `{ "error": "A useful customer-facing message" }` for failure. HTML error pages are also handled as failures.
+- Return a non-2xx response with `{ "error": "A useful customer-facing message" }` for failure. HTML error pages are also handled as failures. A `text/html` response below 500, such as a single-page app fallback or an HTML 404 page answering an unmounted route, is reported as "The store could not be reached" with status 502, so it never clears a saved cart.
 - Only cart reads with HTTP 404 or 410 clear an expired saved cart. Network errors, 401/403/409/5xx, and other failures preserve the ID and block writes until hydration succeeds.
 - Resolve prices and availability on the server. The cart does not calculate shipping, taxes, or discounts; it explains that they are calculated at checkout. Browser SKU names and quantities are input, not pricing authority. Protect mutations against CSRF as appropriate for the host application's authentication.
 
@@ -31,7 +31,9 @@ Server implementations can use GoDaddy Commerce APIs or their existing integrati
 
 `/checkout` is required only when checkout is enabled. `/discounts` is needed if the host uses `applyDiscount`. The standard catalog/detail/cart flow uses the other routes. All product/cart IDs in request paths are encoded.
 
-The companion `@godaddy/gd-commerce-server` returns 404 from product details when the group is missing or excluded by the catalog's ACTIVE filter, including direct links to inactive products.
+The companion `@godaddy/gd-commerce-server` filters `GET /products` to ACTIVE groups available on the server-configured channel. It returns 404 from `GET /products/:id` when the group is missing, inactive, or unavailable on that channel, including direct product links. Browser callers cannot override the configured channel. This browsing filter does not check product-channel eligibility for `GET /skus/:id`, cart creation, or item addition by SKU ID; hosts must enforce any required restrictions on those operations. See the [server package's channel visibility notes][server-channel-visibility] for stale-channel troubleshooting and upstream lookup costs.
+
+[server-channel-visibility]: ../../commerce-server/README.md#product-channel-visibility
 
 ## Configuration
 
@@ -68,7 +70,7 @@ Exported `SKUGroup`, `SKU`, `Connection`, `SkuGroupsResult` and `SkuGroupResult`
 
 For options, return `attributes.edges[].node` with `name`, `label`, and `values.edges[].node` containing `name` and `label`. For example, the attribute `color` has values named `blue` and `clay`. The browser sends those value names as repeated `attributeValues` parameters. Return the group with a SKU connection filtered to that exact combination. Zero or multiple results cannot be purchased. Include accurate `totalCount` and `hasNextPage`; a truncated one-item result must never look like a complete match.
 
-Optionally, give each SKU in the unfiltered response its `attributeValues.edges[].node.name`. With every SKU and its value names, the product page crosses out values whose SKUs are all sold out, given the shopper's other selections. Without them, or when `hasNextPage` is true, no value is marked sold out; the add button still reports a sold-out SKU once it is chosen.
+Optionally, give each SKU in the unfiltered response its `attributeValues.edges[].node.name`. With every SKU and its value names, the product page leaves out values that no SKU has and crosses out values whose SKUs are all sold out, given the shopper's other selections. Without them, or when `hasNextPage` is true, every value is shown and none is marked sold out; the add button still reports a sold-out SKU once it is chosen.
 
 Products without attribute definitions can offer explicit SKU selection only when all SKUs are returned with unique IDs and unique nonempty labels/names. Ambiguous or incomplete collections cannot be purchased. No inventory records means untracked inventory; records without an `AVAILABLE` quantity mean unavailable. Supply appropriate records for physical inventory.
 

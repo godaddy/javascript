@@ -50,6 +50,16 @@ Hosts with their own configuration service can implement `CommerceConfiguration`
 
 The HTTP checkout route accepts an existing `draftOrderId` or a direct `skuId`; Commerce resolves catalog prices. It rejects `lineItemData`. For non-catalog charges such as fixed-price deposits, calculate the amount on the server and call `createCheckoutSession(params, configuration)` directly. Never forward browser-supplied prices to this trusted helper. Server callers can also use `getOrderStatus(orderId, configuration)` without an HTTP loopback.
 
+### Product channel visibility
+
+`GET /products` and `GET /products/:id` use the channel from the server configuration and request only `ACTIVE` products. Search, category filters, and explicit product IDs retain that channel filter. Product-detail requests for products unavailable on that channel return 404. Browser query parameters cannot select a different channel. Products configured for all channels remain available when the configured channel is active and registered to the store.
+
+If a configured `GODADDY_CHANNEL_ID` is inactive or is not registered to the configured store, the Catalog API returns an empty product list and product-detail requests return 404. These are successful empty results from the Catalog API, not configuration errors. When an expected catalog is empty, verify that the channel is active and registered to `GODADDY_STORE_ID`, then check product status and channel assignments. A missing `GODADDY_CHANNEL_ID` is different: the default configuration reader rejects it with 503 `not_configured`.
+
+The Catalog API resolves active store channels through the paginated `/v1/commerce/channels` endpoint when evaluating a channel filter. Those lookups are not currently cached by the Catalog API, so channel-filtered catalog requests can add upstream calls and latency.
+
+These checks control product browsing. `GET /skus/:id`, cart creation (`POST /cart`), and item addition (`POST /cart/:id/items`) forward SKU IDs without this package checking whether their products are available on the configured channel. A 404 from product details does not establish that a SKU lookup or cart write will be rejected. Hosts that require channel-based restrictions on these operations must enforce them before forwarding the SKU IDs; browsing filters are not an authorization boundary.
+
 ## Checkout return destinations
 
 Configure `checkoutReturnUrls` on the router using trusted deployment settings. Both lists contain complete absolute HTTPS URLs; scheme, origin, port, path, and configured query parameters must match. Success URLs may add a single `orderId` query parameter. Additional query parameters, fragments, credentials, relative URLs, and unlisted destinations are rejected. Configure separate cancel and success destinations as shown above; do not derive the allowlist from request headers or request bodies.
@@ -78,6 +88,38 @@ complete. Lost configuration is an error, never evidence of `unbound`. After a s
 report `unbound` again only after it is deliberately disconnected. The storefront package owns
 the generic sample products and local sample cart; this server never creates sample Commerce
 records or simulates checkout.
+
+#### A site before its store connects
+
+A template that shows the storefront's sample products before a store connects needs the catalog routes and an
+explicit connection state. Here `COMMERCE_CONNECTION_STATE` is a host-owned setting, set to `unbound` when the site
+is created and to `ready` by the host's connection flow. Read it from whatever records the connection; never derive
+it from missing `GODADDY_*` variables.
+
+```ts
+import express from 'express';
+import { createCommerceCatalogRouter, createRuntimeCommerceConfiguration } from '@godaddy/gd-commerce-server';
+
+const runtime = createRuntimeCommerceConfiguration();
+const configuration = {
+  ...runtime,
+  readConnectionState() {
+    const state = process.env.COMMERCE_CONNECTION_STATE;
+    if (state === 'unbound' || state === 'connecting' || state === 'ready') return state;
+    throw new Error('COMMERCE_CONNECTION_STATE must be unbound, connecting, or ready.');
+  },
+};
+
+const app = express();
+app.use(express.json());
+// Before static files and any single-page app or SSR fallback, which would answer /api/commerce with HTML.
+app.use('/api/commerce', createCommerceCatalogRouter(configuration));
+app.use(express.static('dist'));
+```
+
+`createCommerceCatalogRouter` exposes no checkout routes, so a site without checkout needs no `checkoutReturnUrls`.
+`GET /api/commerce/config` should return `{"state":"unbound"}` as JSON. If it returns the app's HTML page, the
+router is not mounted, or a fallback route runs before it.
 
 ## Errors
 

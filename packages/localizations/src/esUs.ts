@@ -70,6 +70,9 @@ export const esUs = {
     noShippingMethodAddress:
       'Ingrese su dirección para ver los métodos de envío disponibles.',
     noShippingMethods: 'No se encontraron métodos de envío.',
+    failedToLoadMethods:
+      'No se pudieron cargar los métodos de envío. Inténtalo de nuevo.',
+    retryMethods: 'Intentar de nuevo',
     phone: 'Número de Teléfono',
     country: 'País',
     selectCountry: 'Seleccionar país',

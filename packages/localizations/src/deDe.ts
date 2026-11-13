@@ -70,6 +70,9 @@ export const deDe = {
     noShippingMethodAddress:
       'Geben Sie Ihre Adresse ein, um verfügbare Versandmethoden zu sehen.',
     noShippingMethods: 'Keine Versandmethoden gefunden.',
+    failedToLoadMethods:
+      'Versandarten konnten nicht geladen werden. Bitte versuchen Sie es erneut.',
+    retryMethods: 'Erneut versuchen',
     phone: 'Telefonnummer',
     country: 'Land',
     selectCountry: 'Land auswählen',
@@ -122,7 +125,7 @@ export const deDe = {
       paze: '',
       offline: '',
       mercadopago:
-        'Verwende das MercadoPago-Formular unten, um deinen Kauf sicher abzuschließen.',
+        'Verwenden Sie das MercadoPago-Formular unten, um Ihren Kauf sicher abzuschließen.',
       ach: '',
       ccavenue: '',
     },

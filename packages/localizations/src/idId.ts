@@ -70,6 +70,9 @@ export const idId = {
     noShippingMethodAddress:
       'Masukkan alamat Anda untuk melihat metode pengiriman yang tersedia.',
     noShippingMethods: 'Tidak ada metode pengiriman ditemukan.',
+    failedToLoadMethods:
+      'Tidak dapat memuat metode pengiriman. Silakan coba lagi.',
+    retryMethods: 'Coba lagi',
     phone: 'Nomor Telepon',
     country: 'Negara',
     selectCountry: 'Pilih negara',

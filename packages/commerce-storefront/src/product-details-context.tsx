@@ -10,7 +10,7 @@ import {
   useState,
 } from 'react';
 import { Link, useParams } from 'react-router';
-import { ApiError, message, request } from './api';
+import { ApiError, describeError, request } from './api';
 import { isSoldOut } from './cart';
 import {
   getAvailableInventoryQuantity,
@@ -27,7 +27,7 @@ import {
   type StorefrontProductAttribute,
 } from './catalog-model';
 import { buttonClass, errorNoticeClass } from './class-names';
-import { type GetSwatch, useCommerce } from './commerce-provider';
+import { type GetSwatch, useCommerce, useMessage } from './commerce-provider';
 import { hasChildren, type PartLabel, partProps, renderLabel, usePartRegistry } from './part';
 import { useRootParams } from './root-params';
 import { CommerceStatus, StorefrontSurface } from './storefront-surface';
@@ -223,7 +223,8 @@ function ProductDetailsLoader({
   notFound,
   error,
 }: ProductDetailsRootProps & { productId: string }): ReactElement {
-  const { config, getSwatch } = useCommerce();
+  const { config, getSwatch, messages } = useCommerce();
+  const text = useMessage();
   const [params, setParams] = useRootParams(urlState);
   const [quantity, setQuantity] = useState<number>(1);
   const [imageIndex, setImageIndex] = useState<number>(0);
@@ -247,16 +248,15 @@ function ProductDetailsLoader({
   const productNotFound: boolean =
     product.isError && product.error instanceof ApiError && product.error.status === 404;
   const group = product.data?.skuGroup;
-  const attributes = getProductAttributes(group);
+  const attributes: StorefrontProductAttribute[] = getOfferedAttributes(group, getProductAttributes(group));
   const skuOptions: SKU[] = getLabeledSkuOptions(group);
   const explicitSku: SKU | undefined = skuOptions.find((sku: SKU): boolean => sku.id === params.get('sku'));
-  const selections: string[] = attributes.map((attribute) => params.get(`option.${attribute.name}`) ?? '');
-  const complete: boolean =
-    skuOptions.length > 0
-      ? !!explicitSku
-      : attributes.every((attribute, index) =>
-          attribute.values.some((value) => value.name === selections[index]),
-        );
+  // A value the product does not offer, such as one from an old link, counts as not chosen.
+  const selections: string[] = attributes.map((attribute) => {
+    const value: string = params.get(`option.${attribute.name}`) ?? '';
+    return attribute.values.some((candidate) => candidate.name === value) ? value : '';
+  });
+  const complete: boolean = skuOptions.length > 0 ? !!explicitSku : selections.every(Boolean);
   const selectionParams: URLSearchParams = new URLSearchParams();
   selections.filter(Boolean).forEach((value) => {
     selectionParams.append('attributeValues', value);
@@ -329,7 +329,7 @@ function ProductDetailsLoader({
           loading
         ) : (
           <p role='status' className='text-sm text-commerce-muted'>
-            Loading product…
+            {text('loadingProduct')}
           </p>
         )}
       </div>
@@ -340,12 +340,12 @@ function ProductDetailsLoader({
       <div role='alert' {...partProps('product-details-root', className)}>
         {renderLabel(
           error,
-          { message: message(product.error), retry },
+          { message: describeError(product.error, messages), retry },
           <>
-            <h1 className='text-2xl font-semibold tracking-tight'>Product unavailable</h1>
-            <p className={`my-4 ${errorNoticeClass}`}>{message(product.error)}</p>
+            <h1 className='text-2xl font-semibold tracking-tight'>{text('productUnavailable')}</h1>
+            <p className={`my-4 ${errorNoticeClass}`}>{describeError(product.error, messages)}</p>
             <button type='button' className={buttonClass} onClick={retry}>
-              Retry product
+              {text('retryProduct')}
             </button>
           </>,
         )}
@@ -359,9 +359,9 @@ function ProductDetailsLoader({
           notFound
         ) : (
           <>
-            <h1 className='text-2xl font-semibold tracking-tight'>Product not found</h1>
+            <h1 className='text-2xl font-semibold tracking-tight'>{text('productNotFound')}</h1>
             <Link className={`${buttonClass} mt-6`} to={config.catalogPath}>
-              Back to shop
+              {text('backToShop')}
             </Link>
           </>
         )}
@@ -419,6 +419,45 @@ function focusFirstMissing(root: RefObject<HTMLElement | null>): void {
     ?.focus();
 }
 
+interface SkuAttributeValues {
+  skus: SKU[];
+  /** Each SKU's attribute value names, in `skus` order. */
+  values: (string[] | null)[];
+  /** Every active SKU is loaded with its attribute values. */
+  complete: boolean;
+}
+
+function getSkuAttributeValues(group: SKUGroup | null | undefined): SkuAttributeValues {
+  const connection = group?.skus;
+  const skus: SKU[] = connection?.edges?.flatMap((edge) => (edge?.node ? [edge.node] : [])) ?? [];
+  const values: (string[] | null)[] = skus.map(getSkuAttributeValueNames);
+  const complete: boolean =
+    !connection?.pageInfo?.hasNextPage &&
+    (connection?.totalCount ?? skus.length) === skus.length &&
+    values.every((names) => names !== null);
+  return { skus, values, complete };
+}
+
+/**
+ * The attributes with only the values some active SKU has, so a shopper is never offered a value that cannot be
+ * bought. Needs every SKU with its attribute values, so it keeps every value for a truncated list or an older
+ * server. An attribute that no SKU has a value for keeps every value, so its control still renders.
+ */
+function getOfferedAttributes(
+  group: SKUGroup | null | undefined,
+  attributes: StorefrontProductAttribute[],
+): StorefrontProductAttribute[] {
+  const { values, complete } = getSkuAttributeValues(group);
+  if (!complete) return attributes;
+  const offered: Set<string> = new Set(values.flatMap((names) => names ?? []));
+  return attributes.map((attribute) => {
+    const kept: StorefrontProductAttribute['values'] = attribute.values.filter((value) =>
+      offered.has(value.name),
+    );
+    return kept.length ? { ...attribute, values: kept } : attribute;
+  });
+}
+
 /**
  * For each attribute, the values whose every SKU, among those with the other selected values, has tracked stock
  * used up. Needs every SKU with its attribute values, so it is empty for a truncated list or an older server.
@@ -428,13 +467,7 @@ function getSoldOutValues(
   attributes: StorefrontProductAttribute[],
   selections: string[],
 ): ReadonlySet<string>[] {
-  const connection = group?.skus;
-  const skus: SKU[] = connection?.edges?.flatMap((edge) => (edge?.node ? [edge.node] : [])) ?? [];
-  const values: (string[] | null)[] = skus.map(getSkuAttributeValueNames);
-  const complete: boolean =
-    !connection?.pageInfo?.hasNextPage &&
-    (connection?.totalCount ?? skus.length) === skus.length &&
-    values.every((names) => names !== null);
+  const { skus, values, complete } = getSkuAttributeValues(group);
   return attributes.map((attribute, index) => {
     const soldOut: Set<string> = new Set();
     if (!complete) return soldOut;

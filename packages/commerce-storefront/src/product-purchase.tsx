@@ -1,9 +1,10 @@
 import { type ComponentProps, type ReactElement, type ReactNode, useId } from 'react';
-import { message } from './api';
+import { describeError } from './api';
 import { AddToCart, type AddToCartLabelState, isSoldOut, quantityProblem } from './cart';
 import { getAvailableInventoryQuantity, inSentence, type SKU } from './catalog-model';
 import { buttonClass, errorActionClass, errorNoticeClass, inputClass } from './class-names';
-import { useCommerce, useMoney } from './commerce-provider';
+import { useCommerce, useMessage, useMoney } from './commerce-provider';
+import type { StorefrontMessageKey } from './messages';
 import { type PartLabel, partProps, renderLabel } from './part';
 import {
   type ProductDetailsPartProps,
@@ -13,12 +14,12 @@ import {
   useSkuOptionRegistration,
 } from './product-details-context';
 
-const disabledReasons: Record<Exclude<ProductDetailsStatus, 'ready'>, string> = {
-  incomplete: 'Select all options to add this item to your cart.',
-  checking: 'Checking this variant…',
-  'variant-error': 'Availability for this selection could not be checked.',
-  unavailable: 'This combination is unavailable. Choose different options.',
-  'not-purchasable': 'This product is not currently available to purchase.',
+const disabledReasons: Record<Exclude<ProductDetailsStatus, 'ready'>, StorefrontMessageKey> = {
+  incomplete: 'selectAllOptions',
+  checking: 'checkingVariant',
+  'variant-error': 'variantCheckFailed',
+  unavailable: 'combinationUnavailable',
+  'not-purchasable': 'notPurchasable',
 };
 
 /** Above this many values, buttons wrap into a wall, so the option is a select. */
@@ -126,9 +127,10 @@ function ChoiceGroup({
 }): ReactElement {
   const name = useId();
   const errorId = useId();
+  const text = useMessage();
   const error: ReactNode = missing && (
     <p id={errorId} className='mt-2 inline-block rounded bg-red-50 px-2 py-1 text-sm text-red-800'>
-      Select {inSentence(label)}.
+      {text('selectAttributeError', { attribute: inSentence(label) })}
     </p>
   );
   if (choices.length > maxChoiceButtons)
@@ -142,10 +144,10 @@ function ChoiceGroup({
           value={selected}
           onChange={(event) => onSelect(event.target.value)}
         >
-          <option value=''>Select {inSentence(label)}</option>
+          <option value=''>{text('selectAttribute', { attribute: inSentence(label) })}</option>
           {choices.map((choice) => (
             <option key={choice.value} value={choice.value}>
-              {choice.soldOut ? `${choice.label} (sold out)` : choice.label}
+              {choice.soldOut ? text('soldOutOption', { label: choice.label }) : choice.label}
             </option>
           ))}
         </Select>
@@ -165,7 +167,13 @@ function ChoiceGroup({
           <label
             key={choice.value}
             className='group relative cursor-pointer'
-            title={swatches ? `${choice.label}${choice.soldOut ? ', sold out' : ''}` : undefined}
+            title={
+              swatches
+                ? choice.soldOut
+                  ? text('soldOutChoice', { label: choice.label })
+                  : choice.label
+                : undefined
+            }
           >
             <input
               type='radio'
@@ -174,7 +182,7 @@ function ChoiceGroup({
               value={choice.value}
               checked={choice.value === selected}
               aria-invalid={missing || undefined}
-              aria-label={choice.soldOut ? `${choice.label}, sold out` : undefined}
+              aria-label={choice.soldOut ? text('soldOutChoice', { label: choice.label }) : undefined}
               data-commerce-control='choice'
               onChange={() => onSelect(choice.value)}
             />
@@ -210,11 +218,12 @@ function SkuOption(): ReactElement {
   const { skuOptions, explicitSkuId, selectSku, showMissing } =
     useProductDetailsInternal('ProductDetailsOptions');
   useSkuOptionRegistration();
+  const text = useMessage();
   const missing: boolean = showMissing && !explicitSkuId;
   return (
     <div {...partProps('product-details-sku-option')} data-commerce-missing={missing || undefined}>
       <ChoiceGroup
-        label='Option'
+        label={text('skuOptionLabel')}
         selected={explicitSkuId}
         missing={missing}
         onSelect={selectSku}
@@ -272,6 +281,8 @@ export function ProductDetailsOption({
  */
 export function ProductDetailsPurchaseStatus({ className }: ProductDetailsPartProps): ReactElement | null {
   const { status, variantError, retryVariant } = useProductDetailsInternal('ProductDetailsPurchaseStatus');
+  const { messages } = useCommerce();
+  const text = useMessage();
   let content: ReactElement;
   switch (status) {
     case 'ready':
@@ -280,9 +291,9 @@ export function ProductDetailsPurchaseStatus({ className }: ProductDetailsPartPr
     case 'variant-error':
       content = (
         <div role='alert' className={errorNoticeClass}>
-          <p>{message(variantError)}</p>
+          <p>{describeError(variantError, messages)}</p>
           <button type='button' className={errorActionClass} onClick={retryVariant}>
-            Retry availability
+            {text('retryAvailability')}
           </button>
         </div>
       );
@@ -290,17 +301,17 @@ export function ProductDetailsPurchaseStatus({ className }: ProductDetailsPartPr
     case 'unavailable':
       content = (
         <p role='status' className={errorNoticeClass}>
-          {disabledReasons[status]}
+          {text(disabledReasons[status])}
         </p>
       );
       break;
     case 'not-purchasable':
-      content = <p className='text-sm text-commerce-muted'>{disabledReasons[status]}</p>;
+      content = <p className='text-sm text-commerce-muted'>{text(disabledReasons[status])}</p>;
       break;
     case 'checking':
       content = (
         <p role='status' className='text-sm text-commerce-muted'>
-          {disabledReasons[status]}
+          {text(disabledReasons[status])}
         </p>
       );
       break;
@@ -312,15 +323,16 @@ export function ProductDetailsPurchaseStatus({ className }: ProductDetailsPartPr
 /** Stock for the verified SKU. Renders nothing until a SKU is verified. */
 export function ProductDetailsAvailability({ className }: ProductDetailsPartProps): ReactElement | null {
   const { selectedSku, availableQuantity } = useProductDetailsInternal('ProductDetailsAvailability');
+  const text = useMessage();
   if (!selectedSku) return null;
   return (
     <div {...partProps('product-details-availability', className)}>
       <p className='text-sm text-commerce-muted' aria-live='polite'>
         {availableQuantity === null
-          ? 'Available to order'
+          ? text('availableToOrder')
           : isSoldOut(availableQuantity)
-            ? 'This variant is out of stock'
-            : `${availableQuantity} available`}
+            ? text('variantOutOfStock')
+            : text('availableCount', { count: availableQuantity })}
       </p>
     </div>
   );
@@ -353,22 +365,24 @@ export function ProductDetailsQuantity({ className }: ProductDetailsPartProps): 
     useProductDetailsInternal('ProductDetailsQuantity');
   const id = useId();
   const problemId = useId();
+  const text = useMessage();
   const soldOut: boolean = !!selectedSku && isSoldOut(availableQuantity);
   const max: number | null =
     selectedSku && availableQuantity !== null && availableQuantity > 0 ? availableQuantity : null;
   // A sold-out SKU has no quantity to fix; its availability and button say so.
-  const problem: string | null = soldOut ? null : quantityProblem(quantity, max);
+  const issue = soldOut ? null : quantityProblem(quantity, max);
+  const problem: string | null = issue && text(issue.key, issue.values);
   const current: number = Number.isInteger(quantity) ? quantity : 1;
   return (
     <div {...partProps('product-details-quantity', className)}>
       <label htmlFor={id} className='sr-only'>
-        Quantity
+        {text('quantity')}
       </label>
       <div className='inline-flex items-center rounded-lg border border-commerce-edge'>
         <button
           type='button'
           className={stepperButtonClass}
-          aria-label={`Decrease quantity of ${name}`}
+          aria-label={text('decreaseQuantity', { name })}
           data-commerce-control='decrease'
           disabled={soldOut || current <= 1}
           onClick={() => setQuantity(current - 1)}
@@ -391,7 +405,7 @@ export function ProductDetailsQuantity({ className }: ProductDetailsPartProps): 
         <button
           type='button'
           className={stepperButtonClass}
-          aria-label={`Increase quantity of ${name}`}
+          aria-label={text('increaseQuantity', { name })}
           data-commerce-control='increase'
           disabled={soldOut || (max !== null && current >= max)}
           onClick={() => setQuantity(current + 1)}
@@ -423,6 +437,7 @@ export function ProductDetailsAddToCart({ className, children }: ProductDetailsA
     useProductDetailsInternal('ProductDetailsAddToCart');
   const { config } = useCommerce();
   const money = useMoney();
+  const text = useMessage();
   const reasonId = useId();
   if (selectedSku) {
     const unit: number | null | undefined = price?.value?.value;
@@ -441,8 +456,8 @@ export function ProductDetailsAddToCart({ className, children }: ProductDetailsA
           quantity={quantity}
           className={buttonClass}
           block
-          label={total && `Add to cart · ${total}`}
-          labelName={total ? `Add to cart, ${total}` : undefined}
+          label={total && text('addToCartWithPrice', { price: total })}
+          labelName={total ? text('addToCartWithPriceName', { price: total }) : undefined}
         >
           {children}
         </AddToCart>
@@ -462,7 +477,7 @@ export function ProductDetailsAddToCart({ className, children }: ProductDetailsA
           {renderLabel(
             children,
             { busy: false, soldOut: false },
-            next ? `Select ${inSentence(next)}` : 'Select an option',
+            next ? text('selectAttribute', { attribute: inSentence(next) }) : text('selectOption'),
           )}
         </button>
       </div>
@@ -477,10 +492,10 @@ export function ProductDetailsAddToCart({ className, children }: ProductDetailsA
         aria-describedby={reasonId}
         data-commerce-part='add-to-cart-button'
       >
-        {renderLabel(children, { busy: false, soldOut: false }, 'Add to cart')}
+        {renderLabel(children, { busy: false, soldOut: false }, text('addToCart'))}
       </button>
       <span id={reasonId} hidden>
-        {status === 'ready' ? '' : disabledReasons[status]}
+        {status === 'ready' ? '' : text(disabledReasons[status])}
       </span>
     </div>
   );

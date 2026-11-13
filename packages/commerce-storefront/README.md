@@ -57,6 +57,7 @@ Use the providers your application already has; do not create another router or 
 | `onItemAdded` | unset | Called with `{ name, quantity, isSample }` after each add, live or sample; use it to confirm adds on a site with a cart page instead of a drawer |
 | `onEvent` | unset | Called with a [`CommerceEvent`](#events) for every cart change and failure, such as for analytics |
 | `locale` | `en-US` | BCP 47 locale for formatting prices, such as `de-DE`; an invalid tag falls back to `en-US` with a development warning. It never selects UI text |
+| `messages` | English | The package's text, such as `frFR`. Keys left out stay English. See [translations](#translations) |
 | `theme` | inherited text and transparent wrappers; neutral control palette | CSS custom properties applied to storefront surfaces and the portalled drawer |
 | `getSwatch` | unset | Swatches for attribute values, such as colors. Returns a CSS `background` for a value, or nothing. See [swatches](#swatches) |
 
@@ -81,6 +82,7 @@ A connection failure leaves the surrounding application and its state mounted. C
     '--commerce-radius': '0.75rem',
     '--commerce-sale': '#b42318',
     '--commerce-on-sale': '#ffffff',
+    '--commerce-card-image-aspect': '1 / 1',
   }}
 >
   {/* Register /collection and /item/:productId in your router. */}
@@ -92,7 +94,7 @@ The stylesheet includes all required utilities and scopes them to the package's 
 
 By default, `.commerce-storefront` wrappers do not paint a background and inherit the host's text color. Set page and section backgrounds on the host application's layout elements. Muted text, hairlines, image placeholders and the quieter outlined buttons (cart button, product card actions, pagination) derive from the inherited text color, so they read on a light or dark page without configuration. `--commerce-surface` colors form inputs and the opaque cart drawer, paired with `--commerce-text`; it does not color component wrappers. Error and warning messages bring their own light background. The Sale badge fills with `--commerce-sale` behind `--commerce-on-sale` text, so it reads over an image and on any page; sale prices keep the surrounding text color, with the compare-at price struck through beside them. Images have square corners; `--commerce-radius` rounds buttons, inputs and option buttons. Primary buttons use `--commerce-accent` and are ringed in it on focus, so choose an accent that contrasts with the page. Set `--commerce-surface` and `--commerce-text` together to adapt controls and the drawer to a dark theme. Avoid setting wrapper backgrounds through CSS or the `theme` prop's `background`, `backgroundColor`, or `backgroundImage` properties, which can still override the transparent default. Descendants inherit the surface text and body font instead of global heading styles. Keep text, controls and focus indicators accessible when changing colors. Internal utility class names and markup are not a customization API; use the [product](#custom-product-layouts), [catalog](#custom-catalog-layouts) and [cart](#custom-cart-layouts) parts to change a layout, and the [styling hooks](#styling-hooks) to style inside a part.
 
-Prices follow the provider's `locale`, which defaults to `en-US`. UI text is English. The catalog title and description are configurable through `CatalogHeader`, and many parts take [replacement text](#replacing-text). Full localization is outside this initial API. When it arrives, translated text will be a separate prop that a site opts into; `locale` will keep formatting only, so a site that sets it for prices never gets new wording in a minor release. Replacement text will still take priority over translations.
+Prices follow the provider's `locale`, which defaults to `en-US`. UI text is English unless the site sets [`messages`](#translations).
 
 ## Compatibility
 
@@ -107,6 +109,8 @@ The repository example uses React Router 7. Follow each router version's own Rea
 | `CommerceStorefront` | Recommended integration: provider and one drawer |
 | `Catalog` | Six products per cursor page, or `pageSize`. Its `title`, `description`, and `showHeader` props are deprecated; compose `CatalogRoot` instead |
 | `CatalogRoot` and catalog parts | Build a [custom catalog or card layout](#custom-catalog-layouts) with the same rules as `Catalog` |
+| `useProductCard`, `useCatalog` | Card and catalog state for your own card parts, such as a category line or a product count |
+| `SampleProduct` | The type of [your own sample products](#your-own-sample-products), for a template shown before a store is connected |
 | `ProductDetails` | Reads `:productId`; validates URL option selections against catalog results. `ProductDetailsRoot` also takes a `productId` prop |
 | `ProductDetailsRoot` and product parts | Build a [custom product layout](#custom-product-layouts) with the same rules as `ProductDetails` |
 | `ProductCard` | Renders one `SKUGroup` with direct add or a product-details link; `ProductCardRoot` and card parts customize it |
@@ -117,7 +121,8 @@ The repository example uses React Router 7. Follow each router version's own Rea
 | `AddToCartButton` | Adds a verified `sku`, `name`, and optional integer `quantity`; while disabled, its accessible description says why. Its children replace the label |
 | `CommerceStatus` | Connection progress/error/retry for custom layouts |
 | `useCommerce` | Cart, connection, pending/error state and serialized cart actions |
-| `useMoney` | Formats minor units in the provider's `locale`, like the package's own prices, for custom parts |
+| `useMoney` | Formats minor units in the provider's `locale`, like the package's own prices, for custom parts. `useMoneyRange` formats a range |
+| `useMessage` | The provider's [text](#translations) by key, for custom parts |
 | `ProductImage` | A product image with the package's placeholder for a missing or broken image, for custom parts |
 | `CommerceProvider` | Lower-level composition when the recommended wrapper does not fit, such as a custom drawer; mount it once |
 
@@ -165,7 +170,7 @@ Add your own elements between parts, reorder them, or leave out display parts. `
 | `ProductDetailsAvailability` | Stock for the verified SKU; nothing before verification |
 | `ProductDetailsAddToCart` | Adds the verified SKU and quantity, labeled with the total, such as "Add to cart · $64.00". Until every option is chosen it names the next one, such as "Select size", and pressing it shows an error on each missing option and focuses the first. While a selection is checked or unavailable, it is disabled and its accessible description gives the reason |
 
-Values whose SKUs are all sold out, given the shopper's other selections, are crossed out and announced as "sold out", but stay selectable, so the shopper can change options in any order. This needs every SKU with its attribute values in the product response, which `@godaddy/gd-commerce-server` returns for up to 50 SKUs; for a product with more, no value is marked, and the add button still says "Out of stock" once a sold-out SKU is chosen.
+Values that no active SKU has are left out, so every value shown can be bought, and a link that names one is treated as if that option is not chosen. An attribute that no SKU has a value for keeps all its values. Values whose SKUs are all sold out, given the shopper's other selections, are crossed out and announced as "sold out", but stay selectable, so the shopper can change options in any order. Both need every SKU with its attribute values in the product response, which `@godaddy/gd-commerce-server` returns for up to 50 SKUs; for a product with more, every value is shown, none is marked, and the add button still says "Out of stock" once a sold-out SKU is chosen.
 
 Every part is named `ProductDetails*` because it works only inside `ProductDetailsRoot`. `AddToCartButton` is the standalone button for a SKU you already have.
 
@@ -303,11 +308,25 @@ As with product layouts, the grid, spacing and border classes come from your own
 | `ProductCardDescription` | Up to two lines of description; nothing without one. The packaged card leaves it out |
 | `ProductCardAction` | Adds the product directly only when it has one SKU and no options; otherwise links to the product page to choose. Its children replace the label; as a function, they receive the `action`: `add`, `choose-options` or `view-product` |
 
-`className` on `CatalogProducts` goes on the element whose direct children are the cards, so a host grid places them, and `className` on `ProductCardRoot` goes on each card, so classes such as `col-span-2` work. While products load, that element holds three placeholder cards, so they follow the host's grid. The error with its retry button and, without a `CatalogEmpty`, the empty message render just before it. Card parts take no product, SKU or price props. Inside `CatalogProducts`, `ProductCardRoot` takes no `product` prop either and throws if it gets one, so a card always shows the product it is rendered for. Samples use the same card: they show a placeholder image, no badge, description or links, and add only to the sample cart. Card and catalog parts throw if they are rendered outside their root. Packaged cards fill their grid row, with the price and action at the bottom of each card.
+`className` on `CatalogProducts` goes on the element whose direct children are the cards, so a host grid places them, and `className` on `ProductCardRoot` goes on each card, so classes such as `col-span-2` work. While products load, that element holds three placeholder cards, so they follow the host's grid. The error with its retry button and, without a `CatalogEmpty`, the empty message render just before it. Card parts take no product, SKU or price props. Inside `CatalogProducts`, `ProductCardRoot` takes no `product` prop either and throws if it gets one, so a card always shows the product it is rendered for. Samples use the same card and add only to the sample cart. They have no product page, so their title and image are not links. The packaged samples show a placeholder image and no badge or description; [your own samples](#your-own-sample-products) show their image, description and sale badge. Card images and their loading placeholders are square; set `--commerce-card-image-aspect`, such as `3 / 4`, in the `theme` or on any element around the cards to change that. Card and catalog parts throw if they are rendered outside their root. Packaged cards fill their grid row, with the price and action at the bottom of each card.
 
 The root keeps its page cursor in the page URL, as `after`. For a second catalog on the same page, such as a featured row above the main grid, set `urlState={false}` on it so the two do not share one cursor.
 
-For a product the host already has, such as a featured product, use `ProductCard` or `ProductCardRoot` with a `product` prop outside the catalog. `useProductCard()` returns read-only `product` (`null` for samples), `name`, `href` (`null` for samples) and `isSample` for building custom card parts. Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
+For a product the host already has, such as a featured product, use `ProductCard` or `ProductCardRoot` with a `product` prop outside the catalog. `useProductCard()` returns read-only `product` (`null` for samples), `sample` (the sample as you passed it, or `null` for a product), `name`, `href` (`null` for samples) and `isSample` for building custom card parts. `useCatalog()` returns the catalog's `count`, `isSample` and `status` (`loading`, `error` or `ready`) inside `CatalogRoot`, for a custom product count.
+
+Elements that are only display, such as a "Bestseller" label, a category line or a "View" link, are your own components, written with these hooks. Write such a component once and read its data where you place it, so the same label works on a card and in the cart:
+
+```tsx
+function CategoryLine() {
+  const { sample, product } = useProductCard<RoutineSample>();
+  // Samples carry your own fields; live products come from your catalog data.
+  // The type is not checked, so a sample from another catalog, such as the packaged ones, may lack your fields.
+  const category = sample ? sample.category : categoryFor(product);
+  return category ? <p className='eyebrow'>{category}</p> : null;
+}
+```
+
+Every part accepts `className` on an outer wrapper that the package's CSS reset leaves alone, with the same limits as [product parts](#custom-product-layouts).
 
 ## Custom cart layouts
 
@@ -406,7 +425,7 @@ For a cart page instead of, or as well as, the drawer, compose the same parts in
 Two hooks support custom cart markup:
 
 - `useCart()` works anywhere inside `CommerceProvider`. It returns read-only `items`, `itemCount`, `subtotal` (minor units, or `null` when the server has not priced the cart), `currency`, `isSample` and `loading`. Combine `itemCount` with `useCommerce().setOpen(true)` for a custom cart button.
-- `useCartItem()` returns the line inside `CartItemRoot`: `id`, `name`, `quantity`, `imageUrl`, `options`, `subtotal` and `currency`.
+- `useCartItem()` returns the line inside `CartItemRoot`: `id`, `name`, `quantity`, `imageUrl`, `options`, `subtotal`, `currency` and `sample` (the sample as it was added, or `null` for a store line).
 
 ## Replacing text
 
@@ -433,7 +452,30 @@ Parts whose wording a site often changes take replacement content as children. T
 | `ProductCardAction` | `{ action, busy, soldOut }` |
 | `ProductDetailsBackLink` | Content only |
 
-A replaced label stays the start of the control's accessible name, so voice control users can say what they see. Where the package adds the product name for screen readers, it follows as visually hidden text: `<CartItemRemove>Delete</CartItemRemove>` is named "Delete Mug". Controls without replacement text, such as "Increase quantity of Mug", keep English names.
+A replaced label stays the start of the control's accessible name, so voice control users can say what they see. Where the package adds the product name for screen readers, it follows as visually hidden text: `<CartItemRemove>Delete</CartItemRemove>` is named "Delete Mug". Controls without replacement text, such as "Increase quantity of Mug", take their names from [`messages`](#translations).
+
+## Translations
+
+The package's text comes from the provider's `messages`. Set it with `locale` for a translated store; the two are separate, so a site that sets `locale` for prices never gets new wording.
+
+```tsx
+import { CommerceStorefront } from '@godaddy/gd-commerce-storefront';
+import { frFR } from '@godaddy/gd-commerce-storefront/messages/fr-FR';
+
+<CommerceStorefront locale='fr-FR' messages={frFR}>
+```
+
+French is its own import, so English-only sites do not load it. Pass only the keys to change, and the rest stay as they were, English by default: `messages={{ ...frFR, checkout: 'Commander' }}`. The `StorefrontMessages` type lists every key, and `enUS` has the English text. New keys may be added in minor releases and stay English until translated, so type a translation of your own as `Partial<StorefrontMessages>`.
+
+Messages are plain data, so they can come from JSON, a translation service, or a server component. `{name}` placeholders are filled in, and numbers in them are formatted for the messages' `locale`. A message with a count can have plural forms, chosen by the language's rules; French counts 0 as singular:
+
+```ts
+{ productCount: { one: '{count} produit affiché', other: '{count} produits affichés' } }
+```
+
+The server's failure messages are English. With English text the storefront shows them as they are; with any other language it shows the text in `errorCodes` for the response's `code`, such as `scope_mismatch`, or the generic `requestFailed`. Product names, descriptions and attribute names come from the catalog as the merchant entered them, and are not translated. Sample prices stay in USD.
+
+[Replacement text](#replacing-text) and props such as `CatalogHeader`'s `title` take priority over `messages`. For custom parts, `useMessage()` returns the provider's text by key, `useMoney()` formats prices, and `useMoneyRange()` formats a range the way the `locale` writes it, such as `$20.00 – $25.00` or `20,00–25,00 €`.
 
 ## Styling hooks
 
@@ -458,7 +500,7 @@ Every part's outer element has a `data-commerce-part` attribute with the part's 
 | `item-removed` | `itemId`, `isSample` |
 | `discount-applied` | `code` |
 | `checkout-started` | `cartId`; sent just before the browser leaves for checkout, so use `navigator.sendBeacon` or a keepalive request |
-| `error` | `operation` (`add`, `change-quantity`, `remove`, `discount`, `refresh` or `checkout`) and the `message` the cart shows |
+| `error` | `operation` (`add`, `change-quantity`, `remove`, `discount`, `refresh` or `checkout`), the `message` the cart shows in the provider's language at the time of the failure, and the server's `code`, such as `scope_mismatch`, when it sent one. The cart's own notice follows a later change of `messages`; the event's text does not, so log `code` to group failures |
 
 New event types may be added in minor releases, so ignore types you do not handle. A callback that throws or returns a rejected promise, including `onItemAdded`, is logged to the console and does not fail the cart operation. Async callbacks are not awaited, so a slow analytics call never delays the cart.
 
@@ -469,6 +511,16 @@ Products are SKU groups. The package purchases only an unambiguous SKU, verifies
 Cart mutations share one queue, including initial cart creation. The cart ID is saved under `godaddy:commerce-storefront:cart:<scope>`. Browser Web Locks coordinate tabs where supported; storage/focus events refresh the cart. If storage fails, the current page keeps the cart ID in memory and shows a warning. Browsers without Web Locks have only per-provider serialization; the server must handle concurrent writes correctly.
 
 Changing the server-provided cart scope resets cart state and prevents old responses from affecting the new connection. A failed configuration refresh temporarily disables commerce and also invalidates pending responses. Normal configuration loading and failures do not unmount host content.
+
+## Troubleshooting
+
+**"The store could not be reached" with `returned an HTML page instead of JSON` in the console.** A request under
+`/api/commerce` got the application's HTML page. The Commerce routes are not mounted on this origin, or a static
+file, single-page app or SSR fallback route answers before them. Mount them at `/api/commerce` ahead of those
+routes; with a separate API server in development, proxy `/api/commerce` to it. Opening `/api/commerce/config` in
+the browser should return JSON. A missing route never shows sample products, even with `sampleProducts`: the server
+must report `state: 'unbound'`. See [Before a store is connected](#before-a-store-is-connected) and the server
+package's [example for a site before its store connects](../commerce-server/README.md#a-site-before-its-store-connects).
 
 ## Guides
 
@@ -506,8 +558,8 @@ A site can mount the same components before it has a connected store:
 </CommerceStorefront>
 ```
 
-`Catalog.sampleProducts` defaults to `false`. It allows six built-in sample products
-(Product 1–6, $10–$60 USD) **only** when `/api/commerce/config` reports `state: 'unbound'`.
+`Catalog.sampleProducts` defaults to `false`. `true` allows six built-in sample products
+(Product 1–6, $10–$60 USD, without images) **only** when `/api/commerce/config` reports `state: 'unbound'`.
 When a store is connected, the server reports a different state and the components show real
 products. You do not need to change props or the component tree. The prop has no effect while
 a store is connected. Real empty catalogs and errors never fall back to samples.
@@ -535,6 +587,55 @@ empty sample cart. While connecting, refresh failures keep the connecting
 state for up to 60 seconds before showing the error. Once polling slows to every minute, the next
 failure is already 60 seconds after the last success, so it shows the error at once. Polling
 stops when the state is `ready`; focus and explicit retry still refresh configuration.
+
+#### Your own sample products
+
+A template can show its own samples instead, with the same rule. Pass them to `sampleProducts` on
+`Catalog` or `CatalogRoot`:
+
+```tsx
+interface RoutineSample extends SampleProduct {
+  category: string;
+}
+
+const samples: RoutineSample[] = [
+  {
+    key: 'daily-cleanser',
+    name: 'Daily Cleanser',
+    price: 3200,
+    description: 'Gentle, pH-balanced foam that removes without stripping.',
+    imageUrl: '/images/cleanser.jpg',
+    category: 'Cleanse',
+  },
+];
+
+<Catalog sampleProducts={samples} />
+```
+
+Each sample needs a unique `key`, a `name` and a `price` in minor units of USD. `compareAtPrice`,
+`description` and `imageUrl` are optional. `imageUrl` is any URL the browser can load, such as a
+file in the site's own public folder; the package does not upload or check it. An image that
+fails to load shows the image placeholder on the card and no image in the cart. `CatalogRoot`
+throws, while no store is connected, for an empty list, an entry that is not an object, a
+duplicate or empty key, a packaged sample's key (`sample-1` to `sample-6`), an empty name, a
+`description` or `imageUrl` that is not a string, or a price or compare-at price that is not a
+whole number of 0 or more. Once a store is connected the samples are not shown, so development
+builds log the problem instead and the store's catalog still renders. A list written inline is
+compared by its values, so it does not rebuild the cards when it is unchanged. In a card with
+`ProductCardTitle`, a sample's image is hidden from screen readers, which read the name from the
+title.
+
+The card parts show a sample's image, description, price, and a Sale badge and struck-through
+price when `compareAtPrice` is above `price`. Samples have no product page. Fields of your own,
+such as `category`, come back unchanged from `useProductCard().sample` and, once added, from
+`useCartItem().sample`. The type you pass, as in `useProductCard<RoutineSample>()`, is not
+checked, so where other samples can appear, read your own fields as possibly missing. The sample
+cart keeps each sample as it was added, with its image, so the cart still shows it on a page
+without the catalog. While a catalog with a sample of the same key is mounted, the cart shows
+that sample's current fields, so a price or name loaded later matches the card. The cart lists
+packaged samples in catalog order and your own in the order they were added, after them. Once a
+store is connected, the same card tree shows the store's products, so build the card for both:
+your own parts read `sample` before a store is connected and `product` after.
 
 Use a server that reports connection state before you enable `sampleProducts`. Successful
 config responses without `state` still mean ready. A server that does not report `unbound`

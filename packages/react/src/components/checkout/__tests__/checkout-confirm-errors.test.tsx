@@ -575,7 +575,7 @@ describe('Checkout confirm errors', () => {
     const draftOrder = buildDraftOrder({ shippingLines: [] });
     const session = buildCheckoutSession({ draftOrder });
 
-    const { user } = renderCheckout({
+    const { user, queryClient } = renderCheckout({
       session,
       draftOrder,
       checkoutProps: {
@@ -588,6 +588,20 @@ describe('Checkout confirm errors', () => {
     });
     await waitForCheckoutReady();
     clearOperations();
+    setApiError('getDraftOrderShippingMethods', 'rates failed');
+    await act(async () => {
+      await queryClient.refetchQueries({
+        queryKey: checkoutQueryKeys.draftOrderShippingMethods(session.id),
+      });
+    });
+    expect(
+      queryClient
+        .getQueryCache()
+        .findAll({
+          queryKey: checkoutQueryKeys.draftOrderShippingMethods(session.id),
+        })
+        .some(query => query.state.status === 'error')
+    ).toBe(true);
 
     await user.click(
       await screen.findByRole('button', { name: /express confirm seam/i })

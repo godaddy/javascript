@@ -1,5 +1,11 @@
 # @godaddy/localizations
 
+## 1.0.15
+
+### Patch Changes
+
+- 6c05b32: Keep shipping rates, discounts, and taxes in sync when coupons change, and show a retry action when shipping rates fail to load.
+
 ## 1.0.14
 
 ### Patch Changes

@@ -13,7 +13,6 @@ import type {
   CalculateCheckoutSessionTaxesMutation,
   ConfirmCheckoutSessionMutation,
   CreateCheckoutSessionMutation,
-  RemoveAppliedCheckoutSessionShippingMethodMutation,
   UpdateCheckoutSessionDraftOrderMutation,
   VerifyCheckoutSessionAddressMutation,
 } from '@/lib/godaddy/checkout-mutations.ts';
@@ -157,10 +156,6 @@ export type ApplyCheckoutSessionDeliveryMethodInput = VariablesOf<
 
 export type ApplyCheckoutSessionFulfillmentLocationInput = VariablesOf<
   typeof ApplyCheckoutSessionFulfillmentLocationMutation
->;
-
-export type RemoveAppliedCheckoutSessionShippingMethodInput = VariablesOf<
-  typeof RemoveAppliedCheckoutSessionShippingMethodMutation
 >;
 
 export type CalculateCheckoutSessionTaxesInput = VariablesOf<

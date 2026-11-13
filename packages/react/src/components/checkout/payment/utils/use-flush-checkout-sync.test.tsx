@@ -1,3 +1,4 @@
+import { QueryObserver } from '@tanstack/react-query';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -151,6 +152,36 @@ async function clickFlush(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('useFlushCheckoutSync', () => {
+  it('waits for a failed shipping refresh without validating checkout state', async () => {
+    const onCheckoutErrors = vi.fn();
+    const { user, queryClient } = renderHookHost({
+      onCheckoutErrors,
+      timeoutMs: 1000,
+    });
+    const request = deferred();
+    const observer = new QueryObserver(queryClient, {
+      queryKey:
+        checkoutQueryKeys.draftOrderShippingMethods('checkout-session-1'),
+      queryFn: () => request.promise,
+      retry: false,
+    });
+    const unsubscribe = observer.subscribe(() => undefined);
+    try {
+      await clickFlush(user);
+      await act(async () => {
+        request.reject(new Error('Provider unavailable'));
+        await flushPromises();
+        await vi.advanceTimersByTimeAsync(60);
+      });
+      await waitFor(() =>
+        expect(screen.getByTestId('result')).toHaveTextContent('resolved')
+      );
+      expect(onCheckoutErrors).not.toHaveBeenCalled();
+    } finally {
+      unsubscribe();
+    }
+  });
+
   it('excludes tax mutation waits when tax collection is disabled', async () => {
     const { user } = renderHookHost({
       enableTaxCollection: false,
