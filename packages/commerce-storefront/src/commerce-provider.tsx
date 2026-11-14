@@ -664,11 +664,7 @@ function BoundCommerceProvider({
         headers.set('X-Commerce-Scope', config.cartScope);
         return checkedFetch(input, { ...init, headers });
       };
-      const result: CartResponse = await addToCart(
-        id.current,
-        { skuId: item.skuId, name: item.name, quantity: item.quantity },
-        fetchCart,
-      );
+      const result: CartResponse = await addToCart(id.current, item, fetchCart);
       if (!result.cart?.id || !result.cart.lineItems?.length) throw new StorefrontError('addReturnedNoCart');
       if (!isActive()) return;
       commit(result.cart);

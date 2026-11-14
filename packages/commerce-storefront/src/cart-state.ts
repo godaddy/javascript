@@ -64,10 +64,16 @@ export function useCart(): CartState {
         name: item.name ?? '',
         quantity: item.quantity ?? 0,
         imageUrl: item.details?.productAssetUrl || null,
-        options: (item.details?.selectedOptions ?? []).map((option) => ({
-          attribute: option.attribute ?? '',
-          values: option.values ?? [],
-        })),
+        options: [
+          ...(item.details?.selectedOptions ?? []).map((option) => ({
+            attribute: option.attribute ?? '',
+            values: option.values ?? [],
+          })),
+          ...(item.details?.selectedAddons ?? []).map((addon) => ({
+            attribute: addon.attribute ?? '',
+            values: (addon.values ?? []).map((value) => value.name ?? ''),
+          })),
+        ],
         subtotal: typeof item.totals?.subTotal?.value === 'number' ? item.totals.subTotal.value : null,
         currency: item.totals?.subTotal?.currencyCode ?? currency,
         sample: null,

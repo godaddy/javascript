@@ -561,6 +561,88 @@ describe('composable cart', () => {
     expect(added).toHaveBeenCalledWith({ name: 'Product 2', quantity: 1, isSample: true });
   });
 
+  it('forwards details and metafields from a custom addItem call to the cart POST body', async () => {
+    const fetchMock = mockStore();
+    function CustomAdd(): ReactElement {
+      const { addItem } = useCommerce();
+      return (
+        <button
+          type='button'
+          onClick={() =>
+            void addItem({
+              skuId: 'sku-mug',
+              name: 'Mug',
+              quantity: 1,
+              details: {
+                productAssetUrl: 'https://cdn.test/design.png',
+                selectedAddons: [{ optionId: 'opt-1', values: [{ inputValue: 'Custom design 123' }] }],
+              },
+              metafields: [{ key: 'designId', value: 'design-123' }],
+            })
+          }
+        >
+          Add customized
+        </button>
+      );
+    }
+    render(app(<CustomAdd />));
+    await userEvent.click(screen.getByRole('button', { name: 'Add customized' }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const itemsCall = fetchMock.mock.calls.find(([input]) => String(input).includes('/items'));
+    const body = JSON.parse(String(itemsCall?.[1]?.body));
+    expect(body).toEqual({
+      skuId: 'sku-mug',
+      name: 'Mug',
+      quantity: 1,
+      details: {
+        productAssetUrl: 'https://cdn.test/design.png',
+        selectedAddons: [{ optionId: 'opt-1', values: [{ inputValue: 'Custom design 123' }] }],
+      },
+      metafields: [{ key: 'designId', value: 'design-123' }],
+    });
+  });
+
+  it('surfaces selectedAddons in useCart() options alongside selectedOptions', async () => {
+    localStorage.setItem(storageKey, 'cart-1');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(String(input), 'https://host.test');
+        if (url.pathname.endsWith('/config')) return response({ cartScope: 's', currencyCode: 'USD' });
+        return response({
+          cart: {
+            id: 'cart-1',
+            lineItems: [
+              {
+                id: 'line-1',
+                name: 'Mug',
+                quantity: 1,
+                details: {
+                  selectedAddons: [{ attribute: 'Design', values: [{ name: 'Custom design 123' }] }],
+                },
+                totals: { subTotal: { value: 1200, currencyCode: 'USD' } },
+              },
+            ],
+            totals: {
+              subTotal: { value: 1200, currencyCode: 'USD' },
+              total: { value: 1200, currencyCode: 'USD' },
+            },
+          },
+        });
+      }),
+    );
+    function Options(): ReactElement {
+      const { items } = useCart();
+      return <output data-testid='options'>{JSON.stringify(items[0]?.options ?? [])}</output>;
+    }
+    render(app(<Options />));
+    await waitFor(() =>
+      expect(screen.getByTestId('options')).toHaveTextContent(
+        JSON.stringify([{ attribute: 'Design', values: ['Custom design 123'] }]),
+      ),
+    );
+  });
+
   it('renders the packaged drawer from CommerceStorefront with dividers between lines', async () => {
     mockStore();
     render(

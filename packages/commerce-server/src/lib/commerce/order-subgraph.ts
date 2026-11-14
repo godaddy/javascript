@@ -14,6 +14,7 @@
  * - Money values are integers in the currency's smallest unit (cents for USD).
  */
 
+import { InvalidRequestError } from './errors';
 import type { Money } from './gql';
 
 export interface OrderStorefrontEndpointInput {
@@ -94,6 +95,12 @@ export interface CartNote {
   createdAt?: string | null;
 }
 
+export interface CartMetafield {
+  key?: string | null;
+  type?: string | null;
+  value?: string | null;
+}
+
 export interface CartLineItem {
   id?: string | null;
   name?: string | null;
@@ -106,6 +113,7 @@ export interface CartLineItem {
   discounts?: CartDiscount[] | null;
   taxes?: CartTax[] | null;
   notes?: CartNote[] | null;
+  metafields?: CartMetafield[] | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -190,6 +198,26 @@ export interface CreateDraftLineItemInput {
   details?: LineItemDetailsInput;
 }
 
+// Distinct from `LineItemDetailsInput`: the GraphQL `AddLineItemInput.details.selectedAddons`
+// field takes `{ optionId, values: [{ inputValue | optionValueId }] }` — the catalog-option
+// *input* shape — not the `{ attribute, sku, values: [{ name, costAdjustment }] }` *output*
+// shape a line item returns once built.
+export interface AddLineItemSelectedAddonInput {
+  optionId: string;
+  values: Array<{ inputValue: string }>;
+}
+
+export interface AddLineItemDetailsInput {
+  productAssetUrl?: string;
+  selectedAddons?: AddLineItemSelectedAddonInput[];
+}
+
+export interface AddLineItemMetafieldInput {
+  key: string;
+  value: string;
+  type: 'JSON';
+}
+
 export interface AddLineItemBySkuIdInput {
   orderId: string;
   skuId: string;
@@ -198,7 +226,8 @@ export interface AddLineItemBySkuIdInput {
   fulfillmentMode?: string;
   status?: string;
   type?: string;
-  details?: LineItemDetailsInput;
+  details?: AddLineItemDetailsInput;
+  metafields?: AddLineItemMetafieldInput[];
 }
 
 export interface UpdateLineItemByIdInput {
@@ -275,10 +304,80 @@ export interface EmptyCartOrderInput {
   currencyCode?: string;
 }
 
+export const PRODUCT_ASSET_URL_MAX_LENGTH = 2048;
+export const SELECTED_ADDON_VALUE_MAX_LENGTH = 500;
+export const MAX_SELECTED_ADDONS = 20;
+export const MAX_METAFIELDS = 10;
+export const METAFIELD_VALUE_MAX_LENGTH = 2000;
+
+export interface AddToCartMetafieldInput {
+  key: string;
+  value: string;
+  type?: 'JSON';
+}
+
 export interface AddToCartItemInput {
   skuId: string;
   name: string;
   quantity: number;
+  details?: AddLineItemDetailsInput;
+  metafields?: AddToCartMetafieldInput[];
+}
+
+// Only TEXT/NUMBER catalog options (shopper-typed `inputValue`) are supported here. A LIST
+// option's pre-defined `optionValueId` is a distinct, unvalidated shape — out of scope for this
+// change (see the ticket's addon-value-shape decision) — so reject it explicitly rather than
+// letting it reach `order-api` unchecked or crash on a missing `inputValue`.
+function assertSupportedAddonValueShape(value: { inputValue?: string }): string {
+  if (typeof value.inputValue !== 'string') {
+    throw new InvalidRequestError(
+      'selectedAddons values must use { inputValue }; LIST-option values ({ optionValueId }) are not supported',
+    );
+  }
+  return value.inputValue;
+}
+
+// This is the only place these length/HTTPS/count limits are enforced — `order-api`'s schema
+// uses a plain `z.string()` for these fields with no such caps.
+export function assertValidCartItemInput(item: AddToCartItemInput): void {
+  const assetUrl = item.details?.productAssetUrl;
+  if (assetUrl !== undefined) {
+    if (assetUrl.length > PRODUCT_ASSET_URL_MAX_LENGTH) {
+      throw new InvalidRequestError(
+        `productAssetUrl cannot exceed ${PRODUCT_ASSET_URL_MAX_LENGTH} characters`,
+      );
+    }
+    let parsed: URL;
+    try {
+      parsed = new URL(assetUrl);
+    } catch {
+      throw new InvalidRequestError('productAssetUrl must be an absolute URL');
+    }
+    if (parsed.protocol !== 'https:') throw new InvalidRequestError('productAssetUrl must use https');
+  }
+  const addons = item.details?.selectedAddons ?? [];
+  if (addons.length > MAX_SELECTED_ADDONS) {
+    throw new InvalidRequestError(`selectedAddons cannot exceed ${MAX_SELECTED_ADDONS} entries`);
+  }
+  for (const addon of addons) {
+    for (const value of addon.values) {
+      const inputValue = assertSupportedAddonValueShape(value);
+      if (inputValue.length > SELECTED_ADDON_VALUE_MAX_LENGTH) {
+        throw new InvalidRequestError(
+          `selectedAddons value cannot exceed ${SELECTED_ADDON_VALUE_MAX_LENGTH} characters`,
+        );
+      }
+    }
+  }
+  const metafields = item.metafields ?? [];
+  if (metafields.length > MAX_METAFIELDS) {
+    throw new InvalidRequestError(`metafields cannot exceed ${MAX_METAFIELDS} entries`);
+  }
+  for (const metafield of metafields) {
+    if (metafield.value.length > METAFIELD_VALUE_MAX_LENGTH) {
+      throw new InvalidRequestError(`metafield value cannot exceed ${METAFIELD_VALUE_MAX_LENGTH} characters`);
+    }
+  }
 }
 
 export interface CartSummaryTotals {
@@ -326,6 +425,7 @@ export function buildAddLineItemBySkuIdInput(
   orderId: string,
   item: AddToCartItemInput,
 ): AddLineItemBySkuIdInput {
+  assertValidCartItemInput(item);
   return {
     orderId,
     skuId: item.skuId,
@@ -333,6 +433,10 @@ export function buildAddLineItemBySkuIdInput(
     quantity: item.quantity,
     fulfillmentMode: 'NONE',
     status: 'DRAFT',
+    ...(item.details ? { details: item.details } : {}),
+    ...(item.metafields
+      ? { metafields: item.metafields.map((metafield) => ({ ...metafield, type: metafield.type ?? 'JSON' })) }
+      : {}),
   };
 }
 
@@ -497,6 +601,11 @@ export const getCartOrderQuery = `
           content
           author
           authorType
+        }
+        metafields {
+          key
+          type
+          value
         }
       }
       totals {

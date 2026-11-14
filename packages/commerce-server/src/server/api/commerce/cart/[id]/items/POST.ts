@@ -5,7 +5,7 @@
  * (which creates the cart via POST /api/commerce/cart); subsequent adds
  * for the same cart go here.
  *
- * Body: { skuId: string, name: string, quantity: number }
+ * Body: { skuId: string, name: string, quantity: number, details?, metafields? }
  *
  * Response: { cart: CartOrder | null }
  *   The underlying `addLineItemBySkuId` GraphQL mutation only returns the
@@ -63,13 +63,7 @@ async function addLineItem(req: Request, res: Response): Promise<void> {
   await gqlRequest<AddLineItemBySkuIdResult, AddLineItemBySkuIdVariables>({
     endpoint,
     query: addLineItemBySkuIdMutation,
-    variables: {
-      input: buildAddLineItemBySkuIdInput(cartId, {
-        skuId: body.skuId,
-        name: body.name,
-        quantity: body.quantity,
-      }),
-    },
+    variables: { input: buildAddLineItemBySkuIdInput(cartId, body as AddToCartItemInput) },
     headers,
   });
 

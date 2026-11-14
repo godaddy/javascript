@@ -17,7 +17,7 @@
  *
  * Body:
  *   currencyCode? - override the configured currency (defaults to GODADDY_CURRENCY_CODE)
- *   lineItems?    - [{ skuId, name, quantity }] added one-by-one after create
+ *   lineItems?    - [{ skuId, name, quantity, details?, metafields? }] added one-by-one after create
  *
  * Response: { cart: CartOrder | null }
  *   Same shape as GET /api/commerce/cart/:id and the other cart mutation
@@ -36,6 +36,7 @@ import {
   type AddLineItemBySkuIdResult,
   type AddLineItemBySkuIdVariables,
   type AddToCartItemInput,
+  assertValidCartItemInput,
   buildAddLineItemBySkuIdInput,
   buildEmptyCartOrderInput,
   type GetCartOrderResult,
@@ -72,12 +73,15 @@ async function createCart(req: Request, res: Response): Promise<void> {
   // Validate all items BEFORE creating the cart so a bad payload can't
   // produce an orphaned cart (cart created, item add fails, client never
   // gets the id). Mirrors the validation in POST /api/commerce/cart/:id/items.
+  // assertValidCartItemInput also runs later inside buildAddLineItemBySkuIdInput,
+  // but by then the cart already exists — it must run here too, before creation.
   for (const item of initialItems) {
     if (!item.skuId || !item.name || typeof item.quantity !== 'number') {
       throw new InvalidRequestError(
         'Each lineItem must have skuId, a non-empty name, and a numeric quantity',
       );
     }
+    assertValidCartItemInput(item);
   }
 
   const config: CommerceConfig = readCommerceConfigForResponse(res);

@@ -77,6 +77,12 @@ export interface CartNote {
   createdAt?: string | null;
 }
 
+export interface CartMetafield {
+  key?: string | null;
+  type?: string | null;
+  value?: string | null;
+}
+
 export interface CartLineItem {
   id?: string | null;
   name?: string | null;
@@ -89,6 +95,7 @@ export interface CartLineItem {
   discounts?: CartDiscount[] | null;
   taxes?: CartTax[] | null;
   notes?: CartNote[] | null;
+  metafields?: CartMetafield[] | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -129,10 +136,23 @@ export interface CartOrder {
   tags?: string[] | null;
 }
 
+export interface AddToCartSelectedAddonInput {
+  optionId: string;
+  values: Array<{ inputValue: string }>;
+}
+
+export interface AddToCartMetafieldInput {
+  key: string;
+  value: string;
+  type?: 'JSON';
+}
+
 export interface AddToCartItemInput {
   skuId: string;
   name: string;
   quantity: number;
+  details?: { productAssetUrl?: string; selectedAddons?: AddToCartSelectedAddonInput[] };
+  metafields?: AddToCartMetafieldInput[];
 }
 
 export interface CartSummaryTotals {

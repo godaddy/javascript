@@ -358,6 +358,131 @@ describe('Commerce scoped routes', () => {
     },
   );
 
+  it('forwards details and metafields to addLineItemBySkuId when creating a cart', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addDraftOrder: { id: 'cart-1' } })
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    const details = {
+      productAssetUrl: 'https://cdn.example.com/design.png',
+      selectedAddons: [{ optionId: 'opt-1', values: [{ inputValue: 'Custom design 123' }] }],
+    };
+    const metafields = [{ key: 'designId', value: 'design-123' }];
+    await createCart(
+      {
+        headers: {},
+        body: { lineItems: [{ skuId: 'sku-1', name: 'Product', quantity: 1, details, metafields }] },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[1]?.[0].variables).toEqual({
+      input: expect.objectContaining({
+        details,
+        metafields: [{ key: 'designId', value: 'design-123', type: 'JSON' }],
+      }),
+    });
+  });
+
+  it('forwards details and metafields to addLineItemBySkuId when adding to an existing cart', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    const details = { productAssetUrl: 'https://cdn.example.com/design.png' };
+    const metafields = [{ key: 'designId', value: 'design-123' }];
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, details, metafields },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: expect.objectContaining({
+        details,
+        metafields: [{ key: 'designId', value: 'design-123', type: 'JSON' }],
+      }),
+    });
+  });
+
+  it.each([
+    ['http://cdn.example.com/design.png', 'non-https productAssetUrl'],
+    [`https://cdn.example.com/${'a'.repeat(2049)}.png`, 'oversized productAssetUrl'],
+  ])('rejects an add-item with %s (%s)', async (productAssetUrl): Promise<void> => {
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, details: { productAssetUrl } },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects an add-item with more selectedAddons than the configured maximum', async (): Promise<void> => {
+    const res = response();
+    const selectedAddons = Array.from({ length: 21 }, (_, index) => ({
+      optionId: `opt-${index}`,
+      values: [{ inputValue: 'value' }],
+    }));
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, details: { selectedAddons } },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects an add-item with a LIST-option (optionValueId) addon value', async (): Promise<void> => {
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: {
+          skuId: 'sku-1',
+          name: 'Product',
+          quantity: 1,
+          details: { selectedAddons: [{ optionId: 'opt-1', values: [{ optionValueId: 'val-1' }] }] },
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects cart creation with an invalid customization before creating the cart', async (): Promise<void> => {
+    const res = response();
+    await createCart(
+      {
+        headers: {},
+        body: {
+          lineItems: [
+            {
+              skuId: 'sku-1',
+              name: 'Product',
+              quantity: 1,
+              details: { productAssetUrl: 'http://cdn.example.com/design.png' },
+            },
+          ],
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
   const scopedRequest = {
     headers: {},
     query: {},
