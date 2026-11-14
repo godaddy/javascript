@@ -602,6 +602,47 @@ describe('composable cart', () => {
     });
   });
 
+  it('surfaces selectedAddons in useCart() options alongside selectedOptions', async () => {
+    localStorage.setItem(storageKey, 'cart-1');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(String(input), 'https://host.test');
+        if (url.pathname.endsWith('/config')) return response({ cartScope: 's', currencyCode: 'USD' });
+        return response({
+          cart: {
+            id: 'cart-1',
+            lineItems: [
+              {
+                id: 'line-1',
+                name: 'Mug',
+                quantity: 1,
+                details: {
+                  selectedAddons: [{ attribute: 'Design', values: [{ name: 'Custom design 123' }] }],
+                },
+                totals: { subTotal: { value: 1200, currencyCode: 'USD' } },
+              },
+            ],
+            totals: {
+              subTotal: { value: 1200, currencyCode: 'USD' },
+              total: { value: 1200, currencyCode: 'USD' },
+            },
+          },
+        });
+      }),
+    );
+    function Options(): ReactElement {
+      const { items } = useCart();
+      return <output data-testid='options'>{JSON.stringify(items[0]?.options ?? [])}</output>;
+    }
+    render(app(<Options />));
+    await waitFor(() =>
+      expect(screen.getByTestId('options')).toHaveTextContent(
+        JSON.stringify([{ attribute: 'Design', values: ['Custom design 123'] }]),
+      ),
+    );
+  });
+
   it('renders the packaged drawer from CommerceStorefront with dividers between lines', async () => {
     mockStore();
     render(
