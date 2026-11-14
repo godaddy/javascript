@@ -14,6 +14,7 @@
  * - Money values are integers in the currency's smallest unit (cents for USD).
  */
 
+import { InvalidRequestError } from './errors';
 import type { Money } from './gql';
 
 export interface OrderStorefrontEndpointInput {
@@ -323,39 +324,58 @@ export interface AddToCartItemInput {
   metafields?: AddToCartMetafieldInput[];
 }
 
-// UX-only guard; `order-api`'s schema is the authoritative enforcement point.
-function assertValidCartItemInput(item: AddToCartItemInput): void {
+// Only TEXT/NUMBER catalog options (shopper-typed `inputValue`) are supported here. A LIST
+// option's pre-defined `optionValueId` is a distinct, unvalidated shape — out of scope for this
+// change (see the ticket's addon-value-shape decision) — so reject it explicitly rather than
+// letting it reach `order-api` unchecked or crash on a missing `inputValue`.
+function assertSupportedAddonValueShape(value: { inputValue?: string }): string {
+  if (typeof value.inputValue !== 'string') {
+    throw new InvalidRequestError(
+      'selectedAddons values must use { inputValue }; LIST-option values ({ optionValueId }) are not supported',
+    );
+  }
+  return value.inputValue;
+}
+
+// This is the only place these length/HTTPS/count limits are enforced — `order-api`'s schema
+// uses a plain `z.string()` for these fields with no such caps.
+export function assertValidCartItemInput(item: AddToCartItemInput): void {
   const assetUrl = item.details?.productAssetUrl;
   if (assetUrl !== undefined) {
     if (assetUrl.length > PRODUCT_ASSET_URL_MAX_LENGTH) {
-      throw new Error(`productAssetUrl cannot exceed ${PRODUCT_ASSET_URL_MAX_LENGTH} characters`);
+      throw new InvalidRequestError(
+        `productAssetUrl cannot exceed ${PRODUCT_ASSET_URL_MAX_LENGTH} characters`,
+      );
     }
     let parsed: URL;
     try {
       parsed = new URL(assetUrl);
     } catch {
-      throw new Error('productAssetUrl must be an absolute URL');
+      throw new InvalidRequestError('productAssetUrl must be an absolute URL');
     }
-    if (parsed.protocol !== 'https:') throw new Error('productAssetUrl must use https');
+    if (parsed.protocol !== 'https:') throw new InvalidRequestError('productAssetUrl must use https');
   }
   const addons = item.details?.selectedAddons ?? [];
   if (addons.length > MAX_SELECTED_ADDONS) {
-    throw new Error(`selectedAddons cannot exceed ${MAX_SELECTED_ADDONS} entries`);
+    throw new InvalidRequestError(`selectedAddons cannot exceed ${MAX_SELECTED_ADDONS} entries`);
   }
   for (const addon of addons) {
     for (const value of addon.values) {
-      if (value.inputValue.length > SELECTED_ADDON_VALUE_MAX_LENGTH) {
-        throw new Error(`selectedAddons value cannot exceed ${SELECTED_ADDON_VALUE_MAX_LENGTH} characters`);
+      const inputValue = assertSupportedAddonValueShape(value);
+      if (inputValue.length > SELECTED_ADDON_VALUE_MAX_LENGTH) {
+        throw new InvalidRequestError(
+          `selectedAddons value cannot exceed ${SELECTED_ADDON_VALUE_MAX_LENGTH} characters`,
+        );
       }
     }
   }
   const metafields = item.metafields ?? [];
   if (metafields.length > MAX_METAFIELDS) {
-    throw new Error(`metafields cannot exceed ${MAX_METAFIELDS} entries`);
+    throw new InvalidRequestError(`metafields cannot exceed ${MAX_METAFIELDS} entries`);
   }
   for (const metafield of metafields) {
     if (metafield.value.length > METAFIELD_VALUE_MAX_LENGTH) {
-      throw new Error(`metafield value cannot exceed ${METAFIELD_VALUE_MAX_LENGTH} characters`);
+      throw new InvalidRequestError(`metafield value cannot exceed ${METAFIELD_VALUE_MAX_LENGTH} characters`);
     }
   }
 }
