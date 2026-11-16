@@ -516,6 +516,23 @@ describe('catalog and product selection', () => {
   });
 });
 
+describe('site builder editing', () => {
+  it('marks the catalog and the portaled cart drawer as Commerce data for the site builder', async () => {
+    mockApi((path) =>
+      path.endsWith('/config')
+        ? response(configuration)
+        : response({ skuGroups: { edges: [], pageInfo: {} } }),
+    );
+    const view = mount(<Catalog />);
+    await connected(view);
+    expect(
+      screen.getByText('No products available.').closest('[data-dev-source-origin="commerce"]'),
+    ).not.toBeNull();
+    act(() => view.context().setOpen(true));
+    expect(screen.getByRole('dialog').closest('[data-dev-source-origin="commerce"]')).not.toBeNull();
+  });
+});
+
 describe('storage and transport', () => {
   it('encodes reserved characters in an existing cart ID', async () => {
     const fetcher = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>

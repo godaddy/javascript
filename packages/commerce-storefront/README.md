@@ -512,6 +512,8 @@ Cart mutations share one queue, including initial cart creation. The cart ID is 
 
 Changing the server-provided cart scope resets cart state and prevents old responses from affecting the new connection. A failed configuration refresh temporarily disables commerce and also invalidates pending responses. Normal configuration loading and failures do not unmount host content.
 
+Every `.commerce-storefront` wrapper, including the cart drawer, has the attribute `data-dev-source-origin="commerce"`. The Airo site builder reads it as data from the Commerce API: a site owner can still select the components, for example to ask for a new style, but cannot edit or delete the product names, prices or cart text inside them.
+
 ## Troubleshooting
 
 **"The store could not be reached" with `returned an HTML page instead of JSON` in the console.** A request under
