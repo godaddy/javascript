@@ -461,6 +461,76 @@ describe('Commerce scoped routes', () => {
     expect(gqlRequest).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['non-array selectedAddons', { selectedAddons: 'not-an-array' }],
+    ['selectedAddons entry missing optionId', { selectedAddons: [{ values: [{ inputValue: 'x' }] }] }],
+    ['selectedAddons entry with non-array values', { selectedAddons: [{ optionId: 'opt-1', values: 'x' }] }],
+    ['selectedAddons value that is null', { selectedAddons: [{ optionId: 'opt-1', values: [null] }] }],
+    ['non-string productAssetUrl', { productAssetUrl: 42 }],
+  ])('rejects an add-item with %s instead of a 500', async (_label, details): Promise<void> => {
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, details },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['non-array metafields', 'not-an-array'],
+    ['metafields entry missing key', [{ value: 'x' }]],
+    ['metafields entry with non-string key', [{ key: 42, value: 'x' }]],
+    ['metafields entry with non-string value', [{ key: 'designId', value: 42 }]],
+    ['metafields entry that is null', [null]],
+  ])('rejects an add-item with %s instead of a 500', async (_label, metafields): Promise<void> => {
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, metafields },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects an add-item with more metafields than the configured maximum', async (): Promise<void> => {
+    const res = response();
+    const metafields = Array.from({ length: 11 }, (_, index) => ({ key: `k${index}`, value: 'v' }));
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, metafields },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects an add-item with an oversized metafield value', async (): Promise<void> => {
+    const res = response();
+    const metafields = [{ key: 'designId', value: 'a'.repeat(2001) }];
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, metafields },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
   it('rejects cart creation with an invalid customization before creating the cart', async (): Promise<void> => {
     const res = response();
     await createCart(

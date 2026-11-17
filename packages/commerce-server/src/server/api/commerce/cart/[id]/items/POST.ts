@@ -24,6 +24,7 @@ import {
   type AddLineItemBySkuIdResult,
   type AddLineItemBySkuIdVariables,
   type AddToCartItemInput,
+  assertValidCartItemInput,
   buildAddLineItemBySkuIdInput,
   type GetCartOrderResult,
   type GetCartOrderVariables,
@@ -50,6 +51,9 @@ async function addLineItem(req: Request, res: Response): Promise<void> {
   if (!body.skuId || !body.name || typeof body.quantity !== 'number') {
     throw new InvalidRequestError('Missing required fields: skuId, name, quantity');
   }
+  // `body` is untyped JSON past this point — validate its shape before trusting the cast below.
+  const item = body as AddToCartItemInput;
+  assertValidCartItemInput(item);
 
   const config: CommerceConfig = readCommerceConfigForResponse(res);
   assertCommerceCartScope(req, config);
@@ -63,7 +67,7 @@ async function addLineItem(req: Request, res: Response): Promise<void> {
   await gqlRequest<AddLineItemBySkuIdResult, AddLineItemBySkuIdVariables>({
     endpoint,
     query: addLineItemBySkuIdMutation,
-    variables: { input: buildAddLineItemBySkuIdInput(cartId, body as AddToCartItemInput) },
+    variables: { input: buildAddLineItemBySkuIdInput(cartId, item) },
     headers,
   });
 

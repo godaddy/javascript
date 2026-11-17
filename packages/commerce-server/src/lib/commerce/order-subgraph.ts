@@ -328,20 +328,29 @@ export interface AddToCartItemInput {
 // option's pre-defined `optionValueId` is a distinct, unvalidated shape — out of scope for this
 // change (see the ticket's addon-value-shape decision) — so reject it explicitly rather than
 // letting it reach `order-api` unchecked or crash on a missing `inputValue`.
-function assertSupportedAddonValueShape(value: { inputValue?: string }): string {
-  if (typeof value.inputValue !== 'string') {
+function assertSupportedAddonValueShape(value: unknown): string {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    typeof (value as { inputValue?: unknown }).inputValue !== 'string'
+  ) {
     throw new InvalidRequestError(
       'selectedAddons values must use { inputValue }; LIST-option values ({ optionValueId }) are not supported',
     );
   }
-  return value.inputValue;
+  return (value as { inputValue: string }).inputValue;
 }
 
-// This is the only place these length/HTTPS/count limits are enforced — `order-api`'s schema
-// uses a plain `z.string()` for these fields with no such caps.
+// This is the only place these shapes, length/HTTPS/count limits are enforced — `order-api`'s
+// schema uses a plain `z.string()` for these fields with no such caps, and the request body
+// arrives as untyped JSON, so every field read here must be shape-checked before use rather
+// than trusted from a TypeScript cast.
 export function assertValidCartItemInput(item: AddToCartItemInput): void {
   const assetUrl = item.details?.productAssetUrl;
   if (assetUrl !== undefined) {
+    if (typeof assetUrl !== 'string') {
+      throw new InvalidRequestError('productAssetUrl must be a string');
+    }
     if (assetUrl.length > PRODUCT_ASSET_URL_MAX_LENGTH) {
       throw new InvalidRequestError(
         `productAssetUrl cannot exceed ${PRODUCT_ASSET_URL_MAX_LENGTH} characters`,
@@ -355,27 +364,57 @@ export function assertValidCartItemInput(item: AddToCartItemInput): void {
     }
     if (parsed.protocol !== 'https:') throw new InvalidRequestError('productAssetUrl must use https');
   }
-  const addons = item.details?.selectedAddons ?? [];
-  if (addons.length > MAX_SELECTED_ADDONS) {
-    throw new InvalidRequestError(`selectedAddons cannot exceed ${MAX_SELECTED_ADDONS} entries`);
-  }
-  for (const addon of addons) {
-    for (const value of addon.values) {
-      const inputValue = assertSupportedAddonValueShape(value);
-      if (inputValue.length > SELECTED_ADDON_VALUE_MAX_LENGTH) {
-        throw new InvalidRequestError(
-          `selectedAddons value cannot exceed ${SELECTED_ADDON_VALUE_MAX_LENGTH} characters`,
-        );
+  const addons = item.details?.selectedAddons;
+  if (addons !== undefined) {
+    if (!Array.isArray(addons)) throw new InvalidRequestError('selectedAddons must be an array');
+    if (addons.length > MAX_SELECTED_ADDONS) {
+      throw new InvalidRequestError(`selectedAddons cannot exceed ${MAX_SELECTED_ADDONS} entries`);
+    }
+    for (const addon of addons) {
+      if (
+        typeof addon !== 'object' ||
+        addon === null ||
+        typeof addon.optionId !== 'string' ||
+        !addon.optionId
+      ) {
+        throw new InvalidRequestError('Each selectedAddons entry must have a non-empty optionId');
+      }
+      if (!Array.isArray(addon.values)) {
+        throw new InvalidRequestError('Each selectedAddons entry must have a values array');
+      }
+      for (const value of addon.values) {
+        const inputValue = assertSupportedAddonValueShape(value);
+        if (inputValue.length > SELECTED_ADDON_VALUE_MAX_LENGTH) {
+          throw new InvalidRequestError(
+            `selectedAddons value cannot exceed ${SELECTED_ADDON_VALUE_MAX_LENGTH} characters`,
+          );
+        }
       }
     }
   }
-  const metafields = item.metafields ?? [];
-  if (metafields.length > MAX_METAFIELDS) {
-    throw new InvalidRequestError(`metafields cannot exceed ${MAX_METAFIELDS} entries`);
-  }
-  for (const metafield of metafields) {
-    if (metafield.value.length > METAFIELD_VALUE_MAX_LENGTH) {
-      throw new InvalidRequestError(`metafield value cannot exceed ${METAFIELD_VALUE_MAX_LENGTH} characters`);
+  const metafields = item.metafields;
+  if (metafields !== undefined) {
+    if (!Array.isArray(metafields)) throw new InvalidRequestError('metafields must be an array');
+    if (metafields.length > MAX_METAFIELDS) {
+      throw new InvalidRequestError(`metafields cannot exceed ${MAX_METAFIELDS} entries`);
+    }
+    for (const metafield of metafields) {
+      if (
+        typeof metafield !== 'object' ||
+        metafield === null ||
+        !metafield.key ||
+        typeof metafield.key !== 'string'
+      ) {
+        throw new InvalidRequestError('Each metafield must have a non-empty string key');
+      }
+      if (typeof metafield.value !== 'string') {
+        throw new InvalidRequestError('Each metafield value must be a string');
+      }
+      if (metafield.value.length > METAFIELD_VALUE_MAX_LENGTH) {
+        throw new InvalidRequestError(
+          `metafield value cannot exceed ${METAFIELD_VALUE_MAX_LENGTH} characters`,
+        );
+      }
     }
   }
 }
