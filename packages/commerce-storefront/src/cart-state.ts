@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { money } from './api';
 import { useCommerce } from './commerce-provider';
 import { type SampleProduct, sampleCurrency, useSampleCart } from './sample-cart';
 
@@ -31,7 +32,7 @@ export interface CartState {
 
 /** Read the cart from anywhere inside `CommerceProvider`, for example to build a custom cart button. */
 export function useCart(): CartState {
-  const { cart, config, connection, hydrating } = useCommerce();
+  const { cart, config, connection, hydrating, locale } = useCommerce();
   const sample = useSampleCart();
   const isSample: boolean = connection === 'unbound';
   const sampleItems = sample.items;
@@ -59,30 +60,41 @@ export function useCart(): CartState {
     const lines = cart?.lineItems ?? [];
     const subtotal = cart?.totals?.subTotal?.value;
     return {
-      items: lines.map((item) => ({
-        id: item.id ?? '',
-        name: item.name ?? '',
-        quantity: item.quantity ?? 0,
-        imageUrl: item.details?.productAssetUrl || null,
-        options: [
-          ...(item.details?.selectedOptions ?? []).map((option) => ({
-            attribute: option.attribute ?? '',
-            values: option.values ?? [],
-          })),
-          ...(item.details?.selectedAddons ?? []).map((addon) => ({
-            attribute: addon.attribute ?? '',
-            values: (addon.values ?? []).map((value) => value.name ?? ''),
-          })),
-        ],
-        subtotal: typeof item.totals?.subTotal?.value === 'number' ? item.totals.subTotal.value : null,
-        currency: item.totals?.subTotal?.currencyCode ?? currency,
-        sample: null,
-      })),
+      items: lines.map((item) => {
+        const itemCurrency = item.totals?.subTotal?.currencyCode ?? currency;
+        return {
+          id: item.id ?? '',
+          name: item.name ?? '',
+          quantity: item.quantity ?? 0,
+          imageUrl: item.details?.productAssetUrl || null,
+          options: [
+            ...(item.details?.selectedOptions ?? []).map((option) => ({
+              attribute: option.attribute ?? '',
+              values: option.values ?? [],
+            })),
+            ...(item.details?.selectedAddons ?? []).map((addon) => ({
+              attribute: addon.attribute ?? '',
+              // A value without a name has nothing to show; skip it rather than render a blank entry.
+              values: (addon.values ?? [])
+                .filter((value) => !!value.name)
+                .map((value) => {
+                  const cost = value.costAdjustment;
+                  if (typeof cost?.value !== 'number' || cost.value === 0) return value.name as string;
+                  const formatted = money(cost.value, cost.currencyCode ?? itemCurrency, locale);
+                  return `${value.name} (${cost.value > 0 ? '+' : ''}${formatted})`;
+                }),
+            })),
+          ],
+          subtotal: typeof item.totals?.subTotal?.value === 'number' ? item.totals.subTotal.value : null,
+          currency: itemCurrency,
+          sample: null,
+        };
+      }),
       itemCount: lines.reduce((total, item) => total + (item.quantity ?? 0), 0),
       subtotal: typeof subtotal === 'number' ? subtotal : null,
       currency: cart?.totals?.subTotal?.currencyCode ?? currency,
       isSample,
       loading: hydrating,
     };
-  }, [cart, config.currencyCode, hydrating, isSample, sampleItems]);
+  }, [cart, config.currencyCode, hydrating, isSample, locale, sampleItems]);
 }

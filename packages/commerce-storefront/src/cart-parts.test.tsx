@@ -643,6 +643,55 @@ describe('composable cart', () => {
     );
   });
 
+  it('includes a priced addon surcharge and drops a nameless addon value', async () => {
+    localStorage.setItem(storageKey, 'cart-1');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(String(input), 'https://host.test');
+        if (url.pathname.endsWith('/config')) return response({ cartScope: 's', currencyCode: 'USD' });
+        return response({
+          cart: {
+            id: 'cart-1',
+            lineItems: [
+              {
+                id: 'line-1',
+                name: 'Mug',
+                quantity: 1,
+                details: {
+                  selectedAddons: [
+                    {
+                      attribute: 'Engraving',
+                      values: [
+                        { name: 'Custom design 123', costAdjustment: { value: 500, currencyCode: 'USD' } },
+                        { name: null },
+                      ],
+                    },
+                  ],
+                },
+                totals: { subTotal: { value: 1700, currencyCode: 'USD' } },
+              },
+            ],
+            totals: {
+              subTotal: { value: 1700, currencyCode: 'USD' },
+              total: { value: 1700, currencyCode: 'USD' },
+            },
+          },
+        });
+      }),
+    );
+    function Options(): ReactElement {
+      const { items } = useCart();
+      return <output data-testid='options'>{JSON.stringify(items[0]?.options ?? [])}</output>;
+    }
+    render(app(<Options />));
+    await waitFor(() =>
+      expect(screen.getByTestId('options')).toHaveTextContent(
+        JSON.stringify([{ attribute: 'Engraving', values: ['Custom design 123 (+$5.00)'] }]),
+      ),
+    );
+  });
+
   it('renders the packaged drawer from CommerceStorefront with dividers between lines', async () => {
     mockStore();
     render(
