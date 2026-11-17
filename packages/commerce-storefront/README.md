@@ -512,7 +512,13 @@ Cart mutations share one queue, including initial cart creation. The cart ID is 
 
 Changing the server-provided cart scope resets cart state and prevents old responses from affecting the new connection. A failed configuration refresh temporarily disables commerce and also invalidates pending responses. Normal configuration loading and failures do not unmount host content.
 
-Every `.commerce-storefront` wrapper, including the cart drawer, has the attribute `data-dev-source-origin="commerce"`. The Airo site builder reads it as data from the Commerce API: a site owner can still select the components, for example to ask for a new style, but cannot edit or delete the product names, prices or cart text inside them.
+### Marking store data for site builders
+
+Parts that show a connected store's data carry `data-dev-source-origin="commerce"` (exported as `COMMERCE_DATA_ATTRIBUTE`): product card and product page images, names, descriptions, prices, swatches and options; cart line names, images, options, quantities and prices; the cart subtotal; and the `CartButton` count badge. Site builders such as Airo can read it to tell store data apart from the site's own text. How a builder treats a marked element is up to the builder; this package only sets the attribute.
+
+Everything else is left unmarked, so it stays the site's own content: the `.commerce-storefront` wrappers, headings, empty states and button labels, any `children` or label props the host passes, the connection status, and the sample catalog and cart shown before a store is connected.
+
+For a custom part that shows store data, spread `useCommerceData()` on its element, such as `<p {...useCommerceData()}>`. Pass `false` for content that does not come from the store. To leave out the attribute everywhere, including on custom parts, set `markCommerceData={false}` on the provider.
 
 ## Troubleshooting
 

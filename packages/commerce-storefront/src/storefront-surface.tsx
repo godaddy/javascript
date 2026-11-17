@@ -10,9 +10,8 @@ export function StorefrontSurface({
   className?: string;
 }): ReactElement {
   const { theme } = useCommerce();
-  // Store data comes from the Commerce API, so the Airo site builder must not offer text edits inside it.
   return (
-    <div className={`commerce-storefront ${className}`} style={theme} data-dev-source-origin='commerce'>
+    <div className={`commerce-storefront ${className}`} style={theme}>
       {children}
     </div>
   );

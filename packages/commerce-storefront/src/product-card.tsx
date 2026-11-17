@@ -23,7 +23,7 @@ import {
   type SKUGroup,
 } from './catalog-model';
 import { saleBadgeClass, secondaryButtonClass } from './class-names';
-import { useCommerce, useMessage, useMoney, useMoneyRange } from './commerce-provider';
+import { useCommerce, useCommerceData, useMessage, useMoney, useMoneyRange } from './commerce-provider';
 import { type PartLabel, type PartRegistry, partProps, renderLabel, usePartRegistry } from './part';
 import {
   isBuiltInSample,
@@ -209,8 +209,9 @@ export function ProductCardRoot({ children, product, className }: ProductCardRoo
  */
 export function ProductCardImage({ className }: ProductCardPartProps): ReactElement {
   const card = useProductCardInternal('ProductCardImage');
+  const data = useCommerceData(card.source === 'live');
   return (
-    <div {...partProps('product-card-image', className)}>
+    <div {...partProps('product-card-image', className)} {...data}>
       {card.source === 'live' ? (
         <Link
           to={card.href}
@@ -245,10 +246,11 @@ export function ProductCardImage({ className }: ProductCardPartProps): ReactElem
 
 /** The product name as an H2, linked to its page. */
 export function ProductCardTitle({ className }: ProductCardPartProps): ReactElement {
-  const { name, href, register } = useProductCardInternal('ProductCardTitle');
+  const { name, href, register, isSample } = useProductCardInternal('ProductCardTitle');
+  const data = useCommerceData(!isSample);
   useEffect(() => register(titleLink), [register]);
   return (
-    <div {...partProps('product-card-title', className)}>
+    <div {...partProps('product-card-title', className)} {...data}>
       <h2 className='break-words text-base font-medium leading-6'>
         {href ? (
           <Link
@@ -268,11 +270,12 @@ export function ProductCardTitle({ className }: ProductCardPartProps): ReactElem
 /** Up to two lines of the product or sample description. Renders nothing without one. */
 export function ProductCardDescription({ className }: ProductCardPartProps): ReactElement | null {
   const card = useProductCardInternal('ProductCardDescription');
+  const data = useCommerceData(card.source === 'live');
   const description: string | null | undefined =
     card.source === 'sample' ? card.sample.description : card.product.description;
   if (!description) return null;
   return (
-    <div {...partProps('product-card-description', className)}>
+    <div {...partProps('product-card-description', className)} {...data}>
       <p className='line-clamp-2 text-sm leading-6 text-commerce-muted'>{description}</p>
     </div>
   );
@@ -312,6 +315,7 @@ const sampleCompareAt = (sample: SampleProduct): number | null =>
 /** The product's price, or its price range when variants differ. A single price on sale shows its compare-at price. */
 export function ProductCardPrice({ className }: ProductCardPartProps): ReactElement {
   const card = useProductCardInternal('ProductCardPrice');
+  const data = useCommerceData(card.source === 'live');
   const money = useMoney();
   const moneyRange = useMoneyRange();
   const message = useMessage();
@@ -327,7 +331,7 @@ export function ProductCardPrice({ className }: ProductCardPartProps): ReactElem
   const compareAt: string | null =
     starting === null ? null : money(starting, card.source === 'sample' ? sampleCurrency : undefined);
   return (
-    <div {...partProps('product-card-price', className)}>
+    <div {...partProps('product-card-price', className)} {...data}>
       <p className='flex flex-wrap items-baseline gap-x-2 text-sm leading-6 tabular-nums'>
         <span className='font-medium'>{text}</span>
         {compareAt && (
@@ -349,6 +353,7 @@ export function ProductCardSwatches({ className }: ProductCardPartProps): ReactE
   const { product } = useProductCardInternal('ProductCardSwatches');
   const { getSwatch } = useCommerce();
   const text = useMessage();
+  const data = useCommerceData();
   if (!getSwatch || !product) return null;
   for (const attribute of getProductAttributes(product)) {
     const swatches = attribute.values.map((value) => ({
@@ -358,7 +363,7 @@ export function ProductCardSwatches({ className }: ProductCardPartProps): ReactE
     if (!swatches.length || swatches.some((swatch) => !swatch.background)) continue;
     const shown = swatches.slice(0, 5);
     return (
-      <div {...partProps('product-card-swatches', className)}>
+      <div {...partProps('product-card-swatches', className)} {...data}>
         <p className='flex items-center gap-1.5 text-xs text-commerce-muted'>
           <span className='sr-only'>
             {text('swatchSummary', {

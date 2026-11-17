@@ -2,4 +2,4 @@
 "@godaddy/gd-commerce-storefront": patch
 ---
 
-Every `.commerce-storefront` wrapper, including the cart drawer, now has the attribute `data-dev-source-origin="commerce"`. The Airo site builder reads it as data from the Commerce API: a site owner can still select the components, for example to ask for a new style, but cannot edit or delete the product names, prices or cart text inside them. The markup is otherwise unchanged.
+Parts that show a connected store's data, such as product names, prices, images and cart lines, now carry `data-dev-source-origin="commerce"` for site builders such as Airo. Wrappers, host text and labels, the connection status and sample products stay unmarked. The new `COMMERCE_DATA_ATTRIBUTE` constant and `useCommerceData()` hook let custom parts mark themselves, and `markCommerceData={false}` on the provider leaves the attribute out.
