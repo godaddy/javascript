@@ -141,10 +141,11 @@ export interface AddToCartSelectedAddonInput {
   values: Array<{ inputValue: string }>;
 }
 
+// JSON is the only metafield type the server accepts here — no `type` field, so there is
+// nothing for a caller to get wrong.
 export interface AddToCartMetafieldInput {
   key: string;
   value: string;
-  type?: 'JSON';
 }
 
 export interface AddToCartItemInput {

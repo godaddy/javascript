@@ -310,10 +310,11 @@ export const MAX_SELECTED_ADDONS = 20;
 export const MAX_METAFIELDS = 10;
 export const METAFIELD_VALUE_MAX_LENGTH = 2000;
 
+// JSON is the only metafield type the storefront's add-to-cart surface supports — no `type`
+// field here, so a client can't request a different one.
 export interface AddToCartMetafieldInput {
   key: string;
   value: string;
-  type?: 'JSON';
 }
 
 export interface AddToCartItemInput {
@@ -474,7 +475,13 @@ export function buildAddLineItemBySkuIdInput(
     status: 'DRAFT',
     ...(item.details ? { details: item.details } : {}),
     ...(item.metafields
-      ? { metafields: item.metafields.map((metafield) => ({ ...metafield, type: metafield.type ?? 'JSON' })) }
+      ? {
+          metafields: item.metafields.map(({ key, value }) => ({
+            key,
+            value,
+            type: 'JSON' as const,
+          })),
+        }
       : {}),
   };
 }

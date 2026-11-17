@@ -407,6 +407,31 @@ describe('Commerce scoped routes', () => {
     });
   });
 
+  it('ignores a client-supplied metafield type and always sends JSON', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: {
+          skuId: 'sku-1',
+          name: 'Product',
+          quantity: 1,
+          metafields: [{ key: 'designId', value: 'design-123', type: 'NOT_JSON', extra: 'nope' }],
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: expect.objectContaining({
+        metafields: [{ key: 'designId', value: 'design-123', type: 'JSON' }],
+      }),
+    });
+  });
+
   it.each([
     ['http://cdn.example.com/design.png', 'non-https productAssetUrl'],
     [`https://cdn.example.com/${'a'.repeat(2049)}.png`, 'oversized productAssetUrl'],
