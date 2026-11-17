@@ -70,7 +70,9 @@ export {
 } from './catalog-model';
 export {
   type AddedCartItem,
+  COMMERCE_DATA_ATTRIBUTE,
   type CommerceContextValue,
+  type CommerceDataProps,
   type CommerceEvent,
   type CommerceOperation,
   CommerceProvider,
@@ -79,6 +81,7 @@ export {
   type StorefrontTheme,
   type SwatchValue,
   useCommerce,
+  useCommerceData,
   useMessage,
   useMoney,
   useMoneyRange,
