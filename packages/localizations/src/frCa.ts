@@ -172,7 +172,7 @@ export const frCa = {
     shipping: 'Expédition',
     tip: 'Pourboire',
     estimatedTaxes: 'Taxes estimées',
-    vatIncluded: 'TVA incluse',
+    vatIncluded: 'Taxes incluses',
     fees: 'Frais',
     totalDue: 'Total à payer',
     orderSummary: 'Résumé de la commande',
@@ -296,6 +296,10 @@ export const frCa = {
     DATA_SOURCES_NOT_FOUND: 'Sources de données introuvables',
     TRANSACTION_API_NOT_FOUND:
       'Source de données API de transaction introuvable',
+    PAYMENT_STILL_CONFIRMING:
+      'Un paiement précédent pour cette commande est toujours en cours de confirmation. Patientez un instant avant de réessayer.',
+    PAYMENT_ACTION_REQUIRED:
+      'Votre paiement nécessite une vérification supplémentaire. Réessayez ou choisissez un autre moyen de paiement.',
     TRANSACTION_PROCESSING_FAILED: 'Échec du traitement de la transaction',
     TRANSACTION_CREATION_FAILED:
       'Échec de la recherche ou création de transaction',

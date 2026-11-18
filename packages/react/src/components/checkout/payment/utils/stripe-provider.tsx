@@ -25,13 +25,27 @@ export function StripeProvider({
   isExpress?: boolean;
 }) {
   const { stripeConfig } = useCheckoutContext();
+  // An intent awaiting 3-D Secure lives in the session-scoped unresolved
+  // payment (unresolved-payment.ts), so it survives remounts and is visible to
+  // every payment flow.
+  return stripeConfig?.publishableKey?.trim() ? (
+    <StripeElementsProvider isExpress={isExpress}>
+      {children}
+    </StripeElementsProvider>
+  ) : (
+    <>{children}</>
+  );
+}
 
+function StripeElementsProvider({
+  children,
+  isExpress,
+}: {
+  children: React.ReactNode;
+  isExpress: boolean;
+}) {
   const { stripePromise, currency, clientSecret, isLoading, amount } =
     useStripePaymentIntent({ isExpress });
-
-  if (!stripeConfig?.publishableKey?.trim()) {
-    return <>{children}</>;
-  }
 
   if (isLoading || !stripePromise || amount <= 0) {
     return null;

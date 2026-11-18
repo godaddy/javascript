@@ -2033,6 +2033,15 @@ const introspection = {
             "isDeprecated": false
           },
           {
+            "name": "orderStatus",
+            "type": {
+              "kind": "OBJECT",
+              "name": "DraftOrderStatuses"
+            },
+            "args": [],
+            "isDeprecated": false
+          },
+          {
             "name": "paymentMethods",
             "type": {
               "kind": "OBJECT",
