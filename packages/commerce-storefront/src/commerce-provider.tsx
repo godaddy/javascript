@@ -69,6 +69,25 @@ export interface CommerceContextValue {
 
 const CommerceContext = createContext<CommerceContextValue | null>(null);
 
+/** Whether elements showing store data get `COMMERCE_DATA_ATTRIBUTE`. Not public; set by `markCommerceData`. */
+const CommerceDataContext = createContext<boolean>(true);
+
+/** The attribute on elements that show a connected store's data, such as product names, prices and cart lines. */
+export const COMMERCE_DATA_ATTRIBUTE = 'data-dev-source-origin';
+
+/** `COMMERCE_DATA_ATTRIBUTE` set to `commerce`, or nothing when the provider's `markCommerceData` is `false`. */
+export type CommerceDataProps = { readonly [COMMERCE_DATA_ATTRIBUTE]?: 'commerce' };
+
+/**
+ * Props that mark an element as showing a connected store's data, the way the package's own parts are marked. Spread
+ * them on a custom part's element, such as `<p {...useCommerceData()}>`. `live` false returns none, for content such
+ * as samples that does not come from the store.
+ */
+export function useCommerceData(live: boolean = true): CommerceDataProps {
+  const marked: boolean = useContext(CommerceDataContext);
+  return marked && live ? { [COMMERCE_DATA_ATTRIBUTE]: 'commerce' } : {};
+}
+
 /** Lets a mounted cart drawer register itself, so adds open it only when one exists. Not public. */
 export const CartDrawerRegistry = createContext<(() => () => void) | null>(null);
 
@@ -177,6 +196,11 @@ export interface CommerceProviderProps {
   onItemAdded?: (item: AddedCartItem) => void;
   /** Called for every cart change and failure, such as for analytics. See `CommerceEvent`. */
   onEvent?: (event: CommerceEvent) => void;
+  /**
+   * Marks elements that show a connected store's data with `data-dev-source-origin="commerce"`, for site builders
+   * that read it. Defaults to `true`. See `COMMERCE_DATA_ATTRIBUTE`.
+   */
+  markCommerceData?: boolean;
 }
 
 /** A cart operation that can fail. */
@@ -333,6 +357,7 @@ export function CommerceProvider({
   messages,
   onItemAdded,
   onEvent,
+  markCommerceData = true,
 }: CommerceProviderProps): ReactElement {
   const resolvedLocale: string = useMemo(() => resolveLocale(locale), [locale]);
   // Keyed on the override's contents, so an inline `messages={{ ...frFR, checkout: 'Commander' }}` keeps the text,
@@ -395,47 +420,49 @@ export function CommerceProvider({
   // Retrying only ever shows connecting; readiness still comes from the refreshed response.
   if (retrying) connection = 'connecting';
   return (
-    <BoundCommerceProvider
-      config={{
-        cartScope: '',
-        currencyCode: 'USD',
-        ...(config.data?.state === 'ready' ? config.data : {}),
-        catalogPath,
-        productPath,
-        checkoutSuccessPath,
-      }}
-      connection={connection}
-      connectionError={
-        connection !== 'error'
-          ? null
-          : stalled
-            ? formatMessage(resolvedMessages, 'connectionSlow')
-            : describeError(config.error, resolvedMessages)
-      }
-      retryConnection={() => {
-        const started = Date.now();
-        setPollingSince(started);
-        // Only an error shows retry feedback; changing a ready or unbound connection would reset the cart.
-        if (connection !== 'error') {
-          void config.refetch();
-          return;
+    <CommerceDataContext.Provider value={markCommerceData}>
+      <BoundCommerceProvider
+        config={{
+          cartScope: '',
+          currencyCode: 'USD',
+          ...(config.data?.state === 'ready' ? config.data : {}),
+          catalogPath,
+          productPath,
+          checkoutSuccessPath,
+        }}
+        connection={connection}
+        connectionError={
+          connection !== 'error'
+            ? null
+            : stalled
+              ? formatMessage(resolvedMessages, 'connectionSlow')
+              : describeError(config.error, resolvedMessages)
         }
-        setRetrying(true);
-        void config.refetch().then(async (result) => {
-          if (result.isError)
-            await new Promise((resolve) => setTimeout(resolve, started + RETRY_FEEDBACK_MS - Date.now()));
-          setRetrying(false);
-        });
-      }}
-      theme={theme}
-      getSwatch={getSwatch}
-      locale={resolvedLocale}
-      messages={resolvedMessages}
-      onItemAdded={onItemAdded}
-      onEvent={onEvent}
-    >
-      {children}
-    </BoundCommerceProvider>
+        retryConnection={() => {
+          const started = Date.now();
+          setPollingSince(started);
+          // Only an error shows retry feedback; changing a ready or unbound connection would reset the cart.
+          if (connection !== 'error') {
+            void config.refetch();
+            return;
+          }
+          setRetrying(true);
+          void config.refetch().then(async (result) => {
+            if (result.isError)
+              await new Promise((resolve) => setTimeout(resolve, started + RETRY_FEEDBACK_MS - Date.now()));
+            setRetrying(false);
+          });
+        }}
+        theme={theme}
+        getSwatch={getSwatch}
+        locale={resolvedLocale}
+        messages={resolvedMessages}
+        onItemAdded={onItemAdded}
+        onEvent={onEvent}
+      >
+        {children}
+      </BoundCommerceProvider>
+    </CommerceDataContext.Provider>
   );
 }
 
