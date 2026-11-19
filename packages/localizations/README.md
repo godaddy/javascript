@@ -29,7 +29,14 @@ function App() {
 
 ## Available Localizations
 
+- `enUs` - English (United States)
+- `enCa` - English (Canada)
+- `enAu` - English (Australia)
+- `enIe` - English (Ireland)
 - `frFr` - French (France)
+- `frCa` - French (Canada)
+
+See `src/index.ts` for the full list.
 
 ## Localization Structure
 

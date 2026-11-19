@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { getStartingCompareAt, isOnSale, isProductOnSale } from './catalog-model';
 import { saleBadgeClass } from './class-names';
-import { useCommerce, useMessage, useMoney } from './commerce-provider';
+import { useCommerce, useCommerceData, useMessage, useMoney } from './commerce-provider';
 import { partProps, renderLabel } from './part';
 import { ProductImage } from './product-card';
 import {
@@ -75,8 +75,9 @@ export function ProductDetailsBackLink({ className, children }: ProductDetailsBa
 export function ProductDetailsGallery({ className }: ProductDetailsPartProps): ReactElement {
   const { images, imageIndex, setImageIndex, name } = useProductDetailsInternal('ProductDetailsGallery');
   const text = useMessage();
+  const data = useCommerceData();
   return (
-    <div {...partProps('product-details-gallery', className)}>
+    <div {...partProps('product-details-gallery', className)} {...data}>
       <div className='aspect-square overflow-hidden bg-commerce-tint'>
         <ProductImage key={images[imageIndex]} url={images[imageIndex]} name={name} />
       </div>
@@ -122,8 +123,9 @@ export function ProductDetailsBadge({ className }: ProductDetailsPartProps): Rea
 /** The product name as the page's H1. */
 export function ProductDetailsTitle({ className }: ProductDetailsPartProps): ReactElement {
   const { name } = useProductDetailsInternal('ProductDetailsTitle');
+  const data = useCommerceData();
   return (
-    <div {...partProps('product-details-title', className)}>
+    <div {...partProps('product-details-title', className)} {...data}>
       <h1 className='text-balance break-words text-3xl font-semibold leading-tight tracking-tight sm:text-4xl'>
         {name}
       </h1>
@@ -140,6 +142,7 @@ export function ProductDetailsPrice({ className }: ProductDetailsPartProps): Rea
   const { config } = useCommerce();
   const money = useMoney();
   const text = useMessage();
+  const data = useCommerceData();
   let compareAt: string | null = null;
   if (price?.compareAtValue?.value != null && isOnSale(price.value?.value, price.compareAtValue.value))
     compareAt = money(price.compareAtValue.value, price.compareAtValue.currencyCode ?? config.currencyCode);
@@ -149,7 +152,7 @@ export function ProductDetailsPrice({ className }: ProductDetailsPartProps): Rea
   }
   return (
     // The flex layout is inside the part, so it cannot outrank host classes on the outer element.
-    <div {...partProps('product-details-price', className)}>
+    <div {...partProps('product-details-price', className)} {...data}>
       <div
         aria-live='polite'
         className='flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xl font-medium tabular-nums'
@@ -174,8 +177,9 @@ export function ProductDetailsPrice({ className }: ProductDetailsPartProps): Rea
 /** The verified SKU's description, or the product's. */
 export function ProductDetailsDescription({ className }: ProductDetailsPartProps): ReactElement {
   const { selectedSku, product } = useProductDetailsInternal('ProductDetailsDescription');
+  const data = useCommerceData();
   return (
-    <div {...partProps('product-details-description', className)}>
+    <div {...partProps('product-details-description', className)} {...data}>
       <p className='whitespace-pre-line text-base leading-7 text-commerce-muted'>
         {selectedSku?.description ?? product.description}
       </p>

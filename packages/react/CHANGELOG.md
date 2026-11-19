@@ -1,5 +1,16 @@
 # @godaddy/react
 
+## 1.0.61
+
+### Patch Changes
+
+- 0f7eea2: Add Stripe 3DS verification support for card and express checkout, with localized payment errors and compatibility with existing checkout error handling.
+  
+  Improve payment retry handling, prevent duplicate submissions, and recognize already-paid orders. While a 3-D Secure payment's outcome is unknown, every payment method is blocked from starting another payment for the checkout. Update express payment tracking to reflect the payment method used and successful checkout completion.
+- Updated dependencies [0f7eea2]
+- Updated dependencies [7c12d56]
+  - @godaddy/localizations@1.0.16
+
 ## 1.0.60
 
 ### Patch Changes

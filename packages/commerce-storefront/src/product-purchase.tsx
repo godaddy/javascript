@@ -3,7 +3,7 @@ import { describeError } from './api';
 import { AddToCart, type AddToCartLabelState, isSoldOut, quantityProblem } from './cart';
 import { getAvailableInventoryQuantity, inSentence, type SKU } from './catalog-model';
 import { buttonClass, errorActionClass, errorNoticeClass, inputClass } from './class-names';
-import { useCommerce, useMessage, useMoney } from './commerce-provider';
+import { useCommerce, useCommerceData, useMessage, useMoney } from './commerce-provider';
 import type { StorefrontMessageKey } from './messages';
 import { type PartLabel, partProps, renderLabel } from './part';
 import {
@@ -219,9 +219,10 @@ function SkuOption(): ReactElement {
     useProductDetailsInternal('ProductDetailsOptions');
   useSkuOptionRegistration();
   const text = useMessage();
+  const data = useCommerceData();
   const missing: boolean = showMissing && !explicitSkuId;
   return (
-    <div {...partProps('product-details-sku-option')} data-commerce-missing={missing || undefined}>
+    <div {...partProps('product-details-sku-option')} {...data} data-commerce-missing={missing || undefined}>
       <ChoiceGroup
         label={text('skuOptionLabel')}
         selected={explicitSkuId}
@@ -252,10 +253,12 @@ export function ProductDetailsOption({
   className,
 }: ProductDetailsOptionProps): ReactElement | null {
   const option = useProductDetailsOption(attribute);
+  const data = useCommerceData();
   if (!option) return null;
   return (
     <div
       {...partProps('product-details-option', className)}
+      {...data}
       data-commerce-attribute={option.name}
       data-commerce-missing={option.missing || undefined}
     >

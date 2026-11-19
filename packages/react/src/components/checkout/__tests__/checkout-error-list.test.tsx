@@ -71,6 +71,16 @@ describe('CheckoutErrorList', () => {
     expect(screen.getByText('CUSTOM_RAW_CODE')).toBeInTheDocument();
   });
 
+  it('renders a localized action-required message', () => {
+    renderErrorList({ checkoutErrors: ['PAYMENT_ACTION_REQUIRED'] });
+    expect(
+      screen.getByText(enUs.apiErrors.PAYMENT_ACTION_REQUIRED)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('PAYMENT_ACTION_REQUIRED')
+    ).not.toBeInTheDocument();
+  });
+
   it('renders checkout disabled copy with checkout errors', () => {
     renderErrorList({
       checkoutErrors: ['TRANSACTION_PROCESSING_FAILED'],

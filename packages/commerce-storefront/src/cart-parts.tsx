@@ -12,7 +12,7 @@ import {
 import { Link } from 'react-router';
 import { type CartItemState, type CartState, useCart } from './cart-state';
 import { buttonClass, errorActionClass, errorNoticeClass, secondaryButtonClass } from './class-names';
-import { CartDrawerRegistry, useCommerce, useMessage, useMoney } from './commerce-provider';
+import { CartDrawerRegistry, useCommerce, useCommerceData, useMessage, useMoney } from './commerce-provider';
 import {
   hasChildren,
   type PartLabel,
@@ -386,12 +386,13 @@ export function CartItemRoot({ children, className }: CartItemRootProps): ReactE
 
 /** The line's product image. Renders nothing without one. */
 export function CartItemImage({ className }: CartPartProps): ReactElement | null {
-  const { imageUrl } = useCartItemInternal('CartItemImage');
+  const { imageUrl, sample } = useCartItemInternal('CartItemImage');
+  const data = useCommerceData(!sample);
   // Keyed by URL, like `ProductImage`, so a new URL after a failure is requested again.
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   if (!imageUrl || imageUrl === failedUrl) return null;
   return (
-    <div {...partProps('cart-item-image', className)}>
+    <div {...partProps('cart-item-image', className)} {...data}>
       <img
         src={imageUrl}
         alt=''
@@ -404,9 +405,10 @@ export function CartItemImage({ className }: CartPartProps): ReactElement | null
 
 /** The product name as an H3. */
 export function CartItemName({ className }: CartPartProps): ReactElement {
-  const { name } = useCartItemInternal('CartItemName');
+  const { name, sample } = useCartItemInternal('CartItemName');
+  const data = useCommerceData(!sample);
   return (
-    <div {...partProps('cart-item-name', className)}>
+    <div {...partProps('cart-item-name', className)} {...data}>
       <h3 className='break-words text-sm font-medium leading-6'>{name}</h3>
     </div>
   );
@@ -414,11 +416,12 @@ export function CartItemName({ className }: CartPartProps): ReactElement {
 
 /** The selected options on one line, such as "Color: Blue · Size: M". Renders nothing without options. */
 export function CartItemOptions({ className }: CartPartProps): ReactElement | null {
-  const { options } = useCartItemInternal('CartItemOptions');
+  const { options, sample } = useCartItemInternal('CartItemOptions');
   const text = useMessage();
+  const data = useCommerceData(!sample);
   if (!options.length) return null;
   return (
-    <div {...partProps('cart-item-options', className)}>
+    <div {...partProps('cart-item-options', className)} {...data}>
       <p className='text-sm text-commerce-muted'>
         {options.map((option, index) => (
           <span key={`${option.attribute}:${option.values.join(',')}`}>
@@ -433,11 +436,12 @@ export function CartItemOptions({ className }: CartPartProps): ReactElement | nu
 
 /** The line total. */
 export function CartItemPrice({ className }: CartPartProps): ReactElement {
-  const { subtotal, currency } = useCartItemInternal('CartItemPrice');
+  const { subtotal, currency, sample } = useCartItemInternal('CartItemPrice');
   const money = useMoney();
   const text = useMessage();
+  const data = useCommerceData(!sample);
   return (
-    <div {...partProps('cart-item-price', className)}>
+    <div {...partProps('cart-item-price', className)} {...data}>
       <p className='text-sm leading-6 tabular-nums'>
         {subtotal === null ? text('priceUnavailable') : money(subtotal, currency)}
       </p>
@@ -465,11 +469,12 @@ function StepperIcon({ plus }: { plus?: boolean }): ReactElement {
 
 /** Decrease and increase buttons around the line's quantity. */
 export function CartItemQuantity({ className }: CartPartProps): ReactElement {
-  const { id, name, quantity } = useCartItemInternal('CartItemQuantity');
+  const { id, name, quantity, sample } = useCartItemInternal('CartItemQuantity');
   const { action, locked, run, changeQuantity } = useCartInternal('CartItemQuantity');
   const text = useMessage();
+  const data = useCommerceData(!sample);
   return (
-    <div {...partProps('cart-item-quantity', className)}>
+    <div {...partProps('cart-item-quantity', className)} {...data}>
       <div className='inline-flex items-center rounded-lg border border-commerce-edge'>
         <button
           type='button'
@@ -603,9 +608,10 @@ export function CartSubtotal({ className }: CartPartProps): ReactElement | null 
   const { items, subtotal, currency, isSample } = useCartInternal('CartSubtotal');
   const money = useMoney();
   const text = useMessage();
+  const data = useCommerceData(!isSample);
   if (!items.length || subtotal === null) return null;
   return (
-    <div {...partProps('cart-subtotal', className)}>
+    <div {...partProps('cart-subtotal', className)} {...data}>
       <dl>
         <div className='flex justify-between gap-4 font-semibold'>
           <dt>{text(isSample ? 'sampleSubtotal' : 'subtotal')}</dt>

@@ -3,7 +3,7 @@ import { useCart } from './cart-state';
 import type { SKU } from './catalog-model';
 import { getAvailableInventoryQuantity } from './catalog-model';
 import { buttonClass, errorNoticeClass } from './class-names';
-import { useCommerce, useMessage } from './commerce-provider';
+import { useCommerce, useCommerceData, useMessage } from './commerce-provider';
 import type { MessageValues, StorefrontMessageKey } from './messages';
 import { type PartLabel, renderLabel } from './part';
 import { StorefrontSurface } from './storefront-surface';
@@ -22,8 +22,9 @@ export interface CartButtonProps {
  */
 export function CartButton({ children }: CartButtonProps = {}): ReactElement {
   const { setOpen, open, connection } = useCommerce();
-  const { itemCount } = useCart();
+  const { itemCount, isSample } = useCart();
   const text = useMessage();
+  const data = useCommerceData(!isSample);
   // Bumped on each change after the first render, so the badge remounts and replays its pop.
   const [bump, setBump] = useState<number>(0);
   const previous = useRef<number>(itemCount);
@@ -51,6 +52,7 @@ export function CartButton({ children }: CartButtonProps = {}): ReactElement {
             {itemCount > 0 && (
               <span
                 key={bump}
+                {...data}
                 aria-hidden='true'
                 className='absolute right-0 top-0.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-commerce-accent px-1 text-[11px] font-semibold tabular-nums text-commerce-on-accent motion-safe:animate-commerce-pop'
               >
