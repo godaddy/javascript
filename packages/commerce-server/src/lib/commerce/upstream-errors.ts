@@ -59,18 +59,31 @@ const BAD_USER_INPUT_RULE: UpstreamErrorRule = {
     }),
 };
 
-const CART_UPSTREAM_ERROR_RULES: readonly UpstreamErrorRule[] = [
-  {
-    // A completed (paid) draft is reported the same way, so this is "no longer a usable cart".
-    matches: isCartNotFoundError,
-    toError: (error) => new NotFoundError('Cart not found', { cause: error }),
-  },
+const CART_NOT_FOUND_RULE: UpstreamErrorRule = {
+  // A completed (paid) draft is reported the same way, so this is "no longer a usable cart".
+  matches: isCartNotFoundError,
+  toError: (error) => new NotFoundError('Cart not found', { cause: error }),
+};
+
+const CART_UPSTREAM_ERROR_RULES: readonly UpstreamErrorRule[] = [CART_NOT_FOUND_RULE];
+
+// Add-item is the only route BAD_USER_INPUT is mapped for today: it's the one order-api path
+// this PR actually exercises for that code. Applying it to every classifyCartUpstreamError
+// route (GET, discounts, PATCH, DELETE) would be untested scope creep — add it to
+// CART_UPSTREAM_ERROR_RULES too only once those routes' BAD_USER_INPUT cases are understood.
+const ADD_ITEM_UPSTREAM_ERROR_RULES: readonly UpstreamErrorRule[] = [
+  CART_NOT_FOUND_RULE,
   BAD_USER_INPUT_RULE,
 ];
 
 /** For routes acting on an existing saved cart (`/cart/:id`); creating a cart has none to miss. */
 export function classifyCartUpstreamError(error: UpstreamError): CommerceError {
   return CART_UPSTREAM_ERROR_RULES.find((rule) => rule.matches(error))?.toError(error) ?? error;
+}
+
+/** For `POST /cart/:id/items`: an existing cart can still go missing, and the new item can still fail validation. */
+export function classifyAddItemUpstreamError(error: UpstreamError): CommerceError {
+  return ADD_ITEM_UPSTREAM_ERROR_RULES.find((rule) => rule.matches(error))?.toError(error) ?? error;
 }
 
 /** For `POST /cart`: no existing cart to report missing, but addDraftOrder/addLineItemBySkuId can still reject input. */

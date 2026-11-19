@@ -732,6 +732,36 @@ describe('Commerce scoped routes', () => {
     });
   });
 
+  it.each([
+    ['read', readCart, 'Failed to load cart'],
+    ['update', updateItem, 'Failed to update line item'],
+    ['remove', deleteItem, 'Failed to delete line item'],
+    ['discount', applyDiscount, 'Failed to apply discount codes'],
+  ] as const)(
+    'does not map order-api BAD_USER_INPUT to 400 on %s — stays a generic 502',
+    async (_name, handler, label): Promise<void> => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const res = response();
+      const error = new GraphQLErrorWithCodes([{ code: 'BAD_USER_INPUT', message: 'Invalid discount code' }]);
+      vi.mocked(gqlRequest).mockRejectedValueOnce(error);
+      await handler(
+        {
+          headers: {},
+          params: { id: 'cart-1', itemId: 'item-1' },
+          body: { discountCodes: ['PROMO'] },
+        } as unknown as Request,
+        res as unknown as Response,
+      );
+      expect(res.status).toHaveBeenCalledWith(502);
+      expect(res.json).toHaveBeenCalledWith({
+        error: label,
+        code: 'upstream_error',
+        requestId: expect.any(String),
+      });
+      consoleError.mockRestore();
+    },
+  );
+
   const scopedRequest = {
     headers: {},
     query: {},

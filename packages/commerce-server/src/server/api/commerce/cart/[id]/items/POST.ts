@@ -30,7 +30,7 @@ import {
   orderStorefrontEndpoint,
   parseCartItemInput,
 } from '@/lib/commerce/order-subgraph';
-import { classifyCartUpstreamError } from '@/lib/commerce/upstream-errors';
+import { classifyAddItemUpstreamError } from '@/lib/commerce/upstream-errors';
 
 const addLineItemBySkuIdMutation = `
   mutation AddLineItemBySkuId($input: AddLineItemInput!) {
@@ -75,5 +75,5 @@ async function addLineItem(req: Request, res: Response): Promise<void> {
 }
 
 export default commerceRoute('Failed to add line item', addLineItem, {
-  classifyUpstreamError: classifyCartUpstreamError,
+  classifyUpstreamError: classifyAddItemUpstreamError,
 });
