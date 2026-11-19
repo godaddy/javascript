@@ -22,8 +22,8 @@ Server implementations can use GoDaddy Commerce APIs or their existing integrati
 | `GET /products/:id` | URI-encoded product ID | `{ skuGroup: SKUGroup \| null }` |
 | `GET /products/:id?attributeValues=blue&attributeValues=large` | Repeated selected attribute **names**, not IDs | `{ skuGroup: SKUGroup \| null }` with matching SKU connection |
 | `GET /cart/:id` | URI-encoded cart ID | `{ cart: CartOrder \| null }` |
-| `POST /cart` | `{ lineItems: [{ skuId, name, quantity }] }` | `{ cart: CartOrder }` |
-| `POST /cart/:id/items` | `{ skuId, name, quantity }` | `{ cart: CartOrder }` |
+| `POST /cart` | `{ lineItems: [{ skuId, name, quantity, details?, metafields? }] }` | `{ cart: CartOrder }` |
+| `POST /cart/:id/items` | `{ skuId, name, quantity, details?, metafields? }` | `{ cart: CartOrder }` |
 | `PATCH /cart/:id/items/:itemId` | `{ quantity }` | `{ cart: CartOrder }` |
 | `DELETE /cart/:id/items/:itemId` | No body | `{ cart: CartOrder }` |
 | `POST /cart/:id/discounts` | `{ discountCodes: string[] }` | `{ cart: CartOrder }` |
@@ -96,7 +96,18 @@ A cart is a draft order. Return its `id`, complete `lineItems`, and authoritativ
 }
 ```
 
-Optional totals include `shippingTotal`, `taxTotal`, and `discountTotal`. Optional line details include `productAssetUrl` and `selectedOptions: [{ attribute, values: string[] }]`. The drawer shows supplied totals; it does not calculate authoritative prices from catalog values. A missing total disables checkout.
+Optional totals include `shippingTotal`, `taxTotal`, and `discountTotal`. Optional line details include `productAssetUrl`, `selectedOptions: [{ attribute, values: string[] }]`, and `selectedAddons: [{ attribute, values: [{ name, costAdjustment? }] }]`. The drawer shows supplied totals; it does not calculate authoritative prices from catalog values. A missing total disables checkout.
+
+`metafields` on an add-item request are accepted and stored on the order, but are not returned on cart reads — the browser never sees any line item's metafields, whether written by this storefront, the merchant, or another app. Anything a shopper should see echoed back (a customization, a selected option) belongs in `details`, not `metafields`.
+
+### Customization fields on add-item requests
+
+`POST /cart` and `POST /cart/:id/items` accept an optional `details` and `metafields` alongside `skuId`, `name`, and `quantity`:
+
+- `details.productAssetUrl` must be an absolute `https://` URL (max 2048 characters). It is additive to the SKU's own catalog image, not a replacement for it at the catalog level — but it does take priority over the catalog image everywhere a line item's image is shown (the shopper's cart, the merchant's order view, emails, fulfillment/packing views), since it is meant for the shopper's own design or customization preview.
+- `details.selectedAddons` is `[{ optionId, values: [{ inputValue }] }]` — only the shopper-typed TEXT/NUMBER catalog-option shape. A pre-defined LIST-option value (`{ optionValueId }`) is not supported by this contract and is rejected. Up to 20 addon entries per item; each `inputValue` up to 500 characters.
+- `metafields` is `[{ key, value }]`, up to 10 entries per item, each value up to 2000 characters. The server always sends `type: "JSON"` to the upstream order system regardless of any `type` the client supplies.
+- **Known limitation:** two add-item calls for the same `skuId` reliably produce two distinct cart lines only when at least one of them includes `details.selectedAddons`. If neither call includes `selectedAddons` — for example, two calls that differ only by `metafields` or `productAssetUrl` — they merge into a single line, and the second call's customization silently replaces the first's.
 
 ## Checkout boundary
 
