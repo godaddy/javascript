@@ -501,6 +501,47 @@ describe('Commerce scoped routes', () => {
     });
   });
 
+  it('drops unknown properties inside details and each selectedAddons value', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: {
+          skuId: 'sku-1',
+          name: 'Product',
+          quantity: 1,
+          details: {
+            productAssetUrl: 'https://cdn.example.com/design.png',
+            sku: 'sneaky',
+            unitOfMeasure: 'each',
+            selectedAddons: [
+              {
+                optionId: 'opt-1',
+                values: [{ inputValue: 'Custom design 123', optionValueId: 'sneaky-id' }],
+                extra: 'sneaky',
+              },
+            ],
+          },
+          metafields: [{ key: 'designId', value: 'design-123', type: 'NOT_JSON', extra: 'sneaky' }],
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: expect.objectContaining({
+        details: {
+          productAssetUrl: 'https://cdn.example.com/design.png',
+          selectedAddons: [{ optionId: 'opt-1', values: [{ inputValue: 'Custom design 123' }] }],
+        },
+        metafields: [{ key: 'designId', value: 'design-123', type: 'JSON' }],
+      }),
+    });
+  });
+
   it('drops unknown lineItem properties before creating the cart', async (): Promise<void> => {
     vi.mocked(gqlRequest)
       .mockResolvedValueOnce({ addDraftOrder: { id: 'cart-1' } })

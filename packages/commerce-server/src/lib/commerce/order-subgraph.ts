@@ -448,15 +448,34 @@ export function parseCartItemInput(body: unknown): AddToCartItemInput {
   if (typeof candidate.quantity !== 'number') {
     throw new InvalidRequestError('quantity must be a number');
   }
-  const item: AddToCartItemInput = {
+  // Validate before picking: every field the pick below reads has already been shape-checked
+  // here, so it can be destructured directly without repeating the same guards.
+  assertValidCartItemInput(candidate as AddToCartItemInput);
+  return {
     skuId: candidate.skuId,
     name: candidate.name,
     quantity: candidate.quantity,
-    ...(candidate.details !== undefined ? { details: candidate.details } : {}),
-    ...(candidate.metafields !== undefined ? { metafields: candidate.metafields } : {}),
+    ...(candidate.details !== undefined
+      ? {
+          details: {
+            ...(candidate.details.productAssetUrl !== undefined
+              ? { productAssetUrl: candidate.details.productAssetUrl }
+              : {}),
+            ...(candidate.details.selectedAddons !== undefined
+              ? {
+                  selectedAddons: candidate.details.selectedAddons.map((addon) => ({
+                    optionId: addon.optionId,
+                    values: addon.values.map((value) => ({ inputValue: value.inputValue })),
+                  })),
+                }
+              : {}),
+          },
+        }
+      : {}),
+    ...(candidate.metafields !== undefined
+      ? { metafields: candidate.metafields.map(({ key, value }) => ({ key, value })) }
+      : {}),
   };
-  assertValidCartItemInput(item);
-  return item;
 }
 
 export interface CartSummaryTotals {
@@ -500,11 +519,12 @@ export function buildEmptyCartOrderInput({
   };
 }
 
+// Caller must have already validated `item` (e.g. via `parseCartItemInput`) — this function
+// does not re-validate.
 export function buildAddLineItemBySkuIdInput(
   orderId: string,
   item: AddToCartItemInput,
 ): AddLineItemBySkuIdInput {
-  assertValidCartItemInput(item);
   return {
     orderId,
     skuId: item.skuId,
