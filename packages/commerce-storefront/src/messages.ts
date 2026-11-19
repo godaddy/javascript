@@ -65,6 +65,7 @@ const englishText = {
   quantityPrefix: 'Quantity: ',
   remove: 'Remove',
   itemOption: '{attribute}: {values}',
+  addonValueWithCost: '{name} ({amount})',
   cartEmpty: 'Your cart is empty',
   cartEmptyHint: 'Add something you love and it will show up here.',
   sampleCartEmptyHint: 'Add a sample product to try the cart.',

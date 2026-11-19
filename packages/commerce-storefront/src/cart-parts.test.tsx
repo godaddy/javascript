@@ -719,6 +719,52 @@ describe('composable cart', () => {
     );
   });
 
+  it('shows a negative addon surcharge with a minus sign, not a double negative', async () => {
+    localStorage.setItem(storageKey, 'cart-1');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(String(input), 'https://host.test');
+        if (url.pathname.endsWith('/config')) return response({ cartScope: 's', currencyCode: 'USD' });
+        return response({
+          cart: {
+            id: 'cart-1',
+            lineItems: [
+              {
+                id: 'line-1',
+                name: 'Mug',
+                quantity: 1,
+                details: {
+                  selectedAddons: [
+                    {
+                      attribute: 'Size',
+                      values: [{ name: 'Small', costAdjustment: { value: -200, currencyCode: 'USD' } }],
+                    },
+                  ],
+                },
+                totals: { subTotal: { value: 1000, currencyCode: 'USD' } },
+              },
+            ],
+            totals: {
+              subTotal: { value: 1000, currencyCode: 'USD' },
+              total: { value: 1000, currencyCode: 'USD' },
+            },
+          },
+        });
+      }),
+    );
+    function Options(): ReactElement {
+      const { items } = useCart();
+      return <output data-testid='options'>{JSON.stringify(items[0]?.options ?? [])}</output>;
+    }
+    render(app(<Options />));
+    await waitFor(() =>
+      expect(screen.getByTestId('options')).toHaveTextContent(
+        JSON.stringify([{ attribute: 'Size', values: ['Small (-$2.00)'] }]),
+      ),
+    );
+  });
+
   it('renders the packaged drawer from CommerceStorefront with dividers between lines', async () => {
     mockStore();
     render(

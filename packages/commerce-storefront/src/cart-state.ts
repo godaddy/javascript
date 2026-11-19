@@ -1,7 +1,22 @@
 import { useMemo } from 'react';
-import { money } from './api';
-import { useCommerce } from './commerce-provider';
+import { useCommerce, useMessage } from './commerce-provider';
 import { type SampleProduct, sampleCurrency, useSampleCart } from './sample-cart';
+
+// A dedicated formatter cache for signed addon-cost adjustments, separate from `api.ts`'s
+// `money()` cache: `signDisplay` is only needed here, not for the much hotter plain-price path
+// `money()`/`useMoney()` serve everywhere else, so it isn't worth widening that shared cache's
+// key or public signature for this one case.
+const signedCurrencyFormats = new Map<string, Intl.NumberFormat>();
+function formatSignedCost(value: number, currency: string, locale: string): string {
+  const key = `${locale}|${currency}`;
+  let format = signedCurrencyFormats.get(key);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, { style: 'currency', currency, signDisplay: 'exceptZero' });
+    signedCurrencyFormats.set(key, format);
+  }
+  const scale = 10 ** (format.resolvedOptions().maximumFractionDigits ?? 2);
+  return format.format(value / scale);
+}
 
 /** One cart line, for custom cart parts. */
 export interface CartItemState<Sample extends SampleProduct = SampleProduct> {
@@ -33,6 +48,7 @@ export interface CartState {
 /** Read the cart from anywhere inside `CommerceProvider`, for example to build a custom cart button. */
 export function useCart(): CartState {
   const { cart, config, connection, hydrating, locale } = useCommerce();
+  const text = useMessage();
   const sample = useSampleCart();
   const isSample: boolean = connection === 'unbound';
   const sampleItems = sample.items;
@@ -80,8 +96,8 @@ export function useCart(): CartState {
                 .map((value) => {
                   const cost = value.costAdjustment;
                   if (typeof cost?.value !== 'number' || cost.value === 0) return value.name as string;
-                  const formatted = money(cost.value, cost.currencyCode ?? itemCurrency, locale);
-                  return `${value.name} (${cost.value > 0 ? '+' : ''}${formatted})`;
+                  const amount = formatSignedCost(cost.value, cost.currencyCode ?? itemCurrency, locale);
+                  return text('addonValueWithCost', { name: value.name as string, amount });
                 }),
             })),
           ],
@@ -96,5 +112,5 @@ export function useCart(): CartState {
       isSample,
       loading: hydrating,
     };
-  }, [cart, config.currencyCode, hydrating, isSample, locale, sampleItems]);
+  }, [cart, config.currencyCode, hydrating, isSample, locale, sampleItems, text]);
 }

@@ -130,7 +130,8 @@ describe('formatMessage', () => {
     const keys = Object.keys(enUS) as StorefrontMessageKey[];
     expect(Object.keys(frFR).sort()).toEqual(keys.sort());
     for (const key of keys) {
-      if (key === 'skuOptionLabel') continue;
+      // Pure interpolation templates with no localizable wording — identical in every language.
+      if (key === 'skuOptionLabel' || key === 'addonValueWithCost') continue;
       expect.soft(frFR[key], key).not.toEqual(enUS[key]);
     }
   });
