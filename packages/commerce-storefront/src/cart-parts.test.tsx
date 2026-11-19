@@ -602,6 +602,33 @@ describe('composable cart', () => {
     });
   });
 
+  it('drops extra properties from a spread object passed to addItem', async () => {
+    const fetchMock = mockStore();
+    function CustomAdd(): ReactElement {
+      const { addItem } = useCommerce();
+      const product = {
+        id: 'sku-mug',
+        description: 'A mug',
+        price: 1200,
+        mediaUrl: 'https://cdn.test/mug.png',
+      };
+      return (
+        <button
+          type='button'
+          onClick={() => void addItem({ ...product, skuId: product.id, name: 'Mug', quantity: 1 } as never)}
+        >
+          Add from product card
+        </button>
+      );
+    }
+    render(app(<CustomAdd />));
+    await userEvent.click(screen.getByRole('button', { name: 'Add from product card' }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const itemsCall = fetchMock.mock.calls.find(([input]) => String(input).includes('/items'));
+    const body = JSON.parse(String(itemsCall?.[1]?.body));
+    expect(body).toEqual({ skuId: 'sku-mug', name: 'Mug', quantity: 1 });
+  });
+
   it('surfaces selectedAddons in useCart() options alongside selectedOptions', async () => {
     localStorage.setItem(storageKey, 'cart-1');
     vi.stubGlobal(
