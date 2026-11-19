@@ -469,6 +469,80 @@ describe('Commerce scoped routes', () => {
     });
   });
 
+  it('drops unknown request body properties before the addLineItemBySkuId mutation', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: {
+          skuId: 'sku-1',
+          name: 'Product',
+          quantity: 1,
+          description: 'A product description',
+          price: 1200,
+          mediaUrl: 'https://cdn.example.com/product.png',
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: {
+        orderId: 'cart-1',
+        skuId: 'sku-1',
+        name: 'Product',
+        quantity: 1,
+        fulfillmentMode: 'NONE',
+        status: 'DRAFT',
+      },
+    });
+  });
+
+  it('drops unknown lineItem properties before creating the cart', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addDraftOrder: { id: 'cart-1' } })
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    await createCart(
+      {
+        headers: {},
+        body: {
+          lineItems: [{ skuId: 'sku-1', name: 'Product', quantity: 1, description: 'A product description' }],
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[1]?.[0].variables).toEqual({
+      input: {
+        orderId: 'cart-1',
+        skuId: 'sku-1',
+        name: 'Product',
+        quantity: 1,
+        fulfillmentMode: 'NONE',
+        status: 'DRAFT',
+      },
+    });
+  });
+
+  it.each([
+    [{ name: 'Product', quantity: 1 }, 'missing skuId'],
+    [{ skuId: 'sku-1', quantity: 1 }, 'missing name'],
+    [{ skuId: 'sku-1', name: 'Product' }, 'missing quantity'],
+    [{ skuId: 'sku-1', name: 'Product', quantity: 'one' }, 'non-numeric quantity'],
+  ])('rejects an add-item body with %j (%s)', async (body, _description): Promise<void> => {
+    const res = response();
+    await addItem(
+      { headers: {}, params: { id: 'cart-1' }, body } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['http://cdn.example.com/design.png', 'non-https productAssetUrl'],
     [`https://cdn.example.com/${'a'.repeat(2049)}.png`, 'oversized productAssetUrl'],

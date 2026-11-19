@@ -430,6 +430,35 @@ export function assertValidCartItemInput(item: AddToCartItemInput): void {
   }
 }
 
+// The single place a cart-item request body is turned into a trusted AddToCartItemInput. Reads
+// only the known top-level fields off the untyped body — any other property the client sent
+// (e.g. a spread product object) is dropped here rather than riding along to order-api, which
+// would otherwise reject it as an unknown field and surface as a 502 instead of this 400.
+export function parseCartItemInput(body: unknown): AddToCartItemInput {
+  if (typeof body !== 'object' || body === null) {
+    throw new InvalidRequestError('Request body must be an object');
+  }
+  const candidate = body as Partial<AddToCartItemInput>;
+  if (!candidate.skuId || typeof candidate.skuId !== 'string') {
+    throw new InvalidRequestError('skuId must be a non-empty string');
+  }
+  if (!candidate.name || typeof candidate.name !== 'string') {
+    throw new InvalidRequestError('name must be a non-empty string');
+  }
+  if (typeof candidate.quantity !== 'number') {
+    throw new InvalidRequestError('quantity must be a number');
+  }
+  const item: AddToCartItemInput = {
+    skuId: candidate.skuId,
+    name: candidate.name,
+    quantity: candidate.quantity,
+    ...(candidate.details !== undefined ? { details: candidate.details } : {}),
+    ...(candidate.metafields !== undefined ? { metafields: candidate.metafields } : {}),
+  };
+  assertValidCartItemInput(item);
+  return item;
+}
+
 export interface CartSummaryTotals {
   itemCount: number;
   currencyCode: string;

@@ -23,13 +23,12 @@ import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type AddLineItemBySkuIdResult,
   type AddLineItemBySkuIdVariables,
-  type AddToCartItemInput,
-  assertValidCartItemInput,
   buildAddLineItemBySkuIdInput,
   type GetCartOrderResult,
   type GetCartOrderVariables,
   getCartOrderQuery,
   orderStorefrontEndpoint,
+  parseCartItemInput,
 } from '@/lib/commerce/order-subgraph';
 import { classifyCartUpstreamError } from '@/lib/commerce/upstream-errors';
 
@@ -47,13 +46,7 @@ async function addLineItem(req: Request, res: Response): Promise<void> {
     throw new InvalidRequestError('Missing cart id');
   }
 
-  const body = (req.body ?? {}) as Partial<AddToCartItemInput>;
-  if (!body.skuId || !body.name || typeof body.quantity !== 'number') {
-    throw new InvalidRequestError('Missing required fields: skuId, name, quantity');
-  }
-  // `body` is untyped JSON past this point — validate its shape before trusting the cast below.
-  const item = body as AddToCartItemInput;
-  assertValidCartItemInput(item);
+  const item = parseCartItemInput(req.body);
 
   const config: CommerceConfig = readCommerceConfigForResponse(res);
   assertCommerceCartScope(req, config);
