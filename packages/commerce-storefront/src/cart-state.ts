@@ -5,13 +5,19 @@ import { type SampleProduct, sampleCurrency, useSampleCart } from './sample-cart
 // A dedicated formatter cache for signed addon-cost adjustments, separate from `api.ts`'s
 // `money()` cache: `signDisplay` is only needed here, not for the much hotter plain-price path
 // `money()`/`useMoney()` serve everywhere else, so it isn't worth widening that shared cache's
-// key or public signature for this one case.
+// key or public signature for this one case. Capped the same way, for the same reason: a page
+// uses a few pairs, but a long-running server rendering many locales/currencies should not grow
+// this map unbounded.
 const signedCurrencyFormats = new Map<string, Intl.NumberFormat>();
+const maxSignedCurrencyFormats: number = 64;
 function formatSignedCost(value: number, currency: string, locale: string): string {
   const key = `${locale}|${currency}`;
   let format = signedCurrencyFormats.get(key);
   if (!format) {
     format = new Intl.NumberFormat(locale, { style: 'currency', currency, signDisplay: 'exceptZero' });
+    // Maps keep insertion order, so the first key is the oldest.
+    if (signedCurrencyFormats.size >= maxSignedCurrencyFormats)
+      signedCurrencyFormats.delete(signedCurrencyFormats.keys().next().value ?? '');
     signedCurrencyFormats.set(key, format);
   }
   const scale = 10 ** (format.resolvedOptions().maximumFractionDigits ?? 2);
