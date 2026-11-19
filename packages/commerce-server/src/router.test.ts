@@ -432,6 +432,43 @@ describe('Commerce scoped routes', () => {
     });
   });
 
+  it('sends two metafield-only customizations of the same SKU as two independent mutation calls', async (): Promise<void> => {
+    // This route always issues one addLineItemBySkuId call per add-item request, each carrying
+    // its own distinct metafields. Known limitation (order-api behavior, not this route's): when
+    // neither add includes `details.selectedAddons`, order-api's own line-matching merges the two
+    // into a single line and the second add's details/metafields overwrite the first's, rather
+    // than this route's two calls producing two lines. See the KNOWN LIMITATION comment on
+    // AddToCartItemInput in order-subgraph.ts.
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } })
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-2' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Mug', quantity: 1, metafields: [{ key: 'designId', value: 'A' }] },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Mug', quantity: 1, metafields: [{ key: 'designId', value: 'B' }] },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: expect.objectContaining({ metafields: [{ key: 'designId', value: 'A', type: 'JSON' }] }),
+    });
+    expect(vi.mocked(gqlRequest).mock.calls[2]?.[0].variables).toEqual({
+      input: expect.objectContaining({ metafields: [{ key: 'designId', value: 'B', type: 'JSON' }] }),
+    });
+  });
+
   it.each([
     ['http://cdn.example.com/design.png', 'non-https productAssetUrl'],
     [`https://cdn.example.com/${'a'.repeat(2049)}.png`, 'oversized productAssetUrl'],

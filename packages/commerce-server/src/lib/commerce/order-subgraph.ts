@@ -317,6 +317,16 @@ export interface AddToCartMetafieldInput {
   value: string;
 }
 
+// KNOWN LIMITATION (order-api behavior, not this file's): adding the same skuId twice produces
+// two distinct line items only when at least one of the two adds includes `details.selectedAddons`.
+// order-api's line-matching (`findMatchingLineItem`) looks at `selectedAddons` alone — it ignores
+// `details.productAssetUrl` and `metafields` entirely. So two adds of the same skuId that differ
+// only by `metafields` or `productAssetUrl`, with no `selectedAddons` on either, merge into one
+// line: the quantities combine, and the second add's `details`/`metafields` silently overwrite the
+// first's rather than merging with them (`buildLineItemFromSku` spreads the stored line and then
+// replaces both fields wholesale). A caller that needs metafield-only or image-only customizations
+// to stay on distinct lines must also include a distinguishing `selectedAddons` entry.
+// Tracked as a follow-up against order-api; see `createFromSkuId.ts`'s own design-doc link.
 export interface AddToCartItemInput {
   skuId: string;
   name: string;
