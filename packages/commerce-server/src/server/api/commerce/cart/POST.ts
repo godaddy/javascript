@@ -44,6 +44,7 @@ import {
   getCartOrderQuery,
   orderStorefrontEndpoint,
 } from '@/lib/commerce/order-subgraph';
+import { classifyCartCreationUpstreamError } from '@/lib/commerce/upstream-errors';
 
 const addCartOrderMutation = `
   mutation AddCartOrder($input: AddDraftOrderInput!) {
@@ -139,4 +140,6 @@ async function createCart(req: Request, res: Response): Promise<void> {
   res.status(201).json({ cart: hydrated.orderById ?? null });
 }
 
-export default commerceRoute('Failed to create cart', createCart);
+export default commerceRoute('Failed to create cart', createCart, {
+  classifyUpstreamError: classifyCartCreationUpstreamError,
+});

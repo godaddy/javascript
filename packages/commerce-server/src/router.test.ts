@@ -578,6 +578,49 @@ describe('Commerce scoped routes', () => {
     expect(gqlRequest).not.toHaveBeenCalled();
   });
 
+  it('reports order-api BAD_USER_INPUT on addLineItemBySkuId as 400, not 502', async (): Promise<void> => {
+    const res = response();
+    vi.mocked(gqlRequest).mockRejectedValueOnce(
+      new GraphQLErrorWithCodes([{ code: 'BAD_USER_INPUT', message: 'SKU has no price' }]),
+    );
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1 },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'The requested change is not valid for this cart or its items.',
+      code: 'invalid_request',
+      requestId: expect.any(String),
+    });
+  });
+
+  it('reports order-api BAD_USER_INPUT on cart creation as 400, not 502', async (): Promise<void> => {
+    const res = response();
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addDraftOrder: { id: 'cart-1' } })
+      .mockRejectedValueOnce(
+        new GraphQLErrorWithCodes([{ code: 'BAD_USER_INPUT', message: 'SKU has no price' }]),
+      );
+    await createCart(
+      {
+        headers: {},
+        body: { lineItems: [{ skuId: 'sku-1', name: 'Product', quantity: 1 }] },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'The requested change is not valid for this cart or its items.',
+      code: 'invalid_request',
+      requestId: expect.any(String),
+    });
+  });
+
   const scopedRequest = {
     headers: {},
     query: {},
