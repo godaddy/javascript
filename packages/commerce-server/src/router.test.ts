@@ -358,6 +358,451 @@ describe('Commerce scoped routes', () => {
     },
   );
 
+  it('forwards details and metafields to addLineItemBySkuId when creating a cart', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addDraftOrder: { id: 'cart-1' } })
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    const details = {
+      productAssetUrl: 'https://cdn.example.com/design.png',
+      selectedAddons: [{ optionId: 'opt-1', values: [{ inputValue: 'Custom design 123' }] }],
+    };
+    const metafields = [{ key: 'designId', value: 'design-123' }];
+    await createCart(
+      {
+        headers: {},
+        body: { lineItems: [{ skuId: 'sku-1', name: 'Product', quantity: 1, details, metafields }] },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[1]?.[0].variables).toEqual({
+      input: expect.objectContaining({
+        details,
+        metafields: [{ key: 'designId', value: 'design-123', type: 'JSON' }],
+      }),
+    });
+  });
+
+  it('forwards details and metafields to addLineItemBySkuId when adding to an existing cart', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    const details = { productAssetUrl: 'https://cdn.example.com/design.png' };
+    const metafields = [{ key: 'designId', value: 'design-123' }];
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, details, metafields },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: expect.objectContaining({
+        details,
+        metafields: [{ key: 'designId', value: 'design-123', type: 'JSON' }],
+      }),
+    });
+  });
+
+  it('ignores a client-supplied metafield type and always sends JSON', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: {
+          skuId: 'sku-1',
+          name: 'Product',
+          quantity: 1,
+          metafields: [{ key: 'designId', value: 'design-123', type: 'NOT_JSON', extra: 'nope' }],
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: expect.objectContaining({
+        metafields: [{ key: 'designId', value: 'design-123', type: 'JSON' }],
+      }),
+    });
+  });
+
+  it('sends two metafield-only customizations of the same SKU as two independent mutation calls', async (): Promise<void> => {
+    // This route always issues one addLineItemBySkuId call per add-item request, each carrying
+    // its own distinct metafields. Known limitation (order-api behavior, not this route's): when
+    // neither add includes `details.selectedAddons`, order-api's own line-matching merges the two
+    // into a single line and the second add's details/metafields overwrite the first's, rather
+    // than this route's two calls producing two lines. See the KNOWN LIMITATION comment on
+    // AddToCartItemInput in order-subgraph.ts.
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } })
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-2' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Mug', quantity: 1, metafields: [{ key: 'designId', value: 'A' }] },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Mug', quantity: 1, metafields: [{ key: 'designId', value: 'B' }] },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: expect.objectContaining({ metafields: [{ key: 'designId', value: 'A', type: 'JSON' }] }),
+    });
+    expect(vi.mocked(gqlRequest).mock.calls[2]?.[0].variables).toEqual({
+      input: expect.objectContaining({ metafields: [{ key: 'designId', value: 'B', type: 'JSON' }] }),
+    });
+  });
+
+  it('drops unknown request body properties before the addLineItemBySkuId mutation', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: {
+          skuId: 'sku-1',
+          name: 'Product',
+          quantity: 1,
+          description: 'A product description',
+          price: 1200,
+          mediaUrl: 'https://cdn.example.com/product.png',
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: {
+        orderId: 'cart-1',
+        skuId: 'sku-1',
+        name: 'Product',
+        quantity: 1,
+        fulfillmentMode: 'NONE',
+        status: 'DRAFT',
+      },
+    });
+  });
+
+  it('drops unknown properties inside details and each selectedAddons value', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: {
+          skuId: 'sku-1',
+          name: 'Product',
+          quantity: 1,
+          details: {
+            productAssetUrl: 'https://cdn.example.com/design.png',
+            sku: 'sneaky',
+            unitOfMeasure: 'each',
+            selectedAddons: [
+              {
+                optionId: 'opt-1',
+                values: [{ inputValue: 'Custom design 123', optionValueId: 'sneaky-id' }],
+                extra: 'sneaky',
+              },
+            ],
+          },
+          metafields: [{ key: 'designId', value: 'design-123', type: 'NOT_JSON', extra: 'sneaky' }],
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[0]?.[0].variables).toEqual({
+      input: expect.objectContaining({
+        details: {
+          productAssetUrl: 'https://cdn.example.com/design.png',
+          selectedAddons: [{ optionId: 'opt-1', values: [{ inputValue: 'Custom design 123' }] }],
+        },
+        metafields: [{ key: 'designId', value: 'design-123', type: 'JSON' }],
+      }),
+    });
+  });
+
+  it('drops unknown lineItem properties before creating the cart', async (): Promise<void> => {
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addDraftOrder: { id: 'cart-1' } })
+      .mockResolvedValueOnce({ addLineItemBySkuId: { id: 'item-1' } })
+      .mockResolvedValueOnce({ orderById: { id: 'cart-1', lineItems: [] } });
+    const res = response();
+    await createCart(
+      {
+        headers: {},
+        body: {
+          lineItems: [{ skuId: 'sku-1', name: 'Product', quantity: 1, description: 'A product description' }],
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(vi.mocked(gqlRequest).mock.calls[1]?.[0].variables).toEqual({
+      input: {
+        orderId: 'cart-1',
+        skuId: 'sku-1',
+        name: 'Product',
+        quantity: 1,
+        fulfillmentMode: 'NONE',
+        status: 'DRAFT',
+      },
+    });
+  });
+
+  it.each([
+    [{ name: 'Product', quantity: 1 }, 'missing skuId'],
+    [{ skuId: 'sku-1', quantity: 1 }, 'missing name'],
+    [{ skuId: 'sku-1', name: 'Product' }, 'missing quantity'],
+    [{ skuId: 'sku-1', name: 'Product', quantity: 'one' }, 'non-numeric quantity'],
+  ])('rejects an add-item body with %j (%s)', async (body, _description): Promise<void> => {
+    const res = response();
+    await addItem(
+      { headers: {}, params: { id: 'cart-1' }, body } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['http://cdn.example.com/design.png', 'non-https productAssetUrl'],
+    [`https://cdn.example.com/${'a'.repeat(2049)}.png`, 'oversized productAssetUrl'],
+  ])('rejects an add-item with %s (%s)', async (productAssetUrl): Promise<void> => {
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, details: { productAssetUrl } },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects an add-item with more selectedAddons than the configured maximum', async (): Promise<void> => {
+    const res = response();
+    const selectedAddons = Array.from({ length: 21 }, (_, index) => ({
+      optionId: `opt-${index}`,
+      values: [{ inputValue: 'value' }],
+    }));
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, details: { selectedAddons } },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects an add-item with a LIST-option (optionValueId) addon value', async (): Promise<void> => {
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: {
+          skuId: 'sku-1',
+          name: 'Product',
+          quantity: 1,
+          details: { selectedAddons: [{ optionId: 'opt-1', values: [{ optionValueId: 'val-1' }] }] },
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['non-array selectedAddons', { selectedAddons: 'not-an-array' }],
+    ['selectedAddons entry missing optionId', { selectedAddons: [{ values: [{ inputValue: 'x' }] }] }],
+    ['selectedAddons entry with non-array values', { selectedAddons: [{ optionId: 'opt-1', values: 'x' }] }],
+    ['selectedAddons value that is null', { selectedAddons: [{ optionId: 'opt-1', values: [null] }] }],
+    ['non-string productAssetUrl', { productAssetUrl: 42 }],
+  ])('rejects an add-item with %s instead of a 500', async (_label, details): Promise<void> => {
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, details },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['non-array metafields', 'not-an-array'],
+    ['metafields entry missing key', [{ value: 'x' }]],
+    ['metafields entry with non-string key', [{ key: 42, value: 'x' }]],
+    ['metafields entry with non-string value', [{ key: 'designId', value: 42 }]],
+    ['metafields entry that is null', [null]],
+  ])('rejects an add-item with %s instead of a 500', async (_label, metafields): Promise<void> => {
+    const res = response();
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, metafields },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects an add-item with more metafields than the configured maximum', async (): Promise<void> => {
+    const res = response();
+    const metafields = Array.from({ length: 11 }, (_, index) => ({ key: `k${index}`, value: 'v' }));
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, metafields },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects an add-item with an oversized metafield value', async (): Promise<void> => {
+    const res = response();
+    const metafields = [{ key: 'designId', value: 'a'.repeat(2001) }];
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1, metafields },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects cart creation with an invalid customization before creating the cart', async (): Promise<void> => {
+    const res = response();
+    await createCart(
+      {
+        headers: {},
+        body: {
+          lineItems: [
+            {
+              skuId: 'sku-1',
+              name: 'Product',
+              quantity: 1,
+              details: { productAssetUrl: 'http://cdn.example.com/design.png' },
+            },
+          ],
+        },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(gqlRequest).not.toHaveBeenCalled();
+  });
+
+  it('reports order-api BAD_USER_INPUT on addLineItemBySkuId as 400, not 502', async (): Promise<void> => {
+    const res = response();
+    vi.mocked(gqlRequest).mockRejectedValueOnce(
+      new GraphQLErrorWithCodes([{ code: 'BAD_USER_INPUT', message: 'SKU has no price' }]),
+    );
+    await addItem(
+      {
+        headers: {},
+        params: { id: 'cart-1' },
+        body: { skuId: 'sku-1', name: 'Product', quantity: 1 },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'The requested change is not valid for this cart or its items.',
+      code: 'invalid_request',
+      requestId: expect.any(String),
+    });
+  });
+
+  it('reports order-api BAD_USER_INPUT on cart creation as 400, not 502', async (): Promise<void> => {
+    const res = response();
+    vi.mocked(gqlRequest)
+      .mockResolvedValueOnce({ addDraftOrder: { id: 'cart-1' } })
+      .mockRejectedValueOnce(
+        new GraphQLErrorWithCodes([{ code: 'BAD_USER_INPUT', message: 'SKU has no price' }]),
+      );
+    await createCart(
+      {
+        headers: {},
+        body: { lineItems: [{ skuId: 'sku-1', name: 'Product', quantity: 1 }] },
+      } as unknown as Request,
+      res as unknown as Response,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'The requested change is not valid for this cart or its items.',
+      code: 'invalid_request',
+      requestId: expect.any(String),
+    });
+  });
+
+  it.each([
+    ['read', readCart, 'Failed to load cart'],
+    ['update', updateItem, 'Failed to update line item'],
+    ['remove', deleteItem, 'Failed to delete line item'],
+    ['discount', applyDiscount, 'Failed to apply discount codes'],
+  ] as const)(
+    'does not map order-api BAD_USER_INPUT to 400 on %s — stays a generic 502',
+    async (_name, handler, label): Promise<void> => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const res = response();
+      const error = new GraphQLErrorWithCodes([{ code: 'BAD_USER_INPUT', message: 'Invalid discount code' }]);
+      vi.mocked(gqlRequest).mockRejectedValueOnce(error);
+      await handler(
+        {
+          headers: {},
+          params: { id: 'cart-1', itemId: 'item-1' },
+          body: { discountCodes: ['PROMO'] },
+        } as unknown as Request,
+        res as unknown as Response,
+      );
+      expect(res.status).toHaveBeenCalledWith(502);
+      expect(res.json).toHaveBeenCalledWith({
+        error: label,
+        code: 'upstream_error',
+        requestId: expect.any(String),
+      });
+      consoleError.mockRestore();
+    },
+  );
+
   const scopedRequest = {
     headers: {},
     query: {},

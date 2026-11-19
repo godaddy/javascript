@@ -14,6 +14,7 @@
  * - Money values are integers in the currency's smallest unit (cents for USD).
  */
 
+import { InvalidRequestError } from './errors';
 import type { Money } from './gql';
 
 export interface OrderStorefrontEndpointInput {
@@ -190,6 +191,26 @@ export interface CreateDraftLineItemInput {
   details?: LineItemDetailsInput;
 }
 
+// Distinct from `LineItemDetailsInput`: the GraphQL `AddLineItemInput.details.selectedAddons`
+// field takes `{ optionId, values: [{ inputValue | optionValueId }] }` — the catalog-option
+// *input* shape — not the `{ attribute, sku, values: [{ name, costAdjustment }] }` *output*
+// shape a line item returns once built.
+export interface AddLineItemSelectedAddonInput {
+  optionId: string;
+  values: Array<{ inputValue: string }>;
+}
+
+export interface AddLineItemDetailsInput {
+  productAssetUrl?: string;
+  selectedAddons?: AddLineItemSelectedAddonInput[];
+}
+
+export interface AddLineItemMetafieldInput {
+  key: string;
+  value: string;
+  type: 'JSON';
+}
+
 export interface AddLineItemBySkuIdInput {
   orderId: string;
   skuId: string;
@@ -198,7 +219,8 @@ export interface AddLineItemBySkuIdInput {
   fulfillmentMode?: string;
   status?: string;
   type?: string;
-  details?: LineItemDetailsInput;
+  details?: AddLineItemDetailsInput;
+  metafields?: AddLineItemMetafieldInput[];
 }
 
 export interface UpdateLineItemByIdInput {
@@ -275,10 +297,178 @@ export interface EmptyCartOrderInput {
   currencyCode?: string;
 }
 
+export const PRODUCT_ASSET_URL_MAX_LENGTH = 2048;
+export const SELECTED_ADDON_VALUE_MAX_LENGTH = 500;
+export const MAX_SELECTED_ADDONS = 20;
+export const MAX_METAFIELDS = 10;
+export const METAFIELD_VALUE_MAX_LENGTH = 2000;
+
+// JSON is the only metafield type the storefront's add-to-cart surface supports — no `type`
+// field here, so a client can't request a different one.
+export interface AddToCartMetafieldInput {
+  key: string;
+  value: string;
+}
+
+// KNOWN LIMITATION (order-api behavior, not this file's): adding the same skuId twice produces
+// two distinct line items only when at least one of the two adds includes `details.selectedAddons`.
+// order-api's line-matching (`findMatchingLineItem`) looks at `selectedAddons` alone — it ignores
+// `details.productAssetUrl` and `metafields` entirely. So two adds of the same skuId that differ
+// only by `metafields` or `productAssetUrl`, with no `selectedAddons` on either, merge into one
+// line: the quantities combine, and the second add's `details`/`metafields` silently overwrite the
+// first's rather than merging with them (`buildLineItemFromSku` spreads the stored line and then
+// replaces both fields wholesale). A caller that needs metafield-only or image-only customizations
+// to stay on distinct lines must also include a distinguishing `selectedAddons` entry.
+// Tracked as a follow-up against order-api; see `createFromSkuId.ts`'s own design-doc link.
 export interface AddToCartItemInput {
   skuId: string;
   name: string;
   quantity: number;
+  details?: AddLineItemDetailsInput;
+  metafields?: AddToCartMetafieldInput[];
+}
+
+// Only TEXT/NUMBER catalog options (shopper-typed `inputValue`) are supported here. A LIST
+// option's pre-defined `optionValueId` is a distinct, unvalidated shape — out of scope for this
+// change (see the ticket's addon-value-shape decision) — so reject it explicitly rather than
+// letting it reach `order-api` unchecked or crash on a missing `inputValue`.
+function assertSupportedAddonValueShape(value: unknown): string {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    typeof (value as { inputValue?: unknown }).inputValue !== 'string'
+  ) {
+    throw new InvalidRequestError(
+      'selectedAddons values must use { inputValue }; LIST-option values ({ optionValueId }) are not supported',
+    );
+  }
+  return (value as { inputValue: string }).inputValue;
+}
+
+// This is the only place these shapes, length/HTTPS/count limits are enforced — `order-api`'s
+// schema uses a plain `z.string()` for these fields with no such caps, and the request body
+// arrives as untyped JSON, so every field read here must be shape-checked before use rather
+// than trusted from a TypeScript cast.
+export function assertValidCartItemInput(item: AddToCartItemInput): void {
+  const assetUrl = item.details?.productAssetUrl;
+  if (assetUrl !== undefined) {
+    if (typeof assetUrl !== 'string') {
+      throw new InvalidRequestError('productAssetUrl must be a string');
+    }
+    if (assetUrl.length > PRODUCT_ASSET_URL_MAX_LENGTH) {
+      throw new InvalidRequestError(
+        `productAssetUrl cannot exceed ${PRODUCT_ASSET_URL_MAX_LENGTH} characters`,
+      );
+    }
+    let parsed: URL;
+    try {
+      parsed = new URL(assetUrl);
+    } catch {
+      throw new InvalidRequestError('productAssetUrl must be an absolute URL');
+    }
+    if (parsed.protocol !== 'https:') throw new InvalidRequestError('productAssetUrl must use https');
+  }
+  const addons = item.details?.selectedAddons;
+  if (addons !== undefined) {
+    if (!Array.isArray(addons)) throw new InvalidRequestError('selectedAddons must be an array');
+    if (addons.length > MAX_SELECTED_ADDONS) {
+      throw new InvalidRequestError(`selectedAddons cannot exceed ${MAX_SELECTED_ADDONS} entries`);
+    }
+    for (const addon of addons) {
+      if (
+        typeof addon !== 'object' ||
+        addon === null ||
+        typeof addon.optionId !== 'string' ||
+        !addon.optionId
+      ) {
+        throw new InvalidRequestError('Each selectedAddons entry must have a non-empty optionId');
+      }
+      if (!Array.isArray(addon.values)) {
+        throw new InvalidRequestError('Each selectedAddons entry must have a values array');
+      }
+      for (const value of addon.values) {
+        const inputValue = assertSupportedAddonValueShape(value);
+        if (inputValue.length > SELECTED_ADDON_VALUE_MAX_LENGTH) {
+          throw new InvalidRequestError(
+            `selectedAddons value cannot exceed ${SELECTED_ADDON_VALUE_MAX_LENGTH} characters`,
+          );
+        }
+      }
+    }
+  }
+  const metafields = item.metafields;
+  if (metafields !== undefined) {
+    if (!Array.isArray(metafields)) throw new InvalidRequestError('metafields must be an array');
+    if (metafields.length > MAX_METAFIELDS) {
+      throw new InvalidRequestError(`metafields cannot exceed ${MAX_METAFIELDS} entries`);
+    }
+    for (const metafield of metafields) {
+      if (
+        typeof metafield !== 'object' ||
+        metafield === null ||
+        !metafield.key ||
+        typeof metafield.key !== 'string'
+      ) {
+        throw new InvalidRequestError('Each metafield must have a non-empty string key');
+      }
+      if (typeof metafield.value !== 'string') {
+        throw new InvalidRequestError('Each metafield value must be a string');
+      }
+      if (metafield.value.length > METAFIELD_VALUE_MAX_LENGTH) {
+        throw new InvalidRequestError(
+          `metafield value cannot exceed ${METAFIELD_VALUE_MAX_LENGTH} characters`,
+        );
+      }
+    }
+  }
+}
+
+// The single place a cart-item request body is turned into a trusted AddToCartItemInput. Reads
+// only the known top-level fields off the untyped body — any other property the client sent
+// (e.g. a spread product object) is dropped here rather than riding along to order-api, which
+// would otherwise reject it as an unknown field and surface as a 502 instead of this 400.
+export function parseCartItemInput(body: unknown): AddToCartItemInput {
+  if (typeof body !== 'object' || body === null) {
+    throw new InvalidRequestError('Request body must be an object');
+  }
+  const candidate = body as Partial<AddToCartItemInput>;
+  if (!candidate.skuId || typeof candidate.skuId !== 'string') {
+    throw new InvalidRequestError('skuId must be a non-empty string');
+  }
+  if (!candidate.name || typeof candidate.name !== 'string') {
+    throw new InvalidRequestError('name must be a non-empty string');
+  }
+  if (typeof candidate.quantity !== 'number') {
+    throw new InvalidRequestError('quantity must be a number');
+  }
+  // Validate before picking: every field the pick below reads has already been shape-checked
+  // here, so it can be destructured directly without repeating the same guards.
+  assertValidCartItemInput(candidate as AddToCartItemInput);
+  return {
+    skuId: candidate.skuId,
+    name: candidate.name,
+    quantity: candidate.quantity,
+    ...(candidate.details !== undefined
+      ? {
+          details: {
+            ...(candidate.details.productAssetUrl !== undefined
+              ? { productAssetUrl: candidate.details.productAssetUrl }
+              : {}),
+            ...(candidate.details.selectedAddons !== undefined
+              ? {
+                  selectedAddons: candidate.details.selectedAddons.map((addon) => ({
+                    optionId: addon.optionId,
+                    values: addon.values.map((value) => ({ inputValue: value.inputValue })),
+                  })),
+                }
+              : {}),
+          },
+        }
+      : {}),
+    ...(candidate.metafields !== undefined
+      ? { metafields: candidate.metafields.map(({ key, value }) => ({ key, value })) }
+      : {}),
+  };
 }
 
 export interface CartSummaryTotals {
@@ -322,6 +512,8 @@ export function buildEmptyCartOrderInput({
   };
 }
 
+// Caller must have already validated `item` (e.g. via `parseCartItemInput`) — this function
+// does not re-validate.
 export function buildAddLineItemBySkuIdInput(
   orderId: string,
   item: AddToCartItemInput,
@@ -333,6 +525,16 @@ export function buildAddLineItemBySkuIdInput(
     quantity: item.quantity,
     fulfillmentMode: 'NONE',
     status: 'DRAFT',
+    ...(item.details ? { details: item.details } : {}),
+    ...(item.metafields
+      ? {
+          metafields: item.metafields.map(({ key, value }) => ({
+            key,
+            value,
+            type: 'JSON' as const,
+          })),
+        }
+      : {}),
   };
 }
 
