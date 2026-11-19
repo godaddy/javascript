@@ -1,5 +1,14 @@
 # @godaddy/localizations
 
+## 1.0.16
+
+### Patch Changes
+
+- 0f7eea2: Add Stripe 3DS verification support for card and express checkout, with localized payment errors and compatibility with existing checkout error handling.
+  
+  Improve payment retry handling, prevent duplicate submissions, and recognize already-paid orders. While a 3-D Secure payment's outcome is unknown, every payment method is blocked from starting another payment for the checkout. Update express payment tracking to reflect the payment method used and successful checkout completion.
+- 7c12d56: Use generic tax labels for combined tax totals. `enAu` no longer shows "Estimated GST", "GST included" or GST-specific tax errors. `enUs`, `esUs` and `frCa` now say "Taxes included" / "Impuestos incluidos" / "Taxes incluses" instead of naming VAT, IVA or TVA. Add an `enCa` localization so Canadian checkouts no longer need to borrow `enAu`.
+
 ## 1.0.15
 
 ### Patch Changes
