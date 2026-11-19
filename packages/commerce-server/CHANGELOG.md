@@ -1,5 +1,11 @@
 # @godaddy/gd-commerce-server
 
+## 0.4.2
+
+### Patch Changes
+
+- 2fbe5a5: Carry optional `details` (`productAssetUrl`, `selectedAddons`) and `metafields` through every add-to-cart call, so a shopper's product customization reaches checkout and the order instead of staying client-side only. Existing calls without these fields behave exactly as before.
+
 ## 0.4.1
 
 ### Patch Changes
