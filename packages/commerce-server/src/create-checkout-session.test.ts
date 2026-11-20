@@ -95,13 +95,15 @@ describe('createCheckoutSession', () => {
   it.each(flows)(
     'uses default payments without built-in attribution for %s checkout',
     async (_name, params): Promise<void> => {
-      await createCheckoutSession(params, configuration);
+      const logger = { error: vi.fn(), warn: vi.fn() };
+      await createCheckoutSession(params, configuration, logger);
       const input = mockGqlRequest.mock.calls[0]?.[0].variables.input;
       expect(input).toMatchObject({
         paymentMethods: { card: { processor: 'godaddy', checkoutTypes: ['standard'] } },
       });
       expect(input).not.toHaveProperty('sourceApp');
       expect(input).not.toHaveProperty('owner');
+      expect(logger.warn).not.toHaveBeenCalled();
     },
   );
 
@@ -118,13 +120,15 @@ describe('createCheckoutSession', () => {
   it.each(flows)(
     'forwards server-configured Google Pay for %s checkout',
     async (_name, params): Promise<void> => {
+      const logger = { error: vi.fn(), warn: vi.fn() };
       const paymentMethods = {
         card: { processor: 'godaddy', checkoutTypes: ['standard'] },
         googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] },
       };
       checkout = { ...checkout, paymentMethods };
-      await createCheckoutSession(params, configuration);
+      await createCheckoutSession(params, configuration, logger);
       expect(mockGqlRequest.mock.calls[0]?.[0].variables.input.paymentMethods).toEqual(paymentMethods);
+      expect(logger.warn).not.toHaveBeenCalled();
     },
   );
 
@@ -156,6 +160,7 @@ describe('createCheckoutSession', () => {
     ])(
       'falls back from invalid host payment methods while retaining tax collection: %j',
       async (paymentMethods) => {
+        const logger = { error: vi.fn(), warn: vi.fn() };
         checkout = {
           ...checkout,
           enableTaxCollection: true,
@@ -163,11 +168,16 @@ describe('createCheckoutSession', () => {
         };
         mockGqlRequest.mockResolvedValue(response({ enableTaxCollection: true }));
 
-        await createCheckoutSession(params, configuration);
+        await createCheckoutSession(params, configuration, logger);
         expect(mockGqlRequest.mock.calls[0]?.[0].variables.input).toMatchObject({
           enableTaxCollection: true,
           paymentMethods: { card: { processor: 'godaddy', checkoutTypes: ['standard'] } },
         });
+        expect(logger.warn).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('falling back'), {
+          code: 'invalid_checkout_payment_methods',
+          fallback: 'standard_godaddy_card',
+        });
+        expect(logger.error).not.toHaveBeenCalled();
       },
     );
 

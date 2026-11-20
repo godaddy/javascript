@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { parseCommerceCheckoutConfiguration } from './lib/commerce/checkout-config';
 import { createRuntimeCommerceConfiguration, readCommerceConfig } from './lib/commerce/config';
 
 function environment(): NodeJS.ProcessEnv {
@@ -13,9 +14,42 @@ function environment(): NodeJS.ProcessEnv {
 
 afterEach((): void => {
   vi.unstubAllEnvs();
+  vi.restoreAllMocks();
 });
 
 describe('Commerce runtime configuration', () => {
+  it.each(['missing', 'throwing'] as const)(
+    'keeps the safe fallback and emits a console warning when the host warn method is %s',
+    (mode): void => {
+      const consoleWarning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const logger = {
+        error: vi.fn(),
+        ...(mode === 'throwing'
+          ? {
+              warn: vi.fn(() => {
+                throw new Error('private-logger-error');
+              }),
+            }
+          : {}),
+      };
+      const checkout = { enablePromotionCodes: true, enableTaxCollection: false, enableShipping: false };
+      expect(
+        parseCommerceCheckoutConfiguration(
+          JSON.stringify({
+            ...checkout,
+            paymentMethods: { googlePay: { secret: 'private-payment-config' } },
+          }),
+          logger,
+        ),
+      ).toEqual(checkout);
+      expect(consoleWarning).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('falling back'), {
+        code: 'invalid_checkout_payment_methods',
+        fallback: 'standard_godaddy_card',
+      });
+      expect(logger.error).not.toHaveBeenCalled();
+    },
+  );
+
   it('defaults to production and does not select an API origin from environment variables', (): void => {
     const config = readCommerceConfig({
       environment: { ...environment(), GODADDY_API_BASE_URL: 'https://api.example.com' },
@@ -76,9 +110,10 @@ describe('Commerce runtime configuration', () => {
   });
 
   it('reads checkout flags and API shipping options', (): void => {
+    const logger = { error: vi.fn(), warn: vi.fn() };
     const values = environment();
     const configuration = createRuntimeCommerceConfiguration({ environment: values });
-    expect(configuration.readCheckout()).toEqual({
+    expect(configuration.readCheckout(logger)).toEqual({
       enablePromotionCodes: false,
       enableTaxCollection: false,
       enableShipping: false,
@@ -89,12 +124,13 @@ describe('Commerce runtime configuration', () => {
       enableShipping: true,
       shipping: { fulfillmentLocationId: 'location-1' },
     });
-    expect(configuration.readCheckout()).toEqual({
+    expect(configuration.readCheckout(logger)).toEqual({
       enablePromotionCodes: true,
       enableTaxCollection: false,
       enableShipping: true,
       shipping: { fulfillmentLocationId: 'location-1' },
     });
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -115,6 +151,7 @@ describe('Commerce runtime configuration', () => {
   });
 
   it('retains standard Google Pay settings alongside existing checkout capabilities', (): void => {
+    const logger = { error: vi.fn(), warn: vi.fn() };
     const paymentMethods = {
       card: { processor: 'godaddy', checkoutTypes: ['standard'] },
       googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] },
@@ -126,7 +163,8 @@ describe('Commerce runtime configuration', () => {
         GODADDY_CHECKOUT_CONFIGURATION: JSON.stringify({ ...checkout, paymentMethods }),
       },
     });
-    expect(configuration.readCheckout()).toEqual({ ...checkout, paymentMethods });
+    expect(configuration.readCheckout(logger)).toEqual({ ...checkout, paymentMethods });
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -150,6 +188,8 @@ describe('Commerce runtime configuration', () => {
     { card: null },
     { card: null, googlePay: null },
     { unsupported: {} },
+    { googlepay: { processor: 'godaddy', checkoutTypes: ['standard'] } },
+    { googlePay: { processor: 'godaddy', checkoutTypes: ['standard'], secret: 'not-allowed' } },
     { googlePay: {} },
     { googlePay: { processor: 'godaddy' } },
     { googlePay: { checkoutTypes: ['standard'] } },
@@ -166,6 +206,7 @@ describe('Commerce runtime configuration', () => {
   ])(
     'falls back from invalid optional payment methods without clearing valid flags: %j',
     (paymentMethods): void => {
+      const logger = { error: vi.fn(), warn: vi.fn() };
       const checkout = { enablePromotionCodes: true, enableTaxCollection: true, enableShipping: false };
       const configuration = createRuntimeCommerceConfiguration({
         environment: {
@@ -173,7 +214,12 @@ describe('Commerce runtime configuration', () => {
           GODADDY_CHECKOUT_CONFIGURATION: JSON.stringify({ ...checkout, paymentMethods }),
         },
       });
-      expect(configuration.readCheckout()).toEqual(checkout);
+      expect(configuration.readCheckout(logger)).toEqual(checkout);
+      expect(logger.warn).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('falling back'), {
+        code: 'invalid_checkout_payment_methods',
+        fallback: 'standard_godaddy_card',
+      });
+      expect(logger.error).not.toHaveBeenCalled();
     },
   );
 });

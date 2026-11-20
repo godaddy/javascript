@@ -40,7 +40,7 @@
 import type { Request, Response } from 'express';
 import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
 import type { CheckoutReturnUrlValidator } from '@/lib/commerce/checkout-return-urls';
-import { commerceRoute } from '@/lib/commerce/commerce-route';
+import { commerceLoggerForResponse, commerceRoute } from '@/lib/commerce/commerce-route';
 import {
   type CommerceConfig,
   commerceConfigurationForResponse,
@@ -100,6 +100,7 @@ async function createCheckout(req: Request, res: Response): Promise<void> {
       ...destinations,
     },
     configuration,
+    commerceLoggerForResponse(res),
   );
 
   res.status(200).json(session);

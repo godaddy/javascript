@@ -12,6 +12,7 @@ export type {
   CommerceErrorLogContext,
   CommerceLogger,
   CommerceRequestIdResolver,
+  CommerceWarningLogContext,
 } from './lib/commerce/commerce-route';
 export {
   type CommerceConfig,

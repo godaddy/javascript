@@ -70,7 +70,11 @@ describe('public checkout boundary', () => {
     async (route): Promise<void> => {
       const response = await post(valid, route);
       expect(response.status).toBe(200);
-      expect(createCheckoutSession).toHaveBeenCalledWith(expect.objectContaining(valid), expect.anything());
+      expect(createCheckoutSession).toHaveBeenCalledWith(
+        expect.objectContaining(valid),
+        expect.anything(),
+        expect.objectContaining({ error: expect.any(Function) }),
+      );
     },
   );
 
@@ -82,7 +86,11 @@ describe('public checkout boundary', () => {
       successUrl: 'https://shop.example.com/receipt?orderId=cart-1&campaign=spring',
     };
     expect((await post(body)).status).toBe(200);
-    expect(createCheckoutSession).toHaveBeenCalledWith(expect.objectContaining(body), expect.anything());
+    expect(createCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining(body),
+      expect.anything(),
+      expect.objectContaining({ error: expect.any(Function) }),
+    );
   });
 
   it.each([false, true])(

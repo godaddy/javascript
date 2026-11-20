@@ -26,6 +26,7 @@ import {
   DEFAULT_CHECKOUT_PAYMENT_METHODS,
   getOAuthAccessToken,
 } from './checkout-subgraph';
+import { type CommerceLogger, consoleCommerceLogger } from './commerce-route';
 import {
   type CommerceConfiguration,
   createRuntimeCommerceConfiguration,
@@ -170,6 +171,7 @@ function promotionCodesEnabled(configuration: object): boolean {
 export async function createCheckoutSession(
   params: CreateCheckoutSessionParams,
   configuration: CommerceConfiguration = createRuntimeCommerceConfiguration(),
+  logger: CommerceLogger = consoleCommerceLogger,
 ): Promise<CheckoutSession> {
   const { draftOrderId, skuId, quantity, lineItemData, returnUrl, successUrl } = params;
 
@@ -194,9 +196,10 @@ export async function createCheckoutSession(
     owner,
     currencyCode: configCurrencyCode,
   } = readReadyCommerceConfig(configuration);
-  const checkoutConfiguration = readReadyCheckoutConfig(configuration);
+  const checkoutConfiguration = readReadyCheckoutConfig(configuration, logger);
   const paymentMethods =
-    parseCheckoutPaymentMethods(checkoutConfiguration.paymentMethods) ?? DEFAULT_CHECKOUT_PAYMENT_METHODS;
+    parseCheckoutPaymentMethods(checkoutConfiguration.paymentMethods, logger) ??
+    DEFAULT_CHECKOUT_PAYMENT_METHODS;
   const enablePromotionCodes: boolean = promotionCodesEnabled(checkoutConfiguration);
   const catalogShippingEnabled: boolean = lineItemData === undefined && checkoutConfiguration.enableShipping;
   const checkoutOAuthScope: string = 'commerce.product:read';

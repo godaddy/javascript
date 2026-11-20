@@ -1,7 +1,8 @@
 import { once } from 'node:events';
 import express from 'express';
 import { afterEach, expect, it, vi } from 'vitest';
-import { createRuntimeCommerceConfiguration } from './lib/commerce/config';
+import type { CommerceCheckoutConfiguration } from './lib/commerce/checkout-config';
+import { type CommerceConfiguration, createRuntimeCommerceConfiguration } from './lib/commerce/config';
 import { createCommerceRouter } from './router';
 
 const clientFetch = globalThis.fetch;
@@ -9,6 +10,109 @@ afterEach((): void => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
+
+it.each(['environment', 'host'] as const)(
+  'warns once through the router logger when %s payment settings fall back, then recovers',
+  async (source): Promise<void> => {
+    const logger = { error: vi.fn(), warn: vi.fn() };
+    const consoleWarning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const card = { processor: 'godaddy', checkoutTypes: ['standard'] };
+    let settings: CommerceCheckoutConfiguration = {
+      enablePromotionCodes: false,
+      enableTaxCollection: true,
+      enableShipping: false,
+      paymentMethods: {
+        card,
+        googlepay: { ...card, secret: 'private-payment-config' },
+      } as CommerceCheckoutConfiguration['paymentMethods'],
+    };
+    const environment = {
+      GODADDY_OAUTH_CLIENT_ID: 'client-1',
+      GODADDY_OAUTH_CLIENT_SECRET: 'private-oauth-secret',
+      GODADDY_STORE_ID: 'store-1',
+      GODADDY_CHANNEL_ID: 'channel-1',
+      GODADDY_CURRENCY_CODE: 'USD',
+      GODADDY_CHECKOUT_CONFIGURATION: JSON.stringify(settings),
+    };
+    const runtime = createRuntimeCommerceConfiguration({ environment });
+    const configuration: CommerceConfiguration =
+      source === 'environment' ? runtime : { read: () => runtime.read(), readCheckout: () => settings };
+    let expectedPaymentMethods: CommerceCheckoutConfiguration['paymentMethods'] = { card };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+        if (String(input).endsWith('/v2/oauth2/token')) {
+          return Response.json({ access_token: 'token', expires_in: 3600 });
+        }
+        const body = JSON.parse(String(init?.body));
+        expect(body.variables.input.paymentMethods).toEqual(expectedPaymentMethods);
+        expect(body.variables.input.enableTaxCollection).toBe(true);
+        return Response.json({
+          data: {
+            createCheckoutSession: {
+              id: 'session-1',
+              url: 'https://checkout.example.com/session-1',
+              storeId: 'store-1',
+              channelId: 'channel-1',
+              enableTaxCollection: true,
+              paymentMethods: body.variables.input.paymentMethods,
+            },
+          },
+        });
+      }),
+    );
+    const app = express();
+    app.use(express.json());
+    app.use(
+      '/api/commerce',
+      createCommerceRouter({
+        configuration,
+        logger,
+        checkoutReturnUrls: {
+          returnUrls: ['https://example.com/cart'],
+          successUrls: ['https://example.com/success'],
+        },
+      }),
+    );
+    const server = app.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('Expected a listening TCP server');
+      const requestCheckout = (): Promise<Response> =>
+        clientFetch(`http://127.0.0.1:${address.port}/api/commerce/checkout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            draftOrderId: 'cart-1',
+            returnUrl: 'https://example.com/cart',
+            successUrl: 'https://example.com/success',
+          }),
+        });
+      const fallback = await requestCheckout();
+      expect(fallback.status).toBe(200);
+      const fallbackBody = await fallback.json();
+      expect(fallbackBody).toHaveProperty('id', 'session-1');
+      expectedPaymentMethods = { card, googlePay: card };
+      settings = { ...settings, paymentMethods: expectedPaymentMethods };
+      environment.GODADDY_CHECKOUT_CONFIGURATION = JSON.stringify(settings);
+      expect((await requestCheckout()).status).toBe(200);
+      expect(logger.warn).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('falling back'), {
+        code: 'invalid_checkout_payment_methods',
+        fallback: 'standard_godaddy_card',
+      });
+      const diagnostics = JSON.stringify({ warnings: logger.warn.mock.calls, response: fallbackBody });
+      expect(diagnostics).not.toContain('private-payment-config');
+      expect(diagnostics).not.toContain('private-oauth-secret');
+      expect(logger.error).not.toHaveBeenCalled();
+      expect(consoleWarning).not.toHaveBeenCalled();
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
+  },
+);
 
 it('serves variant product details only on the configured channel without querying SKUGroup.status', async (): Promise<void> => {
   const upstream = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
