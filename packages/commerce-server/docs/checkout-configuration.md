@@ -49,7 +49,7 @@ For example:
 
 Restoring the server reader alone does not discover merchant settings: the builder/deployment integration must populate this value. Shipping-origin address details do not need to be copied into application code; hosted checkout can use store configuration.
 
-The package forwards configured payment methods for all three session paths. Missing or malformed optional payment settings fall back to standard GoDaddy card checkout and do not reset valid feature flags. Upgrade and rebuild existing consumers before relying on this field. Apple Pay and its domain-registration prerequisites are separate work.
+The package forwards configured payment methods for all three session paths. Missing, empty, all-null, or malformed optional payment settings fall back to standard GoDaddy card checkout and do not reset valid feature flags. Environment and custom host payment settings use the same validation. A valid configuration may omit card, provided the returned session retains at least one configured method with the requested processor. Forwarding a provider does not supply its frontend SDK configuration; this integration enables Google Pay through GoDaddy Payments. Upgrade and rebuild existing consumers before relying on this field. Apple Pay and its domain-registration prerequisites are separate work.
 
 The accepted stopgap is eventually consistent: a provider enabled or disabled after deployment is reflected on the next rebuild, not immediately. This is acceptable only while the Checkout API change is pending.
 

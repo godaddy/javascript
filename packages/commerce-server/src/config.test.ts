@@ -130,9 +130,25 @@ describe('Commerce runtime configuration', () => {
   });
 
   it.each([
+    { googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] } },
+    { card: null, googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] } },
+  ])('retains a valid cardless payment configuration: %j', (paymentMethods): void => {
+    const checkout = { enablePromotionCodes: false, enableTaxCollection: true, enableShipping: false };
+    const configuration = createRuntimeCommerceConfiguration({
+      environment: {
+        ...environment(),
+        GODADDY_CHECKOUT_CONFIGURATION: JSON.stringify({ ...checkout, paymentMethods }),
+      },
+    });
+    expect(configuration.readCheckout()).toEqual({ ...checkout, paymentMethods });
+  });
+
+  it.each([
     null,
     [],
     {},
+    { card: null },
+    { card: null, googlePay: null },
     { unsupported: {} },
     { googlePay: {} },
     { googlePay: { processor: 'godaddy' } },
@@ -143,6 +159,10 @@ describe('Commerce runtime configuration', () => {
     { googlePay: { checkoutTypes: [] } },
     { googlePay: { checkoutTypes: [null] } },
     { googlePay: { secret: 'not-allowed' } },
+    { googlePay: { processor: ' godaddy ', checkoutTypes: ['standard'] } },
+    { googlePay: { processor: 'godaddy', checkoutTypes: [' standard '] } },
+    { googlePay: { processor: ' ', checkoutTypes: ['standard'] } },
+    { googlePay: { processor: 'godaddy', checkoutTypes: [' '] } },
   ])(
     'falls back from invalid optional payment methods without clearing valid flags: %j',
     (paymentMethods): void => {

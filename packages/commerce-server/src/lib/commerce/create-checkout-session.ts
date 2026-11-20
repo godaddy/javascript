@@ -13,6 +13,7 @@
  * Server-only. Credentials and integration settings come from the host configuration.
  */
 
+import { parseCheckoutPaymentMethods } from './checkout-config';
 import {
   authorizationHeaders,
   buildBuyNowCheckoutInput,
@@ -194,7 +195,8 @@ export async function createCheckoutSession(
     currencyCode: configCurrencyCode,
   } = readReadyCommerceConfig(configuration);
   const checkoutConfiguration = readReadyCheckoutConfig(configuration);
-  const paymentMethods = checkoutConfiguration.paymentMethods ?? DEFAULT_CHECKOUT_PAYMENT_METHODS;
+  const paymentMethods =
+    parseCheckoutPaymentMethods(checkoutConfiguration.paymentMethods) ?? DEFAULT_CHECKOUT_PAYMENT_METHODS;
   const enablePromotionCodes: boolean = promotionCodesEnabled(checkoutConfiguration);
   const catalogShippingEnabled: boolean = lineItemData === undefined && checkoutConfiguration.enableShipping;
   const checkoutOAuthScope: string = 'commerce.product:read';
@@ -309,7 +311,10 @@ export async function createCheckoutSession(
     throw new UpstreamError('Checkout session did not enable configured shipping and address collection');
   }
 
-  if (!session.paymentMethods?.card?.processor) {
+  const hasConfiguredPaymentMethod = Object.entries(paymentMethods).some(
+    ([name, method]) => method != null && session.paymentMethods?.[name]?.processor === method.processor,
+  );
+  if (!hasConfiguredPaymentMethod) {
     throw new UpstreamError('Checkout session did not configure payment methods.');
   }
 

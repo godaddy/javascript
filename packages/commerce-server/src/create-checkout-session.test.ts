@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommerceCheckoutConfiguration } from './lib/commerce/checkout-config';
-import type { CheckoutSessionResult, CreateCheckoutSessionResult } from './lib/commerce/checkout-subgraph';
+import type {
+  CheckoutSessionPaymentMethodConfigInput,
+  CheckoutSessionResult,
+  CreateCheckoutSessionResult,
+} from './lib/commerce/checkout-subgraph';
 import type { CommerceConfig, CommerceConfiguration } from './lib/commerce/config';
 import {
   type CreateCheckoutSessionParams,
@@ -123,6 +127,85 @@ describe('createCheckoutSession', () => {
       expect(mockGqlRequest.mock.calls[0]?.[0].variables.input.paymentMethods).toEqual(paymentMethods);
     },
   );
+
+  describe.each(flows)('%s payment configuration', (_name, params) => {
+    it.each<Record<string, CheckoutSessionPaymentMethodConfigInput | null>>([
+      { googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] } },
+      { card: null, googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] } },
+    ])('accepts an upstream session with only a configured wallet: %j', async (paymentMethods) => {
+      checkout = { ...checkout, paymentMethods };
+      mockGqlRequest.mockResolvedValue(response({ paymentMethods }));
+
+      await expect(createCheckoutSession(params, configuration)).resolves.toHaveProperty('id', 'session-1');
+      expect(mockGqlRequest.mock.calls[0]?.[0].variables.input.paymentMethods).toEqual(paymentMethods);
+    });
+
+    it.each([
+      null,
+      [],
+      'invalid',
+      {},
+      { card: null },
+      { card: null, googlePay: null },
+      { googlePay: {} },
+      { googlePay: { processor: 'godaddy' } },
+      { googlepay: { processor: 'godaddy', checkoutTypes: ['standard'] } },
+      { googlePay: { processor: ' godaddy ', checkoutTypes: ['standard'] } },
+      { googlePay: { processor: 'godaddy', checkoutTypes: [' standard '] } },
+      { googlePay: { processor: 'godaddy', checkoutTypes: ['standard'], secret: 'not-allowed' } },
+    ])(
+      'falls back from invalid host payment methods while retaining tax collection: %j',
+      async (paymentMethods) => {
+        checkout = {
+          ...checkout,
+          enableTaxCollection: true,
+          paymentMethods: paymentMethods as CommerceCheckoutConfiguration['paymentMethods'],
+        };
+        mockGqlRequest.mockResolvedValue(response({ enableTaxCollection: true }));
+
+        await createCheckoutSession(params, configuration);
+        expect(mockGqlRequest.mock.calls[0]?.[0].variables.input).toMatchObject({
+          enableTaxCollection: true,
+          paymentMethods: { card: { processor: 'godaddy', checkoutTypes: ['standard'] } },
+        });
+      },
+    );
+
+    it.each<CheckoutSessionResult['paymentMethods']>([
+      null,
+      {},
+      { googlePay: null },
+      { googlePay: { processor: '' } },
+      { googlePay: { processor: ' ' } },
+      { googlePay: { processor: 'other' } },
+      { card: { processor: 'godaddy' } },
+    ])('rejects a session without any configured processor: %j', async (paymentMethods) => {
+      checkout = {
+        ...checkout,
+        paymentMethods: { googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] } },
+      };
+      mockGqlRequest.mockResolvedValue(response({ paymentMethods }));
+
+      await expect(createCheckoutSession(params, configuration)).rejects.toThrow(
+        'Checkout session did not configure payment methods.',
+      );
+    });
+
+    it('accepts a session when one of several configured methods survives API filtering', async () => {
+      checkout = {
+        ...checkout,
+        paymentMethods: {
+          card: { processor: 'godaddy', checkoutTypes: ['standard'] },
+          googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] },
+        },
+      };
+      mockGqlRequest.mockResolvedValue(
+        response({ paymentMethods: { googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] } } }),
+      );
+
+      await expect(createCheckoutSession(params, configuration)).resolves.toHaveProperty('id', 'session-1');
+    });
+  });
 
   it('does not let checkout callers override server-owned payment methods', async (): Promise<void> => {
     await createCheckoutSession(

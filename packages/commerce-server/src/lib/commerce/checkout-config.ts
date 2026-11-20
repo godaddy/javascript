@@ -31,9 +31,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-/** Invalid optional payment settings fall back independently of the existing checkout flags. */
-function paymentMethods(value: unknown): CheckoutSessionPaymentMethodsInput | undefined {
+/** Shared validation for environment and host settings; at least one method must be enabled. */
+export function parseCheckoutPaymentMethods(value: unknown): CheckoutSessionPaymentMethodsInput | undefined {
   if (!isRecord(value) || Object.keys(value).length === 0) return undefined;
+  let hasEnabledMethod = false;
   for (const [name, method] of Object.entries(value)) {
     if (!PAYMENT_METHOD_NAMES.has(name as keyof CheckoutSessionPaymentMethodsInput)) return undefined;
     if (method === null) continue;
@@ -43,17 +44,24 @@ function paymentMethods(value: unknown): CheckoutSessionPaymentMethodsInput | un
     ) {
       return undefined;
     }
-    if (typeof method.processor !== 'string' || !method.processor.trim()) {
+    if (
+      typeof method.processor !== 'string' ||
+      !method.processor ||
+      method.processor !== method.processor.trim()
+    ) {
       return undefined;
     }
     if (
       !Array.isArray(method.checkoutTypes) ||
       method.checkoutTypes.length === 0 ||
-      !method.checkoutTypes.every((type: unknown) => typeof type === 'string' && type.trim() !== '')
+      !method.checkoutTypes.every(
+        (type: unknown) => typeof type === 'string' && type !== '' && type === type.trim(),
+      )
     )
       return undefined;
+    hasEnabledMethod = true;
   }
-  return value as CheckoutSessionPaymentMethodsInput;
+  return hasEnabledMethod ? (value as CheckoutSessionPaymentMethodsInput) : undefined;
 }
 
 const DEFAULT_CHECKOUT_CONFIGURATION: CommerceCheckoutConfiguration = {
@@ -98,7 +106,7 @@ export function parseCommerceCheckoutConfiguration(raw: string | undefined): Com
     }
   }
 
-  const configuredPaymentMethods = paymentMethods(candidate.paymentMethods);
+  const configuredPaymentMethods = parseCheckoutPaymentMethods(candidate.paymentMethods);
   return {
     enablePromotionCodes: candidate.enablePromotionCodes as boolean,
     enableTaxCollection: candidate.enableTaxCollection as boolean,
