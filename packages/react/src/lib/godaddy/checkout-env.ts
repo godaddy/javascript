@@ -3908,6 +3908,15 @@ const introspection = {
             },
             "args": [],
             "isDeprecated": false
+          },
+          {
+            "name": "paymentMethods",
+            "type": {
+              "kind": "OBJECT",
+              "name": "CheckoutSessionPaymentMethods"
+            },
+            "args": [],
+            "isDeprecated": false
           }
         ],
         "interfaces": []

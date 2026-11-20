@@ -41,6 +41,7 @@ import {
 } from '@/components/checkout/payment/utils/billing-collection';
 import { getApplicationId } from '@/components/checkout/payment/utils/get-application-id';
 import { PaymentAddressToggle } from '@/components/checkout/payment/utils/payment-address-toggle';
+import { resolveSessionPaymentMethods } from '@/components/checkout/payment/utils/resolve-session-payment-methods';
 import {
   useBillingPolicy,
   useCanOfferShippingAddressAsBilling,
@@ -158,9 +159,12 @@ export function PaymentForm(
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
   const applicationId = getApplicationId(session, godaddyPaymentsConfig?.appId);
   const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
-  // Both the container and each individual method are nullable on the session,
-  // so the cast has to admit null on both levels.
-  const configuredPaymentMethods = session?.paymentMethods as unknown as
+  // Prefer discovered methods under paymentProviderConfiguration; fall back to
+  // legacy top-level session.paymentMethods. Both the container and each
+  // individual method are nullable, so the cast admits null on both levels.
+  const configuredPaymentMethods = resolveSessionPaymentMethods(
+    session
+  ) as unknown as
     | Partial<Record<PaymentMethodValue, SessionPaymentMethodConfig | null>>
     | null
     | undefined;
@@ -229,9 +233,11 @@ export function PaymentForm(
 
   // Check if any GoDaddy wallet payment method is configured
   const hasGoDaddyWalletPayment =
-    session?.paymentMethods?.paze?.processor === PaymentProvider.GODADDY ||
-    session?.paymentMethods?.applePay?.processor === PaymentProvider.GODADDY ||
-    session?.paymentMethods?.googlePay?.processor === PaymentProvider.GODADDY;
+    configuredPaymentMethods?.paze?.processor === PaymentProvider.GODADDY ||
+    configuredPaymentMethods?.applePay?.processor ===
+      PaymentProvider.GODADDY ||
+    configuredPaymentMethods?.googlePay?.processor ===
+      PaymentProvider.GODADDY;
 
   // Initialize TokenizeJs for GoDaddy wallet payments (Paze, Apple Pay, Google Pay)
   useLayoutEffect(() => {

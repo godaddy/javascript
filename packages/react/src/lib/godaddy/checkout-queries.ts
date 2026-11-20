@@ -169,6 +169,24 @@ export const GetCheckoutSessionQuery = graphql(`
                 businessId
                 applicationId
               }
+              paymentMethods {
+                card {
+                  processor
+                  checkoutTypes
+                }
+                express {
+                  processor
+                  checkoutTypes
+                }
+                paypal {
+                  processor
+                  checkoutTypes
+                }
+                razorpay {
+                  processor
+                  checkoutTypes
+                }
+              }
             }
             locations {
               id

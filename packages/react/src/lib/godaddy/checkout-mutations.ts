@@ -152,6 +152,24 @@ export const CreateCheckoutSessionMutation = graphql(`
           businessId
           applicationId
         }
+        paymentMethods {
+          card {
+            processor
+            checkoutTypes
+          }
+          express {
+            processor
+            checkoutTypes
+          }
+          paypal {
+            processor
+            checkoutTypes
+          }
+          razorpay {
+            processor
+            checkoutTypes
+          }
+        }
       }
       draftOrder {
         id
