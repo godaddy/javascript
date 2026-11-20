@@ -1,6 +1,7 @@
 /** Server-only Commerce configuration. Hosts own secrets and deployment-specific loading. */
 import type { Response } from 'express';
 import { type CommerceCheckoutConfiguration, parseCommerceCheckoutConfiguration } from './checkout-config';
+import type { CommerceLogger } from './commerce-route';
 import { CommerceError, CommerceNotConfiguredError } from './errors';
 
 const DEFAULT_API_BASE_URL = 'https://api.godaddy.com';
@@ -29,7 +30,8 @@ export interface CommerceConfiguration {
   /** Authoritative host state. Missing support preserves legacy live/error behavior. */
   readConnectionState?(): CommerceConnectionState | undefined;
   read(): CommerceConfig;
-  readCheckout(): CommerceCheckoutConfiguration;
+  /** The runtime reader uses this logger for invalid optional payment settings. */
+  readCheckout(logger?: CommerceLogger): CommerceCheckoutConfiguration;
 }
 
 export interface RuntimeCommerceConfigurationOptions {
@@ -93,8 +95,11 @@ export function createRuntimeCommerceConfiguration(
 ): CommerceConfiguration {
   return {
     read: (): CommerceConfig => readCommerceConfig(options),
-    readCheckout: (): CommerceCheckoutConfiguration =>
-      parseCommerceCheckoutConfiguration((options.environment ?? process.env).GODADDY_CHECKOUT_CONFIGURATION),
+    readCheckout: (logger): CommerceCheckoutConfiguration =>
+      parseCommerceCheckoutConfiguration(
+        (options.environment ?? process.env).GODADDY_CHECKOUT_CONFIGURATION,
+        logger,
+      ),
   };
 }
 
@@ -144,9 +149,12 @@ export function readReadyCommerceConfig(configuration: CommerceConfiguration): C
   return fromHost(() => configuration.read());
 }
 
-export function readReadyCheckoutConfig(configuration: CommerceConfiguration): CommerceCheckoutConfiguration {
+export function readReadyCheckoutConfig(
+  configuration: CommerceConfiguration,
+  logger?: CommerceLogger,
+): CommerceCheckoutConfiguration {
   assertCommerceConnectionReady(configuration);
-  return fromHost(() => configuration.readCheckout());
+  return fromHost(() => configuration.readCheckout(logger));
 }
 
 export function commerceConfigurationForResponse(res: Response): CommerceConfiguration {

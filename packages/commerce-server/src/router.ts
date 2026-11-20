@@ -30,7 +30,7 @@ export interface CommerceRouterFeatures {
 
 /** Where failure detail is logged and how each request's id is chosen. */
 export interface CommerceRouterObservabilityOptions {
-  /** Receives 5xx failure detail. Defaults to `console.error`. */
+  /** Receives 5xx failures and optional configuration warnings. Defaults to the console. */
   logger?: CommerceLogger;
   /**
    * Returns the host's id for the request, for example `(req) => req.get('x-request-id')` when

@@ -24,6 +24,32 @@ The default configuration reads these **server-only environment variables** on e
 - `GODADDY_CURRENCY_CODE`
 - Optional `GODADDY_CHECKOUT_CONFIGURATION`: JSON with boolean `enablePromotionCodes`, `enableTaxCollection`, and `enableShipping` fields. All three default to false when this variable is absent or malformed so configuration discovery cannot prevent checkout creation. Optional `shipping` accepts the checkout API's `originAddress` or `fulfillmentLocationId`; omit it to use store configuration.
 
+### Standard Google Pay
+
+Set `paymentMethods` inside the server-only checkout JSON. Keep the existing values for the three capability flags; this example has all three disabled:
+
+```json
+{
+  "enablePromotionCodes": false,
+  "enableTaxCollection": false,
+  "enableShipping": false,
+  "paymentMethods": {
+    "card": { "processor": "godaddy", "checkoutTypes": ["standard"] },
+    "googlePay": { "processor": "godaddy", "checkoutTypes": ["standard"] }
+  }
+}
+```
+
+The server forwards payment methods for cart, Buy Now, and trusted non-catalog checkout. Checkout API requires `processor` and `checkoutTypes` for each configured payment method; an empty `googlePay` object is invalid. The merchant's processor and the shopper's browser still determine availability. This configuration does not enable Apple Pay.
+
+Without `paymentMethods`, checkout keeps standard GoDaddy card payments. Empty, all-null, or invalid payment maps use that same fallback without clearing valid shipping, tax, or promotion flags. The same payment validation applies to environment configuration and custom `CommerceConfiguration.readCheckout()` implementations. Payment methods accept the Checkout API method names and nullable method values, with at least one non-null method. Each non-null method requires a nonempty `processor` and a nonempty array of `checkoutTypes`; padded strings, unknown names, and unknown method fields are invalid. Cardless configurations are accepted; the returned session must retain at least one configured method with its requested processor. Browser request bodies cannot select payment methods.
+
+An invalid payment map emits a warning with code `invalid_checkout_payment_methods` and fallback `standard_godaddy_card`. The warning contains no configuration values. Missing or valid payment settings do not warn. Router requests use the configured logger's optional `warn` method; error-only or failing warning loggers fall back to `console.warn`. Each checkout attempt that reads an invalid map warns once.
+
+Forwarding a method does not initialize its frontend SDK. This Google Pay integration uses GoDaddy Payments. Other providers, including Stripe, Square, and Mercado Pago, also require their provider-specific SDK configuration in hosted checkout.
+
+Existing apps must install a release containing this change, update their lockfile, rebuild, and redeploy. A configuration update alone does not upgrade an installed package. A rebuild with an unchanged lockfile can keep the old code. The Airo integration also needs an updated configuration bridge that retains `paymentMethods`.
+
 See [Checkout configuration](docs/checkout-configuration.md) for the temporary build-time synchronization flow and its eventual-consistency limitation.
 
 The API origin defaults to `https://api.godaddy.com`. The package does not load files, provision merchants, or assign application attribution. Hosts own these concerns and any readiness checks or retries before invoking Commerce.
@@ -140,10 +166,15 @@ Upstream errors without a specific mapping stay 502; business errors such as inv
 ```ts
 createCommerceRouter({
   configuration,
-  logger: { error: (message, context) => log.error(context, message) },
+  logger: {
+    error: (message, context) => log.error(context, message),
+    warn: (message, context) => log.warn(context, message),
+  },
   // Use the host's request id when its edge sets one; unsafe or missing ids fall back to a UUID.
   getRequestId: (req) => req.get('x-request-id'),
 });
 ```
 
 `createCommerceCatalogRouter` and `createGoDaddyPaymentsRouter` accept the same `{ logger, getRequestId }` as their last argument. The logger defaults to `console.error`. In-process helpers throw the exported `CommerceError` subclasses (`InvalidRequestError`, `NotFoundError`, `CommerceNotConfiguredError`, `UpstreamError`), including when a host configuration throws while being read. Check `error.code` (for example `'not_found'`) rather than `instanceof`, which fails when a host has more than one copy of this package.
+
+In-process checkout callers can pass their logger as `createCheckoutSession(params, configuration, logger)`. Direct configuration readers can use `configuration.readCheckout(logger)` or `parseCommerceCheckoutConfiguration(raw, logger)` to receive the same payment warnings. These arguments are optional and default to console warnings.

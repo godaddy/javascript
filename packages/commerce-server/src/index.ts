@@ -5,9 +5,14 @@ export {
 } from './lib/commerce/checkout-config';
 export type { CheckoutReturnUrls } from './lib/commerce/checkout-return-urls';
 export type {
+  CheckoutSessionPaymentMethodConfigInput,
+  CheckoutSessionPaymentMethodsInput,
+} from './lib/commerce/checkout-subgraph';
+export type {
   CommerceErrorLogContext,
   CommerceLogger,
   CommerceRequestIdResolver,
+  CommerceWarningLogContext,
 } from './lib/commerce/commerce-route';
 export {
   type CommerceConfig,
