@@ -194,6 +194,7 @@ export async function createCheckoutSession(
     currencyCode: configCurrencyCode,
   } = readReadyCommerceConfig(configuration);
   const checkoutConfiguration = readReadyCheckoutConfig(configuration);
+  const paymentMethods = checkoutConfiguration.paymentMethods ?? DEFAULT_CHECKOUT_PAYMENT_METHODS;
   const enablePromotionCodes: boolean = promotionCodesEnabled(checkoutConfiguration);
   const catalogShippingEnabled: boolean = lineItemData === undefined && checkoutConfiguration.enableShipping;
   const checkoutOAuthScope: string = 'commerce.product:read';
@@ -211,7 +212,7 @@ export async function createCheckoutSession(
     enableTaxCollection: checkoutConfiguration.enableTaxCollection,
     enableShipping: checkoutConfiguration.enableShipping,
     enableShippingAddressCollection: checkoutConfiguration.enableShipping,
-    paymentMethods: DEFAULT_CHECKOUT_PAYMENT_METHODS,
+    paymentMethods,
     shipping: catalogShippingEnabled ? checkoutConfiguration.shipping : undefined,
   };
 
@@ -250,7 +251,7 @@ export async function createCheckoutSession(
           {
             ...attribution,
             enableTaxCollection: checkoutConfiguration.enableTaxCollection,
-            paymentMethods: DEFAULT_CHECKOUT_PAYMENT_METHODS,
+            paymentMethods,
           },
         )
       : buildBuyNowCheckoutInput(

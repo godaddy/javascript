@@ -24,6 +24,28 @@ The default configuration reads these **server-only environment variables** on e
 - `GODADDY_CURRENCY_CODE`
 - Optional `GODADDY_CHECKOUT_CONFIGURATION`: JSON with boolean `enablePromotionCodes`, `enableTaxCollection`, and `enableShipping` fields. All three default to false when this variable is absent or malformed so configuration discovery cannot prevent checkout creation. Optional `shipping` accepts the checkout API's `originAddress` or `fulfillmentLocationId`; omit it to use store configuration.
 
+### Standard Google Pay
+
+Set `paymentMethods` inside the server-only checkout JSON. Keep the existing values for the three capability flags; this example has all three disabled:
+
+```json
+{
+  "enablePromotionCodes": false,
+  "enableTaxCollection": false,
+  "enableShipping": false,
+  "paymentMethods": {
+    "card": { "processor": "godaddy", "checkoutTypes": ["standard"] },
+    "googlePay": { "processor": "godaddy", "checkoutTypes": ["standard"] }
+  }
+}
+```
+
+The server forwards payment methods for cart, Buy Now, and trusted non-catalog checkout. Checkout API requires `processor` and `checkoutTypes` for each configured payment method; an empty `googlePay` object is invalid. The merchant's processor and the shopper's browser still determine availability. This configuration does not enable Apple Pay.
+
+Without `paymentMethods`, checkout keeps standard GoDaddy card payments. Invalid optional payment methods use that same fallback without clearing valid shipping, tax, or promotion flags. Payment methods accept the Checkout API method names and nullable method values. Each non-null method requires a nonempty `processor` and a nonempty array of `checkoutTypes`. Unknown names or method fields are invalid. Hosts supplying `CommerceConfiguration.readCheckout()` directly must validate their own values. Browser request bodies cannot select payment methods.
+
+Existing apps must install a release containing this change, update their lockfile, rebuild, and redeploy. A configuration update alone does not upgrade an installed package. A rebuild with an unchanged lockfile can keep the old code. The Airo integration also needs an updated configuration bridge that retains `paymentMethods`.
+
 See [Checkout configuration](docs/checkout-configuration.md) for the temporary build-time synchronization flow and its eventual-consistency limitation.
 
 The API origin defaults to `https://api.godaddy.com`. The package does not load files, provision merchants, or assign application attribution. Hosts own these concerns and any readiness checks or retries before invoking Commerce.

@@ -33,7 +33,7 @@ Commerce Admin already exposes this lookup to builders through the `commerce_che
 Until Checkout API performs App Registry discovery itself:
 
 1. During every initial build and rebuild/redeploy, the builder calls `commerce_checkout_configuration_get`.
-2. The deployment writes the three returned feature flags to the server-only `GODADDY_CHECKOUT_CONFIGURATION` value; it does not copy the full MCP response or generate conditional application code.
+2. The deployment writes the three returned feature flags and its server-owned payment-method policy to `GODADDY_CHECKOUT_CONFIGURATION`; it does not copy the full MCP response or generate conditional application code. For standard GoDaddy Payments Google Pay, add `paymentMethods: { card: { processor: 'godaddy', checkoutTypes: ['standard'] }, googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] } }` to the existing JSON.
 3. When Checkout is selected, `commerce-server` reads that value and explicitly configures the new checkout session.
 4. The enabled providers calculate live rates and adjustments during checkout.
 
@@ -48,6 +48,8 @@ For example:
 ```
 
 Restoring the server reader alone does not discover merchant settings: the builder/deployment integration must populate this value. Shipping-origin address details do not need to be copied into application code; hosted checkout can use store configuration.
+
+The package forwards configured payment methods for all three session paths. Missing or malformed optional payment settings fall back to standard GoDaddy card checkout and do not reset valid feature flags. Upgrade and rebuild existing consumers before relying on this field. Apple Pay and its domain-registration prerequisites are separate work.
 
 The accepted stopgap is eventually consistent: a provider enabled or disabled after deployment is reflected on the next rebuild, not immediately. This is acceptable only while the Checkout API change is pending.
 

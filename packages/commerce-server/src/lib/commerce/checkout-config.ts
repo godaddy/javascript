@@ -1,3 +1,5 @@
+import type { CheckoutSessionPaymentMethodsInput } from './checkout-subgraph';
+
 /** Shipping options accepted by the hosted checkout API. Omit to use the store's configuration. */
 export interface CommerceCheckoutShippingConfiguration {
   readonly originAddress?: Readonly<Record<string, unknown>>;
@@ -9,6 +11,49 @@ export interface CommerceCheckoutConfiguration {
   readonly enableTaxCollection: boolean;
   readonly enableShipping: boolean;
   readonly shipping?: CommerceCheckoutShippingConfiguration;
+  readonly paymentMethods?: CheckoutSessionPaymentMethodsInput;
+}
+
+const PAYMENT_METHOD_NAMES = new Set<keyof CheckoutSessionPaymentMethodsInput>([
+  'ach',
+  'applePay',
+  'card',
+  'ccavenue',
+  'express',
+  'googlePay',
+  'mercadopago',
+  'offline',
+  'paypal',
+  'paze',
+]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** Invalid optional payment settings fall back independently of the existing checkout flags. */
+function paymentMethods(value: unknown): CheckoutSessionPaymentMethodsInput | undefined {
+  if (!isRecord(value) || Object.keys(value).length === 0) return undefined;
+  for (const [name, method] of Object.entries(value)) {
+    if (!PAYMENT_METHOD_NAMES.has(name as keyof CheckoutSessionPaymentMethodsInput)) return undefined;
+    if (method === null) continue;
+    if (
+      !isRecord(method) ||
+      Object.keys(method).some((key) => key !== 'processor' && key !== 'checkoutTypes')
+    ) {
+      return undefined;
+    }
+    if (typeof method.processor !== 'string' || !method.processor.trim()) {
+      return undefined;
+    }
+    if (
+      !Array.isArray(method.checkoutTypes) ||
+      method.checkoutTypes.length === 0 ||
+      !method.checkoutTypes.every((type: unknown) => typeof type === 'string' && type.trim() !== '')
+    )
+      return undefined;
+  }
+  return value as CheckoutSessionPaymentMethodsInput;
 }
 
 const DEFAULT_CHECKOUT_CONFIGURATION: CommerceCheckoutConfiguration = {
@@ -53,10 +98,12 @@ export function parseCommerceCheckoutConfiguration(raw: string | undefined): Com
     }
   }
 
+  const configuredPaymentMethods = paymentMethods(candidate.paymentMethods);
   return {
     enablePromotionCodes: candidate.enablePromotionCodes as boolean,
     enableTaxCollection: candidate.enableTaxCollection as boolean,
     enableShipping: candidate.enableShipping as boolean,
     ...(shipping ? { shipping: shipping as CommerceCheckoutShippingConfiguration } : {}),
+    ...(configuredPaymentMethods ? { paymentMethods: configuredPaymentMethods } : {}),
   };
 }

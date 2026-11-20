@@ -230,6 +230,10 @@ it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
       if (body.query.includes('CreateCheckoutSession')) {
         expect(body.variables.input.sourceApp).toBe(sourceApp);
         expect(body.variables.input.owner).toBe(owner);
+        expect(body.variables.input.paymentMethods).toEqual({
+          card: { processor: 'godaddy', checkoutTypes: ['standard'] },
+          googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] },
+        });
         return Response.json({
           data: {
             createCheckoutSession: {
@@ -256,6 +260,15 @@ it.each([undefined, 'https://api.example.com', 'https://api.example.com:8443'])(
         GODADDY_STORE_ID: 'store-1',
         GODADDY_CHANNEL_ID: 'channel-1',
         GODADDY_CURRENCY_CODE: 'USD',
+        GODADDY_CHECKOUT_CONFIGURATION: JSON.stringify({
+          enablePromotionCodes: false,
+          enableTaxCollection: false,
+          enableShipping: false,
+          paymentMethods: {
+            card: { processor: 'godaddy', checkoutTypes: ['standard'] },
+            googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] },
+          },
+        }),
       },
     });
     const app = express();

@@ -113,4 +113,47 @@ describe('Commerce runtime configuration', () => {
       enableShipping: false,
     });
   });
+
+  it('retains standard Google Pay settings alongside existing checkout capabilities', (): void => {
+    const paymentMethods = {
+      card: { processor: 'godaddy', checkoutTypes: ['standard'] },
+      googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] },
+    };
+    const checkout = { enablePromotionCodes: true, enableTaxCollection: true, enableShipping: false };
+    const configuration = createRuntimeCommerceConfiguration({
+      environment: {
+        ...environment(),
+        GODADDY_CHECKOUT_CONFIGURATION: JSON.stringify({ ...checkout, paymentMethods }),
+      },
+    });
+    expect(configuration.readCheckout()).toEqual({ ...checkout, paymentMethods });
+  });
+
+  it.each([
+    null,
+    [],
+    {},
+    { unsupported: {} },
+    { googlePay: {} },
+    { googlePay: { processor: 'godaddy' } },
+    { googlePay: { checkoutTypes: ['standard'] } },
+    { googlePay: 'true' },
+    { googlePay: { processor: 123 } },
+    { googlePay: { checkoutTypes: 'standard' } },
+    { googlePay: { checkoutTypes: [] } },
+    { googlePay: { checkoutTypes: [null] } },
+    { googlePay: { secret: 'not-allowed' } },
+  ])(
+    'falls back from invalid optional payment methods without clearing valid flags: %j',
+    (paymentMethods): void => {
+      const checkout = { enablePromotionCodes: true, enableTaxCollection: true, enableShipping: false };
+      const configuration = createRuntimeCommerceConfiguration({
+        environment: {
+          ...environment(),
+          GODADDY_CHECKOUT_CONFIGURATION: JSON.stringify({ ...checkout, paymentMethods }),
+        },
+      });
+      expect(configuration.readCheckout()).toEqual(checkout);
+    },
+  );
 });

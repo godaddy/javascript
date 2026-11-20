@@ -111,6 +111,32 @@ describe('createCheckoutSession', () => {
     });
   });
 
+  it.each(flows)(
+    'forwards server-configured Google Pay for %s checkout',
+    async (_name, params): Promise<void> => {
+      const paymentMethods = {
+        card: { processor: 'godaddy', checkoutTypes: ['standard'] },
+        googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] },
+      };
+      checkout = { ...checkout, paymentMethods };
+      await createCheckoutSession(params, configuration);
+      expect(mockGqlRequest.mock.calls[0]?.[0].variables.input.paymentMethods).toEqual(paymentMethods);
+    },
+  );
+
+  it('does not let checkout callers override server-owned payment methods', async (): Promise<void> => {
+    await createCheckoutSession(
+      {
+        ...cart,
+        paymentMethods: { googlePay: { processor: 'godaddy', checkoutTypes: ['standard'] } },
+      } as CreateCheckoutSessionParams,
+      configuration,
+    );
+    expect(mockGqlRequest.mock.calls[0]?.[0].variables.input.paymentMethods).toEqual({
+      card: { processor: 'godaddy', checkoutTypes: ['standard'] },
+    });
+  });
+
   it.each(flows)('uses only host-owned attribution for %s checkout', async (_name, params): Promise<void> => {
     config = { ...config, sourceApp: 'merchant-site', owner: 'merchant-orders' };
     mockGqlRequest.mockResolvedValue(response({ sourceApp: 'merchant-site' }));
