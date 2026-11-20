@@ -116,6 +116,7 @@ export const viVn = {
       ach: 'Tài khoản ngân hàng',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Thanh toán bằng CCAvenue',
+      razorpay: 'Razorpay',
     },
     descriptions: {
       creditCard: '',
@@ -128,6 +129,7 @@ export const viVn = {
       mercadopago:
         'Hãy sử dụng biểu mẫu MercadoPago bên dưới để hoàn tất mua hàng một cách an toàn.',
       ccavenue: '',
+      razorpay: '',
     },
     noMethodsAvailable: 'Không có phương thức thanh toán nào',
     cardNumber: 'Số thẻ',

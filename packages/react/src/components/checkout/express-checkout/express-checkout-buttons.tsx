@@ -2,6 +2,7 @@ import React from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
 import { CheckoutSection } from '@/components/checkout/checkout-section';
 import { PaymentMethodRenderer } from '@/components/checkout/payment/payment-method-renderer';
+import { resolveSessionPaymentMethods } from '@/components/checkout/payment/utils/resolve-session-payment-methods';
 import { Target } from '@/components/checkout/target/target';
 import { eventIds } from '@/tracking/events';
 import { TrackingEventType, track } from '@/tracking/track';
@@ -9,6 +10,7 @@ import type { AvailablePaymentProviders, PaymentMethodValue } from '@/types';
 
 export function ExpressCheckoutButtons() {
   const { session } = useCheckoutContext();
+  const sessionPaymentMethods = resolveSessionPaymentMethods(session);
 
   // Track express checkout impression when the component loads
   React.useEffect(() => {
@@ -16,10 +18,10 @@ export function ExpressCheckoutButtons() {
       eventId: eventIds.expressCheckoutImpression,
       type: TrackingEventType.IMPRESSION,
       properties: {
-        availableMethods: Object.keys(session?.paymentMethods || {})
+        availableMethods: Object.keys(sessionPaymentMethods || {})
           .filter(provider => {
             const method =
-              session?.paymentMethods?.[provider as PaymentMethodValue];
+              sessionPaymentMethods?.[provider as PaymentMethodValue];
             return (
               method &&
               Array.isArray(method.checkoutTypes) &&
@@ -29,12 +31,12 @@ export function ExpressCheckoutButtons() {
           .join(','),
       },
     });
-  }, [session?.paymentMethods]);
+  }, [sessionPaymentMethods]);
 
   const expressProviders = React.useMemo(() => {
-    if (!session?.paymentMethods) return [];
+    if (!sessionPaymentMethods) return [];
 
-    return Object.entries(session.paymentMethods)
+    return Object.entries(sessionPaymentMethods)
       .filter(
         ([, method]) =>
           method &&
@@ -42,12 +44,12 @@ export function ExpressCheckoutButtons() {
           method.checkoutTypes.includes('express')
       )
       .map(([provider]) => provider);
-  }, [session?.paymentMethods]);
+  }, [sessionPaymentMethods]);
 
   const availableExpressButtons = expressProviders
     .map(provider => {
       const processor =
-        session?.paymentMethods?.[provider as PaymentMethodValue]?.processor;
+        sessionPaymentMethods?.[provider as PaymentMethodValue]?.processor;
 
       return (
         <PaymentMethodRenderer

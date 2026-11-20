@@ -115,6 +115,7 @@ export const deDe = {
       offline: 'Offline-Zahlungen',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Mit CCAvenue bezahlen',
+      razorpay: 'Razorpay',
       ach: 'Bankkonto',
     },
     descriptions: {
@@ -128,6 +129,7 @@ export const deDe = {
         'Verwenden Sie das MercadoPago-Formular unten, um Ihren Kauf sicher abzuschließen.',
       ach: '',
       ccavenue: '',
+      razorpay: '',
     },
     noMethodsAvailable: 'Keine Zahlungsmethoden verfügbar',
     cardNumber: 'Kartennummer',

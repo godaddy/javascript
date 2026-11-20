@@ -129,6 +129,43 @@ export const CreateCheckoutSessionMutation = graphql(`
           processor
           checkoutTypes
         }
+        razorpay {
+          processor
+          checkoutTypes
+        }
+      }
+      paymentProviderConfiguration {
+        paypal {
+          clientId
+          merchantId
+          partnerAttributionId
+          disableFunding
+        }
+        razorpay {
+          configured
+        }
+        godaddy {
+          businessId
+          applicationId
+        }
+        paymentMethods {
+          card {
+            processor
+            checkoutTypes
+          }
+          express {
+            processor
+            checkoutTypes
+          }
+          paypal {
+            processor
+            checkoutTypes
+          }
+          razorpay {
+            processor
+            checkoutTypes
+          }
+        }
       }
       draftOrder {
         id
@@ -466,9 +503,25 @@ export const AuthorizeCheckoutSessionMutation = graphql(`
         authorizeCheckoutSession(input: $input) {
           ... on SaleTransaction {
             transactionRefNum
+            fundingSource {
+              paymentReference
+            }
+            references {
+              type
+              value
+              additionalLabel
+            }
           }
           ... on AuthorizeTransaction {
             transactionRefNum
+            fundingSource {
+              paymentReference
+            }
+            references {
+              type
+              value
+              additionalLabel
+            }
           }
         }
     }

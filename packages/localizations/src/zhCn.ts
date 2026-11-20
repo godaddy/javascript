@@ -111,6 +111,7 @@ export const zhCn = {
       ach: '银行账户',
       mercadopago: 'Mercado Pago',
       ccavenue: '使用 CCAvenue 支付',
+      razorpay: 'Razorpay',
     },
     descriptions: {
       creditCard: '',
@@ -122,6 +123,7 @@ export const zhCn = {
       ach: '',
       mercadopago: '请使用下方的 MercadoPago 表单安全完成购买。',
       ccavenue: '',
+      razorpay: '',
     },
     noMethodsAvailable: '暂无可用的付款方式',
     cardNumber: '卡号',

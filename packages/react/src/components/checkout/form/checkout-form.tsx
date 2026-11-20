@@ -35,6 +35,7 @@ import {
   ConditionalExpressProviders,
   ConditionalPaymentProviders,
 } from '@/components/checkout/payment/utils/conditional-providers';
+import { resolveSessionPaymentMethods } from '@/components/checkout/payment/utils/resolve-session-payment-methods';
 import { LocalPickupForm } from '@/components/checkout/pickup/local-pickup';
 import { ShippingMethodForm } from '@/components/checkout/shipping/shipping-method';
 import { Target } from '@/components/checkout/target/target';
@@ -221,7 +222,7 @@ export function CheckoutForm({
 
   const isFree = isFreeOrderTotal(totals, tipTotal);
   const hasExpressCheckoutPaymentMethod = Object.values(
-    session?.paymentMethods ?? {}
+    resolveSessionPaymentMethods(session) ?? {}
   ).some(
     method =>
       method &&

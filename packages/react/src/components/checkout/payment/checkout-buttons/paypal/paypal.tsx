@@ -14,6 +14,7 @@ import {
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
+import { isDigitalOnlyOrder } from '@/components/checkout/utils/fulfillment';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -68,18 +69,28 @@ function PayPalButtonsWrapper() {
     const request = buildPaymentRequestsFromOrder(
       latestOrder ?? undefined
     ).payPalRequest;
+    // PayPal validates whatever `shipping.address` we send, even a mostly-empty
+    // one — the country-code-only stub use-build-payment-request.ts always
+    // builds (there's no real address to collect) fails with
+    // POSTAL_CODE_REQUIRED unless we omit `shipping` and ask for NO_SHIPPING.
+    // Pickup already did this; digital-only orders need the same treatment,
+    // since they never collect a shipping address either.
+    const suppressShipping =
+      isPickup || isDigitalOnlyOrder(latestOrder?.lineItems);
     const order = {
       ...request,
       purchase_units: request.purchase_units
         ? [
             {
               ...request.purchase_units[0],
-              ...(isPickup ? { shipping: undefined } : {}), // Remove shipping if pickup
+              ...(suppressShipping ? { shipping: undefined } : {}),
             },
           ]
         : undefined,
       application_context: {
-        shipping_preference: isPickup ? 'NO_SHIPPING' : 'SET_PROVIDED_ADDRESS',
+        shipping_preference: suppressShipping
+          ? 'NO_SHIPPING'
+          : 'SET_PROVIDED_ADDRESS',
       },
     };
     return await actions.order.create(order);

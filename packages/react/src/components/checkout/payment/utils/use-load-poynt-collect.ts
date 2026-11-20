@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { resolveSessionPaymentMethods } from '@/components/checkout/payment/utils/resolve-session-payment-methods';
 import { useGetPoyntCollectCdn } from '@/components/checkout/payment/utils/use-poynt-collect-cdn';
 import { PaymentProvider } from '@/types';
 
@@ -14,7 +15,7 @@ export function useLoadPoyntCollect() {
   const [loaded, setLoaded] = useState(isPoyntLoaded);
   const businessId = godaddyPaymentsConfig?.businessId || session?.businessId;
   const hasGoDaddyPaymentMethod = Object.values(
-    session?.paymentMethods ?? {}
+    resolveSessionPaymentMethods(session) ?? {}
   ).some(method => method?.processor === PaymentProvider.GODADDY);
 
   useEffect(() => {
