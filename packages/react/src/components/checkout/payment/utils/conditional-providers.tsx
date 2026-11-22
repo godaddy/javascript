@@ -1,5 +1,6 @@
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { useCheckoutContext } from '@/components/checkout/checkout';
+import { resolveSessionPaymentMethods } from '@/components/checkout/payment/utils/resolve-session-payment-methods';
 import { CCAvenueReturnProvider } from './ccavenue-return-provider';
 import { PayPalProvider } from './paypal-provider';
 import { PoyntACHCollectProvider } from './poynt-ach-provider';
@@ -42,10 +43,12 @@ export function ConditionalPaymentProviders({
     godaddyPaymentsConfig?.businessId || session?.businessId;
   const hasGoDaddyConfig = !!goDaddyBusinessId;
 
+  const sessionPaymentMethods = resolveSessionPaymentMethods(session);
+
   // Only wrap with PoyntACHCollectProvider if GoDaddy ACH is configured
   if (
     hasGoDaddyConfig &&
-    session?.paymentMethods?.ach?.processor === 'godaddy'
+    sessionPaymentMethods?.ach?.processor === 'godaddy'
   ) {
     wrappedChildren = (
       <PoyntACHCollectProvider>{wrappedChildren}</PoyntACHCollectProvider>
@@ -72,6 +75,12 @@ export function ConditionalPaymentProviders({
           clientId: paypalConfig.clientId,
           ...(paypalConfig.merchantId?.trim()
             ? { merchantId: paypalConfig.merchantId.trim() }
+            : {}),
+          ...(paypalConfig.partnerAttributionId?.trim()
+            ? {
+                dataPartnerAttributionId:
+                  paypalConfig.partnerAttributionId.trim(),
+              }
             : {}),
           currency:
             payPalRequest?.purchase_units?.[0]?.amount?.currency_code || 'USD',

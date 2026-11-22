@@ -115,6 +115,7 @@ export const enUs = {
       ach: 'Bank Account',
       mercadopago: 'Mercado Pago',
       ccavenue: 'Pay with CCAvenue',
+      razorpay: 'Razorpay',
     },
     descriptions: {
       creditCard: '',
@@ -127,6 +128,7 @@ export const enUs = {
       mercadopago:
         'Use the MercadoPago form below to complete your purchase securely.',
       ccavenue: '',
+      razorpay: '',
     },
     noMethodsAvailable: 'No payment methods available',
     cardNumber: 'Card number',

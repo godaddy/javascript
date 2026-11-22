@@ -12,6 +12,7 @@ import { useDraftOrder } from '@/components/checkout/order/use-draft-order';
 import { usePaidOrderRedirect } from '@/components/checkout/order/use-paid-order-redirect';
 import { PaymentMethodRenderer } from '@/components/checkout/payment/payment-method-renderer';
 import { ConditionalExpressProviders } from '@/components/checkout/payment/utils/conditional-providers';
+import { resolveSessionPaymentMethods } from '@/components/checkout/payment/utils/resolve-session-payment-methods';
 import { Target } from '@/components/checkout/target/target';
 import { type GoDaddyVariables, useGoDaddyContext } from '@/godaddy-provider';
 import { type Theme, useTheme } from '@/hooks/use-theme';
@@ -43,11 +44,12 @@ export interface ExpressCheckoutProps {
 
 function DraftOrderExpressCheckoutButtons() {
   const { session } = useCheckoutContext();
+  const sessionPaymentMethods = resolveSessionPaymentMethods(session);
 
   const expressProviders = React.useMemo(() => {
-    if (!session?.paymentMethods) return [];
+    if (!sessionPaymentMethods) return [];
 
-    return Object.entries(session.paymentMethods)
+    return Object.entries(sessionPaymentMethods)
       .filter(
         ([, method]) =>
           method &&
@@ -55,12 +57,12 @@ function DraftOrderExpressCheckoutButtons() {
           method.checkoutTypes.includes('express')
       )
       .map(([provider]) => provider);
-  }, [session?.paymentMethods]);
+  }, [sessionPaymentMethods]);
 
   const availableExpressButtons = expressProviders
     .map(provider => {
       const processor =
-        session?.paymentMethods?.[provider as PaymentMethodValue]?.processor;
+        sessionPaymentMethods?.[provider as PaymentMethodValue]?.processor;
 
       return (
         <PaymentMethodRenderer
@@ -140,15 +142,16 @@ export function DraftOrderExpressCheckout(props: ExpressCheckoutProps) {
 
   // Only render if there are express payment methods available
   const hasExpressPaymentMethods = React.useMemo(() => {
-    if (!session?.paymentMethods) return false;
+    const sessionPaymentMethods = resolveSessionPaymentMethods(session);
+    if (!sessionPaymentMethods) return false;
 
-    return Object.values(session.paymentMethods).some(
+    return Object.values(sessionPaymentMethods).some(
       method =>
         method &&
         Array.isArray(method.checkoutTypes) &&
         method.checkoutTypes.includes('express')
     );
-  }, [session?.paymentMethods]);
+  }, [session]);
 
   if (!hasExpressPaymentMethods) {
     return null;

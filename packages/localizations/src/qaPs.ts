@@ -116,6 +116,7 @@ export const qaPs = {
       ach: '[Bâñk Âççöüñţ Þâÿmëñţ]',
       mercadopago: 'Mercado Pago',
       ccavenue: '[Þâÿ ïñ ÇÇÂvëñûë]',
+      razorpay: '[Râžörþâÿ]',
     },
     descriptions: {
       creditCard: '',
@@ -128,6 +129,7 @@ export const qaPs = {
       mercadopago:
         '[Üšë ţhë MërçâðöÞâgö förm këlöw ţö çömþlëţë ÿöür þürçhâšë šëçürëlÿ.]',
       ccavenue: '',
+      razorpay: '',
     },
     noMethodsAvailable: '[Ñö þâÿmëñţ mëţhödš âvâîlâblë âţ ţhîš ţîmë]',
     cardNumber: '[Çârd ñümkër îñþüţ fîëld]',
