@@ -201,9 +201,15 @@ function processActionRequest(req) {
 #### Webhook Verification
 
 ```typescript
-import { verifyWebhookSubscription, VerifiableRequest } from '@godaddy/app-connect';
+import {
+  verifyWebhookSubscription,
+  webhookFailureBody,
+  webhookFailureStatus,
+  VerifiableRequest,
+} from '@godaddy/app-connect';
 
-function processWebhookSubscription(req) {
+// An Express route handler that calls the verifier directly
+function processWebhookSubscription(req, res) {
   // Create a verifiable request object. The body must be the raw bytes as
   // received (here kept by an express.json() verify hook), not a parsed object.
   const verifiableRequest: VerifiableRequest = {
@@ -222,13 +228,17 @@ function processWebhookSubscription(req) {
   const result = verifyWebhookSubscription(verifiableRequest, { strictRawBody: true });
 
   if (!result.success) {
-    // Handle verification failure
+    // Keep the detail in your own logs. The sender gets what the middleware
+    // would answer: 500 with a generic body for the app's own setup problems,
+    // 401 otherwise, so an unsigned caller never sees how the app is set up.
     console.error('Webhook verification failed:', result.error);
-    return { error: result.error };
+    return res
+      .status(webhookFailureStatus(result.error?.name))
+      .json(webhookFailureBody(result.error));
   }
 
   // Process verified webhook
-  return { success: true };
+  return res.json({ received: true });
 }
 ```
 
