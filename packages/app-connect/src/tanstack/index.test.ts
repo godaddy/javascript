@@ -233,11 +233,11 @@ describe('createWebhookMiddleware', () => {
     expect(result).toBe('next-result');
   });
 
-  it('should read body as text from cloned request (not json)', async () => {
+  it('should read the body as bytes from the cloned request (not json or text)', async () => {
     const body = { event: 'order.created' };
     const request = createMockRequest(body);
     const jsonSpy = vi.spyOn(request, 'json');
-    const textSpy = vi.spyOn(Request.prototype, 'text');
+    const bytesSpy = vi.spyOn(Request.prototype, 'arrayBuffer');
     const next = vi.fn().mockResolvedValue('next-result');
 
     mockVerifyWebhookSubscription.mockReturnValue({ success: true });
@@ -245,11 +245,11 @@ describe('createWebhookMiddleware', () => {
     createWebhookMiddleware();
     await capturedServerFn({ next, request });
 
-    // Should read as text (from clone), not call json() on original
+    // Should read bytes (from clone), not call json() on original
     expect(jsonSpy).not.toHaveBeenCalled();
-    expect(textSpy).toHaveBeenCalledTimes(1);
+    expect(bytesSpy).toHaveBeenCalledTimes(1);
 
-    textSpy.mockRestore();
+    bytesSpy.mockRestore();
   });
 
   it('should build a correct VerifiableRequest and pass it to verifyWebhookSubscription', async () => {
@@ -265,20 +265,20 @@ describe('createWebhookMiddleware', () => {
     createWebhookMiddleware(options);
     await capturedServerFn({ next, request });
 
-    // Verify that body is passed as RAW STRING (not parsed object) for signature verification
+    // Verify that body is passed as RAW BYTES (not parsed object) for signature verification
     expect(mockVerifyWebhookSubscription).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'POST',
         url: 'https://example.com/api/test?foo=bar',
         path: '/api/test',
-        body: JSON.stringify(body), // Raw string, not parsed object
+        body: Buffer.from(JSON.stringify(body)), // Raw bytes, not parsed object
         headers: expect.objectContaining({
           'content-type': 'application/json',
           'webhook-signature': 'sig-value',
         }),
         query: { foo: 'bar' },
       }),
-      options,
+      { ...options, strictRawBody: true },
     );
   });
 
@@ -349,12 +349,12 @@ describe('createWebhookMiddleware', () => {
     createWebhookMiddleware();
     await capturedServerFn({ next, request });
 
-    // Verify raw string is passed exactly as-is to verification
+    // Verify raw bytes are passed exactly as-is to verification
     expect(mockVerifyWebhookSubscription).toHaveBeenCalledWith(
       expect.objectContaining({
-        body: rawBodyString, // Exact match including whitespace
+        body: Buffer.from(rawBodyString), // Exact match including whitespace
       }),
-      undefined,
+      { strictRawBody: true },
     );
   });
 
@@ -372,12 +372,156 @@ describe('createWebhookMiddleware', () => {
     createWebhookMiddleware();
     await capturedServerFn({ next, request });
 
-    // Verify exact raw string preservation
+    // Verify exact raw byte preservation
     expect(mockVerifyWebhookSubscription).toHaveBeenCalledWith(
       expect.objectContaining({
-        body: rawBodyString,
+        body: Buffer.from(rawBodyString),
       }),
-      undefined,
+      { strictRawBody: true },
+    );
+  });
+
+  it('should keep a byte-order mark that text() would drop', async () => {
+    const bytes = Buffer.concat([
+      Buffer.from([0xef, 0xbb, 0xbf]),
+      Buffer.from('{"event":"order.created"}'),
+    ]);
+    const request = new Request('https://example.com/api/test', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: bytes,
+    });
+    const next = vi.fn().mockResolvedValue('next-result');
+
+    mockVerifyWebhookSubscription.mockReturnValue({ success: true });
+
+    createWebhookMiddleware();
+    await capturedServerFn({ next, request });
+
+    expect(mockVerifyWebhookSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ body: bytes }),
+      { strictRawBody: true },
+    );
+  });
+
+  it('should verify a request without a body as an empty body', async () => {
+    const request = createMockRequest();
+    const next = vi.fn().mockResolvedValue('next-result');
+
+    mockVerifyWebhookSubscription.mockReturnValue({ success: true });
+
+    createWebhookMiddleware();
+    await capturedServerFn({ next, request });
+
+    expect(mockVerifyWebhookSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ body: Buffer.alloc(0) }),
+      { strictRawBody: true },
+    );
+  });
+
+  it('should pass no body when an earlier middleware already read it', async () => {
+    const request = createMockRequest({ event: 'order.created' });
+    await request.json();
+    const next = vi.fn().mockResolvedValue('next-result');
+
+    mockVerifyWebhookSubscription.mockReturnValue({ success: true });
+
+    createWebhookMiddleware();
+    await capturedServerFn({ next, request });
+
+    expect(mockVerifyWebhookSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ body: undefined }),
+      { strictRawBody: true },
+    );
+  });
+
+  it('should pass no body when the body stream is locked', async () => {
+    const request = createMockRequest({ event: 'order.created' });
+    request.body?.getReader();
+    const next = vi.fn().mockResolvedValue('next-result');
+
+    mockVerifyWebhookSubscription.mockReturnValue({ success: true });
+
+    createWebhookMiddleware();
+    await capturedServerFn({ next, request });
+
+    expect(mockVerifyWebhookSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ body: undefined }),
+      { strictRawBody: true },
+    );
+  });
+
+  it('should refuse an unreadable body even when strict mode is off', async () => {
+    const request = createMockRequest({ event: 'order.created' });
+    await request.json();
+    const next = vi.fn().mockResolvedValue('next-result');
+
+    mockVerifyWebhookSubscription.mockReturnValue({ success: true });
+
+    createWebhookMiddleware({ strictRawBody: false });
+    await capturedServerFn({ next, request });
+
+    expect(mockVerifyWebhookSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ body: undefined }),
+      { strictRawBody: true },
+    );
+  });
+  it('should answer the app setup errors with 500', async () => {
+    for (const name of [
+      'WEBHOOK_RAW_BODY_REQUIRED',
+      'WEBHOOK_SECRET_REQUIRED',
+    ]) {
+      mockVerifyWebhookSubscription.mockReturnValue({
+        success: false,
+        error: { name, message: 'setup' },
+      });
+      createWebhookMiddleware();
+      const thrown = await capturedServerFn({
+        next: vi.fn(),
+        request: createMockRequest({ event: 'order.created' }),
+      }).catch((error: unknown) => error);
+      expect(thrown).toBeInstanceOf(Response);
+      expect((thrown as Response).status).toBe(500);
+    }
+  });
+
+  it('should throw when created with a toleranceSeconds that would refuse everything', () => {
+    expect(() => createWebhookMiddleware({ toleranceSeconds: -1 })).toThrow(
+      TypeError,
+    );
+  });
+
+  it('should let the caller turn strict raw-body verification off', async () => {
+    const request = createMockRequest({ event: 'order.created' });
+    const next = vi.fn().mockResolvedValue('next-result');
+
+    mockVerifyWebhookSubscription.mockReturnValue({ success: true });
+
+    createWebhookMiddleware({ secret: 's', strictRawBody: false });
+    await capturedServerFn({ next, request });
+
+    expect(mockVerifyWebhookSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      { secret: 's', strictRawBody: false },
+    );
+  });
+
+  it('should read a secret behind a getter on the options object', async () => {
+    const request = createMockRequest({ event: 'order.created' });
+    const next = vi.fn().mockResolvedValue('next-result');
+    mockVerifyWebhookSubscription.mockReturnValue({ success: true });
+
+    class Config {
+      get secret() {
+        return 's';
+      }
+    }
+    createWebhookMiddleware(new Config() as unknown as { secret: string });
+    await capturedServerFn({ next, request });
+
+    expect(mockVerifyWebhookSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ secret: 's' }),
     );
   });
 });

@@ -20,9 +20,12 @@ export interface VerifiableRequest {
 
   /**
    * The request body, if any.
-   * - For Express middleware: pre-parsed object from express.json()
-   * - For TanStack middleware: raw string from request.text()
-   * - For Next.js: caller-provided (typically pre-parsed with request.json())
+   * - For Express action middleware: pre-parsed object from express.json()
+   * - For Express webhook middleware: req.rawBody when kept, otherwise req.body
+   * - For TanStack middleware: raw text (actions) or raw bytes (webhooks)
+   * - For Next.js: caller-provided (for webhooks, pass Buffer.from(await request.arrayBuffer()))
+   *
+   * Webhook signatures are over the raw bytes, so pass a Buffer, ArrayBuffer or string.
    */
   body?: unknown;
 }

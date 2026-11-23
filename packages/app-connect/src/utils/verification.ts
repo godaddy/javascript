@@ -1,5 +1,4 @@
 import * as crypto from 'node:crypto';
-import { VerificationError } from '../errors/base-error';
 import {
   ExpiredSignatureError,
   InvalidAlgorithmError,
@@ -12,9 +11,7 @@ import type { VerifiableRequest } from '../types/verifiable-request';
 import {
   VERIFICATION_CONSTANTS,
   type VerificationOptions,
-  type WebhookVerificationOptions,
   getPublicKeyBuffer,
-  getWebhookSecret,
 } from './config';
 import { logger } from './logger';
 import { base64ToArrayBuffer, stringToArrayBuffer } from './strings';
@@ -306,50 +303,6 @@ export async function verifyAction(
 }
 
 /**
- * Error thrown when a required webhook header is missing
- */
-export class MissingWebhookHeaderError extends VerificationError {
-  constructor(headerName: string) {
-    super({
-      name: 'MISSING_WEBHOOK_HEADER',
-      message: `Missing required header: ${headerName}`,
-      details: [
-        {
-          issue: 'MISSING_REQUIRED_HEADER',
-          description: `The ${headerName} header is required for webhook verification`,
-          field: headerName,
-          location: 'header',
-        },
-      ],
-    });
-  }
-}
-
-/**
- * Error thrown when webhook signature verification fails
- */
-export class InvalidWebhookSignatureError extends VerificationError {
-  constructor() {
-    super({
-      name: 'INVALID_WEBHOOK_SIGNATURE',
-      message: 'The webhook signature is invalid',
-      details: [
-        {
-          issue: 'SIGNATURE_VERIFICATION_FAILED',
-          description:
-            'The webhook signature could not be verified with the provided secret',
-          field: 'x-godaddy-webhook-signature',
-          location: 'header',
-        },
-      ],
-    });
-  }
-}
-
-/**
- * Verifies a webhook subscription request
- */
-/**
  * Recursively stringifies a JavaScript value into a canonical JSON string
  * that exactly matches Go's json.Marshal(json.Unmarshal(data)) behavior.
  *
@@ -410,50 +363,4 @@ export function canonicalJsonStringify(value: unknown): string {
     .filter(Boolean); // Remove null entries (undefined values)
 
   return `{${keyValuePairs.join(',')}}`;
-}
-
-/**
- * Verifies a webhook subscription request
- */
-export function verifyWebhookSubscription(
-  req: VerifiableRequest,
-  options?: WebhookVerificationOptions,
-): Result<void> {
-  try {
-    // Get required headers
-    const signatureHeader = req.headers['x-godaddy-webhook-signature'];
-
-    // Check if required headers exist
-    if (!signatureHeader) {
-      return error(
-        new MissingWebhookHeaderError('x-godaddy-webhook-signature').toJSON(),
-      );
-    }
-
-    // Get the webhook secret
-    const secret = getWebhookSecret(options);
-
-    // Create string to sign (request body)
-    const stringToSign =
-      typeof req.body === 'string' ? req.body : JSON.stringify(req.body || '');
-
-    // Create the signature
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(stringToSign)
-      .digest('hex');
-
-    // Compare signatures
-    const providedSignature = Array.isArray(signatureHeader)
-      ? signatureHeader[0]
-      : (signatureHeader as string);
-
-    if (providedSignature !== expectedSignature) {
-      return error(new InvalidWebhookSignatureError().toJSON());
-    }
-
-    return ok();
-  } catch (_err) {
-    return error(new InvalidWebhookSignatureError().toJSON());
-  }
 }
