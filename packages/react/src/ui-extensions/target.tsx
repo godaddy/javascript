@@ -53,6 +53,7 @@ export function Target({
   currencyCode,
   theme,
   onExtensionError,
+  onActionRequest,
 }: TargetProps) {
   const { apiHost, debug } = useGoDaddyContext();
   const lastDebugLogSignatureRef = useRef<string | undefined>(undefined);
@@ -141,6 +142,7 @@ export function Target({
             extension={extension}
             initialProps={initialProps}
             key={extension.id}
+            onActionRequest={onActionRequest}
             onError={onExtensionError}
             runtimeType={runtime}
           />

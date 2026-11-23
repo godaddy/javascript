@@ -28,6 +28,27 @@ export interface DomExtensionMountInput {
   context: UiExtensionContext;
   initialProps?: UiExtensionInitialProps;
   extension: UiExtensionMetadata;
+  /**
+   * Asks the host to run an action, such as opening a page or saving a value.
+   * The request and the host's result are structured-cloned on the way, so
+   * neither side keeps a live reference to the other's objects. It resolves
+   * with the host's result. It rejects with an `action_rejected` runtime error
+   * when the host has no action handler, when the host rejects the action,
+   * when the action name is missing, blank or has spaces around it, when
+   * either value can't be cloned, or when the extension unmounts before
+   * the host answers. A request rejected at unmount may still have run on the
+   * host. Requests stop when unmount starts, so an `unmount` hook can't send
+   * one, and a request awaited inside `mount` counts against the mount
+   * timeout. Catch every call, including fire-and-forget ones, or a rejection
+   * goes unhandled. The rejection value is a plain `UiExtensionRuntimeError`
+   * object, not an `Error`.
+   *
+   * Optional because older hosts don't pass it, so check for it before
+   * calling. The same function stays valid until unmount. Under `Target` and
+   * `UiExtensionRuntimeHost` it always reaches the host's current committed
+   * handler; the runtime alone keeps the handler it was mounted with.
+   */
+  requestAction?(request: UiExtensionActionRequest): Promise<unknown>;
 }
 
 export interface DomExtensionUpdateInput {
@@ -88,6 +109,15 @@ export interface UiExtensionActionRequest {
   input?: unknown;
 }
 
+/**
+ * Which extension sent an action request, so a host can scope or audit it.
+ * The runtime builds it from the host's record of the extension, never from
+ * anything the extension can change.
+ */
+export interface UiExtensionActionSource {
+  extension: UiExtensionMetadata;
+}
+
 export interface UiExtensionRuntimeMountInput {
   extension: UiExtension;
   context: UiExtensionContext;
@@ -98,7 +128,21 @@ export interface UiExtensionRuntimeMountInput {
   onRender?(tree: UiExtensionComponentTree): void;
   onResize?(size: { height?: number; width?: number }): void;
   onError(error: UiExtensionRuntimeError): void;
-  onActionRequest?(request: UiExtensionActionRequest): Promise<unknown>;
+  /**
+   * Runs an action the extension requests through `requestAction`. The
+   * `dom-bundle` runtime always passes `source`, built from the host's own
+   * record of the extension; it is optional so runtimes that call this with
+   * the request alone still compile. Without it, requests reject with an
+   * `action_rejected` runtime error.
+   *
+   * A handler's failure goes only to the extension, as a generic rejection, so
+   * a host that wants to log one catches it inside its handler. Resolve with
+   * structured-cloneable values.
+   */
+  onActionRequest?(
+    request: UiExtensionActionRequest,
+    source?: UiExtensionActionSource
+  ): Promise<unknown>;
 }
 
 export interface UiExtensionRuntimeUpdateInput {

@@ -1,6 +1,8 @@
 import type { ResultOf } from 'gql.tada';
 import { GetEnabledStoreUiExtensionsQuery } from '@/lib/godaddy/checkout-queries';
 import type {
+  UiExtensionActionRequest,
+  UiExtensionActionSource,
   UiExtensionContext,
   UiExtensionInitialProps,
   UiExtensionRuntimeError,
@@ -47,6 +49,17 @@ export interface TargetProps {
   currencyCode?: string;
   theme?: UiExtensionContext['theme'];
   onExtensionError?(error: UiExtensionRuntimeError): void;
+  /**
+   * Runs an action an extension on this target requests, with the extension
+   * that sent it. Without it, requests reject with an `action_rejected`
+   * runtime error. A handler's failure goes only to the extension, not to
+   * `onExtensionError`, so catch inside the handler to log it, and resolve
+   * with structured-cloneable values.
+   */
+  onActionRequest?(
+    request: UiExtensionActionRequest,
+    source: UiExtensionActionSource
+  ): Promise<unknown>;
 }
 
 export interface UseEnabledStoreUiExtensionsOptions {

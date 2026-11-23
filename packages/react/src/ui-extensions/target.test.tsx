@@ -1,7 +1,9 @@
+import { act, render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { useEnabledStoreUiExtensions } from './hooks';
+import type { DomExtensionMountInput } from './runtime';
 import { Target } from './target';
 import type {
   EnabledStoreUiExtensionApp,
@@ -38,6 +40,11 @@ describe('Target', () => {
       t: {} as ReturnType<typeof useGoDaddyContext>['t'],
     });
     mockHookResult();
+  });
+
+  afterEach(() => {
+    document.head.innerHTML = '';
+    delete window.GoDaddyUiExtensions;
   });
 
   it('does not require token and keeps orderId out of extension discovery', () => {
@@ -129,6 +136,64 @@ describe('Target', () => {
 
     expect(output).toContain('data-gd-ui-extension-container="true"');
     expect(output).toContain('extension-1');
+  });
+
+  it('passes action requests to onActionRequest', async () => {
+    const onActionRequest = vi.fn().mockResolvedValue('done');
+    let mountInput: DomExtensionMountInput | undefined;
+    const apps: EnabledStoreUiExtensionApp[] = [
+      {
+        id: 'app-1',
+        name: 'app-1',
+        release: null,
+        uiExtensions: [
+          {
+            id: 'extension-1',
+            applicationId: 'app-1',
+            releaseId: 'release-1',
+            type: 'CHECKOUT',
+            target: 'some.target',
+          },
+        ],
+      },
+    ];
+
+    render(
+      <Target
+        apps={apps}
+        id='some.target'
+        onActionRequest={onActionRequest}
+        storeId='store-123'
+      />
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const script = document.head.querySelector('script') as HTMLScriptElement;
+    window.GoDaddyUiExtensions?.register({
+      mount(input: DomExtensionMountInput) {
+        mountInput = input;
+      },
+    });
+    await act(async () => {
+      script.dispatchEvent(new Event('load'));
+      await Promise.resolve();
+    });
+
+    await expect(
+      mountInput?.requestAction?.({ action: 'settings.open' })
+    ).resolves.toBe('done');
+    expect(onActionRequest).toHaveBeenCalledWith(
+      { action: 'settings.open' },
+      {
+        extension: {
+          id: 'extension-1',
+          applicationId: 'app-1',
+          releaseId: 'release-1',
+          target: 'some.target',
+        },
+      }
+    );
   });
 
   it('does not render hook errors to shoppers', () => {
