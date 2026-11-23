@@ -9,7 +9,7 @@ A collection of tools and utilities for building applications that integrate wit
 
 This library provides essential functionality for developers building applications that work with the GoDaddy platform. It handles platform integration concerns like request verification, webhook validation, authentication, and API communication.
 
-> **Note:** This library is under active development. Currently, it provides request verification and webhook subscription verification functionality, with more features planned for future releases.
+> **Note:** This library is under active development. Currently, it provides request verification, webhook subscription verification and once-only work, with more features planned for future releases.
 
 ## Installation
 
@@ -50,6 +50,15 @@ Verify that incoming webhook subscriptions are genuinely from the GoDaddy platfo
 - Support for webhook subscription verification header format
 - Express.js middleware for easy integration
 - Configurable via environment variables or runtime options
+
+### Once-only Work
+
+Record one outcome per key across every instance of the app, and run the work for it one caller at a time, so a redelivered webhook or a retried job doesn't repeat a side effect. Work that outlives its lease can run again, so pair it with an idempotency key.
+
+- `once(store, key, fn)` with the outcomes `done`, `duplicate`, `in_flight` and `refused`
+- A lease, so work a crashed instance claimed is taken over instead of lost
+- A MySQL 8 store (a `mysql2/promise` pool) and an in-memory store for tests
+- `deriveId(namespace, name)` for stable name-based ids (RFC 9562 version 5)
 
 ## Usage
 
@@ -215,6 +224,43 @@ function processWebhookSubscription(req) {
 }
 ```
 
+### Once-only Work
+
+```typescript
+import { createPool } from 'mysql2/promise';
+import { Refused, createMysqlOnceStore, deriveId, once } from '@godaddy/app-connect/once';
+
+const store = createMysqlOnceStore(createPool(process.env.DATABASE_URL!));
+// One random UUID per app (run crypto.randomUUID() once), never changed.
+// Don't copy someone else's: apps sharing it would share idempotency keys.
+const NAMESPACE = process.env.ONCE_NAMESPACE!;
+
+const result = await once(store, `order-event:${eventId}`, async () => {
+  const response = await sendToVendor(order, { idempotencyKey: deriveId(NAMESPACE, eventId) });
+  if (response.status === 422) throw new Refused('vendor_rejected'); // recorded; never retried
+  if (!response.ok) throw new Error(`vendor answered ${response.status}`); // released; a retry runs again
+  return response.id;
+});
+
+switch (result.status) {
+  case 'done': // the work ran now; result.value is what it returned
+  case 'duplicate': // it already finished earlier (result.outcome says how)
+  case 'refused': // it ran now and was refused for good
+    return res.status(200).end();
+  case 'in_flight': // another instance holds it (or a claim whose response was lost, until its lease passes); ask the sender to retry
+    return res.status(503).end();
+}
+```
+
+- Pass a `mysql2/promise` Pool, not a connection the app uses for its own transactions: claims must commit on their own to be seen by other instances. A claim that waits on a row lock answers `in_flight` only after the server's `innodb_lock_wait_timeout` (50 seconds by default); lower it for the store's pool if senders time out sooner. A claim that waited has its lease renewed from when it got the row. Keep the pool's charset utf8mb4 (the mysql2 default), or keys with characters outside the BMP can be cut short and collide.
+- The store creates its table (`app_connect_once`) on first use. To create it from a migration instead, use `onceTableDdl()` and pass `createTable: false`. The store needs MySQL 8 or later (the key uses `utf8mb4_0900_bin`, which MariaDB doesn't have).
+- Rows are kept. Prune finished rows and claims whose lease has passed in small batches, for example `DELETE FROM app_connect_once WHERE updated_at < ? AND (state <> 'claimed' OR lease_until < ?) LIMIT 1000` (both in Unix milliseconds), so claims aren't kept waiting on a long delete. A pruned key can run again, so keep rows longer than any sender may redeliver or retry the same key.
+- Leases are judged by each instance's own clock, so keep instances' clocks in sync (NTP) to well inside a lease. A clock that runs ahead by more than the lease takes over claims that are still live.
+- `createMemoryOnceStore()` keeps claims in one process and never forgets finished keys, so use it for tests and local runs only.
+- `leaseMs` (default 5 minutes) must be longer than the work can take. Once it passes, another caller may take the key over and run the work again, so make the work safe to repeat, for example with an idempotency key from `deriveId`.
+- Keys are at most 255 characters; derive a shorter one with `deriveId` when needed. A `Refused` reason is stored, so keep it a short code, never vendor text or shopper data.
+- When the work finished but its outcome could not be recorded, `once` throws `OnceNotRecordedError` (with the work's return value as `value`); answer the delivery as failed so it is retried.
+
 ## API Reference
 
 ### Core Functions
@@ -262,6 +308,46 @@ import { verifyAction, verifyWebhookSubscription, VerifiableRequest } from '@god
 ```
 
 See the [Next.js App Router Integration](#nextjs-app-router-integration-nextjs-13) example for action verification details. The pattern is similar for webhook verification.
+
+### Once-only Work
+
+All of these are exported from `@godaddy/app-connect/once` and from the package root.
+
+#### `once(store, key, fn, options?): Promise<OnceResult<T>>`
+
+Records one outcome for `key`, running `fn` one caller at a time. Answers `{ status: 'done', value }`, `{ status: 'duplicate', outcome }`, `{ status: 'in_flight' }` or `{ status: 'refused', reason }`. `options.leaseMs` defaults to 5 minutes; `options.onReleaseError` hears about a claim that couldn't be released after `fn` threw (pass a wrapper such as `(err, key) => logger.error({ err, key }, 'release failed')`, so the logger keeps its `this`). It throws a `TypeError` for a bad key or lease, whatever `store.claim` throws, whatever `fn` throws other than `Refused` (after releasing the claim), and `OnceNotRecordedError` when `fn` finished but its outcome could not be recorded. After any of these this caller didn't record an outcome, so answer the delivery as failed; the retry's `once` call shows whether another caller finished the key meanwhile (see `OnceClaimLostError` below).
+
+#### `Refused`
+
+Throw `new Refused(reason)` from `fn` to record a refusal for good.
+
+#### `createMysqlOnceStore(pool, options?): OnceStore`
+
+A store in MySQL 8. Options: `table` (default `app_connect_once`), `createTable` (default true) and `now`.
+
+#### `onceTableDdl(table?): string`
+
+The `CREATE TABLE IF NOT EXISTS` statement for a migration.
+
+#### `createMemoryOnceStore(options?): OnceStore`
+
+A store in this process's memory, for tests and local runs.
+
+#### `deriveId(namespace, name): string`
+
+An RFC 9562 version 5 UUID for `name` in the `namespace` UUID.
+
+#### `OnceNotRecordedError` and `OnceClaimLostError`
+
+`OnceNotRecordedError` has `key`, `outcome`, `value` (what `fn` returned, not enumerable) and `cause`. When `cause` is an `OnceClaimLostError`, the lease passed and another caller took the key over, so it may already be done; otherwise the store failed and the key stays claimed until its lease passes. Neither error puts the key in its message, but keep shopper data out of keys anyway: they're stored.
+
+#### `OnceStore`
+
+The port for a custom store: `claim(key, leaseMs)` answers `claimed` (with a token), `done`, `refused` or `in_flight`, atomically across processes, taking over a claim whose lease has passed; `complete(key, token, outcome)` records the outcome for the token's holder and throws `OnceClaimLostError` otherwise; `release(key, token)` forgets the holder's claim and does nothing otherwise.
+
+#### Constants
+
+`DEFAULT_LEASE_MS` (5 minutes), `DEFAULT_ONCE_TABLE` (`app_connect_once`), `MAX_KEY_LENGTH` and `MAX_REASON_LENGTH` (255 characters each).
 
 ### Helper Functions
 
