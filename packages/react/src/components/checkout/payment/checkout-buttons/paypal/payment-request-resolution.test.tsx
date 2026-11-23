@@ -153,7 +153,7 @@ it('creates and confirms PayPal with the request from the flushed latest order',
         billing: { name: { full_name: 'Latest Buyer' } },
       },
     ],
-    application_context: { shipping_preference: 'SET_PROVIDED_ADDRESS' },
+    application_context: { shipping_preference: 'NO_SHIPPING' },
   });
   expect(mocks.createOrder.mock.invocationCallOrder[0]).toBeGreaterThan(
     mocks.flush.mock.invocationCallOrder[0]

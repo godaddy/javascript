@@ -21,16 +21,42 @@ vi.mock('@paypal/react-paypal-js', () => ({
   },
 }));
 
+// The flush can settle without an order (e.g. the refetch fails), leaving the
+// payment request to fall back to the cached draft order.
+const flushResult = vi.hoisted(() => ({ forceNullLatestOrder: false }));
+vi.mock(
+  '@/components/checkout/payment/utils/use-flush-checkout-sync',
+  async importOriginal => {
+    const actual =
+      await importOriginal<
+        typeof import('@/components/checkout/payment/utils/use-flush-checkout-sync')
+      >();
+    return {
+      useFlushCheckoutSync: () => {
+        const flush = actual.useFlushCheckoutSync();
+        return async (options?: Parameters<typeof flush>[0]) => {
+          const result = await flush(options);
+          return flushResult.forceNullLatestOrder
+            ? { ...result, latestOrder: null }
+            : result;
+        };
+      },
+    };
+  }
+);
+
 import {
   type CheckoutFormData,
   checkoutContext,
 } from '@/components/checkout/checkout';
+import { DeliveryMethods } from '@/components/checkout/delivery/delivery-methods';
 import { DraftOrderSyncProvider } from '@/components/checkout/order/draft-order-sync-provider';
 import { PayPalCheckoutButton } from '@/components/checkout/payment/checkout-buttons/paypal/paypal';
 import { GoDaddyProvider } from '@/godaddy-provider';
 import {
   buildCheckoutSession,
   buildDraftOrder,
+  buildLineItem,
   createTestQueryClient,
   getOperations,
   mockGodaddyApi,
@@ -66,15 +92,27 @@ const PAYPAL_ORDER_ID = 'paypal-order-1';
 
 let form: UseFormReturn<CheckoutFormData> | undefined;
 
-function renderPayPalButton({ enableTips = true, tipAmount = 0 } = {}) {
-  const session = buildCheckoutSession({ enableTips });
-  const draftOrder = buildDraftOrder();
+function renderPayPalButton({
+  enableTips = true,
+  tipAmount = 0,
+  deliveryMethod,
+  sessionOverrides,
+  draftOrderOverrides,
+}: {
+  enableTips?: boolean;
+  tipAmount?: number;
+  deliveryMethod?: DeliveryMethods;
+  sessionOverrides?: Parameters<typeof buildCheckoutSession>[0];
+  draftOrderOverrides?: Parameters<typeof buildDraftOrder>[0];
+} = {}) {
+  const session = buildCheckoutSession({ enableTips, ...sessionOverrides });
+  const draftOrder = buildDraftOrder(draftOrderOverrides);
   mockGodaddyApi({ session, draftOrder });
   const queryClient = createTestQueryClient();
 
   function Harness() {
     const methods = useForm<CheckoutFormData>({
-      defaultValues: { tipAmount } as CheckoutFormData,
+      defaultValues: { tipAmount, deliveryMethod } as CheckoutFormData,
     });
     form = methods;
 
@@ -143,6 +181,7 @@ describe('PayPalCheckoutButton', () => {
     setupCheckoutTestGlobals();
     form = undefined;
     payPalButtonsProps = undefined;
+    flushResult.forceNullLatestOrder = false;
   });
 
   afterEach(() => {
@@ -254,5 +293,121 @@ describe('PayPalCheckoutButton', () => {
     });
     expect(tipMinorUnitsInOrder(createdOrders[0])).toBe(0);
     expect(confirmInput()?.tipAmount).toBeUndefined();
+  });
+
+  describe('shipping preference', () => {
+    // An order that never collected a shipping address must not send PayPal a
+    // country-code-only stub: PayPal rejects it with POSTAL_CODE_REQUIRED.
+    const noShippingAddress = { shipping: { address: null } };
+
+    async function createPayPalOrder() {
+      const createdOrders: Array<Record<string, unknown>> = [];
+      await act(async () => {
+        await getPayPalButtonsProps().createOrder?.(
+          {},
+          payPalActions(createdOrders)
+        );
+      });
+      const order = createdOrders[0];
+      const purchaseUnit = (
+        order.purchase_units as Array<Record<string, unknown>>
+      )[0];
+      return { order, purchaseUnit };
+    }
+
+    function digitalLineItem() {
+      return {
+        ...buildLineItem(),
+        name: 'Digital Game',
+        type: DeliveryMethods.DIGITAL,
+        fulfillmentMode: DeliveryMethods.DIGITAL,
+      };
+    }
+
+    it('requests NO_SHIPPING for a digital-only order', async () => {
+      renderPayPalButton({
+        deliveryMethod: DeliveryMethods.DIGITAL,
+        draftOrderOverrides: {
+          ...noShippingAddress,
+          lineItems: [digitalLineItem()],
+        },
+      });
+
+      const { order, purchaseUnit } = await createPayPalOrder();
+
+      expect(purchaseUnit.shipping).toBeUndefined();
+      expect(order.application_context).toMatchObject({
+        shipping_preference: 'NO_SHIPPING',
+      });
+      expect(purchaseUnit.items).toEqual([
+        expect.objectContaining({
+          name: 'Digital Game',
+          unit_amount: expect.objectContaining({ value: '25.00' }),
+          quantity: '1',
+        }),
+      ]);
+    });
+
+    it('requests NO_SHIPPING for a digital-only order when the flush returns no order', async () => {
+      flushResult.forceNullLatestOrder = true;
+      renderPayPalButton({
+        deliveryMethod: DeliveryMethods.DIGITAL,
+        draftOrderOverrides: {
+          ...noShippingAddress,
+          lineItems: [digitalLineItem()],
+        },
+      });
+
+      const { order, purchaseUnit } = await createPayPalOrder();
+
+      expect(purchaseUnit.shipping).toBeUndefined();
+      expect(order.application_context).toMatchObject({
+        shipping_preference: 'NO_SHIPPING',
+      });
+    });
+
+    it('requests NO_SHIPPING in purchase mode', async () => {
+      // Shipping and pickup both disabled: a physical SKU is paid for without
+      // collecting any address.
+      renderPayPalButton({
+        deliveryMethod: DeliveryMethods.PURCHASE,
+        sessionOverrides: { enableShipping: false, enableLocalPickup: false },
+        draftOrderOverrides: noShippingAddress,
+      });
+
+      const { order, purchaseUnit } = await createPayPalOrder();
+
+      expect(purchaseUnit.shipping).toBeUndefined();
+      expect(order.application_context).toMatchObject({
+        shipping_preference: 'NO_SHIPPING',
+      });
+    });
+
+    it('requests NO_SHIPPING for pickup even when the order kept a shipping address', async () => {
+      renderPayPalButton({ deliveryMethod: DeliveryMethods.PICKUP });
+
+      const { order, purchaseUnit } = await createPayPalOrder();
+
+      expect(purchaseUnit.shipping).toBeUndefined();
+      expect(order.application_context).toMatchObject({
+        shipping_preference: 'NO_SHIPPING',
+      });
+    });
+
+    it('sends the collected address for a shipped order', async () => {
+      renderPayPalButton({ deliveryMethod: DeliveryMethods.SHIP });
+
+      const { order, purchaseUnit } = await createPayPalOrder();
+
+      expect(purchaseUnit.shipping).toMatchObject({
+        address: expect.objectContaining({
+          address_line_1: expect.any(String),
+          postal_code: expect.any(String),
+        }),
+      });
+      expect(order.application_context).toMatchObject({
+        shipping_preference: 'SET_PROVIDED_ADDRESS',
+      });
+    });
   });
 });

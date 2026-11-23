@@ -240,20 +240,22 @@ export function buildPaymentRequests({
   const totalWithTipMinorUnits = totalMinorUnits + tipAmount;
 
   const countryCode = session?.shipping?.originAddress?.countryCode || 'US';
-  const shippingAddress = {
-    name: {
-      full_name:
-        `${order?.shipping?.firstName || ''} ${order?.shipping?.lastName || ''}`.trim(),
-    },
-    address: {
-      address_line_1: order?.shipping?.address?.addressLine1 || undefined,
-      address_line_2: order?.shipping?.address?.addressLine2 || undefined,
-      admin_area_2: order?.shipping?.address?.adminArea2 || undefined,
-      admin_area_1: order?.shipping?.address?.adminArea1 || undefined,
-      postal_code: order?.shipping?.address?.postalCode || undefined,
-      country_code: order?.shipping?.address?.countryCode || countryCode,
-    },
-  };
+  const shippingAddress = order?.shipping?.address?.addressLine1
+    ? {
+        name: {
+          full_name:
+            `${order.shipping.firstName || ''} ${order.shipping.lastName || ''}`.trim(),
+        },
+        address: {
+          address_line_1: order.shipping.address.addressLine1,
+          address_line_2: order.shipping.address.addressLine2 || undefined,
+          admin_area_2: order.shipping.address.adminArea2 || undefined,
+          admin_area_1: order.shipping.address.adminArea1 || undefined,
+          postal_code: order.shipping.address.postalCode || undefined,
+          country_code: order.shipping.address.countryCode || countryCode,
+        },
+      }
+    : undefined;
   const billingAddress = {
     name: {
       full_name:
@@ -568,7 +570,7 @@ export function buildPaymentRequests({
                 ]
               : []
           ),
-        shipping: shippingAddress,
+        ...(shippingAddress ? { shipping: shippingAddress } : {}),
         billing: billingAddress,
       },
     ],
