@@ -8,6 +8,7 @@ export type {
   DomExtensionMountInput,
   DomExtensionUpdateInput,
   UiExtensionActionRequest,
+  UiExtensionActionSource,
   UiExtensionCapabilities,
   UiExtensionComponentNode,
   UiExtensionComponentTree,

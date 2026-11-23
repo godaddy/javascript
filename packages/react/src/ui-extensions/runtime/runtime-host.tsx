@@ -1,9 +1,16 @@
 'use client';
 
 import { Component, type ReactNode, useEffect, useMemo, useRef } from 'react';
+import { useIsomorphicLayoutEffect } from '@/hooks/use-isomorphic-layout-effect';
 import type { UiExtension } from '../types';
-import { DomBundleUiExtensionRuntime } from './dom-bundle-runtime';
+import {
+  DomBundleUiExtensionRuntime,
+  getExtensionMetadata,
+  NO_ACTION_HANDLER,
+} from './dom-bundle-runtime';
 import type {
+  UiExtensionActionRequest,
+  UiExtensionActionSource,
   UiExtensionContext,
   UiExtensionInitialProps,
   UiExtensionRuntime,
@@ -18,6 +25,18 @@ export interface UiExtensionRuntimeHostProps {
   initialProps?: UiExtensionInitialProps;
   runtimeType?: Extract<UiExtensionRuntimeType, 'dom-bundle'>;
   onError?(error: UiExtensionRuntimeError): void;
+  /**
+   * Runs an action the extension requests, with the extension that sent it.
+   * Changing it doesn't remount the extension; the next request reaches the
+   * new handler. Without it, requests reject with an `action_rejected` runtime
+   * error. A handler's failure goes only to the extension, as a generic
+   * rejection, not to `onError`, so catch inside the handler to log it, and
+   * resolve with structured-cloneable values.
+   */
+  onActionRequest?(
+    request: UiExtensionActionRequest,
+    source: UiExtensionActionSource
+  ): Promise<unknown>;
 }
 
 interface UiExtensionErrorBoundaryProps {
@@ -102,15 +121,23 @@ function UiExtensionRuntimeHostContainer({
   initialProps,
   runtimeType = 'dom-bundle',
   onError,
+  onActionRequest,
 }: UiExtensionRuntimeHostProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const runtimeRef = useRef<UiExtensionRuntime | undefined>(undefined);
   const onErrorRef = useRef(onError);
+  const onActionRequestRef = useRef(onActionRequest);
   const extensionKey = useMemo(() => getExtensionKey(extension), [extension]);
 
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
+
+  // A layout effect, so only a committed handler is used, and it is in place
+  // before the browser paints the render that passed it.
+  useIsomorphicLayoutEffect(() => {
+    onActionRequestRef.current = onActionRequest;
+  }, [onActionRequest]);
 
   useEffect(() => {
     const runtime = createUiExtensionRuntime(runtimeType);
@@ -123,6 +150,19 @@ function UiExtensionRuntimeHostContainer({
       initialProps,
       container: containerRef.current || undefined,
       onError: error => onErrorRef.current?.(error),
+      onActionRequest: (request, source) => {
+        const handler = onActionRequestRef.current;
+        if (!handler) {
+          return Promise.reject(NO_ACTION_HANDLER);
+        }
+        // A runtime that passes no source still names the extension it runs.
+        return handler(
+          request,
+          source ?? {
+            extension: Object.freeze(getExtensionMetadata(extension)),
+          }
+        );
+      },
     });
 
     return () => {

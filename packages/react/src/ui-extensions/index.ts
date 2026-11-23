@@ -1,3 +1,5 @@
+export type { GetEnabledStoreUiExtensionsInput } from './discovery';
+export { getEnabledStoreUiExtensions } from './discovery';
 export * from './hooks';
 export * from './runtime';
 export { Target } from './target';
