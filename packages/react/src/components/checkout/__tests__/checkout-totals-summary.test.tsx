@@ -69,7 +69,7 @@ describe('Checkout totals and order summary UI', () => {
     expect(document.body).toHaveTextContent(/estimated taxes/i);
     expect(document.body).toHaveTextContent(/fees/i);
     expect(document.body).toHaveTextContent(/total due/i);
-    expect(document.body).not.toHaveTextContent(/vat included/i);
+    expect(document.body).not.toHaveTextContent(/taxes included/i);
   });
 
   it('renders the total of included tax constituents separately from additive taxes', async () => {
@@ -96,8 +96,8 @@ describe('Checkout totals and order summary UI', () => {
     });
     await waitForCheckoutReady();
 
-    expect(document.body).toHaveTextContent(/vat included/i);
-    for (const label of screen.getAllByText(/vat included/i)) {
+    expect(document.body).toHaveTextContent(/taxes included/i);
+    for (const label of screen.getAllByText(/taxes included/i)) {
       expect(label.closest('.flex.justify-between')).toHaveTextContent('$1.23');
     }
   });
@@ -113,7 +113,7 @@ describe('Checkout totals and order summary UI', () => {
     await waitForCheckoutReady();
 
     expect(document.body).not.toHaveTextContent(
-      /estimated taxes|vat included/i
+      /estimated taxes|taxes included/i
     );
   });
 
@@ -130,7 +130,7 @@ describe('Checkout totals and order summary UI', () => {
       });
       await waitForCheckoutReady();
 
-      expect(document.body).not.toHaveTextContent(/vat included/i);
+      expect(document.body).not.toHaveTextContent(/taxes included/i);
     }
   );
 
@@ -159,7 +159,7 @@ describe('Checkout totals and order summary UI', () => {
 
       await waitFor(() => {
         for (const label of screen.getAllByText(
-          /vat included|estimated taxes/i
+          /taxes included|estimated taxes/i
         )) {
           const row = label.closest('.flex.justify-between');
           expect(row?.querySelector('.animate-pulse')).toBeInTheDocument();
@@ -172,7 +172,7 @@ describe('Checkout totals and order summary UI', () => {
         await execution;
       });
       await waitFor(() => {
-        for (const label of screen.getAllByText(/vat included/i)) {
+        for (const label of screen.getAllByText(/taxes included/i)) {
           expect(label.closest('.flex.justify-between')).toHaveTextContent(
             '$1.23'
           );
@@ -247,7 +247,7 @@ describe('Checkout totals and order summary UI', () => {
           mutationKey: checkoutMutationKeys.updateDraftOrderTaxes(session.id),
         })
       ).toBe(1);
-      for (const label of screen.getAllByText(/vat included/i)) {
+      for (const label of screen.getAllByText(/taxes included/i)) {
         const row = label.closest('.flex.justify-between');
         expect(row?.querySelector('.animate-pulse')).toBeInTheDocument();
         expect(row).not.toHaveTextContent('$1.23');
@@ -258,13 +258,13 @@ describe('Checkout totals and order summary UI', () => {
       });
       await waitFor(() => expect(queryClient.isMutating()).toBe(0));
       if (amount > 0) {
-        for (const label of screen.getAllByText(/vat included/i)) {
+        for (const label of screen.getAllByText(/taxes included/i)) {
           const row = label.closest('.flex.justify-between');
           expect(row).toHaveTextContent('$0.50');
           expect(row?.querySelector('.animate-pulse')).not.toBeInTheDocument();
         }
       } else {
-        expect(document.body).not.toHaveTextContent(/vat included/i);
+        expect(document.body).not.toHaveTextContent(/taxes included/i);
       }
     }
   );

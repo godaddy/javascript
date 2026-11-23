@@ -9,6 +9,7 @@ import {
 import { DraftOrderSyncProvider } from '@/components/checkout/order/draft-order-sync-provider';
 import { useAuthorizeCheckout } from '@/components/checkout/payment/utils/use-authorize-checkout';
 import { PaymentProvider } from '@/components/checkout/payment/utils/use-confirm-checkout';
+import { checkoutQueryKeys } from '@/components/checkout/utils/query-keys';
 import { GoDaddyProvider } from '@/godaddy-provider';
 import { PaymentMethodType } from '@/types';
 import {
@@ -22,14 +23,22 @@ import {
 function wrapper({
   enableTips = false,
   tipAmount,
+  unresolvedPayment,
 }: {
   enableTips?: boolean;
   tipAmount?: number;
+  unresolvedPayment?: { flow: 'card' | 'express'; paymentReference: string };
 } = {}) {
   const session = buildCheckoutSession({ enableTips });
   const draftOrder = buildDraftOrder();
   mockGodaddyApi({ session, draftOrder });
   const queryClient = createTestQueryClient();
+  if (unresolvedPayment) {
+    queryClient.setQueryData(
+      checkoutQueryKeys.unresolvedPayment(session.id),
+      unresolvedPayment
+    );
+  }
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
     const methods = useForm<CheckoutFormData>({
@@ -72,6 +81,23 @@ async function authorizedInput() {
 }
 
 describe('useAuthorizeCheckout', () => {
+  it('authorizes nothing while another flow has an unresolved payment', async () => {
+    const { result } = renderHook(() => useAuthorizeCheckout(), {
+      wrapper: wrapper({
+        unresolvedPayment: { flow: 'card', paymentReference: 'pi_unresolved' },
+      }),
+    });
+
+    await expect(
+      result.current.mutateAsync({
+        paymentType: PaymentMethodType.CCAVENUE,
+        paymentProvider: PaymentProvider.CCAVENUE,
+        paymentToken: '',
+      })
+    ).rejects.toMatchObject({ codes: ['PAYMENT_STILL_CONFIRMING'] });
+    expect(getOperations('AuthorizeCheckoutSession')).toHaveLength(0);
+  });
+
   it('authorizes for the tip-inclusive amount when tips are enabled', async () => {
     const { result } = renderHook(() => useAuthorizeCheckout(), {
       wrapper: wrapper({ enableTips: true, tipAmount: 500 }),

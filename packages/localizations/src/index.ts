@@ -1,5 +1,6 @@
 export { deDe } from './deDe';
 export { enAu } from './enAu';
+export { enCa } from './enCa';
 export { enIe } from './enIe';
 export { enUs } from './enUs';
 export { esAr } from './esAr';
