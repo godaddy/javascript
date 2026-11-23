@@ -11,6 +11,13 @@ const razorpayPaymentMethods = {
   },
 };
 
+// Airo-style create: explicit card-only paymentMethods; discovery still fills
+// paymentProviderConfiguration.razorpay (and may leave razorpay null / omitted).
+const cardOnlyPaymentMethods = {
+  card: { processor: 'godaddy', checkoutTypes: ['standard'] },
+  razorpay: null,
+};
+
 describe('Razorpay configuration gating', () => {
   it('hides Razorpay when paymentProviderConfiguration.razorpay is missing', async () => {
     renderCheckout({
@@ -41,6 +48,36 @@ describe('Razorpay configuration gating', () => {
     renderCheckout({
       sessionOverrides: {
         paymentMethods: razorpayPaymentMethods,
+        paymentProviderConfiguration: { razorpay: { configured: true } },
+      } as never,
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      screen.getByRole('button', { name: /razorpay/i })
+    ).toBeInTheDocument();
+  });
+
+  it('shows Razorpay when paymentMethods.razorpay is null but configured is true', async () => {
+    renderCheckout({
+      sessionOverrides: {
+        paymentMethods: cardOnlyPaymentMethods,
+        paymentProviderConfiguration: { razorpay: { configured: true } },
+      } as never,
+    });
+    await waitForCheckoutReady();
+
+    expect(
+      screen.getByRole('button', { name: /razorpay/i })
+    ).toBeInTheDocument();
+  });
+
+  it('shows Razorpay when paymentMethods omits razorpay but configured is true', async () => {
+    renderCheckout({
+      sessionOverrides: {
+        paymentMethods: {
+          card: { processor: 'godaddy', checkoutTypes: ['standard'] },
+        },
         paymentProviderConfiguration: { razorpay: { configured: true } },
       } as never,
     });

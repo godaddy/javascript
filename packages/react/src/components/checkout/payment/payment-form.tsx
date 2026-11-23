@@ -127,13 +127,14 @@ export function PaymentForm(
     paymentMethod as PaymentMethodValue
   );
   // TEMP FOR TESTING — DO NOT COMMIT: mirrors the availablePaymentMethods
-  // bypass below. session.paymentMethods.paypal can be null even when PayPal
-  // is actually configured (only paymentProviderConfiguration.paypal gets
-  // resolved by discovery on a session created with explicit paymentMethods
-  // input). Without this, useGetSelectedPaymentMethod returns null for
-  // PayPal, so getCheckoutButton() bails out at `if (!methodConfig) return
-  // null` and the "Pay now" button never renders — even though PayPal is
-  // selectable in the accordion thanks to the bypass below.
+  // bypass below. session.paymentMethods.paypal / razorpay can be null even
+  // when the provider is actually configured (only
+  // paymentProviderConfiguration gets resolved by discovery on a session
+  // created with explicit paymentMethods input). Without this,
+  // useGetSelectedPaymentMethod returns null, so getCheckoutButton() bails
+  // out at `if (!methodConfig) return null` and the "Pay now" button never
+  // renders — even though the method is selectable in the accordion thanks
+  // to the bypass below.
   const methodConfig =
     rawMethodConfig ??
     (paymentMethod === PaymentMethodType.PAYPAL &&
@@ -143,7 +144,14 @@ export function PaymentForm(
           processor: PaymentProvider.PAYPAL,
           checkoutTypes: [CheckoutType.STANDARD],
         }
-      : null);
+      : paymentMethod === PaymentMethodType.RAZORPAY &&
+          razorpayConfig?.configured === true
+        ? {
+            type: PaymentMethodType.RAZORPAY as PaymentMethodValue,
+            processor: PaymentProvider.RAZORPAY,
+            checkoutTypes: [CheckoutType.STANDARD],
+          }
+        : null);
   const { isPoyntLoaded } = useLoadPoyntCollect();
 
   const [pazeSupported, setPazeSupported] = useState<boolean | null>(null);
@@ -286,25 +294,40 @@ export function PaymentForm(
 
   const availablePaymentMethods = React.useMemo(() => {
     if (!configuredPaymentMethods) return [];
-    return Object.keys(configuredPaymentMethods).filter(key => {
+    // TEMP FOR TESTING — DO NOT COMMIT: when callers send explicit
+    // paymentMethods (e.g. card-only), discovery still fills
+    // paymentProviderConfiguration but leaves paymentMethods.paypal /
+    // razorpay null. GraphQL may omit those null keys entirely, so ensure
+    // the provider key is present whenever its public config exists.
+    const methodKeys = new Set(Object.keys(configuredPaymentMethods));
+    if (paypalConfig?.clientId?.trim()) {
+      methodKeys.add(PaymentMethodType.PAYPAL);
+    }
+    if (razorpayConfig?.configured === true) {
+      methodKeys.add(PaymentMethodType.RAZORPAY);
+    }
+    return [...methodKeys].filter(key => {
       const method = configuredPaymentMethods[key as PaymentMethodValue];
 
-      // TEMP FOR TESTING — DO NOT COMMIT: session.paymentMethods.paypal can
-      // be null on a session created with explicit paymentMethods input
-      // (only paymentProviderConfiguration gets resolved by discovery in
-      // that case). Only treat a null paypal method as "standard" when real
-      // PayPal SDK config actually exists. (Razorpay's equivalent signal,
-      // paymentProviderConfiguration.razorpay.configured, is checked in the
-      // stable gating block below instead.)
+      // TEMP FOR TESTING — DO NOT COMMIT: session.paymentMethods.paypal /
+      // razorpay can be null on a session created with explicit
+      // paymentMethods input (only paymentProviderConfiguration gets
+      // resolved by discovery in that case). Treat a null method as
+      // "standard" when the provider's public config actually exists.
       const isPayPalWithRealConfig =
         key === PaymentMethodType.PAYPAL && !!paypalConfig?.clientId?.trim();
+      const isRazorpayWithRealConfig =
+        key === PaymentMethodType.RAZORPAY &&
+        razorpayConfig?.configured === true;
+      const hasProviderConfigBypass =
+        isPayPalWithRealConfig || isRazorpayWithRealConfig;
       const effectiveCheckoutTypes =
         method?.checkoutTypes ??
-        (isPayPalWithRealConfig ? [CheckoutType.STANDARD] : undefined);
+        (hasProviderConfigBypass ? [CheckoutType.STANDARD] : undefined);
 
       const baseCheck =
         PAYMENT_METHOD_ICONS[key as PaymentMethodValue] &&
-        (method || isPayPalWithRealConfig) &&
+        (method || hasProviderConfigBypass) &&
         Array.isArray(effectiveCheckoutTypes) &&
         effectiveCheckoutTypes.includes(CheckoutType.STANDARD);
 
@@ -336,10 +359,12 @@ export function PaymentForm(
       }
 
       // Razorpay requires checkout-api to have resolved a working merchant
-      // account before the button is offered.
+      // account before the button is offered. Mirror PayPal: allow through
+      // when paymentMethods.razorpay is null but
+      // paymentProviderConfiguration.razorpay.configured is true.
       if (
         key === PaymentMethodType.RAZORPAY &&
-        method?.processor === PaymentProvider.RAZORPAY
+        (method?.processor === PaymentProvider.RAZORPAY || !method)
       ) {
         return baseCheck && razorpayConfig?.configured === true;
       }
