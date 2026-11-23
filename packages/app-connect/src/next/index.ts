@@ -8,6 +8,8 @@ import { verifyWebhookSubscription as coreVerifyWebhookSubscription } from '../u
 
 // Re-export the VerifiableRequest type for Next.js users
 export type { VerifiableRequest } from '../types/verifiable-request';
+// The status and body the other adapters answer a failed webhook with
+export { webhookFailureBody, webhookFailureStatus } from '../utils/config';
 
 /**
  * Verifies a signed action request in a Next.js environment

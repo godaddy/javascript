@@ -22,9 +22,15 @@ export {
 } from './errors/verification-errors';
 // Export webhook verification types and errors
 export {
+  InvalidWebhookOptionsError,
   InvalidWebhookSignatureError,
   MissingWebhookHeaderError,
+  WebhookRawBodyRequiredError,
+  WebhookSecretRequiredError,
+  WebhookTimestampOutOfToleranceError,
+  WebhookVerificationFailedError,
 } from './utils/webhook';
+export { webhookFailureBody, webhookFailureStatus } from './utils/config';
 
 // Export action verification types and options
 export type {

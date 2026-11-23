@@ -265,7 +265,7 @@ C. @godaddy/app-connect
 - Scripts:
   - dev/build/typecheck/test/test:watch/test:coverage/lint/check
 - Gotchas:
-  - There are older webhook verification helpers also present in verification.ts; index exports use utils/webhook.ts—prefer those
+  - Webhook verification lives in src/utils/webhook.ts. Webhook signatures are over the raw body bytes; the Express and TanStack webhook middleware are strict about that by default (strictRawBody)
   - Uses WebCrypto (crypto.subtle); ensure Node 20+ (CI uses Node 24)
   - Ensure body, header case, and query order are preserved correctly when constructing VerifiableRequest
 
