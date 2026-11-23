@@ -5,7 +5,8 @@ export default defineConfig({
     'src/index.ts',
     'src/express/index.ts',
     'src/next/index.ts',
-    'src/tanstack/index.ts'
+    'src/tanstack/index.ts',
+    'src/once/index.ts'
   ],
   plugins: [],
   tsconfig: './tsconfig.json',

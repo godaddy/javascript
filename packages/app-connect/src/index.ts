@@ -7,6 +7,32 @@ export { createActionMiddleware, createWebhookMiddleware } from './express';
 export * as next from './next';
 export * as tanstack from './tanstack';
 
+// Export the once-only helper
+export {
+  DEFAULT_LEASE_MS,
+  DEFAULT_ONCE_TABLE,
+  MAX_KEY_LENGTH,
+  MAX_REASON_LENGTH,
+  OnceClaimLostError,
+  OnceNotRecordedError,
+  Refused,
+  createMemoryOnceStore,
+  createMysqlOnceStore,
+  deriveId,
+  once,
+  onceTableDdl,
+} from './once';
+export type {
+  MemoryOnceStoreOptions,
+  MysqlOnceStoreOptions,
+  OnceClaim,
+  OnceOptions,
+  OnceOutcome,
+  OnceResult,
+  OnceStore,
+  SqlQueryRunner,
+} from './once';
+
 // Export types
 export type { Result } from './types/result';
 export type { VerifiableRequest } from './types/verifiable-request';

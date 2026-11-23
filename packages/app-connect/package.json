@@ -1,7 +1,7 @@
 {
 	"name": "@godaddy/app-connect",
 	"version": "1.0.2",
-	"description": "GoDaddy App Connect - A verification library for GoDaddy Platform App requests",
+	"description": "GoDaddy App Connect - Request verification and once-only work for GoDaddy Platform Apps",
 	"type": "module",
 	"types": "./dist/index.d.ts",
 	"files": [
@@ -27,6 +27,11 @@
 			"types": "./dist/tanstack/index.d.ts",
 			"import": "./dist/tanstack/index.js",
 			"default": "./dist/tanstack/index.js"
+		},
+		"./once": {
+			"types": "./dist/once/index.d.ts",
+			"import": "./dist/once/index.js",
+			"default": "./dist/once/index.js"
 		}
 	},
 	"scripts": {
@@ -62,6 +67,7 @@
 		"@biomejs/biome": "1.9.4",
 		"@types/express": "^5.0.2",
 		"@types/node": "^22.13.1",
+		"mysql2": "3.24.6",
 		"pino-pretty": "^13.0.0",
 		"tsdown": "^0.15.6",
 		"typescript": "~5.7.3",
