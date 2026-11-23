@@ -14,7 +14,6 @@ import {
 } from '@/components/checkout/payment/utils/use-confirm-checkout';
 import { useFlushCheckoutSync } from '@/components/checkout/payment/utils/use-flush-checkout-sync';
 import { useIsPaymentDisabled } from '@/components/checkout/payment/utils/use-is-payment-disabled';
-import { isDigitalOnlyOrder } from '@/components/checkout/utils/fulfillment';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoDaddyContext } from '@/godaddy-provider';
 import { GraphQLErrorWithCodes } from '@/lib/graphql-with-errors';
@@ -27,8 +26,6 @@ function PayPalButtonsWrapper() {
   const confirmCheckout = useConfirmCheckout();
   const flushCheckoutSync = useFlushCheckoutSync();
   const [isPaypalDisabled, setIsPaypalDisabled] = useState<boolean>(false);
-  const deliveryMethod = form.watch('deliveryMethod');
-  const isPickup = deliveryMethod === DeliveryMethods.PICKUP;
   const [{ isResolved, isPending }] = usePayPalScriptReducer();
   // PayPal's popup can stay open while the tip changes underneath, so confirm
   // sends the tip `createOrder` submitted rather than the current form value.
@@ -70,22 +67,25 @@ function PayPalButtonsWrapper() {
       latestOrder ?? undefined
     ).payPalRequest;
 
-    const suppressShipping =
-      isPickup || isDigitalOnlyOrder(latestOrder?.lineItems);
+    // Read after the flush so the method matches the order PayPal is sent.
+    // Pickup, digital and purchase mode never collect a shipping address.
+    const isShipping =
+      form.getValues('deliveryMethod') === DeliveryMethods.SHIP &&
+      Boolean(request.purchase_units[0]?.shipping);
     const order = {
       ...request,
       purchase_units: request.purchase_units
         ? [
             {
               ...request.purchase_units[0],
-              ...(suppressShipping ? { shipping: undefined } : {}),
+              ...(isShipping ? {} : { shipping: undefined }),
             },
           ]
         : undefined,
       application_context: {
-        shipping_preference: suppressShipping
-          ? 'NO_SHIPPING'
-          : 'SET_PROVIDED_ADDRESS',
+        shipping_preference: isShipping
+          ? 'SET_PROVIDED_ADDRESS'
+          : 'NO_SHIPPING',
       },
     };
     return await actions.order.create(order);
