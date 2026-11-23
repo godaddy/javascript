@@ -1,0 +1,11 @@
+---
+'@godaddy/app-connect': minor
+---
+
+Harden webhook verification. `verifyWebhookSubscription` compares signatures in constant time, signs the exact body bytes (a Buffer, ArrayBuffer or string), and accepts a space-separated list of `v1,` signatures (either case of the tag), passing when any one matches.
+
+New `strictRawBody` option refuses a body that is not raw bytes or a string, instead of re-serializing a parsed body with `JSON.stringify`. New `toleranceSeconds` option refuses a timestamp too far from now; it is off by default.
+
+Behaviour change: the Express and TanStack webhook middleware now turn `strictRawBody` on by default. Express apps must keep the raw body, through `express.json({ verify })` saving `req.rawBody`, or `express.raw({ type: 'application/json' })` on the webhook route in place of an app-wide `express.json()`. A string decoded by `express.text()` doesn't count as raw. Without the raw body the middleware answers 500; pass `strictRawBody: false` to keep the old `JSON.stringify` fallback for a parsed body (a body nothing kept, or one TanStack can't read, is still a 500). The TanStack middleware now reads the body as bytes, so a byte-order mark is kept. Direct calls and the Next.js `verifyWebhookSubscription` keep strict mode off unless you pass `strictRawBody: true`.
+
+When the app's own setup is wrong at request time (raw body lost, no webhook secret), the middleware answers 500 with a generic `WEBHOOK_VERIFICATION_UNAVAILABLE` body and logs the detail under the same correlation id; a missing secret used to be a 401. Direct calls return `WEBHOOK_RAW_BODY_REQUIRED`, `WEBHOOK_SECRET_REQUIRED`, or `INVALID_WEBHOOK_OPTIONS` for a non-string secret or a NaN or negative `toleranceSeconds`. The middleware throws a TypeError when it is created with such options, so a `secret` passed as a Buffer or KeyObject, which used to work from JavaScript, is now refused: pass the secret string. An internal failure during verification is now `WEBHOOK_VERIFICATION_FAILED` (500) instead of `INVALID_WEBHOOK_SIGNATURE` (401). `webhookFailureStatus` and `webhookFailureBody` are exported from the root and `@godaddy/app-connect/next` for handlers that call `verifyWebhookSubscription` directly.
