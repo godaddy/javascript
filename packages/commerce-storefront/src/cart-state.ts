@@ -1,6 +1,28 @@
 import { useMemo } from 'react';
-import { useCommerce } from './commerce-provider';
+import { useCommerce, useMessage } from './commerce-provider';
 import { type SampleProduct, sampleCurrency, useSampleCart } from './sample-cart';
+
+// A dedicated formatter cache for signed addon-cost adjustments, separate from `api.ts`'s
+// `money()` cache: `signDisplay` is only needed here, not for the much hotter plain-price path
+// `money()`/`useMoney()` serve everywhere else, so it isn't worth widening that shared cache's
+// key or public signature for this one case. Capped the same way, for the same reason: a page
+// uses a few pairs, but a long-running server rendering many locales/currencies should not grow
+// this map unbounded.
+const signedCurrencyFormats = new Map<string, Intl.NumberFormat>();
+const maxSignedCurrencyFormats: number = 64;
+function formatSignedCost(value: number, currency: string, locale: string): string {
+  const key = `${locale}|${currency}`;
+  let format = signedCurrencyFormats.get(key);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, { style: 'currency', currency, signDisplay: 'exceptZero' });
+    // Maps keep insertion order, so the first key is the oldest.
+    if (signedCurrencyFormats.size >= maxSignedCurrencyFormats)
+      signedCurrencyFormats.delete(signedCurrencyFormats.keys().next().value ?? '');
+    signedCurrencyFormats.set(key, format);
+  }
+  const scale = 10 ** (format.resolvedOptions().maximumFractionDigits ?? 2);
+  return format.format(value / scale);
+}
 
 /** One cart line, for custom cart parts. */
 export interface CartItemState<Sample extends SampleProduct = SampleProduct> {
@@ -31,7 +53,8 @@ export interface CartState {
 
 /** Read the cart from anywhere inside `CommerceProvider`, for example to build a custom cart button. */
 export function useCart(): CartState {
-  const { cart, config, connection, hydrating } = useCommerce();
+  const { cart, config, connection, hydrating, locale } = useCommerce();
+  const text = useMessage();
   const sample = useSampleCart();
   const isSample: boolean = connection === 'unbound';
   const sampleItems = sample.items;
@@ -59,24 +82,41 @@ export function useCart(): CartState {
     const lines = cart?.lineItems ?? [];
     const subtotal = cart?.totals?.subTotal?.value;
     return {
-      items: lines.map((item) => ({
-        id: item.id ?? '',
-        name: item.name ?? '',
-        quantity: item.quantity ?? 0,
-        imageUrl: item.details?.productAssetUrl || null,
-        options: (item.details?.selectedOptions ?? []).map((option) => ({
-          attribute: option.attribute ?? '',
-          values: option.values ?? [],
-        })),
-        subtotal: typeof item.totals?.subTotal?.value === 'number' ? item.totals.subTotal.value : null,
-        currency: item.totals?.subTotal?.currencyCode ?? currency,
-        sample: null,
-      })),
+      items: lines.map((item) => {
+        const itemCurrency = item.totals?.subTotal?.currencyCode ?? currency;
+        return {
+          id: item.id ?? '',
+          name: item.name ?? '',
+          quantity: item.quantity ?? 0,
+          imageUrl: item.details?.productAssetUrl || null,
+          options: [
+            ...(item.details?.selectedOptions ?? []).map((option) => ({
+              attribute: option.attribute ?? '',
+              values: option.values ?? [],
+            })),
+            ...(item.details?.selectedAddons ?? []).map((addon) => ({
+              attribute: addon.attribute ?? '',
+              // A value without a name has nothing to show; skip it rather than render a blank entry.
+              values: (addon.values ?? [])
+                .filter((value) => !!value.name)
+                .map((value) => {
+                  const cost = value.costAdjustment;
+                  if (typeof cost?.value !== 'number' || cost.value === 0) return value.name as string;
+                  const amount = formatSignedCost(cost.value, cost.currencyCode ?? itemCurrency, locale);
+                  return text('addonValueWithCost', { name: value.name as string, amount });
+                }),
+            })),
+          ],
+          subtotal: typeof item.totals?.subTotal?.value === 'number' ? item.totals.subTotal.value : null,
+          currency: itemCurrency,
+          sample: null,
+        };
+      }),
       itemCount: lines.reduce((total, item) => total + (item.quantity ?? 0), 0),
       subtotal: typeof subtotal === 'number' ? subtotal : null,
       currency: cart?.totals?.subTotal?.currencyCode ?? currency,
       isSample,
       loading: hydrating,
     };
-  }, [cart, config.currencyCode, hydrating, isSample, sampleItems]);
+  }, [cart, config.currencyCode, hydrating, isSample, locale, sampleItems, text]);
 }

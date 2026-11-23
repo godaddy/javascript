@@ -691,11 +691,17 @@ function BoundCommerceProvider({
         headers.set('X-Commerce-Scope', config.cartScope);
         return checkedFetch(input, { ...init, headers });
       };
-      const result: CartResponse = await addToCart(
-        id.current,
-        { skuId: item.skuId, name: item.name, quantity: item.quantity },
-        fetchCart,
-      );
+      // Pick only the supported fields: a caller spreading a larger object (e.g.
+      // addItem({ ...product, skuId, name, quantity })) must not forward the rest of it —
+      // order-api rejects unknown fields, which would otherwise surface as a 502.
+      const payload: AddToCartItemInput = {
+        skuId: item.skuId,
+        name: item.name,
+        quantity: item.quantity,
+        ...(item.details ? { details: item.details } : {}),
+        ...(item.metafields ? { metafields: item.metafields } : {}),
+      };
+      const result: CartResponse = await addToCart(id.current, payload, fetchCart);
       if (!result.cart?.id || !result.cart.lineItems?.length) throw new StorefrontError('addReturnedNoCart');
       if (!isActive()) return;
       commit(result.cart);

@@ -5,7 +5,7 @@
  * (which creates the cart via POST /api/commerce/cart); subsequent adds
  * for the same cart go here.
  *
- * Body: { skuId: string, name: string, quantity: number }
+ * Body: { skuId: string, name: string, quantity: number, details?, metafields? }
  *
  * Response: { cart: CartOrder | null }
  *   The underlying `addLineItemBySkuId` GraphQL mutation only returns the
@@ -23,14 +23,14 @@ import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type AddLineItemBySkuIdResult,
   type AddLineItemBySkuIdVariables,
-  type AddToCartItemInput,
   buildAddLineItemBySkuIdInput,
   type GetCartOrderResult,
   type GetCartOrderVariables,
   getCartOrderQuery,
   orderStorefrontEndpoint,
+  parseCartItemInput,
 } from '@/lib/commerce/order-subgraph';
-import { classifyCartUpstreamError } from '@/lib/commerce/upstream-errors';
+import { classifyAddItemUpstreamError } from '@/lib/commerce/upstream-errors';
 
 const addLineItemBySkuIdMutation = `
   mutation AddLineItemBySkuId($input: AddLineItemInput!) {
@@ -46,10 +46,7 @@ async function addLineItem(req: Request, res: Response): Promise<void> {
     throw new InvalidRequestError('Missing cart id');
   }
 
-  const body = (req.body ?? {}) as Partial<AddToCartItemInput>;
-  if (!body.skuId || !body.name || typeof body.quantity !== 'number') {
-    throw new InvalidRequestError('Missing required fields: skuId, name, quantity');
-  }
+  const item = parseCartItemInput(req.body);
 
   const config: CommerceConfig = readCommerceConfigForResponse(res);
   assertCommerceCartScope(req, config);
@@ -63,13 +60,7 @@ async function addLineItem(req: Request, res: Response): Promise<void> {
   await gqlRequest<AddLineItemBySkuIdResult, AddLineItemBySkuIdVariables>({
     endpoint,
     query: addLineItemBySkuIdMutation,
-    variables: {
-      input: buildAddLineItemBySkuIdInput(cartId, {
-        skuId: body.skuId,
-        name: body.name,
-        quantity: body.quantity,
-      }),
-    },
+    variables: { input: buildAddLineItemBySkuIdInput(cartId, item) },
     headers,
   });
 
@@ -84,5 +75,5 @@ async function addLineItem(req: Request, res: Response): Promise<void> {
 }
 
 export default commerceRoute('Failed to add line item', addLineItem, {
-  classifyUpstreamError: classifyCartUpstreamError,
+  classifyUpstreamError: classifyAddItemUpstreamError,
 });

@@ -17,7 +17,7 @@
  *
  * Body:
  *   currencyCode? - override the configured currency (defaults to GODADDY_CURRENCY_CODE)
- *   lineItems?    - [{ skuId, name, quantity }] added one-by-one after create
+ *   lineItems?    - [{ skuId, name, quantity, details?, metafields? }] added one-by-one after create
  *
  * Response: { cart: CartOrder | null }
  *   Same shape as GET /api/commerce/cart/:id and the other cart mutation
@@ -28,21 +28,22 @@ import type { Request, Response } from 'express';
 import { assertCommerceCartScope } from '@/lib/commerce/cart-scope';
 import { commerceRoute } from '@/lib/commerce/commerce-route';
 import { type CommerceConfig, readCommerceConfigForResponse } from '@/lib/commerce/config';
-import { InvalidRequestError, UpstreamError } from '@/lib/commerce/errors';
+import { UpstreamError } from '@/lib/commerce/errors';
 import { gqlRequest, storefrontHeaders } from '@/lib/commerce/gql';
 import {
   type AddCartOrderResult,
   type AddCartOrderVariables,
   type AddLineItemBySkuIdResult,
   type AddLineItemBySkuIdVariables,
-  type AddToCartItemInput,
   buildAddLineItemBySkuIdInput,
   buildEmptyCartOrderInput,
   type GetCartOrderResult,
   type GetCartOrderVariables,
   getCartOrderQuery,
   orderStorefrontEndpoint,
+  parseCartItemInput,
 } from '@/lib/commerce/order-subgraph';
+import { classifyCartCreationUpstreamError } from '@/lib/commerce/upstream-errors';
 
 const addCartOrderMutation = `
   mutation AddCartOrder($input: AddDraftOrderInput!) {
@@ -62,23 +63,17 @@ const addLineItemBySkuIdMutation = `
 
 interface CreateCartBody {
   currencyCode?: string;
-  lineItems?: AddToCartItemInput[];
+  lineItems?: unknown[];
 }
 
 async function createCart(req: Request, res: Response): Promise<void> {
   const body = (req.body ?? {}) as CreateCartBody;
-  const initialItems = Array.isArray(body.lineItems) ? body.lineItems : [];
+  const rawItems = Array.isArray(body.lineItems) ? body.lineItems : [];
 
-  // Validate all items BEFORE creating the cart so a bad payload can't
-  // produce an orphaned cart (cart created, item add fails, client never
-  // gets the id). Mirrors the validation in POST /api/commerce/cart/:id/items.
-  for (const item of initialItems) {
-    if (!item.skuId || !item.name || typeof item.quantity !== 'number') {
-      throw new InvalidRequestError(
-        'Each lineItem must have skuId, a non-empty name, and a numeric quantity',
-      );
-    }
-  }
+  // Parse and validate every item BEFORE creating the cart so a bad payload can't produce an
+  // orphaned cart (cart created, item add fails, client never gets the id). parseCartItemInput
+  // also allowlists each item to its known fields, dropping anything else the client sent.
+  const initialItems = rawItems.map((item) => parseCartItemInput(item));
 
   const config: CommerceConfig = readCommerceConfigForResponse(res);
   assertCommerceCartScope(req, config);
@@ -135,4 +130,6 @@ async function createCart(req: Request, res: Response): Promise<void> {
   res.status(201).json({ cart: hydrated.orderById ?? null });
 }
 
-export default commerceRoute('Failed to create cart', createCart);
+export default commerceRoute('Failed to create cart', createCart, {
+  classifyUpstreamError: classifyCartCreationUpstreamError,
+});

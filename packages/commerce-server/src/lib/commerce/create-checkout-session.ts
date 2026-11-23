@@ -13,6 +13,7 @@
  * Server-only. Credentials and integration settings come from the host configuration.
  */
 
+import { parseCheckoutPaymentMethods } from './checkout-config';
 import {
   authorizationHeaders,
   buildBuyNowCheckoutInput,
@@ -25,6 +26,7 @@ import {
   DEFAULT_CHECKOUT_PAYMENT_METHODS,
   getOAuthAccessToken,
 } from './checkout-subgraph';
+import { type CommerceLogger, consoleCommerceLogger } from './commerce-route';
 import {
   type CommerceConfiguration,
   createRuntimeCommerceConfiguration,
@@ -169,6 +171,7 @@ function promotionCodesEnabled(configuration: object): boolean {
 export async function createCheckoutSession(
   params: CreateCheckoutSessionParams,
   configuration: CommerceConfiguration = createRuntimeCommerceConfiguration(),
+  logger: CommerceLogger = consoleCommerceLogger,
 ): Promise<CheckoutSession> {
   const { draftOrderId, skuId, quantity, lineItemData, returnUrl, successUrl } = params;
 
@@ -193,7 +196,10 @@ export async function createCheckoutSession(
     owner,
     currencyCode: configCurrencyCode,
   } = readReadyCommerceConfig(configuration);
-  const checkoutConfiguration = readReadyCheckoutConfig(configuration);
+  const checkoutConfiguration = readReadyCheckoutConfig(configuration, logger);
+  const paymentMethods =
+    parseCheckoutPaymentMethods(checkoutConfiguration.paymentMethods, logger) ??
+    DEFAULT_CHECKOUT_PAYMENT_METHODS;
   const enablePromotionCodes: boolean = promotionCodesEnabled(checkoutConfiguration);
   const catalogShippingEnabled: boolean = lineItemData === undefined && checkoutConfiguration.enableShipping;
   const checkoutOAuthScope: string = 'commerce.product:read';
@@ -211,7 +217,7 @@ export async function createCheckoutSession(
     enableTaxCollection: checkoutConfiguration.enableTaxCollection,
     enableShipping: checkoutConfiguration.enableShipping,
     enableShippingAddressCollection: checkoutConfiguration.enableShipping,
-    paymentMethods: DEFAULT_CHECKOUT_PAYMENT_METHODS,
+    paymentMethods,
     shipping: catalogShippingEnabled ? checkoutConfiguration.shipping : undefined,
   };
 
@@ -250,7 +256,7 @@ export async function createCheckoutSession(
           {
             ...attribution,
             enableTaxCollection: checkoutConfiguration.enableTaxCollection,
-            paymentMethods: DEFAULT_CHECKOUT_PAYMENT_METHODS,
+            paymentMethods,
           },
         )
       : buildBuyNowCheckoutInput(
@@ -308,7 +314,10 @@ export async function createCheckoutSession(
     throw new UpstreamError('Checkout session did not enable configured shipping and address collection');
   }
 
-  if (!session.paymentMethods?.card?.processor) {
+  const hasConfiguredPaymentMethod = Object.entries(paymentMethods).some(
+    ([name, method]) => method != null && session.paymentMethods?.[name]?.processor === method.processor,
+  );
+  if (!hasConfiguredPaymentMethod) {
     throw new UpstreamError('Checkout session did not configure payment methods.');
   }
 

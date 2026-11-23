@@ -129,10 +129,24 @@ export interface CartOrder {
   tags?: string[] | null;
 }
 
+export interface AddToCartSelectedAddonInput {
+  optionId: string;
+  values: Array<{ inputValue: string }>;
+}
+
+// JSON is the only metafield type the server accepts here — no `type` field, so there is
+// nothing for a caller to get wrong.
+export interface AddToCartMetafieldInput {
+  key: string;
+  value: string;
+}
+
 export interface AddToCartItemInput {
   skuId: string;
   name: string;
   quantity: number;
+  details?: { productAssetUrl?: string; selectedAddons?: AddToCartSelectedAddonInput[] };
+  metafields?: AddToCartMetafieldInput[];
 }
 
 export interface CartSummaryTotals {

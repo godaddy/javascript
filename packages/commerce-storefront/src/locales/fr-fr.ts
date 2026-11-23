@@ -76,6 +76,7 @@ export const frFR: StorefrontMessages = {
   quantityPrefix: `Quantité${colon} `,
   remove: 'Retirer',
   itemOption: `{attribute}${colon} {values}`,
+  addonValueWithCost: '{name} ({amount})',
   cartEmpty: 'Votre panier est vide',
   cartEmptyHint: 'Ajoutez un article qui vous plaît et il apparaîtra ici.',
   sampleCartEmptyHint: "Ajoutez un produit d'exemple pour essayer le panier.",

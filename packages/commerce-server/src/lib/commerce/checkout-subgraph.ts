@@ -105,8 +105,8 @@ export interface CheckoutCustomerInput {
 }
 
 export interface CheckoutSessionPaymentMethodConfigInput {
-  processor?: string;
-  checkoutTypes?: string[];
+  processor: string;
+  checkoutTypes: string[];
 }
 
 export interface CheckoutSessionPaymentMethodsInput {

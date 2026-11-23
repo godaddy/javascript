@@ -13,13 +13,21 @@ export interface CommerceErrorLogContext {
   error: unknown;
 }
 
-/** Receives server-side failure detail that is never sent to the browser. */
+export interface CommerceWarningLogContext {
+  code: 'invalid_checkout_payment_methods';
+  fallback: 'standard_godaddy_card';
+}
+
+/** Receives server-side diagnostics that are never sent to the browser. */
 export interface CommerceLogger {
   error(message: string, context: CommerceErrorLogContext): void;
+  /** Optional for compatibility with existing error-only loggers; defaults to `console.warn`. */
+  warn?(message: string, context: CommerceWarningLogContext): void;
 }
 
 export const consoleCommerceLogger: CommerceLogger = {
   error: (message, context): void => console.error(message, context),
+  warn: (message, context): void => console.warn(message, context),
 };
 
 /** Returns the host's id for this request (for example one set by its load balancer), if any. */
@@ -37,6 +45,10 @@ export interface CommerceObservabilityLocals {
 
 function observabilityLocals(res: Response): CommerceObservabilityLocals {
   return res.locals as CommerceObservabilityLocals;
+}
+
+export function commerceLoggerForResponse(res: Response): CommerceLogger {
+  return observabilityLocals(res).commerceLogger ?? consoleCommerceLogger;
 }
 
 export function resolveRequestId(req: Request, resolver?: CommerceRequestIdResolver): string {
@@ -91,10 +103,7 @@ export function sendCommerceError(
     };
     // A failing or invalid host logger must not prevent the failure response.
     try {
-      (observabilityLocals(res).commerceLogger ?? consoleCommerceLogger).error(
-        `commerce-server: ${label}`,
-        context,
-      );
+      commerceLoggerForResponse(res).error(`commerce-server: ${label}`, context);
     } catch (loggerError) {
       console.error(`commerce-server: ${label} (host logger failed)`, { ...context, loggerError });
     }
